@@ -1,17 +1,13 @@
 name: CI Backend (Develop)
 
-# Déclenchement sur push ou PR vers la branche develop
 on:
   push:
     branches: [ "develop" ]
   pull_request:
     branches: [ "develop" ]
-  workflow_dispatch: # Permet de relancer le pipeline manuellement depuis l'interface GitHub
+  workflow_dispatch:
 
 jobs:
-  # -------------------------------------------------------------
-  # JOB 1 : Build & Tests Java avec Maven
-  # -------------------------------------------------------------
   build-and-test:
     name: Build & Test Maven
     runs-on: ubuntu-latest
@@ -25,26 +21,21 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'maven' # Maintient les dépendances en cache pour accélérer les futurs builds
+          cache: 'maven'
 
       - name: Compiler et exécuter les tests
-        # Si votre backend est dans un sous-dossier, décommentez la ligne ci-dessous :
-        # working-directory: ./backend
-        run: mvn clean test package
+        # ATTENTION : Ne mettez PAS -DskipTests ici !
+        # Si un seul test unitaires échoue, l'étape s'arrête et marque le pipeline en ROUGE ❌
+        run: mvn clean verify
 
-  # -------------------------------------------------------------
-  # JOB 2 : Vérification du Build Docker Multi-Stage
-  # -------------------------------------------------------------
   docker-build-test:
     name: Test du Build Docker
     runs-on: ubuntu-latest
-    needs: build-and-test # S'exécute seulement si la compilation Maven a réussi
+    needs: build-and-test # Cette étape ne s'exécute QUE SI la précédente a réussi (100% vert)
 
     steps:
       - name: Récupérer le code source
         uses: actions/checkout@v4
 
       - name: Vérifier la construction de l'image Docker
-        # Si votre Dockerfile est dans un sous-dossier, décommentez la ligne ci-dessous :
-        # working-directory: ./backend
         run: docker build -t lms-backend:develop .
