@@ -8,6 +8,9 @@ on:
     branches: [ "develop" ]
   workflow_dispatch: # Permet de relancer le pipeline manuellement depuis l'interface GitHub
 
+permissions:
+  contents: read
+
 jobs:
   # -------------------------------------------------------------
   # JOB 1 : Build & Tests Java avec Maven
