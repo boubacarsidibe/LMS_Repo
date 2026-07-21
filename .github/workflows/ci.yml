@@ -24,7 +24,6 @@ jobs:
       - name: Checkout du code
         uses: actions/checkout@v4
 
-      # Configuration du JDK Java
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -32,20 +31,18 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # Donne les permissions d'exécution au wrapper Maven
       - name: Make mvnw executable
         run: chmod +x mvnw
 
-      # Compilation et exécution des tests unitaires/intégration
       - name: Build and Test with Maven
         run: ./mvnw clean package
 
-      # Sauvegarde de l'artefact JAR généré pour la suite
       - name: Upload JAR Artifact
         uses: actions/upload-artifact@v4
         with:
           name: spring-boot-app
-          path: target/*.jar
+          # Indique explicitement le sous-dossier backend
+          path: backend/target/*.jar
 
   deploy:
     name: Deploy Environment
@@ -58,24 +55,24 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: spring-boot-app
+          # Télécharge l'artefact directement dans un dossier target/
+          path: target
 
       # --- Déploiement DEVELOP ---
       - name: Deploy to Staging / Develop
         if: github.ref == 'refs/heads/develop'
         run: |
-          echo "🚀 Déploiement de l'application Spring Boot sur DEVELOP..."
-          # Ex: scp target/app.jar user@dev-server:/app/
+          echo "🚀 Déploiement sur DEVELOP..."
+          # target/ contient maintenant votre JAR
 
       # --- Déploiement PREPROD ---
       - name: Deploy to Pre-production
         if: github.ref == 'refs/heads/preprod'
         run: |
-          echo "🧪 Déploiement de l'application Spring Boot sur PREPROD..."
-          # Ex: java -jar app.jar --spring.profiles.active=preprod
+          echo "🧪 Déploiement sur PREPROD..."
 
       # --- Déploiement MAIN (PROD) ---
       - name: Deploy to Production
         if: github.ref == 'refs/heads/main'
         run: |
-          echo "🔥 Déploiement de l'application Spring Boot sur PRODUCTION..."
-          # Ex: commande de déploiement prod
+          echo "🔥 Déploiement sur PRODUCTION..."
