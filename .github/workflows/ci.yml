@@ -16,6 +16,24 @@ jobs:
   build-and-test:
     name: Build & Test (Spring Boot)
     runs-on: ubuntu-latest
+
+    # --- CONTENEUR POSTGRESQL POUR LES TESTS ---
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: lms_test_db
+          POSTGRES_USER: lms_user
+          POSTGRES_PASSWORD: lms_password
+        ports:
+          - 5432:5432
+        # Attend que PostgreSQL soit prêt avant d'exécuter les tests
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     defaults:
       run:
         working-directory: ./backend
@@ -34,14 +52,20 @@ jobs:
       - name: Make mvnw executable
         run: chmod +x mvnw
 
+      # --- EXECUTION DU BUILD AVEC VARIABLES POSTGRESQL ---
       - name: Build and Test with Maven
         run: ./mvnw clean package
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/lms_test_db
+          SPRING_DATASOURCE_USERNAME: lms_user
+          SPRING_DATASOURCE_PASSWORD: lms_password
+          SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+          SPRING_JPA_HIBERNATE_DDL_AUTO: update
 
       - name: Upload JAR Artifact
         uses: actions/upload-artifact@v4
         with:
           name: spring-boot-app
-          # Indique explicitement le sous-dossier backend
           path: backend/target/*.jar
 
   deploy:
@@ -55,24 +79,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: spring-boot-app
-          # Télécharge l'artefact directement dans un dossier target/
           path: target
 
-      # --- Déploiement DEVELOP ---
       - name: Deploy to Staging / Develop
         if: github.ref == 'refs/heads/develop'
-        run: |
-          echo "🚀 Déploiement sur DEVELOP..."
-          # target/ contient maintenant votre JAR
+        run: echo "🚀 Déploiement sur DEVELOP..."
 
-      # --- Déploiement PREPROD ---
       - name: Deploy to Pre-production
         if: github.ref == 'refs/heads/preprod'
-        run: |
-          echo "🧪 Déploiement sur PREPROD..."
+        run: echo "🧪 Déploiement sur PREPROD..."
 
-     
       - name: Deploy to Production
         if: github.ref == 'refs/heads/main'
-        run: |
-          echo "🔥 Déploiement sur PRODUCTION..."
+        run: echo "🔥 Déploiement sur PRODUCTION..."
