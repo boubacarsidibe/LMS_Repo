@@ -3,21 +3,23 @@ name: Spring Boot CI/CD Pipeline
 on:
   push:
     branches:
-      - main
-      - preprod
       - develop
+      - preprod
+      - main
   pull_request:
     branches:
-      - main
-      - preprod
       - develop
+      - preprod
+      - main
 
 jobs:
+  # -------------------------------------------------------------
+  # JOB 1 : COMPILATION ET TESTS SOURCÉS (Develop / PR / Main)
+  # -------------------------------------------------------------
   build-and-test:
     name: Build & Test (Spring Boot)
     runs-on: ubuntu-latest
 
-    # --- CONTENEUR POSTGRESQL POUR LES TESTS ---
     services:
       postgres:
         image: postgres:16-alpine
@@ -27,7 +29,6 @@ jobs:
           POSTGRES_PASSWORD: lms_password
         ports:
           - 5432:5432
-        # Attend que PostgreSQL soit prêt avant d'exécuter les tests
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -52,7 +53,6 @@ jobs:
       - name: Make mvnw executable
         run: chmod +x mvnw
 
-      # --- EXECUTION DU BUILD AVEC VARIABLES POSTGRESQL ---
       - name: Build and Test with Maven
         run: ./mvnw clean package
         env:
@@ -68,27 +68,62 @@ jobs:
           name: spring-boot-app
           path: backend/target/*.jar
 
-  deploy:
-    name: Deploy Environment
+  # -------------------------------------------------------------
+  # JOB 2 : AUTO-MERGE DE DEVELOP VERS PREPROD (Si le Build réussit)
+  # -------------------------------------------------------------
+  promote-to-preprod:
+    name: Sync Develop -> Preprod
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Récupère toutes les branches
+
+      - name: Push direct sur preprod
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout preprod || git checkout -b preprod
+          git merge origin/develop --ff-only || git merge origin/develop -m "Auto-promote develop to preprod"
+          git push origin preprod
+
+  # -------------------------------------------------------------
+  # JOB 3 : DÉPLOIEMENT PREPROD
+  # -------------------------------------------------------------
+  deploy-preprod:
+    name: Deploy to Pre-production
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/preprod'
 
     steps:
       - name: Download JAR Artifact
         uses: actions/download-artifact@v4
         with:
           name: spring-boot-app
-          path: target
 
-      - name: Deploy to Staging / Develop
-        if: github.ref == 'refs/heads/develop'
-        run: echo "🚀 Déploiement sur DEVELOP..."
+      - name: Deploy Script
+        run: echo "🧪 Déploiement automatique sur l'environnement PREPROD..."
 
-      - name: Deploy to Pre-production
-        if: github.ref == 'refs/heads/preprod'
-        run: echo "🧪 Déploiement sur PREPROD..."
+  # -------------------------------------------------------------
+  # JOB 4 : DÉPLOIEMENT PRODUCTION (Validation Manuelle Requise)
+  # -------------------------------------------------------------
+  deploy-production:
+    name: Deploy to Production
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production # <-- Nécessite votre approbation dans GitHub Settings
 
-      - name: Deploy to Production
-        if: github.ref == 'refs/heads/main'
-        run: echo "🔥 Déploiement sur PRODUCTION..."
+    steps:
+      - name: Download JAR Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: spring-boot-app
+
+      - name: Deploy Script
+        run: echo "🔥 Déploiement validé manuellement sur la PRODUCTION !"
