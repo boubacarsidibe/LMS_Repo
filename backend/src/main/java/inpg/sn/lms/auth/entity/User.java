@@ -17,6 +17,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import lombok.AllArgsConstructor;
@@ -47,6 +48,14 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    // @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    // private Candidat candidat;
+    // @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    // private Etudiant etudiant;
+    // @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    // private Formateur formateur;
+
+
     @ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinTable(
         name = "user_roles", 
@@ -55,26 +64,19 @@ public class User {
     )
     private Set<Role> roles = new HashSet<>();
 
+    public User(String username, String password, String email) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+    }
 
     public void addRole(Role role) {
         this.roles.add(role);
-        
     }
 
-    public <T extends User> T convertTo(Class<T> targetClass) {
-        try {
-            T  target = targetClass.getDeclaredConstructor().newInstance();
-            target.setId(this.id);
-            target.setUsername(this.username);
-            target.setPassword(this.password);
-            target.setEmail(this.email);
-            target.setRoles(this.roles);
-            return target;
-        } catch (Exception e) {
-            throw new RuntimeException("Error occurred while converting User to " + targetClass.getSimpleName(), e);
-        }
-    }
 
+    
+    
 
 
 

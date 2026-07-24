@@ -3,6 +3,12 @@ package inpg.sn.lms.auth.entity;
 import java.time.LocalDate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +21,11 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Candidat extends User {
+public class Candidat  {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false)
     private String nom;
@@ -35,16 +45,19 @@ public class Candidat extends User {
     @Column(nullable = false)
     private String niveauEtude;
 
-    public static Candidat userToCandidat(User user, String nom, String prenom, String telephone, String nationalite,
-            LocalDate dateNaissance, String niveauEtude) {
-        Candidat candidat = user.convertTo(Candidat.class);
-        candidat.setNom(nom);
-        candidat.setPrenom(prenom);
-        candidat.setTelephone(telephone);
-        candidat.setNationalite(nationalite);
-        candidat.setDateNaissance(dateNaissance);
-        candidat.setNiveauEtude(niveauEtude);
-        return candidat;
-    }
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "id_user")
+    private User user;
 
+    public Candidat(User user, String nom, String prenom, String telephone, String nationalite, LocalDate dateNaissance, String niveauEtude) {
+        this.user = user;
+        this.nom = nom;
+        this.prenom = prenom;
+        this.telephone = telephone;
+        this.nationalite = nationalite;
+        this.dateNaissance = dateNaissance;
+        this.niveauEtude = niveauEtude;
+    }
+   
 }

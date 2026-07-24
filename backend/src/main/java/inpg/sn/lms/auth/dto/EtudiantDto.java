@@ -22,30 +22,4 @@ public class EtudiantDto {
     private LocalDate dateNaissance;
     private String niveauEtude;
 
-    static public EtudiantDto toEtudiantDto(Etudiant etudiant) {
-        EtudiantDto etudiantDto = new EtudiantDto();
-        etudiantDto.setUsername(etudiant.getUsername());
-        etudiantDto.setPassword(etudiant.getPassword());
-        etudiantDto.setEmail(etudiant.getEmail());
-        etudiantDto.setNom(etudiant.getNom());
-        etudiantDto.setPrenom(etudiant.getPrenom());
-        etudiantDto.setTelephone(etudiant.getTelephone());
-        
-
-        return etudiantDto;
-    }
-
-    public Etudiant toEtudiant() {
-        Etudiant etudiant = new Etudiant();
-        etudiant.setUsername(this.username);
-        etudiant.setPassword(this.password);
-        etudiant.setEmail(this.email);
-        etudiant.setNom(this.nom);
-        etudiant.setPrenom(this.prenom);
-        etudiant.setTelephone(this.telephone);
-       
-        return etudiant;
-    }
-
-    
 }

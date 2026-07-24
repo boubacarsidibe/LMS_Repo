@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.UserRepository;
 
 import java.util.Collections;
@@ -36,6 +37,10 @@ public class UserService implements UserDetailsService {
         inpg.sn.lms.auth.entity.User newUser = userDto.toUser();
         newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
         return userRepository.save(newUser);
+    }
+
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username);
     }
 
     @Override

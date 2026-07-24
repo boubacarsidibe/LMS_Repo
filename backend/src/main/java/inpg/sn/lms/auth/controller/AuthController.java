@@ -1,65 +1,54 @@
 package inpg.sn.lms.auth.controller;
 
-import java.util.List;
+import inpg.sn.lms.auth.dto.AuthRequest;
+import inpg.sn.lms.auth.dto.AuthResponse;
+import inpg.sn.lms.security.JwtUtils;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import inpg.sn.lms.auth.dto.CandidatDto;
-import inpg.sn.lms.auth.dto.EtudiantDto;
-import inpg.sn.lms.auth.dto.UserDto;
-import inpg.sn.lms.auth.entity.Candidat;
-import inpg.sn.lms.auth.entity.Etudiant;
-import inpg.sn.lms.auth.entity.User;
-import inpg.sn.lms.auth.repository.UserRepository;
-import inpg.sn.lms.auth.service.CandidatService;
-import inpg.sn.lms.auth.service.EtudiantService;
-import inpg.sn.lms.auth.service.UserService;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
-    private final UserService userService;
-    private final CandidatService candidatService;
-    private final EtudiantService etudiantService;
 
-    public AuthController(UserService userService, CandidatService candidatService, EtudiantService etudiantService) {
-        this.userService = userService;
-        this.candidatService = candidatService;
-        this.etudiantService = etudiantService;
+    private final AuthenticationManager authenticationManager;
+    private final UserDetailsService userDetailsService;
+    private final JwtUtils jwtUtils;
+
+    public AuthController(AuthenticationManager authenticationManager,
+            UserDetailsService userDetailsService,
+            JwtUtils jwtUtils) {
+        this.authenticationManager = authenticationManager;
+        this.userDetailsService = userDetailsService;
+        this.jwtUtils = jwtUtils;
     }
 
-    @GetMapping("/test")
-    public String test() {
-        return "Hello from AuthController";
-    }
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+        try {
+            // 1. Authentifier l'utilisateur via Spring Security (vérifie le mot de passe
+            // hashé en BDD)
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-    @PostMapping("/register")
-    public User registerUser(@RequestBody UserDto userDto) {
-        return userService.createUser(userDto);
+            // 2. Charger les détails de l'utilisateur (rôles, username, etc.)
+            final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
 
-    }
+            // 3. Générer le jeton JWT
+            final String jwt = jwtUtils.generateToken(userDetails);
 
-    @GetMapping("/getAllUsers")
-    public ResponseEntity<List<User>> getUsers() {
-        // Remplacer userService.get() par userService.getAllUsers()
-        return ResponseEntity.ok(userService.getAllUsers());
-    }
+            // 4. Renvoyer le token dans la réponse
+            return ResponseEntity.ok(new AuthResponse(jwt));
 
-    @PostMapping("/registerCandidat")
-    public Candidat registerCandidat(@RequestBody CandidatDto candidatDto) {
-        return candidatService.createCandidat(candidatDto);
-    }
-
-    
-
-    @PostMapping("/registerEtudiant")
-    public String registerEtudiant(@RequestBody EtudiantDto etudiantDto) {
-        etudiantService.createEtudiant(etudiantDto);
-        return "Etudiant registered successfully";
+        } catch (BadCredentialsException e) {
+            // Si l'identifiant ou le mot de passe est incorrect
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nom d'utilisateur ou mot de passe incorrect");
+        }
     }
 }
