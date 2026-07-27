@@ -3,6 +3,7 @@ package inpg.sn.lms.auth.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +23,7 @@ import inpg.sn.lms.auth.service.UserService;
 
 @RestController
 @RequestMapping("api/auth")
+@CrossOrigin(origins = "http://localhost:4200")
 public class CrudControlleur {
     private final UserService userService;
     private final CandidatService candidatService;
