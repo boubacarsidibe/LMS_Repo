@@ -5,6 +5,33 @@
 /* 2. Directives Tailwind CSS */
 @import "tailwindcss";
 
+
+
+
+@import "tailwindcss";
+
+/* On indique à Tailwind v4 de charger notre fichier de config personnalisé */
+@config "../tailwind.config.js";
+
+/* Tes styles d'icônes Material Symbols */
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    display: inline-block;
+    white-space: nowrap;
+    -webkit-font-smoothing: antialiased;
+}
+
+
+
+
+
+
+
+
 /* 3. Vos styles globaux personnalisés */
 body {
   font-family: 'Inter', sans-serif;
