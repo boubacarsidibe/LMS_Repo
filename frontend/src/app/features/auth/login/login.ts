@@ -19,6 +19,20 @@ export class Login {
   textButton: string = 'Obtenir le code';
   email: string = '';
 
+
+  // Déclaration de la variable activeTab utilisée dans le HTML
+  activeTab: 'login' | 'register' = 'login';
+
+  // Déclaration de la fonction switchTab appelée au clic
+  switchTab(tab: 'login' | 'register'): void {
+    this.activeTab = tab;
+  }
+
+
+
+
+
+
   constructor(
     private formBuilder: FormBuilder,
     private authService: Auth,

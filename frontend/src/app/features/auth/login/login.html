@@ -1,95 +1,123 @@
-<div class="bg-surface-container-low min-h-screen flex items-center justify-center p-4">
-    <!-- Card Principale -->
-    <div class="w-full max-w-md bg-surface-container-lowest p-8 md:p-10 rounded-xl shadow-sm border border-outline-variant">
-        
-        <!-- En-tête -->
-        <div class="text-center mb-8">
-            <h1 class="font-headline-md text-headline-md text-primary mb-1">Bienvenue</h1>
-            <p class="font-body-sm text-body-sm text-on-surface-variant">Veuillez entrer vos identifiants pour continuer</p>
+<div class="bg-surface-container-low min-h-screen flex items-center justify-center p-4 w-full">
+    <!-- Split Screen Layout -->
+    <div class="w-full max-w-5xl bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant flex flex-col md:flex-row overflow-hidden">
+      
+      <!-- Left Side: Branding / Image -->
+      <div class="hidden md:flex md:w-1/2 bg-primary-container relative flex-col justify-between p-12 text-on-primary-container">
+        <div class="absolute inset-0 z-0">
+          <div class="w-full h-full bg-cover bg-center opacity-30 mix-blend-overlay" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDHbTNey3lgxAUOyNQR1cVUCZJSAEBtDv4K3sI4VzyWIsHJKiv2SSDaoo0jSDCm-RwqJbXYNIk9TEpt4ke2_MWbRg_rWwZhpIOac8Wm7ZnrwnSON1HogUvAUx0xI4A_cuoJ6CgK1iHERiMftcxXPs7i39VStPhQLtHniyyVaKSolB8kJPs7Ela9_7pEnN2igcJdsQewtgF66xWshXfLcFbRYtkMKF9j7tQzKwjxNDRqUokWUDhPEiTnwA')"></div>
         </div>
-
-        <!-- Alerte d'erreur dynamique -->
-        <div *ngIf="errorMessage"
-            class="mb-6 p-3.5 bg-error-container border border-error/20 text-on-error-container font-body-sm text-body-sm rounded-lg text-center flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-base">error</span>
-            <span>{{ errorMessage }}</span>
+        <div class="relative z-10">
+          <div class="font-headline-md text-headline-md font-bold text-on-primary">
+            INPG LMS
+          </div>
         </div>
-
-        <!-- Formulaire Angular -->
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
-
-            <!-- Champ Email -->
+        <div class="relative z-10 max-w-sm mt-32">
+          <h1 class="font-headline-lg text-headline-lg text-on-primary mb-4">L'Excellence au Service de l'Énergie</h1>
+          <p class="font-body-md text-body-md text-on-primary-container">Formez-vous aux métiers du pétrole et du gaz avec l'institution de référence au Sénégal.</p>
+        </div>
+        <div class="relative z-10 mt-auto pt-12">
+          <p class="font-body-sm text-body-sm opacity-80">
+            © 2026 INPG Executive Education.
+          </p>
+        </div>
+      </div>
+  
+      <!-- Right Side: Forms -->
+      <div class="w-full md:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-center bg-surface-container-lowest">
+        <!-- Mobile Brand Header -->
+        <div class="md:hidden flex justify-center mb-8">
+          <div class="font-headline-md text-headline-md font-bold text-primary">
+            INPG LMS
+          </div>
+        </div>
+  
+        <div class="w-full max-w-md mx-auto">
+          <h2 class="font-headline-md text-headline-md text-primary mb-2">
+            {{ activeTab === 'login' ? 'Bienvenue' : 'Créer un compte' }}
+          </h2>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mb-8">
+            {{ activeTab === 'login' ? 'Veuillez vous identifier pour continuer.' : 'Rejoignez la plateforme d’apprentissage.' }}
+          </p>
+  
+          <!-- Tabs -->
+          <div class="flex border-b border-outline-variant mb-8">
+            <button 
+              type="button"
+              (click)="switchTab('login')"
+              [class.text-secondary]="activeTab === 'login'"
+              [class.font-bold]="activeTab === 'login'"
+              [class.border-b-2]="activeTab === 'login'"
+              [class.border-secondary]="activeTab === 'login'"
+              [class.text-on-surface-variant]="activeTab !== 'login'"
+              class="flex-1 pb-3 text-center font-label-md text-label-md transition-colors">
+              Se connecter
+            </button>
+            
+            <button 
+              type="button"
+              (click)="switchTab('register')"
+              [class.text-secondary]="activeTab === 'register'"
+              [class.font-bold]="activeTab === 'register'"
+              [class.border-b-2]="activeTab === 'register'"
+              [class.border-secondary]="activeTab === 'register'"
+              [class.text-on-surface-variant]="activeTab !== 'register'"
+              class="flex-1 pb-3 text-center font-label-md text-label-md transition-colors hover:text-secondary">
+              S'inscrire
+            </button>
+          </div>
+  
+          <!-- Login Form -->
+          <form *ngIf="activeTab === 'login'" class="space-y-6">
             <div>
-                <label for="email" class="block font-label-md text-label-md text-on-surface-variant mb-1.5">
-                    Email
-                </label>
-                <input type="email" id="email" formControlName="email" placeholder="alex.dupont@example.com"
-                    class="form-input w-full px-4 py-2.5 rounded-lg border border-outline-variant font-body-md text-body-md text-on-surface bg-surface-container-lowest focus:border-secondary focus:ring-0 transition-shadow placeholder:text-outline"
-                    [class.border-error]="form.get('email')?.invalid && form.get('email')?.touched">
-
-                <!-- Validation Email -->
-                <p *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="font-label-sm text-label-sm text-error mt-1 flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">warning</span>
-                    Veuillez entrer une adresse e-mail valide.
-                </p>
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="login-email">Nom d'utilisateur</label>
+              <input class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-0 transition-shadow bg-surface-container-lowest" id="login-email" required type="email">
             </div>
-
-            <!-- Champ Mot de passe -->
             <div>
-                <div class="flex items-center justify-between mb-1.5">
-                    <label for="password" class="block font-label-md text-label-md text-on-surface-variant">
-                        Mot de passe
-                    </label>
-                    <a routerLink="/forgot-password" class="font-label-sm text-label-sm text-secondary hover:underline">
-                        Oublié ?
-                    </a>
-                </div>
-                <input type="password" id="password" formControlName="password" placeholder="••••••••"
-                    class="form-input w-full px-4 py-2.5 rounded-lg border border-outline-variant font-body-md text-body-md text-on-surface bg-surface-container-lowest focus:border-secondary focus:ring-0 transition-shadow placeholder:text-outline"
-                    [class.border-error]="form.get('password')?.invalid && form.get('password')?.touched">
-
-                <!-- Validation Mot de passe -->
-                <p *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="font-label-sm text-label-sm text-error mt-1 flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">warning</span>
-                    Le mot de passe est obligatoire.
-                </p>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="block font-label-md text-label-md text-on-surface-variant" for="login-password">Mot de passe</label>
+                <a class="font-label-sm text-label-sm text-secondary hover:underline" href="#">Mot de passe oublié ?</a>
+              </div>
+              <input class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-0 transition-shadow bg-surface-container-lowest" id="login-password" placeholder="••••••••" required type="password">
             </div>
-
-            <!-- Champ OTP (Affiché dynamiquement) -->
-            <div *ngIf="showOtpField" class="mt-4 pt-4 border-t border-outline-variant">
-                <label for="otp" class="block font-label-md text-label-md text-on-surface-variant mb-1.5">
-                    Code OTP
-                </label>
-                <input type="text" id="otp" formControlName="code" placeholder="123456"
-                    class="form-input w-full px-4 py-2.5 rounded-lg border border-outline-variant font-body-md text-body-md text-on-surface bg-surface-container-lowest focus:border-secondary focus:ring-0 transition-shadow tracking-widest text-center placeholder:text-outline"
-                    [class.border-error]="form.get('code')?.invalid && form.get('code')?.touched">
-
-                <!-- Validation OTP -->
-                <p *ngIf="form.get('code')?.invalid && form.get('code')?.touched" class="font-label-sm text-label-sm text-error mt-1 flex items-center justify-center gap-1">
-                    <span class="material-symbols-outlined text-sm">warning</span>
-                    Veuillez entrer un code OTP valide.
-                </p>
-
-                <button type="button" (click)="verifyOtp()" 
-                    class="w-full mt-4 bg-tertiary text-on-tertiary font-label-md text-label-md py-3 px-4 rounded-lg hover:bg-opacity-90 transition-all shadow-sm">
-                    Vérifier le code
-                </button>
+            <button class="w-full bg-secondary text-on-secondary font-label-md text-label-md py-3 px-4 rounded-lg hover:bg-opacity-90 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]" type="submit">
+              Se connecter
+            </button>
+          </form>
+  
+          <!-- Register Form -->
+          <form *ngIf="activeTab === 'register'" class="space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-prenom">Prénom</label>
+                <input class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-0 transition-shadow bg-surface-container-lowest" id="reg-prenom" required type="text">
+              </div>
+              <div>
+                <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-nom">Nom</label>
+                <input class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-0 transition-shadow bg-surface-container-lowest" id="reg-nom" required type="text">
+              </div>
             </div>
-
-            <!-- Bouton de connexion classique -->
-            <div class="mt-6" *ngIf="!showOtpField">
-                <button type="submit" [disabled]="form.invalid"
-                    class="w-full bg-secondary text-on-secondary font-label-md text-label-md py-3 px-4 rounded-lg hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
-                    Se connecter
-                </button>
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-email">Email institutionnel</label>
+              <input class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-0 transition-shadow bg-surface-container-lowest" id="reg-email" placeholder="nom@institution.edu" required type="email">
             </div>
-
-        </form>
-
-        <!-- Pied de carte -->
-        <p class="text-center font-body-sm text-body-sm text-on-surface-variant mt-8">
-            Pas encore de compte ?
-            <a routerLink="/register" class="font-semibold text-secondary hover:underline">S'inscrire</a>
-        </p>
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-password">Mot de passe</label>
+              <input class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-0 transition-shadow bg-surface-container-lowest" id="reg-password" placeholder="••••••••" required type="password">
+            </div>
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-confirm">Confirmation du mot de passe</label>
+              <input class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-0 transition-shadow bg-surface-container-lowest" id="reg-confirm" placeholder="••••••••" required type="password">
+            </div>
+            <button class="w-full bg-secondary text-on-secondary font-label-md text-label-md py-3 px-4 rounded-lg hover:bg-opacity-90 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]" type="submit">
+              Créer un compte
+            </button>
+            <p class="text-center font-body-sm text-body-sm text-on-surface-variant mt-4">
+              En vous inscrivant, vous acceptez nos <a class="text-secondary hover:underline" href="#">Conditions d'utilisation</a>.
+            </p>
+          </form>
+  
+        </div>
+      </div>
     </div>
-</div>
+  </div>

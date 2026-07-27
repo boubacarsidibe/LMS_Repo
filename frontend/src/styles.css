@@ -1,3 +1,46 @@
-/* You can add global styles to this file, and also import other style files */
+/* 1. LES @IMPORT DOIVENT ÊTRE EN TOUT PREMIER */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+/* 2. Directives Tailwind CSS */
+@import "tailwindcss";
+
+
+
 
 @import "tailwindcss";
+
+/* On indique à Tailwind v4 de charger notre fichier de config personnalisé */
+@config "../tailwind.config.js";
+
+/* Tes styles d'icônes Material Symbols */
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    display: inline-block;
+    white-space: nowrap;
+    -webkit-font-smoothing: antialiased;
+}
+
+
+
+
+
+
+
+
+/* 3. Vos styles globaux personnalisés */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.form-input:focus {
+  box-shadow: 0 0 0 3px rgba(48, 96, 154, 0.2);
+}
