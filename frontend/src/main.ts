@@ -1,3 +1,5 @@
+import 'zone.js'; // <-- À AJOUTER EN TOUT PREMIER
+
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { App } from './app/app';

@@ -3,6 +3,7 @@ import { Injectable, signal } from '@angular/core';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { AuthResponse } from '../models/auth-response';
 import { User } from '../models/user.model';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +14,7 @@ export class Auth {
   ) { }
 
   currentUser = signal<User | null>(null);
-  private apiUrl = 'http://localhost:8088/api/auth';
+  private apiUrl = `${environment.apiUrl}/auth`;
 
 
 

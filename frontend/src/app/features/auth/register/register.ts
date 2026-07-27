@@ -1,13 +1,18 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth } from '../../../core/auth/services/authService';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule, 
+    RouterLink, 
+    RouterLinkActive
+  ],
   templateUrl: './register.html',
   styleUrl: './register.css'
 })
@@ -19,28 +24,33 @@ export class Register {
   errorMessage: string = '';
   isLoading: boolean = false;
 
-  form: FormGroup = this.fb.group({
-    username: ['', [Validators.required, Validators.minLength(3)]],
+  // Déclaration de tous les contrôles liés au HTML
+  registerForm: FormGroup = this.fb.group({
+    prenom: ['', Validators.required],
+    nom: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]]
+    password: ['', [Validators.required, Validators.minLength(6)]],
+    confirmPassword: ['', Validators.required]
   });
 
   onSubmit(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
       return;
     }
 
     this.isLoading = true;
     this.errorMessage = '';
 
-    const { username, email, password } = this.form.value;
+    const { prenom, nom, email, password } = this.registerForm.value;
+    
+    // Génération automatique d'un username à partir du prénom/nom si ton backend en a besoin
+    const username = `${prenom.trim()}_${nom.trim()}`.toLowerCase();
 
     this.authService.register(username, email, password).subscribe({
       next: () => {
         this.isLoading = false;
-        // Redirection vers le login après inscription réussie
-        this.router.navigate(['/login']);
+        this.router.navigate(['/auth/login']);
       },
       error: (err) => {
         this.isLoading = false;

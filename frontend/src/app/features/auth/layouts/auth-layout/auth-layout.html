@@ -1,0 +1,14 @@
+<div class="min-h-screen bg-surface-container-low flex items-center justify-center p-4 w-full">
+    <!-- Carte principale avec une hauteur maximale autorisée -->
+    <div class="w-full max-w-5xl bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant flex flex-col md:flex-row overflow-hidden max-h-[92vh] my-auto">
+      
+      <!-- GAUCHE : La bannière fixe (SidebarAuth) -->
+      <app-sidebar-auth class="hidden md:flex md:w-1/2 flex-shrink-0"></app-sidebar-auth>
+  
+      <!-- DROITE : Zone de formulaire avec défilement vertical si nécessaire -->
+      <div class="w-full md:w-1/2 p-6 sm:p-8 md:p-12 flex flex-col justify-center bg-surface-container-lowest overflow-y-auto">
+        <router-outlet></router-outlet>
+      </div>
+  
+    </div>
+  </div>

@@ -1,17 +1,21 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { EMPTY, throwError } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { EMPTY } from 'rxjs';
 import { finalize, switchMap, tap, catchError } from 'rxjs/operators';
-
-
-
 import { Auth } from '../../../core/auth/services/authService';
 import { AuthResponse } from '../../../core/auth/models/auth-response';
 
 @Component({
   selector: 'app-login',
-  standalone: false,
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterLink,
+    RouterLinkActive
+  ],
   templateUrl: './login.html',
   styleUrl: './login.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -24,27 +28,11 @@ export class Login {
 
   email = '';
 
-  token: string | null = null;
-
   showOtpField = false;
 
   loginLoading = false;
 
   otpLoading = false;
-
-
-  // Déclaration de la variable activeTab utilisée dans le HTML
-  activeTab: 'login' | 'register' = 'login';
-
-  // Déclaration de la fonction switchTab appelée au clic
-  switchTab(tab: 'login' | 'register'): void {
-    this.activeTab = tab;
-  }
-
-
-
-
-
 
   constructor(
     private formBuilder: FormBuilder,
@@ -81,36 +69,32 @@ export class Login {
       return;
     }
 
-    this.errorMessage = '';
-
     this.loginLoading = true;
-
+    this.errorMessage = '';
     this.email = this.form.value.email;
-
     const password = this.form.value.password;
-
-    this.loginLoading = true;
-    this.errorMessage = '';
 
     this.authService.login(this.email, password)
       .pipe(
-
+        // Capture le token et l'utilisateur dès que le login réussit
+        tap((response: AuthResponse) => {
+          this.authService.setSession(response.user, response.token);
+        }),
+        // Envoie l'OTP après connexion réussie
+        switchMap(() => this.authService.getOtp(this.email)),
+        // Gère les erreurs de login() ET de getOtp()
         catchError((err) => {
           if (err.status === 401) {
             this.errorMessage = 'Adresse e-mail ou mot de passe incorrect.';
-            console.warn('Erreur de connexion :', err.error?.message || err.message);
+          } else if (err.status === 0) {
+            this.errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
           } else {
             this.errorMessage = 'Une erreur est survenue. Veuillez réessayer plus tard.';
           }
+          console.warn('Erreur de connexion :', err.status, err.error?.message || err.message);
           this.cdr.markForCheck();
-          // On retourne EMPTY pour stopper le flux proprement
           return EMPTY;
         }),
-
-        // Enchaîne sur la récupération de l'OTP
-        switchMap(() => this.authService.getOtp(this.email)),
-        // catchError attrape les erreurs de login ET de getOtp
-
         finalize(() => {
           this.loginLoading = false;
           this.cdr.markForCheck();
@@ -119,7 +103,6 @@ export class Login {
       .subscribe({
         next: () => {
           this.showOtpField = true;
-
           const otpControl = this.form.get('otp');
           otpControl?.setValidators([
             Validators.required,
@@ -127,6 +110,12 @@ export class Login {
             Validators.maxLength(6)
           ]);
           otpControl?.updateValueAndValidity();
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.errorMessage = 'Une erreur inattendue est survenue.';
+          this.loginLoading = false;
+          this.cdr.markForCheck();
         }
       });
 
@@ -151,39 +140,35 @@ export class Login {
         catchError((err) => {
           if (err.status === 400 || err.status === 401) {
             this.errorMessage = 'Code OTP invalide ou expiré.';
+          } else if (err.status === 0) {
+            this.errorMessage = 'Impossible de contacter le serveur.';
           } else {
             this.errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
           }
+          console.warn('Erreur OTP :', err.status, err.error?.message || err.message);
           this.cdr.markForCheck();
-          return throwError(() => err);
+          return EMPTY;
         }),
-
         finalize(() => {
           this.otpLoading = false;
           this.cdr.markForCheck();
         })
-
       )
       .subscribe({
         next: (isVerified: boolean) => {
-          
           if (!isVerified) {
-            this.errorMessage =
-              'Le code OTP est invalide ou a expiré.';
-
+            this.errorMessage = 'Le code OTP est invalide ou a expiré.';
             return;
           }
+          // Le token est déjà stocké via setSession() dans onSubmit()
           this.router.navigate(['/test1']);
-          this.authService.setToken(this.token);
         },
-
         error: () => {
-          this.errorMessage =
-            'Une erreur est survenue lors de la vérification du code.';
+          this.errorMessage = 'Une erreur inattendue est survenue lors de la vérification.';
+          this.otpLoading = false;
+          this.cdr.markForCheck();
         }
-
       });
 
   }
-
 }
