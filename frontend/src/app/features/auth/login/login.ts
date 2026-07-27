@@ -1,7 +1,11 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { switchMap, tap } from 'rxjs/operators';
+import { EMPTY, throwError } from 'rxjs';
+import { finalize, switchMap, tap, catchError } from 'rxjs/operators';
+
+
+
 import { Auth } from '../../../core/auth/services/authService';
 import { AuthResponse } from '../../../core/auth/models/auth-response';
 
@@ -10,14 +14,23 @@ import { AuthResponse } from '../../../core/auth/models/auth-response';
   standalone: false,
   templateUrl: './login.html',
   styleUrl: './login.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Login {
-  errorMessage: string = '';
+
   form: FormGroup;
+
+  errorMessage: string = '';
+
+  email = '';
+
   token: string | null = null;
-  showOtpField: boolean = false;
-  textButton: string = 'Obtenir le code';
-  email: string = '';
+
+  showOtpField = false;
+
+  loginLoading = false;
+
+  otpLoading = false;
 
 
   // Déclaration de la variable activeTab utilisée dans le HTML
@@ -36,71 +49,141 @@ export class Login {
   constructor(
     private formBuilder: FormBuilder,
     private authService: Auth,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
+
     this.form = this.formBuilder.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required],
-      code: [''] // Champ pour le code OTP
+
+      email: [
+        '',
+        [
+          Validators.required,
+          Validators.email
+        ]
+      ],
+
+      password: [
+        '',
+        Validators.required
+      ],
+
+      otp: ['']
+
     });
+
   }
 
-  onSubmit() {
-    this.showOtpField = true;
+  onSubmit(): void {
+
     if (this.form.invalid) {
-      this.form.markAllAsTouched(); // Optionnel : affiche les erreurs visuelles si le formulaire est soumis vide
+      this.form.markAllAsTouched();
       return;
     }
 
-    const { password } = this.form.value;
-    this.email = this.form.value.email; // Stocke l'email pour l'utiliser dans la vérification OTP
+    this.errorMessage = '';
 
-    this.authService.login(this.email, password).pipe(
-      
-      tap(response => {
-        
-        this.token = response.token;
-      }),
+    this.loginLoading = true;
 
-      switchMap((response: AuthResponse) => {
-        
-        return this.authService.getOtp(this.email);
-      })
-    ).subscribe({
-      next: (otpResponse) => {
+    this.email = this.form.value.email;
 
-        // this.router.navigate(['/verify-otp'], { queryParams: { email, token: this.token } });
+    const password = this.form.value.password;
 
-        this.textButton = 'Connecter';
-      },
-      error: (err) => {
-        if (err.status === 401) {
-          this.errorMessage = 'Email ou mot de passe incorrect.';
-        } else {
-          this.errorMessage = 'Une erreur est survenue. Veuillez réessayer plus tard.';
+    this.loginLoading = true;
+    this.errorMessage = '';
+
+    this.authService.login(this.email, password)
+      .pipe(
+
+        catchError((err) => {
+          if (err.status === 401) {
+            this.errorMessage = 'Adresse e-mail ou mot de passe incorrect.';
+            console.warn('Erreur de connexion :', err.error?.message || err.message);
+          } else {
+            this.errorMessage = 'Une erreur est survenue. Veuillez réessayer plus tard.';
+          }
+          this.cdr.markForCheck();
+          // On retourne EMPTY pour stopper le flux proprement
+          return EMPTY;
+        }),
+
+        // Enchaîne sur la récupération de l'OTP
+        switchMap(() => this.authService.getOtp(this.email)),
+        // catchError attrape les erreurs de login ET de getOtp
+
+        finalize(() => {
+          this.loginLoading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.showOtpField = true;
+
+          const otpControl = this.form.get('otp');
+          otpControl?.setValidators([
+            Validators.required,
+            Validators.minLength(6),
+            Validators.maxLength(6)
+          ]);
+          otpControl?.updateValueAndValidity();
         }
-      }
-    });
+      });
+
   }
-  verifyOtp() {
-    const { code } = this.form.value;
-    this.authService.verifyOtp(this.email, code).subscribe({
-      next: (isVerified) => {
-        if (!isVerified) {
-          this.errorMessage = 'Code OTP invalide ou expiré.';
-          return;
-        }
-        this.authService.setToken(this.token);
-        this.router.navigate(['/test1']);
-      },
-      error: (err) => {
-        if (err.status === 400 || err.status === 401) {
-          this.errorMessage = 'Code OTP invalide ou expiré.';
 
-        } else {
-          this.errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
+  verifyOtp(): void {
+
+    if (this.form.get('otp')?.invalid) {
+      this.form.get('otp')?.markAsTouched();
+      return;
+    }
+
+    this.errorMessage = '';
+
+    this.otpLoading = true;
+
+    const otp = this.form.value.otp;
+
+    this.authService
+      .verifyOtp(this.email, otp)
+      .pipe(
+        catchError((err) => {
+          if (err.status === 400 || err.status === 401) {
+            this.errorMessage = 'Code OTP invalide ou expiré.';
+          } else {
+            this.errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
+          }
+          this.cdr.markForCheck();
+          return throwError(() => err);
+        }),
+
+        finalize(() => {
+          this.otpLoading = false;
+          this.cdr.markForCheck();
+        })
+
+      )
+      .subscribe({
+        next: (isVerified: boolean) => {
+          
+          if (!isVerified) {
+            this.errorMessage =
+              'Le code OTP est invalide ou a expiré.';
+
+            return;
+          }
+          this.router.navigate(['/test1']);
+          this.authService.setToken(this.token);
+        },
+
+        error: () => {
+          this.errorMessage =
+            'Une erreur est survenue lors de la vérification du code.';
         }
-      }
-    });
+
+      });
+
   }
+
 }

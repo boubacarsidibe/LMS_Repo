@@ -1,95 +1,112 @@
-<div class="bg-surface-container-low min-h-screen flex items-center justify-center p-4">
-    <!-- Card Principale -->
-    <div class="w-full max-w-md bg-surface-container-lowest p-8 md:p-10 rounded-xl shadow-sm border border-outline-variant">
-        
+<div class="bg-slate-100 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg border border-slate-200">
+
         <!-- En-tête -->
         <div class="text-center mb-8">
-            <h1 class="font-headline-md text-headline-md text-primary mb-1">Bienvenue</h1>
-            <p class="font-body-sm text-body-sm text-on-surface-variant">Veuillez entrer vos identifiants pour continuer</p>
+            <h1 class="text-2xl font-bold text-slate-800">
+                {{ showOtpField ? 'Vérification 2FA' : 'Bienvenue' }}
+            </h1>
+            <p class="text-sm text-slate-500 mt-2">
+                {{ showOtpField ? 'Entrez le code à 6 chiffres envoyé sur votre application ou email' : 'Veuillez entrer
+                vos identifiants pour continuer' }}
+            </p>
         </div>
 
-        <!-- Alerte d'erreur dynamique -->
+        <!-- Message d'erreur -->
         <div *ngIf="errorMessage"
-            class="mb-6 p-3.5 bg-error-container border border-error/20 text-on-error-container font-body-sm text-body-sm rounded-lg text-center flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-base">error</span>
-            <span>{{ errorMessage }}</span>
+            class="mb-5 rounded-lg border border-red-300 bg-red-50 p-3 text-center text-sm text-red-700">
+            {{ errorMessage }}
         </div>
 
-        <!-- Formulaire Angular -->
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
 
-            <!-- Champ Email -->
-            <div>
-                <label for="email" class="block font-label-md text-label-md text-on-surface-variant mb-1.5">
-                    Email
+            <!-- Email -->
+            <div *ngIf="!showOtpField">
+                <label for="email" class="block text-sm font-medium text-slate-700 mb-1">
+                    Adresse e-mail
                 </label>
-                <input type="email" id="email" formControlName="email" placeholder="alex.dupont@example.com"
-                    class="form-input w-full px-4 py-2.5 rounded-lg border border-outline-variant font-body-md text-body-md text-on-surface bg-surface-container-lowest focus:border-secondary focus:ring-0 transition-shadow placeholder:text-outline"
-                    [class.border-error]="form.get('email')?.invalid && form.get('email')?.touched">
-
-                <!-- Validation Email -->
-                <p *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="font-label-sm text-label-sm text-error mt-1 flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">warning</span>
+                <input id="email" type="email" formControlName="email" placeholder="alex.dupont@example.com"
+                    class="w-full rounded-lg border border-slate-300 px-4 py-2.5 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    [class.border-red-500]="form.get('email')?.invalid && form.get('email')?.touched" />
+                <p *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="mt-1 text-xs text-red-500">
                     Veuillez entrer une adresse e-mail valide.
                 </p>
             </div>
 
-            <!-- Champ Mot de passe -->
-            <div>
-                <div class="flex items-center justify-between mb-1.5">
-                    <label for="password" class="block font-label-md text-label-md text-on-surface-variant">
+            <!-- Mot de passe -->
+            <div *ngIf="!showOtpField">
+                <div class="flex items-center justify-between mb-1">
+                    <label for="password" class="text-sm font-medium text-slate-700">
                         Mot de passe
                     </label>
-                    <a routerLink="/forgot-password" class="font-label-sm text-label-sm text-secondary hover:underline">
-                        Oublié ?
+                    <a routerLink="/forgot-password" class="text-xs font-semibold text-blue-600 hover:underline">
+                        Mot de passe oublié ?
                     </a>
                 </div>
-                <input type="password" id="password" formControlName="password" placeholder="••••••••"
-                    class="form-input w-full px-4 py-2.5 rounded-lg border border-outline-variant font-body-md text-body-md text-on-surface bg-surface-container-lowest focus:border-secondary focus:ring-0 transition-shadow placeholder:text-outline"
-                    [class.border-error]="form.get('password')?.invalid && form.get('password')?.touched">
-
-                <!-- Validation Mot de passe -->
-                <p *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="font-label-sm text-label-sm text-error mt-1 flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">warning</span>
+                <input id="password" type="password" formControlName="password" placeholder="••••••••"
+                    class="w-full rounded-lg border border-slate-300 px-4 py-2.5 transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    [class.border-red-500]="form.get('password')?.invalid && form.get('password')?.touched" />
+                <p *ngIf="form.get('password')?.invalid && form.get('password')?.touched"
+                    class="mt-1 text-xs text-red-500">
                     Le mot de passe est obligatoire.
                 </p>
             </div>
 
-            <!-- Champ OTP (Affiché dynamiquement) -->
-            <div *ngIf="showOtpField" class="mt-4 pt-4 border-t border-outline-variant">
-                <label for="otp" class="block font-label-md text-label-md text-on-surface-variant mb-1.5">
+            <!-- OTP (Affiché seulement si showOtpField === true) -->
+            <div *ngIf="showOtpField">
+                <label for="otp" class="block text-sm font-medium text-slate-700 mb-1">
                     Code OTP
                 </label>
-                <input type="text" id="otp" formControlName="code" placeholder="123456"
-                    class="form-input w-full px-4 py-2.5 rounded-lg border border-outline-variant font-body-md text-body-md text-on-surface bg-surface-container-lowest focus:border-secondary focus:ring-0 transition-shadow tracking-widest text-center placeholder:text-outline"
-                    [class.border-error]="form.get('code')?.invalid && form.get('code')?.touched">
-
-                <!-- Validation OTP -->
-                <p *ngIf="form.get('code')?.invalid && form.get('code')?.touched" class="font-label-sm text-label-sm text-error mt-1 flex items-center justify-center gap-1">
-                    <span class="material-symbols-outlined text-sm">warning</span>
-                    Veuillez entrer un code OTP valide.
+                <input id="otp" type="text" formControlName="otp" placeholder="123456" maxlength="6"
+                    autocomplete="one-time-code"
+                    class="w-full rounded-lg border border-slate-300 px-4 py-2.5 tracking-[0.4em] text-center text-lg transition focus:border-transparent focus:outline-none focus:ring-2 focus:ring-green-500"
+                    [class.border-red-500]="form.get('otp')?.invalid && form.get('otp')?.touched" />
+                <p *ngIf="form.get('otp')?.invalid && form.get('otp')?.touched" class="mt-1 text-xs text-red-500">
+                    Veuillez saisir votre code OTP (6 chiffres).
                 </p>
 
-                <button type="button" (click)="verifyOtp()" 
-                    class="w-full mt-4 bg-tertiary text-on-tertiary font-label-md text-label-md py-3 px-4 rounded-lg hover:bg-opacity-90 transition-all shadow-sm">
-                    Vérifier le code
+                <!-- Bouton OTP de type "submit" -->
+                <button (click)="verifyOtp()" [disabled]="form.get('otp')?.invalid || otpLoading"
+                    type="button"
+                    class="mt-5 flex w-full items-center justify-center gap-3 rounded-lg bg-green-600 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60">
+                    <svg *ngIf="otpLoading" class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-20">
+                        </circle>
+                        <path fill="currentColor" class="opacity-80" d="M12 2a10 10 0 0 1 10 10h-4a6 6 0 0 0-6-6V2z">
+                        </path>
+                    </svg>
+                    <span>{{ otpLoading ? 'Vérification...' : 'Vérifier le code' }}</span>
                 </button>
             </div>
 
-            <!-- Bouton de connexion classique -->
-            <div class="mt-6" *ngIf="!showOtpField">
-                <button type="submit" [disabled]="form.invalid"
-                    class="w-full bg-secondary text-on-secondary font-label-md text-label-md py-3 px-4 rounded-lg hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
-                    Se connecter
+            <!-- Bouton Connexion (Affiché seulement si showOtpField === false) -->
+            <div *ngIf="!showOtpField">
+                <button type="submit"
+                    [disabled]="form.get('email')?.invalid || form.get('password')?.invalid || loginLoading"
+                    class="flex w-full items-center justify-center gap-3 rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                    <svg *ngIf="loginLoading" class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-20">
+                        </circle>
+                        <path fill="currentColor" class="opacity-80" d="M12 2a10 10 0 0 1 10 10h-4a6 6 0 0 0-6-6V2z">
+                        </path>
+                    </svg>
+                    <span>{{ loginLoading ? 'Connexion en cours...' : 'Se connecter' }}</span>
                 </button>
             </div>
 
         </form>
 
-        <!-- Pied de carte -->
-        <p class="text-center font-body-sm text-body-sm text-on-surface-variant mt-8">
-            Pas encore de compte ?
-            <a routerLink="/register" class="font-semibold text-secondary hover:underline">S'inscrire</a>
-        </p>
+        <!-- Pied -->
+        <div class="mt-8 border-t border-slate-200 pt-6">
+            <p class="text-center text-sm text-slate-500">
+                Pas encore de compte ?
+                <a routerLink="/register" class="font-semibold text-blue-600 hover:underline">
+                    S'inscrire
+                </a>
+            </p>
+        </div>
+
     </div>
 </div>
