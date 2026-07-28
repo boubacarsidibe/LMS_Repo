@@ -1,0 +1,291 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<main
+    class="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg flex flex-col md:flex-row gap-gutter">
+
+    <!-- Sidebar / Table of Contents (Sticky) -->
+    <aside class="w-full md:w-1/4 shrink-0">
+        <div class="sticky top-[100px] glass-panel rounded-lg p-stack-md shadow-sm border border-outline-variant">
+            <h3 class="text-headline-sm font-headline-sm text-primary mb-stack-sm">Sommaire</h3>
+            <nav class="flex flex-col gap-2">
+                @for (item of tocItems; track item.id) {
+                <<a [href]="'#' + item.id" (click)="scrollTo(item.id, $event)"
+                    class="text-body-sm font-body-sm transition-all duration-200"
+                    [class.text-secondary]="activeSection() === item.id"
+                    [class.font-semibold]="activeSection() === item.id"
+                    [class.translate-x-2]="activeSection() === item.id"
+                    [class.text-on-surface-variant]="activeSection() !== item.id"
+                    [class.hover:text-secondary]="activeSection() !== item.id">
+                    {{ item.label }}
+                    </a>
+                    }
+            </nav>
+        </div>
+    </aside>
+    
+
+    <!-- Document Content -->
+    <div class="w-full md:w-3/4 flex flex-col gap-stack-lg">
+        <header class="border-b border-outline-variant pb-stack-md">
+            <h1 class="text-display font-display text-primary mb-2">Politique de Confidentialité et de Protection des
+                Données</h1>
+            <p class="text-body-md font-body-md text-on-surface-variant italic">Dernière mise à jour : Juillet 2026</p>
+            <p class="mt-stack-sm text-body-lg font-body-lg text-on-surface leading-relaxed">
+                L'Institut National du Pétrole et du Gaz (INPG) attache une importance capitale à la protection de la
+                vie privée et des données à caractère personnel de ses utilisateurs, candidats, étudiants et personnels.
+            </p>
+        </header>
+
+        <!-- Section 1 -->
+        <section id="section-1" class="scroll-mt-[120px]">
+            <h2 class="text-headline-md font-headline-md text-primary mb-stack-sm border-b border-outline-variant pb-2">
+                1. Responsable du Traitement des Données</h2>
+            <div
+                class="bg-surface rounded border border-outline-variant p-stack-sm text-body-md font-body-md text-on-surface leading-relaxed">
+                <p>Les données personnelles collectées sur cette plateforme sont traitées sous la responsabilité de :
+                </p>
+                <p class="font-semibold mt-2">Institut National du Pétrole et du Gaz (INPG)</p>
+                <ul class="list-disc list-inside mt-1 text-on-surface-variant">
+                    <li>Adresse : Immeuble Adja Koone Boulevard de l’est – Point E Dakar – Senegal</li>
+                    <li>E-mail Support : <code
+                            class="bg-surface-container-high px-1 py-0.5 rounded text-secondary font-mono text-sm">support&#64;inpg.sn</code>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 2 -->
+        <section id="section-2" class="scroll-mt-[120px]">
+            <h2 class="text-headline-md font-headline-md text-primary mb-stack-sm border-b border-outline-variant pb-2">
+                2. Données Personnelles Collectées</h2>
+            <p class="text-body-md font-body-md text-on-surface mb-2">Dans le cadre de l'utilisation de la plateforme et
+                du processus de recrutement, nous collectons les catégories de données suivantes :</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-stack-sm">
+                <div
+                    class="bg-surface p-4 rounded border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+                    <h4 class="text-label-md font-label-md font-semibold text-primary mb-1 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-outline text-sm">badge</span> Données
+                        d'identification
+                    </h4>
+                    <p class="text-body-sm font-body-sm text-on-surface-variant">Nom, prénom, adresse e-mail, numéro de
+                        téléphone, date de naissance, nationalité, photo d'identité.</p>
+                </div>
+                <div
+                    class="bg-surface p-4 rounded border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+                    <h4 class="text-label-md font-label-md font-semibold text-primary mb-1 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-outline text-sm">school</span> Données académiques
+                    </h4>
+                    <p class="text-body-sm font-body-sm text-on-surface-variant">Diplômes, relevés de notes, CV, lettres
+                        de motivation, expérience professionnelle.</p>
+                </div>
+                <div
+                    class="bg-surface p-4 rounded border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+                    <h4 class="text-label-md font-label-md font-semibold text-primary mb-1 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-outline text-sm">devices</span> Données de connexion
+                    </h4>
+                    <p class="text-body-sm font-body-sm text-on-surface-variant">Adresse IP, journaux de connexion, état
+                        de validation des étapes du formulaire, identifiant de session.</p>
+                </div>
+                <div
+                    class="bg-surface p-4 rounded border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+                    <h4 class="text-label-md font-label-md font-semibold text-primary mb-1 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-outline text-sm">folder</span> Documents téléversés
+                    </h4>
+                    <p class="text-body-sm font-body-sm text-on-surface-variant">Copies numériques de pièces d'identité,
+                        diplômes et certificats.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3 -->
+        <section id="section-3" class="scroll-mt-[120px]">
+            <h2 class="text-headline-md font-headline-md text-primary mb-stack-sm border-b border-outline-variant pb-2">
+                3. Finalités du Traitement</h2>
+            <p class="text-body-md font-body-md text-on-surface mb-2">Vos données sont collectées et traitées
+                exclusivement pour les finalités suivantes :</p>
+            <ol class="list-decimal list-outside ml-6 space-y-2 text-body-md font-body-md text-on-surface">
+                <li><strong class="text-primary font-medium">Gestion des comptes utilisateurs :</strong> Création de
+                    compte, authentification et vérification par code à 6 chiffres.</li>
+                <li><strong class="text-primary font-medium">Gestion du processus de recrutement :</strong> Traitement
+                    des candidatures (mode brouillon et soumissions finales), évaluation par les responsables
+                    pédagogiques, organisation des entretiens et décisions d'admission.</li>
+                <li><strong class="text-primary font-medium">Gestion de la scolarité et espace étudiant :</strong> Suivi
+                    des cours, attribution des matricules, enregistrement des notes et émission des
+                    certificats/attestations d'études.</li>
+                <li><strong class="text-primary font-medium">Communication et Support :</strong> Réponse aux demandes
+                    envoyées via la rubrique Contact/Support et envoi de notifications d'avancement de dossier.</li>
+            </ol>
+        </section>
+
+        <!-- Section 4 -->
+        <section id="section-4" class="scroll-mt-[120px]">
+            <h2 class="text-headline-md font-headline-md text-primary mb-stack-sm border-b border-outline-variant pb-2">
+                4. Hébergement et Confidentialité des Données</h2>
+            <ul class="space-y-3 text-body-md font-body-md text-on-surface">
+                <li class="flex items-start gap-2">
+                    <span class="material-symbols-outlined text-secondary shrink-0 mt-0.5 text-sm">dns</span>
+                    <span><strong class="font-semibold">Stockage Souverain et Interne :</strong> Toutes les données et
+                        les pièces jointes sont stockées de manière sécurisée sur <strong>les infrastructures et
+                            serveurs internes de l'INPG</strong>.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="material-symbols-outlined text-secondary shrink-0 mt-0.5 text-sm">lock</span>
+                    <span><strong class="font-semibold">Absence de transfert non autorisé :</strong> Vos données
+                        personnelles ne sont ni vendues, ni louées, ni cédées à des tiers.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span
+                        class="material-symbols-outlined text-secondary shrink-0 mt-0.5 text-sm">admin_panel_settings</span>
+                    <span><strong class="font-semibold">Accès restreint :</strong> Seuls les personnels habilités de
+                        l'INPG ont accès aux données strictement nécessaires.</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Section 5 -->
+        <section id="section-5" class="scroll-mt-[120px]">
+            <h2 class="text-headline-md font-headline-md text-primary mb-stack-sm border-b border-outline-variant pb-2">
+                5. Durée de Conservation des Données</h2>
+            <div class="overflow-x-auto border border-outline-variant rounded-lg shadow-sm">
+                <table class="min-w-full text-left text-body-sm font-body-sm">
+                    <thead class="bg-surface-container text-on-surface font-semibold border-b border-outline-variant">
+                        <tr>
+                            <th class="px-4 py-3">Type de Données</th>
+                            <th class="px-4 py-3">Durée de Conservation</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-outline-variant bg-surface-container-lowest">
+                        <tr>
+                            <td class="px-4 py-3 font-medium">Candidatures en brouillon non finalisées</td>
+                            <td class="px-4 py-3 text-on-surface-variant">Conservées pendant 12 mois avant purge
+                                automatique si le compte reste inactif.</td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3 font-medium">Dossiers de candidature (Non retenus)</td>
+                            <td class="px-4 py-3 text-on-surface-variant">Conservés pendant 2 ans à compter de la
+                                décision de rejet.</td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3 font-medium">Dossiers Étudiants (Admis)</td>
+                            <td class="px-4 py-3 text-on-surface-variant">Conservés pendant toute la durée de la
+                                scolarité et archivés conformément aux obligations légales.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 6 -->
+        <section id="section-6" class="scroll-mt-[120px]">
+            <h2 class="text-headline-md font-headline-md text-primary mb-stack-sm border-b border-outline-variant pb-2">
+                6. Vos Droits</h2>
+            <p class="text-body-md font-body-md text-on-surface mb-3">Conformément à la réglementation sur la protection
+                des données personnelles, vous disposez des droits suivants :</p>
+            <div class="flex flex-col gap-2 pl-4 border-l-2 border-secondary mb-4">
+                <p class="text-body-md font-body-md text-on-surface"><strong class="font-semibold text-primary">Droit
+                        d'accès :</strong> Consulter l'ensemble des données personnelles vous concernant.</p>
+                <p class="text-body-md font-body-md text-on-surface"><strong class="font-semibold text-primary">Droit de
+                        rectification :</strong> Demander la correction de données inexactes ou incomplètes.</p>
+                <p class="text-body-md font-body-md text-on-surface"><strong class="font-semibold text-primary">Droit à
+                        l'effacement :</strong> Demander la suppression de votre compte y sus datos.</p>
+                <p class="text-body-md font-body-md text-on-surface"><strong class="font-semibold text-primary">Droit
+                        d'opposition :</strong> Vous opposer à certains traitements de données.</p>
+            </div>
+            <p
+                class="text-body-md font-body-md text-on-surface-variant bg-surface-container px-3 py-2 rounded inline-block">
+                Pour exercer vos droits, vous pouvez envoyer une demande écrite à : <code
+                    class="text-secondary font-mono bg-white px-1 rounded border border-outline-variant">dpo&#64;inpg.sn</code>
+            </p>
+        </section>
+
+        <!-- Section 7 -->
+        <section id="section-7" class="scroll-mt-[120px]">
+            <h2 class="text-headline-md font-headline-md text-primary mb-stack-sm border-b border-outline-variant pb-2">
+                7. Sécurité des Données</h2>
+            <p class="text-body-md font-body-md text-on-surface leading-relaxed">
+                L'INPG met en œuvre des mesures techniques et organisationnelles appropriées (chiffrement HTTPS/TLS,
+                contrôle d'accès strict, hachage des mots de passe) pour garantir la sécurité et la confidentialité de
+                vos données.
+            </p>
+        </section>
+
+        <!-- Section 8 -->
+        <section id="section-8" class="scroll-mt-[120px]">
+            <h2 class="text-headline-md font-headline-md text-primary mb-stack-sm border-b border-outline-variant pb-2">
+                8. Cookies et Maintien de Session</h2>
+            <p class="text-body-md font-body-md text-on-surface leading-relaxed">
+                La plateforme utilise des cookies et jetons de session strictly nécessaires à son fonctionnement
+                technique (maintien de la connexion, enregistrement del formulario).
+            </p>
+        </section>
+    </div>
+</main>
+
+<!-- Footer -->
+<footer class="bg-primary-container border-t border-outline-variant mt-12">
+    <div class="w-full py-16 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter mb-12">
+            <!-- Contact -->
+            <div class="flex flex-col gap-stack-md">
+                <h4 class="font-label-md text-label-md text-on-primary-container uppercase tracking-wider">Contact</h4>
+                <div class="flex flex-col gap-stack-sm">
+                    <div class="flex items-start gap-3 text-on-primary-container opacity-80">
+                        <span class="material-symbols-outlined text-[20px] mt-0.5">location_on</span>
+                        <span class="font-body-sm text-body-sm">Immeuble Adja Koone Boulevard de l’est – Point E Dakar –
+                            Senegal</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-on-primary-container opacity-80">
+                        <span class="material-symbols-outlined text-[20px]">call</span>
+                        <span class="font-body-sm text-body-sm">+221 33 865 91 48</span>
+                    </div>
+                    <div class="flex items-start gap-3 text-on-primary-container opacity-80">
+                        <span class="material-symbols-outlined text-[20px] mt-0.5">mail</span>
+                        <div class="flex flex-col font-body-sm text-body-sm">
+                            <span>contact&#64;inpg.sn</span>
+                            <span>training&#64;inpg.sn</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Opening Hours -->
+            <div class="flex flex-col gap-stack-md">
+                <h4 class="font-label-md text-label-md text-on-primary-container uppercase tracking-wider">Heures
+                    d'ouverture</h4>
+                <div class="flex items-start gap-3 text-on-primary-container opacity-80">
+                    <span class="material-symbols-outlined text-[20px] mt-0.5">schedule</span>
+                    <div class="flex flex-col gap-1 font-body-sm text-body-sm">
+                        <div class="flex justify-between gap-4">
+                            <span>Lun - Ven:</span>
+                            <span class="font-bold">08:00 - 17:00 GMT</span>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <span>Sam - Dim:</span>
+                            <span class="font-bold">Fermé</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legal Links -->
+            <div class="flex flex-col gap-stack-md">
+                <h4 class="font-label-md text-label-md text-on-primary-container uppercase tracking-wider">Légal</h4>
+                <nav class="flex flex-col gap-stack-sm">
+                    <a class="font-body-sm text-body-sm text-on-primary-container opacity-80 hover:opacity-100 transition-opacity"
+                        href="#">Politique de confidentialité</a>
+                    <a class="font-body-sm text-body-sm text-on-primary-container opacity-80 hover:opacity-100 transition-opacity"
+                        href="#">Conditions d'utilisation</a>
+                    <a class="font-body-sm text-body-sm text-on-primary-container opacity-80 hover:opacity-100 transition-opacity"
+                        href="#">Gestion des cookies</a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Copyright -->
+        <div
+            class="pt-stack-lg border-t border-on-primary-container/10 flex flex-col md:flex-row justify-between items-center gap-stack-md">
+            <div class="font-body-sm text-body-sm text-on-primary-container opacity-60">
+                © 2026 INPG Executive Education. Tous droits réservés.
+            </div>
+        </div>
+    </div>
+</footer>
