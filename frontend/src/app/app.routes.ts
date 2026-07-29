@@ -25,8 +25,8 @@ export const routes: Routes = [
     ]
   },
   {
-    path:"espace-etudiants/",
-    loadChildren: () => import('./features/espace-etudiants/espace-etudiant.routes').then(m => m.routes)
+    path:"espace-etudiant",
+    loadChildren: () => import('./features/espace-etudiants/espace-etudiants-module').then(m => m.EspaceEtudiantsModule)
   },
 
   // Page protégée
