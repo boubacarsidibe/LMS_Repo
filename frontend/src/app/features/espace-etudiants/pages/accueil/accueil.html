@@ -1,3 +1,17 @@
+<nav class="bg-surface/80 backdrop-blur-md border-b border-outline-variant fixed top-0 w-full z-50">
+  <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-16">
+    <div class="flex items-center gap-stack-sm">
+      <span class="text-headline-sm font-bold text-primary">INPG LMS</span>
+    </div>
+    <div class="flex items-center gap-stack-md">
+      <a class="font-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Aide</a>
+      <button routerLink="/auth/login" class="px-6 py-2 bg-primary-container text-white font-label-md rounded-lg shadow-sm hover:opacity-90 active:opacity-80 transition-all">
+        Se connecter
+      </button>
+    </div>
+  </div>
+</nav>
+
 <main class="flex-grow flex items-center justify-center pt-16">
   <section class="relative w-full py-stack-lg overflow-hidden">
     <div class="absolute inset-0 academic-grid-pattern opacity-30 pointer-events-none"></div>
@@ -34,3 +48,16 @@
       </div>
   </section>
 </main>
+
+<footer class="py-stack-md border-t border-outline-variant bg-surface">
+  <div class="max-w-container-max mx-auto px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-stack-sm">
+    <div class="font-body-sm text-on-surface-variant">
+      © 2024 INPG LMS. Tous droits réservés.
+    </div>
+    <div class="flex gap-gutter">
+      <a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Support</a>
+      <a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Règlements</a>
+      <a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Confidentialité</a>
+    </div>
+  </div>
+</footer>
