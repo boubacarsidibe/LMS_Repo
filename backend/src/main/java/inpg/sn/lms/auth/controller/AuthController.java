@@ -91,15 +91,23 @@ public class AuthController {
             // 3. Récupération des détails de l'utilisateur
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-            
-
-            // 5. Génération du JWT
+            // 4. Génération du JWT
             String jwt = jwtUtils.generateToken(userDetails);
 
-            // Tu peux renvoyer le JWT ainsi qu'un indicateur informant le frontend de
-            // demander l'OTP
+            // 5. Construction de l'objet utilisateur pour le frontend
+            Map<String, Object> userMap = Map.of(
+                "id", user.getId(),
+                "username", user.getUsername(),
+                "email", user.getEmail(),
+                "roles", user.getRoles().stream()
+                    .map(role -> role.getCode())
+                    .toList()
+            );
+
+            // 6. Renvoyer le token + l'utilisateur
             return ResponseEntity.ok(Map.of(
                     "token", jwt,
+                    "user", userMap,
                     "message", "Authentification réussie. Un code OTP vous a été envoyé."));
 
         } catch (BadCredentialsException e) {

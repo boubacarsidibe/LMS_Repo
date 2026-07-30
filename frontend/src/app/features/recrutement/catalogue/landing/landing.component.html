@@ -1,0 +1,90 @@
+<div class="min-h-screen flex flex-col bg-[#F8FAFC]">
+  <app-navbar></app-navbar>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="relative w-full min-h-[700px] flex flex-col justify-center items-center px-4 md:px-10 py-8 bg-[#f2f4f6] overflow-hidden">
+      <div class="absolute inset-0 w-full h-full">
+        <div class="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-multiply" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCTqdOmcERF18V2G3R0zq_lavOIAzmND2aXlsBC8Jyhn_7OqTvWsLP-iTCOWugnE7JZryROdfidSicaZYgHB11Y36bbdbOjk0jfVRp4E4GJNAKQmYaIgKDVEtZi25SXYtx5fiysiPXG9ETHRrwK-PfYfHCBV0556vGZabB5dTY8A7MBZmLmNYEsVl94sY7c0thWgKj2OzkQuzj2c06d48kdokViqxxeLyxnjaD6fKPFEiS8TlbGFcZXsA')"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-[#f2f4f6]/80 to-[#f7f9fb]"></div>
+      </div>
+      <div class="relative z-10 max-w-3xl mx-auto text-center flex flex-col items-center gap-8">
+        <h1 class="text-4xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-[#000002]">
+          Excellence Académique & Innovation Professionnelle
+        </h1>
+        <p class="text-base md:text-lg leading-6 md:leading-7 text-[#46464e] max-w-2xl">
+          Formez-vous aux métiers de demain avec l'expertise de l'INPG. Une approche rigoureuse et structurée pour propulser votre carrière.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 mt-4">
+          <a (click)="goToCatalogue()" class="cursor-pointer px-6 py-3 bg-[#30609a] text-white text-sm leading-4 tracking-[0.01em] font-medium rounded-lg shadow-sm border-t border-[#a5c8ff] hover:brightness-90 transition-all no-underline">
+            Découvrir les formations
+          </a>
+          <a routerLink="/auth/register" class="px-6 py-3 bg-white text-[#000002] text-sm leading-4 tracking-[0.01em] font-medium rounded-lg border border-[#c7c5d0] shadow-sm hover:bg-[#f2f4f6] transition-all no-underline">
+            Postuler
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chiffres Clés Section -->
+    <section class="py-16 md:py-24 px-4 md:px-10 max-w-[1280px] mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="flex flex-col items-center text-center p-8 bg-white rounded-xl border border-[#c7c5d0] shadow-sm hover:shadow-md transition-shadow">
+          <span class="text-4xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-[#30609a] mb-2">95%</span>
+          <h3 class="text-xl leading-7 font-semibold text-[#000002] mb-2">Taux d'insertion</h3>
+          <p class="text-sm text-[#46464e]">Des diplômés en poste dans les 6 mois suivant leur sortie.</p>
+        </div>
+        <div class="flex flex-col items-center text-center p-8 bg-white rounded-xl border border-[#c7c5d0] shadow-sm hover:shadow-md transition-shadow">
+          <span class="text-4xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-[#30609a] mb-2">15 000</span>
+          <h3 class="text-xl leading-7 font-semibold text-[#000002] mb-2">Techniciens</h3>
+          <p class="text-sm text-[#46464e]">Une ambition majeure de former jusqu'à 15 000 techniciens qualifiés pour répondre aux besoins du secteur.</p>
+        </div>
+        <div class="flex flex-col items-center text-center p-8 bg-white rounded-xl border border-[#c7c5d0] shadow-sm hover:shadow-md transition-shadow">
+          <span class="text-4xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-[#30609a] mb-2">50%</span>
+          <h3 class="text-xl leading-7 font-semibold text-[#000002] mb-2">En contenu local</h3>
+          <p class="text-sm text-[#46464e]">Vise à atteindre 50 % de contenu local dans les projets pétroliers et gaziers d'ici 2030.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Programmes Phares Section -->
+    <section class="py-16 md:py-24 px-4 md:px-10 bg-[#f2f4f6] border-t border-[#c7c5d0]">
+      <div class="max-w-[1280px] mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+          <div>
+            <h2 class="text-2xl md:text-[32px] leading-8 md:leading-10 tracking-[-0.01em] font-semibold text-[#000002] mb-2">Programmes Phares</h2>
+            <p class="text-base leading-6 text-[#46464e] max-w-2xl">L'INPG couvre l'ensemble de la chaîne de valeur pétrolière et gazière à travers 6 domaines d'intervention, de l'exploration à la gestion, pour spécialiser les ingénieurs et certifier les techniciens.</p>
+          </div>
+          <a (click)="goToCatalogue()" class="cursor-pointer text-[#30609a] text-sm leading-4 tracking-[0.01em] font-medium flex items-center gap-2 hover:underline">
+            Voir tout le catalogue
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_forward</span>
+          </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <a
+            *ngFor="let prog of programmesPhares"
+            [routerLink]="'/recrutement/catalogue/' + prog.id"
+            class="group bg-white rounded-xl border border-[#c7c5d0] overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full cursor-pointer no-underline">
+            <div class="h-48 w-full relative overflow-hidden bg-[#e6e8ea]">
+              <div class="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500" [style.background-image]="'url(' + prog.imageUrl + ')'"></div>
+            </div>
+            <div class="p-4 flex-grow flex flex-col">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="px-2 py-1 bg-[#91befe]/30 text-[#164c85] text-xs tracking-[0.05em] font-semibold rounded uppercase">{{ prog.niveau }}</span>
+                <span class="text-[#46464e] text-xs tracking-[0.05em] font-semibold">{{ prog.duree }}</span>
+              </div>
+              <h3 class="text-xl leading-7 font-semibold text-[#000002] mb-2 group-hover:text-[#30609a] transition-colors">{{ prog.titre }}</h3>
+              <p class="text-sm text-[#46464e] mb-4 flex-grow">{{ prog.description }}</p>
+              <div class="mt-auto pt-3 border-t border-[#c7c5d0] flex items-center justify-between">
+                <span class="text-sm leading-4 tracking-[0.01em] font-medium text-[#30609a]">En savoir plus</span>
+                <span class="material-symbols-outlined text-[#30609a] group-hover:translate-x-1 transition-transform" style="font-variation-settings: 'FILL' 0;">arrow_right_alt</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+</div>

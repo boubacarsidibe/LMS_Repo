@@ -1,0 +1,17 @@
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <h1 class="text-2xl font-bold text-blue-900 mb-6">Tests Académiques</h1>
+  <div class="bg-white rounded-xl shadow-md p-4 border mb-6 space-y-3">
+    <input [(ngModel)]="nomEpreuve" placeholder="Nom de l'épreuve" class="w-full rounded-lg border p-2">
+    <input type="number" [(ngModel)]="coefficient" placeholder="Coefficient" class="w-full rounded-lg border p-2">
+    <input type="number" [(ngModel)]="noteObtenue" placeholder="Note" class="w-full rounded-lg border p-2">
+    <input type="datetime-local" [(ngModel)]="dateEpreuve" class="w-full rounded-lg border p-2">
+    <input type="number" [(ngModel)]="candidatId" placeholder="ID Candidat" class="w-full rounded-lg border p-2">
+    <button (click)="creer()" class="bg-blue-700 text-white px-4 py-2 rounded-lg">Ajouter</button>
+  </div>
+  <div class="space-y-3">
+    <div *ngFor="let t of tests" class="bg-white p-4 rounded-lg border flex justify-between items-center">
+      <div><p class="font-semibold">{{ t.nomEpreuve }}</p><p class="text-sm text-gray-500">Coeff: {{ t.coefficient }} | Note: {{ t.noteObtenue }} | Candidat ID: {{ t.candidatId }}</p></div>
+      <button (click)="supprimer(t.id)" class="text-red-600 text-sm">Supprimer</button>
+    </div>
+  </div>
+</div>

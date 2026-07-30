@@ -34,7 +34,20 @@ public class UserService implements UserDetailsService {
     }
 
     public inpg.sn.lms.auth.entity.User createUser(inpg.sn.lms.auth.dto.UserDto userDto) {
+        // Vérifier si l'email existe déjà
+        if (userRepository.findByEmail(userDto.getEmail()) != null) {
+            throw new RuntimeException("Cet email est déjà utilisé.");
+        }
+        // Vérifier si le username existe déjà, sinon en générer un unique
+        String baseUsername = userDto.getUsername();
+        String username = baseUsername;
+        int suffix = 1;
+        while (userRepository.findByUsername(username) != null) {
+            username = baseUsername + suffix;
+            suffix++;
+        }
         inpg.sn.lms.auth.entity.User newUser = userDto.toUser();
+        newUser.setUsername(username);
         newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
         return userRepository.save(newUser);
     }

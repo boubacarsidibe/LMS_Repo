@@ -1,0 +1,179 @@
+<div class="min-h-screen flex flex-col bg-[#F8FAFC]">
+  <app-navbar></app-navbar>
+
+  <main class="flex-grow w-full max-w-[1280px] mx-auto px-4 md:px-10 py-12 flex flex-col gap-16">
+    <!-- 1. HERO -->
+    <section class="flex flex-col items-center text-center gap-4 py-20 bg-[#f7f9fb] rounded-2xl border border-[#e0e3e5] relative overflow-hidden">
+      <div class="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#30609a] to-transparent pointer-events-none"></div>
+      <h1 class="text-3xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-[#000002] max-w-[800px] relative z-10">
+        Institut National du Pétrole et du Gaz
+      </h1>
+      <p class="text-base md:text-lg leading-6 md:leading-7 text-[#46464e] max-w-[700px] relative z-10">
+        Bâtir l'excellence énergétique, former les talents de demain et propulser le contenu local au Sénégal et en Afrique.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3 mt-4 relative z-10">
+        <a routerLink="/recrutement/catalogue" class="bg-[#30609a] text-white px-6 py-3 rounded text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#254d7d] transition-colors flex items-center justify-center gap-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] no-underline">
+          Découvrir nos formations
+        </a>
+        <a routerLink="/recrutement/candidature" class="bg-white text-[#131741] border border-[#c7c5d0] px-6 py-3 rounded hover:bg-[#f2f4f6] transition-colors text-sm leading-4 tracking-[0.01em] font-medium flex items-center justify-center gap-2 no-underline">
+          Postuler
+        </a>
+      </div>
+    </section>
+
+    <!-- 2. QUI SOMMES-NOUS & VISION -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+      <div class="flex flex-col gap-3">
+        <h2 class="text-2xl md:text-[32px] leading-8 md:leading-10 tracking-[-0.01em] font-semibold text-[#000002]">Qui sommes-nous ?</h2>
+        <div class="w-12 h-1 bg-[#30609a] rounded-full mb-2"></div>
+        <p class="text-[#46464e]">
+          Créé pour répondre aux enjeux stratégiques du développement des ressources en hydrocarbures, l'INPG est le pilier de la formation spécialisée. Nous accompagnons la transition énergétique juste en développant les compétences techniques et managériales nécessaires à l'industrie.
+        </p>
+        <p class="text-[#46464e]">
+          Notre approche intègre fortement le renforcement des capacités locales, garantissant que les retombées de l'exploitation bénéficient durablement au tissu économique national.
+        </p>
+      </div>
+      <div class="bg-white border border-[#c7c5d0] p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+        <div class="absolute top-0 right-0 p-4 opacity-10 text-[#30609a] transform group-hover:scale-110 transition-transform">
+          <span class="material-symbols-outlined text-[120px] leading-none" style="font-variation-settings: 'FILL' 1;">public</span>
+        </div>
+        <h3 class="text-2xl leading-8 font-semibold text-[#000002] mb-4 relative z-10">Notre Vision & Ambition</h3>
+        <p class="text-[#46464e] font-medium relative z-10">
+          Devenir le centre de référence incontournable pour la formation, l'expertise et l'innovation dans le domaine de l'énergie en Afrique.
+        </p>
+        <ul class="mt-6 flex flex-col gap-3 relative z-10">
+          <li class="flex items-center gap-3 text-sm text-[#191c1e]">
+            <span class="material-symbols-outlined text-[#30609a] text-sm" style="font-variation-settings: 'FILL' 0;">check_circle</span>
+            Standardisation internationale
+          </li>
+          <li class="flex items-center gap-3 text-sm text-[#191c1e]">
+            <span class="material-symbols-outlined text-[#30609a] text-sm" style="font-variation-settings: 'FILL' 0;">check_circle</span>
+            Intégration technologique
+          </li>
+          <li class="flex items-center gap-3 text-sm text-[#191c1e]">
+            <span class="material-symbols-outlined text-[#30609a] text-sm" style="font-variation-settings: 'FILL' 0;">check_circle</span>
+            Développement durable
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 3. NOS VALEURS -->
+    <section class="flex flex-col gap-8">
+      <div class="text-center">
+        <h2 class="text-2xl md:text-[32px] leading-8 md:leading-10 tracking-[-0.01em] font-semibold text-[#000002] mb-2">Nos Valeurs</h2>
+        <p class="text-[#46464e]">Les principes fondamentaux qui guident nos actions.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white border border-[#c7c5d0] p-6 rounded-xl hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all group">
+          <div class="w-12 h-12 bg-[#eceef0] rounded-lg flex items-center justify-center mb-4 group-hover:bg-[#d4e3ff] transition-colors">
+            <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">workspace_premium</span>
+          </div>
+          <h4 class="text-xl leading-7 font-semibold text-[#000002] mb-2">Excellence</h4>
+          <p class="text-sm text-[#46464e]">Expertise de haut niveau et rigueur académique.</p>
+        </div>
+        <div class="bg-white border border-[#c7c5d0] p-6 rounded-xl hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all group">
+          <div class="w-12 h-12 bg-[#eceef0] rounded-lg flex items-center justify-center mb-4 group-hover:bg-[#d4e3ff] transition-colors">
+            <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">lightbulb</span>
+          </div>
+          <h4 class="text-xl leading-7 font-semibold text-[#000002] mb-2">Ouverture</h4>
+          <p class="text-sm text-[#46464e]">Innovation continue et adaptation technologique.</p>
+        </div>
+        <div class="bg-white border border-[#c7c5d0] p-6 rounded-xl hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all group">
+          <div class="w-12 h-12 bg-[#eceef0] rounded-lg flex items-center justify-center mb-4 group-hover:bg-[#d4e3ff] transition-colors">
+            <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">architecture</span>
+          </div>
+          <h4 class="text-xl leading-7 font-semibold text-[#000002] mb-2">Rigueur</h4>
+          <p class="text-sm text-[#46464e]">Respect strict des standards industriels mondiaux.</p>
+        </div>
+        <div class="bg-white border border-[#c7c5d0] p-6 rounded-xl hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all group">
+          <div class="w-12 h-12 bg-[#eceef0] rounded-lg flex items-center justify-center mb-4 group-hover:bg-[#d4e3ff] transition-colors">
+            <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">health_and_safety</span>
+          </div>
+          <h4 class="text-xl leading-7 font-semibold text-[#000002] mb-2">Responsabilité</h4>
+          <p class="text-sm text-[#46464e]">Éthique professionnelle et sécurité avant tout.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. NOS MISSIONS -->
+    <section class="bg-[#f2f4f6] p-6 md:p-10 rounded-2xl flex flex-col gap-8 border border-[#e0e3e5]">
+      <h2 class="text-2xl md:text-[32px] leading-8 md:leading-10 tracking-[-0.01em] font-semibold text-[#000002] text-center">Nos Missions</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-xl border border-[#c7c5d0] flex flex-col gap-4">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 1;">school</span>
+            <h4 class="text-xl leading-7 font-semibold text-[#000002]">Pôle d'excellence</h4>
+          </div>
+          <p class="text-sm text-[#46464e]">
+            Former des ingénieurs et techniciens hautement qualifiés. Mise à disposition d'experts et de simulateurs de pointe pour l'industrie.
+          </p>
+          <div class="mt-auto pt-4 flex flex-wrap gap-2">
+            <span class="px-2 py-1 bg-[#eceef0] text-xs rounded text-[#191c1e] font-medium">Ingénierie</span>
+            <span class="px-2 py-1 bg-[#eceef0] text-xs rounded text-[#191c1e] font-medium">Simulation</span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-xl border border-[#c7c5d0] flex flex-col gap-4">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+            <h4 class="text-xl leading-7 font-semibold text-[#000002]">Renforcement</h4>
+          </div>
+          <p class="text-sm text-[#46464e]">
+            Développer les capacités locales à travers des programmes de certification ciblés et l'accompagnement du Contenu Local.
+          </p>
+          <div class="mt-auto pt-4 flex flex-wrap gap-2">
+            <span class="px-2 py-1 bg-[#eceef0] text-xs rounded text-[#191c1e] font-medium">Contenu Local</span>
+            <span class="px-2 py-1 bg-[#eceef0] text-xs rounded text-[#191c1e] font-medium">Certifications</span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-xl border border-[#c7c5d0] flex flex-col gap-4">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 1;">hub</span>
+            <h4 class="text-xl leading-7 font-semibold text-[#000002]">Sensibilisation</h4>
+          </div>
+          <p class="text-sm text-[#46464e]">
+            Agir comme relais d'information stratégique pour les projets pétroliers et gaziers auprès des parties prenantes.
+          </p>
+          <div class="mt-auto pt-4 flex flex-wrap gap-2">
+            <span class="px-2 py-1 bg-[#eceef0] text-xs rounded text-[#191c1e] font-medium">Veille stratégique</span>
+            <span class="px-2 py-1 bg-[#eceef0] text-xs rounded text-[#191c1e] font-medium">Communication</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. NOS PARTENAIRES -->
+    <section class="flex flex-col gap-4 py-8">
+      <h2 class="text-2xl leading-8 font-semibold text-[#000002] text-center">Nos Partenaires Stratégiques</h2>
+      <div class="flex flex-wrap justify-center items-center gap-8 md:gap-12 mt-6">
+        <div class="h-16 w-32 relative grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100 flex items-center justify-center">
+          <img alt="Partner Logo 1" class="max-h-full max-w-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3o2Gn_bHfyw39J9lFrx52VCVoh-NunFjvKST_cQeS51qTmoaZSDKkCVAA1ucaEi3v2Kow-Z721Mt67jEQaNJnEKNxDxpEbLrOWxZVsy2vRhCbUr7L8B-qMc6ZMjruwoByXuG-CP2TZim6NQIZzWij42HcVelMMQlIhYibesYSLk1Ka69nshUUk1r4_PgVImYiZzEUmzw9HT9u_NadhqCT1Eq01jeNTz9h9jPreWA25cJ_JUeTDgR1gm_rftgknixAJUI">
+        </div>
+        <div class="h-16 w-32 relative grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100 flex items-center justify-center">
+          <img alt="Partner Logo 2" class="max-h-full max-w-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_tZYnof-rrLZEeaQ50R2fOKcMiCJCqX295lCmycrySfW15TJAnyfEEv9pquXafLvgcjqGDtyFZcmHeGpHTaApGttnWqHulluRPrLptKnHrg8AtTatVhgcCeSb-3vA1dMqw3-XYlD4ZbWp69PCHTONuLH-adTFguZ32z6T2AdvW5sc-kQsuz1fygVI8MNEyaNgm4LhIWiRBmP7DNq5SdLTye4CwDDcZQvYKc2UzENLde3bVY07T8sCX5ssD_kHjUbaTT0">
+        </div>
+        <div class="h-16 w-32 relative grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100 flex items-center justify-center">
+          <img alt="Partner Logo 3" class="max-h-full max-w-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVjgUzXTKem3qf0gLM1NnB4ZVuVsA2-uWkqKJ3XRpIbulpw5D6DQNewK7-AQT197qx4W4X_qEtLMVT1KaLja4PSChcNZFLUF36ueTX4ClfObcT9mlWZCETt6i9JdfVumYY_E6dGZkLdK2CEvZI3zof2KCUfWMdDNm6WcPWvtgpTiPak_ELx2DvW7TD6yIG-hFQCoXyKtKPQJncYVZo402dp-GnsDigsmiRhu4O4Uc3fywH2Gt2Te0Fd6sMVSFZn-_tDis">
+        </div>
+        <div class="h-16 w-32 relative grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100 flex items-center justify-center">
+          <img alt="Partner Logo 4" class="max-h-full max-w-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALw10U0CIVFTiRmHW_gSvdpnbNdByJilCK4oB3MgfR4ct2sBxj_1Xq_0twMTqZjjfKF0-mkS1DYK1ECf5BNyc1zx5b4clr4RC0cPeZ18bFWCM7eoIS3TBDSSGsQaUoxAAEsP9gOT8350Fo1NO9_mhbNLl-aUlWbdNztnccfTSCSftBdMFD-bfq6k61UwesGUmyd3ebJPXM2hXYKsvqz6S80eaovacYHcfTwXfI7f0py8v-W-zZrJ8e5E4Nzc_lVOrPymU">
+        </div>
+        <div class="h-16 w-32 relative grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100 flex items-center justify-center">
+          <img alt="Partner Logo 5" class="max-h-full max-w-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFkUeaLxWE7RVdNTHB0fabJdpG7jr1xuoQjiLGrBhANnoc7VU8NVCU-DAVnSdlCH_W8465NEvDWaa6Gxd5BCrpSinM_Dgq7RBrlEbN1PhgdK5fbx3I4HaTLm39FjT7EENJQj1EutQDSIVgpCRANo3J2xJApsgqV9gfrU3EOeoYPc7W9DWsp8URAU3ZRrcZbuHzAqm5cLinCZm98SPnVx0xGhI4WIRGINSJFn8UqEaxEQScnjouYsU5AVMVeYEf8tnaiEw">
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. BOTTOM CTA -->
+    <section class="bg-[#131741] text-white rounded-2xl p-12 md:p-16 flex flex-col items-center text-center gap-4 relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white to-transparent pointer-events-none"></div>
+      <h2 class="text-2xl md:text-[32px] leading-8 md:leading-10 tracking-[-0.01em] font-semibold relative z-10">Prêt à rejoindre l'excellence énergétique?</h2>
+      <p class="text-[#bfc3f7] max-w-[600px] mb-4 relative z-10">Découvrez nos critères d'admission et entamez votre parcours vers une carrière d'élite.</p>
+      <a routerLink="/recrutement/suivi" class="bg-[#30609a] text-white px-8 py-4 rounded-lg text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#254d7d] transition-colors shadow-lg relative z-10 border-t border-[#a5c8ff] no-underline">
+        Dossier de candidature
+      </a>
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+</div>

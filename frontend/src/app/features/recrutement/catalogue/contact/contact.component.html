@@ -1,0 +1,178 @@
+<div class="min-h-screen flex flex-col bg-[#F8FAFC]">
+  <app-navbar></app-navbar>
+
+  <main class="flex-grow flex flex-col w-full">
+    <!-- Hero Section -->
+    <section class="w-full bg-gradient-to-b from-[#f2f4f6] to-[#F8FAFC] py-12 md:py-20 px-4 md:px-10">
+      <div class="max-w-[1280px] mx-auto flex flex-col items-center text-center gap-4">
+        <h1 class="text-3xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-[#000002] mb-1">Contactez l'INPG</h1>
+        <p class="text-base md:text-lg leading-6 md:leading-7 text-[#46464e] max-w-2xl">
+          Notre équipe pédagogique et administrative est à votre écoute pour vous accompagner dans votre parcours.
+        </p>
+      </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <section class="w-full max-w-[1280px] mx-auto px-4 md:px-10 pb-20 -mt-6 flex flex-col gap-8">
+      <!-- Info Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 z-10">
+        <div class="bg-white border border-[#c7c5d0] rounded-2xl p-6 flex flex-col gap-4 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-shadow duration-300">
+          <div class="w-12 h-12 bg-[#f2f4f6] rounded-full flex items-center justify-center text-[#30609a]">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">location_on</span>
+          </div>
+          <div>
+            <h3 class="text-xl leading-7 font-semibold text-[#000002] mb-1">Adresse</h3>
+            <p class="text-sm text-[#46464e] leading-relaxed">
+              Immeuble Adja Koone<br>
+              Boulevard de l'est – Point E<br>
+              Dakar – Senegal
+            </p>
+          </div>
+        </div>
+        <div class="bg-white border border-[#c7c5d0] rounded-2xl p-6 flex flex-col gap-4 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-shadow duration-300">
+          <div class="w-12 h-12 bg-[#f2f4f6] rounded-full flex items-center justify-center text-[#30609a]">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">call</span>
+          </div>
+          <div>
+            <h3 class="text-xl leading-7 font-semibold text-[#000002] mb-1">Téléphone</h3>
+            <p class="text-sm text-[#46464e] leading-relaxed">+221 33 865 91 48</p>
+          </div>
+        </div>
+        <div class="bg-white border border-[#c7c5d0] rounded-2xl p-6 flex flex-col gap-4 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-shadow duration-300">
+          <div class="w-12 h-12 bg-[#f2f4f6] rounded-full flex items-center justify-center text-[#30609a]">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">mail</span>
+          </div>
+          <div>
+            <h3 class="text-xl leading-7 font-semibold text-[#000002] mb-1">Email</h3>
+            <a class="block text-sm text-[#30609a] hover:underline leading-relaxed" href="mailto:contact@inpg.sn">contact@inpg.sn</a>
+            <a class="block text-sm text-[#30609a] hover:underline leading-relaxed" href="mailto:training@inpg.sn">training@inpg.sn</a>
+          </div>
+        </div>
+        <div class="bg-white border border-[#c7c5d0] rounded-2xl p-6 flex flex-col gap-4 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-shadow duration-300">
+          <div class="w-12 h-12 bg-[#f2f4f6] rounded-full flex items-center justify-center text-[#30609a]">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">schedule</span>
+          </div>
+          <div>
+            <h3 class="text-xl leading-7 font-semibold text-[#000002] mb-1">Horaires</h3>
+            <p class="text-sm text-[#46464e] leading-relaxed">
+              Lun – Ven :<br>
+              08:00 – 17:00 GMT
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Split Layout: Form & Map/Socials -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4">
+        <!-- Contact Form Column -->
+        <div class="lg:col-span-7 bg-white border border-[#c7c5d0] rounded-2xl p-6 md:p-8">
+          <h2 class="text-2xl leading-8 font-semibold text-[#000002] mb-6">Envoyez-nous un message</h2>
+          <form class="flex flex-col gap-6" (ngSubmit)="submitForm()">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]" for="fullName">Nom complet</label>
+                <input [(ngModel)]="fullName" name="fullName" id="fullName" class="w-full bg-[#f7f9fb] border border-[#c7c5d0] rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 transition-all text-base text-[#191c1e] placeholder:text-[#77767f]" placeholder="Jean Dupont" required type="text">
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]" for="email">Adresse email</label>
+                <input [(ngModel)]="email" name="email" id="email" class="w-full bg-[#f7f9fb] border border-[#c7c5d0] rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 transition-all text-base text-[#191c1e] placeholder:text-[#77767f]" placeholder="jean.dupont@exemple.com" required type="email">
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]" for="phone">Téléphone</label>
+                <div class="flex relative">
+                  <select [(ngModel)]="phonePrefix" name="phonePrefix" class="bg-[#f2f4f6] border border-[#c7c5d0] border-r-0 rounded-l-lg px-3 py-2.5 focus:outline-none focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 transition-all text-base text-[#46464e] appearance-none pr-6">
+                    <option>+221</option>
+                    <option>+33</option>
+                    <option>+1</option>
+                  </select>
+                  <span class="material-symbols-outlined absolute pointer-events-none text-[#46464e] text-[16px]" style="left: 46px; top: 50%; transform: translateY(-50%);">keyboard_arrow_down</span>
+                  <input [(ngModel)]="phone" name="phone" id="phone" class="w-full bg-[#f7f9fb] border border-[#c7c5d0] rounded-r-lg px-4 py-2.5 focus:outline-none focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 transition-all text-base text-[#191c1e] placeholder:text-[#77767f]" placeholder="77 123 45 67" type="tel">
+                </div>
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]" for="subject">Sujet</label>
+                <select [(ngModel)]="subject" name="subject" id="subject" class="w-full bg-[#f7f9fb] border border-[#c7c5d0] rounded-lg px-4 py-2.5 focus:outline-none focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 transition-all text-base text-[#191c1e] appearance-none" required>
+                  <option disabled selected value="">Sélectionnez un sujet</option>
+                  <option value="admission">Admission & Recrutement</option>
+                  <option value="support">Support Technique LMS</option>
+                  <option value="renseignements">Renseignements Généraux</option>
+                  <option value="partenariats">Partenariats</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between items-end">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]" for="message">Message</label>
+                <span class="text-xs tracking-[0.05em] font-semibold text-[#77767f]">{{ message.length }}/500</span>
+              </div>
+              <textarea [(ngModel)]="message" name="message" id="message" class="w-full bg-[#f7f9fb] border border-[#c7c5d0] rounded-lg px-4 py-3 focus:outline-none focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 transition-all text-base text-[#191c1e] placeholder:text-[#77767f] resize-y" maxlength="500" placeholder="Comment pouvons-nous vous aider ?" required rows="5"></textarea>
+            </div>
+            <div class="mt-2 flex justify-end">
+              <button
+                type="submit"
+                [disabled]="sending || sent"
+                [class.bg-[#15803d]]="sent"
+                [class.hover:bg-[#166534]]="sent"
+                [class.bg-[#30609a]]="!sent"
+                [class.hover:bg-[#254d7d]]="!sent"
+                class="text-white text-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 relative overflow-hidden group disabled:opacity-80">
+                <span class="absolute inset-0 bg-white/10 w-full h-[1px]"></span>
+                <ng-container *ngIf="!sending && !sent">
+                  <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">send</span>
+                  Envoyer le message
+                </ng-container>
+                <ng-container *ngIf="sending && !sent">
+                  <span class="material-symbols-outlined animate-spin" style="font-variation-settings: 'FILL' 0;">progress_activity</span>
+                  Envoi en cours...
+                </ng-container>
+                <ng-container *ngIf="sent">
+                  <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">check_circle</span>
+                  Message envoyé !
+                </ng-container>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Location & Extras Column -->
+        <div class="lg:col-span-5 flex flex-col gap-6">
+          <!-- Map Card -->
+          <div class="bg-white border border-[#c7c5d0] rounded-2xl overflow-hidden h-[300px] relative group">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3858.9!2d-17.4600!3d14.7000!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sImmeuble%20Adja%20Koone%2C%20Point%20E%2C%20Dakar!5e0!3m2!1sfr!2ssn!4v1700000000000!5m2!1sfr!2ssn" width="100%" height="100%" style="border: 0;" allowfullscreen="" loading="lazy" class="w-full h-full"></iframe>
+            <div class="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-sm border border-[#c7c5d0] p-4 rounded-xl flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div>
+                <p class="text-sm leading-4 tracking-[0.01em] font-medium text-[#191c1e]">Ouvrir dans Google Maps</p>
+                <p class="text-sm text-[#46464e]">Voir l'itinéraire</p>
+              </div>
+              <a href="https://maps.app.goo.gl/8hKfC2JuwgNLwkpn9?g_st=iw" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full bg-[#30609a]/10 text-[#30609a] flex items-center justify-center hover:bg-[#30609a]/20 transition-colors">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">open_in_new</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Socials Card -->
+          <div class="bg-[#f2f4f6] border border-[#c7c5d0] rounded-2xl p-6 flex flex-col gap-6">
+            <div>
+              <h3 class="text-xl leading-7 font-semibold text-[#000002] mb-4">Suivez-nous</h3>
+              <div class="flex gap-4">
+                <a aria-label="LinkedIn" class="w-10 h-10 rounded-full bg-white border border-[#c7c5d0] flex items-center justify-center text-[#46464e] hover:text-[#30609a] hover:border-[#30609a] transition-colors" href="https://www.linkedin.com/school/institut-national-du-petrole-et-du-gaz/">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"></path></svg>
+                </a>
+                <a aria-label="X (Twitter)" class="w-10 h-10 rounded-full bg-white border border-[#c7c5d0] flex items-center justify-center text-[#46464e] hover:text-[#30609a] hover:border-[#30609a] transition-colors" href="https://x.com/INPG_sn">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                </a>
+                <a aria-label="Facebook" class="w-10 h-10 rounded-full bg-white border border-[#c7c5d0] flex items-center justify-center text-[#46464e] hover:text-[#30609a] hover:border-[#30609a] transition-colors" href="https://www.facebook.com/share/1Nf9KMSQ9i/?mibextid=wwXIfr">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"></path></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+</div>

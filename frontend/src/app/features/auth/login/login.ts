@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { EMPTY } from 'rxjs';
-import { finalize, switchMap, tap, catchError } from 'rxjs/operators';
+import { finalize, tap, catchError } from 'rxjs/operators';
 import { Auth } from '../../../core/auth/services/authService';
 import { AuthResponse } from '../../../core/auth/models/auth-response';
 
@@ -33,6 +33,10 @@ export class Login {
   loginLoading = false;
 
   otpLoading = false;
+
+  resendLoading = false;
+
+  resendCountdown = 0;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -76,13 +80,9 @@ export class Login {
 
     this.authService.login(this.email, password)
       .pipe(
-        // Capture le token et l'utilisateur dès que le login réussit
         tap((response: AuthResponse) => {
           this.authService.setSession(response.user, response.token);
         }),
-        // Envoie l'OTP après connexion réussie
-        switchMap(() => this.authService.getOtp(this.email)),
-        // Gère les erreurs de login() ET de getOtp()
         catchError((err) => {
           if (err.status === 401) {
             this.errorMessage = 'Adresse e-mail ou mot de passe incorrect.';
@@ -102,15 +102,7 @@ export class Login {
       )
       .subscribe({
         next: () => {
-          this.showOtpField = true;
-          const otpControl = this.form.get('otp');
-          otpControl?.setValidators([
-            Validators.required,
-            Validators.minLength(6),
-            Validators.maxLength(6)
-          ]);
-          otpControl?.updateValueAndValidity();
-          this.cdr.markForCheck();
+          this.router.navigate(['/accueil']);
         },
         error: () => {
           this.errorMessage = 'Une erreur inattendue est survenue.';
@@ -119,6 +111,36 @@ export class Login {
         }
       });
 
+  }
+
+  resendOtp(): void {
+    if (this.resendLoading || this.resendCountdown > 0) return;
+
+    this.resendLoading = true;
+    this.errorMessage = '';
+
+    this.authService.getOtp(this.email).subscribe({
+      next: () => {
+        this.resendLoading = false;
+        this.resendCountdown = 60;
+        const interval = setInterval(() => {
+          this.resendCountdown--;
+          this.cdr.markForCheck();
+          if (this.resendCountdown <= 0) {
+            clearInterval(interval);
+          }
+        }, 1000);
+      },
+      error: (err) => {
+        this.resendLoading = false;
+        if (err.status === 0) {
+          this.errorMessage = 'Impossible de contacter le serveur.';
+        } else {
+          this.errorMessage = 'Échec de l\'envoi du code. Veuillez réessayer.';
+        }
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   verifyOtp(): void {
@@ -161,7 +183,7 @@ export class Login {
             return;
           }
           // Le token est déjà stocké via setSession() dans onSubmit()
-          this.router.navigate(['/test1']);
+          this.router.navigate(['/accueil']);
         },
         error: () => {
           this.errorMessage = 'Une erreur inattendue est survenue lors de la vérification.';

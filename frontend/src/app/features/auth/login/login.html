@@ -1,10 +1,6 @@
-<div class="w-full max-w-md mx-auto">
-  <h2 class="font-headline-md text-headline-md text-primary mb-2">
-    {{ showOtpField ? 'Vérification 2FA' : 'Bienvenue' }}
-  </h2>
-  <p class="font-body-sm text-body-sm text-on-surface-variant mb-8">
-    {{ showOtpField ? 'Entrez le code à 6 chiffres envoyé sur votre application ou email' : 'Veuillez entrer vos identifiants pour continuer' }}
-  </p>
+<div class="w-full">
+  <h2 class="font-headline-md text-headline-md text-primary mb-2">Bienvenue</h2>
+  <p class="font-body-sm text-body-sm text-on-surface-variant mb-8">Veuillez entrer vos identifiants pour continuer</p>
 
   <!-- Onglets de Navigation -->
   <div class="flex border-b border-outline-variant mb-8">
@@ -31,7 +27,7 @@
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
 
     <!-- Email -->
-    <div *ngIf="!showOtpField">
+    <div>
       <label for="email" class="block font-label-md text-label-md text-on-surface-variant mb-1.5">
         Adresse e-mail
       </label>
@@ -49,7 +45,7 @@
     </div>
 
     <!-- Mot de passe -->
-    <div *ngIf="!showOtpField">
+    <div>
       <div class="flex items-center justify-between mb-1.5">
         <label for="password" class="font-label-md text-label-md text-on-surface-variant">
           Mot de passe
@@ -71,53 +67,17 @@
       </p>
     </div>
 
-    <!-- OTP (Affiché seulement si showOtpField === true) -->
-    <div *ngIf="showOtpField">
-      <label for="otp" class="block font-label-md text-label-md text-on-surface-variant mb-1.5">
-        Code OTP
-      </label>
-      <input
-        id="otp"
-        type="text"
-        inputmode="numeric"
-        formControlName="otp"
-        placeholder="123456"
-        maxlength="6"
-        autocomplete="one-time-code"
-        class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 tracking-[0.4em] text-center text-lg font-semibold text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
-        [class.border-error]="form.get('otp')?.invalid && form.get('otp')?.touched"
-      />
-      <p *ngIf="form.get('otp')?.invalid && form.get('otp')?.touched" class="mt-1 text-xs text-error">
-        Veuillez saisir votre code OTP (6 chiffres).
-      </p>
-
-      <!-- Bouton OTP -->
-      <button
-        (click)="verifyOtp()"
-        [disabled]="form.get('otp')?.invalid || otpLoading"
-        type="button"
-        class="mt-5 flex w-full items-center justify-center gap-3 rounded-lg bg-secondary text-on-secondary py-3 font-label-md text-label-md hover:bg-opacity-90 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
-        <svg *ngIf="otpLoading" class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-20"></circle>
-          <path fill="currentColor" class="opacity-80" d="M12 2a10 10 0 0 1 10 10h-4a6 6 0 0 0-6-6V2z"></path>
-        </svg>
-        <span>{{ otpLoading ? 'Vérification...' : 'Vérifier le code' }}</span>
-      </button>
-    </div>
-
-    <!-- Bouton Connexion (Affiché seulement si showOtpField === false) -->
-    <div *ngIf="!showOtpField">
-      <button
-        type="submit"
-        [disabled]="form.get('email')?.invalid || form.get('password')?.invalid || loginLoading"
-        class="flex w-full items-center justify-center gap-3 rounded-lg bg-secondary text-on-secondary py-3 font-label-md text-label-md hover:bg-opacity-90 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
-        <svg *ngIf="loginLoading" class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-20"></circle>
-          <path fill="currentColor" class="opacity-80" d="M12 2a10 10 0 0 1 10 10h-4a6 6 0 0 0-6-6V2z"></path>
-        </svg>
-        <span>{{ loginLoading ? 'Connexion en cours...' : 'Se connecter' }}</span>
-      </button>
-    </div>
+    <!-- Bouton Connexion -->
+    <button
+      type="submit"
+      [disabled]="form.get('email')?.invalid || form.get('password')?.invalid || loginLoading"
+      class="flex w-full items-center justify-center gap-3 rounded-lg bg-secondary text-on-secondary py-3 font-label-md text-label-md hover:bg-opacity-90 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
+      <svg *ngIf="loginLoading" class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-20"></circle>
+        <path fill="currentColor" class="opacity-80" d="M12 2a10 10 0 0 1 10 10h-4a6 6 0 0 0-6-6V2z"></path>
+      </svg>
+      <span>{{ loginLoading ? 'Connexion en cours...' : 'Se connecter' }}</span>
+    </button>
 
   </form>
 

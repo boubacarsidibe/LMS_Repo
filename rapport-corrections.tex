@@ -1,0 +1,728 @@
+\documentclass[a4paper,12pt,french]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{graphicx}
+
+% --- Configuration des listings de code ---
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{codeborder}{RGB}{200,200,200}
+\definecolor{commentgreen}{RGB}{0,128,0}
+\definecolor{keywordblue}{RGB}{0,0,180}
+\definecolor{stringred}{RGB}{180,0,0}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codeborder},
+    numbers=left,
+    numbersep=8pt,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{keywordblue}\bfseries,
+    commentstyle=\color{commentgreen}\itshape,
+    stringstyle=\color{stringred},
+    showstringspaces=false,
+    tabsize=2,
+    captionpos=b
+}
+
+\lstdefinestyle{javastyle}{
+    style=mystyle,
+    language=Java
+}
+
+\lstdefinestyle{tsstyle}{
+    style=mystyle,
+    language=TypeScript
+}
+
+\lstdefinestyle{bashstyle}{
+    style=mystyle,
+    language=bash
+}
+
+% --- Boîtes colorées ---
+\newtcolorbox{problembox}[1][]{
+    colback=red!5!white,
+    colframe=red!75!black,
+    title=Problème,
+    fonttitle=\bfseries,
+    #1
+}
+
+\newtcolorbox{solutionbox}[1][]{
+    colback=green!5!white,
+    colframe=green!50!black,
+    title=Solution,
+    fonttitle=\bfseries,
+    #1
+}
+
+\newtcolorbox{lessonbox}[1][]{
+    colback=blue!5!white,
+    colframe=blue!50!black,
+    title=Leçon à retenir,
+    fonttitle=\bfseries,
+    #1
+}
+
+% --- En-tête et pied de page ---
+\pagestyle{fancy}
+\fancyhead[L]{Rapport de Corrections — LMS INPG}
+\fancyhead[R]{Angular 21 + Spring Boot 4.1}
+\fancyfoot[C]{\thepage}
+
+% --- Titres ---
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+
+\begin{document}
+
+% ============================================================
+% PAGE DE GARDE
+% ============================================================
+\begin{titlepage}
+    \centering
+    \vspace*{3cm}
+    
+    {\Huge\bfseries Rapport de Corrections\par}
+    \vspace{0.5cm}
+    {\LARGE Application LMS — INPG\par}
+    \vspace{1cm}
+    {\large Plateforme de Learning Management System\par}
+    {\large Institut National du Pétrole et du Gaz (Sénégal)\par}
+    \vspace{2cm}
+    
+    {\large\bfseries Stack technique\par}
+    \vspace{0.3cm}
+    Angular 21 — TypeScript — RxJS — Spring Boot 4.1 — Java\\
+    PostgreSQL — Docker — Tailwind CSS v4 — Material Design 3
+    \vspace{2cm}
+    
+    {\large Juillet 2026\par}
+    
+    \vfill
+\end{titlepage}
+
+% ============================================================
+% TABLE DES MATIÈRES
+% ============================================================
+\tableofcontents
+\newpage
+
+% ============================================================
+% INTRODUCTION
+% ============================================================
+\section{Introduction}
+
+Ce rapport documente l'ensemble des problèmes identifiés et corrigés dans l'application LMS INPG. Chaque problème est présenté avec son diagnostic, la correction apportée, et les concepts techniques sous-jacents pour permettre un apprentissage approfondi.
+
+L'application est composée de deux parties :
+\begin{itemize}
+    \item Un \textbf{backend Spring Boot} (port 8080) exposant une API REST d'authentification avec JWT et OTP.
+    \item Un \textbf{frontend Angular 21} (port 4200) utilisant des Standalone Components, RxJS et Tailwind CSS.
+\end{itemize}
+
+\section{Vue d'ensemble des problèmes résolus}
+
+\begin{enumerate}
+    \item URL de l'API codée en dur avec un port incorrect
+    \item Perte du token JWT après l'authentification login
+    \item Position incorrecte de l'opérateur \texttt{catchError} dans le pipe RxJS
+    \item Réponse incomplète du backend (utilisateur absent)
+    \item Erreur SSL avec le serveur SMTP Brevo
+    \item Incohérence du Design System entre les formulaires Login et Register
+\end{enumerate}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 1
+% ============================================================
+\section{Problème 1 : URL de l'API codée en dur avec un mauvais port}
+
+\subsection{Fichiers concernés}
+\begin{itemize}
+    \item \texttt{frontend/src/app/core/auth/services/authService.ts}
+    \item \texttt{frontend/src/environments/environment.ts} (créé)
+    \item \texttt{frontend/src/environments/environment.development.ts} (créé)
+\end{itemize}
+
+\begin{problembox}
+L'URL du backend était codée en dur dans le service Angular :
+\begin{lstlisting}[style=tsstyle]
+private apiUrl = 'http://localhost:8088/api/auth';
+\end{lstlisting}
+
+Le \texttt{docker-compose.yml} expose le backend sur le \textbf{port 8080}, pas 8088. Résultat : toutes les requêtes HTTP aboutissaient à \texttt{err.status === 0} (connexion refusée), et l'utilisateur voyait le message \emph{«~Impossible de contacter le serveur~»}.
+\end{problembox}
+
+\subsection{Diagnostic technique}
+
+Angular tourne sur \texttt{localhost:4200} et le backend Spring Boot sur un autre port. Quand on fait une requête HTTP depuis le navigateur, celui-ci applique la politique \textbf{CORS} (Cross-Origin Resource Sharing). Si le port de destination n'existe pas, la requête échoue avec un \texttt{status 0} — ce n'est même pas une erreur HTTP classique, c'est une erreur réseau au niveau du navigateur.
+
+Pour résoudre ce problème de manière propre, on utilise les \textbf{fichiers d'environnement} d'Angular, un mécanisme qui permet de définir des variables différentes selon le contexte (développement, production, etc.).
+
+\begin{solutionbox}
+\textbf{Étape 1 — Création des fichiers d'environnement}
+
+\texttt{src/environments/environment.ts} (production) :
+\begin{lstlisting}[style=tsstyle]
+export const environment = {
+  production: true,
+  apiUrl: 'http://localhost:8080/api'
+};
+\end{lstlisting}
+
+\texttt{src/environments/environment.development.ts} (développement) :
+\begin{lstlisting}[style=tsstyle]
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:8080/api'
+};
+\end{lstlisting}
+
+\textbf{Étape 2 — Modification du service}
+
+\begin{lstlisting}[style=tsstyle]
+import { environment } from '../../../../environments/environment';
+
+// ...
+
+private apiUrl = `${environment.apiUrl}/auth`;
+// Résultat : http://localhost:8080/api/auth
+\end{lstlisting}
+\end{solutionbox}
+
+\begin{lessonbox}
+\textbf{Pourquoi utiliser des fichiers d'environnement ?}
+\begin{itemize}
+    \item \textbf{Maintenabilité} : changer l'URL nécessite de modifier un seul fichier, pas tout le code.
+    \item \textbf{Déploiement} : Angular remplace automatiquement \texttt{environment.ts} par \texttt{environment.development.ts} en mode dev.
+    \item \textbf{Sécurité} : on peut avoir des clés API différentes par environnement sans les exposer dans le code source.
+\end{itemize}
+
+\textbf{Pourquoi \texttt{err.status === 0} ?} Dans le navigateur, une requête qui n'atteint pas sa cible (serveur éteint, mauvais port, CORS bloqué) produit un statut 0. Ce n'est pas un code HTTP standard — c'est un indicateur que la requête n'a jamais atteint le serveur.
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 2
+% ============================================================
+\section{Problème 2 : Perte du token JWT après le login}
+
+\subsection{Fichier concerné}
+\begin{itemize}
+    \item \texttt{frontend/src/app/features/auth/login/login.ts}
+\end{itemize}
+
+\subsection{Comprendre le flux de login avant correction}
+
+Le flux de connexion se déroule en deux étapes :
+\begin{enumerate}
+    \item \textbf{Login} : envoi de l'email et du mot de passe au backend. Si les identifiants sont corrects, le backend renvoie un token JWT.
+    \item \textbf{Envoi OTP} : une fois authentifié, le backend envoie un code à 6 chiffres par email. Le frontend doit attendre ce code.
+\end{enumerate}
+
+Ces deux étapes sont enchaînées avec l'opérateur RxJS \texttt{switchMap}.
+
+\begin{problembox}
+\textbf{Code problématique :}
+\begin{lstlisting}[style=tsstyle]
+this.authService.login(email, password)
+  .pipe(
+    catchError(...),                              // Gère les erreurs
+    switchMap(() => this.authService.getOtp(email)), // ⚠️ Remplace la réponse
+    finalize(...)
+  )
+  .subscribe({
+    next: () => { this.showOtpField = true; }
+  });
+\end{lstlisting}
+
+Le \texttt{switchMap} \textbf{remplace} la valeur émise par l'Observable. La réponse de \texttt{login()} (qui contient le token JWT et l'utilisateur) est \textbf{perdue}. Elle n'est jamais stockée dans le \texttt{localStorage}.
+\end{problembox}
+
+\subsection{Le rôle de l'opérateur \texttt{switchMap}}
+
+\texttt{switchMap} est un opérateur de transformation qui :
+\begin{enumerate}
+    \item Reçoit la valeur émise par l'Observable source (ici, la réponse de \texttt{login()})
+    \item Exécute une fonction qui retourne un \textbf{nouvel} Observable (ici, \texttt{getOtp()})
+    \item \textbf{Remplace} l'Observable source par ce nouvel Observable
+\end{enumerate}
+
+La valeur d'origine est donc «~avalée~» par \texttt{switchMap}. Si on veut la conserver, il faut la capturer \textbf{avant} le \texttt{switchMap}, avec l'opérateur \texttt{tap}.
+
+\subsection{Le rôle de l'opérateur \texttt{tap}}
+
+\texttt{tap} est un opérateur d'«~effet de bord~» (\textit{side effect}). Il exécute une action (sauvegarder des données, logger, etc.) \textbf{sans modifier le flux de données}. La valeur traverse \texttt{tap} sans être altérée.
+
+\begin{solutionbox}
+\textbf{Code corrigé :}
+\begin{lstlisting}[style=tsstyle]
+this.authService.login(email, password)
+  .pipe(
+    // 1. Capture le token ET l'utilisateur AVANT que switchMap ne les écrase
+    tap((response: AuthResponse) => {
+      this.authService.setSession(response.user, response.token);
+    }),
+    // 2. Enchaîne sur l'envoi de l'OTP
+    switchMap(() => this.authService.getOtp(this.email)),
+    // 3. Gère les erreurs des DEUX appels
+    catchError((err) => { ... }),
+    finalize(...)
+  )
+  .subscribe({ ... });
+\end{lstlisting}
+\end{solutionbox}
+
+\subsection{Impact de la correction}
+
+Avant la correction, \texttt{verifyOtp()} utilisait \texttt{this.token} qui valait toujours \texttt{null} (jamais assigné). L'utilisateur était redirigé vers \texttt{/test1} sans token valide dans le \texttt{localStorage}, et le \texttt{authGuard} bloquait l'accès.
+
+Après correction, le token est stocké dès que le login réussit, et \texttt{verifyOtp()} n'a plus besoin de gérer le token — il est déjà dans le \texttt{localStorage}.
+
+\begin{lessonbox}
+\textbf{Quand utiliser \texttt{tap} vs \texttt{switchMap} ?}
+\begin{itemize}
+    \item \texttt{tap()} : pour exécuter une action sans modifier le flux (sauvegarde, log, effet de bord). La valeur d'origine continue son chemin.
+    \item \texttt{switchMap()} : pour remplacer le flux par un nouvel Observable (enchaîner un appel API, changer de source de données).
+    \item \textbf{Règle d'or} : si vous devez consommer une valeur ET enchaîner un autre appel, placez le \texttt{tap()} \textbf{avant} le \texttt{switchMap()}.
+\end{itemize}
+
+\textbf{Le piège classique} : croire que la réponse de \texttt{login()} «~survit~» au \texttt{switchMap}. En réalité, \texttt{switchMap} crée un nouveau flux et le précédent est abandonné.
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 3
+% ============================================================
+\section{Problème 3 : Position incorrecte de \texttt{catchError} dans le pipe RxJS}
+
+\subsection{Fichier concerné}
+\begin{itemize}
+    \item \texttt{frontend/src/app/features/auth/login/login.ts}
+\end{itemize}
+
+\begin{problembox}
+\textbf{Code problématique :}
+\begin{lstlisting}[style=tsstyle]
+this.authService.login(email, password).pipe(
+  catchError((err) => {
+    // ⚠️ Attrape les erreurs de login() UNIQUEMENT
+    this.errorMessage = '...';
+    return EMPTY;
+  }),
+  switchMap(() => this.authService.getOtp(this.email))
+  // ❌ Si getOtp() échoue, l'erreur n'est PAS attrapée ici
+  // Elle remonte jusqu'au subscribe()
+)
+\end{lstlisting}
+\end{problembox}
+
+\subsection{Comprendre l'ordre d'exécution dans \texttt{pipe()}}
+
+Dans RxJS, les opérateurs dans \texttt{pipe()} sont exécutés \textbf{séquentiellement, de haut en bas}. Chaque opérateur reçoit la sortie du précédent.
+
+Si \texttt{catchError} est placé \textbf{avant} \texttt{switchMap} :
+\begin{itemize}
+    \item Il intercepte uniquement les erreurs de ce qui le précède
+    \item Les erreurs de \texttt{switchMap} (et de \texttt{getOtp()}) passent \textbf{après} lui → elles ne sont pas interceptées
+    \item Elles remontent jusqu'au \texttt{subscribe()}
+\end{itemize}
+
+\begin{solutionbox}
+\textbf{Code corrigé :}
+\begin{lstlisting}[style=tsstyle]
+this.authService.login(email, password).pipe(
+  tap((response: AuthResponse) => {
+    this.authService.setSession(response.user, response.token);
+  }),
+  switchMap(() => this.authService.getOtp(this.email)),
+  catchError((err) => {
+    // ✅ Attrape les erreurs de login() ET de getOtp()
+    if (err.status === 401) {
+      this.errorMessage = 'Adresse e-mail ou mot de passe incorrect.';
+    } else if (err.status === 0) {
+      this.errorMessage = 'Impossible de contacter le serveur.';
+    } else {
+      this.errorMessage = 'Une erreur est survenue.';
+    }
+    return EMPTY;
+  }),
+  finalize(() => { this.loginLoading = false; })
+)
+\end{lstlisting}
+\end{solutionbox}
+
+\subsection{Pourquoi \texttt{EMPTY} et pas \texttt{throwError} ?}
+
+\begin{itemize}
+    \item \texttt{EMPTY} : complète l'Observable sans émettre de valeur. Le callback \texttt{next} du \texttt{subscribe} n'est pas appelé, mais le flux se termine proprement.
+    \item \texttt{throwError} : émet une erreur. Le callback \texttt{error} du \texttt{subscribe} est appelé. Si ce callback n'existe pas, l'erreur est non gérée (\texttt{Uncaught Error}).
+\end{itemize}
+
+Dans notre cas, on utilise \texttt{EMPTY} car l'erreur est déjà traitée dans le \texttt{catchError} (message affiché à l'utilisateur). On ne veut pas propager l'erreur plus loin.
+
+\begin{lessonbox}
+\textbf{Schéma mental du pipe RxJS :}
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\texttt{login()} & $\rightarrow$ & \texttt{tap()} & $\rightarrow$ \\
+\hline
+\texttt{switchMap()} & $\rightarrow$ & \texttt{getOtp()} & $\rightarrow$ \\
+\hline
+\texttt{catchError()} & $\rightarrow$ & \texttt{finalize()} & $\rightarrow$ \\
+\hline
+\multicolumn{3}{|c|}{\texttt{subscribe()}} & \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Règle} : \texttt{catchError} intercepte tout ce qui se trouve \textbf{avant} lui dans le pipe. Placez-le \textbf{en dernier} avant \texttt{finalize}.
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 4
+% ============================================================
+\section{Problème 4 : Réponse incomplète du backend (utilisateur absent)}
+
+\subsection{Fichier concerné}
+\begin{itemize}
+    \item \texttt{backend/src/main/java/inpg/sn/lms/auth/controller/AuthController.java}
+\end{itemize}
+
+\begin{problembox}
+\textbf{Code problématique (méthode \texttt{login()}) :}
+\begin{lstlisting}[style=javastyle]
+return ResponseEntity.ok(Map.of(
+    "token", jwt,
+    "message", "Authentification réussie."
+));
+\end{lstlisting}
+
+Le backend renvoyait uniquement le token JWT et un message. Le frontend attendait un objet \texttt{user} contenant \texttt{id}, \texttt{username}, \texttt{email} et \texttt{roles}.
+\end{problembox}
+
+\subsection{Le contrat Frontend ↔ Backend}
+
+Le frontend Angular définit une interface TypeScript pour typer la réponse attendue :
+
+\begin{lstlisting}[style=tsstyle]
+// auth-response.ts
+export interface AuthResponse {
+    token: string;
+    refreshToken: string;
+    user: User;
+}
+\end{lstlisting}
+
+Et l'utilise dans le service :
+\begin{lstlisting}[style=tsstyle]
+login(email: string, password: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, password });
+}
+\end{lstlisting}
+
+Quand le backend ne renvoie pas de champ \texttt{user}, TypeScript ne peut pas le détecter à la compilation (la vérification se fait à l'exécution). Résultat : \texttt{response.user} vaut \texttt{undefined} côté frontend.
+
+\begin{solutionbox}
+\textbf{Code corrigé :}
+\begin{lstlisting}[style=javastyle]
+// Construction de l'objet utilisateur
+Map<String, Object> userMap = Map.of(
+    "id", user.getId(),
+    "username", user.getUsername(),
+    "email", user.getEmail(),
+    "roles", user.getRoles().stream()
+        .map(role -> role.getCode())
+        .toList()
+);
+
+// Réponse complète
+return ResponseEntity.ok(Map.of(
+    "token", jwt,
+    "user", userMap,
+    "message", "Authentification réussie."
+));
+\end{lstlisting}
+\end{solutionbox}
+
+\subsection{Pourquoi \texttt{role.getCode()} et pas \texttt{role.getName()} ?}
+
+L'entité JPA \texttt{Role} est définie ainsi :
+\begin{lstlisting}[style=javastyle]
+@Entity
+public class Role {
+    private Integer id;
+    private String code;    // ex: "ROLE_ADMIN", "ROLE_ETUDIANT"
+    private String libelle; // ex: "Administrateur", "Étudiant"
+    private String description;
+}
+\end{lstlisting}
+
+Il n'y a pas de méthode \texttt{getName()} — l'attribut s'appelle \texttt{code}. Utiliser \texttt{getName()} provoquerait une erreur de compilation. On utilise donc \texttt{getCode()} qui retourne le code du rôle (ex: \texttt{"Admin"}, \texttt{"User"}, \texttt{"Etudiant"}, etc.).
+
+\begin{lessonbox}
+\textbf{Le contrat API (ou API contract)} est l'ensemble des règles qui définissent comment le frontend et le backend communiquent :
+\begin{itemize}
+    \item Structure des requêtes (quels champs envoyer)
+    \item Structure des réponses (quels champs recevoir)
+    \item Codes HTTP attendus (200, 401, 403, 500)
+\end{itemize}
+
+Un contrat mal respecté produit des bugs silencieux — le frontend s'attend à recevoir un objet, il reçoit \texttt{undefined}, et l'erreur n'apparaît que quand on essaie d'utiliser cet objet. \textbf{Toujours documenter et tester le contrat API.}
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 5
+% ============================================================
+\section{Problème 5 : Erreur SSL avec le serveur SMTP Brevo}
+
+\subsection{Fichier concerné}
+\begin{itemize}
+    \item \texttt{backend/src/main/resources/application.properties}
+\end{itemize}
+
+\begin{problembox}
+\textbf{Erreur rencontrée (HTTP 500) :}
+\begin{lstlisting}[style=bashstyle]
+Mail server connection failed.
+Failed messages: jakarta.mail.MessagingException:
+  Could not convert socket to TLS;
+  nested exception is:
+    javax.net.ssl.SSLHandshakeException: (certificate_unknown)
+    PKIX path building failed:
+    sun.security.provider.certpath.SunCertPathBuilderException:
+    unable to find valid certification path to requested target
+\end{lstlisting}
+\end{problembox}
+
+\subsection{Comprendre le problème SSL/TLS}
+
+Quand JavaMail (via Spring Boot) essaie d'envoyer un email via le serveur SMTP de Brevo (\texttt{smtp-relay.brevo.com}), il établit une connexion TLS (Transport Layer Security). Cette connexion nécessite que le serveur présente un \textbf{certificat SSL} pour prouver son identité.
+
+La JVM (Java Virtual Machine) possède un \textbf{truststore} — un magasin de certificats de confiance. Si le certificat présenté par Brevo n'est pas dans ce truststore (ou si la chaîne de certification n'est pas complète), la JVM refuse la connexion.
+
+C'est exactement ce qui se passe ici : le certificat de Brevo n'est pas reconnu par le truststore par défaut de la JVM.
+
+\begin{solutionbox}
+\textbf{Ajout dans \texttt{application.properties} :}
+\begin{lstlisting}[style=bashstyle]
+spring.mail.properties.mail.smtp.ssl.trust=smtp-relay.brevo.com
+\end{lstlisting}
+
+Cette propriété indique à JavaMail de \textbf{faire confiance} au certificat du serveur \texttt{smtp-relay.brevo.com}, même s'il n'est pas dans le truststore de la JVM.
+\end{solutionbox}
+
+\subsection{Alternatives possibles}
+
+\begin{enumerate}
+    \item \textbf{Importer le certificat dans le truststore Java} (plus lourd) :
+    \begin{lstlisting}[style=bashstyle]
+keytool -import -alias brevo -file brevo.crt \
+  -keystore $JAVA_HOME/lib/security/cacerts
+\end{lstlisting}
+    Cette solution est plus sécurisée car elle valide explicitement le certificat, mais elle nécessite un accès au truststore et doit être refaite à chaque mise à jour du certificat.
+
+    \item \textbf{Désactiver complètement la vérification SSL} (dangereux, jamais en production) :
+    \begin{lstlisting}[style=bashstyle]
+spring.mail.properties.mail.smtp.ssl.trust=*
+\end{lstlisting}
+
+    \item \textbf{Utiliser \texttt{ssl.trust}} (solution retenue) : simple, efficace pour un service connu comme Brevo.
+\end{enumerate}
+
+\begin{lessonbox}
+\textbf{Qu'est-ce que le truststore Java ?}
+
+Le truststore est un fichier (\texttt{cacerts}) situé dans \texttt{\$JAVA\_HOME/lib/security/} qui contient les certificats des autorités de certification (CA) reconnues. Quand une connexion TLS est établie, Java vérifie que le certificat du serveur est signé par une CA présente dans le truststore.
+
+\textbf{Pourquoi Brevo n'est pas reconnu ?}
+\begin{itemize}
+    \item Le certificat de Brevo peut être signé par une CA intermédiaire absente du truststore
+    \item La version de Java utilisée peut avoir un truststore obsolète
+    \item Certains fournisseurs SMTP utilisent des certificats auto-signés
+\end{itemize}
+
+\textbf{Bonne pratique} : la propriété \texttt{ssl.trust} est une solution de contournement acceptable pour les serveurs SMTP connus, mais en production, privilégier l'import du certificat dans le truststore.
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 6
+% ============================================================
+\section{Problème 6 : Incohérence du Design System entre Login et Register}
+
+\subsection{Fichier concerné}
+\begin{itemize}
+    \item \texttt{frontend/src/app/features/auth/login/login.html}
+\end{itemize}
+
+\subsection{Contexte}
+
+Le projet utilise \textbf{Tailwind CSS v4} avec un fichier de configuration (\texttt{tailwind.config.js}) qui définit un \textbf{Design System complet} basé sur Material Design 3 (MD3). Ce design system inclut :
+
+\begin{itemize}
+    \item \textbf{Tokens de couleurs} : \texttt{primary}, \texttt{secondary}, \texttt{surface}, \texttt{error}, \texttt{outline}, \texttt{on-surface}, \texttt{on-primary}, etc.
+    \item \textbf{Tokens typographiques} : \texttt{headline-lg}, \texttt{headline-md}, \texttt{body-lg}, \texttt{body-md}, \texttt{label-md}, \texttt{label-sm}, etc.
+    \item \textbf{Tokens d'espacement} : \texttt{stack-sm} (8px), \texttt{stack-md} (16px), \texttt{gutter} (24px), etc.
+\end{itemize}
+
+\begin{problembox}
+Le formulaire d'inscription (\texttt{register.html}) utilisait correctement ces tokens MD3, mais le formulaire de connexion (\texttt{login.html}) utilisait des classes Tailwind brutes sans aucune cohérence :
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Élément} & \textbf{Login (avant)} & \textbf{Register} \\
+\hline
+Fond & \texttt{bg-slate-100} & \texttt{bg-surface-container-lowest} \\
+Titre & \texttt{text-2xl font-bold text-slate-800} & \texttt{font-headline-md text-headline-md} \\
+Sous-titre & \texttt{text-sm text-slate-500} & \texttt{font-body-sm text-body-sm text-on-surface-variant} \\
+Bouton & \texttt{bg-blue-600} / \texttt{bg-green-600} & \texttt{bg-secondary text-on-secondary} \\
+Input focus & \texttt{focus:ring-blue-500} & \texttt{focus:ring-secondary/20} \\
+Erreur & \texttt{border-red-300 bg-red-50} & \texttt{bg-error-container text-error} \\
+Onglets & Absents & Présents (Se connecter / S'inscrire) \\
+\hline
+\end{tabular}
+\end{center}
+\end{problembox}
+
+\subsection{Pourquoi un Design System est important}
+
+Un Design System n'est pas qu'une question d'esthétique. C'est un outil de \textbf{maintenabilité} et de \textbf{cohérence} :
+
+\begin{itemize}
+    \item Si on veut changer la couleur principale, on modifie \texttt{tailwind.config.js} → tous les composants sont mis à jour automatiquement
+    \item Les développeurs n'ont pas à «~inventer~» des styles — ils utilisent les tokens prédéfinis
+    \item L'expérience utilisateur est cohérente sur toute l'application
+\end{itemize}
+
+\begin{solutionbox}
+\textbf{Modifications appliquées à \texttt{login.html} :}
+
+\begin{enumerate}
+    \item \textbf{Suppression du wrapper externe} : le \texttt{AuthLayoutComponent} gère déjà le fond et le centrage. Le login était wrappé dans un \texttt{div} redondant avec son propre fond.
+    
+    \item \textbf{Remplacement de toutes les classes} par les tokens MD3 (voir tableau ci-dessus).
+    
+    \item \textbf{Ajout des onglets de navigation} identiques à Register :
+    \begin{lstlisting}[style=tsstyle]
+<div class="flex border-b border-outline-variant mb-8">
+  <a routerLink="/auth/login"
+     routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
+     [routerLinkActiveOptions]="{ exact: true }"
+     class="flex-1 pb-3 text-center ...">
+    Se connecter
+  </a>
+  <a routerLink="/auth/register"
+     routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
+     class="flex-1 pb-3 text-center ...">
+    S'inscrire
+  </a>
+</div>
+    \end{lstlisting}
+    
+    \item \textbf{Correction du lien d'inscription} : le lien pointait sur \texttt{/register} (route inexistante), corrigé en \texttt{/auth/register}.
+    
+    \item \textbf{Uniformisation des inputs} : ajout de la classe \texttt{form-input} et des styles MD3 (\texttt{border-outline-variant}, \texttt{bg-surface-container-lowest}, \texttt{focus:border-secondary}, \texttt{focus:ring-secondary/20}).
+\end{enumerate}
+\end{solutionbox}
+
+\begin{lessonbox}
+\textbf{Les tokens de couleurs dans Tailwind config :}
+
+Dans \texttt{tailwind.config.js}, on définit des couleurs sémantiques :
+\begin{lstlisting}[style=tsstyle]
+colors: {
+  "primary": "#000002",
+  "secondary": "#30609a",
+  "surface-container-lowest": "#ffffff",
+  "error": "#ba1a1a",
+  "error-container": "#ffdad6",
+  "outline-variant": "#c7c5d0",
+  "on-surface-variant": "#46464e",
+  // ...
+}
+\end{lstlisting}
+
+Ces tokens suivent la convention Material Design 3 :
+\begin{itemize}
+    \item \texttt{surface-*} : fonds (du plus bas au plus élevé)
+    \item \texttt{primary/secondary/tertiary} : couleurs principales
+    \item \texttt{on-*} : couleur du contenu sur un fond donné
+    \item \texttt{error / error-container} : couleurs d'erreur
+    \item \texttt{outline / outline-variant} : bordures
+\end{itemize}
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% RÉCAPITULATIF
+% ============================================================
+\section{Récapitulatif des fichiers modifiés}
+
+\begin{center}
+\begin{tabular}{|l|l|p{5cm}|}
+\hline
+\textbf{Fichier} & \textbf{Action} & \textbf{Modification} \\
+\hline
+\texttt{environments/} & Créé & Fichiers d'environnement (URL configurable) \\
+\texttt{environment.ts} & & \\
+\hline
+\texttt{environments/} & Créé & Configuration développement \\
+\texttt{environment.development.ts} & & \\
+\hline
+\texttt{authService.ts} & Modifié & URL via \texttt{environment.apiUrl} (port 8080) \\
+\hline
+\texttt{login.ts} & Modifié & \texttt{tap()} avant \texttt{switchMap}, \\
+& & \texttt{catchError} après \texttt{switchMap}, \\
+& & callbacks \texttt{error}, suppression \texttt{this.token} \\
+\hline
+\texttt{login.html} & Modifié & Alignement complet sur le Design System MD3 \\
+\hline
+\texttt{AuthController.java} & Modifié & Réponse login inclut l'objet \texttt{user} \\
+\hline
+\texttt{application.properties} & Modifié & Ajout \texttt{ssl.trust} pour Brevo SMTP \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Conclusion}
+
+Ce rapport a documenté six problèmes distincts rencontrés dans l'application LMS INPG, couvrant :
+
+\begin{itemize}
+    \item \textbf{Configuration} (environnements, ports)
+    \item \textbf{RxJS} (opérateurs \texttt{tap}, \texttt{switchMap}, \texttt{catchError}, \texttt{EMPTY})
+    \item \textbf{Backend} (contrat API, certificats SSL)
+    \item \textbf{Frontend} (Design System, cohérence UI)
+\end{itemize}
+
+Chaque correction a été expliquée avec le concept technique sous-jacent pour faciliter l'apprentissage et éviter la reproduction de ces erreurs dans de futurs projets.
+
+\end{document}
