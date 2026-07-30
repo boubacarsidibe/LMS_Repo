@@ -1,0 +1,188 @@
+<div class="flex flex-col w-full">
+
+  <!-- En-tête -->
+  <section class="px-margin-desktop py-stack-lg flex flex-col gap-base relative overflow-hidden">
+    <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary-fixed-dim/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-stack-md">
+      <div class="space-y-base">
+        <div class="flex items-center gap-2 text-secondary font-label-sm uppercase tracking-widest">
+          <span class="w-8 h-[1px] bg-secondary"></span>
+          Espace Enseignant
+        </div>
+        <h1 class="font-display text-headline-lg text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
+        <p class="font-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos cohortes en temps réel.</p>
+      </div>
+      <button class="group flex items-center gap-3 bg-secondary text-on-secondary px-6 py-4 rounded-xl font-label-md hover:bg-on-secondary-container transition-all shadow-md hover:shadow-xl active:scale-95">
+        <span class="material-symbols-outlined">add_circle</span>
+        Créer un nouveau cours / module
+      </button>
+    </div>
+  </section>
+
+  <!-- Recherche & filtres -->
+  <section class="px-margin-desktop mb-stack-lg">
+    <div class="bg-surface-container-lowest p-stack-md rounded-2xl shadow-sm flex flex-wrap items-center gap-gutter">
+      <div class="flex-1 min-w-[300px] relative group">
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary transition-colors">search</span>
+        <input class="w-full pl-12 pr-4 py-3 bg-surface-container-low rounded-xl border-none focus:ring-2 focus:ring-secondary/20 outline-none font-body-sm transition-all" placeholder="Rechercher une ressource, un code ou un titre..." type="text">
+      </div>
+      <div class="flex items-center gap-stack-sm">
+        <div class="relative">
+          <select class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+            <option>Semestre 1 - 2024</option>
+            <option>Semestre 2 - 2023</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+        </div>
+        <div class="relative">
+          <select class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+            <option>Toutes les Cohortes</option>
+            <option>Option Économie Globale</option>
+            <option>Macroéconomie Appliquée</option>
+          </select>
+          <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Grille principale -->
+  <section class="px-margin-desktop grid grid-cols-12 gap-gutter pb-stack-lg">
+
+    <!-- Cartes de cours (dynamique) -->
+    <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-gutter">
+
+      <div *ngFor="let c of cours" class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden border border-outline-variant/30">
+        <div class="h-3 w-full" [ngClass]="c.couleurBandeau"></div>
+        <div class="p-stack-md flex flex-col h-full">
+          <div class="flex justify-between items-start mb-4">
+            <span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full font-label-sm uppercase tracking-tighter">{{ c.code }}</span>
+            <button class="text-outline hover:text-secondary"><span class="material-symbols-outlined">more_horiz</span></button>
+          </div>
+          <h3 class="font-headline-sm text-on-surface mb-2 group-hover:text-secondary transition-colors">{{ c.titre }}</h3>
+          <div class="grid grid-cols-2 gap-stack-sm my-4">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-outline text-[18px]">group</span>
+              <span class="text-body-sm text-on-surface-variant">{{ c.nbEtudiants }} étudiants</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-outline text-[18px]">folder_open</span>
+              <span class="text-body-sm text-on-surface-variant">{{ c.nbRessources }} ressources</span>
+            </div>
+          </div>
+          <div class="mt-auto pt-4 border-t border-surface-container">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-label-sm text-on-surface-variant">Progression Globale</span>
+              <span class="text-label-md font-bold text-secondary">{{ c.progression }}%</span>
+            </div>
+            <div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+              <div class="h-full bg-secondary rounded-full transition-all duration-1000" [style.width.%]="c.progression"></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-6">
+            <button class="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-secondary/5 transition-colors text-on-surface-variant hover:text-secondary">
+              <span class="material-symbols-outlined text-[20px]">inventory_2</span>
+              <span class="text-[10px] font-bold uppercase">Gérer</span>
+            </button>
+            <button class="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-secondary/5 transition-colors text-on-surface-variant hover:text-secondary">
+              <span class="material-symbols-outlined text-[20px]">add_box</span>
+              <span class="text-[10px] font-bold uppercase">Ajouter</span>
+            </button>
+            <button class="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-secondary/5 transition-colors text-on-surface-variant hover:text-secondary">
+              <span class="material-symbols-outlined text-[20px]">query_stats</span>
+              <span class="text-[10px] font-bold uppercase">Stats</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carte engagement (statique, décorative) -->
+      <div class="col-span-full bg-primary-container p-stack-lg rounded-2xl flex flex-col md:flex-row items-center gap-gutter relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-primary via-transparent to-transparent opacity-50"></div>
+        <div class="relative z-10 flex-1 space-y-stack-sm text-center md:text-left">
+          <h4 class="text-on-primary-fixed-variant font-label-sm uppercase tracking-widest">Aperçu de l'engagement</h4>
+          <p class="font-display text-headline-md text-on-primary-fixed leading-tight">Augmentation de 15% du téléchargement des supports ce mois-ci.</p>
+          <button class="mt-4 px-6 py-2 bg-on-primary-fixed text-primary-container rounded-full font-label-md">Voir le rapport complet</button>
+        </div>
+        <div class="relative z-10 w-full md:w-64 h-32 flex items-end gap-2">
+            <div class="flex-1 bg-primary-fixed-dim/40 rounded-t-lg h-1/2 animate-[bounce_2s_infinite]"></div>
+            <div class="flex-1 bg-primary-fixed-dim/60 rounded-t-lg h-3/4 animate-[bounce_2.5s_infinite]"></div>
+            <div class="flex-1 bg-primary-fixed-dim/80 rounded-t-lg h-full animate-[bounce_1.8s_infinite]"></div>
+            <div class="flex-1 bg-primary-fixed-dim rounded-t-lg h-2/3 animate-[bounce_3s_infinite]"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panneau dépôt rapide -->
+    <aside class="col-span-12 lg:col-span-4 space-y-stack-lg">
+      <div class="bg-surface-container-lowest p-stack-lg rounded-2xl shadow-sm border border-outline-variant/20 sticky top-24">
+        <div class="flex items-center gap-3 mb-stack-md">
+          <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+            <span class="material-symbols-outlined">upload_file</span>
+          </div>
+          <h3 class="font-headline-sm text-on-surface">Dépôt Rapide</h3>
+        </div>
+        <div class="space-y-stack-md">
+         <div (click)="ouvrirExplorateur()" class="border-2 border-dashed border-outline-variant rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-surface-container-low/50 hover:bg-secondary/5 hover:border-secondary transition-all cursor-pointer group">
+            <span class="material-symbols-outlined text-[48px] text-outline group-hover:text-secondary transition-colors">cloud_upload</span>
+            <div class="text-center">
+                <p class="font-label-md text-on-surface">Glissez vos fichiers ici</p>
+                <p class="text-body-sm text-outline">PDF, PPTX ou ZIP (Max. 50MB)</p>
+            </div>
+            <input #fileInput class="hidden" type="file" (change)="onFichierSelectionne($event)">
+         </div>
+        </div>
+          <form class="space-y-stack-md">
+            <div class="space-y-base">
+              <label class="font-label-md text-on-surface-variant">Type de ressource</label>
+              <div class="grid grid-cols-1 gap-2">
+                <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+                  <input checked class="w-4 h-4 accent-secondary" name="res_type" type="radio">
+                  <span class="material-symbols-outlined text-on-surface-variant">description</span>
+                  <span class="font-body-sm text-on-surface">Support de cours (PDF)</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+                  <input class="w-4 h-4 accent-secondary" name="res_type" type="radio">
+                  <span class="material-symbols-outlined text-on-surface-variant">link</span>
+                  <span class="font-body-sm text-on-surface">Lien externe</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+                  <input class="w-4 h-4 accent-secondary" name="res_type" type="radio">
+                  <span class="material-symbols-outlined text-on-surface-variant">videocam</span>
+                  <span class="font-body-sm text-on-surface">Visioconférence / Vidéo</span>
+                </label>
+              </div>
+            </div>
+            <div class="space-y-base">
+              <label class="font-label-md text-on-surface-variant">Cours cible</label>
+              <select class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
+                <option>Sélectionnez un cours...</option>
+                <option *ngFor="let c of cours">{{ c.code }} - {{ c.titre }}</option>
+              </select>
+            </div>
+            <div class="space-y-base">
+              <label class="font-label-md text-on-surface-variant">Date de publication</label>
+              <input class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" type="date">
+            </div>
+            <button class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md mt-4" type="submit">
+              Publier la ressource
+            </button>
+          </form>
+        </div>
+    
+
+      <div class="p-stack-md bg-surface-container rounded-2xl space-y-stack-sm">
+        <h4 class="font-label-md text-on-surface flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">info</span>
+          Guide de publication
+        </h4>
+        <p class="text-body-sm text-on-surface-variant">
+          Pensez à structurer vos fichiers par modules pour une meilleure lisibilité côté étudiant.
+        </p>
+        <a class="text-label-sm text-secondary hover:underline flex items-center gap-1" href="#">
+          Voir la documentation <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+        </a>
+      </div>
+    </aside>
+  </section>
+</div>
