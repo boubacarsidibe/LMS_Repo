@@ -5,3 +5,7 @@ export enum Role {
     Formateur = 'Formateur',
     Candidat = 'Candidat'
 }
+
+export enum Nationalite{
+    
+}

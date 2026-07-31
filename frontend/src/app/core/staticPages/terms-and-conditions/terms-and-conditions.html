@@ -1,0 +1,143 @@
+<div class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+  <!-- Content Layout -->
+  <main class="flex-grow w-full max-w-7xl mx-auto px-4 md:px-10 py-8 grid grid-cols-1 md:grid-cols-12 gap-6">
+    
+    <!-- Sidebar / TOC -->
+    <aside class="md:col-span-3 hidden md:block">
+      <div class="sticky top-24 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Sommaire</h3>
+        <nav class="flex flex-col gap-1">
+          <div class="text-sm text-slate-900 font-bold mb-2">Conditions Générales</div>
+          
+          <a *ngFor="let item of tocItems"
+             [href]="'#' + item.id"
+             (click)="scrollToSection($event, item.id)"
+             [ngClass]="{
+               'border-slate-900 text-slate-900 font-medium': activeSectionId === item.id,
+               'border-transparent text-slate-500 hover:text-slate-800': activeSectionId !== item.id
+             }"
+             class="text-xs pl-3 border-l-2 transition-colors py-1">
+            {{ item.title }}
+          </a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Document Content -->
+    <article class="col-span-1 md:col-span-9 bg-white border border-slate-200 rounded-xl p-6 md:p-8 shadow-sm">
+      <section class="mb-8">
+        <header class="mb-8 border-b border-slate-200 pb-4">
+          <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Conditions Générales d'Utilisation (CGU)</h1>
+          <p class="text-xs text-slate-500 italic">Dernière mise à jour : Juillet 2026</p>
+        </header>
+
+        <div class="space-y-6 text-sm text-slate-700 leading-relaxed">
+          <!-- Section 1 -->
+          <div class="scroll-mt-28" id="cgu-1">
+            <h2 class="text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-600 text-xl">gavel</span>
+              1. Objet
+            </h2>
+            <p>Les présentes Conditions Générales d'Utilisation (CGU) ont pour objet de définir les modalités et conditions dans lesquelles l'Institut National du Pétrole et du Gaz (INPG) met à disposition sa plateforme numérique, ainsi que les droits et obligations des utilisateurs.</p>
+            <p class="mt-2">L'accès et l'utilisation de la plateforme impliquent l'acceptation pleine et sans réserve des présentes CGU par tout utilisateur.</p>
+          </div>
+
+          <hr class="border-slate-100"/>
+
+          <!-- Section 2 -->
+          <div class="scroll-mt-28" id="cgu-2">
+            <h2 class="text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-600 text-xl">language</span>
+              2. Accès à la Plateforme
+            </h2>
+            <p>La plateforme est accessible gratuitement à tout utilisateur disposant d'un accès à internet. Tous les coûts afférents à l'accès, qu'ils soient matériels, logiciels ou d'accès à internet sont exclusivement à la charge de l'utilisateur.</p>
+          </div>
+
+          <hr class="border-slate-100"/>
+
+          <!-- Section 3 -->
+          <div class="scroll-mt-28" id="cgu-3">
+            <h2 class="text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-600 text-xl">lock</span>
+              3. Inscription et Sécurité du Compte
+            </h2>
+            <p class="mb-2">Pour accéder aux fonctionnalités avancées (candidature, espace étudiant), l'utilisateur doit créer un compte :</p>
+            <ul class="list-none space-y-2 pl-4 border-l-2 border-blue-100">
+              <li><strong class="text-slate-900">Exactitude des informations :</strong> L'utilisateur s'engage à fournir des informations exactes, complètes et à jour lors de son inscription et dans ses dossiers de candidature.</li>
+              <li><strong class="text-slate-900">Vérification par code (OTP) :</strong> La validation du compte nécessite la saisie d'un code de confirmation à 6 chiffres envoyé à l'adresse e-mail renseignée.</li>
+              <li><strong class="text-slate-900">Confidentialité des identifiants :</strong> Le mot de passe est strictly personnel. L'utilisateur est seul responsable de la conservation et de la confidentialité de ses identifiants.</li>
+            </ul>
+          </div>
+
+          <hr class="border-slate-100"/>
+
+          <!-- Section 4 -->
+          <div class="scroll-mt-28" id="cgu-4">
+            <h2 class="text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-600 text-xl">assignment</span>
+              4. Soumission et Traitement des Candidatures
+            </h2>
+            <ul class="list-none space-y-2 pl-4 border-l-2 border-blue-100">
+              <li><strong class="text-slate-900">Brouillons :</strong> La plateforme permet d'enregistrer une candidature en mode "brouillon". Les données saisies partiellement sont conservées de manière sécurisée.</li>
+              <li><strong class="text-slate-900">Validation finale :</strong> Une fois la candidature définitivement soumise, les informations ne peuvent plus être modifiées directement par le candidat sans demande expresse auprès du Responsable Pédagogique.</li>
+              <li><strong class="text-slate-900">Motifs de rejet :</strong> En cas de non-admission ou de rejet d'un dossier, l'INPG se réserve le droit de notifier le motif de la décision directement sur l'espace candidat.</li>
+            </ul>
+          </div>
+
+          <hr class="border-slate-100"/>
+
+          <!-- Section 5 -->
+          <div class="scroll-mt-28" id="cgu-5">
+            <h2 class="text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-600 text-xl">copyright</span>
+              5. Propriété Intellectuelle
+            </h2>
+            <ul class="list-none space-y-2 pl-4 border-l-2 border-blue-100">
+              <li>Tous les contenus figurant sur la plateforme (logos, textes, visuels, éléments graphiques, structures de cours, supports pédagogiques) sont la propriété exclusive de l'INPG ou de ses partenaires.</li>
+              <li>Toute reproduction, distribution ou exploitation non autorisée de ces contenus, en tout ou partie, est strictement interdite sans l'accord écrit préalable de l'INPG.</li>
+            </ul>
+          </div>
+
+          <hr class="border-slate-100"/>
+
+          <!-- Section 6 -->
+          <div class="scroll-mt-28" id="cgu-6">
+            <h2 class="text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-600 text-xl">shield_error</span>
+              6. Responsabilités
+            </h2>
+            <ul class="list-none space-y-2 pl-4 border-l-2 border-blue-100">
+              <li><strong class="text-slate-900">Fonctionnement de la plateforme :</strong> L'INPG s'efforce d'assurer une disponibilité maximale du service, mais ne saurait être tenu responsable des interruptions temporaires liées à la maintenance.</li>
+              <li><strong class="text-slate-900">Documents téléversés :</strong> L'utilisateur s'interdit d'envoyer des fichiers contenant des virus, des scripts malveillants ou des documents falsifiés.</li>
+            </ul>
+          </div>
+
+          <hr class="border-slate-100"/>
+
+          <!-- Section 7 -->
+          <div class="scroll-mt-28" id="cgu-7">
+            <h2 class="text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-600 text-xl">edit_document</span>
+              7. Modification des CGU
+            </h2>
+            <p>L'INPG se réserve le droit de modifier les présentes CGU à tout moment. Les utilisateurs seront informés de toute mise à jour importante par notification sur la plateforme ou par e-mail.</p>
+          </div>
+
+          <hr class="border-slate-100"/>
+
+          <!-- Section 8 -->
+          <div class="scroll-mt-28" id="cgu-8">
+            <h2 class="text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
+              <span class="material-symbols-outlined text-blue-600 text-xl">mail</span>
+              8. Contact
+            </h2>
+            <p>Pour toute question relative aux présentes CGU, vous pouvez nous contacter via la rubrique <strong>Contact</strong> de la plateforme ou à l'adresse : <code class="bg-slate-100 px-2 py-1 rounded text-slate-900">contact@inpg.sn</code>.</p>
+          </div>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <!-- Footer Component -->
+  <!-- <app-footer></app-footer> -->
+</div>

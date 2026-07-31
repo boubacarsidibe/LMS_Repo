@@ -1,14 +1,7 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
-interface Cours {
-  code: string;
-  titre: string;
-  nbEtudiants: number;
-  nbRessources: number;
-  progression: number;
-  couleurBandeau: string;
-}
+
 
 @Component({
   selector: 'app-mes-cours',

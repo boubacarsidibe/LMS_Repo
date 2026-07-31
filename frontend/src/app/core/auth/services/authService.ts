@@ -4,6 +4,7 @@ import { catchError, map, Observable, of, tap } from 'rxjs';
 import { AuthResponse } from '../models/auth-response';
 import { User } from '../models/user.model';
 import { environment } from '../../../../environments/environment';
+import { Role } from '../models/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -131,5 +132,21 @@ export class Auth {
         throw error;
       })
     );
+  }
+
+  isCandidate(): boolean {
+    const user = this.currentUser();
+    if (!user) return false;
+    return user && user.roles.includes(Role.Candidat);
+  }
+
+  createCandiadat(nationnalite:string,dateDeNaissance:string){
+    const user = this.getCurrentUser();
+    if (!user) return null;
+    return {
+      dateDeNaissance:dateDeNaissance,
+      nationalite:nationnalite,
+      user:user
+    }
   }
 }
