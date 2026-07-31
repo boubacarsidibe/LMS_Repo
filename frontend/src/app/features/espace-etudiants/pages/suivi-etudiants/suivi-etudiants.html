@@ -1,0 +1,175 @@
+<div class="flex flex-col w-full">
+
+  <!-- En-tête -->
+  <div class="px-margin-desktop py-stack-lg flex flex-col gap-base">
+    <h1 class="font-headline-lg text-primary tracking-tight">Suivi des Étudiants &amp; Progression</h1>
+    <p class="text-body-md text-on-surface-variant max-w-2xl">Analysez la performance de vos cohortes et identifiez les besoins d'accompagnement personnalisés.</p>
+  </div>
+
+  <!-- KPI -->
+  <div class="px-margin-desktop grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">Total Étudiants Actifs</span>
+        <span class="material-symbols-outlined text-secondary">groups</span>
+      </div>
+      <div class="flex items-baseline gap-2">
+        <span class="font-display text-primary tracking-tighter">1 248</span>
+        <span class="text-label-sm text-secondary-container bg-on-secondary-container px-2 py-0.5 rounded-full">+3%</span>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">Taux d'Achèvement Moyen</span>
+        <span class="material-symbols-outlined text-secondary">analytics</span>
+      </div>
+      <div class="flex items-end justify-between">
+        <span class="font-display text-primary tracking-tighter">74%</span>
+        <svg class="w-12 h-12" viewBox="0 0 36 36">
+          <path class="text-surface-container-high stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="3"></path>
+          <path class="text-secondary stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="74, 100" stroke-linecap="round" stroke-width="3"></path>
+        </svg>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">À Suivre en Priorité</span>
+        <span class="material-symbols-outlined text-error">priority_high</span>
+      </div>
+      <div class="flex items-baseline gap-2">
+        <span class="font-display text-primary tracking-tighter text-error">14</span>
+        <span class="text-label-sm text-on-surface-variant">Étudiants</span>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">Engagement Hebd.</span>
+        <span class="material-symbols-outlined text-secondary">trending_up</span>
+      </div>
+      <div class="flex items-baseline gap-2">
+        <span class="font-display text-primary tracking-tighter">68%</span>
+        <div class="flex items-center text-secondary text-label-sm font-bold">
+          <span class="material-symbols-outlined text-sm">north</span>12%
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerte pédagogique -->
+  <div class="px-margin-desktop mb-stack-lg">
+    <div class="bg-error-container/10 border border-error/20 rounded-xl p-stack-md flex flex-col lg:flex-row gap-stack-lg items-center justify-between">
+      <div class="flex items-center gap-stack-md">
+        <div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error">
+          <span class="material-symbols-outlined">warning</span>
+        </div>
+        <div>
+          <h3 class="font-headline-sm text-primary">Alerte Pédagogique : Inactivité Prolongée</h3>
+          <p class="text-body-sm text-on-surface-variant">Certains étudiants comme <strong>Marc-Antoine Dupont</strong> et <strong>Sophie Lefebvre</strong> n'ont pas interagi avec la plateforme depuis plus de 5 jours.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-stack-md shrink-0">
+        <button class="text-label-md font-bold text-secondary hover:underline px-4 py-2 transition-all">Contacter individuellement</button>
+        <button class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-label-md shadow-sm hover:opacity-90 transition-all flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">mail</span>
+          Envoyer une relance collective
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="px-margin-desktop mb-stack-lg">
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+
+      <div class="p-stack-md border-b border-outline-variant flex flex-wrap items-center justify-between gap-stack-md">
+        <div class="flex items-center gap-stack-md flex-1 min-w-[300px]">
+          <div class="relative flex-1 max-w-sm">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline">search</span>
+            <input [(ngModel)]="recherche" class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm focus:outline-none focus:border-secondary transition-all" placeholder="Rechercher un étudiant..." type="text">
+          </div>
+          <select class="px-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm text-on-surface-variant focus:outline-none cursor-pointer">
+            <option>Toutes les cohortes</option>
+            <option>Master 2 - Économie de l'Énergie</option>
+            <option>Licence 3 - Gestion Publique</option>
+          </select>
+          <select class="px-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm text-on-surface-variant focus:outline-none cursor-pointer">
+            <option>Tous les niveaux</option>
+            <option>Avancé (&gt;80%)</option>
+            <option>Intermédiaire (50-80%)</option>
+            <option>En retard (&lt;50%)</option>
+          </select>
+        </div>
+        <button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg text-label-md hover:bg-surface-container-low transition-all">
+          <span class="material-symbols-outlined text-[18px]">filter_list</span>
+          Plus de filtres
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-container-low/50">
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Étudiant</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Cohorte</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Dernière connexion</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Progression</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Note Moyenne</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Statut</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant">
+            <tr *ngFor="let e of etudiantsFiltres" class="hover:bg-surface-container-low hover:translate-x-1 transition-all group">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs" [ngClass]="e.couleurAvatar">
+                    {{ e.initiales }}
+                  </div>
+                  <span class="font-label-md text-primary">{{ e.nom }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-body-sm text-on-surface-variant">{{ e.cohorte }}</td>
+              <td class="px-6 py-4 text-body-sm text-on-surface-variant">{{ e.derniereConnexion }}</td>
+              <td class="px-6 py-4">
+                <div class="flex flex-col gap-1 w-32">
+                  <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+                    <div class="h-full" [ngClass]="classeProgression(e.progression)" [style.width.%]="e.progression"></div>
+                  </div>
+                  <span class="text-[11px] font-bold text-on-surface-variant">{{ e.progression }}%</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-body-sm font-medium text-primary">{{ e.noteMoyenne }}/20</td>
+              <td class="px-6 py-4">
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-tight" [ngClass]="classeStatut(e.statut)">{{ e.statut }}</span>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button (click)="voirProfil(e.id)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Voir le profil">
+                    <span class="material-symbols-outlined text-[20px]">visibility</span>
+                  </button>
+                  <button class="p-2 text-outline hover:text-primary hover:bg-surface-container rounded-full transition-all" title="Exporter PDF">
+                    <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination désactivée (attend l'API) -->
+      <div class="p-4 border-t border-outline-variant flex items-center justify-between">
+        <span class="text-body-sm text-on-surface-variant">Affichage de 1-{{ etudiants.length }} sur 1 248 étudiants</span>
+        <div class="flex items-center gap-2 opacity-40 pointer-events-none">
+          <button class="p-2 border border-outline-variant rounded-lg" disabled>
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+          </button>
+          <button class="w-8 h-8 rounded-lg bg-primary text-on-primary text-label-md">1</button>
+          <button class="p-2 border border-outline-variant rounded-lg" disabled>
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -5,7 +5,9 @@ import { DashboardFormateur } from './pages/dashboard-formateur/dashboard-format
 import { MesCours } from './pages/mes-cours/mes-cours';
 import { FormateurLayout } from './layouts/formateur-layout/formateur-layout';
 import { guestGuard } from '../../core/auth/guards/guest-guard';
-
+import { CreerCours } from './pages/creer-cours/creer-cours';
+import { ProfilEtudiant } from './pages/profil-etudiant/profil-etudiant';
+import { SuiviEtudiants } from './pages/suivi-etudiants/suivi-etudiants';
 export const routes: Routes = [
     {
         path: 'accueil',
@@ -18,7 +20,10 @@ export const routes: Routes = [
         children: [
             { path: '', redirectTo: 'dashboard-formateur', pathMatch: 'full' },
             { path: 'dashboard-formateur', component: DashboardFormateur },
-            { path: 'mes-cours', component: MesCours }
+            { path: 'mes-cours', component: MesCours },
+            { path: 'creer-cours', component: CreerCours },
+            { path: 'suivi-etudiants', component: SuiviEtudiants },
+            { path: 'profil-etudiant/:id', component: ProfilEtudiant }
         ]
     },
     {

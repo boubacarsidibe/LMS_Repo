@@ -12,7 +12,7 @@
         <h1 class="font-display text-headline-lg text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
         <p class="font-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos cohortes en temps réel.</p>
       </div>
-      <button class="group flex items-center gap-3 bg-secondary text-on-secondary px-6 py-4 rounded-xl font-label-md hover:bg-on-secondary-container transition-all shadow-md hover:shadow-xl active:scale-95">
+      <button routerLink="/espace-etudiant/formateur/creer-cours" class="group flex items-center gap-3 bg-secondary text-on-secondary px-6 py-4 rounded-xl font-label-md hover:bg-on-secondary-container transition-all shadow-md hover:shadow-xl active:scale-95">
         <span class="material-symbols-outlined">add_circle</span>
         Créer un nouveau cours / module
       </button>
@@ -24,18 +24,18 @@
     <div class="bg-surface-container-lowest p-stack-md rounded-2xl shadow-sm flex flex-wrap items-center gap-gutter">
       <div class="flex-1 min-w-[300px] relative group">
         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary transition-colors">search</span>
-        <input class="w-full pl-12 pr-4 py-3 bg-surface-container-low rounded-xl border-none focus:ring-2 focus:ring-secondary/20 outline-none font-body-sm transition-all" placeholder="Rechercher une ressource, un code ou un titre..." type="text">
+        <input [(ngModel)]="recherche" class="w-full pl-12 pr-4 py-3 bg-surface-container-low rounded-xl border-none focus:ring-2 focus:ring-secondary/20 outline-none font-body-sm transition-all" placeholder="Rechercher une ressource, un code ou un titre..." type="text">
       </div>
       <div class="flex items-center gap-stack-sm">
         <div class="relative">
-          <select class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+          <select [(ngModel)]="semestreSelectionne" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
             <option>Semestre 1 - 2024</option>
             <option>Semestre 2 - 2023</option>
           </select>
           <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
         </div>
         <div class="relative">
-          <select class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+          <select [(ngModel)]="cohorteSelectionnee" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
             <option>Toutes les Cohortes</option>
             <option>Option Économie Globale</option>
             <option>Macroéconomie Appliquée</option>
@@ -44,7 +44,7 @@
         </div>
       </div>
     </div>
-  </section>
+</section>
 
   <!-- Grille principale -->
   <section class="px-margin-desktop grid grid-cols-12 gap-gutter pb-stack-lg">
@@ -52,7 +52,7 @@
     <!-- Cartes de cours (dynamique) -->
     <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-gutter">
 
-      <div *ngFor="let c of cours" class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden border border-outline-variant/30">
+        <div *ngFor="let c of coursFiltres" class="group bg-surface-container-lowest rounded-2xl ...">
         <div class="h-3 w-full" [ngClass]="c.couleurBandeau"></div>
         <div class="p-stack-md flex flex-col h-full">
           <div class="flex justify-between items-start mb-4">
@@ -132,42 +132,58 @@
             <input #fileInput class="hidden" type="file" (change)="onFichierSelectionne($event)">
          </div>
         </div>
-          <form class="space-y-stack-md">
+        <p *ngIf="fichierSelectionne" class="text-body-sm text-secondary font-medium">
+          Fichier sélectionné : {{ fichierSelectionne.name }}
+        </p>
+          <form [formGroup]="depotForm" (ngSubmit)="onSubmit()" class="space-y-stack-md">
             <div class="space-y-base">
-              <label class="font-label-md text-on-surface-variant">Type de ressource</label>
-              <div class="grid grid-cols-1 gap-2">
+                <label class="font-label-md text-on-surface-variant">Type de ressource</label>
+                <div class="grid grid-cols-1 gap-2">
                 <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                  <input checked class="w-4 h-4 accent-secondary" name="res_type" type="radio">
-                  <span class="material-symbols-outlined text-on-surface-variant">description</span>
-                  <span class="font-body-sm text-on-surface">Support de cours (PDF)</span>
+                    <input formControlName="typeRessource" value="pdf" class="w-4 h-4 accent-secondary" name="res_type" type="radio">
+                    <span class="material-symbols-outlined text-on-surface-variant">description</span>
+                    <span class="font-body-sm text-on-surface">Support de cours (PDF)</span>
                 </label>
                 <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                  <input class="w-4 h-4 accent-secondary" name="res_type" type="radio">
-                  <span class="material-symbols-outlined text-on-surface-variant">link</span>
-                  <span class="font-body-sm text-on-surface">Lien externe</span>
+                    <input formControlName="typeRessource" value="lien" class="w-4 h-4 accent-secondary" name="res_type" type="radio">
+                    <span class="material-symbols-outlined text-on-surface-variant">link</span>
+                    <span class="font-body-sm text-on-surface">Lien externe</span>
                 </label>
                 <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                  <input class="w-4 h-4 accent-secondary" name="res_type" type="radio">
-                  <span class="material-symbols-outlined text-on-surface-variant">videocam</span>
-                  <span class="font-body-sm text-on-surface">Visioconférence / Vidéo</span>
+                    <input formControlName="typeRessource" value="video" class="w-4 h-4 accent-secondary" name="res_type" type="radio">
+                    <span class="material-symbols-outlined text-on-surface-variant">videocam</span>
+                    <span class="font-body-sm text-on-surface">Visioconférence / Vidéo</span>
                 </label>
-              </div>
+                </div>
             </div>
+
             <div class="space-y-base">
-              <label class="font-label-md text-on-surface-variant">Cours cible</label>
-              <select class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
-                <option>Sélectionnez un cours...</option>
-                <option *ngFor="let c of cours">{{ c.code }} - {{ c.titre }}</option>
-              </select>
+                <label class="font-label-md text-on-surface-variant">Cours cible</label>
+                <select formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
+                <option value="">Sélectionnez un cours...</option>
+                <option *ngFor="let c of cours" [value]="c.code">{{ c.code }} - {{ c.titre }}</option>
+                </select>
+                <p *ngIf="depotForm.get('coursCible')?.invalid && depotForm.get('coursCible')?.touched" class="text-body-sm text-error">
+                Veuillez sélectionner un cours.
+                </p>
             </div>
+
             <div class="space-y-base">
-              <label class="font-label-md text-on-surface-variant">Date de publication</label>
-              <input class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" type="date">
+                <label class="font-label-md text-on-surface-variant">Date de publication</label>
+                <input formControlName="datePublication" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" type="date">
+                <p *ngIf="depotForm.get('datePublication')?.invalid && depotForm.get('datePublication')?.touched" class="text-body-sm text-error">
+                Veuillez indiquer une date.
+                </p>
             </div>
+
+            <p *ngIf="!fichierSelectionne && depotForm.touched" class="text-body-sm text-error">
+                Veuillez sélectionner un fichier.
+            </p>
+
             <button class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md mt-4" type="submit">
-              Publier la ressource
+                Publier la ressource
             </button>
-          </form>
+            </form>
         </div>
     
 

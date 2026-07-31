@@ -1,0 +1,57 @@
+<div class="flex flex-col w-full">
+  <section class="px-margin-desktop py-stack-lg flex flex-col gap-base">
+    <div class="flex items-center gap-2 text-secondary font-label-sm uppercase tracking-widest">
+      <span class="w-8 h-[1px] bg-secondary"></span>
+      Espace Enseignant
+    </div>
+    <h1 class="font-display text-headline-lg text-on-surface">Créer un nouveau cours</h1>
+    <p class="font-body-lg text-on-surface-variant max-w-2xl">Renseignez les informations de base, vous pourrez ajouter les ressources ensuite.</p>
+  </section>
+
+  <section class="px-margin-desktop pb-stack-lg max-w-2xl">
+    <form [formGroup]="creerCoursForm" (ngSubmit)="onSubmit()" class="bg-surface-container-lowest p-stack-lg rounded-2xl shadow-sm space-y-stack-md">
+
+      <div class="space-y-base">
+        <label class="font-label-md text-on-surface-variant">Code du cours</label>
+        <input formControlName="code" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" placeholder="Ex: ECO-402" type="text">
+        <p *ngIf="creerCoursForm.get('code')?.invalid && creerCoursForm.get('code')?.touched" class="text-body-sm text-error">
+          Le code du cours est requis.
+        </p>
+      </div>
+
+      <div class="space-y-base">
+        <label class="font-label-md text-on-surface-variant">Titre du cours</label>
+        <input formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" placeholder="Ex: Théorie et Pratique Économiques" type="text">
+        <p *ngIf="creerCoursForm.get('titre')?.invalid && creerCoursForm.get('titre')?.touched" class="text-body-sm text-error">
+          Le titre est requis.
+        </p>
+      </div>
+
+      <div class="space-y-base">
+        <label class="font-label-md text-on-surface-variant">Semestre</label>
+        <select formControlName="semestre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
+          <option value="">Sélectionnez un semestre...</option>
+          <option value="Semestre 1 - 2024">Semestre 1 - 2024</option>
+          <option value="Semestre 2 - 2023">Semestre 2 - 2023</option>
+        </select>
+        <p *ngIf="creerCoursForm.get('semestre')?.invalid && creerCoursForm.get('semestre')?.touched" class="text-body-sm text-error">
+          Veuillez sélectionner un semestre.
+        </p>
+      </div>
+
+      <div class="space-y-base">
+        <label class="font-label-md text-on-surface-variant">Description (optionnel)</label>
+        <textarea formControlName="description" rows="4" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface resize-none" placeholder="Décrivez brièvement le contenu du cours..."></textarea>
+      </div>
+
+      <div class="flex gap-stack-md pt-4">
+        <button type="button" (click)="annuler()" class="flex-1 py-4 bg-surface-container text-on-surface rounded-xl font-label-md hover:bg-outline-variant transition-all">
+          Annuler
+        </button>
+        <button type="submit" class="flex-1 py-4 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md">
+          Créer le cours
+        </button>
+      </div>
+    </form>
+  </section>
+</div>
