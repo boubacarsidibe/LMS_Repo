@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '../../core/auth/guards/auth-guard';
 import { CatalogueComponent } from './catalogue/catalogue.component';
+import { candidatGuard } from '../../core/auth/guards/candidat-guard';
 
 export const RECRUTEMENT_ROUTES: Routes = [
   // Public
@@ -34,7 +35,7 @@ export const RECRUTEMENT_ROUTES: Routes = [
   {
     path: 'suivi',
     loadComponent: () => import('./suivi/suivi.component').then(m => m.SuiviComponent),
-    canActivate: [authGuard]
+    canActivate: [candidatGuard]
   },
 
   // Admin
@@ -51,11 +52,11 @@ export const RECRUTEMENT_ROUTES: Routes = [
   {
     path: 'admin/tests',
     loadComponent: () => import('./admin/admin-tests/admin-tests.component').then(m => m.AdminTestsComponent),
-    canActivate: [authGuard]
+    canActivate: [candidatGuard]
   },
   {
     path: 'admin/entretiens',
     loadComponent: () => import('./admin/admin-entretiens/admin-entretiens.component').then(m => m.AdminEntretiensComponent),
     canActivate: [authGuard]
-  }
+  },
 ];

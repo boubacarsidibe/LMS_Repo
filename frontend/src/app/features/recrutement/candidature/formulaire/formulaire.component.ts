@@ -8,31 +8,6 @@ import { NavbarComponent } from '../../../../shared/components/navbar/navbar.com
 
 const STORAGE_KEY = 'candidature_brouillon';
 
-interface CandidatureFormData {
-  etape: number;
-  nom: string;
-  prenom: string;
-  email: string;
-  telephone: string;
-  adresse: string;
-  dateNaissance: string;
-  nationalite: string;
-  typeFormation: string;
-  niveauVise: string;
-  programme: string;
-  campus: string;
-  sessionRentree: string;
-  niveauActuel: string;
-  etablissement: string;
-  diplome: string;
-  anneeObtention: string;
-  fichierIdentite: string;
-  fichierCV: string;
-  fichierMotivation: string;
-  fichierPhoto: string;
-  consentement: boolean;
-}
-
 @Component({
   selector: 'app-formulaire',
   standalone: true,
@@ -193,6 +168,8 @@ export class FormulaireComponent implements OnInit {
         setTimeout(() => {
           this.router.navigate(['/recrutement/candidature/pieces'], { queryParams: { candidatureId: response.id } });
         }, 1500);
+
+    
       },
       error: (err) => {
         this.loading = false;

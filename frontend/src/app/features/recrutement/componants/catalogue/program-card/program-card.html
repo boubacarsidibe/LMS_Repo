@@ -1,0 +1,25 @@
+
+    <a  [routerLink]="'/recrutement/catalogue/' + prog.id"
+        class="group bg-white rounded-xl border border-[#c7c5d0] overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full cursor-pointer no-underline">
+        <div class="h-48 w-full relative overflow-hidden bg-[#e6e8ea]">
+            <div class="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
+                [style.background-image]="'url(' + prog.imageUrl + ')'"></div>
+        </div>
+        <div class="p-4 flex-grow flex flex-col">
+            <div class="flex items-center gap-2 mb-2">
+                <span
+                    class="px-2 py-1 bg-[#91befe]/30 text-[#164c85] text-xs tracking-[0.05em] font-semibold rounded uppercase">{{
+                    prog.niveau }}</span>
+                <span class="text-[#46464e] text-xs tracking-[0.05em] font-semibold">{{ prog.duree }}</span>
+            </div>
+            <h3
+                class="text-xl leading-7 font-semibold text-[#000002] mb-2 group-hover:text-[#30609a] transition-colors">
+                {{ prog.titre }}</h3>
+            <p class="text-sm text-[#46464e] mb-4 flex-grow">{{ prog.description }}</p>
+            <div class="mt-auto pt-3 border-t border-[#c7c5d0] flex items-center justify-between">
+                <span class="text-sm leading-4 tracking-[0.01em] font-medium text-[#30609a]">En savoir plus</span>
+                <span class="material-symbols-outlined text-[#30609a] group-hover:translate-x-1 transition-transform"
+                    style="font-variation-settings: 'FILL' 0;">arrow_right_alt</span>
+            </div>
+        </div>
+    </a>
