@@ -1,1 +1,126 @@
-<p>planning-calendrier works!</p>
+<div class="flex flex-col w-full">
+
+  <!-- En-tête -->
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-stack-md mb-stack-lg px-margin-desktop pt-stack-lg">
+    <div class="flex flex-col gap-1">
+      <span class="text-label-sm font-bold text-on-primary-container tracking-widest uppercase">Espace Formateur</span>
+      <h1 class="font-headline-lg text-primary-container">Calendrier Pédagogique &amp; Classes Virtuelles</h1>
+      <p class="text-body-md text-on-surface-variant max-w-2xl">Gérez vos sessions d'enseignement, classes virtuelles et échéances d'évaluation en temps réel.</p>
+    </div>
+    <div class="flex items-center gap-stack-md shrink-0">
+      <div class="bg-surface-container-low p-1 rounded-lg flex items-center shadow-sm">
+        <button class="px-4 py-2 rounded-md text-label-md font-bold transition-all bg-surface-container-lowest text-primary shadow-sm">Mois</button>
+        <button class="px-4 py-2 rounded-md text-label-md font-medium text-on-surface-variant hover:text-primary transition-colors" title="Bientôt disponible">Semaine</button>
+        <button class="px-4 py-2 rounded-md text-label-md font-medium text-on-surface-variant hover:text-primary transition-colors" title="Bientôt disponible">Jour</button>
+        <button class="px-4 py-2 rounded-md text-label-md font-medium text-on-surface-variant hover:text-primary transition-colors" title="Bientôt disponible">Liste</button>
+      </div>
+      <button class="flex items-center gap-2 bg-secondary text-on-secondary px-6 py-3 rounded-lg font-label-md shadow-md hover:shadow-lg transition-all active:scale-95">
+        <span class="material-symbols-outlined text-[20px]">add_circle</span>
+        Programmer une session
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-12 gap-gutter px-margin-desktop items-start pb-stack-lg">
+
+    <!-- Calendrier -->
+    <div class="col-span-12 lg:col-span-8 xl:col-span-9 bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/30">
+
+      <div class="flex items-center justify-between p-stack-md border-b border-outline-variant/20">
+        <div class="flex items-center gap-4">
+          <h2 class="font-headline-sm text-primary-container capitalize">{{ nomsMois[moisAffiche.getMonth()] }} {{ moisAffiche.getFullYear() }}</h2>
+          <div class="flex items-center bg-surface-container rounded-full p-1">
+            <button (click)="moisPrecedent()" class="p-1 hover:bg-surface-container-high rounded-full transition-colors">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <button (click)="moisSuivant()" class="p-1 hover:bg-surface-container-high rounded-full transition-colors">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-primary-container"></span>
+            <span class="text-label-sm text-on-surface-variant">Classes Virtuelles</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-error"></span>
+            <span class="text-label-sm text-on-surface-variant">Échéances</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-secondary-container"></span>
+            <span class="text-label-sm text-on-surface-variant">Tutorat</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-7 border-collapse">
+        <div class="py-3 text-center border-b border-outline-variant/20 text-label-sm font-bold text-outline uppercase tracking-wider bg-surface-container-low">Lun</div>
+        <div class="py-3 text-center border-b border-outline-variant/20 text-label-sm font-bold text-outline uppercase tracking-wider bg-surface-container-low">Mar</div>
+        <div class="py-3 text-center border-b border-outline-variant/20 text-label-sm font-bold text-outline uppercase tracking-wider bg-surface-container-low">Mer</div>
+        <div class="py-3 text-center border-b border-outline-variant/20 text-label-sm font-bold text-outline uppercase tracking-wider bg-surface-container-low">Jeu</div>
+        <div class="py-3 text-center border-b border-outline-variant/20 text-label-sm font-bold text-outline uppercase tracking-wider bg-surface-container-low">Ven</div>
+        <div class="py-3 text-center border-b border-outline-variant/20 text-label-sm font-bold text-outline uppercase tracking-wider bg-surface-container-low">Sam</div>
+        <div class="py-3 text-center border-b border-outline-variant/20 text-label-sm font-bold text-outline uppercase tracking-wider bg-surface-container-low">Dim</div>
+
+        <div *ngFor="let j of jours"
+             class="min-h-[120px] p-2 border-r border-b border-outline-variant/10 font-label-sm hover:bg-surface-container-low/50 transition-colors"
+             [class.text-outline-variant]="j.horsMois"
+             [class.opacity-40]="j.horsMois"
+             [class.text-on-surface]="!j.horsMois"
+             [class.ring-2]="estAujourdhui(j.date)"
+             [class.ring-secondary]="estAujourdhui(j.date)"
+             [class.ring-inset]="estAujourdhui(j.date)">
+          <span class="mb-2 block" [class.font-bold]="estAujourdhui(j.date)" [class.text-secondary]="estAujourdhui(j.date)">{{ j.numero }}</span>
+          <div *ngFor="let e of j.evenements" class="p-1.5 rounded-md text-[11px] font-bold leading-tight mb-1 cursor-pointer hover:brightness-110" [ngClass]="classeEvenement(e.type)">
+            {{ e.heure }} - {{ e.titre }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Prochaines Séances -->
+    <div class="col-span-12 lg:col-span-4 xl:col-span-3 space-y-stack-lg">
+      <div class="flex flex-col gap-stack-md">
+        <h3 class="font-headline-sm text-primary-container flex items-center justify-between">
+          Prochaines Séances
+          <span class="text-label-sm font-medium text-on-surface-variant bg-surface-container px-2 py-1 rounded">48h</span>
+        </h3>
+
+        <div class="space-y-stack-md">
+            <div *ngFor="let s of prochainesSeances" class="bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-4 shadow-sm hover:shadow-md transition-all group">
+                <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" [ngClass]="fondIconeEvenement(s.type)">
+                    <span class="material-symbols-outlined">{{ iconeEvenement(s.type) }}</span>
+                </div>
+                <div>
+                    <p class="text-label-sm font-bold uppercase tracking-tight" [class.text-secondary]="s.type !== 'echeance'" [class.text-error]="s.type === 'echeance'">
+                    {{ s.libelleDate }} • {{ s.heure }}
+                    </p>
+                    <p class="font-headline-sm text-on-surface group-hover:text-secondary transition-colors">{{ s.titre }}</p>
+                </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2" *ngIf="s.type === 'cours'">
+                <button class="bg-secondary text-on-secondary py-2 rounded-lg font-label-md hover:brightness-110 transition-all">Lancer</button>
+                <button class="bg-surface-container-low text-on-surface-variant py-2 rounded-lg font-label-md hover:bg-surface-container transition-all">Modifier</button>
+            </div>
+                <button *ngIf="s.type === 'tutorat'" class="w-full border border-outline-variant text-on-surface-variant py-2 rounded-lg font-label-md hover:bg-surface-container-low transition-all">Gérer le rendez-vous</button>
+        </div>
+
+  <p *ngIf="prochainesSeances.length === 0" class="text-body-sm text-on-surface-variant text-center py-4">
+    Aucune séance à venir dans les prochains jours.
+  </p>
+</div>
+      </div>
+
+      <div class="p-6 bg-primary-container rounded-xl text-on-primary-container relative overflow-hidden">
+        <div class="relative z-10">
+          <p class="font-headline-sm mb-2">Synchronisation</p>
+          <p class="text-body-sm opacity-80 mb-4">Synchronisez votre calendrier INPG avec Google Calendar ou Outlook pour ne rien manquer.</p>
+          <button disabled class="text-label-md font-bold underline underline-offset-4 opacity-60 cursor-not-allowed" title="Bientôt disponible">Lier mon agenda professionnel</button>
+        </div>
+        <span class="material-symbols-outlined absolute -bottom-4 -right-4 text-[120px] opacity-10 rotate-12 pointer-events-none">sync</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -8,6 +8,8 @@ import { guestGuard } from '../../core/auth/guards/guest-guard';
 import { CreerCours } from './pages/creer-cours/creer-cours';
 import { ProfilEtudiant } from './pages/profil-etudiant/profil-etudiant';
 import { SuiviEtudiants } from './pages/suivi-etudiants/suivi-etudiants';
+import { PlanningCalendrier } from './pages/planning-calendrier/planning-calendrier';
+
 export const routes: Routes = [
     {
         path: 'accueil',
@@ -23,7 +25,8 @@ export const routes: Routes = [
             { path: 'mes-cours', component: MesCours },
             { path: 'creer-cours', component: CreerCours },
             { path: 'suivi-etudiants', component: SuiviEtudiants },
-            { path: 'profil-etudiant/:id', component: ProfilEtudiant }
+            { path: 'profil-etudiant/:id', component: ProfilEtudiant },
+            { path: 'planning-calendrier', component: PlanningCalendrier }
         ]
     },
     {

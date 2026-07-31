@@ -11,11 +11,13 @@ import { SuiviEtudiants } from './pages/suivi-etudiants/suivi-etudiants';
 import { ProfilEtudiant } from './pages/profil-etudiant/profil-etudiant';
 import { FormateurLayout } from './layouts/formateur-layout/formateur-layout';
 import { routes } from './espace-etudiant.routes';
+import { PlanningCalendrier } from './pages/planning-calendrier/planning-calendrier';
+
 
 @NgModule({
   declarations: [
     Accueil, Test, DashboardFormateur, MesCours, CreerCours,
-    SuiviEtudiants, ProfilEtudiant, FormateurLayout
+    SuiviEtudiants, ProfilEtudiant, FormateurLayout, PlanningCalendrier
   ],
   imports: [
     CommonModule,
