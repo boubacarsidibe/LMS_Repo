@@ -20,7 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -33,15 +33,17 @@ public class AuthController {
     private final JwtUtils jwtUtils;
     private final OtpService otpService;
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthController(AuthenticationManager authenticationManager,
             UserDetailsService userDetailsService,
-            JwtUtils jwtUtils, OtpService otpService, UserService userService) {
+            JwtUtils jwtUtils, OtpService otpService, UserService userService, PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtUtils = jwtUtils;
         this.otpService = otpService;
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/send-otp")
@@ -163,5 +165,18 @@ public class AuthController {
         // Angular
         // en supprimant le token du LocalStorage, mais cet endpoint confirme l'action.
         return ResponseEntity.ok().body("Déconnexion réussie");
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String newPassword = request.get("newPassword");
+
+        User user = userService.findByEmail(email);
+        if (user != null) {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            return ResponseEntity.ok(userService.save(user));
+        }
+        return ResponseEntity.badRequest().body("Utilisateur non trouvé");
     }
 }

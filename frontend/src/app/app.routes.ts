@@ -5,6 +5,8 @@ import { Login } from './features/auth/login/login';
 import { Register } from './features/auth/register/register';
 import { VerifyOtp } from './features/auth/verify-otp/verify-otp';
 import { AuthLayoutComponent } from './features/auth/layouts/auth-layout/auth-layout';
+import { PolitiqueConfidentialite } from './core/staticPages/politique-confidentialite/politique-confidentialite';
+import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 
 export const routes: Routes = [
   // Redirection par défaut → Page d'accueil
@@ -45,12 +47,18 @@ export const routes: Routes = [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
       { path: 'login', component: Login },
       { path: 'register', component: Register },
-      { path: 'verify-otp', component: VerifyOtp }
+      { path: 'verify-otp', component: VerifyOtp },
+      { path: 'forgot-password', component: ForgotPassword }
     ]
+  },
+  {
+    path:"espace-etudiant",
+    loadChildren: () => import('./features/espace-etudiants/espace-etudiants-module').then(m => m.EspaceEtudiantsModule)
   },
 
   // Page protégée
   { path: 'test1', component: Test1, canActivate: [authGuard] },
+  {path:"politique-de-confidentialite", component:PolitiqueConfidentialite},
 
   // Module Recrutement & Candidatures (lazy-loaded)
   {
@@ -59,5 +67,9 @@ export const routes: Routes = [
   },
 
   // Redirection de sécurité si l'URL saisie n'existe pas
-  { path: '**', redirectTo: 'auth/login' }
+  { path: '**', redirectTo: 'auth/login' },
+
+  
+
+
 ];

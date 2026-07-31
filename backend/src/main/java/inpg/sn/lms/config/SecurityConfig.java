@@ -60,7 +60,7 @@ public class SecurityConfig {
             
             
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/", "/error","/login").permitAll()
+                .requestMatchers("/api/auth/**", "/api/recrutement/public/**", "/", "/error","/login").permitAll()
                 .requestMatchers("/voirplus").hasRole("CANDIDAT")
                 .requestMatchers("/etudiant").hasRole("ETUDIANT")
                 .anyRequest().authenticated()

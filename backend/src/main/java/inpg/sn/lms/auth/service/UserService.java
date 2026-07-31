@@ -73,7 +73,19 @@ public class UserService implements UserDetailsService {
                 .toList();
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
     }
+    
+    public User ChangePassword(String email, String newPassword) {
+        User user = userRepository.findByEmail(email);
+        if (user != null) {
+            user.setPassword(passwordEncoder.encode(newPassword));
+            return userRepository.save(user);
+        }
+        return null;
+    }
 
+    public User save(User user) {
+        return userRepository.save(user);
+    }
     
 
 }

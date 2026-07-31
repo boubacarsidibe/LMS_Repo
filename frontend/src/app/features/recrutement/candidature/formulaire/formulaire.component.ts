@@ -10,12 +10,13 @@ const STORAGE_KEY = 'candidature_brouillon';
 
 interface CandidatureFormData {
   etape: number;
-  sessionId: number | null;
   nom: string;
   prenom: string;
   email: string;
   telephone: string;
   adresse: string;
+  dateNaissance: string;
+  nationalite: string;
   typeFormation: string;
   niveauVise: string;
   programme: string;
@@ -43,18 +44,20 @@ export class FormulaireComponent implements OnInit {
   loading = false;
   candidature: CandidatureResponse | null = null;
   successMessage = '';
+  showErrors = false;
 
   etape = 1;
   readonly totalEtapes = 4;
 
   data: CandidatureFormData = {
     etape: 1,
-    sessionId: null,
     nom: '',
     prenom: '',
     email: '',
     telephone: '',
     adresse: '',
+    dateNaissance: '',
+    nationalite: '',
     typeFormation: '',
     niveauVise: '',
     programme: '',
@@ -77,13 +80,27 @@ export class FormulaireComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Vérifier immédiatement si une candidature existe déjà → rediriger vers suivi
+    this.recrutementService.getMesCandidatures().subscribe({
+      next: (candidatures) => {
+        const active = candidatures.find(c => c.statut !== 'REJETE' && c.statut !== 'BROUILLON');
+        if (active) {
+          this.router.navigate(['/recrutement/suivi']);
+          return;
+        }
+        this.initCatalogue();
+      },
+      error: () => this.initCatalogue()
+    });
+  }
+
+  private initCatalogue(): void {
     this.recrutementService.getCataloguePublic().subscribe({
       next: (data) => {
         this.sessions = data.filter(s => s.estActive);
       }
     });
-
-    const saved = sessionStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -105,31 +122,53 @@ export class FormulaireComponent implements OnInit {
   }
 
   suivant(): void {
+    if (!this.peutAvancer()) return;
     if (this.etape < this.totalEtapes) {
       this.etape++;
       this.saveDraft();
     }
   }
 
-  saveDraft(): void {
-    this.data.etape = this.etape;
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+  peutAvancer(): boolean {
+    this.showErrors = false;
+    if (this.etape === 1) {
+      if (!this.data.nom?.trim() || !this.data.prenom?.trim() || !this.data.email?.trim() || !this.data.telephone?.trim()) {
+        this.showErrors = true;
+        return false;
+      }
+    }
+    if (this.etape === 2) {
+      if (!this.data.programme?.trim()) {
+        this.showErrors = true;
+        return false;
+      }
+    }
+    return true;
   }
 
-  creerBrouillon(): void {
-    if (!this.data.sessionId) {
-      alert('Veuillez sélectionner une session.');
+  saveDraft(): void {
+    this.data.etape = this.etape;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+  }
+
+  soumettre(): void {
+    if (!this.data.consentement) {
+      alert('Veuillez accepter les conditions.');
       return;
     }
     this.loading = true;
+    const sessionId = this.sessions.length > 0 ? this.sessions[0].id : 1;
     const request: CandidatureRequest = {
-      sessionCandidatureId: this.data.sessionId,
+      sessionCandidatureId: sessionId,
       informationsPersonnelles: JSON.stringify({
         nom: this.data.nom,
         prenom: this.data.prenom,
         email: this.data.email,
         telephone: this.data.telephone,
         adresse: this.data.adresse,
+        dateNaissance: this.data.dateNaissance,
+        nationalite: this.data.nationalite,
+        niveauEtude: this.data.niveauActuel,
       }),
       informationsAcademiques: JSON.stringify({
         typeFormation: this.data.typeFormation,
@@ -145,39 +184,38 @@ export class FormulaireComponent implements OnInit {
         sessionRentree: this.data.sessionRentree,
       }),
     };
-    this.recrutementService.creerBrouillon(request).subscribe({
+    this.recrutementService.soumettreCandidature(request).subscribe({
       next: (response) => {
         this.candidature = response;
         this.loading = false;
-        sessionStorage.removeItem(STORAGE_KEY);
-      },
-      error: (err) => {
-        alert('Erreur : ' + (err.error?.message || 'Erreur inconnue'));
-        this.loading = false;
-      }
-    });
-  }
-
-  soumettre(): void {
-    if (!this.candidature) return;
-    if (!this.data.consentement) {
-      alert('Veuillez accepter les conditions.');
-      return;
-    }
-    this.loading = true;
-    this.recrutementService.soumettreCandidature(this.candidature.id).subscribe({
-      next: (response) => {
-        this.candidature = response;
-        this.loading = false;
-        this.successMessage = 'Candidature soumise avec succès !';
+        this.successMessage = 'Candidature soumise avec succès ! N° ' + response.numeroDossier;
+        localStorage.removeItem(STORAGE_KEY);
         setTimeout(() => {
           this.router.navigate(['/recrutement/candidature/pieces'], { queryParams: { candidatureId: response.id } });
         }, 1500);
       },
       error: (err) => {
-        alert('Erreur lors de la soumission : ' + (err.error?.message || 'Erreur inconnue'));
         this.loading = false;
+        const msg = err.error?.message || err.message || 'Erreur inconnue';
+        alert('Erreur lors de la soumission : ' + msg);
       }
     });
+  }
+
+  onFileSelected(event: Event, type: string): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const names = Array.from(input.files).map(f => f.name).join(', ');
+      if (type === 'identite') {
+        this.data.fichierIdentite = names;
+      } else if (type === 'cv') {
+        this.data.fichierCV = names;
+      } else if (type === 'motivation') {
+        this.data.fichierMotivation = names;
+      } else if (type === 'photo') {
+        this.data.fichierPhoto = names;
+      }
+      this.saveDraft();
+    }
   }
 }

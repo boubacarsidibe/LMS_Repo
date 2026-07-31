@@ -22,6 +22,10 @@ export class Auth {
     return localStorage.getItem('token');
   }
 
+  getUserByEmail(email: string): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/user`, { params: { email } });
+  }
+
   login(email: string, password: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, password });
   }
@@ -114,6 +118,18 @@ export class Auth {
         this.currentUser.set(null);
         this.clearSession();
       }),
+    );
+  }
+
+  ChangePassword(currentPassword: string, newPassword: string): Observable<string> {
+    return this.http.post(`${this.apiUrl}/change-password`, { currentPassword, newPassword }, { responseType: 'text' }).pipe(
+      tap(() => {
+        console.log('Mot de passe changé avec succès.');
+      }),
+      catchError((error) => {
+        console.error('Erreur lors du changement de mot de passe :', error.error?.message || error.message);
+        throw error;
+      })
     );
   }
 }

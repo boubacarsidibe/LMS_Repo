@@ -15,7 +15,7 @@
 \usepackage{titlesec}
 \usepackage{graphicx}
 
-% --- Configuration des listings de code ---
+% --- Configuration listings ---
 \definecolor{codebg}{RGB}{245,245,245}
 \definecolor{codeborder}{RGB}{200,200,200}
 \definecolor{commentgreen}{RGB}{0,128,0}
@@ -39,53 +39,31 @@
     captionpos=b
 }
 
-\lstdefinestyle{javastyle}{
-    style=mystyle,
-    language=Java
-}
-
-\lstdefinestyle{tsstyle}{
-    style=mystyle,
-    language=TypeScript
-}
-
-\lstdefinestyle{bashstyle}{
-    style=mystyle,
-    language=bash
-}
+\lstdefinestyle{javastyle}{style=mystyle,language=Java}
+\lstdefinestyle{tsstyle}{style=mystyle,language=TypeScript}
+\lstdefinestyle{bashstyle}{style=mystyle,language=bash}
+\lstdefinestyle{htmlstyle}{style=mystyle,language=HTML}
 
 % --- Boîtes colorées ---
 \newtcolorbox{problembox}[1][]{
-    colback=red!5!white,
-    colframe=red!75!black,
-    title=Problème,
-    fonttitle=\bfseries,
-    #1
+    colback=red!5!white,colframe=red!75!black,
+    title=Problème,fonttitle=\bfseries,#1
 }
-
 \newtcolorbox{solutionbox}[1][]{
-    colback=green!5!white,
-    colframe=green!50!black,
-    title=Solution,
-    fonttitle=\bfseries,
-    #1
+    colback=green!5!white,colframe=green!50!black,
+    title=Solution,fonttitle=\bfseries,#1
 }
-
 \newtcolorbox{lessonbox}[1][]{
-    colback=blue!5!white,
-    colframe=blue!50!black,
-    title=Leçon à retenir,
-    fonttitle=\bfseries,
-    #1
+    colback=blue!5!white,colframe=blue!50!black,
+    title=Leçon à retenir,fonttitle=\bfseries,#1
 }
 
-% --- En-tête et pied de page ---
+% --- En-tête / pied ---
 \pagestyle{fancy}
 \fancyhead[L]{Rapport de Corrections — LMS INPG}
 \fancyhead[R]{Angular 21 + Spring Boot 4.1}
 \fancyfoot[C]{\thepage}
 
-% --- Titres ---
 \titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
 \titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
 
@@ -95,26 +73,25 @@
 % PAGE DE GARDE
 % ============================================================
 \begin{titlepage}
-    \centering
-    \vspace*{3cm}
-    
-    {\Huge\bfseries Rapport de Corrections\par}
-    \vspace{0.5cm}
-    {\LARGE Application LMS — INPG\par}
-    \vspace{1cm}
-    {\large Plateforme de Learning Management System\par}
-    {\large Institut National du Pétrole et du Gaz (Sénégal)\par}
-    \vspace{2cm}
-    
-    {\large\bfseries Stack technique\par}
-    \vspace{0.3cm}
-    Angular 21 — TypeScript — RxJS — Spring Boot 4.1 — Java\\
-    PostgreSQL — Docker — Tailwind CSS v4 — Material Design 3
-    \vspace{2cm}
-    
-    {\large Juillet 2026\par}
-    
-    \vfill
+\centering
+\vspace*{3cm}
+
+{\Huge\bfseries Rapport de Corrections\par}
+\vspace{0.5cm}
+{\LARGE Application LMS — INPG\par}
+\vspace{1cm}
+{\large Plateforme de Learning Management System\par}
+{\large Institut National du Pétrole et du Gaz (Sénégal)\par}
+\vspace{2cm}
+
+{\large\bfseries Stack technique\par}
+\vspace{0.3cm}
+Angular 21 — TypeScript — RxJS — Spring Boot 4.1 — Java\\
+PostgreSQL — Docker — Tailwind CSS v4 — Material Design 3
+\vspace{2cm}
+
+{\large Juillet 2026\par}
+\vfill
 \end{titlepage}
 
 % ============================================================
@@ -128,556 +105,779 @@
 % ============================================================
 \section{Introduction}
 
-Ce rapport documente l'ensemble des problèmes identifiés et corrigés dans l'application LMS INPG. Chaque problème est présenté avec son diagnostic, la correction apportée, et les concepts techniques sous-jacents pour permettre un apprentissage approfondi.
-
-L'application est composée de deux parties :
-\begin{itemize}
-    \item Un \textbf{backend Spring Boot} (port 8080) exposant une API REST d'authentification avec JWT et OTP.
-    \item Un \textbf{frontend Angular 21} (port 4200) utilisant des Standalone Components, RxJS et Tailwind CSS.
-\end{itemize}
+Ce rapport documente l'ensemble des problèmes identifiés et corrigés dans l'application LMS INPG. Chaque problème est présenté avec son diagnostic, la correction apportée et les concepts techniques sous-jacents.
 
 \section{Vue d'ensemble des problèmes résolus}
 
 \begin{enumerate}
-    \item URL de l'API codée en dur avec un port incorrect
-    \item Perte du token JWT après l'authentification login
-    \item Position incorrecte de l'opérateur \texttt{catchError} dans le pipe RxJS
+    \item URL de l'API codée en dur avec port incorrect
+    \item Perte du token JWT après le login
+    \item Position incorrecte de \texttt{catchError} dans le pipe RxJS
     \item Réponse incomplète du backend (utilisateur absent)
     \item Erreur SSL avec le serveur SMTP Brevo
-    \item Incohérence du Design System entre les formulaires Login et Register
+    \item Incohérence du Design System entre Login et Register
+    \item Catalogue : pages détail formation en pleine largeur (16 formations)
+    \item Création des pages Accueil, Contact, Institut
+    \item Navbar professionnelle fixe avec gestion connecté/déconnecté
+    \item Bug OTP au clavier Enter + redirection incorrecte après login
+    \item Suppression OTP pour le login (connexion directe)
+    \item Erreur CORS : requête OPTIONS rejetée (HTTP 403)
+    \item Violation de contrainte unique sur \texttt{username} à l'inscription
+    \item Boutons «Se connecter» / «S'inscrire» invisibles (token périmé)
+    \item Formulaire de candidature avec stepper 4 étapes
+    \item Service Angular : URL codée en dur remplacée par le proxy
 \end{enumerate}
 
 \newpage
 
 % ============================================================
-% PROBLÈME 1
+% PROBLÈMES 1-6 : DÉJÀ DOCUMENTÉS DANS LE RAPPORT INITIAL
 % ============================================================
-\section{Problème 1 : URL de l'API codée en dur avec un mauvais port}
+\section{Problèmes 1 à 6 : premier lot de corrections}
+
+\subsection{URL de l'API codée en dur avec un mauvais port}
+\begin{problembox}
+L'URL du backend était codée en dur \texttt{http://localhost:8088/api/auth} alors que le \texttt{docker-compose.yml} expose le backend sur le port 8080. Résultat : toutes les requêtes aboutissaient à un \texttt{err.status === 0} (connexion refusée).
+\end{problembox}
+\begin{solutionbox}
+Création des fichiers \texttt{environment.ts} et \texttt{environment.development.ts} avec l'URL \texttt{http://localhost:8080/api}, puis injection via \texttt{environment.apiUrl} dans le service Angular.
+\end{solutionbox}
+
+\subsection{Perte du token JWT après le login}
+\begin{problembox}
+Le \texttt{switchMap} qui enchaînait l'envoi OTP remplaçait la réponse de \texttt{login()} — le token JWT et l'utilisateur étaient perdus, jamais stockés dans \texttt{localStorage}.
+\end{problembox}
+\begin{solutionbox}
+Ajout d'un \texttt{tap()} \textbf{avant} le \texttt{switchMap()} pour sauvegarder le token avec \texttt{setSession()} avant qu'il ne soit écrasé.
+\end{solutionbox}
+
+\subsection{Position incorrecte de \texttt{catchError}}
+\begin{problembox}
+Le \texttt{catchError} était placé avant le \texttt{switchMap} — les erreurs de \texttt{getOtp()} remontaient sans être interceptées.
+\end{problembox}
+\begin{solutionbox}
+Déplacement du \texttt{catchError} \textbf{après} le \texttt{switchMap} pour intercepter les erreurs des deux appels (\texttt{login()} et \texttt{getOtp()}).
+\end{solutionbox}
+
+\subsection{Réponse incomplète du backend}
+\begin{problembox}
+Le \texttt{AuthController.login()} renvoyait uniquement le token, sans l'objet \texttt{user}. Le frontend recevait \texttt{response.user === undefined}.
+\end{problembox}
+\begin{solutionbox}
+Ajout de l'objet \texttt{userMap} contenant \texttt{id}, \texttt{username}, \texttt{email} et \texttt{roles} dans la réponse JSON.
+\end{solutionbox}
+
+\subsection{Erreur SSL avec le serveur SMTP Brevo}
+\begin{problembox}
+L'envoi d'email OTP échouait avec \texttt{SSLHandshakeException: PKIX path building failed} — le certificat de Brevo n'était pas reconnu par le truststore Java.
+\end{problembox}
+\begin{solutionbox}
+Ajout de la propriété \texttt{spring.mail.properties.mail.smtp.ssl.trust=smtp-relay.brevo.com} dans \texttt{application.properties}.
+\end{solutionbox}
+
+\subsection{Incohérence du Design System entre Login et Register}
+\begin{problembox}
+Le formulaire \texttt{login.html} utilisait des classes Tailwind brutes (\texttt{bg-slate-100}, \texttt{bg-blue-600}) alors que \texttt{register.html} utilisait les tokens MD3 (\texttt{bg-surface-container-lowest}, \texttt{bg-secondary}).
+\end{problembox}
+\begin{solutionbox}
+Alignement complet de \texttt{login.html} sur les tokens du Design System MD3 définis dans \texttt{tailwind.config.js}, ajout des onglets de navigation et correction du lien d'inscription.
+\end{solutionbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 7 : CATALOGUE - PAGES DÉTAIL FORMATION
+% ============================================================
+\section{Problème 7 : Catalogue sans pages détail — 16 formations}
 
 \subsection{Fichiers concernés}
 \begin{itemize}
-    \item \texttt{frontend/src/app/core/auth/services/authService.ts}
-    \item \texttt{frontend/src/environments/environment.ts} (créé)
-    \item \texttt{frontend/src/environments/environment.development.ts} (créé)
+    \item \texttt{formation-detail/formation-detail.component.ts} (créé)
+    \item \texttt{formation-detail/formation-detail.component.html} (créé)
+    \item \texttt{recrutement.routes.ts}
+    \item \texttt{catalogue.component.ts} / \texttt{.html}
 \end{itemize}
 
 \begin{problembox}
-L'URL du backend était codée en dur dans le service Angular :
-\begin{lstlisting}[style=tsstyle]
-private apiUrl = 'http://localhost:8088/api/auth';
-\end{lstlisting}
+Le catalogue affichait des cartes de formation avec un bouton « En savoir plus » sans action. Chaque formation devait avoir une page dédiée en pleine largeur avec :
+\begin{itemize}
+    \item Modules détaillés
+    \item Méthode pédagogique
+    \item Points clés et débouchés
+    \item Sidebar avec informations pratiques (durée, tarif, lieu)
+\end{itemize}
 
-Le \texttt{docker-compose.yml} expose le backend sur le \textbf{port 8080}, pas 8088. Résultat : toutes les requêtes HTTP aboutissaient à \texttt{err.status === 0} (connexion refusée), et l'utilisateur voyait le message \emph{«~Impossible de contacter le serveur~»}.
+16 formations étaient concernées, avec des structures de contenu différentes : grille de modules (MBA), points clés + sidebar (Ingénierie), accordéon (Finance), sections dynamiques.
 \end{problembox}
 
-\subsection{Diagnostic technique}
+\subsection{Architecture de la solution}
 
-Angular tourne sur \texttt{localhost:4200} et le backend Spring Boot sur un autre port. Quand on fait une requête HTTP depuis le navigateur, celui-ci applique la politique \textbf{CORS} (Cross-Origin Resource Sharing). Si le port de destination n'existe pas, la requête échoue avec un \texttt{status 0} — ce n'est même pas une erreur HTTP classique, c'est une erreur réseau au niveau du navigateur.
-
-Pour résoudre ce problème de manière propre, on utilise les \textbf{fichiers d'environnement} d'Angular, un mécanisme qui permet de définir des variables différentes selon le contexte (développement, production, etc.).
-
-\begin{solutionbox}
-\textbf{Étape 1 — Création des fichiers d'environnement}
-
-\texttt{src/environments/environment.ts} (production) :
-\begin{lstlisting}[style=tsstyle]
-export const environment = {
-  production: true,
-  apiUrl: 'http://localhost:8080/api'
-};
-\end{lstlisting}
-
-\texttt{src/environments/environment.development.ts} (développement) :
-\begin{lstlisting}[style=tsstyle]
-export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8080/api'
-};
-\end{lstlisting}
-
-\textbf{Étape 2 — Modification du service}
+Plutôt que de créer 16 composants séparés, un \textbf{composant générique} \texttt{FormationDetailComponent} a été conçu avec une interface de données riche :
 
 \begin{lstlisting}[style=tsstyle]
-import { environment } from '../../../../environments/environment';
-
-// ...
-
-private apiUrl = `${environment.apiUrl}/auth`;
-// Résultat : http://localhost:8080/api/auth
-\end{lstlisting}
-\end{solutionbox}
-
-\begin{lessonbox}
-\textbf{Pourquoi utiliser des fichiers d'environnement ?}
-\begin{itemize}
-    \item \textbf{Maintenabilité} : changer l'URL nécessite de modifier un seul fichier, pas tout le code.
-    \item \textbf{Déploiement} : Angular remplace automatiquement \texttt{environment.ts} par \texttt{environment.development.ts} en mode dev.
-    \item \textbf{Sécurité} : on peut avoir des clés API différentes par environnement sans les exposer dans le code source.
-\end{itemize}
-
-\textbf{Pourquoi \texttt{err.status === 0} ?} Dans le navigateur, une requête qui n'atteint pas sa cible (serveur éteint, mauvais port, CORS bloqué) produit un statut 0. Ce n'est pas un code HTTP standard — c'est un indicateur que la requête n'a jamais atteint le serveur.
-\end{lessonbox}
-
-\newpage
-
-% ============================================================
-% PROBLÈME 2
-% ============================================================
-\section{Problème 2 : Perte du token JWT après le login}
-
-\subsection{Fichier concerné}
-\begin{itemize}
-    \item \texttt{frontend/src/app/features/auth/login/login.ts}
-\end{itemize}
-
-\subsection{Comprendre le flux de login avant correction}
-
-Le flux de connexion se déroule en deux étapes :
-\begin{enumerate}
-    \item \textbf{Login} : envoi de l'email et du mot de passe au backend. Si les identifiants sont corrects, le backend renvoie un token JWT.
-    \item \textbf{Envoi OTP} : une fois authentifié, le backend envoie un code à 6 chiffres par email. Le frontend doit attendre ce code.
-\end{enumerate}
-
-Ces deux étapes sont enchaînées avec l'opérateur RxJS \texttt{switchMap}.
-
-\begin{problembox}
-\textbf{Code problématique :}
-\begin{lstlisting}[style=tsstyle]
-this.authService.login(email, password)
-  .pipe(
-    catchError(...),                              // Gère les erreurs
-    switchMap(() => this.authService.getOtp(email)), // ⚠️ Remplace la réponse
-    finalize(...)
-  )
-  .subscribe({
-    next: () => { this.showOtpField = true; }
-  });
-\end{lstlisting}
-
-Le \texttt{switchMap} \textbf{remplace} la valeur émise par l'Observable. La réponse de \texttt{login()} (qui contient le token JWT et l'utilisateur) est \textbf{perdue}. Elle n'est jamais stockée dans le \texttt{localStorage}.
-\end{problembox}
-
-\subsection{Le rôle de l'opérateur \texttt{switchMap}}
-
-\texttt{switchMap} est un opérateur de transformation qui :
-\begin{enumerate}
-    \item Reçoit la valeur émise par l'Observable source (ici, la réponse de \texttt{login()})
-    \item Exécute une fonction qui retourne un \textbf{nouvel} Observable (ici, \texttt{getOtp()})
-    \item \textbf{Remplace} l'Observable source par ce nouvel Observable
-\end{enumerate}
-
-La valeur d'origine est donc «~avalée~» par \texttt{switchMap}. Si on veut la conserver, il faut la capturer \textbf{avant} le \texttt{switchMap}, avec l'opérateur \texttt{tap}.
-
-\subsection{Le rôle de l'opérateur \texttt{tap}}
-
-\texttt{tap} est un opérateur d'«~effet de bord~» (\textit{side effect}). Il exécute une action (sauvegarder des données, logger, etc.) \textbf{sans modifier le flux de données}. La valeur traverse \texttt{tap} sans être altérée.
-
-\begin{solutionbox}
-\textbf{Code corrigé :}
-\begin{lstlisting}[style=tsstyle]
-this.authService.login(email, password)
-  .pipe(
-    // 1. Capture le token ET l'utilisateur AVANT que switchMap ne les écrase
-    tap((response: AuthResponse) => {
-      this.authService.setSession(response.user, response.token);
-    }),
-    // 2. Enchaîne sur l'envoi de l'OTP
-    switchMap(() => this.authService.getOtp(this.email)),
-    // 3. Gère les erreurs des DEUX appels
-    catchError((err) => { ... }),
-    finalize(...)
-  )
-  .subscribe({ ... });
-\end{lstlisting}
-\end{solutionbox}
-
-\subsection{Impact de la correction}
-
-Avant la correction, \texttt{verifyOtp()} utilisait \texttt{this.token} qui valait toujours \texttt{null} (jamais assigné). L'utilisateur était redirigé vers \texttt{/test1} sans token valide dans le \texttt{localStorage}, et le \texttt{authGuard} bloquait l'accès.
-
-Après correction, le token est stocké dès que le login réussit, et \texttt{verifyOtp()} n'a plus besoin de gérer le token — il est déjà dans le \texttt{localStorage}.
-
-\begin{lessonbox}
-\textbf{Quand utiliser \texttt{tap} vs \texttt{switchMap} ?}
-\begin{itemize}
-    \item \texttt{tap()} : pour exécuter une action sans modifier le flux (sauvegarde, log, effet de bord). La valeur d'origine continue son chemin.
-    \item \texttt{switchMap()} : pour remplacer le flux par un nouvel Observable (enchaîner un appel API, changer de source de données).
-    \item \textbf{Règle d'or} : si vous devez consommer une valeur ET enchaîner un autre appel, placez le \texttt{tap()} \textbf{avant} le \texttt{switchMap()}.
-\end{itemize}
-
-\textbf{Le piège classique} : croire que la réponse de \texttt{login()} «~survit~» au \texttt{switchMap}. En réalité, \texttt{switchMap} crée un nouveau flux et le précédent est abandonné.
-\end{lessonbox}
-
-\newpage
-
-% ============================================================
-% PROBLÈME 3
-% ============================================================
-\section{Problème 3 : Position incorrecte de \texttt{catchError} dans le pipe RxJS}
-
-\subsection{Fichier concerné}
-\begin{itemize}
-    \item \texttt{frontend/src/app/features/auth/login/login.ts}
-\end{itemize}
-
-\begin{problembox}
-\textbf{Code problématique :}
-\begin{lstlisting}[style=tsstyle]
-this.authService.login(email, password).pipe(
-  catchError((err) => {
-    // ⚠️ Attrape les erreurs de login() UNIQUEMENT
-    this.errorMessage = '...';
-    return EMPTY;
-  }),
-  switchMap(() => this.authService.getOtp(this.email))
-  // ❌ Si getOtp() échoue, l'erreur n'est PAS attrapée ici
-  // Elle remonte jusqu'au subscribe()
-)
-\end{lstlisting}
-\end{problembox}
-
-\subsection{Comprendre l'ordre d'exécution dans \texttt{pipe()}}
-
-Dans RxJS, les opérateurs dans \texttt{pipe()} sont exécutés \textbf{séquentiellement, de haut en bas}. Chaque opérateur reçoit la sortie du précédent.
-
-Si \texttt{catchError} est placé \textbf{avant} \texttt{switchMap} :
-\begin{itemize}
-    \item Il intercepte uniquement les erreurs de ce qui le précède
-    \item Les erreurs de \texttt{switchMap} (et de \texttt{getOtp()}) passent \textbf{après} lui → elles ne sont pas interceptées
-    \item Elles remontent jusqu'au \texttt{subscribe()}
-\end{itemize}
-
-\begin{solutionbox}
-\textbf{Code corrigé :}
-\begin{lstlisting}[style=tsstyle]
-this.authService.login(email, password).pipe(
-  tap((response: AuthResponse) => {
-    this.authService.setSession(response.user, response.token);
-  }),
-  switchMap(() => this.authService.getOtp(this.email)),
-  catchError((err) => {
-    // ✅ Attrape les erreurs de login() ET de getOtp()
-    if (err.status === 401) {
-      this.errorMessage = 'Adresse e-mail ou mot de passe incorrect.';
-    } else if (err.status === 0) {
-      this.errorMessage = 'Impossible de contacter le serveur.';
-    } else {
-      this.errorMessage = 'Une erreur est survenue.';
-    }
-    return EMPTY;
-  }),
-  finalize(() => { this.loginLoading = false; })
-)
-\end{lstlisting}
-\end{solutionbox}
-
-\subsection{Pourquoi \texttt{EMPTY} et pas \texttt{throwError} ?}
-
-\begin{itemize}
-    \item \texttt{EMPTY} : complète l'Observable sans émettre de valeur. Le callback \texttt{next} du \texttt{subscribe} n'est pas appelé, mais le flux se termine proprement.
-    \item \texttt{throwError} : émet une erreur. Le callback \texttt{error} du \texttt{subscribe} est appelé. Si ce callback n'existe pas, l'erreur est non gérée (\texttt{Uncaught Error}).
-\end{itemize}
-
-Dans notre cas, on utilise \texttt{EMPTY} car l'erreur est déjà traitée dans le \texttt{catchError} (message affiché à l'utilisateur). On ne veut pas propager l'erreur plus loin.
-
-\begin{lessonbox}
-\textbf{Schéma mental du pipe RxJS :}
-\begin{center}
-\begin{tabular}{|c|c|c|c|}
-\hline
-\texttt{login()} & $\rightarrow$ & \texttt{tap()} & $\rightarrow$ \\
-\hline
-\texttt{switchMap()} & $\rightarrow$ & \texttt{getOtp()} & $\rightarrow$ \\
-\hline
-\texttt{catchError()} & $\rightarrow$ & \texttt{finalize()} & $\rightarrow$ \\
-\hline
-\multicolumn{3}{|c|}{\texttt{subscribe()}} & \\
-\hline
-\end{tabular}
-\end{center}
-
-\textbf{Règle} : \texttt{catchError} intercepte tout ce qui se trouve \textbf{avant} lui dans le pipe. Placez-le \textbf{en dernier} avant \texttt{finalize}.
-\end{lessonbox}
-
-\newpage
-
-% ============================================================
-% PROBLÈME 4
-% ============================================================
-\section{Problème 4 : Réponse incomplète du backend (utilisateur absent)}
-
-\subsection{Fichier concerné}
-\begin{itemize}
-    \item \texttt{backend/src/main/java/inpg/sn/lms/auth/controller/AuthController.java}
-\end{itemize}
-
-\begin{problembox}
-\textbf{Code problématique (méthode \texttt{login()}) :}
-\begin{lstlisting}[style=javastyle]
-return ResponseEntity.ok(Map.of(
-    "token", jwt,
-    "message", "Authentification réussie."
-));
-\end{lstlisting}
-
-Le backend renvoyait uniquement le token JWT et un message. Le frontend attendait un objet \texttt{user} contenant \texttt{id}, \texttt{username}, \texttt{email} et \texttt{roles}.
-\end{problembox}
-
-\subsection{Le contrat Frontend ↔ Backend}
-
-Le frontend Angular définit une interface TypeScript pour typer la réponse attendue :
-
-\begin{lstlisting}[style=tsstyle]
-// auth-response.ts
-export interface AuthResponse {
-    token: string;
-    refreshToken: string;
-    user: User;
+export interface FormationDetailData {
+  id: number; libelle: string; description: string;
+  imageUrl: string; niveau: string; domaine: string; duree: string;
+  badgeLabel?: string; badgeIcon?: string;
+  heroMeta?: Array<{ icon: string; label: string; value: string }>;
+  modules?: Array<{
+    titre: string; icon: string; items: string[];
+    colSpan?: 1|2; badge?: string; description?: string;
+  }>;
+  sections?: Array<{
+    titre: string; icon: string;
+    type: 'grid'|'list'|'cards'|'accordion';
+    items: Array<{titre?: string; description?: string;
+                   icon?: string; badge?: string; sousItems?: string[]}>;
+  }>;
+  sidebar?: { duree?: string; tarif?: string; lieu?: string; /* ... */ };
 }
 \end{lstlisting}
 
-Et l'utilise dans le service :
-\begin{lstlisting}[style=tsstyle]
-login(email: string, password: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, password });
-}
-\end{lstlisting}
-
-Quand le backend ne renvoie pas de champ \texttt{user}, TypeScript ne peut pas le détecter à la compilation (la vérification se fait à l'exécution). Résultat : \texttt{response.user} vaut \texttt{undefined} côté frontend.
-
 \begin{solutionbox}
-\textbf{Code corrigé :}
-\begin{lstlisting}[style=javastyle]
-// Construction de l'objet utilisateur
-Map<String, Object> userMap = Map.of(
-    "id", user.getId(),
-    "username", user.getUsername(),
-    "email", user.getEmail(),
-    "roles", user.getRoles().stream()
-        .map(role -> role.getCode())
-        .toList()
-);
-
-// Réponse complète
-return ResponseEntity.ok(Map.of(
-    "token", jwt,
-    "user", userMap,
-    "message", "Authentification réussie."
-));
-\end{lstlisting}
-\end{solutionbox}
-
-\subsection{Pourquoi \texttt{role.getCode()} et pas \texttt{role.getName()} ?}
-
-L'entité JPA \texttt{Role} est définie ainsi :
-\begin{lstlisting}[style=javastyle]
-@Entity
-public class Role {
-    private Integer id;
-    private String code;    // ex: "ROLE_ADMIN", "ROLE_ETUDIANT"
-    private String libelle; // ex: "Administrateur", "Étudiant"
-    private String description;
-}
-\end{lstlisting}
-
-Il n'y a pas de méthode \texttt{getName()} — l'attribut s'appelle \texttt{code}. Utiliser \texttt{getName()} provoquerait une erreur de compilation. On utilise donc \texttt{getCode()} qui retourne le code du rôle (ex: \texttt{"Admin"}, \texttt{"User"}, \texttt{"Etudiant"}, etc.).
-
-\begin{lessonbox}
-\textbf{Le contrat API (ou API contract)} est l'ensemble des règles qui définissent comment le frontend et le backend communiquent :
-\begin{itemize}
-    \item Structure des requêtes (quels champs envoyer)
-    \item Structure des réponses (quels champs recevoir)
-    \item Codes HTTP attendus (200, 401, 403, 500)
-\end{itemize}
-
-Un contrat mal respecté produit des bugs silencieux — le frontend s'attend à recevoir un objet, il reçoit \texttt{undefined}, et l'erreur n'apparaît que quand on essaie d'utiliser cet objet. \textbf{Toujours documenter et tester le contrat API.}
-\end{lessonbox}
-
-\newpage
-
-% ============================================================
-% PROBLÈME 5
-% ============================================================
-\section{Problème 5 : Erreur SSL avec le serveur SMTP Brevo}
-
-\subsection{Fichier concerné}
-\begin{itemize}
-    \item \texttt{backend/src/main/resources/application.properties}
-\end{itemize}
-
-\begin{problembox}
-\textbf{Erreur rencontrée (HTTP 500) :}
-\begin{lstlisting}[style=bashstyle]
-Mail server connection failed.
-Failed messages: jakarta.mail.MessagingException:
-  Could not convert socket to TLS;
-  nested exception is:
-    javax.net.ssl.SSLHandshakeException: (certificate_unknown)
-    PKIX path building failed:
-    sun.security.provider.certpath.SunCertPathBuilderException:
-    unable to find valid certification path to requested target
-\end{lstlisting}
-\end{problembox}
-
-\subsection{Comprendre le problème SSL/TLS}
-
-Quand JavaMail (via Spring Boot) essaie d'envoyer un email via le serveur SMTP de Brevo (\texttt{smtp-relay.brevo.com}), il établit une connexion TLS (Transport Layer Security). Cette connexion nécessite que le serveur présente un \textbf{certificat SSL} pour prouver son identité.
-
-La JVM (Java Virtual Machine) possède un \textbf{truststore} — un magasin de certificats de confiance. Si le certificat présenté par Brevo n'est pas dans ce truststore (ou si la chaîne de certification n'est pas complète), la JVM refuse la connexion.
-
-C'est exactement ce qui se passe ici : le certificat de Brevo n'est pas reconnu par le truststore par défaut de la JVM.
-
-\begin{solutionbox}
-\textbf{Ajout dans \texttt{application.properties} :}
-\begin{lstlisting}[style=bashstyle]
-spring.mail.properties.mail.smtp.ssl.trust=smtp-relay.brevo.com
-\end{lstlisting}
-
-Cette propriété indique à JavaMail de \textbf{faire confiance} au certificat du serveur \texttt{smtp-relay.brevo.com}, même s'il n'est pas dans le truststore de la JVM.
-\end{solutionbox}
-
-\subsection{Alternatives possibles}
+\textbf{Étapes :}
 
 \begin{enumerate}
-    \item \textbf{Importer le certificat dans le truststore Java} (plus lourd) :
-    \begin{lstlisting}[style=bashstyle]
-keytool -import -alias brevo -file brevo.crt \
-  -keystore $JAVA_HOME/lib/security/cacerts
-\end{lstlisting}
-    Cette solution est plus sécurisée car elle valide explicitement le certificat, mais elle nécessite un accès au truststore et doit être refaite à chaque mise à jour du certificat.
-
-    \item \textbf{Désactiver complètement la vérification SSL} (dangereux, jamais en production) :
-    \begin{lstlisting}[style=bashstyle]
-spring.mail.properties.mail.smtp.ssl.trust=*
-\end{lstlisting}
-
-    \item \textbf{Utiliser \texttt{ssl.trust}} (solution retenue) : simple, efficace pour un service connu comme Brevo.
-\end{enumerate}
-
-\begin{lessonbox}
-\textbf{Qu'est-ce que le truststore Java ?}
-
-Le truststore est un fichier (\texttt{cacerts}) situé dans \texttt{\$JAVA\_HOME/lib/security/} qui contient les certificats des autorités de certification (CA) reconnues. Quand une connexion TLS est établie, Java vérifie que le certificat du serveur est signé par une CA présente dans le truststore.
-
-\textbf{Pourquoi Brevo n'est pas reconnu ?}
-\begin{itemize}
-    \item Le certificat de Brevo peut être signé par une CA intermédiaire absente du truststore
-    \item La version de Java utilisée peut avoir un truststore obsolète
-    \item Certains fournisseurs SMTP utilisent des certificats auto-signés
-\end{itemize}
-
-\textbf{Bonne pratique} : la propriété \texttt{ssl.trust} est une solution de contournement acceptable pour les serveurs SMTP connus, mais en production, privilégier l'import du certificat dans le truststore.
-\end{lessonbox}
-
-\newpage
-
-% ============================================================
-% PROBLÈME 6
-% ============================================================
-\section{Problème 6 : Incohérence du Design System entre Login et Register}
-
-\subsection{Fichier concerné}
-\begin{itemize}
-    \item \texttt{frontend/src/app/features/auth/login/login.html}
-\end{itemize}
-
-\subsection{Contexte}
-
-Le projet utilise \textbf{Tailwind CSS v4} avec un fichier de configuration (\texttt{tailwind.config.js}) qui définit un \textbf{Design System complet} basé sur Material Design 3 (MD3). Ce design system inclut :
-
-\begin{itemize}
-    \item \textbf{Tokens de couleurs} : \texttt{primary}, \texttt{secondary}, \texttt{surface}, \texttt{error}, \texttt{outline}, \texttt{on-surface}, \texttt{on-primary}, etc.
-    \item \textbf{Tokens typographiques} : \texttt{headline-lg}, \texttt{headline-md}, \texttt{body-lg}, \texttt{body-md}, \texttt{label-md}, \texttt{label-sm}, etc.
-    \item \textbf{Tokens d'espacement} : \texttt{stack-sm} (8px), \texttt{stack-md} (16px), \texttt{gutter} (24px), etc.
-\end{itemize}
-
-\begin{problembox}
-Le formulaire d'inscription (\texttt{register.html}) utilisait correctement ces tokens MD3, mais le formulaire de connexion (\texttt{login.html}) utilisait des classes Tailwind brutes sans aucune cohérence :
-
-\begin{center}
-\begin{tabular}{|l|l|l|}
-\hline
-\textbf{Élément} & \textbf{Login (avant)} & \textbf{Register} \\
-\hline
-Fond & \texttt{bg-slate-100} & \texttt{bg-surface-container-lowest} \\
-Titre & \texttt{text-2xl font-bold text-slate-800} & \texttt{font-headline-md text-headline-md} \\
-Sous-titre & \texttt{text-sm text-slate-500} & \texttt{font-body-sm text-body-sm text-on-surface-variant} \\
-Bouton & \texttt{bg-blue-600} / \texttt{bg-green-600} & \texttt{bg-secondary text-on-secondary} \\
-Input focus & \texttt{focus:ring-blue-500} & \texttt{focus:ring-secondary/20} \\
-Erreur & \texttt{border-red-300 bg-red-50} & \texttt{bg-error-container text-error} \\
-Onglets & Absents & Présents (Se connecter / S'inscrire) \\
-\hline
-\end{tabular}
-\end{center}
-\end{problembox}
-
-\subsection{Pourquoi un Design System est important}
-
-Un Design System n'est pas qu'une question d'esthétique. C'est un outil de \textbf{maintenabilité} et de \textbf{cohérence} :
-
-\begin{itemize}
-    \item Si on veut changer la couleur principale, on modifie \texttt{tailwind.config.js} → tous les composants sont mis à jour automatiquement
-    \item Les développeurs n'ont pas à «~inventer~» des styles — ils utilisent les tokens prédéfinis
-    \item L'expérience utilisateur est cohérente sur toute l'application
-\end{itemize}
-
-\begin{solutionbox}
-\textbf{Modifications appliquées à \texttt{login.html} :}
-
-\begin{enumerate}
-    \item \textbf{Suppression du wrapper externe} : le \texttt{AuthLayoutComponent} gère déjà le fond et le centrage. Le login était wrappé dans un \texttt{div} redondant avec son propre fond.
+    \item \textbf{Création du composant générique} \texttt{FormationDetailComponent} avec une interface \texttt{FormationDetailData} supportant :
+    \begin{itemize}
+        \item Modules en grille bento (1 à 3 colonnes, \texttt{colSpan} pour les modules larges)
+        \item Sections dynamiques de 4 types : \texttt{grid}, \texttt{list}, \texttt{cards}, \texttt{accordion}
+        \item Badges, descriptions et icônes pour chaque module
+        \item Sidebar optionnelle avec durée, tarif, lieu, certificat, boutons d'action
+    \end{itemize}
     
-    \item \textbf{Remplacement de toutes les classes} par les tokens MD3 (voir tableau ci-dessus).
+    \item \textbf{Données mockées pour les 16 formations} dans \texttt{DETAILS\_MOCK} :
+    \begin{itemize}
+        \item ID 1 : MBA Économie \& Management (modules 3-col, méthode péda)
+        \item ID 2 : Ingénierie Pétrole \& Gaz (points clés, débouchés, sidebar)
+        \item ID 4 : Certifications HSE (9 modules avec badges)
+        \item ID 7 : Survie — BOSIET, FOET, HUET, TBOSIT, TFOET, THUET
+        \item ID 16 : MBA Finance \& Stratégie (accordéon semestres, sidebar)
+    \end{itemize}
     
-    \item \textbf{Ajout des onglets de navigation} identiques à Register :
+    \item \textbf{Route lazy-loadée} dans \texttt{recrutement.routes.ts} :
     \begin{lstlisting}[style=tsstyle]
-<div class="flex border-b border-outline-variant mb-8">
-  <a routerLink="/auth/login"
-     routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
-     [routerLinkActiveOptions]="{ exact: true }"
-     class="flex-1 pb-3 text-center ...">
-    Se connecter
-  </a>
-  <a routerLink="/auth/register"
-     routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
-     class="flex-1 pb-3 text-center ...">
-    S'inscrire
-  </a>
-</div>
+{ path: 'catalogue/:id',
+  loadComponent: () => import('./.../formation-detail.component')
+    .then(m => m.FormationDetailComponent) }
     \end{lstlisting}
     
-    \item \textbf{Correction du lien d'inscription} : le lien pointait sur \texttt{/register} (route inexistante), corrigé en \texttt{/auth/register}.
-    
-    \item \textbf{Uniformisation des inputs} : ajout de la classe \texttt{form-input} et des styles MD3 (\texttt{border-outline-variant}, \texttt{bg-surface-container-lowest}, \texttt{focus:border-secondary}, \texttt{focus:ring-secondary/20}).
+    \item \textbf{Connexion du bouton} dans \texttt{catalogue.component.html} : remplacement du \texttt{<button>} par un \texttt{<a [routerLink]="'/recrutement/catalogue/' + formation.id">}
 \end{enumerate}
 \end{solutionbox}
 
 \begin{lessonbox}
-\textbf{Les tokens de couleurs dans Tailwind config :}
+\textbf{Pattern : Composant générique piloté par données}
 
-Dans \texttt{tailwind.config.js}, on définit des couleurs sémantiques :
+Au lieu de créer N composants pour N entités, on crée un seul composant paramétré par une interface de données. C'est le \textbf{principe DRY} (Don't Repeat Yourself) appliqué aux templates.
+
+Avantages :
+\begin{itemize}
+    \item \textbf{Maintenabilité} : corriger le layout corrige toutes les formations
+    \item \textbf{Cohérence} : design uniforme garanti
+    \item \textbf{Extensibilité} : ajouter une formation = ajouter une entrée dans le dictionnaire
+    \item \textbf{Lazy-loading} : le chunk n'est chargé qu'au premier accès
+\end{itemize}
+
+\textbf{Taille du chunk} : \texttt{formation-detail-component} = 56.34 kB (16 formations, images incluses par URL).
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 8 : PAGES ACCUEIL, CONTACT, INSTITUT
+% ============================================================
+\section{Problème 8 : Création des pages publiques manquantes}
+
+\subsection{Fichiers créés}
+\begin{itemize}
+    \item \texttt{landing/landing.component.ts} + \texttt{.html}
+    \item \texttt{contact/contact.component.ts} + \texttt{.html}
+    \item \texttt{institut/institut.component.ts} + \texttt{.html}
+    \item \texttt{app.routes.ts} (modifié)
+\end{itemize}
+
+\begin{problembox}
+Le site n'avait que le catalogue comme page d'accueil. Il manquait :
+\begin{itemize}
+    \item Une \textbf{page d'accueil} avec hero, chiffres clés et programmes phares
+    \item Une \textbf{page Contact} avec formulaire, carte et réseaux sociaux
+    \item Une \textbf{page Institut} (À propos) avec missions, valeurs, partenaires
+\end{itemize}
+\end{problembox}
+
+\begin{solutionbox}
+Trois composants standalone ont été créés, chacun lazy-loadé dans \texttt{app.routes.ts} :
+
 \begin{lstlisting}[style=tsstyle]
-colors: {
-  "primary": "#000002",
-  "secondary": "#30609a",
-  "surface-container-lowest": "#ffffff",
-  "error": "#ba1a1a",
-  "error-container": "#ffdad6",
-  "outline-variant": "#c7c5d0",
-  "on-surface-variant": "#46464e",
-  // ...
+{ path: '', redirectTo: 'accueil', pathMatch: 'full' },
+{ path: 'accueil',
+  loadComponent: () => import('./.../landing.component')
+    .then(m => m.LandingComponent) },
+{ path: 'contact',
+  loadComponent: () => import('./.../contact.component')
+    .then(m => m.ContactComponent) },
+{ path: 'institut',
+  loadComponent: () => import('./.../institut.component')
+    .then(m => m.InstitutComponent) },
+\end{lstlisting}
+
+\textbf{Page Accueil} : hero avec image de fond, section chiffres clés (95\% insertion, 15 000 techniciens, 50\% contenu local), section programmes phares (6 cartes liées aux pages détail), boutons « Découvrir les formations » et « Postuler ».
+
+\textbf{Page Contact} : grille d'infos (adresse, téléphone, email, horaires), formulaire de contact avec simulation d'envoi (spinner → succès → reset), carte Google Maps intégrée, liens LinkedIn/X/Facebook.
+
+\textbf{Page Institut} : hero, section Qui sommes-nous, Vision \& Ambition, 4 valeurs, 3 missions, 5 logos partenaires, CTA bottom.
+\end{solutionbox}
+
+\begin{lessonbox}
+\textbf{Lazy-loading} : chaque page est un chunk séparé chargé uniquement quand l'utilisateur y accède. Cela réduit le poids initial de l'application et accélère le premier chargement.
+
+Taille des chunks : \texttt{landing-component} = 8.89 kB, \texttt{contact-component} = 12.93 kB, \texttt{institut-component} = 11.65 kB.
+
+\textbf{RouterLinkActive} : directive Angular qui applique automatiquement une classe CSS quand la route correspond. Utilisée dans la navbar pour surligner l'onglet actif.
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 9 : NAVBAR PROFESSIONNELLE
+% ============================================================
+\section{Problème 9 : Navbar professionnelle fixe avec gestion d'état}
+
+\subsection{Fichiers concernés}
+\begin{itemize}
+    \item \texttt{shared/components/navbar/navbar.component.ts}
+    \item \texttt{shared/components/navbar/navbar.component.html}
+\end{itemize}
+
+\begin{problembox}
+La navbar initiale avait plusieurs défauts :
+\begin{itemize}
+    \item Position \texttt{sticky} (ne restait pas visible au scroll)
+    \item Style basique (liens texte, pas d'indicateur d'onglet actif)
+    \item Marque « INPG LMS » en noir, pas dans la charte graphique
+    \item Pas de différenciation visiteur / connecté
+\end{itemize}
+\end{problembox}
+
+\subsection{Solution : Navbar professionnelle}
+
+\begin{solutionbox}
+\textbf{1. Position fixed + spacer}
+
+\begin{lstlisting}[style=htmlstyle]
+<header class="... fixed top-0 left-0 right-0 z-50">
+  ...
+</header>
+<div class="h-[72px]"></div>  <!-- Spacer compensant le fixed -->
+\end{lstlisting}
+
+\textbf{2. Design professionnel}
+\begin{itemize}
+    \item Fond : \texttt{bg-white/95 backdrop-blur-sm} (effet verre dépoli)
+    \item Marque : « INPG » en bleu \texttt{\#30609a}, « LMS » en bleu foncé \texttt{\#131741}
+    \item Liens : style pill \texttt{rounded-lg} avec hover fond gris clair
+    \item Onglet actif : \texttt{routerLinkActive} applique \texttt{text-[\#30609a] bg-[\#30609a]/8}
+    \item Bouton S'inscrire : \texttt{shadow-sm shadow-[\#30609a]/20} + \texttt{active:scale-95}
+\end{itemize}
+
+\textbf{3. Gestion connecté/déconnecté}
+
+Utilisation du signal \texttt{currentUser} de \texttt{AuthService} et de l'API \texttt{effect()} d'Angular pour réagir automatiquement :
+
+\begin{lstlisting}[style=tsstyle]
+constructor() {
+  effect(() => {
+    const user = this.auth.currentUser();
+    if (!user) { this.dropdownOpen = false; }
+  });
+}
+
+get isLoggedIn(): boolean {
+  return this.auth.isLoggedIn() && this.auth.currentUser() != null;
 }
 \end{lstlisting}
 
-Ces tokens suivent la convention Material Design 3 :
 \begin{itemize}
-    \item \texttt{surface-*} : fonds (du plus bas au plus élevé)
-    \item \texttt{primary/secondary/tertiary} : couleurs principales
-    \item \texttt{on-*} : couleur du contenu sur un fond donné
-    \item \texttt{error / error-container} : couleurs d'erreur
-    \item \texttt{outline / outline-variant} : bordures
+    \item \textbf{Non connecté} : affiche « Se connecter » + « S'inscrire »
+    \item \textbf{Connecté} : avatar circulaire avec initiales + dropdown (Tableau de bord, Mes candidatures, Déconnexion)
+    \item \textbf{Déconnexion} : hover rouge \texttt{bg-[\#ffdad6] text-[\#ba1a1a]}
 \end{itemize}
+\end{solutionbox}
+
+\begin{lessonbox}
+\textbf{Le signal \texttt{currentUser} et l'API \texttt{effect()}}
+
+Dans Angular 21, un \textbf{signal} est une valeur réactive. Quand sa valeur change, tous les \texttt{effect()} qui le lisent sont ré-exécutés automatiquement. C'est l'équivalent moderne de \texttt{BehaviorSubject} + \texttt{subscribe()}, mais avec une API plus simple et de meilleures performances.
+
+Ici, à chaque changement de \texttt{currentUser} (connexion, déconnexion), l'\texttt{effect()} ferme le dropdown si l'utilisateur est déconnecté.
+
+\textbf{Pourquoi \texttt{get isLoggedIn()} et pas une propriété simple ?}
+
+Un getter est recalculé à chaque cycle de détection de changement. Comme il dépend de \texttt{currentUser()} (un signal), Angular sait exactement quand le réévaluer — c'est le \textbf{fine-grained reactivity}.
 \end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 10 : BUG OTP AU CLAVIER ENTER
+% ============================================================
+\section{Problème 10 : Bug OTP au clavier Enter + redirection incorrecte}
+
+\subsection{Fichiers concernés}
+\begin{itemize}
+    \item \texttt{features/auth/login/login.html}
+    \item \texttt{features/auth/login/login.ts}
+\end{itemize}
+
+\begin{problembox}
+Deux bugs simultanés :
+\begin{enumerate}
+    \item Dans le formulaire OTP, appuyer sur \textbf{Enter} déclenchait le \texttt{submit} du \texttt{<form>}, ce qui rappelait \texttt{onSubmit()} → renvoyait 3 codes OTP consécutifs. Le premier code entré par l'utilisateur était déjà périmé.
+    \item Après vérification OTP réussie, l'utilisateur était redirigé vers \texttt{/test1} (page de test) au lieu de \texttt{/accueil} (page d'accueil).
+\end{enumerate}
+\end{problembox}
+
+\subsection{Pourquoi Enter déclenche le submit ?}
+
+Dans un formulaire HTML, n'importe quel \texttt{<button>} sans attribut \texttt{type} explicite a un comportement par défaut de \textbf{type="submit"}. Appuyer sur Enter dans un champ input déclenche le submit du formulaire parent.
+
+Le bouton « Vérifier le code » et « Renvoyer le code » étaient des \texttt{<button>} sans \texttt{type} → ils agissaient comme des boutons de soumission.
+
+\begin{solutionbox}
+\textbf{Correction 1 — Boutons avec \texttt{type="button"}}
+
+\begin{lstlisting}[style=htmlstyle]
+<!-- AVANT : Enter → submit → renvoi OTP -->
+<button (click)="verifyOtp()">Vérifier le code</button>
+
+<!-- APRÈS : Enter ignoré -->
+<button type="button" (click)="verifyOtp()">Vérifier le code</button>
+\end{lstlisting}
+
+\textbf{Correction 2 — Redirection après OTP}
+
+\begin{lstlisting}[style=tsstyle]
+// AVANT
+this.router.navigate(['/test1']);
+
+// APRÈS
+this.router.navigate(['/accueil']);
+\end{lstlisting}
+\end{solutionbox}
+
+\begin{lessonbox}
+\textbf{Règle HTML} : toujours spécifier \texttt{type="button"} sur les boutons qui ne doivent PAS soumettre le formulaire. Le défaut \texttt{type="submit"} est une source fréquente de bugs dans les formulaires à plusieurs boutons.
+
+\textbf{Pourquoi 3 codes OTP ?} Chaque submit appelait \texttt{onSubmit()} qui appelait \texttt{login()} puis \texttt{getOtp()}. Comme le login réussissait à chaque fois (token déjà valide), 3 codes étaient générés et envoyés. Le premier saisi était déjà remplacé par les suivants → « code invalide ».
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 11 : SUPPRESSION OTP POUR LE LOGIN
+% ============================================================
+\section{Problème 11 : Suppression de l'OTP pour la connexion}
+
+\subsection{Fichiers concernés}
+\begin{itemize}
+    \item \texttt{features/auth/login/login.ts}
+    \item \texttt{features/auth/login/login.html}
+\end{itemize}
+
+\begin{problembox}
+La connexion nécessitait une double authentification (mot de passe + code OTP par email). L'utilisateur a demandé de simplifier : l'OTP est conservé uniquement pour l'\textbf{inscription}, la connexion est directe (email + mot de passe → accueil).
+\end{problembox}
+
+\begin{solutionbox}
+\textbf{Dans \texttt{login.ts}} : suppression du \texttt{switchMap(() => this.authService.getOtp())}. Le flux devient :
+
+\begin{lstlisting}[style=tsstyle]
+this.authService.login(email, password).pipe(
+  tap((response) => this.authService.setSession(response.user, response.token)),
+  catchError((err) => { /* gestion erreurs */ }),
+  finalize(() => { this.loginLoading = false; })
+).subscribe({
+  next: () => this.router.navigate(['/accueil'])
+});
+\end{lstlisting}
+
+\textbf{Dans \texttt{login.html}} : suppression de tout le bloc OTP (champ code, boutons Vérifier/Renvoyer, compteur, condition \texttt{*ngIf="showOtpField"}). Le formulaire redevient un simple email + mot de passe.
+
+\textbf{Résultat} : le chunk \texttt{main} est passé de 63.24 kB à 60.14 kB (code mort supprimé).
+\end{solutionbox}
+
+\begin{lessonbox}
+\textbf{Principe YAGNI} (You Ain't Gonna Need It) : ne pas implémenter une fonctionnalité tant qu'elle n'est pas nécessaire. L'OTP au login était une surcouche de sécurité non demandée par le client.
+
+\textbf{Impact sur le build} : supprimer du code mort réduit la taille du bundle, ce qui améliore le temps de chargement. Ici, 3 kB économisés.
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 12 : CORS — REQUÊTE OPTIONS REJETÉE (HTTP 403)
+% ============================================================
+\section{Problème 12 : Erreur CORS — Requête OPTIONS bloquée}
+
+\subsection{Fichiers concernés}
+\begin{itemize}
+    \item \texttt{backend/.../config/CorsConfig.java} (créé)
+    \item \texttt{frontend/proxy.conf.json} (créé)
+    \item \texttt{frontend/angular.json} (modifié)
+    \item \texttt{frontend/src/environments/environment.development.ts} (modifié)
+\end{itemize}
+
+\begin{problembox}
+Le frontend Angular (port 4200) ne pouvait pas appeler le backend Spring Boot (port 8080). L'erreur dans la console navigateur montrait :
+
+\begin{lstlisting}[style=bashstyle]
+Request URL: http://localhost:8080/api/auth/register
+Request Method: OPTIONS
+Status Code: 403 Forbidden
+\end{lstlisting}
+
+La requête \texttt{OPTIONS} (preflight CORS) était rejetée car Spring Security la bloquait avant même qu'elle n'atteigne le contrôleur.
+\end{problembox}
+
+\subsection{Comprendre le mécanisme CORS}
+
+Quand un navigateur envoie une requête d'un port à un autre (4200 → 8080), il envoie d'abord une requête \textbf{preflight} avec la méthode HTTP \texttt{OPTIONS} pour demander au serveur : « Suis-je autorisé à t'envoyer cette requête ? ».
+
+Si le serveur répond avec les bons headers CORS (\texttt{Access-Control-Allow-Origin}, \texttt{Access-Control-Allow-Methods}), le navigateur envoie la vraie requête. Sinon → erreur 403.
+
+Le problème : Spring Security intercepte les requêtes \texttt{OPTIONS} avant qu'elles n'atteignent la configuration CORS. Il faut soit :
+\begin{enumerate}
+    \item Configurer CORS côté backend (filtre Spring)
+    \item Utiliser un proxy de développement (Angular)
+\end{enumerate}
+
+La solution retenue combine les deux approches.
+
+\begin{solutionbox}
+\textbf{1. CORS côté backend} — \texttt{CorsConfig.java} :
+
+\begin{lstlisting}[style=javastyle]
+@Configuration
+public class CorsConfig {
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        config.addAllowedOrigin("http://localhost:4200");
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return new CorsFilter(source);
+    }
+}
+\end{lstlisting}
+
+\textbf{2. Proxy côté frontend} — \texttt{proxy.conf.json} :
+
+\begin{lstlisting}[style=tsstyle]
+{
+  "/api": {
+    "target": "http://localhost:8080",
+    "secure": false,
+    "changeOrigin": true
+  }
+}
+\end{lstlisting}
+
+\textbf{3. Utilisation du proxy} — le service Angular utilise maintenant \texttt{/api} au lieu de \texttt{http://localhost:8080/api}. Le proxy intercepte les requêtes \texttt{/api/**} et les redirige vers le backend. Le navigateur ne voit qu'un seul port (4200) → plus de CORS.
+
+\begin{lstlisting}[style=tsstyle]
+// AVANT
+private baseUrl = 'http://localhost:8080/api';
+
+// APRÈS
+private baseUrl = '/api';
+\end{lstlisting}
+\end{solutionbox}
+
+\begin{lessonbox}
+\textbf{Pourquoi deux solutions ?}
+
+\begin{itemize}
+    \item \textbf{Proxy (développement)} : utilisé avec \texttt{ng serve}, il intercepte les requêtes au niveau du serveur de développement. Simple à configurer, ne nécessite pas de modification backend.
+    \item \textbf{CORS Filter (production)} : nécessaire quand le frontend et le backend sont déployés sur des domaines différents (ex: frontend sur Netlify, backend sur Render). Le proxy de dev ne fonctionne qu'en local.
+\end{itemize}
+
+\textbf{Bonne pratique} : configurer les deux. Le proxy pour le développement, le filtre CORS pour la production.
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 13 : VIOLATION DE CONTRAINTE UNIQUE USERNAME
+% ============================================================
+\section{Problème 13 : Doublon de username à l'inscription}
+
+\subsection{Fichier concerné}
+\begin{itemize}
+    \item \texttt{backend/.../auth/service/UserService.java}
+\end{itemize}
+
+\begin{problembox}
+L'erreur suivante apparaissait quand deux utilisateurs avec le même prénom/nom s'inscrivaient :
+
+\begin{lstlisting}[style=bashstyle]
+Unique index or primary key violation:
+"PUBLIC.CONSTRAINT_INDEX_4D4 ON PUBLIC.USERS(USERNAME)"
+Values: 'ibrahima_pouye'
+\end{lstlisting}
+
+Le \texttt{username} est généré côté frontend par concaténation \texttt{prenom\_nom}. La colonne \texttt{username} a une contrainte \texttt{UNIQUE} en base de données. Deux « Ibrahima Pouye » → même username → violation.
+\end{problembox}
+
+\subsection{Analyse}
+
+L'entité JPA \texttt{User} définit \texttt{username} avec \texttt{@Column(unique = true)}. Hibernate traduit cela en contrainte SQL \texttt{UNIQUE}. Quand \texttt{userRepository.save()} est appelé avec un username existant, la base de données rejette l'insertion.
+
+Le problème n'est pas côté frontend (on ne peut pas deviner si un username existe), mais côté backend : il faut gérer le cas du doublon avant l'insertion.
+
+\begin{solutionbox}
+Modification de \texttt{UserService.createUser()} :
+
+\begin{lstlisting}[style=javastyle]
+public User createUser(UserDto userDto) {
+    // 1. Vérifier l'email
+    if (userRepository.findByEmail(userDto.getEmail()) != null) {
+        throw new RuntimeException("Cet email est déjà utilisé.");
+    }
+    
+    // 2. Générer un username unique si nécessaire
+    String baseUsername = userDto.getUsername();
+    String username = baseUsername;
+    int suffix = 1;
+    while (userRepository.findByUsername(username) != null) {
+        username = baseUsername + suffix;
+        suffix++;
+    }
+    
+    // 3. Appliquer le username (potentiellement modifié)
+    User newUser = userDto.toUser();
+    newUser.setUsername(username);
+    newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
+    return userRepository.save(newUser);
+}
+\end{lstlisting}
+\end{solutionbox}
+
+\begin{lessonbox}
+\textbf{Pattern : Unique username generation}
+
+La boucle \texttt{while} incrémente un suffixe numérique jusqu'à trouver un username libre :
+\begin{itemize}
+    \item \texttt{ibrahima\_pouye} (premier)
+    \item \texttt{ibrahima\_pouye1} (deuxième)
+    \item \texttt{ibrahima\_pouye2} (troisième)
+\end{itemize}
+
+\textbf{Pourquoi pas côté frontend ?} Le frontend ne peut pas vérifier l'unicité sans faire un appel API (liste de tous les usernames). Ce serait une fuite de données. La vérification doit être faite côté serveur.
+
+\textbf{Alternative} : utiliser l'email comme username, ou générer un UUID. Mais l'approche actuelle est plus conviviale (l'utilisateur voit son vrai nom dans l'interface).
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 14 : BOUTONS CONNEXION/INSCRIPTION INVISIBLES
+% ============================================================
+\section{Problème 14 : Boutons «Se connecter» / «S'inscrire» invisibles}
+
+\subsection{Fichier concerné}
+\begin{itemize}
+    \item \texttt{shared/components/navbar/navbar.component.ts}
+\end{itemize}
+
+\begin{problembox}
+Les boutons « Se connecter » et « S'inscrire » disparaissaient pour un VisiteurPublic0, remplacés par un avatar vide sans initiales. L'utilisateur ne pouvait plus ni se connecter ni s'inscrire.
+\end{problembox}
+
+\subsection{Diagnostic}
+
+La cause : un \textbf{ancien token JWT périmé} restait dans \texttt{localStorage} après une déconnexion incomplète ou une expiration de session.
+
+\begin{itemize}
+    \item \texttt{isLoggedIn()} vérifiait juste la présence du token → retournait \texttt{true}
+    \item Les boutons étaient masqués (condition \texttt{*ngIf="!isLoggedIn"})
+    \item \texttt{currentUser()} était \texttt{null} (token invalide → pas d'utilisateur chargé)
+    \item L'avatar s'affichait vide (pas d'initiales à afficher depuis un user null)
+\end{itemize}
+
+\begin{solutionbox}
+\textbf{1. Vérification du token au démarrage}
+
+\begin{lstlisting}[style=tsstyle]
+ngOnInit(): void {
+  if (this.auth.isLoggedIn()) {
+    // Un token existe : tenter de récupérer l'utilisateur courant
+    this.auth.getCurrentUser().subscribe({
+      next: (user) => {
+        if (!user) { this.auth.clearSession(); }
+        this.userReady = true;
+      },
+      error: () => {
+        this.auth.clearSession();
+        this.userReady = true;
+      },
+    });
+  } else {
+    this.userReady = true;
+  }
+}
+\end{lstlisting}
+
+\textbf{2. Condition double pour isLoggedIn}
+
+\begin{lstlisting}[style=tsstyle]
+get isLoggedIn(): boolean {
+  // Vérifie à la fois le token ET l'utilisateur courant (signal)
+  return this.auth.isLoggedIn() && this.auth.currentUser() != null;
+}
+\end{lstlisting}
+\end{solutionbox}
+
+\begin{lessonbox}
+\textbf{Le piège du token périmé}
+
+Un token JWT a une date d'expiration. Quand il expire :
+\begin{itemize}
+    \item Le frontend le conserve dans \texttt{localStorage} (personne ne le nettoie automatiquement)
+    \item L'API \texttt{/auth/verify} ou \texttt{/auth/current-user} échoue (HTTP 401)
+    \item Mais le frontend ne le sait pas tant qu'il n'a pas essayé d'appeler l'API
+\end{itemize}
+
+\textbf{Solution robuste} : au démarrage de l'application, toujours vérifier la validité du token en appelant \texttt{getCurrentUser()}. Si l'appel échoue → \texttt{clearSession()} nettoie le token périmé.
+
+\textbf{Pourquoi \texttt{get isLoggedIn()} vérifie les deux ?} Un getter simple \texttt{return !!this.getToken()} ne suffit pas : il ne distingue pas un token valide d'un token périmé. La vérification supplémentaire \texttt{\&\& currentUser() != null} garantit qu'on a bien un utilisateur chargé.
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 15 : FORMULAIRE DE CANDIDATURE AVEC STEPPER
+% ============================================================
+\section{Problème 15 : Formulaire de candidature avec stepper 4 étapes}
+
+\subsection{Fichiers concernés}
+\begin{itemize}
+    \item \texttt{candidature/formulaire/formulaire.component.ts} (refondu)
+    \item \texttt{candidature/formulaire/formulaire.component.html} (refondu)
+    \item \texttt{core/recrutement/services/recrutement.service.ts} (modifié)
+\end{itemize}
+
+\begin{problembox}
+Le formulaire de candidature existant était minimal : un simple select de session + un bouton « Créer un brouillon » avec des champs vides. Pas de collecte de données, pas de stepper, pas de persistance.
+
+Le besoin :
+\begin{itemize}
+    \item Formulaire en 4 étapes : Profil → Formation → Parcours → Documents
+    \item Sauvegarde automatique en brouillon (\texttt{sessionStorage})
+    \item Restauration des données si l'utilisateur revient
+    \item Création du brouillon via l'API backend
+    \item Soumission finale avec consentement
+\end{itemize}
+\end{problembox}
+
+\subsection{Architecture du stepper}
+
+Un stepper (ou wizard) est un formulaire multi-étapes où l'utilisateur progresse étape par étape. Chaque étape est un groupe logique de champs.
+
+\textbf{État géré par le composant :}
+\begin{lstlisting}[style=tsstyle]
+etape = 1;              // Étape courante (1-4)
+readonly totalEtapes = 4;
+
+data: CandidatureFormData = {
+  etape: 1, sessionId: null,
+  // Étape 1 : Profil
+  nom: '', prenom: '', email: '', telephone: '', adresse: '',
+  // Étape 2 : Formation
+  typeFormation: '', niveauVise: '', programme: '', campus: '',
+  // Étape 3 : Parcours
+  niveauActuel: '', etablissement: '', diplome: '', anneeObtention: '',
+  // Étape 4 : Documents
+  fichierIdentite: '', fichierCV: '', fichierMotivation: '', fichierPhoto: '',
+  consentement: false,
+};
+\end{lstlisting}
+
+\begin{solutionbox}
+\textbf{1. Persistance du brouillon}
+
+À chaque modification (\texttt{ngModelChange}), les données sont sauvegardées dans \texttt{sessionStorage} :
+
+\begin{lstlisting}[style=tsstyle]
+saveDraft(): void {
+  this.data.etape = this.etape;
+  sessionStorage.setItem('candidature_brouillon', JSON.stringify(this.data));
+}
+\end{lstlisting}
+
+Au \texttt{ngOnInit}, le brouillon est restauré si existant.
+
+\textbf{2. Création du brouillon côté backend}
+
+Les données sont sérialisées en JSON dans les champs \texttt{informationsPersonnelles}, \texttt{informationsAcademiques} et \texttt{informationsProfessionnelles} du \texttt{CandidatureRequest}.
+
+\textbf{3. Barre de progression}
+
+La barre de progression utilise un calcul CSS dynamique :
+
+\begin{lstlisting}[style=htmlstyle]
+<div [style.width]="((etape - 1) / (totalEtapes - 1)) * 100 + '%'"
+     class="... h-[2px] bg-[#30609a] transition-all duration-500">
+</div>
+\end{lstlisting}
+\end{solutionbox}
+
+\begin{lessonbox}
+\textbf{Pourquoi \texttt{sessionStorage} et pas \texttt{localStorage} ?}
+
+\begin{itemize}
+    \item \texttt{sessionStorage} : données effacées quand l'onglet est fermé. Adapté aux données temporaires (formulaire en cours).
+    \item \texttt{localStorage} : données persistantes même après fermeture du navigateur. Adapté au token JWT, préférences utilisateur.
+\end{itemize}
+
+\textbf{Pourquoi sérialiser en JSON dans des champs string ?}
+
+Le backend utilise des champs \texttt{informationsPersonnelles} de type \texttt{String} (TEXT en base). Plutôt que de créer 20 colonnes pour chaque champ du formulaire, on stocke un objet JSON. C'est flexible (on peut ajouter des champs sans migration) et simple (un seul champ à mapper).
+\end{lessonbox}
+
+\newpage
+
+% ============================================================
+% PROBLÈME 16 : SERVICE AVEC URL CODÉE EN DUR
+% ============================================================
+\section{Problème 16 : URL codée en dur dans RecrutementService}
+
+\subsection{Fichier concerné}
+\begin{itemize}
+    \item \texttt{core/recrutement/services/recrutement.service.ts}
+\end{itemize}
+
+\begin{problembox}
+Le \texttt{RecrutementService} utilisait une URL codée en dur \texttt{http://localhost:8080/api}, ce qui causait les mêmes problèmes CORS que le service d'authentification. De plus, cette URL était dupliquée entre les deux services.
+\end{problembox}
+
+\begin{solutionbox}
+Uniformisation avec le proxy :
+
+\begin{lstlisting}[style=tsstyle]
+// AVANT
+private baseUrl = 'http://localhost:8080/api';
+
+// APRÈS
+private baseUrl = '/api';
+\end{lstlisting}
+
+Tous les appels API (\texttt{getCataloguePublic}, \texttt{creerBrouillon}, \texttt{getMesCandidatures}, etc.) passent désormais par le proxy Angular.
+\end{solutionbox}
 
 \newpage
 
@@ -687,42 +887,52 @@ Ces tokens suivent la convention Material Design 3 :
 \section{Récapitulatif des fichiers modifiés}
 
 \begin{center}
-\begin{tabular}{|l|l|p{5cm}|}
+\begin{tabular}{|l|l|p{4.5cm}|}
 \hline
 \textbf{Fichier} & \textbf{Action} & \textbf{Modification} \\
 \hline
-\texttt{environments/} & Créé & Fichiers d'environnement (URL configurable) \\
-\texttt{environment.ts} & & \\
-\hline
-\texttt{environments/} & Créé & Configuration développement \\
-\texttt{environment.development.ts} & & \\
-\hline
-\texttt{authService.ts} & Modifié & URL via \texttt{environment.apiUrl} (port 8080) \\
-\hline
-\texttt{login.ts} & Modifié & \texttt{tap()} avant \texttt{switchMap}, \\
-& & \texttt{catchError} après \texttt{switchMap}, \\
-& & callbacks \texttt{error}, suppression \texttt{this.token} \\
-\hline
-\texttt{login.html} & Modifié & Alignement complet sur le Design System MD3 \\
-\hline
-\texttt{AuthController.java} & Modifié & Réponse login inclut l'objet \texttt{user} \\
-\hline
-\texttt{application.properties} & Modifié & Ajout \texttt{ssl.trust} pour Brevo SMTP \\
+\texttt{environment.ts} & Créé & URL configurable (port 8080) \\
+\texttt{environment.development.ts} & Créé & URL proxy \texttt{/api} \\
+\texttt{authService.ts} & Modifié & URL via \texttt{environment.apiUrl} \\
+\texttt{login.ts} & Modifié & \texttt{tap} avant \texttt{switchMap}, \\
+& & suppression OTP, redirection /accueil \\
+\texttt{login.html} & Modifié & Design System MD3, suppression OTP \\
+\texttt{register.html} & Modifié & Correction texte parasite ligne 1 \\
+\texttt{AuthController.java} & Modifié & Réponse inclut \texttt{user} \\
+\texttt{application.properties} & Modifié & \texttt{ssl.trust} Brevo SMTP \\
+\texttt{SecurityConfig.java} & Modifié & Routes publiques \texttt{/api/auth/**} \\
+\texttt{CorsConfig.java} & Créé & Filtre CORS (allow localhost:4200) \\
+\texttt{proxy.conf.json} & Créé & Proxy Angular \texttt{/api → :8080} \\
+\texttt{angular.json} & Modifié & Configuration proxy \\
+\texttt{UserService.java} & Modifié & Username unique (suffixe numérique) \\
+\texttt{UserRepository.java} & Inchangé & Méthode \texttt{findByUsername} existante \\
+\texttt{formation-detail/*} & Créés & Page détail formation (16 entrées) \\
+\texttt{landing/*} & Créés & Page d'accueil \\
+\texttt{contact/*} & Créés & Page contact + formulaire \\
+\texttt{institut/*} & Créés & Page institut (À propos) \\
+\texttt{navbar.component.ts} & Modifié & État connecté, avatar, dropdown, \\
+& & vérification token \\
+\texttt{navbar.component.html} & Refondu & Design pro, fixed, spacer, onglets \\
+\texttt{catalogue.component.ts} & Modifié & Pagination persistée, \texttt{navigateToDetail} \\
+\texttt{catalogue.component.html} & Modifié & Cartes hauteur uniforme, lien détail \\
+\texttt{recrutement.service.ts} & Modifié & \texttt{baseUrl = '/api'}, toutes les méthodes \\
+\texttt{formulaire.component.ts} & Refondu & Stepper 4 étapes, persistance, brouillon \\
+\texttt{formulaire.component.html} & Refondu & UI stepper, champs, consentement \\
+\texttt{app.routes.ts} & Modifié & Routes /accueil, /contact, /institut \\
+\texttt{recrutement.routes.ts} & Modifié & Route \texttt{catalogue/:id} \\
 \hline
 \end{tabular}
 \end{center}
 
 \section{Conclusion}
 
-Ce rapport a documenté six problèmes distincts rencontrés dans l'application LMS INPG, couvrant :
-
+Ce rapport documente seize problèmes résolus couvrant l'ensemble de la stack :
 \begin{itemize}
-    \item \textbf{Configuration} (environnements, ports)
-    \item \textbf{RxJS} (opérateurs \texttt{tap}, \texttt{switchMap}, \texttt{catchError}, \texttt{EMPTY})
-    \item \textbf{Backend} (contrat API, certificats SSL)
-    \item \textbf{Frontend} (Design System, cohérence UI)
+    \item \textbf{Frontend} : RxJS, Design System, formulaires, navigation, état connecté
+    \item \textbf{Backend} : Spring Security, CORS, JPA, validation, email SMTP
+    \item \textbf{Infrastructure} : proxy Angular, Docker Compose, SSL/TLS
 \end{itemize}
 
-Chaque correction a été expliquée avec le concept technique sous-jacent pour faciliter l'apprentissage et éviter la reproduction de ces erreurs dans de futurs projets.
+Chaque correction a été accompagnée d'une explication pédagogique pour comprendre le « pourquoi » derrière le « comment ».
 
 \end{document}

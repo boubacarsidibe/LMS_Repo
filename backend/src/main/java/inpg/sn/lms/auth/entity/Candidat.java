@@ -30,7 +30,7 @@ public class Candidat  {
     @Column(nullable = false)
     private String prenom;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String telephone;
 
     @Column(nullable = false)

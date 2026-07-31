@@ -119,12 +119,11 @@ export class RecrutementService {
 
   // ===================== CANDIDAT =====================
 
-  creerBrouillon(request: CandidatureRequest): Observable<CandidatureResponse> {
-    return this.http.post<CandidatureResponse>(`${this.baseUrl}/recrutement/candidat/candidature/brouillon`, request);
-  }
-
-  soumettreCandidature(id: number): Observable<CandidatureResponse> {
-    return this.http.put<CandidatureResponse>(`${this.baseUrl}/recrutement/candidat/candidature/${id}/soumettre`, {});
+  /**
+   * Route unique : crée le Candidat (si nécessaire) et soumet la candidature.
+   */
+  soumettreCandidature(request: CandidatureRequest): Observable<CandidatureResponse> {
+    return this.http.post<CandidatureResponse>(`${this.baseUrl}/recrutement/candidat/candidature/soumettre`, request);
   }
 
   televerserPiece(candidatureId: number, file: File, typeDocument: string): Observable<any> {
