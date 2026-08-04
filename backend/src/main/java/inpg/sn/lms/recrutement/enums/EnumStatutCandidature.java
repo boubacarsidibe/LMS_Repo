@@ -4,6 +4,8 @@ public enum EnumStatutCandidature {
     BROUILLON,
     SOUMIS,
     EN_COURS_DE_PRESELECTION,
-    ADMIS,
-    REJETE
+    REJETE,
+    ADMIS1,
+    ADMIS2,
+    ADMIS3
 }

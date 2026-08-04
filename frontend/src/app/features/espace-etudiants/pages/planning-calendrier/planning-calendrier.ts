@@ -91,43 +91,44 @@ export class PlanningCalendrier {
       default: return '';
     }
   }
+
   get prochainesSeances(): (EvenementCalendrier & { libelleDate: string })[] {
-  const maintenant = new Date();
-  maintenant.setHours(0, 0, 0, 0);
+    const maintenant = new Date();
+    maintenant.setHours(0, 0, 0, 0);
 
-  return this.evenements
-    .filter(e => e.date >= maintenant)
-    .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .slice(0, 3)
-    .map(e => ({ ...e, libelleDate: this.libelleDateRelative(e.date) }));
-}
-
-libelleDateRelative(date: Date): string {
-  const aujourdhui = new Date();
-  aujourdhui.setHours(0, 0, 0, 0);
-  const demain = new Date(aujourdhui);
-  demain.setDate(demain.getDate() + 1);
-
-  if (this.memesDates(date, aujourdhui)) return "Aujourd'hui";
-  if (this.memesDates(date, demain)) return 'Demain';
-  return `${date.getDate()} ${this.nomsMois[date.getMonth()].toLowerCase().slice(0, 3)}.`;
-}
-
-iconeEvenement(type: string): string {
-  switch (type) {
-    case 'cours': return 'video_camera_front';
-    case 'tutorat': return 'psychology';
-    case 'echeance': return 'assignment';
-    default: return 'event';
+    return this.evenements
+      .filter(e => e.date >= maintenant)
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .slice(0, 3)
+      .map(e => ({ ...e, libelleDate: this.libelleDateRelative(e.date) }));
   }
-}
 
-fondIconeEvenement(type: string): string {
-  switch (type) {
-    case 'cours': return 'bg-primary-container text-on-primary';
-    case 'tutorat': return 'bg-secondary-container/30 text-secondary';
-    case 'echeance': return 'bg-error-container/20 text-error';
-    default: return '';
+  libelleDateRelative(date: Date): string {
+    const aujourdhui = new Date();
+    aujourdhui.setHours(0, 0, 0, 0);
+    const demain = new Date(aujourdhui);
+    demain.setDate(demain.getDate() + 1);
+
+    if (this.memesDates(date, aujourdhui)) return "Aujourd'hui";
+    if (this.memesDates(date, demain)) return 'Demain';
+    return `${date.getDate()} ${this.nomsMois[date.getMonth()].toLowerCase().slice(0, 3)}.`;
   }
-}
+
+  iconeEvenement(type: string): string {
+    switch (type) {
+      case 'cours': return 'video_camera_front';
+      case 'tutorat': return 'psychology';
+      case 'echeance': return 'assignment';
+      default: return 'event';
+    }
+  }
+
+  fondIconeEvenement(type: string): string {
+    switch (type) {
+      case 'cours': return 'bg-primary-container text-on-primary';
+      case 'tutorat': return 'bg-secondary-container/30 text-secondary';
+      case 'echeance': return 'bg-error-container/20 text-error';
+      default: return '';
+    }
+  }
 }

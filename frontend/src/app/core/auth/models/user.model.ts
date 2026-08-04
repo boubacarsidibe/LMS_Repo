@@ -8,16 +8,15 @@ export interface User {
     roles: Role[];
 }
 
-export interface candidat  {
+export interface candidat {
     dateDeNaissance: Date;
-    nationalite:string;
-    user:User
+    nationalite: string;
+    user: User;
 }
 
-export interface etudiant  {
+export interface etudiant {
     dateDeNaissance: Date;
-    nationalite:string;
-    user:User;
-    matricule:string;
-    
+    nationalite: string;
+    user: User;
+    matricule: string;
 }

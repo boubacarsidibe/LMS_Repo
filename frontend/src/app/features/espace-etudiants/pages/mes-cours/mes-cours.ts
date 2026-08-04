@@ -1,7 +1,6 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-
-
+import { Cours } from '../../models/cours';
 
 @Component({
   selector: 'app-mes-cours',
@@ -51,16 +50,17 @@ export class MesCours {
     console.log('Ressource à publier :', payload);
     // TODO : appel API réel vers le backend une fois l'endpoint disponible
   }
-    recherche: string = '';
-    semestreSelectionne: string = 'Semestre 1 - 2024';
-    cohorteSelectionnee: string = 'Toutes les Cohortes';
 
-    get coursFiltres(): Cours[] {
-      return this.cours.filter(c => {
-        const correspondRecherche = 
-          c.titre.toLowerCase().includes(this.recherche.toLowerCase()) ||
-          c.code.toLowerCase().includes(this.recherche.toLowerCase());
-        return correspondRecherche;
-      });
-}
+  recherche: string = '';
+  semestreSelectionne: string = 'Semestre 1 - 2024';
+  cohorteSelectionnee: string = 'Toutes les Cohortes';
+
+  get coursFiltres(): Cours[] {
+    return this.cours.filter(c => {
+      const correspondRecherche = 
+        c.titre.toLowerCase().includes(this.recherche.toLowerCase()) ||
+        c.code.toLowerCase().includes(this.recherche.toLowerCase());
+      return correspondRecherche;
+    });
+  }
 }

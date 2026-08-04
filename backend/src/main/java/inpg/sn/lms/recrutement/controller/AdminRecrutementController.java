@@ -25,6 +25,7 @@ import inpg.sn.lms.recrutement.dto.TestAcademiqueResponse;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.service.CandidatureService;
 import inpg.sn.lms.recrutement.service.EntretienService;
+import inpg.sn.lms.recrutement.service.NotificationCandidatService;
 import inpg.sn.lms.recrutement.service.NotificationService;
 import inpg.sn.lms.recrutement.service.PaiementService;
 import inpg.sn.lms.recrutement.service.SessionCandidatureService;
@@ -124,12 +125,34 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/candidatures/{id}/admettre")
-    public ResponseEntity<CandidatureResponse> admettreCandidat(@PathVariable Long id) {
-        CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS,
+    @PutMapping("/candidatures/{id}/admettre-test")
+    public ResponseEntity<CandidatureResponse> admettreTestAcademique(@PathVariable Long id) {
+        CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS1,
                 null);
         if (response.getCandidatEmail() != null) {
-            notificationService.notifierAdmission(response.getCandidatEmail(),
+            notificationService.notifierAdmissionTest(response.getCandidatEmail(),
+                    response.getNumeroDossier());
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/candidatures/{id}/admettre-entretien")
+    public ResponseEntity<CandidatureResponse> admettreEntretien(@PathVariable Long id) {
+        CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS2,
+                null);
+        if (response.getCandidatEmail() != null) {
+            notificationService.notifierAdmissionEntretien(response.getCandidatEmail(),
+                    response.getNumeroDossier());
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/candidatures/{id}/admettre-final")
+    public ResponseEntity<CandidatureResponse> admettreFinal(@PathVariable Long id) {
+        CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS3,
+                null);
+        if (response.getCandidatEmail() != null) {
+            notificationService.notifierAdmissionFinale(response.getCandidatEmail(),
                     response.getNumeroDossier());
         }
         return ResponseEntity.ok(response);

@@ -173,8 +173,10 @@ public class CandidatureService {
             case SOUMIS -> nouveau == EnumStatutCandidature.EN_COURS_DE_PRESELECTION
                     || nouveau == EnumStatutCandidature.REJETE;
             case EN_COURS_DE_PRESELECTION ->
-                nouveau == EnumStatutCandidature.ADMIS || nouveau == EnumStatutCandidature.REJETE;
-            case ADMIS, REJETE -> false; // État terminal
+                nouveau == EnumStatutCandidature.ADMIS1 || nouveau == EnumStatutCandidature.REJETE;
+            case ADMIS1 -> nouveau == EnumStatutCandidature.ADMIS2 || nouveau == EnumStatutCandidature.REJETE;
+            case ADMIS2 -> nouveau == EnumStatutCandidature.ADMIS3 || nouveau == EnumStatutCandidature.REJETE;
+            case ADMIS3, REJETE -> false; // État terminal
         };
     }
 

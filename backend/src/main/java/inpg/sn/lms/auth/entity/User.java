@@ -56,7 +56,7 @@ public class User {
     // private Formateur formateur;
 
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.MERGE })
     @JoinTable(
         name = "user_roles", 
         joinColumns = @JoinColumn(name = "user_id"), 

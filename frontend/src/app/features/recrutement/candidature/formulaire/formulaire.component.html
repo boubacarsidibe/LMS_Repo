@@ -1,6 +1,17 @@
-<div class="min-h-screen flex flex-col bg-[#F8FAFC]">
+TS2305: Module '"./features/recrutement/responsable-admission/layout/responsable-admission-layout.component"' has no exported member 'ResponsableAdmissionLayoutComponent'.
+src/app/app.routes.ts:9:9
+Click outside, press Esc key, or fix the code to dismiss.<div class="min-h-screen flex flex-col bg-[#F8FAFC]">
   <app-navbar></app-navbar>
-  <main class="flex-grow flex items-start justify-center py-10 px-4 md:px-10">
+
+  <!-- Loader de vérification initiale -->
+  <main *ngIf="verifierCandidatureExistante" class="flex-grow flex items-center justify-center py-20">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 border-2 border-[#30609a] border-t-transparent rounded-full animate-spin"></div>
+      <span class="text-sm text-[#46464e]">Vérification de vos candidatures...</span>
+    </div>
+  </main>
+
+  <main *ngIf="!verifierCandidatureExistante" class="flex-grow flex items-start justify-center py-10 px-4 md:px-10">
     <div class="w-full max-w-3xl bg-white rounded-xl border border-[#c7c5d0] shadow-sm">
 
       <!-- ========== STEPPER HEADER ========== -->
@@ -79,13 +90,47 @@
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Téléphone <span class="text-[#ba1a1a]">*</span></label>
-                <div class="relative">
-                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#77767f] text-[20px]" style="font-variation-settings: 'FILL' 0;">call</span>
-                  <input [(ngModel)]="data.telephone" (ngModelChange)="saveDraft()" type="tel" placeholder="+221 77 123 45 67"
+                <div class="flex gap-2">
+                  <select [(ngModel)]="data.phonePrefix" (ngModelChange)="saveDraft()" class="w-24 px-2 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                    <option>+221</option>
+                    <option>+33</option>
+                    <option>+1</option>
+                    <option>+32</option>
+                    <option>+41</option>
+                    <option>+225</option>
+                    <option>+226</option>
+                    <option>+227</option>
+                    <option>+229</option>
+                  </select>
+                  <input [(ngModel)]="data.telephone" (ngModelChange)="saveDraft()" type="tel" placeholder="77 123 45 67"
                          [class.border-[#ba1a1a]]="showErrors && !data.telephone?.trim()"
-                         class="w-full pl-10 pr-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                         class="flex-1 px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
                 </div>
                 <p *ngIf="showErrors && !data.telephone?.trim()" class="text-xs text-[#ba1a1a]">Le téléphone est obligatoire.</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Date de naissance</label>
+                <input [(ngModel)]="data.dateNaissance" (ngModelChange)="saveDraft()" type="date"
+                       class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Nationalité</label>
+                <select [(ngModel)]="data.nationalite" (ngModelChange)="saveDraft()" class="w-full px-3 py-2.5 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                  <option value="">-- Sélectionner --</option>
+                  <option value="Sénégalaise">Sénégalaise</option>
+                  <option value="Ivoirienne">Ivoirienne</option>
+                  <option value="Malienne">Malienne</option>
+                  <option value="Burkinabé">Burkinabé</option>
+                  <option value="Nigérienne">Nigérienne</option>
+                  <option value="Mauritanienne">Mauritanienne</option>
+                  <option value="Béninoise">Béninoise</option>
+                  <option value="Togolaise">Togolaise</option>
+                  <option value="Guinéenne">Guinéenne</option>
+                  <option value="Française">Française</option>
+                  <option value="Autre">Autre</option>
+                </select>
               </div>
             </div>
             <div class="flex flex-col gap-1.5">
@@ -234,19 +279,19 @@
               </label>
               <p *ngIf="data.fichierMotivation" class="text-xs text-[#30609a] truncate">{{ data.fichierMotivation }}</p>
             </div>
-            <!-- Photo d'identité -->
+            <!-- Relevés de notes -->
             <div class="bg-[#f2f4f6] border border-[#c7c5d0] p-4 rounded-lg flex flex-col gap-2">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">account_circle</span>
-                <h3 class="text-sm font-semibold text-[#000002]">Photo d'identité</h3>
-                <span class="px-2 py-0.5 rounded-full bg-[#e0e3e5] text-[#46464e] text-xs tracking-[0.05em] font-semibold ml-auto">Facultatif</span>
+                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">school</span>
+                <h3 class="text-sm font-semibold text-[#000002]">Relevés de notes</h3>
+                <span class="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-xs tracking-[0.05em] font-semibold ml-auto">Requis</span>
               </div>
               <label class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#c7c5d0] rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors">
                 <span class="material-symbols-outlined text-[#77767f] text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">cloud_upload</span>
-                <span class="text-xs text-[#77767f]">PDF, JPG, PNG (Max 2 Mo)</span>
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" multiple (change)="onFileSelected($event, 'photo')">
+                <span class="text-xs text-[#77767f]">PDF uniquement (Max 5 Mo)</span>
+                <input type="file" accept=".pdf" class="hidden" multiple (change)="onFileSelected($event, 'releves')">
               </label>
-              <p *ngIf="data.fichierPhoto" class="text-xs text-[#30609a] truncate">{{ data.fichierPhoto }}</p>
+              <p *ngIf="data.fichierReleves" class="text-xs text-[#30609a] truncate">{{ data.fichierReleves }}</p>
             </div>
           </div>
 

@@ -17,8 +17,6 @@ export class Auth {
   currentUser = signal<User | null>(null);
   private apiUrl = `${environment.apiUrl}/auth`;
 
-
-
   getToken(): string | null {
     return localStorage.getItem('token');
   }
@@ -31,21 +29,45 @@ export class Auth {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, password });
   }
 
-  setSession(user: User, token: string): void {
-    localStorage.setItem('token', token);
-    this.currentUser.set(user);
+  setSession(authResponse: AuthResponse): void {
+    localStorage.setItem('token', authResponse.token);
+    if (authResponse.user) {
+      this.currentUser.set(authResponse.user);
+    }
+  }
+
+  /** Redirige l'utilisateur vers sa page d'accueil selon son rôle */
+  redirectByRole(router: any): void {
+    const user = this.currentUser();
+    const roles: string[] = (user as any)?.roles || [];
+    if (roles.includes('ROLE_RESPONSABLE_ADMISSION')) {
+      router.navigate(['/responsable-admission']);
+    } else if (roles.includes('ROLE_CANDIDAT')) {
+      router.navigate(['/recrutement/catalogue']);
+    } else if (roles.includes('ROLE_ETUDIANT')) {
+      router.navigate(['/espace-etudiant/accueil']);
+    } else {
+      router.navigate(['/accueil']);
+    }
+  }
+
+  getUserRoles(): string[] {
+    const user = this.currentUser();
+    return (user as any)?.roles || [];
+  }
+
+  isResponsableAdmission(): boolean {
+    return this.getUserRoles().includes('ROLE_RESPONSABLE_ADMISSION');
   }
 
   isLoggedIn(): boolean {
     return !!this.getToken();
   }
 
-  // Fermer la session
   clearSession(): void {
     localStorage.removeItem('token');
     this.currentUser.set(null);
   }
-
 
   setToken(token: string | null): void {
     if (token) {
@@ -55,7 +77,6 @@ export class Auth {
     }
   }
 
-
   register(username: string, email: string, password: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, { username, email, password });
   }
@@ -64,19 +85,17 @@ export class Auth {
     const payload = { email, code };
 
     return this.http.post<{ message: string }>(`${this.apiUrl}/verify-otp`, payload).pipe(
-
       map(() => true),
-
       catchError((error) => {
         console.warn('Vérification OTP échouée :', error.error?.message || error.message);
         return of(false);
       })
     );
   }
+
   getOtp(email: string): Observable<boolean> {
     return this.http.post<boolean>(`${this.apiUrl}/send-otp`, { email });
   }
-
 
   checkToken(): Observable<boolean> {
     const token = this.getToken();
@@ -97,7 +116,6 @@ export class Auth {
     );
   }
 
-
   getCurrentUser(): Observable<User | null> {
     const token = this.getToken();
 
@@ -108,7 +126,7 @@ export class Auth {
     return this.http.get<User>(`${this.apiUrl}/current-user`, {
       headers: { Authorization: `Bearer ${token}` }
     }).pipe(
-      tap((user) => this.currentUser.set(user)), // Met à jour le signal si la requête réussit
+      tap((user) => this.currentUser.set(user)),
       catchError(() => of(null))
     );
   }
@@ -140,13 +158,13 @@ export class Auth {
     return user && user.roles.includes(Role.Candidat);
   }
 
-  createCandiadat(nationnalite:string,dateDeNaissance:string){
+  createCandiadat(nationnalite: string, dateDeNaissance: string) {
     const user = this.getCurrentUser();
     if (!user) return null;
     return {
-      dateDeNaissance:dateDeNaissance,
-      nationalite:nationnalite,
-      user:user
-    }
+      dateDeNaissance: dateDeNaissance,
+      nationalite: nationnalite,
+      user: user
+    };
   }
 }

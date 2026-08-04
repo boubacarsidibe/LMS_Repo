@@ -44,7 +44,6 @@ export class PiecesComponent implements OnInit {
       next: () => {
         alert(`Pièce "${typeDocument}" téléversée avec succès !`);
         this.uploading = false;
-        // Recharger la candidature
         if (this.candidatureId) {
           this.recrutementService.getCandidature(this.candidatureId).subscribe({
             next: (data) => this.candidature = data

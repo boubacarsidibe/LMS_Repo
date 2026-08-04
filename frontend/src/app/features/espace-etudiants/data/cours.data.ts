@@ -1,3 +1,5 @@
+import { Cours } from '../models/cours';
+
 export const mesCours: Cours[] = [
     {
         code: 'ECO-402',

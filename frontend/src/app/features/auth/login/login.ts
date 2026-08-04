@@ -81,7 +81,7 @@ export class Login {
     this.authService.login(this.email, password)
       .pipe(
         tap((response: AuthResponse) => {
-          this.authService.setSession(response.user, response.token);
+          this.authService.setSession(response);
         }),
         catchError((err) => {
           if (err.status === 401) {
@@ -102,7 +102,7 @@ export class Login {
       )
       .subscribe({
         next: () => {
-          this.router.navigate(['/accueil']);
+            this.authService.redirectByRole(this.router);
         },
         error: () => {
           this.errorMessage = 'Une erreur inattendue est survenue.';
@@ -183,7 +183,7 @@ export class Login {
             return;
           }
           // Le token est déjà stocké via setSession() dans onSubmit()
-          this.router.navigate(['/accueil']);
+          this.authService.redirectByRole(this.router);
         },
         error: () => {
           this.errorMessage = 'Une erreur inattendue est survenue lors de la vérification.';

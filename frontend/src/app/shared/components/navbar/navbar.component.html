@@ -20,7 +20,7 @@
       <a routerLink="/recrutement/catalogue" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
         Catalogue
       </a>
-      <a *ngIf="isLoggedIn" routerLink="/recrutement/candidature" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
+      <a *ngIf="isLoggedIn" [routerLink]="candidatureUrl" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
         Candidature
       </a>
     </nav>
@@ -37,54 +37,121 @@
         </a>
       </ng-container>
 
-      <!-- Connecté : avatar + dropdown -->
-      <div *ngIf="isLoggedIn" class="relative">
-        <button
-          (click)="toggleDropdown()"
-          class="flex items-center gap-2 p-1.5 rounded-full hover:bg-[#f2f4f6] transition-colors cursor-pointer border-0 bg-transparent"
-          aria-label="Menu utilisateur">
-          <!-- Avatar -->
-          <div class="w-9 h-9 rounded-full bg-[#30609a] text-white flex items-center justify-center text-sm font-semibold shadow-sm">
-            {{ userInitials }}
-          </div>
-          <span class="material-symbols-outlined text-[#77767f] text-[20px]" style="font-variation-settings: 'FILL' 0;">
-            {{ dropdownOpen ? 'expand_less' : 'expand_more' }}
-          </span>
-        </button>
+      <!-- Connecté : icône notifications + avatar + dropdown -->
+      <ng-container *ngIf="isLoggedIn">
+        <!-- Icône Notifications (cloche) -->
+        <div class="relative">
+          <button
+            id="notif-btn"
+            (click)="toggleNotifDropdown()"
+            class="relative p-2 rounded-full hover:bg-[#f2f4f6] transition-colors cursor-pointer border-0 bg-transparent"
+            aria-label="Notifications">
+            <span class="material-symbols-outlined text-[#46464e] text-[24px]" style="font-variation-settings: 'FILL' 0;">notifications</span>
+            <!-- Badge non lues -->
+            <span *ngIf="nbNonLues > 0"
+                  class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-[#ba1a1a] text-white text-[10px] font-bold rounded-full px-1 animate-pulse">
+              {{ nbNonLues > 99 ? '99+' : nbNonLues }}
+            </span>
+          </button>
 
-        <!-- Dropdown Menu -->
-        <div
-          *ngIf="dropdownOpen"
-          class="absolute right-0 mt-2 w-56 bg-white border border-[#c7c5d0] rounded-xl shadow-lg py-1 z-50 origin-top-right animate-in fade-in zoom-in-95">
-          <!-- User info header -->
-          <div class="px-4 py-3 border-b border-[#c7c5d0]/40">
-            <p class="text-sm font-semibold text-[#000002] capitalize">{{ userDisplayName }}</p>
+          <!-- Dropdown Notifications -->
+          <div
+            *ngIf="notifDropdownOpen"
+            id="notif-dropdown"
+            class="absolute right-0 mt-2 w-80 bg-white border border-[#c7c5d0] rounded-xl shadow-lg z-50 origin-top-right">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-4 py-3 border-b border-[#c7c5d0]/40">
+              <p class="text-sm font-semibold text-[#000002]">Notifications</p>
+              <button *ngIf="nbNonLues > 0" (click)="marquerToutLu()"
+                      class="text-xs font-medium text-[#30609a] hover:text-[#254d7d] bg-transparent border-0 cursor-pointer">
+                Tout marquer lu
+              </button>
+            </div>
+
+            <!-- Liste des notifications -->
+            <div class="max-h-80 overflow-y-auto">
+              <div *ngIf="notifications.length === 0" class="px-4 py-10 text-center">
+                <span class="material-symbols-outlined text-4xl text-[#c7c5d0] mb-2" style="font-variation-settings: 'FILL' 0;">inbox</span>
+                <p class="text-sm text-[#77767f]">Aucune notification</p>
+                <p class="text-xs text-[#c7c5d0] mt-1">Les mises à jour de votre candidature apparaîtront ici.</p>
+              </div>
+
+              <div *ngFor="let notif of notifications"
+                   (click)="onNotificationClick(notif)"
+                   class="flex items-start gap-3 px-4 py-3 border-b border-[#c7c5d0]/20 hover:bg-[#f2f4f6] cursor-pointer transition-colors"
+                   [class.bg-[#30609a]/5]="!notif.lu">
+                <!-- Icône type -->
+                <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                     [class.bg-[#30609a]/10]="!notif.lu"
+                     [class.bg-[#c7c5d0]/20]="notif.lu">
+                  <span class="material-symbols-outlined text-[18px]"
+                        [class.text-[#30609a]]="!notif.lu"
+                        [class.text-[#77767f]]="notif.lu"
+                        style="font-variation-settings: 'FILL' 0;">
+                    {{ getNotifIcon(notif.type) }}
+                  </span>
+                </div>
+                <!-- Contenu -->
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-[#191c1e] leading-snug line-clamp-2"
+                     [class.font-semibold]="!notif.lu">{{ notif.message }}</p>
+                  <p class="text-xs text-[#77767f] mt-1">{{ getRelativeTime(notif.dateCreation) }}</p>
+                </div>
+                <!-- Point non lu -->
+                <span *ngIf="!notif.lu" class="w-2 h-2 rounded-full bg-[#30609a] shrink-0 mt-2"></span>
+              </div>
+            </div>
           </div>
-          <!-- Menu items -->
-          <a (click)="goToDashboard()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#f2f4f6] hover:text-[#30609a] cursor-pointer transition-colors">
-            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">dashboard</span>
-            Tableau de bord
-          </a>
-          <a (click)="goToMesCandidatures()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#f2f4f6] hover:text-[#30609a] cursor-pointer transition-colors">
-            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">description</span>
-            Mes candidatures
-          </a>
-          <hr class="my-1 border-[#c7c5d0]/40">
-          <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#ffdad6] hover:text-[#ba1a1a] cursor-pointer transition-colors">
-            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">logout</span>
-            Déconnexion
-          </a>
         </div>
-      </div>
+
+        <!-- Avatar utilisateur -->
+        <div class="relative">
+          <button
+            id="profile-btn"
+            (click)="toggleDropdown()"
+            class="flex items-center gap-2 p-1.5 rounded-full hover:bg-[#f2f4f6] transition-colors cursor-pointer border-0 bg-transparent"
+            aria-label="Menu utilisateur">
+            <!-- Avatar -->
+            <div class="w-9 h-9 rounded-full bg-[#30609a] text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+              {{ userInitials }}
+            </div>
+            <span class="material-symbols-outlined text-[#77767f] text-[20px]" style="font-variation-settings: 'FILL' 0;">
+              {{ dropdownOpen ? 'expand_less' : 'expand_more' }}
+            </span>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div
+            *ngIf="dropdownOpen"
+            id="profile-dropdown"
+            class="absolute right-0 mt-2 w-56 bg-white border border-[#c7c5d0] rounded-xl shadow-lg py-1 z-50 origin-top-right animate-in fade-in zoom-in-95">
+            <!-- User info header -->
+            <div class="px-4 py-3 border-b border-[#c7c5d0]/40">
+              <p class="text-sm font-semibold text-[#000002] capitalize">{{ userDisplayName }}</p>
+            </div>
+            <!-- Menu items -->
+            <a (click)="goToDashboard()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#f2f4f6] hover:text-[#30609a] cursor-pointer transition-colors">
+              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+              Tableau de bord
+            </a>
+            <a (click)="goToMesCandidatures()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#f2f4f6] hover:text-[#30609a] cursor-pointer transition-colors">
+              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">description</span>
+              Mes candidatures
+            </a>
+            <hr class="my-1 border-[#c7c5d0]/40">
+            <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#ffdad6] hover:text-[#ba1a1a] cursor-pointer transition-colors">
+              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">logout</span>
+              Déconnexion
+            </a>
+          </div>
+        </div>
+      </ng-container>
     </div>
   </div>
 </header>
 <!-- Spacer for fixed navbar -->
 <div class="h-[72px]"></div>
 
-<!-- Backdrop for closing dropdown on outside click -->
-<div
-  *ngIf="dropdownOpen"
-  class="fixed inset-0 z-40"
-  (click)="closeDropdown()">
-</div>
+<!-- Backdrops for closing dropdowns on outside click -->
+<div *ngIf="dropdownOpen" class="fixed inset-0 z-40" (click)="closeDropdown()"></div>
+<div *ngIf="notifDropdownOpen" class="fixed inset-0 z-40" (click)="closeNotifDropdown()"></div>

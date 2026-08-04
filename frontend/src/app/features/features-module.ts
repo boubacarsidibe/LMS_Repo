@@ -1,10 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-
-import { Login } from './auth/login/login';
 import { RouterModule } from '@angular/router';
-
+import { Login } from './auth/login/login';
 
 @NgModule({
   declarations: [
@@ -13,7 +10,7 @@ import { RouterModule } from '@angular/router';
   imports: [
     CommonModule,
     Login,
-    RouterModule,
+    RouterModule
   ],
   exports: [
     Login 

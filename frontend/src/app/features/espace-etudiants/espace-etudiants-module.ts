@@ -13,7 +13,6 @@ import { FormateurLayout } from './layouts/formateur-layout/formateur-layout';
 import { routes } from './espace-etudiant.routes';
 import { PlanningCalendrier } from './pages/planning-calendrier/planning-calendrier';
 
-
 @NgModule({
   declarations: [
     Accueil, Test, DashboardFormateur, MesCours, CreerCours,

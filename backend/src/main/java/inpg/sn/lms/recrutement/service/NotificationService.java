@@ -57,11 +57,26 @@ public class NotificationService {
                         + "\n\nCordialement,\nL'équipe INPG");
     }
 
-    public void notifierAdmission(String emailCandidat, String numeroDossier) {
+    public void notifierAdmissionTest(String emailCandidat, String numeroDossier) {
         envoyerEmail(emailCandidat,
-                "Félicitations - Admission",
+                "Admission au Test Académique",
+                "Bonjour,\n\nFélicitations ! Votre dossier n°" + numeroDossier
+                        + " a été retenu. Vous êtes convoqué(e) au Test Académique.\n\nCordialement,\nL'équipe INPG");
+    }
+
+    public void notifierAdmissionEntretien(String emailCandidat, String numeroDossier) {
+        envoyerEmail(emailCandidat,
+                "Admission à l'Entretien",
+                "Bonjour,\n\nFélicitations ! Vous avez réussi le Test Académique. Votre dossier n°"
+                        + numeroDossier
+                        + " passe à l'étape de l'Entretien.\n\nCordialement,\nL'équipe INPG");
+    }
+
+    public void notifierAdmissionFinale(String emailCandidat, String numeroDossier) {
+        envoyerEmail(emailCandidat,
+                "Félicitations - Admission Définitive",
                 "Bonjour,\n\nFélicitations ! Votre candidature n°" + numeroDossier
-                        + " a été retenue. Vous êtes admis(e) à l'INPG.\n\nCordialement,\nL'équipe INPG");
+                        + " a été définitivement retenue. Vous êtes admis(e) à l'INPG.\n\nCordialement,\nL'équipe INPG");
     }
 
     public void notifierNonAdmission(String emailCandidat, String numeroDossier) {

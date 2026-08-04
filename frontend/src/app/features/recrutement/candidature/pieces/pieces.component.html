@@ -1,29 +1,31 @@
-<div class="max-w-2xl mx-auto px-4 py-10">
-  <h1 class="text-2xl font-bold text-blue-900 mb-6">Pièces Justificatives</h1>
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <h1 class="text-2xl font-bold text-blue-900 mb-6">Gestion des Pièces Justificatives</h1>
 
-  <div *ngIf="candidature" class="bg-white rounded-xl shadow-md p-6 border border-blue-100">
-    <p class="mb-4">Dossier n° <strong>{{ candidature.numeroDossier }}</strong> — Statut : {{ candidature.statut }}</p>
+  <div *ngIf="!candidature" class="text-center text-gray-500 py-10">
+    Chargement de la candidature...
+  </div>
 
-    <div class="space-y-4">
-      <div *ngFor="let type of typesDocuments" class="border rounded-lg p-4 flex items-center justify-between">
-        <div>
-          <p class="font-medium">{{ type }}</p>
-          <p *ngIf="getPieceStatus(type) as piece" class="text-sm" [class.text-green-600]="piece.estConforme" [class.text-gray-500]="!piece.estConforme">
-            {{ piece.fichierNomOriginal || 'Fichier téléversé' }}
-          </p>
-          <p *ngIf="!getPieceStatus(type)" class="text-sm text-red-500">Non téléversé</p>
+  <div *ngIf="candidature" class="bg-white rounded-xl shadow-md border border-blue-100 p-6">
+    <p class="text-sm text-gray-600 mb-4">Dossier n° <strong>{{ candidature.numeroDossier }}</strong> — Statut : {{ candidature.statut }}</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div *ngFor="let type of typesDocuments" class="border border-gray-200 rounded-lg p-4">
+        <h4 class="font-semibold text-blue-900 mb-2">{{ type }}</h4>
+        <div *ngIf="getPieceStatus(type) as piece">
+          <p class="text-sm text-gray-500">Fichier : {{ piece.fichierNomOriginal || 'Téléversé' }}</p>
+          <span [class.text-green-600]="piece.estConforme" [class.text-red-600]="!piece.estConforme" class="text-xs font-medium">
+            {{ piece.estConforme ? '✓ Conforme' : '⏳ En attente de validation' }}
+          </span>
         </div>
-        <input type="file" (change)="onFileSelected($event, type)" [disabled]="uploading" class="text-sm" accept=".pdf,.jpg,.jpeg,.png">
+        <div *ngIf="!getPieceStatus(type)" class="mt-2">
+          <input type="file" (change)="onFileSelected($event, type)" class="text-sm">
+          <p class="text-xs text-gray-400 mt-1">PDF, JPG, PNG (Max 5MB)</p>
+        </div>
       </div>
     </div>
 
-    <div class="mt-6 flex gap-4">
-      <a routerLink="/recrutement/candidature/paiement" [queryParams]="{candidatureId: candidatureId}" class="bg-blue-700 text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition">
-        Passer au paiement
-      </a>
-      <a routerLink="/recrutement/suivi" class="text-blue-600 hover:underline self-center">Voir mes candidatures</a>
-    </div>
+    <a routerLink="/recrutement/candidature/paiement" [queryParams]="{candidatureId: candidature.id}" class="mt-6 inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
+      Continuer vers le paiement
+    </a>
   </div>
-
-  <div *ngIf="!candidature" class="text-center text-gray-500">Chargement...</div>
 </div>

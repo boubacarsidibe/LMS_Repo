@@ -6,6 +6,6 @@ export enum Role {
     Candidat = 'Candidat'
 }
 
-export enum Nationalite{
-    
+export enum Nationalite {
+
 }

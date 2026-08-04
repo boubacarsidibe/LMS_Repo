@@ -88,29 +88,29 @@
         </h3>
 
         <div class="space-y-stack-md">
-            <div *ngFor="let s of prochainesSeances" class="bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-4 shadow-sm hover:shadow-md transition-all group">
-                <div class="flex items-center gap-3 mb-3">
-                <div class="w-10 h-10 rounded-lg flex items-center justify-center" [ngClass]="fondIconeEvenement(s.type)">
-                    <span class="material-symbols-outlined">{{ iconeEvenement(s.type) }}</span>
-                </div>
-                <div>
-                    <p class="text-label-sm font-bold uppercase tracking-tight" [class.text-secondary]="s.type !== 'echeance'" [class.text-error]="s.type === 'echeance'">
-                    {{ s.libelleDate }} • {{ s.heure }}
-                    </p>
-                    <p class="font-headline-sm text-on-surface group-hover:text-secondary transition-colors">{{ s.titre }}</p>
-                </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2" *ngIf="s.type === 'cours'">
-                <button class="bg-secondary text-on-secondary py-2 rounded-lg font-label-md hover:brightness-110 transition-all">Lancer</button>
-                <button class="bg-surface-container-low text-on-surface-variant py-2 rounded-lg font-label-md hover:bg-surface-container transition-all">Modifier</button>
+          <div *ngFor="let s of prochainesSeances" class="bg-surface-container-lowest border border-outline-variant/20 rounded-xl p-4 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center" [ngClass]="fondIconeEvenement(s.type)">
+                <span class="material-symbols-outlined">{{ iconeEvenement(s.type) }}</span>
+              </div>
+              <div>
+                <p class="text-label-sm font-bold uppercase tracking-tight" [class.text-secondary]="s.type !== 'echeance'" [class.text-error]="s.type === 'echeance'">
+                  {{ s.libelleDate }} • {{ s.heure }}
+                </p>
+                <p class="font-headline-sm text-on-surface group-hover:text-secondary transition-colors">{{ s.titre }}</p>
+              </div>
             </div>
-                <button *ngIf="s.type === 'tutorat'" class="w-full border border-outline-variant text-on-surface-variant py-2 rounded-lg font-label-md hover:bg-surface-container-low transition-all">Gérer le rendez-vous</button>
-        </div>
+            <div class="grid grid-cols-2 gap-2" *ngIf="s.type === 'cours'">
+              <button class="bg-secondary text-on-secondary py-2 rounded-lg font-label-md hover:brightness-110 transition-all">Lancer</button>
+              <button class="bg-surface-container-low text-on-surface-variant py-2 rounded-lg font-label-md hover:bg-surface-container transition-all">Modifier</button>
+            </div>
+            <button *ngIf="s.type === 'tutorat'" class="w-full border border-outline-variant text-on-surface-variant py-2 rounded-lg font-label-md hover:bg-surface-container-low transition-all">Gérer le rendez-vous</button>
+          </div>
 
-  <p *ngIf="prochainesSeances.length === 0" class="text-body-sm text-on-surface-variant text-center py-4">
-    Aucune séance à venir dans les prochains jours.
-  </p>
-</div>
+          <p *ngIf="prochainesSeances.length === 0" class="text-body-sm text-on-surface-variant text-center py-4">
+            Aucune séance à venir dans les prochains jours.
+          </p>
+        </div>
       </div>
 
       <div class="p-6 bg-primary-container rounded-xl text-on-primary-container relative overflow-hidden">
@@ -122,5 +122,6 @@
         <span class="material-symbols-outlined absolute -bottom-4 -right-4 text-[120px] opacity-10 rotate-12 pointer-events-none">sync</span>
       </div>
     </div>
+
   </div>
 </div>

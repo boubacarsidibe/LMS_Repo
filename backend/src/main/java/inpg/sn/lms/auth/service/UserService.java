@@ -8,37 +8,37 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import inpg.sn.lms.auth.entity.Role;
 import inpg.sn.lms.auth.entity.User;
+import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
 
-import java.util.Collections;
 import java.util.List;
 
 @Service
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // Le PasswordEncoder injecté est celui que tu as défini dans ton SecurityConfig
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
-    
-
-
-    public List<inpg.sn.lms.auth.entity.User> getAllUsers() {
+    public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    public inpg.sn.lms.auth.entity.User createUser(inpg.sn.lms.auth.dto.UserDto userDto) {
-        // Vérifier si l'email existe déjà
+    /**
+     * Crée un utilisateur avec le rôle CANDIDAT par défaut (inscription publique).
+     */
+    public User createUser(inpg.sn.lms.auth.dto.UserDto userDto) {
         if (userRepository.findByEmail(userDto.getEmail()) != null) {
             throw new RuntimeException("Cet email est déjà utilisé.");
         }
-        // Vérifier si le username existe déjà, sinon en générer un unique
         String baseUsername = userDto.getUsername();
         String username = baseUsername;
         int suffix = 1;
@@ -46,10 +46,31 @@ public class UserService implements UserDetailsService {
             username = baseUsername + suffix;
             suffix++;
         }
-        inpg.sn.lms.auth.entity.User newUser = userDto.toUser();
+        User newUser = userDto.toUser();
         newUser.setUsername(username);
         newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
+
+        // Assigner le rôle CANDIDAT à tout nouvel inscrit
+        Role roleCandidat = roleRepository.findByCode("ROLE_CANDIDAT");
+        if (roleCandidat != null) {
+            newUser.addRole(roleCandidat);
+        }
+
         return userRepository.save(newUser);
+    }
+
+    /**
+     * Crée un compte Responsable Admission (réservé à l'admin ou au seed).
+     */
+    public User createResponsableAdmission(inpg.sn.lms.auth.dto.UserDto userDto) {
+        User user = createUser(userDto);
+        // Remplacer le rôle CANDIDAT par RESPONSABLE_ADMISSION
+        user.getRoles().clear();
+        Role roleResp = roleRepository.findByCode("ROLE_RESPONSABLE_ADMISSION");
+        if (roleResp != null) {
+            user.addRole(roleResp);
+        }
+        return userRepository.save(user);
     }
 
     public User findByUsername(String username) {
@@ -60,11 +81,13 @@ public class UserService implements UserDetailsService {
         return userRepository.findByEmail(email);
     }
 
-
+    public boolean hasRole(User user, String roleCode) {
+        return user.getRoles().stream().anyMatch(r -> r.getCode().equals(roleCode));
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        inpg.sn.lms.auth.entity.User user = userRepository.findByUsername(username);
+        User user = userRepository.findByUsername(username);
         if (user == null) {
             throw new UsernameNotFoundException("User not found with username: " + username);
         }
@@ -73,7 +96,7 @@ public class UserService implements UserDetailsService {
                 .toList();
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
     }
-    
+
     public User ChangePassword(String email, String newPassword) {
         User user = userRepository.findByEmail(email);
         if (user != null) {
@@ -86,6 +109,4 @@ public class UserService implements UserDetailsService {
     public User save(User user) {
         return userRepository.save(user);
     }
-    
-
 }

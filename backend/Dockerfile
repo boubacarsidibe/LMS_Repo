@@ -24,6 +24,9 @@ WORKDIR /app
 # Récupérer uniquement le fichier .jar généré à l'étape précédente
 COPY --from=builder /app/target/*.jar app.jar
 
+# Créer le dossier d'upload des fichiers attachés
+RUN mkdir -p /app/uploads && chmod 777 /app/uploads
+
 # Exposer le port sur lequel Spring Boot écoute (8080 par défaut)
 EXPOSE 8080
 

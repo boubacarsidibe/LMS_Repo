@@ -60,9 +60,14 @@ public class SecurityConfig {
             
             
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/recrutement/public/**", "/", "/error","/login").permitAll()
-                .requestMatchers("/voirplus").hasRole("CANDIDAT")
-                .requestMatchers("/etudiant").hasRole("ETUDIANT")
+                // Public : authentification, catalogue, contact
+                .requestMatchers("/api/auth/**", "/api/recrutement/public/**", "/", "/error", "/login").permitAll()
+                // Candidat connecté : soumettre, téléverser, suivre, notifications
+                .requestMatchers("/api/recrutement/candidat/**").hasRole("CANDIDAT")
+                // Admin : gestion recrutement
+                .requestMatchers("/api/admin/recrutement/**").hasRole("RESPONSABLE_ADMISSION")
+                // Étudiant : espace étudiant
+                .requestMatchers("/api/espace-etudiant/**").hasRole("ETUDIANT")
                 .anyRequest().authenticated()
                 )
                 

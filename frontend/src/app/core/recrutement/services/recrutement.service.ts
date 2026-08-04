@@ -89,6 +89,15 @@ export interface EntretienRequest {
   candidatId: number;
 }
 
+export interface NotificationCandidatResponse {
+  id: number;
+  message: string;
+  type: string;
+  lu: boolean;
+  dateCreation: string;
+  lien: string | null;
+}
+
 export interface EntretienResponse {
   id: number;
   dateHeure: string;
@@ -185,8 +194,16 @@ export class RecrutementService {
     return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/rejeter`, { motif });
   }
 
-  admettreCandidat(id: number): Observable<CandidatureResponse> {
-    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/admettre`, {});
+  admettreTestAcademique(id: number): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/admettre-test`, {});
+  }
+
+  admettreEntretien(id: number): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/admettre-entretien`, {});
+  }
+
+  admettreFinal(id: number): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/admettre-final`, {});
   }
 
   simulerSuccesPaiement(id: number): Observable<PaiementResponse> {
@@ -225,5 +242,23 @@ export class RecrutementService {
 
   supprimerEntretien(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin/recrutement/entretiens/${id}`);
+  }
+
+  // ===================== NOTIFICATIONS CANDIDAT =====================
+
+  getNotifications(): Observable<NotificationCandidatResponse[]> {
+    return this.http.get<NotificationCandidatResponse[]>(`${this.baseUrl}/recrutement/candidat/notifications`);
+  }
+
+  countNotificationsNonLues(): Observable<{ count: number }> {
+    return this.http.get<{ count: number }>(`${this.baseUrl}/recrutement/candidat/notifications/count`);
+  }
+
+  marquerNotificationLue(id: number): Observable<NotificationCandidatResponse> {
+    return this.http.post<NotificationCandidatResponse>(`${this.baseUrl}/recrutement/candidat/notifications/${id}/lu`, {});
+  }
+
+  marquerToutesNotificationsLues(): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/recrutement/candidat/notifications/tout-lu`, {});
   }
 }
