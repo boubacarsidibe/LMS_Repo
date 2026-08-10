@@ -17,11 +17,17 @@
       <a routerLink="/contact" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
         Contact
       </a>
-      <a routerLink="/recrutement/catalogue" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
+      <a *ngIf="isCandidatRole" routerLink="/recrutement/catalogue" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
         Catalogue
       </a>
-      <a *ngIf="isLoggedIn" [routerLink]="candidatureUrl" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
-        Candidature
+      <a *ngIf="isLoggedIn && isEtudiantRole" routerLink="/espace-etudiant/accueil" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
+        Espace étudiant
+      </a>
+      <a *ngIf="isLoggedIn && isFormateurRole" routerLink="/espace-etudiant/formateur" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
+        Espace formateur
+      </a>
+      <a *ngIf="isLoggedIn && isResponsableAdmissionRole" routerLink="/responsable-admission" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
+        Administration
       </a>
     </nav>
 

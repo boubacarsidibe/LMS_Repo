@@ -44,12 +44,22 @@
         <textarea formControlName="description" rows="4" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface resize-none" placeholder="Décrivez brièvement le contenu du cours..."></textarea>
       </div>
 
+      <div class="space-y-base">
+        <label class="font-label-md text-on-surface-variant">Volume horaire</label>
+        <input formControlName="volumeHoraire" min="0" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" type="number">
+        <p *ngIf="creerCoursForm.get('volumeHoraire')?.invalid && creerCoursForm.get('volumeHoraire')?.touched" class="text-body-sm text-error">
+          Le volume horaire doit être positif ou nul.
+        </p>
+      </div>
+
+      <p *ngIf="errorMessage" class="text-body-sm text-error">{{ errorMessage }}</p>
+
       <div class="flex gap-stack-md pt-4">
         <button type="button" (click)="annuler()" class="flex-1 py-4 bg-surface-container text-on-surface rounded-xl font-label-md hover:bg-outline-variant transition-all">
           Annuler
         </button>
-        <button type="submit" class="flex-1 py-4 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md">
-          Créer le cours
+        <button [disabled]="isSubmitting" type="submit" class="flex-1 py-4 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
+          {{ isSubmitting ? 'Création…' : 'Créer le cours' }}
         </button>
       </div>
     </form>

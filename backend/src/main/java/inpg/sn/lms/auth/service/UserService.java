@@ -36,10 +36,17 @@ public class UserService implements UserDetailsService {
      * Crée un utilisateur avec le rôle CANDIDAT par défaut (inscription publique).
      */
     public User createUser(inpg.sn.lms.auth.dto.UserDto userDto) {
-        if (userRepository.findByEmail(userDto.getEmail()) != null) {
+        if (userDto.getEmail() == null || userDto.getEmail().isBlank()
+                || userDto.getUsername() == null || userDto.getUsername().isBlank()
+                || userDto.getPassword() == null || userDto.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Le nom d'utilisateur, l'e-mail et le mot de passe sont requis.");
+        }
+
+        String email = userDto.getEmail().trim().toLowerCase();
+        if (userRepository.findByEmail(email) != null) {
             throw new RuntimeException("Cet email est déjà utilisé.");
         }
-        String baseUsername = userDto.getUsername();
+        String baseUsername = userDto.getUsername().trim();
         String username = baseUsername;
         int suffix = 1;
         while (userRepository.findByUsername(username) != null) {
@@ -48,13 +55,15 @@ public class UserService implements UserDetailsService {
         }
         User newUser = userDto.toUser();
         newUser.setUsername(username);
+        newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
 
         // Assigner le rôle CANDIDAT à tout nouvel inscrit
         Role roleCandidat = roleRepository.findByCode("ROLE_CANDIDAT");
-        if (roleCandidat != null) {
-            newUser.addRole(roleCandidat);
+        if (roleCandidat == null) {
+            throw new IllegalStateException("Le rôle ROLE_CANDIDAT est introuvable.");
         }
+        newUser.addRole(roleCandidat);
 
         return userRepository.save(newUser);
     }

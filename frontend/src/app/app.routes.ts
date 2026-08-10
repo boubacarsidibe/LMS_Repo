@@ -13,6 +13,7 @@ import { Register } from './features/auth/register/register';
 import { VerifyOtp } from './features/auth/verify-otp/verify-otp';
 import { AuthLayoutComponent } from './features/auth/layouts/auth-layout/auth-layout';
 import { PolitiqueConfidentialite } from './core/staticPages/politique-confidentialite/politique-confidentialite';
+import { TermsAndConditions } from './core/staticPages/terms-and-conditions/terms-and-conditions';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 
 export const routes: Routes = [
@@ -88,6 +89,7 @@ export const routes: Routes = [
     ]
   },
   {path:"politique-de-confidentialite", component:PolitiqueConfidentialite},
+    { path: 'terms-and-conditions', component: TermsAndConditions },
 
   // Module Recrutement & Candidatures (lazy-loaded)
   {

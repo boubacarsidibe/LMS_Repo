@@ -161,7 +161,7 @@
                 <label class="font-label-md text-on-surface-variant">Cours cible</label>
                 <select formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
                 <option value="">Sélectionnez un cours...</option>
-                <option *ngFor="let c of cours" [value]="c.code">{{ c.code }} - {{ c.titre }}</option>
+                <option *ngFor="let c of cours" [value]="c.id">{{ c.code }} - {{ c.titre }}</option>
                 </select>
                 <p *ngIf="depotForm.get('coursCible')?.invalid && depotForm.get('coursCible')?.touched" class="text-body-sm text-error">
                 Veuillez sélectionner un cours.
@@ -180,8 +180,10 @@
                 Veuillez sélectionner un fichier.
             </p>
 
-            <button class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md mt-4" type="submit">
-                Publier la ressource
+            <p *ngIf="uploadMessage" class="text-body-sm text-secondary font-medium">{{ uploadMessage }}</p>
+            <p *ngIf="uploadError" class="text-body-sm text-error">{{ uploadError }}</p>
+            <button [disabled]="isUploading" class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md mt-4 disabled:opacity-60" type="submit">
+                {{ isUploading ? 'Publication…' : 'Publier la ressource' }}
             </button>
             </form>
         </div>
@@ -195,7 +197,7 @@
         <p class="text-body-sm text-on-surface-variant">
           Pensez à structurer vos fichiers par modules pour une meilleure lisibilité côté étudiant.
         </p>
-        <a class="text-label-sm text-secondary hover:underline flex items-center gap-1" href="#">
+        <a routerLink="/espace-etudiant/formateur/creer-cours" class="text-label-sm text-secondary hover:underline flex items-center gap-1">
           Voir la documentation <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
         </a>
       </div>

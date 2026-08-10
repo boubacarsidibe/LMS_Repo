@@ -65,16 +65,16 @@ Click outside, press Esc key, or fix the code to dismiss.<div class="min-h-scree
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Nom <span class="text-[#ba1a1a]">*</span></label>
                 <input [(ngModel)]="data.nom" (ngModelChange)="saveDraft()" type="text" placeholder="Nom"
-                       [class.border-[#ba1a1a]]="showErrors && !data.nom?.trim()"
+                       [class.border-[#ba1a1a]]="showErrors && !data.nom.trim()"
                        class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
-                <p *ngIf="showErrors && !data.nom?.trim()" class="text-xs text-[#ba1a1a]">Le nom est obligatoire.</p>
+                <p *ngIf="showErrors && !data.nom.trim()" class="text-xs text-[#ba1a1a]">Le nom est obligatoire.</p>
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Prénom <span class="text-[#ba1a1a]">*</span></label>
                 <input [(ngModel)]="data.prenom" (ngModelChange)="saveDraft()" type="text" placeholder="Prénom"
-                       [class.border-[#ba1a1a]]="showErrors && !data.prenom?.trim()"
+                       [class.border-[#ba1a1a]]="showErrors && !data.prenom.trim()"
                        class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
-                <p *ngIf="showErrors && !data.prenom?.trim()" class="text-xs text-[#ba1a1a]">Le prénom est obligatoire.</p>
+                <p *ngIf="showErrors && !data.prenom.trim()" class="text-xs text-[#ba1a1a]">Le prénom est obligatoire.</p>
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -83,10 +83,10 @@ Click outside, press Esc key, or fix the code to dismiss.<div class="min-h-scree
                 <div class="relative">
                   <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#77767f] text-[20px]" style="font-variation-settings: 'FILL' 0;">mail</span>
                   <input [(ngModel)]="data.email" (ngModelChange)="saveDraft()" type="email" placeholder="Mail"
-                         [class.border-[#ba1a1a]]="showErrors && !data.email?.trim()"
+                         [class.border-[#ba1a1a]]="showErrors && !data.email.trim()"
                          class="w-full pl-10 pr-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
                 </div>
-                <p *ngIf="showErrors && !data.email?.trim()" class="text-xs text-[#ba1a1a]">L'email est obligatoire.</p>
+                <p *ngIf="showErrors && !data.email.trim()" class="text-xs text-[#ba1a1a]">L'email est obligatoire.</p>
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Téléphone <span class="text-[#ba1a1a]">*</span></label>
@@ -103,10 +103,10 @@ Click outside, press Esc key, or fix the code to dismiss.<div class="min-h-scree
                     <option>+229</option>
                   </select>
                   <input [(ngModel)]="data.telephone" (ngModelChange)="saveDraft()" type="tel" placeholder="77 123 45 67"
-                         [class.border-[#ba1a1a]]="showErrors && !data.telephone?.trim()"
+                         [class.border-[#ba1a1a]]="showErrors && !data.telephone.trim()"
                          class="flex-1 px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
                 </div>
-                <p *ngIf="showErrors && !data.telephone?.trim()" class="text-xs text-[#ba1a1a]">Le téléphone est obligatoire.</p>
+                <p *ngIf="showErrors && !data.telephone.trim()" class="text-xs text-[#ba1a1a]">Le téléphone est obligatoire.</p>
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -172,9 +172,9 @@ Click outside, press Esc key, or fix the code to dismiss.<div class="min-h-scree
             <div class="flex flex-col gap-1.5">
               <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Programme souhaité <span class="text-[#ba1a1a]">*</span></label>
               <input [(ngModel)]="data.programme" (ngModelChange)="saveDraft()" type="text" placeholder="Ex: MBA Économie et Management"
-                     [class.border-[#ba1a1a]]="showErrors && !data.programme?.trim()"
+                     [class.border-[#ba1a1a]]="showErrors && !data.programme.trim()"
                      class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
-              <p *ngIf="showErrors && !data.programme?.trim()" class="text-xs text-[#ba1a1a]">Le programme souhaité est obligatoire.</p>
+              <p *ngIf="showErrors && !data.programme.trim()" class="text-xs text-[#ba1a1a]">Le programme souhaité est obligatoire.</p>
             </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Campus de préférence</label>

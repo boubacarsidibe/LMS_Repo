@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ETUDIANTS_MOCK, Etudiant } from '../../data/etudiants.mock';
+import { Etudiant } from '../../data/etudiants.mock';
+import { EtudiantService } from '../../services/etudiant.service';
 
 @Component({
   selector: 'app-profil-etudiant',
@@ -11,10 +12,15 @@ import { ETUDIANTS_MOCK, Etudiant } from '../../data/etudiants.mock';
 export class ProfilEtudiant implements OnInit {
   etudiant: Etudiant | undefined;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(private route: ActivatedRoute, private etudiantService: EtudiantService) {}
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.etudiant = ETUDIANTS_MOCK.find(e => e.id === id);
+    if (id) {
+      this.etudiantService.getById(id).subscribe({
+        next: e => this.etudiant = e,
+        error: () => this.etudiant = undefined
+      });
+    }
   }
 }

@@ -6,6 +6,8 @@ import { Accueil } from './pages/accueil/accueil';
 import { Test } from './pages/test/test';
 import { DashboardFormateur } from './pages/dashboard-formateur/dashboard-formateur';
 import { MesCours } from './pages/mes-cours/mes-cours';
+import { MesFormations } from './pages/mes-formations/mes-formations';
+import { FormationCard } from './pages/mes-formations/formation-card';
 import { CreerCours } from './pages/creer-cours/creer-cours';
 import { SuiviEtudiants } from './pages/suivi-etudiants/suivi-etudiants';
 import { ProfilEtudiant } from './pages/profil-etudiant/profil-etudiant';
@@ -15,7 +17,7 @@ import { PlanningCalendrier } from './pages/planning-calendrier/planning-calendr
 
 @NgModule({
   declarations: [
-    Accueil, Test, DashboardFormateur, MesCours, CreerCours,
+    Accueil, Test, DashboardFormateur, MesCours, MesFormations, FormationCard, CreerCours,
     SuiviEtudiants, ProfilEtudiant, FormateurLayout, PlanningCalendrier
   ],
   imports: [

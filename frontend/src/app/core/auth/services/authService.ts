@@ -4,7 +4,6 @@ import { catchError, map, Observable, of, tap } from 'rxjs';
 import { AuthResponse } from '../models/auth-response';
 import { User } from '../models/user.model';
 import { environment } from '../../../../environments/environment';
-import { Role } from '../models/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -46,6 +45,8 @@ export class Auth {
       router.navigate(['/recrutement/catalogue']);
     } else if (roles.includes('ROLE_ETUDIANT')) {
       router.navigate(['/espace-etudiant/accueil']);
+    } else if (roles.includes('ROLE_FORMATEUR')) {
+      router.navigate(['/espace-etudiant/formateur/dashboard-formateur']);
     } else {
       router.navigate(['/accueil']);
     }
@@ -78,7 +79,10 @@ export class Auth {
   }
 
   register(username: string, email: string, password: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, { username, email, password });
+    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, { username, email, password })
+      .pipe(
+        tap((resp) => this.setSession(resp))
+      );
   }
 
   verifyOtp(email: string, code: string): Observable<boolean> {
@@ -155,7 +159,7 @@ export class Auth {
   isCandidate(): boolean {
     const user = this.currentUser();
     if (!user) return false;
-    return user && user.roles.includes(Role.Candidat);
+    return user.roles.includes('ROLE_CANDIDAT');
   }
 
   createCandiadat(nationnalite: string, dateDeNaissance: string) {

@@ -1,0 +1,7 @@
+.card-cover { height: 160px; object-fit: cover; }
+.formations-grid .card { border-radius: 12px; overflow: hidden; }
+
+/* simple responsive tweaks aligned with project design system */
+@media (min-width: 1024px) {
+  .px-margin-desktop { padding-left: 48px; padding-right: 48px; }
+}

@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { CoursService } from '../../services/cours.service';
 
 @Component({
   selector: 'app-creer-cours',
@@ -10,13 +11,16 @@ import { Router } from '@angular/router';
 })
 export class CreerCours {
   creerCoursForm: FormGroup;
+  isSubmitting = false;
+  errorMessage = '';
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor(private fb: FormBuilder, private router: Router, private coursService: CoursService) {
     this.creerCoursForm = this.fb.group({
       code: ['', Validators.required],
       titre: ['', Validators.required],
       semestre: ['', Validators.required],
-      description: ['']
+      description: [''],
+      volumeHoraire: [0, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -25,9 +29,15 @@ export class CreerCours {
       this.creerCoursForm.markAllAsTouched();
       return;
     }
-    console.log('Nouveau cours à créer :', this.creerCoursForm.value);
-    // TODO : appel API réel vers le backend une fois l'endpoint disponible
-    this.router.navigate(['/espace-etudiant/formateur/mes-cours']);
+    this.isSubmitting = true;
+    this.errorMessage = '';
+    this.coursService.create(this.creerCoursForm.getRawValue()).subscribe({
+      next: () => this.router.navigate(['/espace-etudiant/formateur/mes-cours']),
+      error: (error) => {
+        this.isSubmitting = false;
+        this.errorMessage = error.error?.message || 'La création du cours a échoué.';
+      }
+    });
   }
 
   annuler() {

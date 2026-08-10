@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ETUDIANTS_MOCK, Etudiant } from '../../data/etudiants.mock';
+import { Etudiant } from '../../data/etudiants.mock';
+import { EtudiantService } from '../../services/etudiant.service';
 
 @Component({
   selector: 'app-suivi-etudiants',
@@ -8,11 +9,15 @@ import { ETUDIANTS_MOCK, Etudiant } from '../../data/etudiants.mock';
   templateUrl: './suivi-etudiants.html',
   styleUrl: './suivi-etudiants.css',
 })
-export class SuiviEtudiants {
-  etudiants: Etudiant[] = ETUDIANTS_MOCK;
+export class SuiviEtudiants implements OnInit {
+  etudiants: Etudiant[] = [];
   recherche: string = '';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private etudiantService: EtudiantService) {}
+
+  ngOnInit(): void {
+    this.etudiantService.getAll().subscribe({ next: list => this.etudiants = list, error: () => this.etudiants = [] });
+  }
 
   get etudiantsFiltres(): Etudiant[] {
     return this.etudiants.filter(e =>

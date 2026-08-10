@@ -16,6 +16,22 @@ public class SupportPedagogique {
     private String titre;
     private EnumTypeSupport typeSupport;
     private LocalDate dateMiseEnLigne;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getTitre() {
+        return titre;
+    }
+
+    public EnumTypeSupport getTypeSupport() {
+        return typeSupport;
+    }
+
+    public LocalDate getDateMiseEnLigne() {
+        return dateMiseEnLigne;
+    }
 }
 
 enum EnumTypeSupport {

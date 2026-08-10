@@ -1,6 +1,8 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Cours } from '../../models/cours';
+import { CoursService } from '../../services/cours.service';
+import { SupportService } from '../../services/support.service';
 
 @Component({
   selector: 'app-mes-cours',
@@ -8,22 +10,41 @@ import { Cours } from '../../models/cours';
   templateUrl: './mes-cours.html',
   styleUrl: './mes-cours.css',
 })
-export class MesCours {
+export class MesCours implements OnInit {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
-  cours: Cours[] = [
-    { code: 'ECO-402', titre: 'Théorie et Pratique Économiques', nbEtudiants: 42, nbRessources: 12, progression: 68, couleurBandeau: 'bg-secondary-container' },
-    { code: 'MGT-301', titre: 'Management des Organisations', nbEtudiants: 38, nbRessources: 8, progression: 45, couleurBandeau: 'bg-primary-fixed-dim' }
-  ];
+  cours: Cours[] = [];
 
   depotForm: FormGroup;
   fichierSelectionne: File | null = null;
+  isUploading = false;
+  uploadMessage = '';
+  uploadError = '';
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private coursService: CoursService,
+    private supportService: SupportService
+  ) {
     this.depotForm = this.fb.group({
       typeRessource: ['pdf', Validators.required],
       coursCible: ['', Validators.required],
       datePublication: ['', Validators.required]
+    });
+  }
+
+  ngOnInit(): void {
+    this.loadCours();
+  }
+
+  private loadCours(): void {
+    this.coursService.getAll().subscribe({
+      next: (data) => {
+        this.cours = data || [];
+      },
+      error: () => {
+        this.cours = [];
+      }
     });
   }
 
@@ -43,12 +64,30 @@ export class MesCours {
       this.depotForm.markAllAsTouched();
       return;
     }
-    const payload = {
-      ...this.depotForm.value,
-      fichier: this.fichierSelectionne
-    };
-    console.log('Ressource à publier :', payload);
-    // TODO : appel API réel vers le backend une fois l'endpoint disponible
+
+    this.isUploading = true;
+    this.uploadError = '';
+    this.uploadMessage = '';
+    const { coursCible, typeRessource, datePublication } = this.depotForm.getRawValue();
+    this.supportService.uploadCourseSupport(
+      Number(coursCible),
+      typeRessource,
+      datePublication,
+      this.fichierSelectionne
+    ).subscribe({
+      next: () => {
+        this.isUploading = false;
+        this.uploadMessage = 'La ressource a été publiée.';
+        this.fichierSelectionne = null;
+        this.depotForm.reset({ typeRessource: 'pdf', coursCible: '', datePublication: '' });
+        this.fileInput.nativeElement.value = '';
+        this.loadCours();
+      },
+      error: (error) => {
+        this.isUploading = false;
+        this.uploadError = error.error?.message || 'La publication de la ressource a échoué.';
+      }
+    });
   }
 
   recherche: string = '';

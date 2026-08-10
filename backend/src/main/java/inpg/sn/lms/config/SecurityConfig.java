@@ -66,8 +66,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/recrutement/candidat/**").hasRole("CANDIDAT")
                 // Admin : gestion recrutement
                 .requestMatchers("/api/admin/recrutement/**").hasRole("RESPONSABLE_ADMISSION")
-                // Étudiant : espace étudiant
-                .requestMatchers("/api/espace-etudiant/**").hasRole("ETUDIANT")
+                // Espace pédagogique : les opérations d'enseignant restent réservées aux formateurs.
+                .requestMatchers("/api/espace-etudiant/formateur/**").hasRole("FORMATEUR")
+                .requestMatchers("/api/espace-etudiant/**").hasAnyRole("ETUDIANT", "FORMATEUR")
                 .anyRequest().authenticated()
                 )
                 

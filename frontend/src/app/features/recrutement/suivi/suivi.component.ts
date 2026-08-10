@@ -69,6 +69,10 @@ export class SuiviComponent implements OnInit {
   lieuEntretien = 'INPG Campus Dakar';
   adresseEntretien = 'VDN / Almadies, Dakar, Sénégal';
 
+  get mapUrl(): string {
+    return 'https://www.google.com/maps/search/' + encodeURIComponent(this.adresseEntretien || '');
+  }
+
   constructor(private recrutementService: RecrutementService) {}
 
   ngOnInit(): void {

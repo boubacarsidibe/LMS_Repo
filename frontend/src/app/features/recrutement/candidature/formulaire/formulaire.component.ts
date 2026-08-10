@@ -97,12 +97,12 @@ export class FormulaireComponent implements OnInit {
   peutAvancer(): boolean {
     this.showErrors = false;
     if (this.etape === 1) {
-      if (!this.data.nom?.trim() || !this.data.prenom?.trim() || !this.data.email?.trim() || !this.data.telephone?.trim()) {
+      if (!this.data.nom.trim() || !this.data.prenom.trim() || !this.data.email.trim() || !this.data.telephone.trim()) {
         this.showErrors = true; return false;
       }
     }
     if (this.etape === 2) {
-      if (!this.data.programme?.trim()) { this.showErrors = true; return false; }
+      if (!this.data.programme.trim()) { this.showErrors = true; return false; }
     }
     return true;
   }

@@ -380,7 +380,7 @@
           <div class="bg-white border border-outline-variant rounded-3xl overflow-hidden shadow-sm flex flex-col">
             <div class="p-6 pb-4">
               <h4 class="text-xl font-semibold mb-2">Lieu de l'entretien</h4>
-              <div class="flex items-start gap-3 mt-3"><span class="material-symbols-outlined text-secondary mt-0.5" style="font-variation-settings:'FILL' 1;">location_on</span><div><p class="text-label-md text-on-surface">{{ lieuEntretien }}</p><p class="text-on-surface-variant text-sm mt-1">{{ adresseEntretien }}</p><a class="inline-block mt-2 text-secondary text-sm font-medium hover:underline" href="#">Voir l'itinéraire</a></div></div>
+              <div class="flex items-start gap-3 mt-3"><span class="material-symbols-outlined text-secondary mt-0.5" style="font-variation-settings:'FILL' 1;">location_on</span><div><p class="text-label-md text-on-surface">{{ lieuEntretien }}</p><p class="text-on-surface-variant text-sm mt-1">{{ adresseEntretien }}</p><a class="inline-block mt-2 text-secondary text-sm font-medium hover:underline" [href]="mapUrl" target="_blank" rel="noopener">Voir l'itinéraire</a></div></div>
             </div>
             <div class="h-40 w-full relative bg-surface-dim"><div class="w-full h-full bg-surface-dim flex items-center justify-center"><span class="material-symbols-outlined text-4xl text-on-surface-variant/40">map</span></div></div>
           </div>

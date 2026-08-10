@@ -19,5 +19,16 @@ public class Formation {
     @Column(nullable = false)
     private String intitule;
 
+    public Long getId() {
+        return id;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public String getIntitule() {
+        return intitule;
+    }
 
 }

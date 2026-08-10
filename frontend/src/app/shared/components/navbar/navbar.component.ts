@@ -94,6 +94,25 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return this.auth.isLoggedIn() && this.auth.currentUser() != null;
   }
 
+  get isResponsableAdmissionRole(): boolean {
+    return this.auth.isResponsableAdmission();
+  }
+
+  get isEtudiantRole(): boolean {
+    const roles = this.auth.getUserRoles();
+    return roles.includes('ROLE_ETUDIANT');
+  }
+
+  get isFormateurRole(): boolean {
+    const roles = this.auth.getUserRoles();
+    return roles.includes('ROLE_FORMATEUR');
+  }
+
+  get isCandidatRole(): boolean {
+    const roles = this.auth.getUserRoles();
+    return roles.includes('ROLE_CANDIDAT');
+  }
+
   get userInitials(): string {
     const user = this.auth.currentUser();
     if (!user) return '';

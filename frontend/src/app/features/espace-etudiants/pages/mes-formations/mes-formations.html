@@ -1,0 +1,39 @@
+<div class="flex w-full">
+  <section class="w-full px-margin-desktop py-stack-lg">
+    <div class="flex items-center justify-between mb-stack-md">
+      <div>
+        <h1 class="font-display text-headline-lg">Mes Formations</h1>
+        <p class="text-on-surface-variant">Espace Apprenant · Mes Formations</p>
+      </div>
+      <div class="w-80">
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+          <input [(ngModel)]="recherche" placeholder="Rechercher un module..." class="w-full pl-12 pr-4 py-3 bg-surface-container-low rounded-xl border-none outline-none">
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-gutter">
+      <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-gutter">
+        <div *ngFor="let f of formationsFiltres">
+          <app-formation-card [formation]="f"></app-formation-card>
+        </div>
+      </div>
+
+      <aside class="col-span-12 lg:col-span-4 space-y-stack-lg">
+        <div class="bg-surface-container-lowest p-stack-lg rounded-2xl shadow-sm">
+          <h3 class="font-headline-sm mb-2">Filtrer par</h3>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2"><input type="radio" name="statut" checked> En cours (4)</label>
+            <label class="flex items-center gap-2"><input type="radio" name="statut"> Terminés (12)</label>
+            <label class="flex items-center gap-2"><input type="radio" name="statut"> Favoris (2)</label>
+          </div>
+        </div>
+        <div class="bg-surface-container p-stack-md rounded-2xl">
+          <h4 class="font-label-md">Programme</h4>
+          <p class="text-body-sm text-on-surface-variant">Executive MBA</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+</div>

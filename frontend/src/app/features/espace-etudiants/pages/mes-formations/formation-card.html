@@ -1,0 +1,26 @@
+<div class="group bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm">
+  <img src="images/image_lms_accueil.jpeg" alt="cover" class="w-full h-40 object-cover">
+  <div class="p-stack-md">
+    <div class="flex items-center justify-between mb-2">
+      <div class="font-label-sm text-on-surface-variant">{{ formation.code }}</div>
+      <button class="text-outline"><span class="material-symbols-outlined">favorite_border</span></button>
+    </div>
+    <h3 class="font-headline-sm mb-2">{{ formation.intitule }}</h3>
+    <div class="flex items-center gap-2 text-body-sm text-on-surface-variant mb-3">
+      <span class="material-symbols-outlined">person</span>
+      <span>Responsable</span>
+    </div>
+    <div class="mt-auto">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-label-sm text-on-surface-variant">Progression</span>
+        <span class="text-label-md font-bold text-secondary">65%</span>
+      </div>
+      <div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+        <div class="h-full bg-secondary rounded-full" style="width:65%"></div>
+      </div>
+    </div>
+    <div class="mt-4">
+      <button class="px-4 py-2 bg-secondary text-on-secondary rounded-lg">Continuer le cours</button>
+    </div>
+  </div>
+</div>
