@@ -10,6 +10,8 @@ import { CreerCours } from './pages/creer-cours/creer-cours';
 import { ProfilEtudiant } from './pages/profil-etudiant/profil-etudiant';
 import { SuiviEtudiants } from './pages/suivi-etudiants/suivi-etudiants';
 import { PlanningCalendrier } from './pages/planning-calendrier/planning-calendrier';
+import { Forum } from './pages/forum/forum';
+import { RetoursEvaluations } from './pages/retours-evaluations/retours-evaluations';
 
 export const routes: Routes = [
     {
@@ -33,7 +35,9 @@ export const routes: Routes = [
             { path: 'creer-cours', component: CreerCours },
             { path: 'suivi-etudiants', component: SuiviEtudiants },
             { path: 'profil-etudiant/:id', component: ProfilEtudiant },
-            { path: 'planning-calendrier', component: PlanningCalendrier }
+            { path: 'planning-calendrier', component: PlanningCalendrier },
+            { path: 'forum', component: Forum },
+            { path: 'retours-evaluations', component: RetoursEvaluations }
         ]
     },
     {

@@ -14,11 +14,13 @@ import { ProfilEtudiant } from './pages/profil-etudiant/profil-etudiant';
 import { FormateurLayout } from './layouts/formateur-layout/formateur-layout';
 import { routes } from './espace-etudiant.routes';
 import { PlanningCalendrier } from './pages/planning-calendrier/planning-calendrier';
+import { Forum } from './pages/forum/forum';
+import { RetoursEvaluations } from './pages/retours-evaluations/retours-evaluations';
 
 @NgModule({
   declarations: [
     Accueil, Test, DashboardFormateur, MesCours, MesFormations, FormationCard, CreerCours,
-    SuiviEtudiants, ProfilEtudiant, FormateurLayout, PlanningCalendrier
+    SuiviEtudiants, ProfilEtudiant, FormateurLayout, PlanningCalendrier, Forum, RetoursEvaluations
   ],
   imports: [
     CommonModule,
