@@ -16,11 +16,11 @@ import { routes } from './espace-etudiant.routes';
 import { PlanningCalendrier } from './pages/planning-calendrier/planning-calendrier';
 import { Forum } from './pages/forum/forum';
 import { RetoursEvaluations } from './pages/retours-evaluations/retours-evaluations';
-
+import { MonProfil } from './pages/mon-profil/mon-profil';
 @NgModule({
   declarations: [
     Accueil, Test, DashboardFormateur, MesCours, MesFormations, FormationCard, CreerCours,
-    SuiviEtudiants, ProfilEtudiant, FormateurLayout, PlanningCalendrier, Forum, RetoursEvaluations
+    SuiviEtudiants, ProfilEtudiant, FormateurLayout, PlanningCalendrier, Forum, RetoursEvaluations, MonProfil
   ],
   imports: [
     CommonModule,

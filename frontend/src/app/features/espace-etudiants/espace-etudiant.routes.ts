@@ -12,6 +12,7 @@ import { SuiviEtudiants } from './pages/suivi-etudiants/suivi-etudiants';
 import { PlanningCalendrier } from './pages/planning-calendrier/planning-calendrier';
 import { Forum } from './pages/forum/forum';
 import { RetoursEvaluations } from './pages/retours-evaluations/retours-evaluations';
+import { MonProfil } from './pages/mon-profil/mon-profil';
 
 export const routes: Routes = [
     {
@@ -27,7 +28,7 @@ export const routes: Routes = [
     {
         path: 'formateur',
         component: FormateurLayout,
-        canActivate: [roleGuard('ROLE_FORMATEUR')],
+        // canActivate: [roleGuard('ROLE_FORMATEUR')],
         children: [
             { path: '', redirectTo: 'dashboard-formateur', pathMatch: 'full' },
             { path: 'dashboard-formateur', component: DashboardFormateur },
@@ -37,7 +38,8 @@ export const routes: Routes = [
             { path: 'profil-etudiant/:id', component: ProfilEtudiant },
             { path: 'planning-calendrier', component: PlanningCalendrier },
             { path: 'forum', component: Forum },
-            { path: 'retours-evaluations', component: RetoursEvaluations }
+            { path: 'retours-evaluations', component: RetoursEvaluations },
+            { path: 'mon-profil', component: MonProfil }
         ]
     },
     {
