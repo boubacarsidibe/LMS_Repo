@@ -1,12 +1,15 @@
 import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Cours } from '../../models/cours';
 import { CoursService } from '../../services/cours.service';
 import { SupportService } from '../../services/support.service';
 
 @Component({
   selector: 'app-mes-cours',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
   templateUrl: './mes-cours.html',
   styleUrl: './mes-cours.css',
 })

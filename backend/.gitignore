@@ -31,3 +31,30 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+# ===================== Secrets =====================
+.env
+.env.*
+!.env.example
+
+# ===================== Backend (Maven / Spring Boot) =====================
+backend/target/
+backend/uploads/
+*.log
+hs_err_pid*.log
+replay_pid*.log
+
+# ===================== Frontend (Angular) =====================
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+frontend/npm-debug.log*
+
+# ===================== IDE / OS =====================
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

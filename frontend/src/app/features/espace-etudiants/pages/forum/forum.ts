@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { SUJETS_FORUM_MOCK, SujetForum } from '../../data/forum.mock';
+import { Auth } from '../../../../core/auth/services/authService';
 
 @Component({
   selector: 'app-forum',
@@ -13,6 +14,12 @@ export class Forum {
   filtreActif: 'tous' | 'non-lus' | 'prioritaires' = 'tous';
   nouveauMessage: string = '';
   marquerCommeSolution: boolean = false;
+  private currentUserName: string | null = null;
+
+  constructor(private auth: Auth) {
+    const user = this.auth.currentUser();
+    this.currentUserName = user ? user.username : null;
+  }
 
   get sujetsFiltres(): SujetForum[] {
     if (this.filtreActif === 'non-lus') {
@@ -42,9 +49,12 @@ export class Forum {
   envoyerReponse() {
     if (!this.nouveauMessage.trim()) return;
 
+    const auteur = this.currentUserName || 'Anonyme';
+    const initiales = auteur.split(' ').map(n => n.charAt(0)).slice(0,2).join('').toUpperCase();
+
     this.sujetSelectionne.messages.push({
-      auteur: 'Julian Sterling',
-      initiales: 'JS',
+      auteur,
+      initiales,
       date: "à l'instant",
       contenu: this.nouveauMessage
     });

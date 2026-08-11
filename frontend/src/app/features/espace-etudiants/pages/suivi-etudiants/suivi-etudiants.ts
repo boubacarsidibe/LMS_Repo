@@ -1,11 +1,14 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Etudiant } from '../../data/etudiants.mock';
 import { EtudiantService } from '../../services/etudiant.service';
 
 @Component({
   selector: 'app-suivi-etudiants',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './suivi-etudiants.html',
   styleUrl: './suivi-etudiants.css',
 })

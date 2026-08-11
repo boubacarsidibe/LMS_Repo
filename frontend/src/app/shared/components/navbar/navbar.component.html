@@ -6,29 +6,12 @@
       INPG<span class="text-[#131741]"> LMS</span>
     </a>
 
-    <!-- Navigation Links (Desktop) -->
-    <nav class="hidden md:flex items-center gap-1">
-      <a routerLink="/accueil" routerLinkActive="text-[#30609a] bg-[#30609a]/8" [routerLinkActiveOptions]="{exact: true}" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
-        Accueil
-      </a>
-      <a routerLink="/institut" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
-        Institut
-      </a>
-      <a routerLink="/contact" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
-        Contact
-      </a>
-      <a *ngIf="isCandidatRole" routerLink="/recrutement/catalogue" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
-        Catalogue
-      </a>
-      <a *ngIf="isLoggedIn && isEtudiantRole" routerLink="/espace-etudiant/accueil" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
-        Espace étudiant
-      </a>
-      <a *ngIf="isLoggedIn && isFormateurRole" routerLink="/espace-etudiant/formateur" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
-        Espace formateur
-      </a>
-      <a *ngIf="isLoggedIn && isResponsableAdmissionRole" routerLink="/responsable-admission" routerLinkActive="text-[#30609a] bg-[#30609a]/8" class="relative px-4 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a] hover:bg-[#f2f4f6] rounded-lg transition-all duration-200">
-        Administration
-      </a>
+    <!-- Navigation Links (Desktop) - centered -->
+    <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
+      <a routerLink="/espace-etudiant/accueil" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Dashboard</a>
+      <a routerLink="/espace-etudiant/mes-formations" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Courses</a>
+      <a *ngIf="isLoggedIn && (isEtudiantRole || isFormateurRole)" routerLink="/espace-etudiant/formateur/planning-calendrier" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Schedule</a>
+      <a routerLink="/institut" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Resources</a>
     </nav>
 
     <!-- Actions (Desktop) -->
@@ -60,12 +43,11 @@
             </span>
           </button>
 
-          <!-- Dropdown Notifications -->
+          <!-- Dropdown Notifications (same as before) -->
           <div
             *ngIf="notifDropdownOpen"
             id="notif-dropdown"
             class="absolute right-0 mt-2 w-80 bg-white border border-[#c7c5d0] rounded-xl shadow-lg z-50 origin-top-right">
-            <!-- Header -->
             <div class="flex items-center justify-between px-4 py-3 border-b border-[#c7c5d0]/40">
               <p class="text-sm font-semibold text-[#000002]">Notifications</p>
               <button *ngIf="nbNonLues > 0" (click)="marquerToutLu()"
@@ -73,20 +55,16 @@
                 Tout marquer lu
               </button>
             </div>
-
-            <!-- Liste des notifications -->
             <div class="max-h-80 overflow-y-auto">
               <div *ngIf="notifications.length === 0" class="px-4 py-10 text-center">
                 <span class="material-symbols-outlined text-4xl text-[#c7c5d0] mb-2" style="font-variation-settings: 'FILL' 0;">inbox</span>
                 <p class="text-sm text-[#77767f]">Aucune notification</p>
                 <p class="text-xs text-[#c7c5d0] mt-1">Les mises à jour de votre candidature apparaîtront ici.</p>
               </div>
-
               <div *ngFor="let notif of notifications"
                    (click)="onNotificationClick(notif)"
                    class="flex items-start gap-3 px-4 py-3 border-b border-[#c7c5d0]/20 hover:bg-[#f2f4f6] cursor-pointer transition-colors"
                    [class.bg-[#30609a]/5]="!notif.lu">
-                <!-- Icône type -->
                 <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
                      [class.bg-[#30609a]/10]="!notif.lu"
                      [class.bg-[#c7c5d0]/20]="notif.lu">
@@ -97,29 +75,33 @@
                     {{ getNotifIcon(notif.type) }}
                   </span>
                 </div>
-                <!-- Contenu -->
                 <div class="flex-1 min-w-0">
                   <p class="text-sm text-[#191c1e] leading-snug line-clamp-2"
                      [class.font-semibold]="!notif.lu">{{ notif.message }}</p>
                   <p class="text-xs text-[#77767f] mt-1">{{ getRelativeTime(notif.dateCreation) }}</p>
                 </div>
-                <!-- Point non lu -->
                 <span *ngIf="!notif.lu" class="w-2 h-2 rounded-full bg-[#30609a] shrink-0 mt-2"></span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Avatar utilisateur -->
+        <!-- vertical divider -->
+        <div class="hidden sm:block h-8 w-px bg-[#c7c5d0]/40 mx-3"></div>
+
+        <!-- Avatar utilisateur + nom/role -->
         <div class="relative">
           <button
             id="profile-btn"
             (click)="toggleDropdown()"
-            class="flex items-center gap-2 p-1.5 rounded-full hover:bg-[#f2f4f6] transition-colors cursor-pointer border-0 bg-transparent"
+            class="flex items-center gap-3 p-1.5 rounded-full hover:bg-[#f2f4f6] transition-colors cursor-pointer border-0 bg-transparent"
             aria-label="Menu utilisateur">
-            <!-- Avatar -->
             <div class="w-9 h-9 rounded-full bg-[#30609a] text-white flex items-center justify-center text-sm font-semibold shadow-sm">
               {{ userInitials }}
+            </div>
+            <div class="hidden sm:flex flex-col items-start leading-tight">
+              <span class="text-sm font-medium text-[#191c1e]">{{ userDisplayName }}</span>
+              <span class="text-xs uppercase text-[#77767f]">{{ getUserRoleLabel() }}</span>
             </div>
             <span class="material-symbols-outlined text-[#77767f] text-[20px]" style="font-variation-settings: 'FILL' 0;">
               {{ dropdownOpen ? 'expand_less' : 'expand_more' }}
@@ -131,11 +113,9 @@
             *ngIf="dropdownOpen"
             id="profile-dropdown"
             class="absolute right-0 mt-2 w-56 bg-white border border-[#c7c5d0] rounded-xl shadow-lg py-1 z-50 origin-top-right animate-in fade-in zoom-in-95">
-            <!-- User info header -->
             <div class="px-4 py-3 border-b border-[#c7c5d0]/40">
               <p class="text-sm font-semibold text-[#000002] capitalize">{{ userDisplayName }}</p>
             </div>
-            <!-- Menu items -->
             <a (click)="goToDashboard()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#f2f4f6] hover:text-[#30609a] cursor-pointer transition-colors">
               <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">dashboard</span>
               Tableau de bord

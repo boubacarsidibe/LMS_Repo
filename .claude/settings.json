@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -NoProfile -Command \"Stop-Process -Id 12416 -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 2; 'done'\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"auth/send-otp reachable, HTTP %{http_code}\\\\n\" -X POST http://localhost:8080/api/auth/send-otp -H \"Content-Type: application/json\" -d '{\"email\":\"\"}')",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" http://localhost:8080/api/recrutement/public/catalogue)",
+      "Bash(powershell.exe -NoProfile -Command \"\\(Get-NetTCPConnection -LocalPort 8080 -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess\\)\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-NetTCPConnection -LocalPort 8080 -ErrorAction SilentlyContinue\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8080 -State Listen\\).OwningProcess | Select-Object Id,ProcessName\")",
+      "Bash(rm -f /tmp/spring-run3.log)",
+      "Bash(./mvnw -o spring-boot:run)",
+      "Bash(rm -f /tmp/ng-serve.log)",
+      "Bash(npx ng *)",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST http://localhost:4200/api/auth/register -H 'Content-Type: application/json' -d '{\"username\":\"verifuser1\",\"email\":\"verif.__CMDSUB_OUTPUT__@test.local\",\"password\":\"azerty123\"}')",
+      "Bash(docker exec -i mon-postgres psql -U admin -d myappdb -c ' *)",
+      "Bash(powershell.exe -NoProfile -Command \"Get-NetTCPConnection -LocalPort 8080,4200 -ErrorAction SilentlyContinue | Select-Object LocalPort,State\")",
+      "Bash(powershell.exe -NoProfile -Command \"Stop-Process -Id 27628,27416 -Force; Start-Sleep -Seconds 1; Get-NetTCPConnection -LocalPort 8080,4200 -ErrorAction SilentlyContinue\")",
+      "Bash(powershell.exe -NoProfile -Command \"Get-NetTCPConnection -LocalPort 8080,4200 -State Listen -ErrorAction SilentlyContinue\")",
+      "Bash(rm -f /tmp/ng-build-p0.log)",
+      "Bash(rm -f /tmp/ng-build-step2.log)",
+      "Bash(until grep *)",
+      "Bash(tail -20 /tmp/ng-build-step2.log)",
+      "Bash(grep -A2 \"Initial total\" /tmp/ng-build-step2.log)",
+      "Bash(rm -f \"f:/Real_projects/Inpg/LMS_Repo/frontend/src/app/features/dashboard/test/test1/\"*.*)",
+      "Bash(rmdir \"f:/Real_projects/Inpg/LMS_Repo/frontend/src/app/features/dashboard\")",
+      "Bash(rm -f /tmp/ng-build-step2b.log)"
+    ]
+  }
+}

@@ -3,6 +3,9 @@ package inpg.sn.lms.recrutement.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import inpg.sn.lms.recrutement.dto.SessionCandidatureResponse;
+import inpg.sn.lms.recrutement.service.NotificationService;
 import inpg.sn.lms.recrutement.service.SessionCandidatureService;
 
 @RestController
@@ -19,10 +23,18 @@ import inpg.sn.lms.recrutement.service.SessionCandidatureService;
 @CrossOrigin(origins = "http://localhost:4200")
 public class PublicController {
 
-    private final SessionCandidatureService sessionCandidatureService;
+    private static final Logger log = LoggerFactory.getLogger(PublicController.class);
 
-    public PublicController(SessionCandidatureService sessionCandidatureService) {
+    private final SessionCandidatureService sessionCandidatureService;
+    private final NotificationService notificationService;
+
+    @Value("${app.admission.email:admin@inpg.sn}")
+    private String emailAdmission;
+
+    public PublicController(SessionCandidatureService sessionCandidatureService,
+                             NotificationService notificationService) {
         this.sessionCandidatureService = sessionCandidatureService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -39,14 +51,34 @@ public class PublicController {
      */
     @PostMapping("/question")
     public ResponseEntity<Map<String, String>> poserQuestion(@RequestBody Map<String, String> request) {
-        String email = request.getOrDefault("email", "");
-        String message = request.getOrDefault("message", "");
+        // getOrDefault renvoie null si la clé est présente avec une valeur nulle.
+        String email = request.get("email") == null ? "" : request.get("email").trim();
+        String message = request.get("message") == null ? "" : request.get("message").trim();
 
         if (message.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le message ne peut pas être vide."));
         }
+        if (email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "L'adresse email est requise pour vous répondre."));
+        }
 
-        // TODO: Envoyer l'email au service admission
+        // Envoi de l'email au service admission avec l'email du visiteur en objet,
+        // afin que le responsable admission puisse identifier et répondre facilement.
+        try {
+            notificationService.envoyerEmail(
+                    emailAdmission,
+                    "Nouvelle question du site (" + email + ")",
+                    "Une nouvelle question a été posée depuis le site public.\n\n"
+                            + "Email du visiteur : " + email + "\n\n"
+                            + "Message :\n" + message
+            );
+        } catch (Exception e) {
+            // On ne fait pas échouer la requête du visiteur si le serveur SMTP est
+            // momentanément indisponible : on journalise l'incident pour investigation
+            // et on informe tout de même l'utilisateur que sa demande a bien été reçue.
+            log.error("Échec de l'envoi de l'email de contact vers {} : {}", emailAdmission, e.getMessage(), e);
+        }
+
         return ResponseEntity.ok(Map.of("message", "Votre question a bien été envoyée. Nous vous répondrons dans les plus brefs délais."));
     }
 }

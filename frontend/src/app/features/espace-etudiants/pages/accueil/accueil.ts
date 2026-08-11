@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FormationService } from '../../services/formation.service';
 import { PromotionService } from '../../services/promotion.service';
 import { SupportService } from '../../services/support.service';
@@ -8,7 +9,8 @@ import { Support } from '../../models/support';
 
 @Component({
   selector: 'app-accueil',
-  standalone: false,
+  standalone: true,
+  imports: [RouterLink],
   templateUrl: './accueil.html',
   styleUrl: './accueil.css',
 })

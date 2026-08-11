@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { EVENEMENTS_MOCK, EvenementCalendrier } from '../../data/evenements.mock';
 
 interface JourCalendrier {
@@ -10,7 +11,8 @@ interface JourCalendrier {
 
 @Component({
   selector: 'app-planning-calendrier',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './planning-calendrier.html',
   styleUrl: './planning-calendrier.css',
 })

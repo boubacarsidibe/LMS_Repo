@@ -1,0 +1,31 @@
+<section class="p-6">
+  <h2 class="text-lg font-semibold mb-4">Gestion des rôles utilisateurs</h2>
+
+  <div *ngIf="loading" class="text-sm text-gray-600">Chargement...</div>
+
+  <table class="w-full table-auto text-sm" *ngIf="!loading">
+    <thead>
+      <tr class="text-left text-xs text-gray-500">
+        <th class="p-2">Utilisateur</th>
+        <th class="p-2">E-mail</th>
+        <th class="p-2">Étudiant</th>
+        <th class="p-2">Formateur</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let u of users" class="border-t">
+        <td class="p-2">{{ u.username }}</td>
+        <td class="p-2">{{ u.email }}</td>
+        <td class="p-2">
+          <input type="checkbox" [attr.aria-label]="'Rôle étudiant pour ' + u.username"
+                 [checked]="u.roles.includes('ROLE_ETUDIANT')" (change)="onToggleRole(u, 'ROLE_ETUDIANT', $any($event.target).checked)" />
+        </td>
+        <td class="p-2">
+          <input type="checkbox" [attr.aria-label]="'Rôle formateur pour ' + u.username"
+                 [checked]="u.roles.includes('ROLE_FORMATEUR')" (change)="onToggleRole(u, 'ROLE_FORMATEUR', $any($event.target).checked)" />
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</section>

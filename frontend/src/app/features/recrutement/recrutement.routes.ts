@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { authGuard } from '../../core/auth/guards/auth-guard';
 import { candidatGuard } from '../../core/auth/guards/candidat-guard';
 import { CatalogueComponent } from './catalogue/catalogue.component';
 
@@ -14,16 +13,16 @@ export const RECRUTEMENT_ROUTES: Routes = [
       ),
   },
 
-  // VisiteurPublic (connecté) - Candidature
+  // Candidat - Candidature
   {
     path: 'candidature',
     loadComponent: () => import('./candidature/formulaire/formulaire.component').then(m => m.FormulaireComponent),
-    canActivate: [authGuard]
+    canActivate: [candidatGuard]
   },
   {
     path: 'candidature/paiement',
     loadComponent: () => import('./candidature/paiement/paiement.component').then(m => m.PaiementComponent),
-    canActivate: [authGuard]
+    canActivate: [candidatGuard]
   },
 
   // Candidat - Suivi

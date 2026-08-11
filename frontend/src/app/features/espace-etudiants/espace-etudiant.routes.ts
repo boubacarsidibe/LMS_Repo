@@ -1,43 +1,47 @@
 import { Routes } from '@angular/router';
-import { Test } from './pages/test/test';
-import { Accueil } from './pages/accueil/accueil';
-import { MesFormations } from './pages/mes-formations/mes-formations';
-import { DashboardFormateur } from './pages/dashboard-formateur/dashboard-formateur';
-import { MesCours } from './pages/mes-cours/mes-cours';
-import { FormateurLayout } from './layouts/formateur-layout/formateur-layout';
 import { roleGuard } from '../../core/auth/guards/role-guard';
-import { CreerCours } from './pages/creer-cours/creer-cours';
-import { ProfilEtudiant } from './pages/profil-etudiant/profil-etudiant';
-import { SuiviEtudiants } from './pages/suivi-etudiants/suivi-etudiants';
-import { PlanningCalendrier } from './pages/planning-calendrier/planning-calendrier';
 
 export const routes: Routes = [
     {
         path: 'accueil',
-        component: Accueil,
+        loadComponent: () => import('./pages/accueil/accueil').then(m => m.Accueil),
         canActivate: [roleGuard('ROLE_ETUDIANT', 'ROLE_FORMATEUR')]
     },
     {
         path: 'mes-formations',
-        component: MesFormations,
-        // canActivate: [roleGuard('ROLE_ETUDIANT')]
+        loadComponent: () => import('./pages/mes-formations/mes-formations').then(m => m.MesFormations),
+        canActivate: [roleGuard('ROLE_ETUDIANT')]
     },
     {
         path: 'formateur',
-        component: FormateurLayout,
+        loadComponent: () => import('./layouts/formateur-layout/formateur-layout').then(m => m.FormateurLayout),
         canActivate: [roleGuard('ROLE_FORMATEUR')],
         children: [
             { path: '', redirectTo: 'dashboard-formateur', pathMatch: 'full' },
-            { path: 'dashboard-formateur', component: DashboardFormateur },
-            { path: 'mes-cours', component: MesCours },
-            { path: 'creer-cours', component: CreerCours },
-            { path: 'suivi-etudiants', component: SuiviEtudiants },
-            { path: 'profil-etudiant/:id', component: ProfilEtudiant },
-            { path: 'planning-calendrier', component: PlanningCalendrier }
+            {
+                path: 'dashboard-formateur',
+                loadComponent: () => import('./pages/dashboard-formateur/dashboard-formateur').then(m => m.DashboardFormateur)
+            },
+            {
+                path: 'mes-cours',
+                loadComponent: () => import('./pages/mes-cours/mes-cours').then(m => m.MesCours)
+            },
+            {
+                path: 'creer-cours',
+                loadComponent: () => import('./pages/creer-cours/creer-cours').then(m => m.CreerCours)
+            },
+            {
+                path: 'suivi-etudiants',
+                loadComponent: () => import('./pages/suivi-etudiants/suivi-etudiants').then(m => m.SuiviEtudiants)
+            },
+            {
+                path: 'profil-etudiant/:id',
+                loadComponent: () => import('./pages/profil-etudiant/profil-etudiant').then(m => m.ProfilEtudiant)
+            },
+            {
+                path: 'planning-calendrier',
+                loadComponent: () => import('./pages/planning-calendrier/planning-calendrier').then(m => m.PlanningCalendrier)
+            }
         ]
-    },
-    {
-        path: 'test',
-        component: Test
     }
 ];

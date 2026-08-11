@@ -6,13 +6,18 @@
       <span class="font-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Vue d'ensemble institutionnelle</span>
       <h1 class="font-display text-primary-container leading-none -ml-1">Pilotage Pédagogique</h1>
       <p class="font-body-lg text-on-surface-variant mt-4 max-w-2xl">
-        Ravi de vous revoir, <span class="font-bold">{{ profile?.nom || 'Professeur' }}</span>. Vos cohortes actuelles affichent une <span class="text-secondary font-bold">augmentation de 12%</span> de l'engagement ce semestre. Consultez les actions prioritaires ci-dessous.
+        <ng-container *ngIf="!loading">
+          <span *ngIf="profile; else noProfile">Ravi de vous revoir, <span class="font-bold">{{ profile.nom }}</span>.</span>
+          <ng-template #noProfile>Ravi de vous revoir.</ng-template>
+        </ng-container>
+        <ng-container *ngIf="loading">Chargement du profil…</ng-container>
+        &nbsp;Vos cohortes actuelles affichent une <span class="text-secondary font-bold">augmentation de 12%</span> de l'engagement ce semestre. Consultez les actions prioritaires ci-dessous.
       </p>
     </div>
     <div class="col-span-12 lg:col-span-4 flex justify-end gap-stack-md pb-1">
       <div class="bg-surface-container-high p-4 rounded-xl flex flex-col min-w-[140px]">
         <span class="font-label-sm text-on-surface-variant">Étudiants Actifs</span>
-        <span class="font-headline-md text-primary-container">{{ profile?.nbCours ?? '1 248' }}</span>
+        <span class="font-headline-md text-primary-container">{{ profile?.nbCours ?? '—' }}</span>
       </div>
       <div class="bg-primary-container p-4 rounded-xl flex flex-col min-w-[140px] text-on-primary">
         <span class="font-label-sm opacity-80 text-on-primary-container">État du Système</span>
