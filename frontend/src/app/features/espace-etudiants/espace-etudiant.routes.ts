@@ -41,6 +41,14 @@ export const routes: Routes = [
             {
                 path: 'planning-calendrier',
                 loadComponent: () => import('./pages/planning-calendrier/planning-calendrier').then(m => m.PlanningCalendrier)
+            },
+            {
+                path: 'forum',
+                loadComponent: () => import('./pages/forum/forum').then(m => m.Forum)
+            },
+            {
+                path: 'retours-evaluations',
+                loadComponent: () => import('./pages/retours-evaluations/retours-evaluations').then(m => m.RetoursEvaluations)
             }
         ]
     }

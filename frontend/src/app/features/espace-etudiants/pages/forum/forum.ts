@@ -1,10 +1,13 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { SUJETS_FORUM_MOCK, SujetForum } from '../../data/forum.mock';
 import { Auth } from '../../../../core/auth/services/authService';
 
 @Component({
   selector: 'app-forum',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './forum.html',
   styleUrl: './forum.css',
 })

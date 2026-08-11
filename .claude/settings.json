@@ -24,7 +24,8 @@
       "Bash(grep -A2 \"Initial total\" /tmp/ng-build-step2.log)",
       "Bash(rm -f \"f:/Real_projects/Inpg/LMS_Repo/frontend/src/app/features/dashboard/test/test1/\"*.*)",
       "Bash(rmdir \"f:/Real_projects/Inpg/LMS_Repo/frontend/src/app/features/dashboard\")",
-      "Bash(rm -f /tmp/ng-build-step2b.log)"
+      "Bash(rm -f /tmp/ng-build-step2b.log)",
+      "Bash(rm -f /tmp/ng-build-merge.log)"
     ]
   }
 }
