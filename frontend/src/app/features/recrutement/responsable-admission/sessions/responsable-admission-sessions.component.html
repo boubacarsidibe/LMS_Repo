@@ -12,15 +12,20 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-1">Planification, suivi des quotas et ouverture des appels à candidatures.</p>
   </div>
   <div class="flex items-center gap-3">
-    <button class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm">
+    <button type="button" [disabled]="exporting" (click)="exporter()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
       <span class="material-symbols-outlined text-[18px]">download</span>
-      Exporter la liste
+      {{ exporting ? 'Export en cours…' : 'Exporter la liste' }}
     </button>
-    <button class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md" (click)="openDrawer()">
+    <button type="button" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md" (click)="openDrawer()">
       <span class="material-symbols-outlined text-[18px]">add</span>
       Nouvelle Session
     </button>
   </div>
+</div>
+
+<!-- Erreur de chargement -->
+<div *ngIf="errorMessage" class="mt-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm">
+  {{ errorMessage }}
 </div>
 
 <!-- KPI Bento Grid -->
@@ -30,7 +35,7 @@
       <p class="font-label-md text-label-md text-on-surface-variant">Total Sessions</p>
       <span class="material-symbols-outlined text-on-surface-variant opacity-70">event</span>
     </div>
-    <h3 class="font-headline-lg text-headline-lg text-primary">8 <span class="font-body-md text-on-surface-variant font-normal">sessions</span></h3>
+    <h3 class="font-headline-lg text-headline-lg text-primary">{{ totalSessions }} <span class="font-body-md text-on-surface-variant font-normal">sessions</span></h3>
   </div>
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
     <div class="flex items-center justify-between mb-4">
@@ -38,31 +43,29 @@
       <span class="material-symbols-outlined text-on-surface-variant opacity-70">check_circle</span>
     </div>
     <div class="flex items-end gap-3">
-      <h3 class="font-headline-lg text-headline-lg text-primary">4</h3>
+      <h3 class="font-headline-lg text-headline-lg text-primary">{{ nbOuvertes }}</h3>
       <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-md mb-2">ouvertes</span>
     </div>
   </div>
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
     <div class="flex items-center justify-between mb-4">
-      <p class="font-label-md text-label-md text-on-surface-variant">Quota Global</p>
-      <span class="material-symbols-outlined text-on-surface-variant opacity-70">group</span>
+      <p class="font-label-md text-label-md text-on-surface-variant">Sessions Actives</p>
+      <span class="material-symbols-outlined text-on-surface-variant opacity-70">bolt</span>
     </div>
-    <div>
-      <p class="font-headline-sm md:font-headline-md text-primary mb-2">180 / 220 <span class="font-body-md text-on-surface-variant font-normal">places</span></p>
-      <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-        <div class="bg-secondary h-2 rounded-full" style="width: 81%"></div>
-      </div>
-    </div>
+    <h3 class="font-headline-lg text-headline-lg text-primary">{{ nbActives }}</h3>
   </div>
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
     <div class="flex items-center justify-between mb-4">
       <p class="font-label-md text-label-md text-on-surface-variant">Prochaine Clôture</p>
       <span class="material-symbols-outlined text-on-surface-variant opacity-70">timer</span>
     </div>
-    <div>
-      <p class="font-headline-sm md:font-headline-md text-primary">15 Août 2026</p>
-      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Executive MBA</p>
+    <div *ngIf="prochaineFermeture; else aucuneCloture">
+      <p class="font-headline-sm md:font-headline-md text-primary">{{ prochaineFermeture.dateFermeture | date:'dd MMM yyyy' }}</p>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ prochaineFermeture.libelle }}</p>
     </div>
+    <ng-template #aucuneCloture>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">Aucune session ouverte</p>
+    </ng-template>
   </div>
 </div>
 
@@ -70,50 +73,63 @@
 <div class="flex flex-col md:flex-row gap-4 mb-stack-lg">
   <div class="relative flex-1">
     <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-    <input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none text-body-md" placeholder="Rechercher une session..." type="text"/>
+    <input [(ngModel)]="recherche" class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none text-body-md" placeholder="Rechercher une session..." type="text"/>
   </div>
   <div class="flex flex-wrap md:flex-nowrap gap-3">
-    <select class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface-variant font-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
-      <option>Année Académique</option>
-    </select>
-    <select class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface-variant font-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
-      <option>Statut</option>
-    </select>
-    <select class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface-variant font-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
-      <option>Niveau</option>
+    <select [(ngModel)]="filtreStatut" class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface-variant font-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
+      <option value="TOUTES">Toutes les sessions</option>
+      <option value="OUVERTES">Ouvertes</option>
+      <option value="FERMEES">Fermées</option>
+      <option value="ACTIVES">Actives</option>
     </select>
   </div>
 </div>
 
+<!-- Loading -->
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement des sessions…</div>
+
+<!-- Empty state -->
+<div *ngIf="!loading && sessionsFiltrees.length === 0" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant">
+  <span class="material-symbols-outlined text-4xl text-outline mb-2 block">event_busy</span>
+  <p class="font-body-md text-on-surface-variant">Aucune session ne correspond à votre recherche.</p>
+</div>
+
 <!-- Data Table -->
-<div class="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
+<div *ngIf="!loading && sessionsFiltrees.length > 0" class="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
   <table class="w-full text-left border-collapse">
     <thead>
       <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant font-label-sm uppercase tracking-wider">
-        <th class="px-6 py-4 font-semibold">Formation</th>
-        <th class="px-6 py-4 font-semibold">Période</th>
-        <th class="px-6 py-4 font-semibold">Frais</th>
-        <th class="px-6 py-4 font-semibold">Admis / Quota</th>
+        <th class="px-6 py-4 font-semibold">Session</th>
+        <th class="px-6 py-4 font-semibold">Ouverture</th>
+        <th class="px-6 py-4 font-semibold">Fermeture</th>
         <th class="px-6 py-4 font-semibold">Statut</th>
         <th class="px-6 py-4 font-semibold text-right">Actions</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-outline-variant text-on-surface font-body-sm">
-      <tr class="hover:bg-surface-container-low transition-colors">
-        <td class="px-6 py-4 font-medium">Executive MBA Management du Pétrole & Gaz</td>
-        <td class="px-6 py-4 text-on-surface-variant">15 Mai - 15 Août 2026</td>
-        <td class="px-6 py-4">15 000 FCFA</td>
-        <td class="px-6 py-4"><div class="flex flex-col gap-1 w-32"><span class="text-xs">38/50 admis</span><div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden"><div class="bg-secondary h-1.5 rounded-full" style="width: 76%"></div></div></div></td>
-        <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Ouverte</span></td>
-        <td class="px-6 py-4 text-right"><button class="p-1 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button></td>
-      </tr>
-      <tr class="hover:bg-surface-container-low transition-colors">
-        <td class="px-6 py-4 font-medium">Master 1 Data Science & AI</td>
-        <td class="px-6 py-4 text-on-surface-variant">01 Juin - 01 Sept 2026</td>
-        <td class="px-6 py-4">15 000 FCFA</td>
-        <td class="px-6 py-4"><div class="flex flex-col gap-1 w-32"><span class="text-xs">45/50 admis</span><div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden"><div class="bg-secondary h-1.5 rounded-full" style="width: 90%"></div></div></div></td>
-        <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Ouverte</span></td>
-        <td class="px-6 py-4 text-right"><button class="p-1 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button></td>
+      <tr *ngFor="let s of sessionsFiltrees" class="hover:bg-surface-container-low transition-colors">
+        <td class="px-6 py-4 font-medium">{{ s.libelle }}</td>
+        <td class="px-6 py-4 text-on-surface-variant">{{ s.dateOuverture | date:'dd MMM yyyy' }}</td>
+        <td class="px-6 py-4 text-on-surface-variant">{{ s.dateFermeture | date:'dd MMM yyyy' }}</td>
+        <td class="px-6 py-4">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [ngClass]="s.estOuverte ? 'bg-green-100 text-green-800' : 'bg-surface-container text-on-surface-variant'">
+              {{ s.estOuverte ? 'Ouverte' : 'Fermée' }}
+            </span>
+            <span *ngIf="s.estActive" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-fixed text-secondary">
+              Active
+            </span>
+          </div>
+        </td>
+        <td class="px-6 py-4 text-right">
+          <button type="button" (click)="openDrawer(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors" title="Modifier">
+            <span class="material-symbols-outlined text-[20px]">edit</span>
+          </button>
+          <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded transition-colors" title="Supprimer">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+          </button>
+        </td>
       </tr>
     </tbody>
   </table>
@@ -125,22 +141,38 @@
 <!-- Side Drawer -->
 <aside class="fixed top-0 right-0 h-full w-full max-w-md bg-surface shadow-[0_12px_32px_rgba(19,23,65,0.1)] z-50 transform transition-transform duration-300 ease-in-out flex flex-col border-l border-outline-variant" [class.translate-x-full]="!drawerOpen" [class.translate-x-0]="drawerOpen">
   <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
-    <h2 class="font-headline-sm text-headline-sm text-primary">Créer / Éditer une session</h2>
-    <button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" (click)="closeDrawer()"><span class="material-symbols-outlined">close</span></button>
+    <h2 class="font-headline-sm text-headline-sm text-primary">{{ sessionEnEdition ? 'Modifier la session' : 'Créer une session' }}</h2>
+    <button type="button" class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" (click)="closeDrawer()"><span class="material-symbols-outlined">close</span></button>
   </div>
-  <div class="flex-1 overflow-y-auto p-6 space-y-6">
-    <div class="space-y-4">
-      <div><label class="block font-label-md text-label-md text-on-surface-variant mb-1">Intitulé de la formation</label><input class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" placeholder="Ex: Master Data Science 2025" type="text"/></div>
-      <div class="grid grid-cols-2 gap-4">
-        <div><label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date d'ouverture</label><input class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/></div>
-        <div><label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date limite</label><input class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/></div>
+  <form [formGroup]="sessionForm" (ngSubmit)="enregistrer()" class="flex-1 flex flex-col overflow-y-auto">
+    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+      <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm">{{ formError }}</div>
+      <div class="space-y-4">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Intitulé de la formation</label>
+          <input formControlName="libelle" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" placeholder="Ex: Master Data Science 2025" type="text"/>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date d'ouverture</label>
+            <input formControlName="dateOuverture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
+          </div>
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date limite</label>
+            <input formControlName="dateFermeture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
+          </div>
+        </div>
+        <label class="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant">
+          <input formControlName="estOuverte" type="checkbox" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+          Session ouverte aux candidatures
+        </label>
       </div>
-      <div><label class="block font-label-md text-label-md text-on-surface-variant mb-1">Capacité d'accueil</label><input class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" placeholder="Ex: 50" type="number"/></div>
-      <div><label class="block font-label-md text-label-md text-on-surface-variant mb-1">Frais de dossier (FCFA)</label><input class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" placeholder="Ex: 15000" type="number"/></div>
     </div>
-  </div>
-  <div class="p-6 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
-    <button class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="closeDrawer()">Annuler</button>
-    <button class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm" (click)="closeDrawer()">Créer la session</button>
-  </div>
+    <div class="p-6 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
+      <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="closeDrawer()">Annuler</button>
+      <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+        {{ isSubmitting ? 'Enregistrement…' : (sessionEnEdition ? 'Enregistrer' : 'Créer la session') }}
+      </button>
+    </div>
+  </form>
 </aside>

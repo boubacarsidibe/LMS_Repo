@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { Formation } from '../../models/formation';
 import { FormationService } from '../../services/formation.service';
 import { mesFormationsMock } from '../../data/formations.data';
@@ -21,7 +20,7 @@ export class MesFormations implements OnInit {
   filtre: 'ALL' | 'EN_COURS' | 'TERMINE' | 'FAVORI' = 'ALL';
   recherche: string = '';
 
-  constructor(private formationService: FormationService, private router: Router, private favorites: FavoritesService) {}
+  constructor(private formationService: FormationService, private favorites: FavoritesService) {}
 
   ngOnInit(): void {
     this.loadFormations();
@@ -59,10 +58,5 @@ export class MesFormations implements OnInit {
       if (this.filtre === 'FAVORI') return !!f.favorite;
       return f.status === this.filtre;
     });
-  }
-
-  continuer(formation: Formation) {
-    // navigation vers le catalogue / détail — adapter si une route dédiée existe
-    this.router.navigate(['/recrutement/catalogue']);
   }
 }

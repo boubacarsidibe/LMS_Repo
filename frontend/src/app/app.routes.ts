@@ -109,10 +109,31 @@ export const routes: Routes = [
           ).then((m) => m.ResponsableAdmissionDeliberationComponent),
       },
       {
+        path: 'statistiques',
+        loadComponent: () =>
+          import(
+            './features/recrutement/responsable-admission/statistiques/responsable-admission-statistiques.component'
+          ).then((m) => m.ResponsableAdmissionStatistiquesComponent),
+      },
+      {
         path: 'users',
         loadComponent: () =>
           import('./features/recrutement/responsable-admission/users/responsable-users.component').then(
             (m) => m.ResponsableUsersComponent
+          ),
+      },
+      {
+        path: 'parametres',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/parametres/responsable-admission-parametres.component').then(
+            (m) => m.ResponsableAdmissionParametresComponent
+          ),
+      },
+      {
+        path: 'aide',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/aide/responsable-admission-aide.component').then(
+            (m) => m.ResponsableAdmissionAideComponent
           ),
       },
     ],

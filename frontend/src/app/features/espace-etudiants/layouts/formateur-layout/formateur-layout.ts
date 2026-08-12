@@ -21,4 +21,10 @@ export class FormateurLayout implements OnInit {
     this.formateurService.getProfile().subscribe({ next: p => { this.profile = p; this.loading = false; }, error: () => { this.profile = null; this.loading = false; } });
   }
 
+  // Pas encore de page de profil self-service : on prévient honnêtement plutôt
+  // que de laisser un lien href="#" qui ne fait que remonter en haut de page.
+  profilBientotDisponible(event: Event): void {
+    event.preventDefault();
+    alert('La page "Mon profil" sera bientôt disponible.');
+  }
 }

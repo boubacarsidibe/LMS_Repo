@@ -33,7 +33,11 @@ public class UserService implements UserDetailsService {
     }
 
     /**
-     * Crée un utilisateur avec le rôle CANDIDAT par défaut (inscription publique).
+     * Crée un utilisateur sans rôle métier (inscription publique). Le rôle
+     * CANDIDAT n'est plus attribué ici : il l'est uniquement lors de la
+     * soumission réussie d'une candidature (CandidatController#soumettreCandidature),
+     * pour qu'un simple inscrit ne soit pas considéré candidat avant d'avoir
+     * réellement postulé.
      */
     public User createUser(inpg.sn.lms.auth.dto.UserDto userDto) {
         if (userDto.getEmail() == null || userDto.getEmail().isBlank()
@@ -57,13 +61,6 @@ public class UserService implements UserDetailsService {
         newUser.setUsername(username);
         newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
-
-        // Assigner le rôle CANDIDAT à tout nouvel inscrit
-        Role roleCandidat = roleRepository.findByCode("ROLE_CANDIDAT");
-        if (roleCandidat == null) {
-            throw new IllegalStateException("Le rôle ROLE_CANDIDAT est introuvable.");
-        }
-        newUser.addRole(roleCandidat);
 
         return userRepository.save(newUser);
     }

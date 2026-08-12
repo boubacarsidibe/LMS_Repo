@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import inpg.sn.lms.auth.entity.Candidat;
+import inpg.sn.lms.auth.repository.CandidatRepository;
 import inpg.sn.lms.recrutement.entity.NotificationCandidat;
 import inpg.sn.lms.recrutement.repository.NotificationCandidatRepository;
 
@@ -14,9 +15,11 @@ import inpg.sn.lms.recrutement.repository.NotificationCandidatRepository;
 public class NotificationCandidatService {
 
     private final NotificationCandidatRepository repository;
+    private final CandidatRepository candidatRepository;
 
-    public NotificationCandidatService(NotificationCandidatRepository repository) {
+    public NotificationCandidatService(NotificationCandidatRepository repository, CandidatRepository candidatRepository) {
         this.repository = repository;
+        this.candidatRepository = candidatRepository;
     }
 
     /**
@@ -25,6 +28,13 @@ public class NotificationCandidatService {
     public NotificationCandidat creerNotification(Candidat candidat, String message, String type, String lien) {
         NotificationCandidat notif = new NotificationCandidat(candidat, message, type, lien);
         return repository.save(notif);
+    }
+
+    /** Variante pratique pour les appelants qui n'ont que l'ID du candidat (ex: contrôleurs admin). */
+    public NotificationCandidat creerNotification(Long candidatId, String message, String type, String lien) {
+        Candidat candidat = candidatRepository.findById(candidatId)
+                .orElseThrow(() -> new RuntimeException("Candidat non trouvé avec l'ID: " + candidatId));
+        return creerNotification(candidat, message, type, lien);
     }
 
     /**

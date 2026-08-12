@@ -3,60 +3,63 @@
 <div class="mb-stack-lg flex flex-col md:flex-row md:items-end justify-between gap-4">
   <div>
     <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1">Vue d'ensemble</h2>
-    <p class="font-body-md text-body-md text-on-surface-variant">Suivi des candidatures et sessions en cours.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant">Suivi des sessions en cours. Pour les indicateurs et graphiques, voir <a routerLink="/responsable-admission/statistiques" class="text-secondary hover:underline">Statistiques</a>.</p>
   </div>
   <div class="flex gap-3">
-    <button class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm">
-      <span class="material-symbols-outlined text-[18px]">download</span> Rapport
+    <button type="button" routerLink="/responsable-admission/statistiques" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm">
+      <span class="material-symbols-outlined text-[18px]">bar_chart</span> Statistiques
+    </button>
+    <button type="button" [disabled]="exporting" (click)="exporterSessions()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
+      <span class="material-symbols-outlined text-[18px]">download</span> {{ exporting ? 'Export en cours…' : 'Rapport (Sessions)' }}
     </button>
   </div>
 </div>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
-    <div class="flex justify-between items-start mb-4">
-      <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">groups</span></div>
-      <span class="flex items-center gap-1 text-secondary font-label-sm text-label-sm bg-secondary-fixed px-2 py-1 rounded-full"><span class="material-symbols-outlined text-[14px]">trending_up</span> +12%</span>
-    </div>
-    <p class="font-label-md text-label-md text-on-surface-variant mb-1">Total Candidats</p>
-    <h3 class="font-headline-lg text-headline-lg text-primary">1,240</h3>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
-    <div class="flex justify-between items-start mb-4">
-      <div class="w-10 h-10 rounded-lg bg-secondary-fixed/50 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">hourglass_empty</span></div>
-    </div>
-    <p class="font-label-md text-label-md text-on-surface-variant mb-1">Validation en cours</p>
-    <h3 class="font-headline-lg text-headline-lg text-primary">320</h3>
-    <div class="w-full bg-surface-container h-1.5 rounded-full mt-3 overflow-hidden"><div class="bg-secondary h-full rounded-full" style="width: 25%"></div></div>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group relative overflow-hidden">
-    <div class="flex justify-between items-start mb-4 relative z-10">
-      <div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center text-on-surface-variant group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">how_to_reg</span></div>
-    </div>
-    <p class="font-label-md text-label-md text-on-surface-variant mb-1 relative z-10">Présélectionnés</p>
-    <h3 class="font-headline-lg text-headline-lg text-primary relative z-10">180</h3>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
-    <div class="flex justify-between items-start mb-4">
-      <div class="w-10 h-10 rounded-lg bg-error-container flex items-center justify-center text-error group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">cancel</span></div>
-    </div>
-    <p class="font-label-md text-label-md text-on-surface-variant mb-1">Rejetés</p>
-    <h3 class="font-headline-lg text-headline-lg text-primary">90</h3>
-  </div>
-</div>
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement des données…</div>
 
-<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
-  <div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
-    <h3 class="font-headline-sm text-headline-sm text-primary">Sessions Actives</h3>
-    <button class="text-secondary font-label-md text-label-md hover:underline" routerLink="/responsable-admission/sessions">Voir tout</button>
+<ng-container *ngIf="!loading">
+  <div *ngIf="prefs.showSessionsActives" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+    <div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+      <h3 class="font-headline-sm text-headline-sm text-primary">Sessions Actives</h3>
+      <button type="button" class="text-secondary font-label-md text-label-md hover:underline" routerLink="/responsable-admission/sessions">Voir tout</button>
+    </div>
+    <div *ngIf="sessionsActives.length === 0" class="p-10 text-center text-on-surface-variant font-body-md">
+      Aucune session active pour le moment.
+    </div>
+    <div class="overflow-x-auto" *ngIf="sessionsActives.length > 0">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-outline-variant bg-surface-container-lowest">
+            <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Session</th>
+            <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Candidatures</th>
+            <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Date limite</th>
+            <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium text-right">Statut</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant">
+          <tr *ngFor="let s of sessionsActives" class="hover:bg-surface-container-low transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">school</span></div>
+                <p class="font-label-md text-label-md text-primary font-semibold">{{ s.libelle }}</p>
+              </div>
+            </td>
+            <td class="px-6 py-4 font-body-md text-body-md text-primary">{{ nbCandidatures(s.id) }} candidature(s)</td>
+            <td class="px-6 py-4"><p class="font-body-md text-body-md text-primary">{{ s.dateFermeture | date:'dd MMM yyyy' }}</p></td>
+            <td class="px-6 py-4 text-right">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-label-sm"
+                    [ngClass]="s.estOuverte ? 'bg-secondary-fixed text-secondary border border-secondary-fixed' : 'bg-surface-container text-on-surface-variant'">
+                {{ s.estOuverte ? 'Ouverte' : 'Fermée' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
-  <div class="overflow-x-auto">
-    <table class="w-full text-left border-collapse">
-      <thead><tr class="border-b border-outline-variant bg-surface-container-lowest"><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Session</th><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium w-1/3">Capacité & Avancement</th><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Date limite</th><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium text-right">Statut</th></tr></thead>
-      <tbody class="divide-y divide-outline-variant">
-        <tr class="hover:bg-surface-container-low transition-colors"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">school</span></div><div><p class="font-label-md text-label-md text-primary font-semibold">Master 1 Data Science</p><p class="font-body-sm text-body-sm text-on-surface-variant">Automne 2024</p></div></div></td><td class="px-6 py-4"><div class="flex flex-col gap-1"><div class="flex justify-between font-label-sm text-label-sm"><span class="text-on-surface-variant">45 admis</span><span class="text-primary">50 places</span></div><div class="w-full bg-surface-container h-2 rounded-full overflow-hidden"><div class="bg-primary h-full rounded-full" style="width: 90%"></div></div></div></td><td class="px-6 py-4"><p class="font-body-md text-body-md text-primary">15 Juin 2024</p></td><td class="px-6 py-4 text-right"><span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-label-sm bg-secondary-fixed text-secondary border border-secondary-fixed">Ouverte</span></td></tr>
-        <tr class="hover:bg-surface-container-low transition-colors"><td class="px-6 py-4"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">engineering</span></div><div><p class="font-label-md text-label-md text-primary font-semibold">Cycle Ingénieur - 1ère Année</p><p class="font-body-sm text-body-sm text-on-surface-variant">Automne 2024</p></div></div></td><td class="px-6 py-4"><div class="flex flex-col gap-1"><div class="flex justify-between font-label-sm text-label-sm"><span class="text-on-surface-variant">112 admis</span><span class="text-primary">120 places</span></div><div class="w-full bg-surface-container h-2 rounded-full overflow-hidden"><div class="bg-[#f59e0b] h-full rounded-full" style="width: 93%"></div></div></div></td><td class="px-6 py-4"><p class="font-body-md text-body-md text-primary">01 Juin 2024</p></td><td class="px-6 py-4 text-right"><span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-label-sm bg-[#fef3c7] text-[#92400e] border border-[#fde68a]">En délibération</span></td></tr>
-      </tbody>
-    </table>
+
+  <div *ngIf="!prefs.showSessionsActives" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant">
+    <span class="material-symbols-outlined text-4xl text-outline mb-2 block">visibility_off</span>
+    <p class="font-body-md text-on-surface-variant">Le tableau des sessions actives est masqué. <a routerLink="/responsable-admission/parametres" class="text-secondary hover:underline">Modifier dans Paramètres</a>.</p>
   </div>
-</div>
+</ng-container>

@@ -8,9 +8,10 @@
 
     <!-- Navigation Links (Desktop) - centered -->
     <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
-      <a routerLink="/espace-etudiant/accueil" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Dashboard</a>
-      <a routerLink="/espace-etudiant/mes-formations" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Courses</a>
-      <a *ngIf="isLoggedIn && (isEtudiantRole || isFormateurRole)" routerLink="/espace-etudiant/formateur/planning-calendrier" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Schedule</a>
+      <a *ngIf="isLoggedIn && (isEtudiantRole || isFormateurRole)" routerLink="/espace-etudiant/accueil" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Dashboard</a>
+      <a *ngIf="isEtudiantRole" routerLink="/espace-etudiant/mes-formations" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Mes formations</a>
+      <a *ngIf="isFormateurRole" routerLink="/espace-etudiant/formateur/mes-cours" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Mes cours</a>
+      <a *ngIf="isFormateurRole" routerLink="/espace-etudiant/formateur/planning-calendrier" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Planning</a>
       <a routerLink="/institut" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Resources</a>
     </nav>
 

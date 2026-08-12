@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface SessionCandidatureResponse {
@@ -102,7 +102,7 @@ export interface EntretienResponse {
   id: number;
   dateHeure: string;
   lieuOuLien: string;
-  noteEntretien: number;
+  noteEntretien: number | null;
   appreciationGlobale: string;
   candidatId: number;
 }
@@ -177,6 +177,10 @@ export class RecrutementService {
     return this.http.delete(`${this.baseUrl}/admin/recrutement/sessions/${id}`);
   }
 
+  exporterSessions(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/admin/recrutement/sessions/export`, { responseType: 'blob' });
+  }
+
   // Candidatures admin
   getAllCandidatures(): Observable<CandidatureResponse[]> {
     return this.http.get<CandidatureResponse[]>(`${this.baseUrl}/admin/recrutement/candidatures`);
@@ -184,6 +188,14 @@ export class RecrutementService {
 
   getCandidatureAdmin(id: number): Observable<CandidatureResponse> {
     return this.http.get<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}`);
+  }
+
+  exporterCandidatures(statut?: string): Observable<Blob> {
+    let params = new HttpParams();
+    if (statut) {
+      params = params.set('statut', statut);
+    }
+    return this.http.get(`${this.baseUrl}/admin/recrutement/candidatures/export`, { responseType: 'blob', params });
   }
 
   validerPreselection(id: number): Observable<CandidatureResponse> {

@@ -1,6 +1,4 @@
-TS2305: Module '"./features/recrutement/responsable-admission/layout/responsable-admission-layout.component"' has no exported member 'ResponsableAdmissionLayoutComponent'.
-src/app/app.routes.ts:9:9
-Click outside, press Esc key, or fix the code to dismiss.<div class="min-h-screen flex flex-col bg-[#F8FAFC]">
+<div class="min-h-screen flex flex-col bg-[#F8FAFC]">
   <app-navbar></app-navbar>
 
   <!-- Loader de vérification initiale -->
@@ -65,16 +63,16 @@ Click outside, press Esc key, or fix the code to dismiss.<div class="min-h-scree
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Nom <span class="text-[#ba1a1a]">*</span></label>
                 <input [(ngModel)]="data.nom" (ngModelChange)="saveDraft()" type="text" placeholder="Nom"
-                       [class.border-[#ba1a1a]]="showErrors && !data.nom.trim()"
+                       [class.border-[#ba1a1a]]="showErrors && nomInvalide"
                        class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
-                <p *ngIf="showErrors && !data.nom.trim()" class="text-xs text-[#ba1a1a]">Le nom est obligatoire.</p>
+                <p *ngIf="showErrors && nomInvalide" class="text-xs text-[#ba1a1a]">{{ data.nom.trim() ? 'Nom invalide (lettres uniquement, 2 caractères minimum).' : 'Le nom est obligatoire.' }}</p>
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Prénom <span class="text-[#ba1a1a]">*</span></label>
                 <input [(ngModel)]="data.prenom" (ngModelChange)="saveDraft()" type="text" placeholder="Prénom"
-                       [class.border-[#ba1a1a]]="showErrors && !data.prenom.trim()"
+                       [class.border-[#ba1a1a]]="showErrors && prenomInvalide"
                        class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
-                <p *ngIf="showErrors && !data.prenom.trim()" class="text-xs text-[#ba1a1a]">Le prénom est obligatoire.</p>
+                <p *ngIf="showErrors && prenomInvalide" class="text-xs text-[#ba1a1a]">{{ data.prenom.trim() ? 'Prénom invalide (lettres uniquement, 2 caractères minimum).' : 'Le prénom est obligatoire.' }}</p>
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -83,10 +81,10 @@ Click outside, press Esc key, or fix the code to dismiss.<div class="min-h-scree
                 <div class="relative">
                   <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#77767f] text-[20px]" style="font-variation-settings: 'FILL' 0;">mail</span>
                   <input [(ngModel)]="data.email" (ngModelChange)="saveDraft()" type="email" placeholder="Mail"
-                         [class.border-[#ba1a1a]]="showErrors && !data.email.trim()"
+                         [class.border-[#ba1a1a]]="showErrors && emailInvalide"
                          class="w-full pl-10 pr-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
                 </div>
-                <p *ngIf="showErrors && !data.email.trim()" class="text-xs text-[#ba1a1a]">L'email est obligatoire.</p>
+                <p *ngIf="showErrors && emailInvalide" class="text-xs text-[#ba1a1a]">{{ data.email.trim() ? 'Adresse email invalide.' : "L'email est obligatoire." }}</p>
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Téléphone <span class="text-[#ba1a1a]">*</span></label>
@@ -103,10 +101,10 @@ Click outside, press Esc key, or fix the code to dismiss.<div class="min-h-scree
                     <option>+229</option>
                   </select>
                   <input [(ngModel)]="data.telephone" (ngModelChange)="saveDraft()" type="tel" placeholder="77 123 45 67"
-                         [class.border-[#ba1a1a]]="showErrors && !data.telephone.trim()"
+                         [class.border-[#ba1a1a]]="showErrors && telephoneInvalide"
                          class="flex-1 px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
                 </div>
-                <p *ngIf="showErrors && !data.telephone.trim()" class="text-xs text-[#ba1a1a]">Le téléphone est obligatoire.</p>
+                <p *ngIf="showErrors && telephoneInvalide" class="text-xs text-[#ba1a1a]">{{ data.telephone.trim() ? 'Numéro invalide (7 à 12 chiffres).' : 'Le téléphone est obligatoire.' }}</p>
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -134,8 +132,11 @@ Click outside, press Esc key, or fix the code to dismiss.<div class="min-h-scree
               </div>
             </div>
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Adresse postale</label>
-              <textarea [(ngModel)]="data.adresse" (ngModelChange)="saveDraft()" rows="3" placeholder="Adresse postale" class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all resize-none text-sm"></textarea>
+              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Adresse postale <span class="text-[#ba1a1a]">*</span></label>
+              <textarea [(ngModel)]="data.adresse" (ngModelChange)="saveDraft()" rows="3" placeholder="Adresse postale"
+                        [class.border-[#ba1a1a]]="showErrors && adresseInvalide"
+                        class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all resize-none text-sm"></textarea>
+              <p *ngIf="showErrors && adresseInvalide" class="text-xs text-[#ba1a1a]">{{ data.adresse.trim() ? 'Adresse trop courte (5 caractères minimum).' : "L'adresse est obligatoire." }}</p>
             </div>
           </div>
         </ng-container>

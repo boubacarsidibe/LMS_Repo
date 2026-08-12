@@ -26,4 +26,14 @@ export class FormationCard {
       }
     });
   }
+
+  // Aucune page de contenu de cours n'existe encore côté étudiant : on prévient
+  // honnêtement plutôt que de naviguer vers une page sans rapport (ex. le
+  // catalogue public de recrutement).
+  continuer(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    alert('Le contenu de ce cours n\'est pas encore disponible en ligne.');
+  }
 }

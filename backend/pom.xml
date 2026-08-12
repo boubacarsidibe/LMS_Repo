@@ -113,6 +113,13 @@
             <version>2.2.0</version>
         </dependency>
 
+        <!-- Export Excel (.xlsx) pour le back-office recrutement -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+
         <!-- Tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

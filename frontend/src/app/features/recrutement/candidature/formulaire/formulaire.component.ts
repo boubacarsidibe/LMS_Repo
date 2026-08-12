@@ -6,8 +6,14 @@ import { firstValueFrom } from 'rxjs';
 import { RecrutementService, SessionCandidatureResponse, CandidatureRequest, CandidatureResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
 import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
+import { Auth } from '../../../../core/auth/services/authService';
 
 const STORAGE_KEY = 'candidature_brouillon';
+
+// Regex de validation — volontairement simples et permissives (pas de sur-validation
+// bloquante), juste assez pour rejeter les cas manifestement invalides.
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const NOM_REGEX = /^[a-zA-ZÀ-ÖØ-öø-ÿ][a-zA-ZÀ-ÖØ-öø-ÿ' -]{1,}$/;
 
 interface CandidatureFormData {
   etape: number;
@@ -53,7 +59,8 @@ export class FormulaireComponent implements OnInit {
 
   constructor(
     private recrutementService: RecrutementService,
-    private router: Router
+    private router: Router,
+    private auth: Auth
   ) {}
 
   ngOnInit(): void {
@@ -91,13 +98,37 @@ export class FormulaireComponent implements OnInit {
 
   get etapeLabels(): string[] { return ['Profil', 'Formation', 'Parcours', 'Documents']; }
 
+  // --- Validateurs étape 1 (Profil) : présence ET format, pas juste "non vide" ---
+
+  get nomInvalide(): boolean {
+    return !NOM_REGEX.test(this.data.nom.trim());
+  }
+
+  get prenomInvalide(): boolean {
+    return !NOM_REGEX.test(this.data.prenom.trim());
+  }
+
+  get emailInvalide(): boolean {
+    return !EMAIL_REGEX.test(this.data.email.trim());
+  }
+
+  /** Chiffres uniquement une fois espaces/points/tirets retirés, entre 7 et 12 chiffres (formats régionaux variables). */
+  get telephoneInvalide(): boolean {
+    const chiffres = this.data.telephone.replace(/[\s.-]/g, '');
+    return !/^\d{7,12}$/.test(chiffres);
+  }
+
+  get adresseInvalide(): boolean {
+    return this.data.adresse.trim().length < 5;
+  }
+
   precedent(): void { if (this.etape > 1) { this.etape--; this.saveDraft(); } }
   suivant(): void { if (!this.peutAvancer()) return; if (this.etape < this.totalEtapes) { this.etape++; this.saveDraft(); } }
 
   peutAvancer(): boolean {
     this.showErrors = false;
     if (this.etape === 1) {
-      if (!this.data.nom.trim() || !this.data.prenom.trim() || !this.data.email.trim() || !this.data.telephone.trim()) {
+      if (this.nomInvalide || this.prenomInvalide || this.emailInvalide || this.telephoneInvalide || this.adresseInvalide) {
         this.showErrors = true; return false;
       }
     }
@@ -113,6 +144,19 @@ export class FormulaireComponent implements OnInit {
   }
 
   soumettre(): void {
+    // Un brouillon restauré depuis le localStorage peut contenir des données
+    // invalides sans être repassé par peutAvancer() : on revérifie ici avant
+    // d'envoyer quoi que ce soit au backend.
+    if (this.nomInvalide || this.prenomInvalide || this.emailInvalide || this.telephoneInvalide || this.adresseInvalide) {
+      this.etape = 1;
+      this.showErrors = true;
+      return;
+    }
+    if (!this.data.programme.trim()) {
+      this.etape = 2;
+      this.showErrors = true;
+      return;
+    }
     if (!this.data.consentement) { alert('Veuillez accepter les conditions.'); return; }
     this.loading = true;
     const sessionId = this.sessions.length > 0 ? this.sessions[0].id : 1;
@@ -179,9 +223,16 @@ export class FormulaireComponent implements OnInit {
     this.loading = false;
     this.successMessage = 'Candidature soumise avec succès ! N° ' + (this.candidature?.numeroDossier || '');
     localStorage.removeItem(STORAGE_KEY);
-    setTimeout(() => {
-      this.router.navigate(['/recrutement/suivi']);
-    }, 1500);
+    // La soumission vient d'accorder ROLE_CANDIDAT côté backend : on rafraîchit
+    // currentUser AVANT de naviguer vers /suivi (gardée par candidatGuard), sinon
+    // le signal encore obsolète ferait rejeter l'utilisateur qui vient de réussir.
+    this.auth.getCurrentUser().subscribe({
+      next: () => {
+        setTimeout(() => {
+          this.router.navigate(['/recrutement/suivi']);
+        }, 1500);
+      },
+    });
   }
 
   onFileSelected(event: Event, type: string): void {
