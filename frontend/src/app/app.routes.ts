@@ -95,10 +95,24 @@ export const routes: Routes = [
           ).then((m) => m.ResponsableAdmissionCandidaturesComponent),
       },
       {
+        path: 'tests',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/tests/responsable-admission-tests.component').then(
+            (m) => m.ResponsableAdmissionTestsComponent
+          ),
+      },
+      {
         path: 'entretiens',
         loadComponent: () =>
           import('./features/recrutement/responsable-admission/entretiens/responsable-admission-entretiens.component').then(
             (m) => m.ResponsableAdmissionEntretiensComponent
+          ),
+      },
+      {
+        path: 'criteres',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/criteres/responsable-admission-criteres.component').then(
+            (m) => m.ResponsableAdmissionCriteresComponent
           ),
       },
       {

@@ -1,3 +1,4 @@
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -72,12 +73,12 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
     if (this.chargementsEnCours <= 0) this.loading = false;
   }
 
-  /** Moyenne pondérée par coefficient des épreuves du candidat, ou null s'il n'a passé aucun test. */
+  /** Moyenne pondérée par coefficient des épreuves notées du candidat, ou null s'il n'en a aucune. */
   private noteTestDe(candidatId: number): number | null {
-    const testsDuCandidat = this.tests.filter((t) => t.candidatId === candidatId);
+    const testsDuCandidat = this.tests.filter((t) => t.candidatId === candidatId && t.noteObtenue !== null);
     if (testsDuCandidat.length === 0) return null;
     const sommeCoeffs = testsDuCandidat.reduce((s, t) => s + (t.coefficient || 1), 0);
-    const sommePonderee = testsDuCandidat.reduce((s, t) => s + t.noteObtenue * (t.coefficient || 1), 0);
+    const sommePonderee = testsDuCandidat.reduce((s, t) => s + t.noteObtenue! * (t.coefficient || 1), 0);
     return sommeCoeffs > 0 ? Math.round((sommePonderee / sommeCoeffs) * 100) / 100 : null;
   }
 

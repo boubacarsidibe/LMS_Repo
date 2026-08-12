@@ -5,11 +5,19 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-1">Gérez et évaluez les candidatures soumises, toutes sessions confondues.</p>
   </div>
   <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-    <button type="button" [disabled]="exporting" (click)="exporter()" class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface disabled:opacity-60">
+    <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface disabled:opacity-60">
       <span class="material-symbols-outlined text-sm">download</span> {{ exporting ? 'Export en cours…' : 'Exporter la liste' }}
     </button>
   </div>
 </div>
+
+<app-export-columns-modal
+  [open]="exportModalOpen"
+  [colonnes]="colonnesExport"
+  [selectionnees]="colonnesExportParDefaut"
+  (openChange)="exportModalOpen = $event"
+  (exporter)="exporter($event)">
+</app-export-columns-modal>
 
 <!-- Erreur -->
 <div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm">
@@ -132,9 +140,14 @@
         <div class="space-y-2" *ngIf="sel.piecesJustificatives.length; else aucunePiece">
           <div *ngFor="let p of sel.piecesJustificatives" class="flex items-center justify-between text-body-sm">
             <span class="text-on-surface">{{ p.typeDocument }}</span>
-            <span class="material-symbols-outlined text-[18px]" [class.text-secondary]="p.estConforme" [class.text-outline]="!p.estConforme">
-              {{ p.estConforme ? 'check_circle' : 'radio_button_unchecked' }}
-            </span>
+            <div class="flex items-center gap-2">
+              <button type="button" *ngIf="p.fichierStockeId" (click)="telechargerPiece(p)" class="p-1 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Télécharger le document">
+                <span class="material-symbols-outlined text-[18px]">download</span>
+              </button>
+              <span class="material-symbols-outlined text-[18px]" [class.text-secondary]="p.estConforme" [class.text-outline]="!p.estConforme" [title]="p.estConforme ? 'Conforme' : 'Non vérifié'">
+                {{ p.estConforme ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+            </div>
           </div>
         </div>
         <ng-template #aucunePiece>

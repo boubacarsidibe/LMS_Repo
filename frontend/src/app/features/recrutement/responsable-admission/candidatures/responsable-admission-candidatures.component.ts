@@ -3,15 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
-import { CandidatureResponse, RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
+import { CandidatureResponse, PieceJustificativeResponse, RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
+import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 
 type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 'ADMIS2' | 'ADMIS3' | 'REJETE' | 'BROUILLON';
 
 @Component({
   selector: 'app-responsable-admission-candidatures',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ExportColumnsModalComponent],
   templateUrl: './responsable-admission-candidatures.component.html',
 })
 export class ResponsableAdmissionCandidaturesComponent implements OnInit {
@@ -25,6 +26,23 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   candidatureSelectionnee: CandidatureResponse | null = null;
   actionEnCours = false;
   exporting = false;
+  exportModalOpen = false;
+
+  readonly colonnesExport: ColonneExport[] = [
+    { key: 'numeroDossier', label: 'N° Dossier' },
+    { key: 'nom', label: 'Nom' },
+    { key: 'prenom', label: 'Prénom' },
+    { key: 'email', label: 'Email' },
+    { key: 'session', label: 'Session' },
+    { key: 'statut', label: 'Statut' },
+    { key: 'dateSoumission', label: 'Date de soumission' },
+    { key: 'motifRejet', label: 'Motif de rejet' },
+    { key: 'genre', label: 'Genre' },
+    { key: 'niveauEtude', label: "Niveau d'études" },
+    { key: 'profession', label: 'Profession' },
+    { key: 'anneesExperience', label: "Années d'expérience" },
+  ];
+  readonly colonnesExportParDefaut = ['numeroDossier', 'nom', 'prenom', 'email', 'session', 'statut', 'dateSoumission', 'motifRejet'];
 
   constructor(private recrutementService: RecrutementService) {}
 
@@ -172,10 +190,18 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     });
   }
 
-  exporter(): void {
+  telechargerPiece(piece: PieceJustificativeResponse): void {
+    if (piece.fichierStockeId == null) return;
+    this.recrutementService.telechargerPiece(piece.id).subscribe({
+      next: (blob) => downloadBlob(blob, piece.fichierNomOriginal || `document_${piece.id}`),
+      error: () => alert('Échec du téléchargement du document.'),
+    });
+  }
+
+  exporter(colonnes: string[]): void {
     this.exporting = true;
     const statut = this.filtreStatut === 'TOUS' ? undefined : this.filtreStatut;
-    this.recrutementService.exporterCandidatures(statut).subscribe({
+    this.recrutementService.exporterCandidatures(statut, colonnes).subscribe({
       next: (blob) => {
         downloadBlob(blob, `candidatures_recrutement_${new Date().toISOString().slice(0, 10)}.xlsx`);
         this.exporting = false;

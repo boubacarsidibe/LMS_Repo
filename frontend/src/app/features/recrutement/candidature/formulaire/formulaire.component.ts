@@ -19,6 +19,8 @@ interface CandidatureFormData {
   etape: number;
   nom: string; prenom: string; email: string; telephone: string;
   adresse: string; phonePrefix: string; dateNaissance: string; nationalite: string;
+  genre: string; profession: string; anneesExperience: string;
+  sessionCandidatureId: number | null;
   typeFormation: string; niveauVise: string; programme: string; campus: string;
   sessionRentree: string; niveauActuel: string; etablissement: string;
   diplome: string; anneeObtention: string;
@@ -50,6 +52,8 @@ export class FormulaireComponent implements OnInit {
   data: CandidatureFormData = {
     etape: 1, nom: '', prenom: '', email: '', telephone: '', adresse: '',
     phonePrefix: '+221', dateNaissance: '', nationalite: '',
+    genre: '', profession: '', anneesExperience: '',
+    sessionCandidatureId: null,
     typeFormation: '', niveauVise: '', programme: '', campus: '',
     sessionRentree: '', niveauActuel: '', etablissement: '',
     diplome: '', anneeObtention: '',
@@ -84,16 +88,41 @@ export class FormulaireComponent implements OnInit {
 
   private initCatalogue(): void {
     this.recrutementService.getCataloguePublic().subscribe({
-      next: (data) => { this.sessions = data.filter(s => s.estActive); }
+      next: (data) => {
+        this.sessions = data.filter(s => s.estActive);
+        // Présélectionne automatiquement s'il n'y a qu'une seule session ouverte
+        // (cas le plus courant) ; sinon le candidat doit choisir explicitement.
+        if (this.sessions.length === 1 && !this.data.sessionCandidatureId) {
+          this.data.sessionCandidatureId = this.sessions[0].id;
+        }
+      }
     });
+
+    // Brouillon serveur en priorité (permet la reprise depuis un autre appareil) ;
+    // repli sur le localStorage si absent côté serveur ou si la requête échoue.
+    this.recrutementService.getBrouillon().subscribe({
+      next: (res) => {
+        if (res && res.donneesJson) {
+          this.chargerBrouillon(res.donneesJson);
+        } else {
+          this.chargerBrouillonLocal();
+        }
+      },
+      error: () => this.chargerBrouillonLocal(),
+    });
+  }
+
+  private chargerBrouillonLocal(): void {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        this.data = { ...this.data, ...parsed };
-        this.etape = this.data.etape || 1;
-      } catch { /* ignore */ }
-    }
+    if (saved) this.chargerBrouillon(saved);
+  }
+
+  private chargerBrouillon(json: string): void {
+    try {
+      const parsed = JSON.parse(json);
+      this.data = { ...this.data, ...parsed };
+      this.etape = this.data.etape || 1;
+    } catch { /* ignore */ }
   }
 
   get etapeLabels(): string[] { return ['Profil', 'Formation', 'Parcours', 'Documents']; }
@@ -122,51 +151,80 @@ export class FormulaireComponent implements OnInit {
     return this.data.adresse.trim().length < 5;
   }
 
+  get genreInvalide(): boolean {
+    return !['Homme', 'Femme', 'Autre'].includes(this.data.genre);
+  }
+
+  /** Champ optionnel : invalide seulement si rempli avec une valeur hors bornes plausibles. */
+  get anneesExperienceInvalide(): boolean {
+    if (!this.data.anneesExperience.trim()) return false;
+    const n = Number(this.data.anneesExperience);
+    return !Number.isFinite(n) || n < 0 || n > 60;
+  }
+
+  /** La session choisie doit exister parmi celles réellement publiées/ouvertes par l'admin. */
+  get sessionInvalide(): boolean {
+    return !this.sessions.some(s => s.id === this.data.sessionCandidatureId);
+  }
+
   precedent(): void { if (this.etape > 1) { this.etape--; this.saveDraft(); } }
   suivant(): void { if (!this.peutAvancer()) return; if (this.etape < this.totalEtapes) { this.etape++; this.saveDraft(); } }
 
   peutAvancer(): boolean {
     this.showErrors = false;
     if (this.etape === 1) {
-      if (this.nomInvalide || this.prenomInvalide || this.emailInvalide || this.telephoneInvalide || this.adresseInvalide) {
+      if (this.nomInvalide || this.prenomInvalide || this.emailInvalide || this.telephoneInvalide
+          || this.adresseInvalide || this.genreInvalide || this.anneesExperienceInvalide) {
         this.showErrors = true; return false;
       }
     }
     if (this.etape === 2) {
-      if (!this.data.programme.trim()) { this.showErrors = true; return false; }
+      if (this.sessionInvalide || !this.data.programme.trim()) { this.showErrors = true; return false; }
     }
     return true;
   }
 
+  private brouillonServeurTimer?: ReturnType<typeof setTimeout>;
+
   saveDraft(): void {
     this.data.etape = this.etape;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+    const json = JSON.stringify(this.data);
+    localStorage.setItem(STORAGE_KEY, json);
+
+    // Débounce l'écriture serveur (appelée à chaque frappe côté template) pour
+    // éviter une requête HTTP par caractère saisi.
+    if (this.brouillonServeurTimer) clearTimeout(this.brouillonServeurTimer);
+    this.brouillonServeurTimer = setTimeout(() => {
+      this.recrutementService.sauvegarderBrouillon(json).subscribe({ error: () => { /* best-effort */ } });
+    }, 1000);
   }
 
   soumettre(): void {
     // Un brouillon restauré depuis le localStorage peut contenir des données
     // invalides sans être repassé par peutAvancer() : on revérifie ici avant
     // d'envoyer quoi que ce soit au backend.
-    if (this.nomInvalide || this.prenomInvalide || this.emailInvalide || this.telephoneInvalide || this.adresseInvalide) {
+    if (this.nomInvalide || this.prenomInvalide || this.emailInvalide || this.telephoneInvalide
+        || this.adresseInvalide || this.genreInvalide || this.anneesExperienceInvalide) {
       this.etape = 1;
       this.showErrors = true;
       return;
     }
-    if (!this.data.programme.trim()) {
+    if (this.sessionInvalide || !this.data.programme.trim()) {
       this.etape = 2;
       this.showErrors = true;
       return;
     }
     if (!this.data.consentement) { alert('Veuillez accepter les conditions.'); return; }
     this.loading = true;
-    const sessionId = this.sessions.length > 0 ? this.sessions[0].id : 1;
     const request: CandidatureRequest = {
-      sessionCandidatureId: sessionId,
+      sessionCandidatureId: this.data.sessionCandidatureId!,
       informationsPersonnelles: JSON.stringify({
         nom: this.data.nom, prenom: this.data.prenom, email: this.data.email,
         telephone: this.data.phonePrefix + ' ' + this.data.telephone, adresse: this.data.adresse,
         dateNaissance: this.data.dateNaissance, nationalite: this.data.nationalite,
         niveauEtude: this.data.niveauActuel,
+        genre: this.data.genre, profession: this.data.profession,
+        anneesExperience: this.data.anneesExperience,
       }),
       informationsAcademiques: JSON.stringify({
         typeFormation: this.data.typeFormation, niveauVise: this.data.niveauVise,

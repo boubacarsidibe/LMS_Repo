@@ -1,0 +1,109 @@
+<!-- ==================== CONTENU SEUL ==================== -->
+<div class="mb-stack-lg">
+  <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Paramètres</h1>
+  <p class="font-body-md text-body-md text-on-surface-variant mt-2">Informations de votre compte et sécurité.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter max-w-4xl">
+  <!-- Profil -->
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm h-fit">
+    <h2 class="font-headline-sm text-headline-sm text-primary mb-4">Mon profil</h2>
+    <div *ngIf="chargementProfil" class="text-on-surface-variant font-body-sm">Chargement…</div>
+    <div *ngIf="!chargementProfil" class="space-y-4">
+      <div>
+        <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Nom d'utilisateur</div>
+        <div class="font-body-md text-body-md text-on-surface">{{ username || '—' }}</div>
+      </div>
+      <div>
+        <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Email</div>
+        <div class="font-body-md text-body-md text-on-surface">{{ email || '—' }}</div>
+      </div>
+      <div>
+        <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Rôle</div>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-fixed text-secondary">{{ roleLabel }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Changement de mot de passe -->
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+    <h2 class="font-headline-sm text-headline-sm text-primary mb-4">Changer mon mot de passe</h2>
+
+    <div *ngIf="errorMessage" class="mb-4 p-3 bg-error-container/20 text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
+    <div *ngIf="successMessage" class="mb-4 p-3 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm">{{ successMessage }}</div>
+
+    <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Mot de passe actuel</label>
+        <input formControlName="currentPassword" type="password" aria-label="Mot de passe actuel" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Nouveau mot de passe</label>
+        <input formControlName="newPassword" type="password" aria-label="Nouveau mot de passe" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+        <p class="text-xs text-on-surface-variant mt-1">Au moins 6 caractères.</p>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Confirmer le nouveau mot de passe</label>
+        <input formControlName="confirmPassword" type="password" aria-label="Confirmer le nouveau mot de passe" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+      </div>
+      <button type="submit" [disabled]="isSubmitting" class="w-full py-2.5 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+        {{ isSubmitting ? 'Enregistrement…' : 'Mettre à jour le mot de passe' }}
+      </button>
+    </form>
+  </div>
+
+  <!-- Personnalisation du dashboard -->
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm lg:col-span-2">
+    <h2 class="font-headline-sm text-headline-sm text-primary mb-1">Personnaliser mon dashboard</h2>
+    <p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Choisissez les widgets affichés sur la Vue d'ensemble et les Statistiques. Enregistré sur ce navigateur.</p>
+
+    <div *ngIf="dashboardPrefsSaved" class="mb-4 p-3 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm">Préférences enregistrées.</div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+      <div>
+        <h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-3">Vue d'ensemble</h3>
+        <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+          <input type="checkbox" [(ngModel)]="dashboardPrefs.showSessionsActives" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+          Tableau des sessions actives
+        </label>
+      </div>
+      <div>
+        <h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-3">Statistiques</h3>
+        <div class="space-y-3">
+          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+            <input type="checkbox" [(ngModel)]="dashboardPrefs.showTotalCandidats" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+            Total Candidats
+          </label>
+          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+            <input type="checkbox" [(ngModel)]="dashboardPrefs.showValidationEnCours" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+            Validation en cours
+          </label>
+          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+            <input type="checkbox" [(ngModel)]="dashboardPrefs.showPreselectionnes" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+            Présélectionnés
+          </label>
+          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+            <input type="checkbox" [(ngModel)]="dashboardPrefs.showRejetes" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+            Rejetés
+          </label>
+          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+            <input type="checkbox" [(ngModel)]="dashboardPrefs.showRepartitionStatuts" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+            Graphique — Répartition par étape
+          </label>
+          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+            <input type="checkbox" [(ngModel)]="dashboardPrefs.showTauxAdmission" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+            Graphique — Taux d'admission
+          </label>
+          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+            <input type="checkbox" [(ngModel)]="dashboardPrefs.showDemographie" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+            Graphiques — Profil démographique (genre, âge, profession)
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" (click)="enregistrerDashboardPrefs()" class="px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm">
+      Enregistrer mes préférences
+    </button>
+  </div>
+</div>

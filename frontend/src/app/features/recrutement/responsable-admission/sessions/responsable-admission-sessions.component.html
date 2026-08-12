@@ -12,10 +12,17 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-1">Planification, suivi des quotas et ouverture des appels à candidatures.</p>
   </div>
   <div class="flex items-center gap-3">
-    <button type="button" [disabled]="exporting" (click)="exporter()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
+    <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
       <span class="material-symbols-outlined text-[18px]">download</span>
       {{ exporting ? 'Export en cours…' : 'Exporter la liste' }}
     </button>
+    <app-export-columns-modal
+      [open]="exportModalOpen"
+      [colonnes]="colonnesExport"
+      [selectionnees]="colonnesExportParDefaut"
+      (openChange)="exportModalOpen = $event"
+      (exporter)="exporter($event)">
+    </app-export-columns-modal>
     <button type="button" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md" (click)="openDrawer()">
       <span class="material-symbols-outlined text-[18px]">add</span>
       Nouvelle Session

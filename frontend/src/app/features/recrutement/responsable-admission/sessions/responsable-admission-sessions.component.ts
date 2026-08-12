@@ -8,11 +8,12 @@ import {
   SessionCandidatureResponse,
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
+import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 
 @Component({
   selector: 'app-responsable-admission-sessions',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, ExportColumnsModalComponent],
   templateUrl: './responsable-admission-sessions.component.html',
 })
 export class ResponsableAdmissionSessionsComponent implements OnInit {
@@ -30,6 +31,17 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   formError = '';
 
   exporting = false;
+  exportModalOpen = false;
+
+  readonly colonnesExport: ColonneExport[] = [
+    { key: 'libelle', label: 'Libellé' },
+    { key: 'dateOuverture', label: "Date d'ouverture" },
+    { key: 'dateFermeture', label: 'Date de fermeture' },
+    { key: 'estOuverte', label: 'Ouverte' },
+    { key: 'estActive', label: 'Active' },
+    { key: 'nbCandidatures', label: 'Nb candidatures' },
+  ];
+  readonly colonnesExportParDefaut = ['libelle', 'dateOuverture', 'dateFermeture', 'estOuverte', 'estActive', 'nbCandidatures'];
 
   constructor(private recrutementService: RecrutementService, private fb: FormBuilder) {
     this.sessionForm = this.fb.group({
@@ -153,9 +165,9 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
     });
   }
 
-  exporter(): void {
+  exporter(colonnes: string[]): void {
     this.exporting = true;
-    this.recrutementService.exporterSessions().subscribe({
+    this.recrutementService.exporterSessions(colonnes).subscribe({
       next: (blob) => {
         downloadBlob(blob, `sessions_recrutement_${new Date().toISOString().slice(0, 10)}.xlsx`);
         this.exporting = false;
