@@ -1,5 +1,6 @@
 package inpg.sn.lms.auth.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OtpService {
     
     private final JavaMailSender mailSender;
+
+    @Value("${app.mail.from}")
+    private String expediteur;
 
     private static class OtpData {
         String code;
@@ -41,10 +45,16 @@ public class OtpService {
         return otpCode;
     }
 
+    /** Retire un code du cache, par exemple lorsque son envoi par e-mail a échoué. */
+    public void invalidateOtp(String email) {
+        otpCache.remove(email);
+    }
+
     // 2. Envoi de l'e-mail
     public void sendOtpEmail(String toEmail, String otpCode) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("livecodingx@gmail.com");
+        // L'expéditeur doit être un domaine vérifié chez le relais SMTP, sinon Brevo rejette l'envoi.
+        message.setFrom(expediteur);
         message.setTo(toEmail);
         message.setSubject("Votre code de vérification OTP");
         message.setText("Bonjour,\n\nVotre code de vérification est : " + otpCode +
@@ -67,19 +77,10 @@ public class OtpService {
         }
 
         if (data.code.equals(inputCode)) {
-            otpCache.remove(email); // Code valide, on le supprime
+            otpCache.remove(email); // Code valide, on le consomme
             return true;
-        }
-
-        // Code incorrect
-        if (!data.code.equals(inputCode)) {
-            return false;
         }
 
         return false;
     }
-
-    public Map<String, OtpData> getOtpCache() { 
-        return otpCache;
-    } // getter de otpCache
 }

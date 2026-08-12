@@ -38,13 +38,24 @@ public class UserService implements UserDetailsService {
     }
 
     /**
-     * Crée un utilisateur avec le rôle CANDIDAT par défaut (inscription publique).
+     * Crée un utilisateur sans rôle métier (inscription publique). Le rôle
+     * CANDIDAT n'est plus attribué ici : il l'est uniquement lors de la
+     * soumission réussie d'une candidature (CandidatController#soumettreCandidature),
+     * pour qu'un simple inscrit ne soit pas considéré candidat avant d'avoir
+     * réellement postulé.
      */
     public User createUser(inpg.sn.lms.auth.dto.UserDto userDto) {
-        if (userRepository.findByEmail(userDto.getEmail()) != null) {
+        if (userDto.getEmail() == null || userDto.getEmail().isBlank()
+                || userDto.getUsername() == null || userDto.getUsername().isBlank()
+                || userDto.getPassword() == null || userDto.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Le nom d'utilisateur, l'e-mail et le mot de passe sont requis.");
+        }
+
+        String email = userDto.getEmail().trim().toLowerCase();
+        if (userRepository.findByEmail(email) != null) {
             throw new RuntimeException("Cet email est déjà utilisé.");
         }
-        String baseUsername = userDto.getUsername();
+        String baseUsername = userDto.getUsername().trim();
         String username = baseUsername;
         int suffix = 1;
         while (userRepository.findByUsername(username) != null) {
@@ -53,13 +64,8 @@ public class UserService implements UserDetailsService {
         }
         User newUser = userDto.toUser();
         newUser.setUsername(username);
+        newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
-
-        // Assigner le rôle CANDIDAT à tout nouvel inscrit
-        Role roleCandidat = roleRepository.findByCode("ROLE_CANDIDAT");
-        if (roleCandidat != null) {
-            newUser.addRole(roleCandidat);
-        }
 
         return userRepository.save(newUser);
     }

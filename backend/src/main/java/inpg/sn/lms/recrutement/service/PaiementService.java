@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,13 +22,24 @@ import inpg.sn.lms.recrutement.repository.PaiementRepository;
 @Transactional
 public class PaiementService {
 
+    private static final Logger log = LoggerFactory.getLogger(PaiementService.class);
+
     private final PaiementRepository paiementRepository;
     private final CandidatureRepository candidatureRepository;
+    private final NotificationService notificationService;
+    private final NotificationCandidatService notificationCandidatService;
+
+    @Value("${app.admission.email:admin@inpg.sn}")
+    private String emailAdmission;
 
     public PaiementService(PaiementRepository paiementRepository,
-            CandidatureRepository candidatureRepository) {
+            CandidatureRepository candidatureRepository,
+            NotificationService notificationService,
+            NotificationCandidatService notificationCandidatService) {
         this.paiementRepository = paiementRepository;
         this.candidatureRepository = candidatureRepository;
+        this.notificationService = notificationService;
+        this.notificationCandidatService = notificationCandidatService;
     }
 
     /**
@@ -66,6 +80,30 @@ public class PaiementService {
         }
 
         Paiement saved = paiementRepository.save(paiement);
+
+        Candidature candidature = saved.getCandidature();
+        if (candidature != null && candidature.getCandidat() != null) {
+            String numeroDossier = candidature.getNumeroDossier();
+            String emailCandidat = candidature.getCandidat().getUser() != null
+                    ? candidature.getCandidat().getUser().getEmail()
+                    : null;
+            if (emailCandidat != null) {
+                notificationService.notifierPaiementSucces(emailCandidat, numeroDossier);
+            }
+            notificationCandidatService.creerNotification(candidature.getCandidat().getId(),
+                    "Le paiement des frais de dossier pour la candidature n°" + numeroDossier + " est confirmé.",
+                    "PAIEMENT", "/recrutement/suivi");
+            try {
+                notificationService.envoyerEmail(emailAdmission,
+                        "Paiement confirmé",
+                        "Le paiement du dossier n°" + numeroDossier + " (" + saved.getMontant() + " "
+                                + saved.getDevise() + ") a été confirmé.");
+            } catch (Exception e) {
+                log.error("Échec de l'envoi de l'email de confirmation de paiement à {} : {}", emailAdmission,
+                        e.getMessage(), e);
+            }
+        }
+
         return toResponse(saved);
     }
 

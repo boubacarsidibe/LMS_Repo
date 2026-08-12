@@ -1,0 +1,53 @@
+<div class="mb-stack-lg">
+  <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Critères de Présélection Automatique</h1>
+  <p class="font-body-md text-body-md text-on-surface-variant mt-2 max-w-2xl">
+    Configurez un premier filtre automatique appliqué à chaque nouvelle candidature soumise. Les dossiers qui remplissent les critères passent directement en présélection ; les autres sont automatiquement rejetés (avec notification au candidat). Désactivez le filtre pour revenir à une validation entièrement manuelle.
+  </p>
+</div>
+
+<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
+<div *ngIf="successMessage" class="mb-stack-md p-4 bg-[#ecfdf5] text-[#065f46] rounded-lg font-body-sm">{{ successMessage }}</div>
+
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement…</div>
+
+<div *ngIf="!loading" class="max-w-2xl bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 space-y-6">
+  <div class="flex items-center justify-between p-4 bg-surface-container-low rounded-lg border border-outline-variant">
+    <div>
+      <div class="font-label-md text-label-md text-on-surface font-bold">Filtre automatique</div>
+      <div class="font-body-sm text-body-sm text-on-surface-variant">{{ criteres.actif ? 'Activé — les critères ci-dessous sont appliqués à chaque soumission.' : 'Désactivé — toutes les candidatures restent en attente de validation manuelle.' }}</div>
+    </div>
+    <button type="button" (click)="criteres.actif = !criteres.actif" role="switch" [attr.aria-checked]="criteres.actif"
+            class="relative w-12 h-7 rounded-full transition-colors shrink-0" [class.bg-secondary]="criteres.actif" [class.bg-outline-variant]="!criteres.actif">
+      <span class="absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform" [class.translate-x-5]="criteres.actif"></span>
+    </button>
+  </div>
+
+  <div class="flex flex-col gap-1.5">
+    <label class="font-label-md text-label-md text-on-surface-variant">Niveau d'études minimum requis</label>
+    <select [(ngModel)]="criteres.niveauEtudeMinimum" [disabled]="!criteres.actif" aria-label="Niveau d'études minimum"
+            class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none disabled:opacity-50">
+      <option [ngValue]="null">-- Aucune contrainte --</option>
+      <option *ngFor="let n of niveaux" [value]="n">{{ n }}</option>
+    </select>
+    <p class="font-body-sm text-body-sm text-on-surface-variant">Un candidat ayant déclaré un niveau inférieur sera automatiquement rejeté. Les candidats ayant déclaré "Autre" ne sont jamais filtrés sur ce critère.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="flex flex-col gap-1.5">
+      <label class="font-label-md text-label-md text-on-surface-variant">Âge minimum</label>
+      <input [(ngModel)]="criteres.ageMinimum" [disabled]="!criteres.actif" type="number" min="0" max="100" placeholder="Ex: 18"
+             class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none disabled:opacity-50">
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label class="font-label-md text-label-md text-on-surface-variant">Âge maximum</label>
+      <input [(ngModel)]="criteres.ageMaximum" [disabled]="!criteres.actif" type="number" min="0" max="100" placeholder="Ex: 45"
+             class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none disabled:opacity-50">
+    </div>
+  </div>
+
+  <div class="flex justify-end pt-2 border-t border-outline-variant">
+    <button type="button" [disabled]="saving" (click)="enregistrer()" class="px-5 py-2.5 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg font-label-md text-label-md transition-all shadow-sm disabled:opacity-60">
+      {{ saving ? 'Enregistrement…' : 'Enregistrer les critères' }}
+    </button>
+  </div>
+</div>

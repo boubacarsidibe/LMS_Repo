@@ -57,6 +57,14 @@ public class FichierStockeService {
                 .orElseThrow(() -> new RuntimeException("Fichier non trouvé avec l'ID: " + id));
     }
 
+    public byte[] lireContenu(FichierStocke fichier) {
+        try {
+            return Files.readAllBytes(Paths.get(fichier.getCheminStockage()));
+        } catch (IOException e) {
+            throw new RuntimeException("Impossible de lire le fichier: " + fichier.getNomOriginal(), e);
+        }
+    }
+
     public void supprimerFichier(Long id) {
         FichierStocke fichier = trouverParId(id);
         try {

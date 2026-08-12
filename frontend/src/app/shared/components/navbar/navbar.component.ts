@@ -94,6 +94,25 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return this.auth.isLoggedIn() && this.auth.currentUser() != null;
   }
 
+  get isResponsableAdmissionRole(): boolean {
+    return this.auth.isResponsableAdmission();
+  }
+
+  get isEtudiantRole(): boolean {
+    const roles = this.auth.getUserRoles();
+    return roles.includes('ROLE_ETUDIANT');
+  }
+
+  get isFormateurRole(): boolean {
+    const roles = this.auth.getUserRoles();
+    return roles.includes('ROLE_FORMATEUR');
+  }
+
+  get isCandidatRole(): boolean {
+    const roles = this.auth.getUserRoles();
+    return roles.includes('ROLE_CANDIDAT');
+  }
+
   get userInitials(): string {
     const user = this.auth.currentUser();
     if (!user) return '';
@@ -110,6 +129,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
       return (user as any).username.replace('_', ' ');
     }
     return user.email;
+  }
+
+  getUserRoleLabel(): string {
+    const roles = this.auth.getUserRoles();
+    if (!roles || roles.length === 0) return '';
+    const r = roles[0];
+    switch (r) {
+      case 'ROLE_RESPONSABLE_ADMISSION': return 'RESPONSABLE ADMISSION';
+      case 'ROLE_CANDIDAT': return 'CANDIDAT';
+      case 'ROLE_ETUDIANT': return 'ETUDIANT';
+      case 'ROLE_FORMATEUR': return 'FORMATEUR';
+      default: return r.replace('ROLE_', '');
+    }
   }
 
   /** Formatte la date relative : "il y a 2 min", "il y a 1 jour" */

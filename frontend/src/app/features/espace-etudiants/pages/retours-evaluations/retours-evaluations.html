@@ -1,0 +1,167 @@
+<div class="flex flex-col w-full p-margin-desktop space-y-stack-lg">
+
+  <!-- En-tête -->
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-gutter">
+    <div class="flex flex-col space-y-base">
+      <div class="flex items-center gap-2 text-secondary font-label-sm uppercase tracking-widest">
+        <span class="w-8 h-[1px] bg-secondary"></span>
+        Performance Pédagogique
+      </div>
+      <h1 class="font-display text-on-surface leading-tight">Retours &amp; Évaluations des Enseignements</h1>
+      <p class="font-body-lg text-on-surface-variant max-w-2xl">
+        Analysez la satisfaction des étudiants et gérez les retours pédagogiques de vos cohortes pour optimiser vos parcours de formation.
+      </p>
+    </div>
+    <div class="flex gap-stack-md">
+      <button disabled title="Bientôt disponible" class="flex items-center gap-2 px-6 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-on-surface-variant/50 cursor-not-allowed">
+        <span class="material-symbols-outlined text-[20px]">download</span>
+        Exporter le Rapport
+      </button>
+      <button disabled title="Bientôt disponible" class="flex items-center gap-2 px-6 py-3 bg-primary/40 text-on-primary rounded-lg font-label-md cursor-not-allowed">
+        <span class="material-symbols-outlined text-[20px]">analytics</span>
+        Analyse Comparative
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+    <div class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-sm border border-outline-variant/30 flex flex-col justify-between">
+      <div class="flex justify-between items-start">
+        <div class="p-3 bg-primary-container/10 rounded-lg text-primary">
+          <span class="material-symbols-outlined">star_rate</span>
+        </div>
+        <span class="text-label-sm font-bold text-secondary bg-secondary-container/20 px-2 py-1 rounded">+0.2 vs S1</span>
+      </div>
+      <div class="mt-stack-md">
+        <p class="font-label-md text-on-surface-variant">Note Moyenne Globale</p>
+        <div class="flex items-baseline gap-2">
+          <h2 class="font-display text-on-surface">4.8</h2>
+          <span class="font-headline-sm text-outline">/ 5</span>
+        </div>
+      </div>
+      <div class="flex gap-0.5 mt-2">
+        <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">star</span>
+        <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">star</span>
+        <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">star</span>
+        <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">star</span>
+        <span class="material-symbols-outlined text-secondary">star_half</span>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-sm border border-outline-variant/30 flex flex-col">
+      <div class="flex justify-between items-start mb-4">
+        <div class="p-3 bg-secondary-container/10 rounded-lg text-secondary">
+          <span class="material-symbols-outlined">sentiment_satisfied</span>
+        </div>
+        <svg class="w-12 h-12 transform -rotate-90">
+          <circle class="text-surface-container" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-width="4"></circle>
+          <circle class="text-secondary" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-dasharray="125.6" stroke-dashoffset="7.5" stroke-width="4"></circle>
+        </svg>
+      </div>
+      <p class="font-label-md text-on-surface-variant">Taux de Satisfaction</p>
+      <h2 class="font-display text-on-surface">94%</h2>
+      <div class="w-full bg-surface-container h-1.5 rounded-full mt-4 overflow-hidden">
+        <div class="bg-secondary h-full rounded-full" style="width: 94%"></div>
+      </div>
+    </div>
+
+    <div class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-sm border border-outline-variant/30 flex flex-col">
+      <div class="flex justify-between items-start">
+        <div class="p-3 bg-tertiary-fixed-dim/10 rounded-lg text-on-tertiary-fixed">
+          <span class="material-symbols-outlined">forum</span>
+        </div>
+        <div class="flex -space-x-2">
+          <div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest"></div>
+          <div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-high"></div>
+          <div class="w-8 h-8 rounded-full border-2 border-surface bg-primary flex items-center justify-center text-[10px] text-on-primary font-bold">+31</div>
+        </div>
+      </div>
+      <div class="mt-stack-md">
+        <p class="font-label-md text-on-surface-variant">Volume de Retours</p>
+        <h2 class="font-display text-on-surface">342</h2>
+        <p class="font-body-sm text-on-surface-variant mt-1 italic">Avis collectés ce trimestre</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="flex flex-col md:flex-row items-center justify-between gap-stack-md bg-surface-container-low p-4 rounded-xl">
+    <div class="flex flex-wrap items-center gap-stack-md w-full md:w-auto">
+      <div class="relative min-w-[280px]">
+        <select class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-label-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all">
+          <option>Tous les cours</option>
+          <option>Théorie et Pratique Économiques</option>
+          <option>Macroéconomie Avancée</option>
+          <option>Économétrie Appliquée</option>
+        </select>
+        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+      </div>
+      <div class="h-8 w-[1px] bg-outline-variant hidden md:block"></div>
+      <div class="flex bg-surface-container-highest p-1 rounded-lg">
+        <button (click)="filtreActif = 'recents'" [class.bg-surface-container-lowest]="filtreActif === 'recents'" [class.text-on-surface]="filtreActif === 'recents'" [class.shadow-sm]="filtreActif === 'recents'" [class.text-on-surface-variant]="filtreActif !== 'recents'" class="px-4 py-1.5 rounded-md font-label-md text-sm transition-all">Plus récents</button>
+        <button (click)="filtreActif = 'notes-basses'" [class.bg-surface-container-lowest]="filtreActif === 'notes-basses'" [class.text-on-surface]="filtreActif === 'notes-basses'" [class.shadow-sm]="filtreActif === 'notes-basses'" [class.text-on-surface-variant]="filtreActif !== 'notes-basses'" class="px-4 py-1.5 rounded-md font-label-md text-sm transition-all">Notes basses</button>
+        <button (click)="filtreActif = 'actions-requises'" [class.bg-surface-container-lowest]="filtreActif === 'actions-requises'" [class.text-on-surface]="filtreActif === 'actions-requises'" [class.shadow-sm]="filtreActif === 'actions-requises'" [class.text-on-surface-variant]="filtreActif !== 'actions-requises'" class="px-4 py-1.5 rounded-md font-label-md text-sm transition-all relative">
+          Actions requises
+          <span *ngIf="nbActionsRequises > 0" class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grille des avis -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-gutter">
+    <div *ngFor="let r of retoursFiltres"
+         class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 flex flex-col justify-between hover:translate-y-[-4px] transition-transform duration-300 relative"
+         [class.border-l-4]="r.statut === 'action-requise'"
+         [class.border-l-error]="r.statut === 'action-requise'">
+
+      <button (click)="togglePin(r)" class="absolute top-2 right-2 p-1.5 rounded-full hover:bg-surface-container transition-colors" [class.text-secondary]="r.epingle" [class.text-outline]="!r.epingle" title="Épingler cet avis">
+        <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="r.epingle ? &quot;'FILL' 1&quot; : &quot;'FILL' 0&quot;">push_pin</span>
+      </button>
+
+      <div>
+        <div class="flex justify-between items-start mb-4 pr-8">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-bold text-on-surface-variant">
+              <span class="material-symbols-outlined text-[20px]">person</span>
+            </div>
+            <div>
+              <p class="font-label-md text-on-surface">Anonyme</p>
+              <p class="text-label-sm text-on-surface-variant">{{ r.date }} • {{ r.cours }}</p>
+            </div>
+          </div>
+          <span *ngIf="r.statut === 'valide'" class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider rounded whitespace-nowrap">Avis Validé</span>
+          <span *ngIf="r.statut === 'action-requise'" class="px-2 py-1 bg-orange-100 text-orange-700 text-[10px] font-bold uppercase tracking-wider rounded whitespace-nowrap">Action Requise</span>
+        </div>
+
+        <div class="flex gap-0.5 mb-3">
+          <span *ngFor="let pleine of etoiles(r.note)" class="material-symbols-outlined text-[18px]" [class.text-secondary]="pleine" [class.text-outline]="!pleine" [style.font-variation-settings]="pleine ? &quot;'FILL' 1&quot; : &quot;'FILL' 0&quot;">star</span>
+        </div>
+
+        <p class="font-body-md text-on-surface-variant italic">"{{ r.commentaire }}"</p>
+      </div>
+
+      <div class="flex items-center justify-end mt-6 pt-4 border-t border-outline-variant/30" *ngIf="r.statut === 'action-requise'">
+        <button (click)="ajusterCours()" class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-label-md hover:opacity-90 transition-all">
+          <span class="material-symbols-outlined text-[18px]">tune</span>
+          Ajuster le cours
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="retoursFiltres.length === 0" class="text-center text-body-md text-on-surface-variant py-8">
+    Aucun avis ne correspond à ce filtre.
+  </p>
+
+  <!-- Pagination désactivée -->
+  <div class="flex flex-col items-center justify-center pt-stack-lg border-t border-outline-variant/20 opacity-40 pointer-events-none">
+    <div class="flex flex-col items-center gap-2">
+      <span class="text-label-md text-on-surface-variant">Afficher plus de retours</span>
+      <div class="p-2 bg-surface-container rounded-full">
+        <span class="material-symbols-outlined">keyboard_arrow_down</span>
+      </div>
+    </div>
+  </div>
+</div>

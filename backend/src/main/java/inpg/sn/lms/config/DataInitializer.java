@@ -59,28 +59,17 @@ public class DataInitializer {
                 System.out.println("Programmes crees (4)");
             }
 
-            // ===================== ROLES =====================
-            if (roleRepository.count() == 0) {
-                Role roleCandidat = new Role();
-                roleCandidat.setCode("ROLE_CANDIDAT");
-                roleCandidat.setLibelle("Candidat");
-                roleCandidat.setDescription("Etudiant postulant");
-                roleRepository.save(roleCandidat);
-
-                Role roleResponsable = new Role();
-                roleResponsable.setCode("ROLE_RESPONSABLE_ADMISSION");
-                roleResponsable.setLibelle("Responsable Admission");
-                roleResponsable.setDescription("Staff administratif");
-                roleRepository.save(roleResponsable);
-
-                Role roleEtudiant = new Role();
-                roleEtudiant.setCode("ROLE_ETUDIANT");
-                roleEtudiant.setLibelle("Etudiant");
-                roleEtudiant.setDescription("Etudiant admis");
-                roleRepository.save(roleEtudiant);
-
-                System.out.println("Roles crees");
-            }
+            // ===================== RÔLES =====================
+            // Chaque rôle est vérifié séparément afin de rendre l'initialisation sûre
+            // pour une base déjà existante.
+            ensureRole(roleRepository, "ROLE_CANDIDAT", "Candidat",
+                    "Étudiant postulant — soumet et suit sa candidature");
+            ensureRole(roleRepository, "ROLE_RESPONSABLE_ADMISSION", "Responsable Admission",
+                    "Staff administratif — gère les candidatures, sessions, entretiens");
+            ensureRole(roleRepository, "ROLE_ETUDIANT", "Étudiant",
+                    "Étudiant admis — accès à l'espace étudiant");
+            ensureRole(roleRepository, "ROLE_FORMATEUR", "Formateur",
+                    "Enseignant — gère ses cours et ses supports pédagogiques");
 
             // ===================== SESSIONS =====================
             if (sessionRepository.count() == 0) {
@@ -157,5 +146,18 @@ public class DataInitializer {
                 System.out.println("Compte admin_admission cree");
             }
         };
+    }
+
+    private Role ensureRole(RoleRepository roleRepository, String code, String libelle, String description) {
+        Role existingRole = roleRepository.findByCode(code);
+        if (existingRole != null) {
+            return existingRole;
+        }
+
+        Role role = new Role();
+        role.setCode(code);
+        role.setLibelle(libelle);
+        role.setDescription(description);
+        return roleRepository.save(role);
     }
 }

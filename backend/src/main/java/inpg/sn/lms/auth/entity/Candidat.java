@@ -42,6 +42,16 @@ public class Candidat  {
     @Column(nullable = false)
     private String niveauEtude;
 
+    /** Champs démographiques optionnels, utilisés pour les statistiques du back-office (TDR 3.1.1). */
+    @Column
+    private String genre;
+
+    @Column
+    private String profession;
+
+    @Column
+    private Integer anneesExperience;
+
     @OneToOne
     @MapsId
     @JoinColumn(name = "id_user")
@@ -56,5 +66,5 @@ public class Candidat  {
         this.dateNaissance = dateNaissance;
         this.niveauEtude = niveauEtude;
     }
-   
+
 }

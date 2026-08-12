@@ -1,0 +1,121 @@
+<app-espace-navbar></app-espace-navbar>
+
+<main class="flex-grow w-full max-w-container-max mx-auto px-margin-desktop py-stack-lg flex flex-col md:flex-row gap-gutter">
+  <!-- Sidebar Navigation (Filters) -->
+  <aside class="w-full md:w-64 flex-shrink-0">
+    <div class="bg-surface border border-outline-variant rounded-xl p-stack-md sticky top-24">
+      <h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-stack-md">Filtrer par</h3>
+      
+      <div class="flex flex-col gap-1">
+        <!-- Option: Tous -->
+        <button 
+          type="button"
+          (click)="filtre = 'ALL'"
+          [ngClass]="{
+            'bg-primary-container text-white font-medium': filtre === 'ALL',
+            'text-on-surface hover:bg-surface-container': filtre !== 'ALL'
+          }"
+          class="flex items-center justify-between w-full p-stack-sm rounded-lg transition-colors group">
+          <div class="flex items-center gap-stack-sm">
+            <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="filtre === 'ALL' ? '\'FILL\' 1' : '\'FILL\' 0'">apps</span>
+            <span class="font-label-md text-label-md">Tous les cours</span>
+          </div>
+          <span [ngClass]="filtre === 'ALL' ? 'bg-white/20' : 'bg-surface-container-high'" class="px-2 py-0.5 rounded text-[10px]">18</span>
+        </button>
+
+        <!-- Option: En cours -->
+        <button 
+          type="button"
+          (click)="filtre = 'EN_COURS'"
+          [ngClass]="{
+            'bg-primary-container text-white font-medium': filtre === 'EN_COURS',
+            'text-on-surface hover:bg-surface-container': filtre !== 'EN_COURS'
+          }"
+          class="flex items-center justify-between w-full p-stack-sm rounded-lg transition-colors group">
+          <div class="flex items-center gap-stack-sm">
+            <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="filtre === 'EN_COURS' ? '\'FILL\' 1' : '\'FILL\' 0'">play_circle</span>
+            <span class="font-label-md text-label-md">En cours</span>
+          </div>
+          <span [ngClass]="filtre === 'EN_COURS' ? 'bg-white/20' : 'bg-surface-container-high'" class="px-2 py-0.5 rounded text-[10px]">4</span>
+        </button>
+
+        <!-- Option: Terminés -->
+        <button 
+          type="button"
+          (click)="filtre = 'TERMINE'"
+          [ngClass]="{
+            'bg-primary-container text-white font-medium': filtre === 'TERMINE',
+            'text-on-surface hover:bg-surface-container': filtre !== 'TERMINE'
+          }"
+          class="flex items-center justify-between w-full p-stack-sm rounded-lg transition-colors group">
+          <div class="flex items-center gap-stack-sm">
+            <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="filtre === 'TERMINE' ? '\'FILL\' 1' : '\'FILL\' 0'">check_circle</span>
+            <span class="font-label-md text-label-md">Terminés</span>
+          </div>
+          <span [ngClass]="filtre === 'TERMINE' ? 'bg-white/20' : 'bg-surface-container-high'" class="px-2 py-0.5 rounded text-[10px]">12</span>
+        </button>
+
+        <!-- Option: Favoris -->
+        <button 
+          type="button"
+          (click)="filtre = 'FAVORI'"
+          [ngClass]="{
+            'bg-primary-container text-white font-medium': filtre === 'FAVORI',
+            'text-on-surface hover:bg-surface-container': filtre !== 'FAVORI'
+          }"
+          class="flex items-center justify-between w-full p-stack-sm rounded-lg transition-colors group">
+          <div class="flex items-center gap-stack-sm">
+            <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="filtre === 'FAVORI' ? '\'FILL\' 1' : '\'FILL\' 0'">favorite</span>
+            <span class="font-label-md text-label-md">Favoris</span>
+          </div>
+          <span [ngClass]="filtre === 'FAVORI' ? 'bg-white/20' : 'bg-surface-container-high'" class="px-2 py-0.5 rounded text-[10px]">2</span>
+        </button>
+      </div>
+
+      <div class="mt-stack-lg pt-stack-lg border-t border-outline-variant">
+        <h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-stack-md">Programme</h3>
+        <div class="p-stack-sm bg-surface-container-low rounded-lg border border-outline-variant/50">
+          <p class="font-label-md text-label-md font-bold text-secondary">Executive MBA</p>
+          <p class="text-[12px] text-on-surface-variant mt-1 leading-tight">Petroleum Management &amp; Strategic Operations</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Content Area -->
+  <div class="flex-grow">
+    <!-- Header Area -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-stack-md mb-stack-lg">
+      <div>
+        <nav class="flex items-center gap-2 text-on-surface-variant mb-2">
+          <span class="font-label-sm text-label-sm">Espace Apprenant</span>
+          <span class="material-symbols-outlined text-sm">chevron_right</span>
+          <span class="font-label-sm text-label-sm font-semibold text-primary">Mes Formations</span>
+        </nav>
+        <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Mes Formations</h1>
+      </div>
+
+      <div class="flex items-center gap-stack-sm">
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+          <input 
+            type="text"
+            [(ngModel)]="recherche" 
+            placeholder="Rechercher un module..." 
+            class="pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded-lg font-body-sm text-body-sm focus:ring-2 focus:ring-secondary/20 focus:border-secondary outline-none w-full sm:w-64 transition-all"
+          />
+        </div>
+        <button type="button" class="p-2 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined">filter_list</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bento-style Grid for Course Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-stack-lg">
+      <div *ngFor="let f of formationsFiltres">
+        <app-formation-card [formation]="f"></app-formation-card>
+      </div>
+    </div>
+  </div>
+</main>

@@ -1,222 +1,126 @@
-<!-- ==================== TESTS ACADÉMIQUES ==================== -->
-
-<!-- Page Header -->
-<div class="flex justify-between items-end mb-6">
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-stack-lg">
   <div>
-    <h2 class="text-2xl font-bold text-on-surface tracking-tight">Gestion des Tests Académiques & Épreuves</h2>
-    <p class="text-on-surface-variant text-sm mt-1">Planification des examens, saisie des notes, calcul du seuil d'admissibilité (60/100) et publication des résultats.</p>
+    <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Tests Académiques</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-2">Planification des épreuves et saisie des notes des candidats admis à cette étape.</p>
   </div>
   <div class="flex gap-3">
-    <button (click)="openPlanExamModal()" class="px-4 py-2 bg-primary text-on-primary font-medium rounded-lg hover:bg-opacity-90 transition-opacity shadow-sm text-sm flex items-center gap-2">
-      <span class="material-symbols-outlined text-[20px]">add</span>Planifier une session d'épreuve
+    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="openDrawer()" class="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg font-label-md text-label-md transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis au test académique pour le moment' : ''">
+      <span class="material-symbols-outlined text-[20px]">add</span> Nouveau Test
     </button>
   </div>
 </div>
 
-<!-- KPI Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-  @if (chargementKpis) {
-    @for (i of [1,2,3,4]; track i) {
-    <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm animate-pulse"><div class="h-12 w-12 bg-surface-container rounded-lg"></div></div>
-    }
-  } @else {
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
-    <div class="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">quiz</span></div>
-    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Épreuves Actives</p><p class="text-2xl font-bold text-on-surface">{{ kpis.epreuvesActives }}</p></div>
-  </div>
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
-    <div class="w-12 h-12 rounded-lg bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">query_stats</span></div>
-    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Moyenne Générale</p><p class="text-2xl font-bold text-on-surface">{{ kpis.moyenneGenerale }}</p></div>
-  </div>
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
-    <div class="w-12 h-12 rounded-lg bg-success/10 text-success flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">edit_document</span></div>
-    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Notes Saisies</p><p class="text-2xl font-bold text-on-surface">{{ kpis.notesSaisiesPct }}%</p></div>
-  </div>
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
-    <div class="w-12 h-12 rounded-lg bg-warning/10 text-warning flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">event_available</span></div>
-    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Prochain Test</p><p class="text-lg font-bold text-on-surface">{{ kpis.prochainTest }}</p></div>
-  </div>
-  }
+<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-gutter mb-stack-lg">
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Total Tests</span><span class="material-symbols-outlined text-secondary">quiz</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ totalTests }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Programmés</div></div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Notés</span><span class="material-symbols-outlined text-secondary">edit_note</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbNotes }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Notes saisies</div></div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Admissibles</span><span class="material-symbols-outlined text-outline">check_circle</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbAdmissibles }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Note ≥ 10/20</div></div>
 </div>
 
-<!-- Tabs -->
-<div class="flex border-b border-surface-container-highest gap-8 mb-6">
-  <button class="pb-4 text-sm transition-colors cursor-pointer border-b-2"
-          [class.border-primary]="activeTab === 'epreuves'" [class.text-primary]="activeTab === 'epreuves'" [class.font-bold]="activeTab === 'epreuves'"
-          [class.border-transparent]="activeTab !== 'epreuves'" [class.text-on-surface-variant]="activeTab !== 'epreuves'" [class.font-medium]="activeTab !== 'epreuves'"
-          (click)="switchTab('epreuves')">Liste des Épreuves</button>
-  <button class="pb-4 text-sm transition-colors cursor-pointer border-b-2"
-          [class.border-primary]="activeTab === 'notes'" [class.text-primary]="activeTab === 'notes'" [class.font-bold]="activeTab === 'notes'"
-          [class.border-transparent]="activeTab !== 'notes'" [class.text-on-surface-variant]="activeTab !== 'notes'" [class.font-medium]="activeTab !== 'notes'"
-          (click)="switchTab('notes')">Saisie des Scores & Résultats</button>
-</div>
-
-<!-- ==================== TAB: ÉPREUVES ==================== -->
-@if (activeTab === 'epreuves') {
-<div>
-  @if (chargement) {
-  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm p-6 space-y-3"><div class="h-10 bg-surface-container rounded animate-pulse"></div><div class="h-10 bg-surface-container rounded animate-pulse"></div></div>
-  } @else if (epreuves.length === 0) {
-  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm p-12 text-center text-on-surface-variant text-sm">Aucune épreuve planifiée.</div>
-  } @else {
-  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm whitespace-nowrap">
-        <thead class="text-xs text-on-surface-variant uppercase bg-surface-container-low border-b border-surface-container-highest font-bold">
-          <tr><th class="px-6 py-3">Épreuve</th><th class="px-6 py-3">Date & Heure</th><th class="px-6 py-3">Candidats</th><th class="px-6 py-3">Statut</th><th class="px-6 py-3 text-right">Actions</th></tr>
-        </thead>
-        <tbody class="divide-y divide-surface-container-highest">
-          @for (epreuve of epreuves; track epreuve.nom) {
-          <tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer group">
-            <td class="px-6 py-4 font-semibold text-on-surface">{{ epreuve.nom }}</td>
-            <td class="px-6 py-4 text-on-surface-variant">{{ epreuve.date }} • {{ epreuve.heure }}</td>
-            <td class="px-6 py-4">{{ epreuve.candidats }}</td>
-            <td class="px-6 py-4">
-              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border" [class]="getStatutClass(epreuve.statut)">{{ epreuve.statut }}</span>
-            </td>
-            <td class="px-6 py-4 text-right">
-              @if (epreuve.statut === 'TERMINE') {
-              <button class="p-1.5 hover:bg-surface-container rounded-lg text-primary cursor-pointer" (click)="onExamSelect(epreuve.nom)"><span class="material-symbols-outlined text-[18px]">edit_document</span></button>
-              } @else if (epreuve.statut === 'PROGRAMME') {
-              <button class="p-1.5 hover:bg-surface-container rounded-lg text-on-surface-variant cursor-pointer" (click)="changerStatutEpreuve(epreuve.nom, 'TERMINE')"><span class="material-symbols-outlined text-[18px]">play_arrow</span></button>
-              }
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+  <div class="p-4 border-b border-outline-variant bg-surface flex justify-end">
+    <div class="relative w-full sm:w-64">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+      <input [(ngModel)]="recherche" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher..." type="text">
     </div>
   </div>
-  }
-</div>
-}
 
-<!-- ==================== TAB: NOTES ==================== -->
-@if (activeTab === 'notes') {
-<div>
-  <!-- Context Bar -->
-  <div class="bg-surface-container-low border border-surface-container-highest rounded-xl p-4 flex flex-wrap items-center justify-between gap-6 mb-6">
-    <div class="flex flex-wrap items-center gap-6">
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Épreuve à corriger</label>
-        <select class="bg-surface-container-lowest border border-surface-container-highest rounded-lg text-sm font-medium text-on-surface py-2 pl-3 pr-10 cursor-pointer focus:ring-2 focus:ring-primary outline-none" [(ngModel)]="selectedExam" (change)="onExamSelect(selectedExam)">
-          <option value="" disabled>-- Sélectionner --</option>
-          @for (epreuve of epreuves; track epreuve.nom) {
-          <option [value]="epreuve.nom">{{ epreuve.nom }}</option>
-          }
+  <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement des tests…</div>
+  <div *ngIf="!loading && testsFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md">Aucun test ne correspond à ces critères.</div>
+
+  <div class="overflow-x-auto" *ngIf="!loading && testsFiltres.length > 0">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low border-b border-outline-variant">
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Épreuve</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Coeff.</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Note /20</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Résultat</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant">
+        <tr *ngFor="let t of testsFiltres" class="hover:bg-surface-container-low transition-colors group">
+          <td class="p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">{{ t.candidatPrenom | slice:0:1 }}{{ t.candidatNom | slice:0:1 }}</div>
+              <div>
+                <div class="font-label-md text-label-md text-primary">{{ t.candidatPrenom }} {{ t.candidatNom }}</div>
+                <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ t.numeroDossier }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ t.nomEpreuve }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-primary">{{ t.dateEpreuve | date:'dd MMM yyyy, HH:mm' }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-primary">{{ t.coefficient }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-primary">{{ t.noteObtenue ?? '—' }}</td>
+          <td class="p-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [ngClass]="{
+                    'bg-[#ecfdf5] text-[#065f46]': resultat(t) === 'ADMISSIBLE',
+                    'bg-error-container/40 text-error': resultat(t) === 'INSUFFISANT',
+                    'bg-surface-container text-on-surface-variant': resultat(t) === 'EN_ATTENTE'
+                  }">
+              {{ resultat(t) === 'ADMISSIBLE' ? 'Admissible' : resultat(t) === 'INSUFFISANT' ? 'Insuffisant' : 'En attente' }}
+            </span>
+          </td>
+          <td class="p-4 text-right">
+            <div class="flex justify-end gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
+              <button type="button" (click)="openDrawer(t)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+              <button type="button" (click)="supprimer(t)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Drawer -->
+<div class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 transition-opacity duration-300" [class.hidden]="!drawerOpen" (click)="closeDrawer()"></div>
+<aside class="fixed top-0 right-0 h-full w-full max-w-md bg-surface shadow-[0_12px_32px_rgba(19,23,65,0.1)] z-50 transform transition-transform duration-300 ease-in-out flex flex-col border-l border-outline-variant" [class.translate-x-full]="!drawerOpen" [class.translate-x-0]="drawerOpen">
+  <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+    <h2 class="font-headline-sm text-headline-sm text-primary">{{ testEnEdition ? 'Modifier le test' : 'Planifier un test' }}</h2>
+    <button type="button" class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" (click)="closeDrawer()"><span class="material-symbols-outlined">close</span></button>
+  </div>
+  <form [formGroup]="testForm" (ngSubmit)="enregistrer()" class="flex-1 flex flex-col overflow-y-auto">
+    <div class="flex-1 overflow-y-auto p-6 space-y-4">
+      <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm">{{ formError }}</div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Candidat (admis au test)</label>
+        <select formControlName="candidatId" aria-label="Candidat" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
+          <option value="" disabled>Sélectionner un candidat</option>
+          <option *ngIf="testEnEdition" [value]="testEnEdition.candidatId">
+            {{ testForm.value.candidatId }}
+          </option>
+          <option *ngFor="let c of candidatsEligibles" [value]="c.candidatId">{{ c.candidatPrenom }} {{ c.candidatNom }} — {{ c.numeroDossier }}</option>
         </select>
       </div>
-    </div>
-    <div class="flex items-center gap-3 bg-primary/10 text-primary px-4 py-2 rounded-lg border border-primary/20">
-      <span class="material-symbols-outlined text-[20px]">info</span>
-      <span class="text-sm font-semibold">Seuil d'admissibilité : {{ seuilAdmission }}/100</span>
-    </div>
-  </div>
-
-  <!-- Toolbar -->
-  <div class="flex justify-between items-center gap-4 mb-4">
-    <div class="relative flex-1 max-w-md">
-      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-      <input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-surface-container-highest rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none" placeholder="Rechercher un candidat..." type="text" [(ngModel)]="searchNotesQuery"/>
-    </div>
-    <div class="flex items-center gap-3">
-      <button (click)="saveAllNotes()" class="bg-primary text-on-primary px-4 py-2 rounded-lg flex items-center gap-2 font-bold text-sm hover:bg-opacity-90 transition-opacity cursor-pointer">
-        <span class="material-symbols-outlined text-[18px]">save_as</span> Sauvegarder toutes les notes
-      </button>
-      <select class="text-sm border border-surface-container-highest rounded-lg bg-surface-container-lowest py-2 pl-3 pr-8 cursor-pointer outline-none" [(ngModel)]="filterDecision">
-        <option value="">Toutes les décisions</option>
-        <option value="ADMIS">Admis</option>
-        <option value="AJOURNE">Ajourné</option>
-      </select>
-      <button class="px-4 py-2 bg-primary text-on-primary font-bold rounded-lg hover:bg-opacity-90 transition-opacity text-sm flex items-center gap-2 cursor-pointer" (click)="saveAllNotes()">
-        <span class="material-symbols-outlined text-[18px]">publish</span>Publier les résultats
-      </button>
-    </div>
-  </div>
-
-  <!-- Notes Table -->
-  @if (chargement) {
-  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm p-6 space-y-3"><div class="h-10 bg-surface-container rounded animate-pulse"></div><div class="h-10 bg-surface-container rounded animate-pulse"></div></div>
-  } @else if (noteRows.length === 0) {
-  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm p-12 text-center text-on-surface-variant text-sm">Sélectionnez une épreuve pour saisir les notes.</div>
-  } @else {
-  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm whitespace-nowrap">
-        <thead class="text-xs text-on-surface-variant uppercase bg-surface-container-low border-b border-surface-container-highest font-bold">
-          <tr><th class="px-6 py-3">Candidat</th><th class="px-6 py-3">Note (/100)</th><th class="px-6 py-3">Décision</th><th class="px-6 py-3 text-right">Actions</th></tr>
-        </thead>
-        <tbody class="divide-y divide-surface-container-highest">
-          @for (row of filteredNoteRows; track row.id) {
-          <tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer">
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-bold text-xs">{{ row.initials }}</div>
-                <div class="font-semibold text-on-surface">{{ row.nom }}</div>
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              <input class="w-20 p-1 border border-surface-container-highest rounded text-center bg-surface-container-lowest focus:ring-1 focus:ring-primary" type="number" [(ngModel)]="row.noteObtenue" (change)="onGradeChange(row)" min="0" max="100"/>
-            </td>
-            <td class="px-6 py-4">
-              <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase"
-                    [class.bg-success/10]="row.decision === 'ADMIS'" [class.text-success]="row.decision === 'ADMIS'"
-                    [class.bg-error/10]="row.decision !== 'ADMIS'" [class.text-error]="row.decision !== 'ADMIS'">{{ row.decision === 'ADMIS' ? 'Admis' : 'Ajourné' }}</span>
-            </td>
-            <td class="px-6 py-4 text-right">
-              <button (click)="saveRow(row)" class="text-primary hover:text-secondary transition-colors cursor-pointer"><span class="material-symbols-outlined">save</span></button>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-  }
-</div>
-}
-
-<!-- ==================== MODAL: PLANIFIER ÉPREUVE ==================== -->
-@if (modalPlanExamOpen) {
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/50 backdrop-blur-sm">
-  <div class="bg-surface-container-lowest rounded-xl shadow-lg w-full max-w-lg overflow-hidden flex flex-col">
-    <div class="px-6 py-4 border-b border-surface-container-highest flex justify-between items-center">
-      <h3 class="text-lg font-bold text-on-surface">Planifier une session d'épreuve</h3>
-      <button class="text-on-surface-variant hover:text-on-surface" (click)="modalPlanExamOpen = false"><span class="material-symbols-outlined">close</span></button>
-    </div>
-    <div class="p-6 space-y-4">
       <div>
-        <label class="block text-sm font-medium text-on-surface mb-1">Nom de l'épreuve</label>
-        <input class="w-full rounded-lg border-surface-container-highest shadow-sm focus:border-primary focus:ring-primary text-sm" type="text" [(ngModel)]="newExam.nomEpreuve" placeholder="Analyse Quantitative"/>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Nom de l'épreuve</label>
+        <input formControlName="nomEpreuve" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Test de mathématiques" type="text"/>
       </div>
       <div>
-        <label class="block text-sm font-medium text-on-surface mb-1">Date</label>
-        <input class="w-full rounded-lg border-surface-container-highest shadow-sm focus:border-primary focus:ring-primary text-sm" type="date" [(ngModel)]="newExam.dateEpreuve"/>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date et heure</label>
+        <input formControlName="dateEpreuve" aria-label="Date et heure" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="datetime-local"/>
       </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-1">Coefficient</label>
-          <input class="w-full rounded-lg border-surface-container-highest shadow-sm focus:border-primary focus:ring-primary text-sm" type="number" [(ngModel)]="newExam.coefficient" min="1" max="10"/>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-on-surface mb-1">Seuil (/100)</label>
-          <input class="w-full rounded-lg border-surface-container-highest shadow-sm focus:border-primary focus:ring-primary text-sm" type="number" [(ngModel)]="newExam.seuil" min="0" max="100"/>
-        </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Coefficient</label>
+        <input formControlName="coefficient" aria-label="Coefficient" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0.1" step="0.5"/>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Note obtenue /20 (une fois le test corrigé)</label>
+        <input formControlName="noteObtenue" aria-label="Note sur 20" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0" max="20" step="0.25"/>
       </div>
     </div>
-    <div class="px-6 py-4 border-t border-surface-container-highest bg-surface-container-low flex justify-end gap-3">
-      <button class="px-4 py-2 text-sm font-medium border border-surface-container-highest text-on-surface hover:bg-surface-container rounded-lg transition-colors" (click)="modalPlanExamOpen = false">Annuler</button>
-      <button class="px-4 py-2 text-sm font-medium bg-primary text-on-primary rounded-lg hover:bg-opacity-90 transition-opacity" (click)="createExam()">Planifier</button>
+    <div class="p-6 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
+      <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="closeDrawer()">Annuler</button>
+      <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+        {{ isSubmitting ? 'Enregistrement…' : (testEnEdition ? 'Enregistrer' : 'Planifier') }}
+      </button>
     </div>
-  </div>
-</div>
-}
-
-<!-- Toast -->
-@if (toastVisible) {
-<div class="fixed bottom-4 right-4 z-50 transform transition-all duration-300 flex items-center gap-3 px-4 py-3 bg-surface-container-lowest border rounded-lg shadow-lg"
-     [class.border-success/30]="toastType === 'success'" [class.border-error/30]="toastType === 'error'">
-  <span class="material-symbols-outlined text-[18px]" [class.text-success]="toastType === 'success'" [class.text-error]="toastType === 'error'">{{ toastType === 'success' ? 'check' : 'error' }}</span>
-  <p class="text-sm font-medium text-on-surface">{{ toastMessage }}</p>
-</div>
-}
+  </form>
+</aside>

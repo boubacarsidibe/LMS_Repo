@@ -37,8 +37,13 @@ public class EtudiantService {
             user = new User(etudiantDto.getUsername(), passwordEncoder.encode(etudiantDto.getPassword()),
                     etudiantDto.getEmail());
         }
-        user.addRole(roleRepository.findByCode("ROLE_ETUDIANT"));
-        Etudiant newEtudiant = new Etudiant(user, etudiantDto.getNom(), etudiantDto.getPrenom(),etudiantDto.getTelephone());;
+        var roleEtudiant = roleRepository.findByCode("ROLE_ETUDIANT");
+        if (roleEtudiant == null) {
+            throw new IllegalStateException("Le rôle ROLE_ETUDIANT est introuvable.");
+        }
+        user.addRole(roleEtudiant);
+        user = userService.save(user);
+        Etudiant newEtudiant = new Etudiant(user, etudiantDto.getNom(), etudiantDto.getPrenom(), etudiantDto.getTelephone());
 
         return etudiantRepository.save(newEtudiant);
     }

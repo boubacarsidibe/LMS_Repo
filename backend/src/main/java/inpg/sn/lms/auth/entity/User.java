@@ -17,6 +17,8 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
@@ -42,6 +44,9 @@ public class User {
     @Column(nullable = false, unique = true)
     private String username;
 
+    // WRITE_ONLY : le hash bcrypt ne doit jamais partir dans une réponse JSON
+    // (GET /api/admin/users sérialise l'entité User telle quelle).
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(nullable = false)
     private String password;
 
@@ -64,6 +69,15 @@ public class User {
     )
     private Set<Role> roles = new HashSet<>();
 
+    @ManyToMany
+    @JoinTable(
+        name = "user_favorites",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "formation_id")
+    )
+    @JsonIgnore
+    private Set<inpg.sn.lms.espace_etudiant.entity.Formation> favorites = new HashSet<>();
+
     public User(String username, String password, String email) {
         this.username = username;
         this.password = password;
@@ -72,6 +86,14 @@ public class User {
 
     public void addRole(Role role) {
         this.roles.add(role);
+    }
+
+    public Set<inpg.sn.lms.espace_etudiant.entity.Formation> getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(Set<inpg.sn.lms.espace_etudiant.entity.Formation> favorites) {
+        this.favorites = favorites;
     }
 
     

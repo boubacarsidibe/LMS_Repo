@@ -20,4 +20,24 @@ public class Promotion {
 
     private LocalDate dateDebut;
     private LocalDate dateFin;
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public LocalDate getDateDebut() {
+        return dateDebut;
+    }
+
+    public LocalDate getDateFin() {
+        return dateFin;
+    }
 }

@@ -1,0 +1,13 @@
+.card { border-radius: 12px; overflow: hidden; background: var(--surface, #fff); }
+.card-media img { height: 160px; object-fit: cover; display:block; width:100%; }
+.card-body { padding: 16px; display:flex; flex-direction:column; gap:8px; }
+.badge { font-weight:600; font-size:12px; color:var(--on-primary-fixed,#fff); background:var(--primary-container,#2b66a6); }
+.fav { border: none; cursor: pointer; }
+.title { font-size:18px; margin:0; color:var(--on-surface,#111827); }
+.author-row { color:var(--on-surface-variant,#6b7280); font-size:14px; }
+.code-label { font-size:12px; color:var(--on-surface-variant,#6b7280); }
+.progress-section .w-full { background: var(--surface-container, #eef2f6); height:12px; border-radius:999px; }
+.progress-section .bg-secondary { background: var(--secondary,#2563eb); height:100%; }
+.card .btn, .card button { border: none; }
+.card .w-full.py-3 { padding-top:12px; padding-bottom:12px; }
+.shadow { box-shadow: 0 2px 8px rgba(16,24,40,0.06); }

@@ -1,62 +1,103 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { filter } from 'rxjs/operators';
+import { Auth } from '../../../../core/auth/services/authService';
+import { RecrutementService, SessionCandidatureResponse } from '../../../../core/recrutement/services/recrutement.service';
 
 interface NavItem {
   label: string;
   icon: string;
   route: string;
+  filled?: boolean;
 }
 
-interface Notification {
-  id: number;
+interface Alerte {
+  icone: string;
   message: string;
-  type: 'admission' | 'success';
-  time: string;
-  read: boolean;
+  route: string;
 }
 
 @Component({
   selector: 'app-responsable-admission-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './responsable-admission-layout.component.html',
 })
-export class ResponsableAdmissionLayoutComponent {
-  searchQuery = '';
-  selectedAnneeAcademique = '2026-2027';
+export class ResponsableAdmissionLayoutComponent implements OnInit {
   notificationOpen = false;
-  toastVisible = false;
-  toastMessage = '';
+  profileOpen = false;
+  sidebarMobileOpen = false;
   activeRoute = '';
 
+  private candidaturesSoumises = 0;
+  private sessionsBientotFermees: SessionCandidatureResponse[] = [];
+
   navItems: NavItem[] = [
-    { label: 'Vue d\'Ensemble', icon: 'dashboard', route: '/responsable-admission' },
-    { label: 'Sessions', icon: 'event', route: '/responsable-admission/sessions' },
-    { label: 'Candidatures', icon: 'description', route: '/responsable-admission/candidatures' },
-    { label: 'Tests Académiques', icon: 'school', route: '/responsable-admission/tests' },
+    { label: "Vue d'ensemble", icon: 'dashboard', route: '/responsable-admission' },
+    { label: 'Statistiques', icon: 'bar_chart', route: '/responsable-admission/statistiques' },
+    { label: 'Sessions', icon: 'calendar_today', route: '/responsable-admission/sessions' },
+    { label: 'Candidatures', icon: 'folder_shared', route: '/responsable-admission/candidatures' },
+    { label: 'Critères auto', icon: 'filter_alt', route: '/responsable-admission/criteres' },
+    { label: 'Tests Académiques', icon: 'quiz', route: '/responsable-admission/tests' },
     { label: 'Entretiens', icon: 'groups', route: '/responsable-admission/entretiens' },
-    { label: 'Statistiques', icon: 'monitoring', route: '/responsable-admission/statistiques' },
+    { label: 'Délibération', icon: 'gavel', route: '/responsable-admission/deliberation', filled: true },
   ];
 
-  notifications: Notification[] = [
-    { id: 1, message: 'Nouveau dossier: Amadou Fall', type: 'admission', time: 'Il y a 5 min', read: false },
-    { id: 2, message: 'Test complété: Fatou Diop', type: 'success', time: 'Il y a 20 min', read: false },
-    { id: 3, message: 'Nouveau dossier: Ousmane Sow', type: 'admission', time: 'Il y a 1h', read: true },
-  ];
-
-  get hasUnreadNotifications(): boolean {
-    return this.notifications.some(n => !n.read);
-  }
-
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private auth: Auth,
+    private recrutementService: RecrutementService
+  ) {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e: NavigationEnd) => {
         this.activeRoute = e.urlAfterRedirects;
+        this.sidebarMobileOpen = false;
       });
+  }
+
+  ngOnInit(): void {
+    // Il n'existe pas de système de notifications admin persistées côté backend :
+    // ces alertes sont calculées à partir des vraies candidatures/sessions déjà
+    // exposées par l'API, pas des notifications stockées.
+    this.recrutementService.getAllCandidatures().subscribe({
+      next: (data) => {
+        this.candidaturesSoumises = (data || []).filter((c) => c.statut === 'SOUMIS').length;
+      },
+      error: () => {},
+    });
+    this.recrutementService.getAllSessions().subscribe({
+      next: (data) => {
+        const aujourdhui = new Date().toISOString().slice(0, 10);
+        const dansSeptJours = new Date();
+        dansSeptJours.setDate(dansSeptJours.getDate() + 7);
+        const limite = dansSeptJours.toISOString().slice(0, 10);
+        this.sessionsBientotFermees = (data || []).filter(
+          (s) => s.estOuverte && s.dateFermeture >= aujourdhui && s.dateFermeture <= limite
+        );
+      },
+      error: () => {},
+    });
+  }
+
+  get alertes(): Alerte[] {
+    const items: Alerte[] = [];
+    if (this.candidaturesSoumises > 0) {
+      items.push({
+        icone: 'inbox',
+        message: `${this.candidaturesSoumises} candidature(s) en attente de traitement`,
+        route: '/responsable-admission/candidatures',
+      });
+    }
+    for (const s of this.sessionsBientotFermees) {
+      items.push({
+        icone: 'timer',
+        message: `« ${s.libelle} » ferme le ${new Date(s.dateFermeture).toLocaleDateString('fr-FR')}`,
+        route: '/responsable-admission/sessions',
+      });
+    }
+    return items;
   }
 
   isActive(route: string): boolean {
@@ -66,29 +107,78 @@ export class ResponsableAdmissionLayoutComponent {
     return this.activeRoute.startsWith(route);
   }
 
-  toggleDropdown(type: 'notification', event: MouseEvent): void {
-    event.stopPropagation();
-    this.notificationOpen = !this.notificationOpen;
+  get userInitials(): string {
+    const user = this.auth.currentUser();
+    if (!user) return '';
+    const parts = (user as any).username ? (user as any).username.split('_') : [user.email.charAt(0)];
+    return parts.length >= 2
+      ? (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase()
+      : (parts[0].charAt(0) + (parts[0].charAt(1) || '')).toUpperCase();
   }
 
-  markAllRead(): void {
-    this.notifications.forEach(n => n.read = true);
+  get userDisplayName(): string {
+    const user = this.auth.currentUser();
+    if (!user) return '';
+    return (user as any).username ? (user as any).username.replace('_', ' ') : user.email;
+  }
+
+  get userEmail(): string {
+    return this.auth.currentUser()?.email || '';
+  }
+
+  logout(): void {
+    this.auth.logout().subscribe({
+      next: () => {
+        this.closeAll();
+        this.router.navigate(['/auth/login']);
+      },
+      error: () => {
+        this.auth.clearSession();
+        this.closeAll();
+        this.router.navigate(['/auth/login']);
+      },
+    });
+  }
+
+  private closeAll(): void {
+    this.notificationOpen = false;
+    this.profileOpen = false;
+  }
+
+  toggleDropdown(type: 'notification' | 'profile'): void {
+    if (type === 'notification') {
+      const wasOpen = this.notificationOpen;
+      this.closeAll();
+      this.notificationOpen = !wasOpen;
+    } else {
+      const wasOpen = this.profileOpen;
+      this.closeAll();
+      this.profileOpen = !wasOpen;
+    }
+  }
+
+  toggleSidebarMobile(): void {
+    this.sidebarMobileOpen = !this.sidebarMobileOpen;
   }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    if (target.closest('#notification-btn') || target.closest('#notification-dropdown')) return;
-    this.notificationOpen = false;
-  }
-
-  logout(): void {
-    this.router.navigate(['/auth/login']);
-  }
-
-  showToast(message: string): void {
-    this.toastMessage = message;
-    this.toastVisible = true;
-    setTimeout(() => { this.toastVisible = false; }, 3000);
+    if (
+      target.closest('#notification-btn') ||
+      target.closest('#profile-btn') ||
+      target.closest('#mobile-menu-btn')
+    ) {
+      return;
+    }
+    if (
+      target.closest('#notification-dropdown') ||
+      target.closest('#profile-dropdown') ||
+      target.closest('#mobile-sidebar')
+    ) {
+      return;
+    }
+    this.closeAll();
+    this.sidebarMobileOpen = false;
   }
 }

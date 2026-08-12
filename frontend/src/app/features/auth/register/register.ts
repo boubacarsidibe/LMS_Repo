@@ -50,7 +50,8 @@ export class Register {
     this.authService.register(username, email, password).subscribe({
       next: () => {
         this.isLoading = false;
-        this.router.navigate(['/auth/login']);
+        // rediriger selon le rôle comme pour la connexion
+        this.authService.redirectByRole(this.router);
       },
       error: (err) => {
         this.isLoading = false;

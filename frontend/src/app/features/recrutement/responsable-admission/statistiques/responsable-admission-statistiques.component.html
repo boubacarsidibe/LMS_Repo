@@ -1,168 +1,155 @@
-<!-- ==================== STATISTIQUES ==================== -->
-
-<!-- Page Header -->
-<div class="flex justify-between items-end mb-6">
+<!-- ==================== CONTENU SEUL ==================== -->
+<div class="mb-stack-lg flex flex-col md:flex-row md:items-end justify-between gap-4">
   <div>
-    <h2 class="text-2xl font-bold text-on-surface tracking-tight">Statistiques & Rapports</h2>
-    <p class="text-on-surface-variant text-sm mt-1">Analysez les tendances de recrutement et suivez vos indicateurs clés de performance.</p>
+    <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1">Statistiques</h2>
+    <p class="font-body-md text-body-md text-on-surface-variant">Indicateurs et répartition des candidatures, toutes sessions confondues.</p>
   </div>
-  <div class="flex gap-3 items-center">
-    <select class="text-sm border border-surface-container-highest rounded-lg bg-surface-container-lowest text-on-surface py-2 pl-3 pr-8 cursor-pointer outline-none focus:ring-1 focus:ring-primary" [(ngModel)]="anneeAcademique" (change)="onAnneeChange()">
-      <option>2026-2027</option>
-      <option>2025-2026</option>
-    </select>
-    <button (click)="exportReport()" class="px-4 py-2 bg-primary text-on-primary font-medium rounded-lg hover:bg-opacity-90 transition-opacity shadow-sm text-sm flex items-center gap-2 cursor-pointer">
-      <span class="material-symbols-outlined text-[20px]">download</span>Exporter Rapport
+  <div class="flex gap-3">
+    <button type="button" routerLink="/responsable-admission/parametres" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm" title="Choisir les widgets affichés">
+      <span class="material-symbols-outlined text-[18px]">tune</span> Personnaliser
+    </button>
+    <button type="button" [disabled]="exporting" (click)="exporter()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
+      <span class="material-symbols-outlined text-[18px]">download</span> {{ exporting ? 'Export en cours…' : 'Exporter les candidatures' }}
     </button>
   </div>
 </div>
 
-<!-- KPI Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm">
-    <div class="flex items-center justify-between mb-2">
-      <span class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Total Candidatures</span>
-      <span class="material-symbols-outlined text-[20px] text-primary">trending_up</span>
-    </div>
-    <p class="text-2xl font-bold text-on-surface">{{ kpis.totalCandidatures.toLocaleString('fr') }}</p>
-    <div class="flex items-center gap-1 mt-1">
-      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-success/10 text-success">+{{ kpis.variation }}%</span>
-      <span class="text-[10px] text-on-surface-variant">vs session précédente</span>
-    </div>
-  </div>
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm">
-    <div class="flex items-center justify-between mb-2">
-      <span class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Taux d'Admission</span>
-      <span class="material-symbols-outlined text-[20px] text-primary">school</span>
-    </div>
-    <p class="text-2xl font-bold text-on-surface">{{ kpis.tauxAdmission }}%</p>
-    <div class="flex items-center gap-1 mt-1">
-      <span class="text-[10px] text-on-surface-variant">Cible: {{ kpis.cibleAdmission }}%</span>
-    </div>
-  </div>
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm">
-    <div class="flex items-center justify-between mb-2">
-      <span class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Frais Collectés</span>
-      <span class="material-symbols-outlined text-[20px] text-primary">payments</span>
-    </div>
-    <p class="text-2xl font-bold text-on-surface">{{ formatFrais(kpis.fraisCollectes) }}</p>
-    <div class="flex items-center gap-1 mt-1">
-      <span class="text-[10px] text-on-surface-variant">Wave · PayDunya · Virement</span>
-    </div>
-  </div>
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm">
-    <div class="flex items-center justify-between mb-2">
-      <span class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Temps Traitement</span>
-      <span class="material-symbols-outlined text-[20px] text-primary">schedule</span>
-    </div>
-    <p class="text-2xl font-bold text-on-surface">{{ kpis.tempsTraitement }}j</p>
-    <div class="flex items-center gap-1 mt-1">
-      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-success/10 text-success">{{ kpis.deltaTemps }}j</span>
-      <span class="text-[10px] text-on-surface-variant">vs période précédente</span>
-    </div>
-  </div>
-</div>
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement des données…</div>
 
-<!-- Charts Grid -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-  <!-- Volume by Month (2/3) -->
-  <div class="lg:col-span-2 bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm p-5">
-    <h3 class="font-bold text-on-surface text-sm mb-4 flex items-center gap-2">
-      <span class="material-symbols-outlined text-[20px] text-primary">bar_chart</span>Volume de Candidatures par Mois
-    </h3>
-    @if (volumeByMonth.length === 0) {
-    <div class="py-12 text-center text-on-surface-variant text-sm">Données insuffisantes pour la période sélectionnée.</div>
-    } @else {
-    <div class="space-y-4">
-      @for (entry of volumeByMonth; track entry.mois) {
-      <div>
-        <div class="flex justify-between text-xs text-on-surface-variant mb-1">
-          <span class="font-semibold">{{ entry.mois }}</span>
-          <span>{{ entry.total }} candidatures</span>
-        </div>
-        <div class="w-full h-5 bg-surface-container rounded-full overflow-hidden flex">
-          <div [style.width]="barWidth(entry.validees)" class="h-full bg-primary transition-all duration-500"></div>
-          <div [style.width]="barWidth(entry.rejetees)" class="h-full bg-error/60 transition-all duration-500"></div>
-        </div>
-        <div class="flex gap-4 text-[10px] text-on-surface-variant mt-1">
-          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span>Validées: {{ entry.validees }}</span>
-          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-error/60"></span>Rejetées: {{ entry.rejetees }}</span>
+<ng-container *ngIf="!loading">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
+    <div *ngIf="prefs.showTotalCandidats" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+      <div class="flex justify-between items-start mb-4">
+        <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">groups</span></div>
+      </div>
+      <p class="font-label-md text-label-md text-on-surface-variant mb-1">Total Candidats</p>
+      <h3 class="font-headline-lg text-headline-lg text-primary">{{ totalCandidats }}</h3>
+    </div>
+    <div *ngIf="prefs.showValidationEnCours" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+      <div class="flex justify-between items-start mb-4">
+        <div class="w-10 h-10 rounded-lg bg-secondary-fixed/50 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">hourglass_empty</span></div>
+      </div>
+      <p class="font-label-md text-label-md text-on-surface-variant mb-1">Validation en cours</p>
+      <h3 class="font-headline-lg text-headline-lg text-primary">{{ validationEnCours }}</h3>
+    </div>
+    <div *ngIf="prefs.showPreselectionnes" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group relative overflow-hidden">
+      <div class="flex justify-between items-start mb-4 relative z-10">
+        <div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center text-on-surface-variant group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">how_to_reg</span></div>
+      </div>
+      <p class="font-label-md text-label-md text-on-surface-variant mb-1 relative z-10">Présélectionnés</p>
+      <h3 class="font-headline-lg text-headline-lg text-primary relative z-10">{{ preselectionnes }}</h3>
+    </div>
+    <div *ngIf="prefs.showRejetes" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+      <div class="flex justify-between items-start mb-4">
+        <div class="w-10 h-10 rounded-lg bg-error-container flex items-center justify-center text-error group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">cancel</span></div>
+      </div>
+      <p class="font-label-md text-label-md text-on-surface-variant mb-1">Rejetés</p>
+      <h3 class="font-headline-lg text-headline-lg text-primary">{{ rejetes }}</h3>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter" *ngIf="prefs.showRepartitionStatuts || prefs.showTauxAdmission">
+    <!-- Répartition par statut (barres) -->
+    <div *ngIf="prefs.showRepartitionStatuts" class="lg:col-span-2 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-primary mb-4">Répartition des candidatures par étape</h3>
+      <div class="space-y-3" *ngIf="totalCandidats > 0; else aucuneCandidature">
+        <div *ngFor="let seg of repartitionStatuts">
+          <div class="flex justify-between items-baseline mb-1">
+            <span class="font-label-sm text-label-sm text-on-surface-variant">{{ seg.label }}</span>
+            <span class="font-label-sm text-label-sm text-on-surface">{{ seg.count }} <span class="text-on-surface-variant">({{ seg.pourcentage }}%)</span></span>
+          </div>
+          <div class="w-full bg-surface-container h-2.5 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-500" [ngClass]="seg.couleur" [style.width.%]="seg.pourcentage"></div>
+          </div>
         </div>
       </div>
-      }
+      <ng-template #aucuneCandidature>
+        <p class="text-body-sm text-on-surface-variant py-6 text-center">Aucune candidature pour le moment.</p>
+      </ng-template>
     </div>
-    }
-  </div>
 
-  <!-- Geographic Distribution (1/3) -->
-  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm p-5">
-    <h3 class="font-bold text-on-surface text-sm mb-4 flex items-center gap-2">
-      <span class="material-symbols-outlined text-[20px] text-primary">public</span>Origine Géographique
-    </h3>
-    @if (geoDistribution.length === 0) {
-    <div class="py-12 text-center text-on-surface-variant text-sm">Données insuffisantes.</div>
-    } @else {
-    <div class="space-y-4">
-      @for (entry of geoDistribution; track entry.pays) {
-      <div>
-        <div class="flex justify-between text-xs mb-1">
-          <span class="font-semibold text-on-surface">{{ entry.pays }}</span>
-          <span class="text-on-surface-variant">{{ entry.effectif }} ({{ entry.pourcentage }}%)</span>
-        </div>
-        <div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
-          <div [style.width]="entry.pourcentage + '%'" class="h-full rounded-full transition-all duration-500"
-               [class.bg-primary]="entry.pays === 'Sénégal'"
-               [class.bg-secondary]="entry.pays === 'Mali'"
-               [class.bg-success]="entry.pays === 'Côte d\'Ivoire'"
-               [class.bg-surface-container-highest]="entry.pays === 'Autres'"></div>
+    <!-- Taux d'admission (anneau) -->
+    <div *ngIf="prefs.showTauxAdmission" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col items-center justify-center">
+      <h3 class="font-headline-sm text-headline-sm text-primary mb-4 self-start">Taux d'admission</h3>
+      <div class="relative w-36 h-36">
+        <svg class="w-36 h-36 transform -rotate-90" viewBox="0 0 128 128">
+          <circle class="text-outline-variant/20" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-width="10"></circle>
+          <circle class="text-secondary" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor"
+                  [attr.stroke-dasharray]="anneauCirconference" [attr.stroke-dashoffset]="anneauDashOffset"
+                  stroke-width="10" stroke-linecap="round"></circle>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="font-display text-headline-lg text-primary leading-none">{{ tauxAdmission }}%</span>
+          <span class="font-label-sm text-on-surface-variant mt-1">admis</span>
         </div>
       </div>
-      }
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-4 text-center">
+        {{ candidaturesDecidees > 0 ? (candidaturesDecidees + ' dossier(s) tranché(s)') : 'Aucune décision finale pour le moment' }}
+      </p>
     </div>
-    }
   </div>
-</div>
 
-<!-- Conversion Funnel -->
-<div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm p-5 mb-6">
-  <h3 class="font-bold text-on-surface text-sm mb-4 flex items-center gap-2">
-    <span class="material-symbols-outlined text-[20px] text-primary">filter_alt</span>Entonnoir de Conversion
-  </h3>
-  @if (funnel.length === 0) {
-  <div class="py-12 text-center text-on-surface-variant text-sm">Données insuffisantes.</div>
-  } @else {
-  <div class="flex flex-wrap justify-center gap-4">
-    @for (step of funnel; track step.etape; let idx = $index) {
-    <div class="flex flex-col items-center min-w-[140px]">
-      @if (idx > 0) {
-      <div class="w-0.5 h-6 bg-surface-container-highest"></div>
-      }
-      <div class="px-4 py-3 rounded-xl text-center transition-all"
-           [style.width]="(step.pourcentage * 1.5 + 80) + 'px'"
-           [style.max-width]="'220px'"
-           [class.bg-primary]="idx === 0"
-           [class.bg-primary/80]="idx === 1"
-           [class.bg-primary/60]="idx === 2"
-           [class.bg-primary/40]="idx === 3"
-           [class.bg-primary/20]="idx === 4">
-        <p class="text-xs font-bold" [class.text-on-primary]="idx <= 1" [class.text-on-surface]="idx > 1">{{ step.etape }}</p>
-        <p class="text-lg font-bold" [class.text-on-primary]="idx <= 1" [class.text-on-surface]="idx > 1">{{ step.nombre }}</p>
-        <p class="text-[10px] opacity-70" [class.text-on-primary/70]="idx <= 1" [class.text-on-surface-variant]="idx > 1">{{ step.pourcentage }}%</p>
+  <!-- Statistiques démographiques -->
+  <div *ngIf="prefs.showDemographie" class="mt-stack-lg">
+    <h3 class="font-headline-sm text-headline-sm text-primary mb-4">Profil démographique des candidats</h3>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+      <!-- Genre -->
+      <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+        <h4 class="font-label-lg text-label-lg text-on-surface mb-4">Genre</h4>
+        <div class="space-y-3" *ngIf="totalCandidats > 0; else aucuneDonneeGenre">
+          <div *ngFor="let seg of repartitionGenre">
+            <div class="flex justify-between items-baseline mb-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">{{ seg.label }}</span>
+              <span class="font-label-sm text-label-sm text-on-surface">{{ seg.count }} <span class="text-on-surface-variant">({{ seg.pourcentage }}%)</span></span>
+            </div>
+            <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" [ngClass]="seg.couleur" [style.width.%]="seg.pourcentage"></div>
+            </div>
+          </div>
+        </div>
+        <ng-template #aucuneDonneeGenre><p class="text-body-sm text-on-surface-variant py-6 text-center">Aucune donnée.</p></ng-template>
       </div>
-      @if (idx < funnel.length - 1) {
-      <span class="material-symbols-outlined text-[16px] text-on-surface-variant my-1">arrow_downward</span>
-      }
-    </div>
-    }
-  </div>
-  }
-</div>
 
-<!-- Toast -->
-@if (toastVisible) {
-<div class="fixed bottom-4 right-4 z-50 transform transition-all duration-300 flex items-center gap-3 px-4 py-3 bg-surface-container-lowest border rounded-lg shadow-lg"
-     [class.border-success/30]="toastType === 'success'" [class.border-error/30]="toastType === 'error'">
-  <span class="material-symbols-outlined text-[18px]" [class.text-success]="toastType === 'success'" [class.text-error]="toastType === 'error'">{{ toastType === 'success' ? 'check' : 'error' }}</span>
-  <p class="text-sm font-medium text-on-surface">{{ toastMessage }}</p>
-</div>
-}
+      <!-- Âge -->
+      <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+        <h4 class="font-label-lg text-label-lg text-on-surface mb-4">Tranche d'âge</h4>
+        <div class="space-y-3" *ngIf="totalCandidats > 0; else aucuneDonneeAge">
+          <div *ngFor="let seg of repartitionAge">
+            <div class="flex justify-between items-baseline mb-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">{{ seg.label }}</span>
+              <span class="font-label-sm text-label-sm text-on-surface">{{ seg.count }} <span class="text-on-surface-variant">({{ seg.pourcentage }}%)</span></span>
+            </div>
+            <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" [ngClass]="seg.couleur" [style.width.%]="seg.pourcentage"></div>
+            </div>
+          </div>
+        </div>
+        <ng-template #aucuneDonneeAge><p class="text-body-sm text-on-surface-variant py-6 text-center">Aucune donnée.</p></ng-template>
+      </div>
+
+      <!-- Professions -->
+      <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+        <h4 class="font-label-lg text-label-lg text-on-surface mb-4">Professions les plus déclarées</h4>
+        <div class="space-y-3" *ngIf="topProfessions.length > 0; else aucuneDonneeProfession">
+          <div *ngFor="let seg of topProfessions">
+            <div class="flex justify-between items-baseline mb-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant capitalize">{{ seg.label }}</span>
+              <span class="font-label-sm text-label-sm text-on-surface">{{ seg.count }} <span class="text-on-surface-variant">({{ seg.pourcentage }}%)</span></span>
+            </div>
+            <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" [ngClass]="seg.couleur" [style.width.%]="seg.pourcentage"></div>
+            </div>
+          </div>
+          <p *ngIf="nbSansProfessionDeclaree > 0" class="font-body-sm text-body-sm text-on-surface-variant pt-1">{{ nbSansProfessionDeclaree }} candidat(s) sans profession déclarée.</p>
+        </div>
+        <ng-template #aucuneDonneeProfession><p class="text-body-sm text-on-surface-variant py-6 text-center">Aucune donnée.</p></ng-template>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!prefs.showTotalCandidats && !prefs.showValidationEnCours && !prefs.showPreselectionnes && !prefs.showRejetes && !prefs.showRepartitionStatuts && !prefs.showTauxAdmission && !prefs.showDemographie"
+       class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant">
+    <span class="material-symbols-outlined text-4xl text-outline mb-2 block">visibility_off</span>
+    <p class="font-body-md text-on-surface-variant">Tous les widgets sont masqués. <a routerLink="/responsable-admission/parametres" class="text-secondary hover:underline">Modifier dans Paramètres</a>.</p>
+  </div>
+</ng-container>

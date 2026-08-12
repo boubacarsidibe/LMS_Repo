@@ -1,175 +1,213 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { Subscription, Subject, debounceTime, distinctUntilChanged } from 'rxjs';
-import { RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
+import {
+  CandidatureResponse,
+  EntretienRequest,
+  EntretienResponse,
+  RecrutementService,
+} from '../../../../core/recrutement/services/recrutement.service';
 
-interface InterviewRow {
-  id: number;
+interface EntretienAffiche extends EntretienResponse {
   candidatNom: string;
   candidatPrenom: string;
-  date: string;
-  heure: string;
-  lieuOuLien: string;
-  statut: string;
-  noteEntretien: number | null;
-  appreciationGlobale: string;
-}
-
-interface InterviewKpi {
-  totalEntretiens: number;
-  effectues: number;
-  aujourdhui: number;
-  enAttente: number;
+  numeroDossier: string;
 }
 
 @Component({
   selector: 'app-responsable-admission-entretiens',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
   templateUrl: './responsable-admission-entretiens.component.html',
 })
-export class ResponsableAdmissionEntretiensComponent implements OnInit, OnDestroy {
-  // KPIs
-  kpis: InterviewKpi = { totalEntretiens: 0, effectues: 0, aujourdhui: 0, enAttente: 0 };
-  chargementKpis = false;
+export class ResponsableAdmissionEntretiensComponent implements OnInit {
+  entretiens: EntretienResponse[] = [];
+  candidatures: CandidatureResponse[] = [];
+  loading = false;
+  errorMessage = '';
+  private chargementsEnCours = 0;
 
-  // Tabs & Filters
-  activeTab: 'ALL' | 'PLANNED' | 'COMPLETED' = 'ALL';
-  searchQuery = '';
-  page = 0;
-  limit = 10;
-  totalCount = 0;
-  private searchSubject = new Subject<string>();
+  recherche = '';
+  filtre: 'TOUS' | 'A_VENIR' | 'PASSES' = 'TOUS';
 
-  // Modals / Drawer
-  modalPlanOpen = false;
-  modalEvalOpen = false;
-  selectedInterview: InterviewRow | null = null;
-  newInterview = { dateHeure: '', lieuOuLien: 'Salle A', candidatId: null as number | null };
-  evalForm = { noteEntretien: 0, appreciationGlobale: '', decision: 'ADMIS' };
+  drawerOpen = false;
+  entretienEnEdition: EntretienResponse | null = null;
+  entretienForm: FormGroup;
+  isSubmitting = false;
+  formError = '';
 
-  // Data
-  entretiens: InterviewRow[] = [];
-  chargement = false;
-  emptyMessage = '';
-
-  // Toast
-  toastVisible = false;
-  toastMessage = '';
-  toastType: 'success' | 'error' = 'success';
-
-  private subs: Subscription[] = [];
-
-  constructor(private service: RecrutementService) {}
+  constructor(private recrutementService: RecrutementService, private fb: FormBuilder) {
+    this.entretienForm = this.fb.group({
+      candidatId: ['', Validators.required],
+      dateHeure: ['', Validators.required],
+      lieuOuLien: ['', Validators.required],
+      noteEntretien: [null],
+      appreciationGlobale: [''],
+    });
+  }
 
   ngOnInit(): void {
-    this.chargerKpis();
-    this.chargerEntretiens();
-    const debSub = this.searchSubject.pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(() => { this.page = 0; this.chargerEntretiens(); });
-    this.subs.push(debSub);
+    this.charger();
   }
 
-  ngOnDestroy(): void { this.subs.forEach(s => s.unsubscribe()); }
+  private charger(): void {
+    this.loading = true;
+    this.errorMessage = '';
+    this.chargementsEnCours = 2;
 
-  chargerKpis(): void {
-    this.chargementKpis = true;
-    const sub = this.service.getInterviewKpis().subscribe({
-      next: d => { this.kpis = d; this.chargementKpis = false; },
-      error: () => { this.chargementKpis = false; }
-    });
-    this.subs.push(sub);
-  }
-
-  chargerEntretiens(): void {
-    this.chargement = true;
-    this.emptyMessage = '';
-    const sub = this.service.listInterviews(this.activeTab, this.searchQuery || undefined, this.page, this.limit).subscribe({
-      next: (data: any[]) => {
-        this.entretiens = data.map(e => ({
-          id: e.id,
-          candidatNom: e.candidatNom || '', candidatPrenom: e.candidatPrenom || '',
-          date: e.date || '', heure: e.heure || '', lieuOuLien: e.lieuOuLien || '',
-          statut: e.statut || 'PLANIFIE', noteEntretien: e.noteEntretien, appreciationGlobale: e.appreciationGlobale || ''
-        }));
-        this.chargement = false;
-        if (this.entretiens.length === 0) this.emptyMessage = 'Aucun entretien trouvé.';
+    this.recrutementService.getAllEntretiens().subscribe({
+      next: (data) => (this.entretiens = data || []),
+      error: () => {
+        this.entretiens = [];
+        this.errorMessage = 'Impossible de charger les entretiens.';
       },
-      error: () => { this.chargement = false; }
+      complete: () => this.finDeChargement(),
     });
-    this.subs.push(sub);
-  }
 
-  switchTab(tab: 'ALL' | 'PLANNED' | 'COMPLETED'): void {
-    this.activeTab = tab;
-    this.page = 0;
-    this.chargerEntretiens();
-  }
-
-  onSearchChange(): void { this.searchSubject.next(this.searchQuery); }
-
-  prevPage(): void { if (this.page > 0) { this.page--; this.chargerEntretiens(); } }
-  nextPage(): void { this.page++; this.chargerEntretiens(); }
-
-  // ---- Plan interview ----
-  openPlanModal(): void {
-    this.modalPlanOpen = true;
-    this.newInterview = { dateHeure: '', lieuOuLien: 'Salle A', candidatId: null };
-  }
-
-  createInterview(): void {
-    const body: any = { dateHeure: this.newInterview.dateHeure + ':00', lieuOuLien: this.newInterview.lieuOuLien };
-    if (this.newInterview.candidatId) body.candidatId = this.newInterview.candidatId;
-    this.service.createInterview(body).subscribe({
-      next: () => {
-        this.modalPlanOpen = false;
-        this.afficherToast('Entretien planifié.', 'success');
-        this.chargerEntretiens(); this.chargerKpis();
-      },
-      error: () => this.afficherToast('Erreur création.', 'error')
+    this.recrutementService.getAllCandidatures().subscribe({
+      next: (data) => (this.candidatures = data || []),
+      error: () => (this.candidatures = []),
+      complete: () => this.finDeChargement(),
     });
   }
 
-  // ---- Evaluate ----
-  openEvalModal(interview: InterviewRow): void {
-    this.selectedInterview = interview;
-    this.evalForm = { noteEntretien: interview.noteEntretien || 0, appreciationGlobale: interview.appreciationGlobale || '', decision: 'ADMIS' };
-    this.modalEvalOpen = true;
-  }
-
-  saveEvaluation(): void {
-    if (!this.selectedInterview) return;
-    this.service.saveEvaluation(this.selectedInterview.id, this.evalForm).subscribe({
-      next: () => {
-        this.modalEvalOpen = false;
-        this.afficherToast('Évaluation enregistrée.', 'success');
-        this.chargerEntretiens(); this.chargerKpis();
-      },
-      error: () => this.afficherToast('Erreur évaluation.', 'error')
-    });
-  }
-
-  // ---- Delete ----
-  deleteInterview(id: number): void {
-    if (!confirm('Annuler cet entretien ?')) return;
-    this.service.deleteInterview(id).subscribe({
-      next: () => { this.afficherToast('Entretien annulé.', 'success'); this.chargerEntretiens(); this.chargerKpis(); },
-      error: () => this.afficherToast('Erreur suppression.', 'error')
-    });
-  }
-
-  getStatutClass(statut: string): string {
-    switch (statut) {
-      case 'TERMINE': return 'bg-success/10 text-success border-success/20';
-      case 'PLANIFIE': return 'bg-primary/10 text-primary border-primary/20';
-      default: return 'bg-surface-container-highest text-on-surface-variant';
+  private finDeChargement(): void {
+    this.chargementsEnCours--;
+    if (this.chargementsEnCours <= 0) {
+      this.loading = false;
     }
   }
 
-  afficherToast(message: string, type: 'success' | 'error'): void {
-    this.toastMessage = message; this.toastType = type; this.toastVisible = true;
-    setTimeout(() => this.toastVisible = false, 4000);
+  /** Un candidat n'a pas de nom dans EntretienResponse : jointure côté client avec les candidatures. */
+  private candidatureDe(candidatId: number): CandidatureResponse | undefined {
+    return this.candidatures.find((c) => c.candidatId === candidatId);
+  }
+
+  get entretiensAffiches(): EntretienAffiche[] {
+    return this.entretiens.map((e) => {
+      const c = this.candidatureDe(e.candidatId);
+      return {
+        ...e,
+        candidatNom: c?.candidatNom || '—',
+        candidatPrenom: c?.candidatPrenom || '',
+        numeroDossier: c?.numeroDossier || '',
+      };
+    });
+  }
+
+  get entretiensFiltres(): EntretienAffiche[] {
+    const q = this.recherche.trim().toLowerCase();
+    const maintenant = new Date();
+    return this.entretiensAffiches.filter((e) => {
+      if (q) {
+        const texte = `${e.candidatPrenom} ${e.candidatNom} ${e.lieuOuLien} ${e.numeroDossier}`.toLowerCase();
+        if (!texte.includes(q)) return false;
+      }
+      const estPasse = new Date(e.dateHeure) < maintenant;
+      if (this.filtre === 'A_VENIR' && estPasse) return false;
+      if (this.filtre === 'PASSES' && !estPasse) return false;
+      return true;
+    });
+  }
+
+  /** Candidats admis à l'entretien (ADMIS2), éligibles pour une planification. */
+  get candidatsEligibles(): CandidatureResponse[] {
+    return this.candidatures.filter((c) => c.statut === 'ADMIS2');
+  }
+
+  get totalEntretiens(): number {
+    return this.entretiens.length;
+  }
+
+  get nbEffectues(): number {
+    const maintenant = new Date();
+    return this.entretiens.filter((e) => new Date(e.dateHeure) < maintenant).length;
+  }
+
+  get nbAVenir(): number {
+    const maintenant = new Date();
+    return this.entretiens.filter((e) => new Date(e.dateHeure) >= maintenant).length;
+  }
+
+  get nbAujourdhui(): number {
+    const aujourdhui = new Date().toDateString();
+    return this.entretiens.filter((e) => new Date(e.dateHeure).toDateString() === aujourdhui).length;
+  }
+
+  estPasse(dateHeure: string): boolean {
+    return new Date(dateHeure) < new Date();
+  }
+
+  openDrawer(entretien?: EntretienResponse): void {
+    this.formError = '';
+    if (entretien) {
+      this.entretienEnEdition = entretien;
+      this.entretienForm.setValue({
+        candidatId: entretien.candidatId,
+        dateHeure: this.versInputDatetimeLocal(entretien.dateHeure),
+        lieuOuLien: entretien.lieuOuLien,
+        noteEntretien: entretien.noteEntretien ?? null,
+        appreciationGlobale: entretien.appreciationGlobale || '',
+      });
+    } else {
+      this.entretienEnEdition = null;
+      this.entretienForm.reset({
+        candidatId: '',
+        dateHeure: '',
+        lieuOuLien: '',
+        noteEntretien: null,
+        appreciationGlobale: '',
+      });
+    }
+    this.drawerOpen = true;
+  }
+
+  closeDrawer(): void {
+    this.drawerOpen = false;
+  }
+
+  private versInputDatetimeLocal(iso: string): string {
+    // "2026-06-12T10:00:00" (backend) -> "2026-06-12T10:00" (attendu par <input type="datetime-local">)
+    return iso ? iso.slice(0, 16) : '';
+  }
+
+  enregistrer(): void {
+    if (this.entretienForm.invalid) {
+      this.entretienForm.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting = true;
+    this.formError = '';
+    const brut = this.entretienForm.getRawValue();
+    const request: EntretienRequest = {
+      ...brut,
+      candidatId: Number(brut.candidatId),
+      noteEntretien: brut.noteEntretien === null || brut.noteEntretien === '' ? null : Number(brut.noteEntretien),
+    };
+
+    const obs = this.entretienEnEdition
+      ? this.recrutementService.modifierEntretien(this.entretienEnEdition.id, request)
+      : this.recrutementService.creerEntretien(request);
+
+    obs.subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.closeDrawer();
+        this.charger();
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        this.formError = err.error?.message || "Échec de l'enregistrement de l'entretien.";
+      },
+    });
+  }
+
+  supprimer(entretien: EntretienAffiche): void {
+    if (!confirm(`Annuler l'entretien de ${entretien.candidatPrenom} ${entretien.candidatNom} ?`)) return;
+    this.recrutementService.supprimerEntretien(entretien.id).subscribe({
+      next: () => this.charger(),
+      error: () => alert("Échec de l'annulation de l'entretien."),
+    });
   }
 }

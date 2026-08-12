@@ -2,15 +2,20 @@ package inpg.sn.lms.auth.controller;
 
 import inpg.sn.lms.auth.dto.AuthRequest;
 import inpg.sn.lms.auth.dto.AuthResponse;
+import inpg.sn.lms.auth.dto.FormateurDto;
+import inpg.sn.lms.auth.entity.Formateur;
+import inpg.sn.lms.auth.service.FormateurService;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.service.OtpService;
 import inpg.sn.lms.auth.service.UserService;
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import inpg.sn.lms.security.JwtUtils;
 
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -34,29 +39,39 @@ public class AuthController {
     private final OtpService otpService;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final FormateurService formateurService;
 
     public AuthController(AuthenticationManager authenticationManager,
             UserDetailsService userDetailsService,
-            JwtUtils jwtUtils, OtpService otpService, UserService userService, PasswordEncoder passwordEncoder) {
+            JwtUtils jwtUtils, OtpService otpService, UserService userService, PasswordEncoder passwordEncoder,
+            FormateurService formateurService) {
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtUtils = jwtUtils;
         this.otpService = otpService;
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.formateurService = formateurService;
     }
 
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request) {
         String email = request.get("email");
-        
-        
+
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "L'e-mail est requis."));
         }
 
         String otp = otpService.generateOtp(email);
-        otpService.sendOtpEmail(email, otp);
+        try {
+            otpService.sendOtpEmail(email, otp);
+        } catch (MailException e) {
+            // Sans cette prise en charge, une panne SMTP remonte en 500 générique et
+            // laisse un code non délivré en cache : on l'invalide et on le signale.
+            otpService.invalidateOtp(email);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("message", "L'envoi de l'e-mail a échoué. Veuillez réessayer dans quelques instants."));
+        }
 
         return ResponseEntity.ok(Map.of("message", "Code OTP envoyé par e-mail avec succès."));
     }
@@ -73,6 +88,37 @@ public class AuthController {
         } else {
             return ResponseEntity.badRequest().body(Map.of("message", "Code OTP invalide ou expiré."));
         }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String code = request.get("code");
+        String newPassword = request.get("newPassword");
+
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "L'e-mail est requis."));
+        }
+        if (code == null || code.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Le code de vérification est requis."));
+        }
+        if (newPassword == null || newPassword.length() < 6) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Le nouveau mot de passe doit contenir au moins 6 caractères."));
+        }
+
+        boolean otpValide = otpService.validateOtp(email, code);
+        if (!otpValide) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Code de vérification invalide ou expiré."));
+        }
+
+        User user = userService.findByEmail(email);
+        if (user == null) {
+            throw new ResourceNotFoundException("Utilisateur", "email", email);
+        }
+
+        userService.ChangePassword(email, newPassword);
+        return ResponseEntity.ok(Map.of("message", "Mot de passe réinitialisé avec succès."));
     }
 
     @PostMapping("/login")
@@ -98,13 +144,12 @@ public class AuthController {
 
             // 5. Construction de l'objet utilisateur pour le frontend
             Map<String, Object> userMap = Map.of(
-                "id", user.getId(),
-                "username", user.getUsername(),
-                "email", user.getEmail(),
-                "roles", user.getRoles().stream()
-                    .map(role -> role.getCode())
-                    .toList()
-            );
+                    "id", user.getId(),
+                    "username", user.getUsername(),
+                    "email", user.getEmail(),
+                    "roles", user.getRoles().stream()
+                            .map(role -> role.getCode())
+                            .toList());
 
             // 6. Renvoyer le token + l'utilisateur
             return ResponseEntity.ok(Map.of(
@@ -154,8 +199,11 @@ public class AuthController {
         if (userDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        // Renvoie les détails de l'utilisateur (username, rôles, etc.)
-        return ResponseEntity.ok(userDetails);
+        User user = userService.findByUsername(userDetails.getUsername());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok(toUserMap(user));
     }
 
     // 4. Déconnexion (Optionnel - Côté serveur si nécessaire)
@@ -168,15 +216,58 @@ public class AuthController {
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
+    public ResponseEntity<?> changePassword(
+            @RequestBody Map<String, String> request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Utilisateur non authentifié"));
+        }
+        String currentPassword = request.get("currentPassword");
         String newPassword = request.get("newPassword");
 
-        User user = userService.findByEmail(email);
-        if (user != null) {
-            user.setPassword(passwordEncoder.encode(newPassword));
-            return ResponseEntity.ok(userService.save(user));
+        if (newPassword == null || newPassword.length() < 6) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Le mot de passe doit contenir au moins 6 caractères."));
         }
-        return ResponseEntity.badRequest().body("Utilisateur non trouvé");
+        User user = userService.findByUsername(userDetails.getUsername());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Utilisateur non trouvé"));
+        }
+        if (currentPassword == null || !passwordEncoder.matches(currentPassword, user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Mot de passe actuel incorrect."));
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userService.save(user);
+        return ResponseEntity.ok(Map.of("message", "Mot de passe modifié avec succès."));
+    }
+
+    @PostMapping("/formateurs")
+    public ResponseEntity<?> createFormateur(@RequestBody FormateurDto formateurDto) {
+        try {
+            Formateur created = formateurService.createFormateur(formateurDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "id", created.getId(),
+                    "message", "Formateur créé avec succès."));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Erreur lors de la création du formateur."));
+        }
+    }
+
+    @GetMapping("/formateurs")
+    public ResponseEntity<?> getAllFormateurs() {
+        return ResponseEntity.ok(formateurService.getAllFormateurs());
+    }
+
+    private Map<String, Object> toUserMap(User user) {
+        return Map.of(
+                "id", user.getId(),
+                "username", user.getUsername(),
+                "email", user.getEmail(),
+                "roles", user.getRoles().stream().map(role -> role.getCode()).toList());
     }
 }

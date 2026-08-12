@@ -1,16 +1,4 @@
-<nav class="bg-surface/80 backdrop-blur-md border-b border-outline-variant fixed top-0 w-full z-50">
-  <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-16">
-    <div class="flex items-center gap-stack-sm">
-      <span class="text-headline-sm font-bold text-primary">INPG LMS</span>
-    </div>
-    <div class="flex items-center gap-stack-md">
-      <a class="font-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Aide</a>
-      <button routerLink="/auth/login" class="px-6 py-2 bg-primary-container text-white font-label-md rounded-lg shadow-sm hover:opacity-90 active:opacity-80 transition-all">
-        Se connecter
-      </button>
-    </div>
-  </div>
-</nav>
+<app-espace-navbar></app-espace-navbar>
 
 <main class="flex-grow flex items-center justify-center pt-16">
   <section class="relative w-full py-stack-lg overflow-hidden">
@@ -33,9 +21,13 @@
       </div>
       </div>
       <div class="flex flex-col sm:flex-row items-center justify-center gap-stack-md pt-stack-sm">
-        <button routerLink="/auth/login" (click)="test()" class="w-full sm:w-auto px-10 py-4 bg-secondary text-on-secondary rounded-lg font-label-md shadow-lg hover:shadow-xl hover:translate-y-[-1px] transition-all flex items-center justify-center gap-stack-sm">
-          Se connecter
-          <span class="material-symbols-outlined">login</span>
+        <button *ngIf="isEtudiantRole" routerLink="/espace-etudiant/mes-formations" class="w-full sm:w-auto px-10 py-4 bg-secondary text-on-secondary rounded-lg font-label-md shadow-lg hover:shadow-xl hover:translate-y-[-1px] transition-all flex items-center justify-center gap-stack-sm">
+          Voir mes formations
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+        <button *ngIf="isFormateurRole" routerLink="/espace-etudiant/formateur/dashboard-formateur" class="w-full sm:w-auto px-10 py-4 bg-secondary text-on-secondary rounded-lg font-label-md shadow-lg hover:shadow-xl hover:translate-y-[-1px] transition-all flex items-center justify-center gap-stack-sm">
+          Accéder à mon espace formateur
+          <span class="material-symbols-outlined">arrow_forward</span>
         </button>
         <button routerLink="/recrutement/catalogue" class="w-full sm:w-auto px-10 py-4 bg-white border border-outline-variant text-primary rounded-lg font-label-md hover:bg-surface-container-low transition-all">
           Consulter le catalogue
@@ -55,9 +47,9 @@
       © 2024 INPG LMS. Tous droits réservés.
     </div>
     <div class="flex gap-gutter">
-      <a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Support</a>
-      <a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Règlements</a>
-      <a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Confidentialité</a>
+      <a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" routerLink="/contact">Support</a>
+      <a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" routerLink="/terms-and-conditions">Règlements</a>
+      <a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" routerLink="/politique-de-confidentialite">Confidentialité</a>
     </div>
   </div>
 </footer>

@@ -1,183 +1,202 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
+import {
+  CandidatureResponse,
+  RecrutementService,
+  TestAcademiqueRequest,
+  TestAcademiqueResponse,
+} from '../../../../core/recrutement/services/recrutement.service';
 
-interface Epreuve {
-  nom: string;
-  date: string;
-  heure: string;
-  candidats: number;
-  statut: string;
-  coefficient: number;
-  seuil: number;
+interface TestAffiche extends TestAcademiqueResponse {
+  candidatNom: string;
+  candidatPrenom: string;
+  numeroDossier: string;
 }
 
-interface NoteRow {
-  id: number;
-  nom: string;
-  initials: string;
-  noteObtenue: number;
-  coefficient: number;
-  decision: string;
-  saved: boolean;
-}
-
-interface TestKpi {
-  epreuvesActives: number;
-  moyenneGenerale: number;
-  notesSaisiesPct: number;
-  prochainTest: string;
-}
+/** Seuil d'admissibilité utilisé pour l'affichage du résultat (note sur 20). */
+const SEUIL_ADMISSIBILITE = 10;
 
 @Component({
   selector: 'app-responsable-admission-tests',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
   templateUrl: './responsable-admission-tests.component.html',
 })
-export class ResponsableAdmissionTestsComponent implements OnInit, OnDestroy {
-  activeTab: 'epreuves' | 'notes' = 'epreuves';
-  selectedProgram = 'all';
-  selectedSession = '';
-  selectedExam = '';
-  searchNotesQuery = '';
-  filterDecision = '';
-  seuilAdmission = 60;
+export class ResponsableAdmissionTestsComponent implements OnInit {
+  tests: TestAcademiqueResponse[] = [];
+  candidatures: CandidatureResponse[] = [];
+  loading = false;
+  errorMessage = '';
+  private chargementsEnCours = 0;
 
-  kpis: TestKpi = { epreuvesActives: 0, moyenneGenerale: 0, notesSaisiesPct: 0, prochainTest: 'N/A' };
-  chargementKpis = false;
-  chargement = false;
+  recherche = '';
 
-  epreuves: Epreuve[] = [];
-  noteRows: NoteRow[] = [];
+  drawerOpen = false;
+  testEnEdition: TestAcademiqueResponse | null = null;
+  testForm: FormGroup;
+  isSubmitting = false;
+  formError = '';
 
-  modalPlanExamOpen = false;
-  newExam = { nomEpreuve: '', dateEpreuve: '', coefficient: 1, sessionId: null as number | null, seuil: 60 };
-
-  toastVisible = false;
-  toastMessage = '';
-  toastType: 'success' | 'error' = 'success';
-
-  private subs: Subscription[] = [];
-
-  constructor(private service: RecrutementService) {}
+  constructor(private recrutementService: RecrutementService, private fb: FormBuilder) {
+    this.testForm = this.fb.group({
+      candidatId: ['', Validators.required],
+      nomEpreuve: ['', Validators.required],
+      coefficient: [1, [Validators.required, Validators.min(0.1)]],
+      noteObtenue: [null],
+      dateEpreuve: ['', Validators.required],
+    });
+  }
 
   ngOnInit(): void {
-    this.chargerKpis();
-    this.chargerEpreuves();
+    this.charger();
   }
 
-  ngOnDestroy(): void { this.subs.forEach(s => s.unsubscribe()); }
+  private charger(): void {
+    this.loading = true;
+    this.errorMessage = '';
+    this.chargementsEnCours = 2;
 
-  chargerKpis(): void {
-    this.chargementKpis = true;
-    const sub = this.service.getAcademicTestKpis().subscribe({
-      next: (d) => { this.kpis = d; this.chargementKpis = false; },
-      error: () => { this.chargementKpis = false; }
-    });
-    this.subs.push(sub);
-  }
-
-  chargerEpreuves(): void {
-    this.chargement = true;
-    const sub = this.service.listAcademicExams().subscribe({
-      next: (data: any[]) => {
-        this.epreuves = data.map(e => ({
-          nom: e.nom, date: e.date, heure: e.heure, candidats: e.candidats,
-          statut: e.statut, coefficient: e.coefficient || 1, seuil: e.seuil || 60
-        }));
-        this.chargement = false;
+    this.recrutementService.getAllTests().subscribe({
+      next: (data) => (this.tests = data || []),
+      error: () => {
+        this.tests = [];
+        this.errorMessage = 'Impossible de charger les tests académiques.';
       },
-      error: () => { this.chargement = false; }
+      complete: () => this.finDeChargement(),
     });
-    this.subs.push(sub);
-  }
 
-  chargerScores(nomEpreuve: string): void {
-    this.chargement = true;
-    const sub = this.service.getExamScores(nomEpreuve, this.seuilAdmission).subscribe({
-      next: (data: any[]) => {
-        this.noteRows = data.map(s => ({
-          id: s.id, nom: `${s.candidatNom} ${s.candidatPrenom}`,
-          initials: (s.candidatPrenom?.charAt(0)||'')+(s.candidatNom?.charAt(0)||''),
-          noteObtenue: s.noteObtenue || 0, coefficient: s.coefficient || 1,
-          decision: s.decision || 'AJOURNE', saved: true
-        }));
-        this.chargement = false;
-      },
-      error: () => { this.chargement = false; }
-    });
-    this.subs.push(sub);
-  }
-
-  get filteredNoteRows(): NoteRow[] {
-    return this.noteRows.filter(r => {
-      const q = this.searchNotesQuery.toLowerCase();
-      return (!q || r.nom.toLowerCase().includes(q))
-        && (!this.filterDecision || r.decision === this.filterDecision);
+    this.recrutementService.getAllCandidatures().subscribe({
+      next: (data) => (this.candidatures = data || []),
+      error: () => (this.candidatures = []),
+      complete: () => this.finDeChargement(),
     });
   }
 
-  getStatutClass(statut: string): string {
-    switch (statut) {
-      case 'TERMINE': return 'bg-success/10 text-success border-success/20';
-      case 'EN_COURS': return 'bg-primary/10 text-primary border-primary/20';
-      case 'PROGRAMME': return 'bg-surface-container-highest text-on-surface-variant border-surface-container-highest';
-      default: return '';
+  private finDeChargement(): void {
+    this.chargementsEnCours--;
+    if (this.chargementsEnCours <= 0) {
+      this.loading = false;
     }
   }
 
-  switchTab(tab: 'epreuves' | 'notes'): void { this.activeTab = tab; }
-
-  onExamSelect(nomEpreuve: string): void {
-    this.selectedExam = nomEpreuve;
-    this.chargerScores(nomEpreuve);
-    this.switchTab('notes');
+  private candidatureDe(candidatId: number): CandidatureResponse | undefined {
+    return this.candidatures.find((c) => c.candidatId === candidatId);
   }
 
-  onGradeChange(row: NoteRow): void {
-    row.decision = row.noteObtenue >= this.seuilAdmission ? 'ADMIS' : 'AJOURNE';
-    row.saved = false;
-  }
-
-  saveRow(row: NoteRow): void {
-    this.service.saveExamScores(this.selectedExam, [{ id: row.id, noteObtenue: row.noteObtenue }]).subscribe({
-      next: () => { row.saved = true; this.afficherToast('Note sauvegardée.', 'success'); },
-      error: () => this.afficherToast('Erreur sauvegarde.', 'error')
+  get testsAffiches(): TestAffiche[] {
+    return this.tests.map((t) => {
+      const c = this.candidatureDe(t.candidatId);
+      return {
+        ...t,
+        candidatNom: c?.candidatNom || '—',
+        candidatPrenom: c?.candidatPrenom || '',
+        numeroDossier: c?.numeroDossier || '',
+      };
     });
   }
 
-  saveAllNotes(): void {
-    const scores = this.noteRows.map(r => ({ id: r.id, noteObtenue: r.noteObtenue }));
-    this.service.saveExamScores(this.selectedExam, scores).subscribe({
-      next: (res: any) => { this.noteRows.forEach(r => r.saved = true); this.afficherToast(res.message, 'success'); this.chargerKpis(); },
-      error: () => this.afficherToast('Erreur sauvegarde.', 'error')
+  get testsFiltres(): TestAffiche[] {
+    const q = this.recherche.trim().toLowerCase();
+    if (!q) return this.testsAffiches;
+    return this.testsAffiches.filter((t) => {
+      const texte = `${t.candidatPrenom} ${t.candidatNom} ${t.nomEpreuve} ${t.numeroDossier}`.toLowerCase();
+      return texte.includes(q);
     });
   }
 
-  openPlanExamModal(): void { this.modalPlanExamOpen = true; this.newExam = { nomEpreuve: '', dateEpreuve: '', coefficient: 1, sessionId: null, seuil: 60 }; }
-  createExam(): void {
-    if (!this.newExam.nomEpreuve) { this.afficherToast('Nom requis.', 'error'); return; }
-    const body: any = { nomEpreuve: this.newExam.nomEpreuve, coefficient: this.newExam.coefficient, dateEpreuve: this.newExam.dateEpreuve + 'T09:00:00', seuil: this.newExam.seuil };
-    if (this.newExam.sessionId) body.sessionId = this.newExam.sessionId;
-    this.service.createAcademicExam(body).subscribe({
-      next: () => { this.modalPlanExamOpen = false; this.afficherToast('Épreuve planifiée.', 'success'); this.chargerEpreuves(); this.chargerKpis(); },
-      error: () => this.afficherToast('Erreur création.', 'error')
+  /** Candidats admis au Test Académique (ADMIS1), éligibles pour une planification d'épreuve. */
+  get candidatsEligibles(): CandidatureResponse[] {
+    return this.candidatures.filter((c) => c.statut === 'ADMIS1');
+  }
+
+  get totalTests(): number {
+    return this.tests.length;
+  }
+
+  get nbNotes(): number {
+    return this.tests.filter((t) => t.noteObtenue !== null && t.noteObtenue !== undefined).length;
+  }
+
+  get nbAdmissibles(): number {
+    return this.tests.filter((t) => (t.noteObtenue ?? -1) >= SEUIL_ADMISSIBILITE).length;
+  }
+
+  resultat(t: TestAcademiqueResponse): 'ADMISSIBLE' | 'INSUFFISANT' | 'EN_ATTENTE' {
+    if (t.noteObtenue === null || t.noteObtenue === undefined) return 'EN_ATTENTE';
+    return t.noteObtenue >= SEUIL_ADMISSIBILITE ? 'ADMISSIBLE' : 'INSUFFISANT';
+  }
+
+  openDrawer(test?: TestAcademiqueResponse): void {
+    this.formError = '';
+    if (test) {
+      this.testEnEdition = test;
+      this.testForm.setValue({
+        candidatId: test.candidatId,
+        nomEpreuve: test.nomEpreuve,
+        coefficient: test.coefficient,
+        noteObtenue: test.noteObtenue ?? null,
+        dateEpreuve: this.versInputDatetimeLocal(test.dateEpreuve),
+      });
+    } else {
+      this.testEnEdition = null;
+      this.testForm.reset({
+        candidatId: '',
+        nomEpreuve: '',
+        coefficient: 1,
+        noteObtenue: null,
+        dateEpreuve: '',
+      });
+    }
+    this.drawerOpen = true;
+  }
+
+  closeDrawer(): void {
+    this.drawerOpen = false;
+  }
+
+  private versInputDatetimeLocal(iso: string): string {
+    return iso ? iso.slice(0, 16) : '';
+  }
+
+  enregistrer(): void {
+    if (this.testForm.invalid) {
+      this.testForm.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting = true;
+    this.formError = '';
+    const brut = this.testForm.getRawValue();
+    const request: TestAcademiqueRequest = {
+      ...brut,
+      candidatId: Number(brut.candidatId),
+      coefficient: Number(brut.coefficient),
+      noteObtenue: brut.noteObtenue === null || brut.noteObtenue === '' ? null : Number(brut.noteObtenue),
+    };
+
+    const obs = this.testEnEdition
+      ? this.recrutementService.modifierTest(this.testEnEdition.id, request)
+      : this.recrutementService.creerTest(request);
+
+    obs.subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.closeDrawer();
+        this.charger();
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        this.formError = err.error?.message || "Échec de l'enregistrement du test.";
+      },
     });
   }
 
-  changerStatutEpreuve(nom: string, status: string): void {
-    this.service.changeExamStatus(nom, status).subscribe({
-      next: () => { this.afficherToast(`Statut : ${status}.`, 'success'); this.chargerEpreuves(); },
-      error: () => this.afficherToast('Erreur statut.', 'error')
+  supprimer(test: TestAffiche): void {
+    if (!confirm(`Supprimer le test "${test.nomEpreuve}" de ${test.candidatPrenom} ${test.candidatNom} ?`)) return;
+    this.recrutementService.supprimerTest(test.id).subscribe({
+      next: () => this.charger(),
+      error: () => alert('Échec de la suppression du test.'),
     });
-  }
-
-  afficherToast(message: string, type: 'success' | 'error'): void {
-    this.toastMessage = message; this.toastType = type; this.toastVisible = true;
-    setTimeout(() => this.toastVisible = false, 4000);
   }
 }

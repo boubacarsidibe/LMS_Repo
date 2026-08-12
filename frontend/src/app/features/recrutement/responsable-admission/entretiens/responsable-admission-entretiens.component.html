@@ -1,190 +1,127 @@
-<!-- ==================== ENTRETIENS ==================== -->
-
-<!-- Page Header -->
-<div class="flex justify-between items-end mb-6">
+<!-- ==================== CONTENU SEUL ==================== -->
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-stack-lg">
   <div>
-    <h2 class="text-2xl font-bold text-on-surface tracking-tight">Gestion des Entretiens</h2>
-    <p class="text-on-surface-variant text-sm mt-1">Planification et suivi des entretiens d'admission.</p>
+    <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Gestion des Entretiens</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-2">Planification et suivi des entretiens des candidats admis à cette étape.</p>
   </div>
   <div class="flex gap-3">
-    <button (click)="openPlanModal()" class="px-4 py-2 bg-primary text-on-primary font-medium rounded-lg hover:bg-opacity-90 transition-opacity shadow-sm text-sm flex items-center gap-2 cursor-pointer">
+    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="openDrawer()" class="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg font-label-md text-label-md transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : ''">
       <span class="material-symbols-outlined text-[20px]">add</span> Nouvel Entretien
     </button>
   </div>
 </div>
 
-<!-- KPI Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-  @if (chargementKpis) {
-    @for (i of [1,2,3,4]; track i) {
-    <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm animate-pulse"><div class="h-12 w-12 bg-surface-container rounded-lg"></div></div>
-    }
-  } @else {
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
-    <div class="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">event</span></div>
-    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Total Entretiens</p><p class="text-2xl font-bold text-on-surface">{{ kpis.totalEntretiens }}</p></div>
-  </div>
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
-    <div class="w-12 h-12 rounded-lg bg-success/10 text-success flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">check_circle</span></div>
-    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Effectués</p><p class="text-2xl font-bold text-on-surface">{{ kpis.effectues }}</p></div>
-  </div>
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
-    <div class="w-12 h-12 rounded-lg bg-warning/10 text-warning flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">today</span></div>
-    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Aujourd'hui</p><p class="text-2xl font-bold text-on-surface">{{ kpis.aujourdhui }}</p></div>
-  </div>
-  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
-    <div class="w-12 h-12 rounded-lg bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">hourglass_empty</span></div>
-    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">En attente</p><p class="text-2xl font-bold text-on-surface">{{ kpis.enAttente }}</p></div>
-  </div>
-  }
+<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Total Entretiens</span><span class="material-symbols-outlined text-secondary">event</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ totalEntretiens }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Programmés</div></div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Effectués</span><span class="material-symbols-outlined text-secondary">check_circle</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbEffectues }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Terminés</div></div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Aujourd'hui</span><span class="material-symbols-outlined text-outline">today</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbAujourdhui }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Programmés ce jour</div></div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">À venir</span><span class="material-symbols-outlined text-outline">hourglass_empty</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbAVenir }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Non encore effectués</div></div>
 </div>
 
-<!-- Table Container -->
-<div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm overflow-hidden flex flex-col">
-  <!-- Filters & Tabs -->
-  <div class="p-4 border-b border-surface-container-highest flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface-container-low/50">
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+  <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-4">
     <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
-      <button (click)="switchTab('ALL')" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors cursor-pointer"
-              [class.bg-primary]="activeTab === 'ALL'" [class.text-on-primary]="activeTab === 'ALL'"
-              [class.bg-surface-container]="activeTab !== 'ALL'" [class.text-on-surface-variant]="activeTab !== 'ALL'" [class.hover:bg-surface-container-high]="activeTab !== 'ALL'">Tous ({{ kpis.totalEntretiens }})</button>
-      <button (click)="switchTab('PLANNED')" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors cursor-pointer"
-              [class.bg-primary]="activeTab === 'PLANNED'" [class.text-on-primary]="activeTab === 'PLANNED'"
-              [class.bg-surface-container]="activeTab !== 'PLANNED'" [class.text-on-surface-variant]="activeTab !== 'PLANNED'" [class.hover:bg-surface-container-high]="activeTab !== 'PLANNED'">Planifiés</button>
-      <button (click)="switchTab('COMPLETED')" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors cursor-pointer"
-              [class.bg-primary]="activeTab === 'COMPLETED'" [class.text-on-primary]="activeTab === 'COMPLETED'"
-              [class.bg-surface-container]="activeTab !== 'COMPLETED'" [class.text-on-surface-variant]="activeTab !== 'COMPLETED'" [class.hover:bg-surface-container-high]="activeTab !== 'COMPLETED'">Terminés</button>
+      <button type="button" (click)="filtre = 'TOUS'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'TOUS'" [class.text-on-secondary]="filtre === 'TOUS'" [class.text-on-surface-variant]="filtre !== 'TOUS'">Tous ({{ totalEntretiens }})</button>
+      <button type="button" (click)="filtre = 'A_VENIR'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'A_VENIR'" [class.text-on-secondary]="filtre === 'A_VENIR'" [class.text-on-surface-variant]="filtre !== 'A_VENIR'">À venir ({{ nbAVenir }})</button>
+      <button type="button" (click)="filtre = 'PASSES'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'PASSES'" [class.text-on-secondary]="filtre === 'PASSES'" [class.text-on-surface-variant]="filtre !== 'PASSES'">Effectués ({{ nbEffectues }})</button>
     </div>
     <div class="relative w-full sm:w-64">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-      <input class="w-full pl-10 pr-4 py-1.5 border border-surface-container-highest rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none" placeholder="Rechercher..." type="text" [(ngModel)]="searchQuery" (input)="onSearchChange()"/>
+      <input [(ngModel)]="recherche" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher..." type="text">
     </div>
   </div>
 
-  <!-- Table -->
-  @if (chargement) {
-  <div class="p-6 space-y-3"><div class="h-10 bg-surface-container rounded animate-pulse"></div><div class="h-10 bg-surface-container rounded animate-pulse"></div><div class="h-10 bg-surface-container rounded animate-pulse"></div></div>
-  } @else if (entretiens.length === 0) {
-  <div class="p-12 text-center text-on-surface-variant text-sm">{{ emptyMessage || 'Aucun entretien planifié pour le moment.' }}</div>
-  } @else {
-  <div class="overflow-x-auto">
-    <table class="w-full text-left text-sm whitespace-nowrap">
-      <thead class="text-xs text-on-surface-variant uppercase bg-surface-container-low border-b border-surface-container-highest font-bold">
-        <tr><th class="px-6 py-3">Candidat</th><th class="px-6 py-3">Date</th><th class="px-6 py-3">Horaire</th><th class="px-6 py-3">Salle/Lien</th><th class="px-6 py-3">Statut</th><th class="px-6 py-3 text-right">Actions</th></tr>
+  <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement des entretiens…</div>
+  <div *ngIf="!loading && entretiensFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md">Aucun entretien ne correspond à ces critères.</div>
+
+  <div class="overflow-x-auto" *ngIf="!loading && entretiensFiltres.length > 0">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low border-b border-outline-variant">
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Lieu / Lien</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date &amp; heure</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Note</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+        </tr>
       </thead>
-      <tbody class="divide-y divide-surface-container-highest">
-        @for (entretien of entretiens; track entretien.id) {
-        <tr class="hover:bg-surface-container-low/50 transition-colors group">
-          <td class="px-6 py-4">
+      <tbody class="divide-y divide-outline-variant">
+        <tr *ngFor="let e of entretiensFiltres" class="hover:bg-surface-container-low transition-colors group">
+          <td class="p-4">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold text-xs">{{ (entretien.candidatPrenom?.charAt(0) || '') + (entretien.candidatNom?.charAt(0) || '') }}</div>
+              <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">{{ e.candidatPrenom | slice:0:1 }}{{ e.candidatNom | slice:0:1 }}</div>
               <div>
-                <div class="font-semibold text-on-surface">{{ entretien.candidatPrenom }} {{ entretien.candidatNom }}</div>
+                <div class="font-label-md text-label-md text-primary">{{ e.candidatPrenom }} {{ e.candidatNom }}</div>
+                <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ e.numeroDossier }}</div>
               </div>
             </div>
           </td>
-          <td class="px-6 py-4 text-on-surface-variant">{{ entretien.date }}</td>
-          <td class="px-6 py-4 text-on-surface-variant">{{ entretien.heure }}</td>
-          <td class="px-6 py-4 text-on-surface-variant">{{ entretien.lieuOuLien }}</td>
-          <td class="px-6 py-4">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border" [class]="getStatutClass(entretien.statut)">{{ entretien.statut === 'TERMINE' ? 'Terminé' : 'Planifié' }}</span>
+          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ e.lieuOuLien }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-primary">{{ e.dateHeure | date:'dd MMM yyyy, HH:mm' }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-primary">{{ e.noteEntretien ?? '—' }}</td>
+          <td class="p-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [ngClass]="estPasse(e.dateHeure) ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-primary-fixed text-on-primary-fixed-variant'">
+              {{ estPasse(e.dateHeure) ? 'Effectué' : 'Planifié' }}
+            </span>
           </td>
-          <td class="px-6 py-4 text-right">
-            <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              @if (entretien.statut === 'PLANIFIE') {
-              <button (click)="openEvalModal(entretien)" class="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer" title="Évaluer"><span class="material-symbols-outlined text-[18px]">edit</span></button>
-              <button (click)="openPlanModal(); newInterview.dateHeure = entretien.date + 'T' + entretien.heure; newInterview.lieuOuLien = entretien.lieuOuLien" class="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer" title="Modifier créneau"><span class="material-symbols-outlined text-[18px]">schedule</span></button>
-              } @else {
-              <button (click)="openEvalModal(entretien)" class="p-1.5 rounded text-on-surface-variant hover:text-success hover:bg-success/10 transition-colors cursor-pointer" title="Voir l'évaluation"><span class="material-symbols-outlined text-[18px]">visibility</span></button>
-              }
-              <button (click)="deleteInterview(entretien.id)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors cursor-pointer" title="Annuler"><span class="material-symbols-outlined text-[18px]">cancel</span></button>
+          <td class="p-4 text-right">
+            <div class="flex justify-end gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
+              <button type="button" (click)="openDrawer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+              <button type="button" (click)="supprimer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Annuler"><span class="material-symbols-outlined text-[18px]">cancel</span></button>
             </div>
           </td>
         </tr>
-        }
       </tbody>
     </table>
   </div>
-  }
-
-  <!-- Pagination -->
-  <div class="p-3 border-t border-surface-container-highest bg-surface-container-low flex justify-between items-center text-sm text-on-surface-variant">
-    <span class="text-xs">Affichage de {{ entretiens.length }} entretiens</span>
-    <div class="flex gap-1">
-      <button (click)="prevPage()" class="p-1 rounded hover:bg-surface-container-high disabled:opacity-50 cursor-pointer"><span class="material-symbols-outlined text-[20px]">chevron_left</span></button>
-      <button (click)="nextPage()" class="p-1 rounded hover:bg-surface-container-high cursor-pointer"><span class="material-symbols-outlined text-[20px]">chevron_right</span></button>
-    </div>
-  </div>
 </div>
 
-<!-- ==================== MODAL: PLANIFIER ENTRETIEN ==================== -->
-@if (modalPlanOpen) {
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/50 backdrop-blur-sm">
-  <div class="bg-surface-container-lowest rounded-xl shadow-lg w-full max-w-lg overflow-hidden flex flex-col">
-    <div class="px-6 py-4 border-b border-surface-container-highest flex justify-between items-center">
-      <h3 class="text-lg font-bold text-on-surface">Planifier un entretien</h3>
-      <button class="text-on-surface-variant hover:text-on-surface cursor-pointer" (click)="modalPlanOpen = false"><span class="material-symbols-outlined">close</span></button>
-    </div>
-    <div class="p-6 space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-on-surface mb-1">Date et heure</label>
-        <input class="w-full rounded-lg border-surface-container-highest shadow-sm focus:border-primary focus:ring-primary text-sm" type="datetime-local" [(ngModel)]="newInterview.dateHeure"/>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-on-surface mb-1">Salle / Lien visio</label>
-        <input class="w-full rounded-lg border-surface-container-highest shadow-sm focus:border-primary focus:ring-primary text-sm" type="text" [(ngModel)]="newInterview.lieuOuLien" placeholder="Salle A / https://meet..."/>
-      </div>
-    </div>
-    <div class="px-6 py-4 border-t border-surface-container-highest bg-surface-container-low flex justify-end gap-3">
-      <button class="px-4 py-2 text-sm font-medium border border-surface-container-highest text-on-surface hover:bg-surface-container rounded-lg transition-colors cursor-pointer" (click)="modalPlanOpen = false">Annuler</button>
-      <button class="px-4 py-2 text-sm font-medium bg-primary text-on-primary rounded-lg hover:bg-opacity-90 transition-opacity cursor-pointer" (click)="createInterview()">Planifier</button>
-    </div>
+<!-- Drawer -->
+<div class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 transition-opacity duration-300" [class.hidden]="!drawerOpen" (click)="closeDrawer()"></div>
+<aside class="fixed top-0 right-0 h-full w-full max-w-md bg-surface shadow-[0_12px_32px_rgba(19,23,65,0.1)] z-50 transform transition-transform duration-300 ease-in-out flex flex-col border-l border-outline-variant" [class.translate-x-full]="!drawerOpen" [class.translate-x-0]="drawerOpen">
+  <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+    <h2 class="font-headline-sm text-headline-sm text-primary">{{ entretienEnEdition ? 'Modifier l\'entretien' : 'Planifier un entretien' }}</h2>
+    <button type="button" class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" (click)="closeDrawer()"><span class="material-symbols-outlined">close</span></button>
   </div>
-</div>
-}
-
-<!-- ==================== MODAL: ÉVALUATION ==================== -->
-@if (modalEvalOpen && selectedInterview) {
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/50 backdrop-blur-sm">
-  <div class="bg-surface-container-lowest rounded-xl shadow-lg w-full max-w-lg overflow-hidden flex flex-col">
-    <div class="px-6 py-4 border-b border-surface-container-highest flex justify-between items-center">
-      <h3 class="text-lg font-bold text-on-surface">{{ selectedInterview.statut === 'TERMINE' ? 'Fiche d\'évaluation' : 'Évaluer l\'entretien' }}</h3>
-      <button class="text-on-surface-variant hover:text-on-surface cursor-pointer" (click)="modalEvalOpen = false"><span class="material-symbols-outlined">close</span></button>
-    </div>
-    <div class="p-6 space-y-4">
+  <form [formGroup]="entretienForm" (ngSubmit)="enregistrer()" class="flex-1 flex flex-col overflow-y-auto">
+    <div class="flex-1 overflow-y-auto p-6 space-y-4">
+      <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm">{{ formError }}</div>
       <div>
-        <label class="block text-sm font-medium text-on-surface mb-1">Candidat</label>
-        <p class="text-sm font-semibold text-on-surface">{{ selectedInterview.candidatPrenom }} {{ selectedInterview.candidatNom }}</p>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-on-surface mb-1">Note (/100)</label>
-        <input class="w-full rounded-lg border-surface-container-highest shadow-sm focus:border-primary focus:ring-primary text-sm" type="number" [(ngModel)]="evalForm.noteEntretien" min="0" max="100"/>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-on-surface mb-1">Appréciation</label>
-        <textarea class="w-full rounded-lg border-surface-container-highest shadow-sm focus:border-primary focus:ring-primary text-sm h-20 resize-none" [(ngModel)]="evalForm.appreciationGlobale" placeholder="Commentaires du jury..."></textarea>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-on-surface mb-1">Décision</label>
-        <select class="w-full rounded-lg border-surface-container-highest shadow-sm focus:border-primary focus:ring-primary text-sm" [(ngModel)]="evalForm.decision">
-          <option value="ADMIS">Admis</option>
-          <option value="LISTE_D_ATTENTE">Liste d'attente</option>
-          <option value="REFUSÉ">Refusé</option>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Candidat (admis à l'entretien)</label>
+        <select formControlName="candidatId" aria-label="Candidat" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
+          <option value="" disabled>Sélectionner un candidat</option>
+          <option *ngIf="entretienEnEdition" [value]="entretienEnEdition.candidatId">
+            {{ entretienForm.value.candidatId }}
+          </option>
+          <option *ngFor="let c of candidatsEligibles" [value]="c.candidatId">{{ c.candidatPrenom }} {{ c.candidatNom }} — {{ c.numeroDossier }}</option>
         </select>
       </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date et heure</label>
+        <input formControlName="dateHeure" aria-label="Date et heure" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="datetime-local"/>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu ou lien visio</label>
+        <input formControlName="lieuOuLien" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B204 ou lien Teams" type="text"/>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Note (sur 20, une fois l'entretien effectué)</label>
+        <input formControlName="noteEntretien" aria-label="Note sur 20" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0" max="20" step="0.25"/>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Appréciation globale</label>
+        <textarea formControlName="appreciationGlobale" aria-label="Appréciation globale" rows="3" class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"></textarea>
+      </div>
     </div>
-    <div class="px-6 py-4 border-t border-surface-container-highest bg-surface-container-low flex justify-end gap-3">
-      <button class="px-4 py-2 text-sm font-medium border border-surface-container-highest text-on-surface hover:bg-surface-container rounded-lg transition-colors cursor-pointer" (click)="modalEvalOpen = false">Annuler</button>
-      <button class="px-4 py-2 text-sm font-medium bg-primary text-on-primary rounded-lg hover:bg-opacity-90 transition-opacity cursor-pointer" (click)="saveEvaluation()">Enregistrer</button>
+    <div class="p-6 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
+      <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="closeDrawer()">Annuler</button>
+      <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+        {{ isSubmitting ? 'Enregistrement…' : (entretienEnEdition ? 'Enregistrer' : 'Planifier') }}
+      </button>
     </div>
-  </div>
-</div>
-}
-
-<!-- Toast -->
-@if (toastVisible) {
-<div class="fixed bottom-4 right-4 z-50 transform transition-all duration-300 flex items-center gap-3 px-4 py-3 bg-surface-container-lowest border rounded-lg shadow-lg"
-     [class.border-success/30]="toastType === 'success'" [class.border-error/30]="toastType === 'error'">
-  <span class="material-symbols-outlined text-[18px]" [class.text-success]="toastType === 'success'" [class.text-error]="toastType === 'error'">{{ toastType === 'success' ? 'check' : 'error' }}</span>
-  <p class="text-sm font-medium text-on-surface">{{ toastMessage }}</p>
-</div>
-}
+  </form>
+</aside>

@@ -69,6 +69,10 @@ export class SuiviComponent implements OnInit {
   lieuEntretien = 'INPG Campus Dakar';
   adresseEntretien = 'VDN / Almadies, Dakar, Sénégal';
 
+  get mapUrl(): string {
+    return 'https://www.google.com/maps/search/' + encodeURIComponent(this.adresseEntretien || '');
+  }
+
   constructor(private recrutementService: RecrutementService) {}
 
   ngOnInit(): void {
@@ -224,27 +228,27 @@ export class SuiviComponent implements OnInit {
     return '';
   }
 
+  // Ces 4 actions n'ont pas encore d'endpoint côté backend : on prévient
+  // honnêtement le candidat plutôt que de laisser croire que l'action a été
+  // enregistrée (aucun appel réseau, aucun effet réel).
+
   /** Confirmation de présence à l'entretien */
   confirmerPresence(): void {
-    console.log('Confirmation de présence à l\'entretien');
-    // TODO: appel API
+    alert('La confirmation de présence en ligne sera bientôt disponible. En attendant, merci de contacter le service admission.');
   }
 
   /** Demande de report de créneau */
   demanderReport(): void {
-    console.log('Demande de report de créneau');
-    // TODO: appel API
+    alert('La demande de report en ligne sera bientôt disponible. En attendant, merci de contacter le service admission.');
   }
 
   /** Télécharger convocation PDF */
   telechargerConvocation(): void {
-    console.log('Téléchargement de la convocation');
-    // TODO: appel API
+    alert('Le téléchargement de la convocation sera bientôt disponible.');
   }
 
   /** Ajouter à l'agenda */
   ajouterAgenda(): void {
-    console.log('Ajout à l\'agenda');
-    // TODO: implémentation
+    alert('L\'ajout automatique à l\'agenda sera bientôt disponible.');
   }
 }

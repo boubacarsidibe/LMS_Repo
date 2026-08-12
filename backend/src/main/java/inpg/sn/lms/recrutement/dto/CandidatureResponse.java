@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -26,6 +27,12 @@ public class CandidatureResponse {
     private String candidatNom;
     private String candidatPrenom;
     private String candidatEmail;
+    /** Champs démographiques du candidat, exposés uniquement pour les statistiques du back-office. */
+    private String candidatGenre;
+    private String candidatProfession;
+    private Integer candidatAnneesExperience;
+    private LocalDate candidatDateNaissance;
+    private String candidatNiveauEtude;
     private Long sessionCandidatureId;
     private String sessionCandidatureLibelle;
     private List<PieceJustificativeResponse> piecesJustificatives;

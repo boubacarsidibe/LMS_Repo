@@ -1,6 +1,7 @@
 package inpg.sn.lms.auth.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -29,13 +30,15 @@ import inpg.sn.lms.auth.service.UserService;
 @CrossOrigin(origins = "http://localhost:4200")
 public class CrudControlleur {
     private final UserService userService;
+    private final inpg.sn.lms.security.JwtUtils jwtUtils;
     private final CandidatService candidatService;
     private final EtudiantService etudiantService;
 
-    public CrudControlleur(UserService userService, CandidatService candidatService, EtudiantService etudiantService) {
+    public CrudControlleur(UserService userService, CandidatService candidatService, EtudiantService etudiantService, inpg.sn.lms.security.JwtUtils jwtUtils) {
         this.userService = userService;
         this.candidatService = candidatService;
         this.etudiantService = etudiantService;
+        this.jwtUtils = jwtUtils;
     }
 
     @GetMapping("/test")
@@ -44,9 +47,20 @@ public class CrudControlleur {
     }
 
     @PostMapping("/register")
-    public User registerUser(@RequestBody UserDto userDto) {
-        return userService.createUser(userDto);
-
+    public ResponseEntity<?> registerUser(@RequestBody UserDto userDto) {
+        try {
+            inpg.sn.lms.auth.entity.User newUser = userService.createUser(userDto);
+            var userDetails = userService.loadUserByUsername(newUser.getUsername());
+            String token = jwtUtils.generateToken(userDetails);
+            Map<String, Object> user = Map.of(
+                    "id", newUser.getId(),
+                    "username", newUser.getUsername(),
+                    "email", newUser.getEmail(),
+                    "roles", newUser.getRoles().stream().map(role -> role.getCode()).toList());
+            return ResponseEntity.ok(Map.of("token", token, "user", user));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @GetMapping("user")

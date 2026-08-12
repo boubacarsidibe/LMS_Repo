@@ -6,7 +6,7 @@
 export default [
   {
     context: ['/api'],
-    target: 'http://backend:8080',
+    target: process.env.BACKEND_URL || 'http://localhost:8080',
     secure: false,
     changeOrigin: true,
     logLevel: 'debug',

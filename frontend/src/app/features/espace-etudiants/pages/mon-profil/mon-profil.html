@@ -1,0 +1,78 @@
+<div class="flex flex-col w-full p-margin-desktop">
+
+  <!-- État chargement -->
+  <div *ngIf="chargement" class="flex items-center justify-center py-20">
+    <p class="text-body-lg text-on-surface-variant">Chargement du profil...</p>
+  </div>
+
+  <!-- État erreur -->
+  <div *ngIf="erreur && !chargement" class="flex items-center justify-center py-20">
+    <p class="text-body-lg text-error">{{ erreur }}</p>
+  </div>
+
+  <!-- Contenu -->
+  <div *ngIf="profil && !chargement" class="flex flex-col gap-stack-lg">
+
+    <!-- Carte profil -->
+    <section class="relative overflow-hidden bg-surface-container-lowest rounded-xl shadow-sm">
+      <div class="relative p-8 flex flex-col md:flex-row items-center gap-8">
+        <div class="w-32 h-32 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0 border-4 border-surface-container shadow-md">
+          <span class="font-display text-headline-lg text-on-primary-container">{{ initiales(profil.nom) }}</span>
+        </div>
+        <div class="flex-1 text-center md:text-left">
+          <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
+            <h1 class="font-display text-headline-lg text-on-surface">{{ profil.nom }}</h1>
+            <span class="px-3 py-1 bg-secondary-container/20 text-on-secondary-container text-label-sm rounded-full border border-secondary-container/30">Actif</span>
+          </div>
+          <p class="text-body-lg text-on-surface-variant font-medium mb-4">Instructeur</p>
+          <div class="flex items-center gap-2 text-on-surface-variant justify-center md:justify-start">
+            <span class="material-symbols-outlined text-outline">mail</span>
+            <span class="text-label-md">{{ profil.email }}</span>
+          </div>
+        </div>
+        <div class="flex flex-col gap-3">
+          <button disabled title="Bientôt disponible" class="px-6 py-2.5 bg-primary/40 text-on-primary font-label-md rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">
+            <span class="material-symbols-outlined">edit</span>
+            Modifier le Profil
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grille -->
+    <div class="grid grid-cols-12 gap-gutter">
+      <div class="col-span-12 lg:col-span-8 bg-surface-container-lowest p-8 rounded-xl shadow-sm">
+        <h3 class="font-headline-sm text-on-surface mb-6">Détails de l'Identité</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-stack-lg">
+          <div class="flex flex-col gap-base">
+            <label class="text-label-md font-bold text-on-surface-variant">Nom complet</label>
+            <input class="bg-surface-container border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface-variant cursor-not-allowed" type="text" [value]="profil.nom" readonly>
+          </div>
+          <div class="flex flex-col gap-base">
+            <label class="text-label-md font-bold text-on-surface-variant">Email Institutionnel</label>
+            <div class="relative">
+              <input class="w-full bg-surface-container border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface-variant cursor-not-allowed" readonly type="email" [value]="profil.email">
+              <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">lock</span>
+            </div>
+          </div>
+        </div>
+        <p class="text-label-sm text-outline italic mt-6">
+          La modification des informations personnelles sera bientôt disponible.
+        </p>
+      </div>
+
+      <div class="col-span-12 lg:col-span-4">
+        <div class="bg-primary-container p-6 rounded-xl text-on-primary-container shadow-sm relative overflow-hidden">
+          <div class="relative z-10">
+            <h4 class="text-label-sm font-bold uppercase tracking-widest opacity-80 mb-6">Aperçu Académique</h4>
+            <div class="flex items-center justify-between">
+              <span class="text-body-md">Cours Actifs</span>
+              <span class="text-headline-sm font-display">{{ profil.nbCours }}</span>
+            </div>
+          </div>
+          <span class="material-symbols-outlined absolute -bottom-8 -right-8 text-[120px] opacity-10 pointer-events-none">school</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

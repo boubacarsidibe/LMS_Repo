@@ -14,7 +14,9 @@ export const RECRUTEMENT_ROUTES: Routes = [
       ),
   },
 
-  // VisiteurPublic (connecté) - Candidature
+  // Tout utilisateur connecté peut candidater : ROLE_CANDIDAT n'est accordé
+  // qu'après une soumission réussie (voir CandidatController côté backend),
+  // donc pas encore présent quand quelqu'un arrive sur ces pages.
   {
     path: 'candidature',
     loadComponent: () => import('./candidature/formulaire/formulaire.component').then(m => m.FormulaireComponent),
@@ -26,7 +28,7 @@ export const RECRUTEMENT_ROUTES: Routes = [
     canActivate: [authGuard]
   },
 
-  // Candidat - Suivi
+  // Candidat - Suivi : nécessite une candidature réellement soumise, donc ROLE_CANDIDAT.
   {
     path: 'suivi',
     loadComponent: () => import('./suivi/suivi.component').then(m => m.SuiviComponent),

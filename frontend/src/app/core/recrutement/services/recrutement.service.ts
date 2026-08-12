@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface SessionCandidatureResponse {
@@ -28,10 +28,23 @@ export interface CandidatureResponse {
   candidatNom: string;
   candidatPrenom: string;
   candidatEmail: string | null;
+  candidatGenre: string | null;
+  candidatProfession: string | null;
+  candidatAnneesExperience: number | null;
+  candidatDateNaissance: string | null;
+  candidatNiveauEtude: string | null;
   sessionCandidatureId: number;
   sessionCandidatureLibelle: string;
   piecesJustificatives: PieceJustificativeResponse[];
   paiement: PaiementResponse | null;
+}
+
+export interface CritereSelection {
+  id?: number;
+  actif: boolean;
+  niveauEtudeMinimum: string | null;
+  ageMinimum: number | null;
+  ageMaximum: number | null;
 }
 
 export interface PieceJustificativeResponse {
@@ -67,7 +80,7 @@ export interface SessionCandidatureRequest {
 export interface TestAcademiqueRequest {
   nomEpreuve: string;
   coefficient: number;
-  noteObtenue: number;
+  noteObtenue: number | null;
   dateEpreuve: string;
   candidatId: number;
 }
@@ -76,7 +89,7 @@ export interface TestAcademiqueResponse {
   id: number;
   nomEpreuve: string;
   coefficient: number;
-  noteObtenue: number;
+  noteObtenue: number | null;
   dateEpreuve: string;
   candidatId: number;
 }
@@ -132,7 +145,7 @@ export interface EntretienResponse {
   id: number;
   dateHeure: string;
   lieuOuLien: string;
-  noteEntretien: number;
+  noteEntretien: number | null;
   appreciationGlobale: string;
   candidatId: number;
 }
@@ -436,6 +449,15 @@ export class RecrutementService {
     return this.http.get<CandidatureResponse>(`${this.baseUrl}/recrutement/candidat/suivi/${numeroDossier}`);
   }
 
+  /** Brouillon du formulaire de candidature persisté côté serveur (reprise depuis un autre appareil). */
+  getBrouillon(): Observable<{ donneesJson?: string }> {
+    return this.http.get<{ donneesJson?: string }>(`${this.baseUrl}/recrutement/candidat/brouillon`);
+  }
+
+  sauvegarderBrouillon(donneesJson: string): Observable<any> {
+    return this.http.put(`${this.baseUrl}/recrutement/candidat/brouillon`, { donneesJson });
+  }
+
   // ===================== ADMIN =====================
 
   // Sessions
@@ -455,6 +477,14 @@ export class RecrutementService {
     return this.http.delete(`${this.baseUrl}/admin/recrutement/sessions/${id}`);
   }
 
+  exporterSessions(colonnes?: string[]): Observable<Blob> {
+    let params = new HttpParams();
+    if (colonnes && colonnes.length) {
+      colonnes.forEach((c) => (params = params.append('colonnes', c)));
+    }
+    return this.http.get(`${this.baseUrl}/admin/recrutement/sessions/export`, { responseType: 'blob', params });
+  }
+
   // Candidatures admin
   getAllCandidatures(): Observable<CandidatureResponse[]> {
     return this.http.get<CandidatureResponse[]>(`${this.baseUrl}/admin/recrutement/candidatures`);
@@ -462,6 +492,30 @@ export class RecrutementService {
 
   getCandidatureAdmin(id: number): Observable<CandidatureResponse> {
     return this.http.get<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}`);
+  }
+
+  exporterCandidatures(statut?: string, colonnes?: string[]): Observable<Blob> {
+    let params = new HttpParams();
+    if (statut) {
+      params = params.set('statut', statut);
+    }
+    if (colonnes && colonnes.length) {
+      colonnes.forEach((c) => (params = params.append('colonnes', c)));
+    }
+    return this.http.get(`${this.baseUrl}/admin/recrutement/candidatures/export`, { responseType: 'blob', params });
+  }
+
+  telechargerPiece(pieceId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/admin/recrutement/pieces/${pieceId}/telecharger`, { responseType: 'blob' });
+  }
+
+  // Critères de sélection (premier filtre automatique)
+  getCriteres(): Observable<CritereSelection> {
+    return this.http.get<CritereSelection>(`${this.baseUrl}/admin/recrutement/criteres`);
+  }
+
+  modifierCriteres(request: CritereSelection): Observable<CritereSelection> {
+    return this.http.put<CritereSelection>(`${this.baseUrl}/admin/recrutement/criteres`, request);
   }
 
   validerPreselection(id: number): Observable<CandidatureResponse> {

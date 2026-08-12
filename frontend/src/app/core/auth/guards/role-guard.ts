@@ -1,5 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { map, of } from 'rxjs';
 import { Auth } from '../services/authService';
 
 /**
@@ -12,29 +13,32 @@ export function roleGuard(...requiredRoles: string[]): CanActivateFn {
     const router = inject(Router);
     const auth = inject(Auth);
 
-    const user = auth.currentUser();
-    if (!user) {
-      router.navigate(['/auth/login']);
+    const evaluate = (user: ReturnType<typeof auth.currentUser>): boolean => {
+      if (!user) {
+        router.navigate(['/auth/login']);
+        return false;
+      }
+
+      const userRoles = user.roles || [];
+      if (requiredRoles.some(role => userRoles.includes(role))) {
+        return true;
+      }
+
+      if (userRoles.includes('ROLE_RESPONSABLE_ADMISSION')) {
+        router.navigate(['/responsable-admission']);
+      } else if (userRoles.includes('ROLE_CANDIDAT')) {
+        router.navigate(['/recrutement/catalogue']);
+      } else if (userRoles.includes('ROLE_ETUDIANT')) {
+        router.navigate(['/espace-etudiant/accueil']);
+      } else if (userRoles.includes('ROLE_FORMATEUR')) {
+        router.navigate(['/espace-etudiant/formateur/dashboard-formateur']);
+      } else {
+        router.navigate(['/accueil']);
+      }
       return false;
-    }
+    };
 
-    const userRoles: string[] = (user as any)?.roles || [];
-    const hasRole = requiredRoles.some(role => userRoles.includes(role));
-
-    if (hasRole) {
-      return true;
-    }
-
-    // Rediriger vers la page par défaut selon le rôle
-    if (userRoles.includes('ROLE_RESPONSABLE_ADMISSION')) {
-      router.navigate(['/responsable-admission']);
-    } else if (userRoles.includes('ROLE_CANDIDAT')) {
-      router.navigate(['/recrutement/catalogue']);
-    } else if (userRoles.includes('ROLE_ETUDIANT')) {
-      router.navigate(['/espace-etudiant/accueil']);
-    } else {
-      router.navigate(['/accueil']);
-    }
-    return false;
+    const user = auth.currentUser();
+    return user ? of(evaluate(user)) : auth.getCurrentUser().pipe(map(evaluate));
   };
 }

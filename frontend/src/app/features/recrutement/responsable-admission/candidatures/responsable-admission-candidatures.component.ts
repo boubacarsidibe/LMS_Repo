@@ -1,144 +1,215 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subscription, Subject, debounceTime, distinctUntilChanged } from 'rxjs';
-import { RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
+import { RouterModule } from '@angular/router';
+import { Observable } from 'rxjs';
+import { CandidatureResponse, PieceJustificativeResponse, RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
+import { downloadBlob } from '../../../../shared/utils/download-file';
+import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 
-interface CandidatureRow {
-  id: number;
-  nom: string;
-  initials: string;
-  nationalite: string;
-  idShort: string;
-  formation: string;
-  dateSoumission: string;
-  pieces: string;
-  paiement: string;
-  selected: boolean;
-}
-
-interface DocumentItem {
-  id: number;
-  nom: string;
-  valide: boolean;
-}
-
-interface ApplicationKpi {
-  totalCandidatures: number;
-  aVerifier: number;
-  conformes: number;
-  incomplets: number;
-  relancesPotentielles: number;
-}
+type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 'ADMIS2' | 'ADMIS3' | 'REJETE' | 'BROUILLON';
 
 @Component({
   selector: 'app-responsable-admission-candidatures',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ExportColumnsModalComponent],
   templateUrl: './responsable-admission-candidatures.component.html',
 })
-export class ResponsableAdmissionCandidaturesComponent implements OnInit, OnDestroy {
-  // ---- KPIs ----
-  kpis: ApplicationKpi = { totalCandidatures: 0, aVerifier: 0, conformes: 0, incomplets: 0, relancesPotentielles: 0 };
-  chargementKpis = false;
+export class ResponsableAdmissionCandidaturesComponent implements OnInit {
+  candidatures: CandidatureResponse[] = [];
+  loading = false;
+  errorMessage = '';
 
-  drawerOpen = false;
-  selectedCandidate: CandidatureRow | null = null;
-  searchQuery = '';
-  filterStatus = '';
-  filterProgram = '';
-  filterSession = '';
-  private searchSubject = new Subject<string>();
+  recherche = '';
+  filtreStatut: StatutFiltre = 'TOUS';
 
-  modalReminderOpen = false;
-  toastVisible = false;
-  toastMessage = '';
-  toastType: 'success' | 'error' = 'success';
+  candidatureSelectionnee: CandidatureResponse | null = null;
+  actionEnCours = false;
+  exporting = false;
+  exportModalOpen = false;
 
-  candidatures: CandidatureRow[] = [];
-  chargement = false;
-
-  documentsList: DocumentItem[] = [
-    { id: 1, nom: 'CV & Lettre de motivation', valide: true },
-    { id: 2, nom: 'Relevé de notes L3', valide: true },
-    { id: 3, nom: 'Pièce d\'Identité', valide: true },
-    { id: 4, nom: 'Diplôme du Baccalauréat', valide: false },
+  readonly colonnesExport: ColonneExport[] = [
+    { key: 'numeroDossier', label: 'N° Dossier' },
+    { key: 'nom', label: 'Nom' },
+    { key: 'prenom', label: 'Prénom' },
+    { key: 'email', label: 'Email' },
+    { key: 'session', label: 'Session' },
+    { key: 'statut', label: 'Statut' },
+    { key: 'dateSoumission', label: 'Date de soumission' },
+    { key: 'motifRejet', label: 'Motif de rejet' },
+    { key: 'genre', label: 'Genre' },
+    { key: 'niveauEtude', label: "Niveau d'études" },
+    { key: 'profession', label: 'Profession' },
+    { key: 'anneesExperience', label: "Années d'expérience" },
   ];
+  readonly colonnesExportParDefaut = ['numeroDossier', 'nom', 'prenom', 'email', 'session', 'statut', 'dateSoumission', 'motifRejet'];
 
-  private subs: Subscription[] = [];
-
-  constructor(private service: RecrutementService) {}
+  constructor(private recrutementService: RecrutementService) {}
 
   ngOnInit(): void {
-    this.chargerKpis();
     this.chargerCandidatures();
-    const debSub = this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => this.chargerCandidatures());
-    this.subs.push(debSub);
   }
 
-  ngOnDestroy(): void { this.subs.forEach(s => s.unsubscribe()); }
-
-  chargerKpis(): void {
-    this.chargementKpis = true;
-    const sub = this.service.getApplicationKpis().subscribe({ next: d => { this.kpis = d; this.chargementKpis = false; }, error: () => { this.chargementKpis = false; } });
-    this.subs.push(sub);
-  }
-
-  chargerCandidatures(): void {
-    this.chargement = true;
-    const sub = this.service.listApplications({ search: this.searchQuery || undefined, status: this.filterStatus || undefined, sessionId: undefined }).subscribe({
-      next: (data: any[]) => {
-        this.candidatures = data.map((c: any) => ({
-          id: c.id, nom: `${c.candidatNom} ${c.candidatPrenom}`, initials: (c.candidatPrenom?.charAt(0)||'')+(c.candidatNom?.charAt(0)||''),
-          nationalite: c.candidatNationalite || '', idShort: c.numeroDossier?.split('-').pop() || '',
-          formation: c.program?.title || '', dateSoumission: c.dateSoumission ? new Date(c.dateSoumission).toLocaleDateString('fr') : '',
-          pieces: c.documentStatus, paiement: c.paymentStatus, selected: false
-        }));
-        this.chargement = false;
+  private chargerCandidatures(): void {
+    this.loading = true;
+    this.errorMessage = '';
+    this.recrutementService.getAllCandidatures().subscribe({
+      next: (data) => {
+        this.candidatures = data || [];
+        this.loading = false;
       },
-      error: () => { this.chargement = false; }
-    });
-    this.subs.push(sub);
-  }
-
-  get filteredCandidatures(): CandidatureRow[] {
-    return this.candidatures.filter(c => {
-      const s = this.searchQuery.toLowerCase();
-      return (!s || c.nom.toLowerCase().includes(s) || c.idShort.includes(s))
-        && (!this.filterProgram || c.formation.toLowerCase().includes(this.filterProgram.toLowerCase()))
-        && (!this.filterStatus || c.pieces === this.filterStatus);
+      error: () => {
+        this.candidatures = [];
+        this.loading = false;
+        this.errorMessage = 'Impossible de charger les candidatures.';
+      },
     });
   }
 
-  get selectedCount(): number { return this.candidatures.filter(c => c.selected).length; }
-
-  toggleSelectAll(event: Event): void { const checked = (event.target as HTMLInputElement).checked; this.candidatures.forEach(c => c.selected = checked); }
-  updateSelection(): void {}
-
-  onSearchChange(): void { this.searchSubject.next(this.searchQuery); }
-  onFilterChange(): void { this.chargerCandidatures(); this.chargerKpis(); }
-  resetFilters(): void { this.searchQuery = ''; this.filterStatus = ''; this.filterProgram = ''; this.filterSession = ''; this.chargerCandidatures(); this.chargerKpis(); }
-
-  openCandidateDrawer(cand: CandidatureRow): void { this.selectedCandidate = cand; this.drawerOpen = true; }
-  closeDrawer(): void { this.drawerOpen = false; this.selectedCandidate = null; }
-
-  openReminderModal(): void { this.modalReminderOpen = true; }
-  sendReminder(): void {
-    const sub = this.service.sendReminder().subscribe({ next: (res: any) => { this.modalReminderOpen = false; this.afficherToast(res.message, 'success'); }, error: () => { this.modalReminderOpen = false; this.afficherToast('Erreur envoi relances.', 'error'); } });
-    this.subs.push(sub);
+  get candidaturesFiltrees(): CandidatureResponse[] {
+    const q = this.recherche.trim().toLowerCase();
+    return this.candidatures.filter((c) => {
+      if (this.filtreStatut !== 'TOUS' && c.statut !== this.filtreStatut) return false;
+      if (!q) return true;
+      return (
+        (c.candidatNom || '').toLowerCase().includes(q) ||
+        (c.candidatPrenom || '').toLowerCase().includes(q) ||
+        (c.candidatEmail || '').toLowerCase().includes(q) ||
+        (c.numeroDossier || '').toLowerCase().includes(q)
+      );
+    });
   }
 
-  exportApplications(): void {
-    const sub = this.service.exportApplications().subscribe({ next: blob => { const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'candidatures_export.csv'; a.click(); window.URL.revokeObjectURL(url); this.afficherToast('Export téléchargé.', 'success'); }, error: () => this.afficherToast('Erreur export.', 'error') });
-    this.subs.push(sub);
+  compter(statut: StatutFiltre): number {
+    if (statut === 'TOUS') return this.candidatures.length;
+    return this.candidatures.filter((c) => c.statut === statut).length;
   }
 
-  validerDocument(docId: number, valide: boolean): void {
-    if (!this.selectedCandidate) return;
-    const sub = this.service.updateDocumentStatus(this.selectedCandidate.id, docId, valide).subscribe({ next: (d: any) => { this.afficherToast(valide ? 'Document validé.' : 'Document rejeté.', 'success'); this.chargerCandidatures(); this.chargerKpis(); }, error: () => this.afficherToast('Erreur validation.', 'error') });
-    this.subs.push(sub);
+  libelleStatut(statut: string): string {
+    switch (statut) {
+      case 'BROUILLON': return 'Brouillon';
+      case 'SOUMIS': return 'Soumis';
+      case 'EN_COURS_DE_PRESELECTION': return 'En présélection';
+      case 'ADMIS1': return 'Admis au test';
+      case 'ADMIS2': return 'Admis à l\'entretien';
+      case 'ADMIS3': return 'Admis (final)';
+      case 'REJETE': return 'Rejeté';
+      default: return statut;
+    }
   }
 
-  afficherToast(message: string, type: 'success' | 'error'): void { this.toastMessage = message; this.toastType = type; this.toastVisible = true; setTimeout(() => this.toastVisible = false, 4000); }
+  classeStatut(statut: string): string {
+    switch (statut) {
+      case 'REJETE': return 'bg-error-container/20 text-error';
+      case 'ADMIS3': return 'bg-green-100 text-green-800';
+      case 'ADMIS1':
+      case 'ADMIS2': return 'bg-primary-fixed text-on-primary-fixed-variant';
+      case 'SOUMIS':
+      case 'EN_COURS_DE_PRESELECTION': return 'bg-secondary-container/30 text-on-secondary-container';
+      default: return 'bg-surface-container text-on-surface-variant';
+    }
+  }
+
+  /** Libellé + capacité d'action selon l'étape actuelle du workflow (cf. CandidatureService#estTransitionValide côté backend). */
+  actionSuivante(c: CandidatureResponse): { libelle: string; action: () => void } | null {
+    switch (c.statut) {
+      case 'SOUMIS':
+        return { libelle: 'Valider présélection', action: () => this.validerPreselection(c) };
+      case 'EN_COURS_DE_PRESELECTION':
+        return { libelle: 'Admettre au test', action: () => this.admettreTest(c) };
+      case 'ADMIS1':
+        return { libelle: 'Admettre à l\'entretien', action: () => this.admettreEntretien(c) };
+      case 'ADMIS2':
+        return { libelle: 'Admettre (final)', action: () => this.admettreFinal(c) };
+      default:
+        return null;
+    }
+  }
+
+  peutRejeter(c: CandidatureResponse): boolean {
+    return c.statut !== 'ADMIS3' && c.statut !== 'REJETE' && c.statut !== 'BROUILLON';
+  }
+
+  voirDetail(c: CandidatureResponse): void {
+    this.candidatureSelectionnee = c;
+  }
+
+  fermerDetail(): void {
+    this.candidatureSelectionnee = null;
+  }
+
+  private executer(obs: Observable<CandidatureResponse>): void {
+    this.actionEnCours = true;
+    obs.subscribe({
+      next: () => {
+        this.actionEnCours = false;
+        this.candidatureSelectionnee = null;
+        this.chargerCandidatures();
+      },
+      error: (err) => {
+        this.actionEnCours = false;
+        alert(err.error?.message || "Échec de l'action sur la candidature.");
+      },
+    });
+  }
+
+  validerPreselection(c: CandidatureResponse): void {
+    this.executer(this.recrutementService.validerPreselection(c.id));
+  }
+
+  admettreTest(c: CandidatureResponse): void {
+    this.executer(this.recrutementService.admettreTestAcademique(c.id));
+  }
+
+  admettreEntretien(c: CandidatureResponse): void {
+    this.executer(this.recrutementService.admettreEntretien(c.id));
+  }
+
+  admettreFinal(c: CandidatureResponse): void {
+    this.executer(this.recrutementService.admettreFinal(c.id));
+  }
+
+  rejeter(c: CandidatureResponse): void {
+    const motif = window.prompt(`Motif de rejet pour le dossier ${c.numeroDossier} :`);
+    if (motif === null) return; // annulé
+    if (!motif.trim()) {
+      alert('Un motif de rejet est requis.');
+      return;
+    }
+    this.actionEnCours = true;
+    this.recrutementService.rejeterDossier(c.id, motif.trim()).subscribe({
+      next: () => {
+        this.actionEnCours = false;
+        this.candidatureSelectionnee = null;
+        this.chargerCandidatures();
+      },
+      error: (err) => {
+        this.actionEnCours = false;
+        alert(err.error?.message || 'Échec du rejet de la candidature.');
+      },
+    });
+  }
+
+  telechargerPiece(piece: PieceJustificativeResponse): void {
+    if (piece.fichierStockeId == null) return;
+    this.recrutementService.telechargerPiece(piece.id).subscribe({
+      next: (blob) => downloadBlob(blob, piece.fichierNomOriginal || `document_${piece.id}`),
+      error: () => alert('Échec du téléchargement du document.'),
+    });
+  }
+
+  exporter(colonnes: string[]): void {
+    this.exporting = true;
+    const statut = this.filtreStatut === 'TOUS' ? undefined : this.filtreStatut;
+    this.recrutementService.exporterCandidatures(statut, colonnes).subscribe({
+      next: (blob) => {
+        downloadBlob(blob, `candidatures_recrutement_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+        alert("Échec de l'export Excel.");
+      },
+    });
+  }
 }

@@ -1,8 +1,11 @@
 package inpg.sn.lms.recrutement.service;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,12 +20,20 @@ import inpg.sn.lms.recrutement.repository.EntretienRepository;
 @Transactional
 public class EntretienService {
 
+    private static final Logger log = LoggerFactory.getLogger(EntretienService.class);
+    private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
     private final EntretienRepository entretienRepository;
     private final CandidatRepository candidatRepository;
+    private final NotificationService notificationService;
+    private final NotificationCandidatService notificationCandidatService;
 
-    public EntretienService(EntretienRepository entretienRepository, CandidatRepository candidatRepository) {
+    public EntretienService(EntretienRepository entretienRepository, CandidatRepository candidatRepository,
+            NotificationService notificationService, NotificationCandidatService notificationCandidatService) {
         this.entretienRepository = entretienRepository;
         this.candidatRepository = candidatRepository;
+        this.notificationService = notificationService;
+        this.notificationCandidatService = notificationCandidatService;
     }
 
     public EntretienResponse creerEntretien(EntretienRequest request) {
@@ -37,6 +48,24 @@ public class EntretienService {
         entretien.setCandidat(candidat);
 
         Entretien saved = entretienRepository.save(entretien);
+
+        // Convocation automatique du candidat dès la planification de l'entretien (TDR 3.1.3).
+        if (saved.getDateHeure() != null) {
+            String dateFormatee = saved.getDateHeure().format(DATETIME_FORMAT);
+            String emailCandidat = candidat.getUser() != null ? candidat.getUser().getEmail() : null;
+            if (emailCandidat != null) {
+                try {
+                    notificationService.notifierConvocationEntretien(emailCandidat, dateFormatee, saved.getLieuOuLien());
+                } catch (Exception e) {
+                    log.error("Échec de l'envoi de la convocation à l'entretien à {} : {}", emailCandidat,
+                            e.getMessage(), e);
+                }
+            }
+            notificationCandidatService.creerNotification(candidat,
+                    "Vous êtes convoqué(e) à l'entretien le " + dateFormatee + " (" + saved.getLieuOuLien() + ").",
+                    "ENTRETIEN_CONVOCATION", "/recrutement/suivi");
+        }
+
         return toResponse(saved);
     }
 

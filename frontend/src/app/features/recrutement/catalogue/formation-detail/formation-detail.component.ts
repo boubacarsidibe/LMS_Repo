@@ -294,6 +294,11 @@ export class FormationDetailComponent implements OnInit {
     }
   }
 
+  // Aucune brochure PDF n'est générée/stockée côté backend pour l'instant.
+  brochureIndisponible(): void {
+    alert('La brochure PDF sera bientôt disponible.');
+  }
+
   methodeIcon(item: string): string {
     const map: Record<string, string> = {
       'Cours théoriques': 'menu_book', 'Exercices': 'edit_note', 'Études de cas': 'assignment',

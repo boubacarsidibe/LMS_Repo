@@ -40,7 +40,7 @@ export const SUJETS_FORUM_MOCK: SujetForum[] = [
         auteur: 'Alex Mercer',
         initiales: 'AM',
         date: 'il y a 14m',
-        contenu: "Bonjour Professeur Sterling,\n\nJe rencontre une difficulté bloquante sur le TP de simulation du Module 3. Lorsque j'introduis la variable exogène de choc d'offre, le modèle de simulation refuse de converger, même après 500 itérations.\n\nEst-ce un problème lié au paramétrage de l'alpha ou bien une erreur dans l'implémentation de la fonction de coût ?\n\nMerci d'avance pour votre aide !"
+        contenu: "Bonjour Professeur,\n\nJe rencontre une difficulté bloquante sur le TP de simulation du Module 3. Lorsque j'introduis la variable exogène de choc d'offre, le modèle de simulation refuse de converger, même après 500 itérations.\n\nEst-ce un problème lié au paramétrage de l'alpha ou bien une erreur dans l'implémentation de la fonction de coût ?\n\nMerci d'avance pour votre aide !"
       }
     ]
   },

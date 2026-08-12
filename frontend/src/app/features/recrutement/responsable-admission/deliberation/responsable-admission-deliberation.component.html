@@ -1,24 +1,83 @@
 <!-- ==================== CONTENU SEUL ==================== -->
 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-stack-lg">
-  <div><h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Délibération Finale</h1><p class="font-body-md text-body-md text-on-surface-variant mt-2">Validation et publication des résultats pour la Session d'Automne 2024.</p></div>
+  <div>
+    <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Délibération</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-2">Décision finale pour les candidats admis à l'entretien, classés par moyenne (test + entretien).</p>
+  </div>
   <div class="flex gap-3">
-    <button class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest text-primary border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm"><span class="material-symbols-outlined text-[20px]">ios_share</span> Exporter vers LMS</button>
-    <button class="flex items-center gap-2 px-5 py-2 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg font-label-md text-label-md transition-all shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-t border-[#4a7ec2]"><span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">lock</span> Publier les résultats</button>
+    <button type="button" [disabled]="exporting" (click)="exporter()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest text-primary border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
+      <span class="material-symbols-outlined text-[20px]">ios_share</span> {{ exporting ? 'Export en cours…' : 'Exporter la liste' }}
+    </button>
   </div>
 </div>
+
+<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
+
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-stack-lg">
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Liste Principale</span><span class="material-symbols-outlined text-secondary">check_circle</span></div><div class="font-headline-lg text-headline-lg text-primary">120</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Candidats admis</div></div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Liste d'Attente</span><span class="material-symbols-outlined text-outline">hourglass_empty</span></div><div class="font-headline-lg text-headline-lg text-primary">45</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">En attente de désistement</div></div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Non Retenus</span><span class="material-symbols-outlined text-outline">cancel</span></div><div class="font-headline-lg text-headline-lg text-primary">312</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Candidatures refusées</div></div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">En attente de décision</span><span class="material-symbols-outlined text-outline">hourglass_empty</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbEnAttente }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Après entretien</div></div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Admis (final)</span><span class="material-symbols-outlined text-secondary">check_circle</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbAdmis }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Toutes sessions</div></div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Non retenus</span><span class="material-symbols-outlined text-outline">cancel</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbRejetes }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Toutes sessions</div></div>
 </div>
-<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col h-[600px]">
-  <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-4"><div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto"><button class="px-4 py-1.5 bg-secondary text-on-secondary rounded-full font-label-sm text-label-sm whitespace-nowrap">Tous (477)</button><button class="px-4 py-1.5 hover:bg-surface-container border border-transparent rounded-full font-label-sm text-label-sm text-on-surface-variant whitespace-nowrap transition-colors">Principale (120)</button><button class="px-4 py-1.5 hover:bg-surface-container border border-transparent rounded-full font-label-sm text-label-sm text-on-surface-variant whitespace-nowrap transition-colors">Attente (45)</button></div><div class="relative w-full sm:w-64"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span><input class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher un candidat..." type="text"></div></div>
-  <div class="grid grid-cols-12 gap-4 p-4 border-b border-outline-variant bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider"><div class="col-span-1">Rang</div><div class="col-span-1">N° CANDIDATURE</div><div class="col-span-3">Candidat</div><div class="col-span-2 text-right">Note Écrit</div><div class="col-span-2 text-right">Note Oral</div><div class="col-span-1 text-right font-bold">Moyenne</div><div class="col-span-2 text-center">Statut Final</div></div>
-  <div class="overflow-y-auto flex-1 p-2 space-y-1">
-    <div class="grid grid-cols-12 gap-4 p-3 items-center rounded-lg hover:bg-surface-container-low transition-colors group"><div class="col-span-1 font-label-md text-label-md text-primary">1</div><div class="col-span-1 font-body-sm text-body-sm text-on-surface-variant">INP-24-089</div><div class="col-span-3 flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">EL</div><div><div class="font-label-md text-label-md text-primary">El Amrani, Sarah</div><div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">Filière: Ingénierie Data</div></div></div><div class="col-span-2 text-right font-body-sm text-body-sm text-primary">18.50</div><div class="col-span-2 text-right font-body-sm text-body-sm text-primary">19.00</div><div class="col-span-1 text-right font-label-md text-label-md text-primary font-bold">18.75</div><div class="col-span-2 flex justify-center"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">Liste Principale</span></div></div>
-    <div class="grid grid-cols-12 gap-4 p-3 items-center rounded-lg hover:bg-surface-container-low transition-colors group"><div class="col-span-1 font-label-md text-label-md text-primary">2</div><div class="col-span-1 font-body-sm text-body-sm text-on-surface-variant">INP-24-142</div><div class="col-span-3 flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">BT</div><div><div class="font-label-md text-label-md text-primary">Bennani, Tariq</div><div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">Filière: Génie Logiciel</div></div></div><div class="col-span-2 text-right font-body-sm text-body-sm text-primary">17.75</div><div class="col-span-2 text-right font-body-sm text-body-sm text-primary">18.50</div><div class="col-span-1 text-right font-label-md text-label-md text-primary font-bold">18.12</div><div class="col-span-2 flex justify-center"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">Liste Principale</span></div></div>
-    <div class="py-2 px-4 flex items-center gap-4"><div class="flex-1 h-px bg-outline-variant"></div><span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Fin de la Liste Principale</span><div class="flex-1 h-px bg-outline-variant"></div></div>
-    <div class="grid grid-cols-12 gap-4 p-3 items-center rounded-lg hover:bg-surface-container-low transition-colors group opacity-90"><div class="col-span-1 font-label-md text-label-md text-primary">121</div><div class="col-span-1 font-body-sm text-body-sm text-on-surface-variant">INP-24-301</div><div class="col-span-3 flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold text-xs">MJ</div><div><div class="font-label-md text-label-md text-primary">Mounir, Jalal</div><div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">Filière: Ingénierie Data</div></div></div><div class="col-span-2 text-right font-body-sm text-body-sm text-primary">14.50</div><div class="col-span-2 text-right font-body-sm text-body-sm text-primary">15.00</div><div class="col-span-1 text-right font-label-md text-label-md text-primary font-bold">14.75</div><div class="col-span-2 flex justify-center"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#fffbeb] text-[#92400e] border border-[#fde68a]">Liste d'Attente</span></div></div>
+
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
+  <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
+      <button type="button" (click)="filtre = 'EN_ATTENTE'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'EN_ATTENTE'" [class.text-on-secondary]="filtre === 'EN_ATTENTE'" [class.text-on-surface-variant]="filtre !== 'EN_ATTENTE'">En attente ({{ nbEnAttente }})</button>
+      <button type="button" (click)="filtre = 'ADMIS'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'ADMIS'" [class.text-on-secondary]="filtre === 'ADMIS'" [class.text-on-surface-variant]="filtre !== 'ADMIS'">Admis ({{ nbAdmis }})</button>
+      <button type="button" (click)="filtre = 'REJETES'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'REJETES'" [class.text-on-secondary]="filtre === 'REJETES'" [class.text-on-surface-variant]="filtre !== 'REJETES'">Non retenus ({{ nbRejetes }})</button>
+      <button type="button" (click)="filtre = 'TOUS'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'TOUS'" [class.text-on-secondary]="filtre === 'TOUS'" [class.text-on-surface-variant]="filtre !== 'TOUS'">Tous ({{ lignes.length }})</button>
+    </div>
+    <div class="relative w-full sm:w-64">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+      <input [(ngModel)]="recherche" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher un candidat..." type="text">
+    </div>
   </div>
-  <div class="p-3 border-t border-outline-variant bg-surface flex justify-between items-center text-sm text-on-surface-variant"><span class="font-body-sm text-body-sm">Affichage 1-10 sur 477 candidats</span><div class="flex gap-1"><button class="p-1 rounded hover:bg-surface-container-high disabled:opacity-50"><span class="material-symbols-outlined text-[20px]">chevron_left</span></button><button class="p-1 rounded hover:bg-surface-container-high"><span class="material-symbols-outlined text-[20px]">chevron_right</span></button></div></div>
+
+  <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement…</div>
+  <div *ngIf="!loading && lignesFiltrees.length === 0" class="p-10 text-center text-on-surface-variant font-body-md">Aucun candidat à ce stade pour le moment.</div>
+
+  <ng-container *ngIf="!loading && lignesFiltrees.length > 0">
+    <div class="grid grid-cols-12 gap-4 p-4 border-b border-outline-variant bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+      <div class="col-span-1">Rang</div>
+      <div class="col-span-3">Candidat</div>
+      <div class="col-span-2 text-right">Note Test</div>
+      <div class="col-span-2 text-right">Note Entretien</div>
+      <div class="col-span-1 text-right font-bold">Moyenne</div>
+      <div class="col-span-2 text-center">Statut</div>
+      <div class="col-span-1 text-right">Actions</div>
+    </div>
+    <div class="overflow-y-auto flex-1 p-2 space-y-1 max-h-[600px]">
+      <div *ngFor="let l of lignesFiltrees; let i = index" class="grid grid-cols-12 gap-4 p-3 items-center rounded-lg hover:bg-surface-container-low transition-colors">
+        <div class="col-span-1 font-label-md text-label-md text-primary">{{ i + 1 }}</div>
+        <div class="col-span-3 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">{{ l.candidature.candidatPrenom | slice:0:1 }}{{ l.candidature.candidatNom | slice:0:1 }}</div>
+          <div>
+            <div class="font-label-md text-label-md text-primary">{{ l.candidature.candidatPrenom }} {{ l.candidature.candidatNom }}</div>
+            <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ l.candidature.numeroDossier }}</div>
+          </div>
+        </div>
+        <div class="col-span-2 text-right font-body-sm text-body-sm text-primary">{{ l.noteTest ?? '—' }}</div>
+        <div class="col-span-2 text-right font-body-sm text-body-sm text-primary">{{ l.noteEntretien ?? '—' }}</div>
+        <div class="col-span-1 text-right font-label-md text-label-md text-primary font-bold">{{ l.moyenne ?? '—' }}</div>
+        <div class="col-span-2 flex justify-center">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border"
+                [ngClass]="{
+                  'bg-[#ecfdf5] text-[#065f46] border-[#a7f3d0]': l.candidature.statut === 'ADMIS3',
+                  'bg-error-container/20 text-error border-transparent': l.candidature.statut === 'REJETE',
+                  'bg-[#fffbeb] text-[#92400e] border-[#fde68a]': l.candidature.statut === 'ADMIS2'
+                }">
+            {{ l.candidature.statut === 'ADMIS3' ? 'Admis' : (l.candidature.statut === 'REJETE' ? 'Non retenu' : 'En attente') }}
+          </span>
+        </div>
+        <div class="col-span-1 flex justify-end gap-1" *ngIf="l.candidature.statut === 'ADMIS2'">
+          <button type="button" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Admettre">
+            <span class="material-symbols-outlined text-[18px]">check</span>
+          </button>
+          <button type="button" [disabled]="actionEnCours" (click)="rejeter(l)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Rejeter">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
 </div>

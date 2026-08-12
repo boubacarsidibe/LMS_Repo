@@ -3,19 +3,39 @@ package inpg.sn.lms.espace_etudiant.entity;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import jakarta.annotation.Generated;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import org.hibernate.annotations.UuidGenerator;
+
 @Entity
 public class SupportPedagogique {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @UuidGenerator
     private UUID id;
     private String titre;
+    // Sans EnumType.STRING, JPA stocke l'ordinal : réordonner les constantes
+    // corromprait silencieusement les lignes déjà enregistrées.
+    @Enumerated(EnumType.STRING)
     private EnumTypeSupport typeSupport;
     private LocalDate dateMiseEnLigne;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public String getTitre() {
+        return titre;
+    }
+
+    public EnumTypeSupport getTypeSupport() {
+        return typeSupport;
+    }
+
+    public LocalDate getDateMiseEnLigne() {
+        return dateMiseEnLigne;
+    }
 }
 
 enum EnumTypeSupport {

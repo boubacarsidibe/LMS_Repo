@@ -37,7 +37,12 @@ public class FormateurService {
             user = new User(formateurDto.getUsername(), passwordEncoder.encode(formateurDto.getPassword()),
                     formateurDto.getEmail());
         }
-        user.addRole(roleService.findByCode("ROLE_FORMATEUR"));
+        var roleFormateur = roleService.findByCode("ROLE_FORMATEUR");
+        if (roleFormateur == null) {
+            throw new IllegalStateException("Le rôle ROLE_FORMATEUR est introuvable.");
+        }
+        user.addRole(roleFormateur);
+        user = userService.save(user);
         Formateur newFormateur = new Formateur(user, formateurDto.getNom(), formateurDto.getPrenom(),
                 formateurDto.getTelephone());
 

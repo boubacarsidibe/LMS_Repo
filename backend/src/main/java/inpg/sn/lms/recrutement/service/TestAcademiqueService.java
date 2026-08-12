@@ -1,8 +1,11 @@
 package inpg.sn.lms.recrutement.service;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,13 +20,22 @@ import inpg.sn.lms.recrutement.repository.TestAcademiqueRepository;
 @Transactional
 public class TestAcademiqueService {
 
+    private static final Logger log = LoggerFactory.getLogger(TestAcademiqueService.class);
+    private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
     private final TestAcademiqueRepository testAcademiqueRepository;
     private final CandidatRepository candidatRepository;
+    private final NotificationService notificationService;
+    private final NotificationCandidatService notificationCandidatService;
 
     public TestAcademiqueService(TestAcademiqueRepository testAcademiqueRepository,
-            CandidatRepository candidatRepository) {
+            CandidatRepository candidatRepository,
+            NotificationService notificationService,
+            NotificationCandidatService notificationCandidatService) {
         this.testAcademiqueRepository = testAcademiqueRepository;
         this.candidatRepository = candidatRepository;
+        this.notificationService = notificationService;
+        this.notificationCandidatService = notificationCandidatService;
     }
 
     public TestAcademiqueResponse creerTest(TestAcademiqueRequest request) {
@@ -38,6 +50,23 @@ public class TestAcademiqueService {
         test.setCandidat(candidat);
 
         TestAcademique saved = testAcademiqueRepository.save(test);
+
+        // Convocation automatique du candidat dès la planification du test (TDR 3.1.2).
+        if (saved.getDateEpreuve() != null) {
+            String dateFormatee = saved.getDateEpreuve().format(DATETIME_FORMAT);
+            String emailCandidat = candidat.getUser() != null ? candidat.getUser().getEmail() : null;
+            if (emailCandidat != null) {
+                try {
+                    notificationService.notifierConvocationTest(emailCandidat, saved.getNomEpreuve(), dateFormatee);
+                } catch (Exception e) {
+                    log.error("Échec de l'envoi de la convocation au test à {} : {}", emailCandidat, e.getMessage(), e);
+                }
+            }
+            notificationCandidatService.creerNotification(candidat,
+                    "Vous êtes convoqué(e) au test \"" + saved.getNomEpreuve() + "\" le " + dateFormatee + ".",
+                    "TEST_CONVOCATION", "/recrutement/suivi");
+        }
+
         return toResponse(saved);
     }
 
