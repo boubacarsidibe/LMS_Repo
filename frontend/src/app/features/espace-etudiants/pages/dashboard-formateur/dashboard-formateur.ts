@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormateurService, FormateurProfile } from '../../services/formateur.service';
+import { FormateurService, FormateurProfile, FormateurDashboard } from '../../services/formateur.service';
 
 @Component({
   selector: 'app-dashboard-formateur',
@@ -11,6 +11,7 @@ import { FormateurService, FormateurProfile } from '../../services/formateur.ser
 })
 export class DashboardFormateur implements OnInit {
   profile: FormateurProfile | null = null;
+  dashboard: FormateurDashboard | null = null;
   loading = false;
 
   constructor(private formateurService: FormateurService) {}
@@ -20,6 +21,10 @@ export class DashboardFormateur implements OnInit {
     this.formateurService.getProfile().subscribe({
       next: p => { this.profile = p; this.loading = false; },
       error: () => { this.profile = null; this.loading = false; }
+    });
+    this.formateurService.getDashboard().subscribe({
+      next: dashboard => this.dashboard = dashboard,
+      error: () => this.dashboard = null
     });
   }
 }

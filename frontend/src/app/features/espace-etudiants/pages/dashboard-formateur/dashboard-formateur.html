@@ -16,12 +16,12 @@
     </div>
     <div class="col-span-12 lg:col-span-4 flex justify-end gap-stack-md pb-1">
       <div class="bg-surface-container-high p-4 rounded-xl flex flex-col min-w-[140px]">
-        <span class="font-label-sm text-on-surface-variant">Étudiants Actifs</span>
-        <span class="font-headline-md text-primary-container">{{ profile?.nbCours ?? '—' }}</span>
+        <span class="font-label-sm text-on-surface-variant">Mes cours</span>
+        <span class="font-headline-md text-primary-container">{{ dashboard?.nbCours ?? '—' }}</span>
       </div>
       <div class="bg-primary-container p-4 rounded-xl flex flex-col min-w-[140px] text-on-primary">
-        <span class="font-label-sm opacity-80 text-on-primary-container">État du Système</span>
-        <span class="font-headline-md">Optimal</span>
+        <span class="font-label-sm opacity-80 text-on-primary-container">Supports publiés</span>
+        <span class="font-headline-md">{{ dashboard?.nbRessources ?? '—' }}</span>
       </div>
     </div>
   </div>

@@ -32,4 +32,8 @@ public class CoursService {
     public Cours save(Cours cours) {
         return coursRepository.save(cours);
     }
+
+    public void delete(Cours cours) {
+        coursRepository.delete(cours);
+    }
 }

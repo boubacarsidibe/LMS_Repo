@@ -41,4 +41,12 @@ public class SupportService {
     public long countCourseSupports(Long coursId) {
         return supportCoursRepository.countByCoursId(coursId);
     }
+
+    public List<SupportCours> getCourseSupports(Long coursId) {
+        return supportCoursRepository.findByCoursIdOrderByDatePublicationDesc(coursId);
+    }
+
+    public void deleteCourseSupports(Long coursId) {
+        supportCoursRepository.deleteByCoursId(coursId);
+    }
 }

@@ -26,8 +26,12 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,13 +49,17 @@ import inpg.sn.lms.espace_etudiant.dto.FormateurProfileDto;
 import inpg.sn.lms.espace_etudiant.dto.FormationDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportDto;
+import inpg.sn.lms.espace_etudiant.dto.SeanceDto;
+import inpg.sn.lms.espace_etudiant.dto.SeanceRequest;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
+import inpg.sn.lms.espace_etudiant.entity.Seance;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
+import inpg.sn.lms.espace_etudiant.service.SeanceService;
 
 @RestController
 @RequestMapping("/api/espace-etudiant")
@@ -67,6 +75,7 @@ public class EspaceEtudiantController {
     private final CoursService coursService;
     private final PromotionService promotionService;
     private final SupportService supportService;
+    private final SeanceService seanceService;
     private final Path uploadDirectory;
 
     public EspaceEtudiantController(
@@ -77,6 +86,7 @@ public class EspaceEtudiantController {
             CoursService coursService,
             PromotionService promotionService,
             SupportService supportService,
+            SeanceService seanceService,
             @Value("${app.upload.dir:uploads}") String uploadDirectory) {
         this.userRepository = userRepository;
         this.etudiantRepository = etudiantRepository;
@@ -85,6 +95,7 @@ public class EspaceEtudiantController {
         this.coursService = coursService;
         this.promotionService = promotionService;
         this.supportService = supportService;
+        this.seanceService = seanceService;
         this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize();
     }
 
@@ -238,6 +249,57 @@ public class EspaceEtudiantController {
                 formateur.getId(), fullName, formateur.getUser().getEmail(), numberOfCourses));
     }
 
+    @GetMapping("/formateur/dashboard")
+    public ResponseEntity<?> getFormateurDashboard(Authentication authentication) {
+        Formateur formateur = findAuthenticatedFormateur(authentication);
+        if (formateur == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Profil formateur introuvable."));
+        }
+        List<Cours> cours = coursService.getByFormateurId(formateur.getId());
+        long nbRessources = cours.stream()
+                .mapToLong(item -> supportService.countCourseSupports(item.getId()))
+                .sum();
+        return ResponseEntity.ok(Map.of(
+                "nbCours", cours.size(),
+                "nbRessources", nbRessources));
+    }
+    @GetMapping("/formateur/seances")
+    public ResponseEntity<?> listMySessions(Authentication authentication) {
+        Formateur formateur = findAuthenticatedFormateur(authentication);
+        if (formateur == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Profil formateur introuvable."));
+        return ResponseEntity.ok(seanceService.getByFormateur(formateur.getId()).stream().map(this::toSeanceDto).toList());
+    }
+
+    @PostMapping("/formateur/seances")
+    public ResponseEntity<?> createSession(@RequestBody SeanceRequest request, Authentication authentication) {
+        Cours cours = request.coursId() == null ? null : findOwnedCourse(request.coursId(), authentication);
+        if (cours == null) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Cours introuvable ou non autorisé."));
+        if (isBlank(request.titre()) || isBlank(request.type()) || request.dateHeure() == null || request.dureeMinutes() == null || request.dureeMinutes() <= 0)
+            return ResponseEntity.badRequest().body(Map.of("message", "Titre, type, date et durée positive sont requis."));
+        Seance seance = new Seance();
+        applySession(seance, request, cours);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toSeanceDto(seanceService.save(seance)));
+    }
+
+    @PutMapping("/formateur/seances/{id}")
+    public ResponseEntity<?> updateSession(@PathVariable Long id, @RequestBody SeanceRequest request, Authentication authentication) {
+        Seance seance = findOwnedSession(id, authentication);
+        Cours cours = request.coursId() == null ? null : findOwnedCourse(request.coursId(), authentication);
+        if (seance == null || cours == null) return ResponseEntity.notFound().build();
+        if (isBlank(request.titre()) || isBlank(request.type()) || request.dateHeure() == null || request.dureeMinutes() == null || request.dureeMinutes() <= 0)
+            return ResponseEntity.badRequest().body(Map.of("message", "Titre, type, date et durée positive sont requis."));
+        applySession(seance, request, cours);
+        return ResponseEntity.ok(toSeanceDto(seanceService.save(seance)));
+    }
+
+    @DeleteMapping("/formateur/seances/{id}")
+    public ResponseEntity<?> deleteSession(@PathVariable Long id, Authentication authentication) {
+        Seance seance = findOwnedSession(id, authentication);
+        if (seance == null) return ResponseEntity.notFound().build();
+        seanceService.delete(seance);
+        return ResponseEntity.noContent().build();
+    }
     @GetMapping("/formateur/cours")
     public ResponseEntity<?> listMyCourses(Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -277,6 +339,57 @@ public class EspaceEtudiantController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toCoursDto(coursService.save(cours)));
     }
 
+    @GetMapping("/formateur/cours/{id}")
+    public ResponseEntity<?> getMyCourse(@PathVariable Long id, Authentication authentication) {
+        Cours cours = findOwnedCourse(id, authentication);
+        return cours == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(toCoursDto(cours));
+    }
+
+    @PutMapping("/formateur/cours/{id}")
+    public ResponseEntity<?> updateCourse(
+            @PathVariable Long id,
+            @RequestBody CoursCreateRequest request,
+            Authentication authentication) {
+        Cours cours = findOwnedCourse(id, authentication);
+        if (cours == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (isBlank(request.code()) || isBlank(request.titre())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Le code et le titre du cours sont requis."));
+        }
+        if (request.volumeHoraire() != null && request.volumeHoraire() < 0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Le volume horaire ne peut pas etre negatif."));
+        }
+        cours.setNom(request.code().trim());
+        cours.setTitre(request.titre().trim());
+        cours.setDescription(request.description() == null ? "" : request.description().trim());
+        cours.setSemestre(request.semestre() == null ? "" : request.semestre().trim());
+        cours.setVolumeHoraire(request.volumeHoraire() == null ? 0L : request.volumeHoraire());
+        return ResponseEntity.ok(toCoursDto(coursService.save(cours)));
+    }
+
+    @DeleteMapping("/formateur/cours/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteCourse(@PathVariable Long id, Authentication authentication) {
+        Cours cours = findOwnedCourse(id, authentication);
+        if (cours == null) {
+            return ResponseEntity.notFound().build();
+        }
+        supportService.deleteCourseSupports(cours.getId());
+        coursService.delete(cours);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/formateur/cours/{id}/supports")
+    public ResponseEntity<?> listMyCourseSupports(@PathVariable Long id, Authentication authentication) {
+        Cours cours = findOwnedCourse(id, authentication);
+        if (cours == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(supportService.getCourseSupports(cours.getId()).stream()
+                .map(this::toSupportDto)
+                .toList());
+    }
     @PostMapping(value = "/formateur/supports", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadCourseSupport(
             @RequestParam Long coursId,
@@ -355,6 +468,24 @@ public class EspaceEtudiantController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    private Seance findOwnedSession(Long id, Authentication authentication) {
+        Formateur formateur = findAuthenticatedFormateur(authentication);
+        if (formateur == null) return null;
+        return seanceService.getByFormateur(formateur.getId()).stream().filter(seance -> seance.getId().equals(id)).findFirst().orElse(null);
+    }
+
+    private void applySession(Seance seance, SeanceRequest request, Cours cours) {
+        seance.setCours(cours);
+        seance.setTitre(request.titre().trim());
+        seance.setType(request.type().trim().toLowerCase());
+        seance.setDateHeure(request.dateHeure());
+        seance.setDureeMinutes(request.dureeMinutes());
+        seance.setLieuOuLien(request.lieuOuLien() == null ? "" : request.lieuOuLien().trim());
+    }
+
+    private SeanceDto toSeanceDto(Seance seance) {
+        return new SeanceDto(seance.getId(), seance.getCours().getId(), seance.getCours().getTitre(), seance.getTitre(), seance.getType(), seance.getDateHeure(), seance.getDureeMinutes(), seance.getLieuOuLien());
+    }
     private CoursDto toCoursDto(Cours cours) {
         return new CoursDto(
                 cours.getId(),
@@ -404,6 +535,16 @@ public class EspaceEtudiantController {
         return user == null ? null : formateurRepository.findByUserId(user.getId()).orElse(null);
     }
 
+    private Cours findOwnedCourse(Long courseId, Authentication authentication) {
+        Formateur formateur = findAuthenticatedFormateur(authentication);
+        if (formateur == null) {
+            return null;
+        }
+        return coursService.getByFormateurId(formateur.getId()).stream()
+                .filter(cours -> cours.getId().equals(courseId))
+                .findFirst()
+                .orElse(null);
+    }
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }

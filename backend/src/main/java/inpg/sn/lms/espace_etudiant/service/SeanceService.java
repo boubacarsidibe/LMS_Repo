@@ -1,0 +1,15 @@
+package inpg.sn.lms.espace_etudiant.service;
+
+import java.util.List;
+import org.springframework.stereotype.Service;
+import inpg.sn.lms.espace_etudiant.entity.Seance;
+import inpg.sn.lms.espace_etudiant.repository.SeanceRepository;
+
+@Service
+public class SeanceService {
+    private final SeanceRepository repository;
+    public SeanceService(SeanceRepository repository) { this.repository = repository; }
+    public List<Seance> getByFormateur(Long formateurId) { return repository.findByCours_Formateurs_IdOrderByDateHeureAsc(formateurId); }
+    public Seance save(Seance seance) { return repository.save(seance); }
+    public void delete(Seance seance) { repository.delete(seance); }
+}

@@ -2,7 +2,8 @@ import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Cours } from '../../models/cours';
+import { Cours, CoursCreation } from '../../models/cours';
+import { Support } from '../../models/support';
 import { CoursService } from '../../services/cours.service';
 import { SupportService } from '../../services/support.service';
 
@@ -19,6 +20,13 @@ export class MesCours implements OnInit {
   cours: Cours[] = [];
 
   depotForm: FormGroup;
+  gestionForm: FormGroup;
+  coursSelectionne: Cours | null = null;
+  supportsCours: Support[] = [];
+  chargementSupports = false;
+  isSavingCourse = false;
+  gestionMessage = '';
+  gestionError = '';
   fichierSelectionne: File | null = null;
   isUploading = false;
   uploadMessage = '';
@@ -33,6 +41,14 @@ export class MesCours implements OnInit {
       typeRessource: ['pdf', Validators.required],
       coursCible: ['', Validators.required],
       datePublication: ['', Validators.required]
+    });
+
+    this.gestionForm = this.fb.group({
+      code: ['', Validators.required],
+      titre: ['', Validators.required],
+      semestre: [''],
+      description: [''],
+      volumeHoraire: [0, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -93,6 +109,71 @@ export class MesCours implements OnInit {
     });
   }
 
+  gererCours(cours: Cours): void {
+    this.coursSelectionne = cours;
+    this.supportsCours = [];
+    this.gestionMessage = '';
+    this.gestionError = '';
+    this.gestionForm.reset({
+      code: cours.code,
+      titre: cours.titre,
+      semestre: cours.semestre || '',
+      description: cours.description || '',
+      volumeHoraire: cours.volumeHoraire ?? 0
+    });
+    this.chargementSupports = true;
+    this.coursService.getSupports(cours.id).subscribe({
+      next: supports => { this.supportsCours = supports || []; this.chargementSupports = false; },
+      error: () => { this.gestionError = 'Impossible de charger les supports du cours.'; this.chargementSupports = false; }
+    });
+  }
+
+  fermerGestion(): void {
+    this.coursSelectionne = null;
+    this.supportsCours = [];
+  }
+
+  enregistrerCours(): void {
+    if (!this.coursSelectionne || this.gestionForm.invalid) {
+      this.gestionForm.markAllAsTouched();
+      return;
+    }
+    this.isSavingCourse = true;
+    this.gestionMessage = '';
+    this.gestionError = '';
+    const data = this.gestionForm.getRawValue() as CoursCreation;
+    this.coursService.update(this.coursSelectionne.id, data).subscribe({
+      next: cours => {
+        this.cours = this.cours.map(item => item.id === cours.id ? cours : item);
+        this.coursSelectionne = cours;
+        this.isSavingCourse = false;
+        this.gestionMessage = 'Cours mis à jour.';
+      },
+      error: error => {
+        this.isSavingCourse = false;
+        this.gestionError = error.error?.message || 'La mise à jour du cours a échoué.';
+      }
+    });
+  }
+
+  supprimerCours(): void {
+    if (!this.coursSelectionne || !confirm(`Supprimer le cours « ${this.coursSelectionne.titre} » et ses supports ?`)) {
+      return;
+    }
+    this.isSavingCourse = true;
+    this.coursService.delete(this.coursSelectionne.id).subscribe({
+      next: () => { this.isSavingCourse = false; this.fermerGestion(); this.loadCours(); },
+      error: error => {
+        this.isSavingCourse = false;
+        this.gestionError = error.error?.message || 'La suppression du cours a échoué.';
+      }
+    });
+  }
+
+  ajouterRessource(cours: Cours): void {
+    this.depotForm.patchValue({ coursCible: String(cours.id) });
+    document.getElementById('depot-rapide')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   recherche: string = '';
   semestreSelectionne: string = 'Semestre 1 - 2024';
   cohorteSelectionnee: string = 'Toutes les Cohortes';
