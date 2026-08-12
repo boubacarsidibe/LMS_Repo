@@ -1,0 +1,231 @@
+<!-- ==================== PARAMÈTRES ==================== -->
+
+<div class="flex justify-between items-end mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-on-surface tracking-tight">Paramètres du Système</h2>
+    <p class="text-on-surface-variant text-sm mt-1">Configuration globale de la plateforme d'admission INPG.</p>
+  </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div class="flex border-b border-surface-container-highest gap-8 mb-6">
+  <button class="pb-4 text-sm transition-colors cursor-pointer border-b-2"
+          [class.border-primary]="activeTab === 'general'"
+          [class.text-primary]="activeTab === 'general'"
+          [class.font-bold]="activeTab === 'general'"
+          [class.border-transparent]="activeTab !== 'general'"
+          [class.text-on-surface-variant]="activeTab !== 'general'"
+          [class.font-medium]="activeTab !== 'general'"
+          (click)="switchTab('general')">Général & Établissement</button>
+  <button class="pb-4 text-sm transition-colors cursor-pointer border-b-2"
+          [class.border-primary]="activeTab === 'rules'"
+          [class.text-primary]="activeTab === 'rules'"
+          [class.font-bold]="activeTab === 'rules'"
+          [class.border-transparent]="activeTab !== 'rules'"
+          [class.text-on-surface-variant]="activeTab !== 'rules'"
+          [class.font-medium]="activeTab !== 'rules'"
+          (click)="switchTab('rules')">Règles & Barèmes</button>
+  <button class="pb-4 text-sm transition-colors cursor-pointer border-b-2"
+          [class.border-primary]="activeTab === 'users'"
+          [class.text-primary]="activeTab === 'users'"
+          [class.font-bold]="activeTab === 'users'"
+          [class.border-transparent]="activeTab !== 'users'"
+          [class.text-on-surface-variant]="activeTab !== 'users'"
+          [class.font-medium]="activeTab !== 'users'"
+          (click)="switchTab('users')">Équipe & Rôles Admin</button>
+  <button class="pb-4 text-sm transition-colors cursor-pointer border-b-2"
+          [class.border-primary]="activeTab === 'templates'"
+          [class.text-primary]="activeTab === 'templates'"
+          [class.font-bold]="activeTab === 'templates'"
+          [class.border-transparent]="activeTab !== 'templates'"
+          [class.text-on-surface-variant]="activeTab !== 'templates'"
+          [class.font-medium]="activeTab !== 'templates'"
+          (click)="switchTab('templates')">Modèles Emails & SMS</button>
+</div>
+
+<!-- ==================== TAB: GENERAL ==================== -->
+<div [class.hidden]="activeTab !== 'general'">
+  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest p-6 shadow-sm">
+    <h4 class="font-bold text-on-surface mb-6">Informations de l'Établissement</h4>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div>
+        <label class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Nom de l'Institut</label>
+        <input type="text" class="w-full rounded-lg border-surface-container-highest text-sm" [(ngModel)]="institutName"/>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Email de Contact</label>
+        <input type="email" class="w-full rounded-lg border-surface-container-highest text-sm" [(ngModel)]="contactEmail"/>
+      </div>
+    </div>
+    <div class="space-y-4 pt-6 border-t border-surface-container-highest">
+      <div class="flex items-center justify-between">
+        <span class="text-sm font-medium">Autoriser les candidatures spontanées</span>
+        <button class="w-10 h-5 rounded-full relative transition-colors cursor-pointer"
+                [class.bg-primary]="candidaturesSpontanees"
+                [class.bg-surface-container-highest]="!candidaturesSpontanees"
+                (click)="candidaturesSpontanees = !candidaturesSpontanees">
+          <span class="absolute top-1 w-3 h-3 bg-white rounded-full transition-all"
+                [class.right-1]="candidaturesSpontanees"
+                [class.left-1]="!candidaturesSpontanees"></span>
+        </button>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-sm font-medium">Activer les paiements en ligne</span>
+        <button class="w-10 h-5 rounded-full relative transition-colors cursor-pointer"
+                [class.bg-primary]="paiementEnLigne"
+                [class.bg-surface-container-highest]="!paiementEnLigne"
+                (click)="paiementEnLigne = !paiementEnLigne">
+          <span class="absolute top-1 w-3 h-3 bg-white rounded-full transition-all"
+                [class.right-1]="paiementEnLigne"
+                [class.left-1]="!paiementEnLigne"></span>
+        </button>
+      </div>
+    </div>
+    <div class="mt-8 flex justify-end">
+      <button class="px-6 py-2 bg-primary text-on-primary font-bold rounded-lg hover:bg-opacity-90 transition-opacity cursor-pointer" (click)="saveSettings('Paramètres enregistrés avec succès.')">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB: RULES ==================== -->
+<div [class.hidden]="activeTab !== 'rules'">
+  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest p-6 shadow-sm">
+    <h4 class="font-bold text-on-surface mb-6">Seuils d'Admissibilité</h4>
+    <div class="grid grid-cols-2 gap-6 mb-8">
+      <div>
+        <label class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Tests Académiques (/100)</label>
+        <input type="number" class="w-full rounded-lg border-surface-container-highest text-sm" [(ngModel)]="seuilTests"/>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Entretien (/100)</label>
+        <input type="number" class="w-full rounded-lg border-surface-container-highest text-sm" [(ngModel)]="seuilEntretien"/>
+      </div>
+    </div>
+    <div class="mt-8 flex justify-end">
+      <button class="px-6 py-2 bg-primary text-on-primary font-bold rounded-lg hover:bg-opacity-90 transition-opacity cursor-pointer" (click)="saveSettings('Barèmes sauvegardés avec succès.')">Sauvegarder les barèmes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TAB: USERS ==================== -->
+<div [class.hidden]="activeTab !== 'users'">
+  <div class="flex justify-end mb-4">
+    <button class="px-4 py-2 bg-primary text-on-primary font-bold rounded-lg flex items-center gap-2 cursor-pointer" (click)="openAddUserModal()">
+      <span class="material-symbols-outlined text-[20px]">person_add</span> Ajouter un membre
+    </button>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm overflow-hidden">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-surface-container-low text-xs font-bold uppercase text-on-surface-variant border-b border-surface-container-highest">
+        <tr>
+          <th class="px-6 py-3">Utilisateur</th>
+          <th class="px-6 py-3">Rôle</th>
+          <th class="px-6 py-3">Statut</th>
+          <th class="px-6 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-surface-container-highest">
+        <tr *ngFor="let user of users">
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">{{ user.initials }}</div>
+              <div><p class="font-semibold">{{ user.nom }}</p><p class="text-xs text-on-surface-variant">{{ user.email }}</p></div>
+            </div>
+          </td>
+          <td class="px-6 py-4"><span class="px-2 py-1 bg-surface-container-high rounded text-xs">{{ user.role }}</span></td>
+          <td class="px-6 py-4">
+            <span class="flex items-center gap-1" [class.text-success]="user.actif" [class.text-on-surface-variant]="!user.actif">
+              <span class="w-1.5 h-1.5 rounded-full" [class.bg-success]="user.actif" [class.bg-on-surface-variant]="!user.actif"></span>
+              {{ user.actif ? 'Actif' : 'Inactif' }}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-right">
+            <button class="text-on-surface-variant hover:text-primary cursor-pointer">
+              <span class="material-symbols-outlined text-[18px]">edit</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== TAB: TEMPLATES ==================== -->
+<div [class.hidden]="activeTab !== 'templates'">
+  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest p-6 shadow-sm">
+    <div class="flex gap-6">
+      <div class="w-64 space-y-2">
+        <button class="w-full text-left p-3 rounded-lg bg-primary/10 border border-primary/20 font-semibold text-primary cursor-pointer">Confirmation Inscription</button>
+        <button class="w-full text-left p-3 rounded-lg hover:bg-surface-container transition-colors cursor-pointer">Convocation Test</button>
+      </div>
+      <div class="flex-1 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Objet de l'Email</label>
+          <input type="text" class="w-full rounded-lg border-surface-container-highest text-sm" value="Confirmation de réception de votre dossier - INPG"/>
+        </div>
+        <textarea class="w-full rounded-lg border-surface-container-highest text-sm h-48 font-mono p-4">Bonjour &#123;NOM_CANDIDAT&#125;,
+
+Nous vous confirmons la bonne réception de votre dossier pour la session &#123;SESSION&#125;.
+Votre numéro de dossier est le : &#123;NUMERO_DOSSIER&#125;.
+
+Vous serez informé(e) des prochaines étapes par email.
+
+Cordialement,
+L'équipe Admissions INPG</textarea>
+        <div class="flex justify-end">
+          <button class="px-6 py-2 bg-primary text-on-primary font-bold rounded-lg cursor-pointer" (click)="saveSettings('Modèle enregistré avec succès.')">Enregistrer le modèle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL: AJOUTER UTILISATEUR ==================== -->
+<div class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center" [class.hidden]="!modalAddUserOpen">
+  <div class="bg-surface-container-lowest rounded-2xl w-full max-w-lg p-8 shadow-2xl flex flex-col gap-6">
+    <div class="flex justify-between items-center">
+      <h3 class="text-xl font-bold text-on-surface">+ Ajouter un membre de l'équipe</h3>
+      <button class="p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant cursor-pointer" (click)="closeAddUserModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Prénom</label>
+          <input type="text" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="ex: Jean"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Nom</label>
+          <input type="text" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="ex: Dupont"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Email Professionnel</label>
+        <input type="email" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="j.dupont@inpg.sn"/>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Rôle Attribué</label>
+        <select class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm cursor-pointer">
+          <option>Super Admin</option>
+          <option>Responsable Admissions</option>
+          <option>Correcteur Test</option>
+          <option>Membre Jury</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex justify-end gap-3 pt-4 border-t border-surface-container-highest">
+      <button class="px-6 py-2.5 text-sm font-semibold text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors cursor-pointer" (click)="closeAddUserModal()">Annuler</button>
+      <button class="px-6 py-2.5 text-sm font-bold bg-primary text-on-primary rounded-xl hover:bg-opacity-90 transition-opacity shadow-md cursor-pointer" (click)="createUser()">Créer le compte</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="fixed bottom-4 right-4 z-50 transform transition-all duration-300 pointer-events-none flex items-center gap-3 px-4 py-3 bg-surface-container-lowest border border-success/30 rounded-lg shadow-lg"
+     [class.translate-y-full]="!toastVisible" [class.opacity-0]="!toastVisible">
+  <div class="w-8 h-8 rounded-full bg-success/20 text-success flex items-center justify-center shrink-0">
+    <span class="material-symbols-outlined text-[18px]">check</span>
+  </div>
+  <p class="text-sm font-medium text-on-surface">{{ toastMessage }}</p>
+</div>

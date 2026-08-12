@@ -28,3 +28,12 @@ body {
 .form-input:focus {
   box-shadow: 0 0 0 3px rgba(48, 96, 154, 0.2);
 }
+
+/* Curseur pointer sur tous les éléments interactifs */
+button, a, select, [role="button"], summary, input[type="checkbox"], input[type="radio"], input[type="submit"], label {
+  cursor: pointer;
+}
+
+tr[class*="cursor-pointer"], tr[class*="group"] {
+  cursor: pointer;
+}

@@ -10,6 +10,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -40,6 +42,22 @@ public class SessionCandidature {
 
     @Column(nullable = false)
     private boolean estOuverte;
+
+    @Column(nullable = false)
+    private int quotaMax = 220;
+
+    @Column(nullable = false)
+    private int quotaActuel = 0;
+
+    @Column(length = 500)
+    private String description;
+
+    @Column(nullable = false)
+    private String status = "BROUILLON"; // BROUILLON, OUVERT, CLOTURE, SUSPENDU
+
+    @ManyToOne
+    @JoinColumn(name = "program_id")
+    private Program program;
 
     @OneToMany(mappedBy = "sessionCandidature", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Candidature> candidatures = new ArrayList<>();

@@ -13,4 +13,6 @@ public interface SessionCandidatureRepository extends JpaRepository<SessionCandi
     List<SessionCandidature> findByEstOuverteTrue();
 
     List<SessionCandidature> findByLibelleContainingIgnoreCase(String libelle);
+
+    SessionCandidature findTopByEstOuverteTrueOrderByIdDesc();
 }

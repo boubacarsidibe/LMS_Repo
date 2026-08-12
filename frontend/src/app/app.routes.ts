@@ -8,6 +8,7 @@ import { ResponsableAdmissionCandidaturesComponent } from './features/recrutemen
 import { ResponsableAdmissionEntretiensComponent } from './features/recrutement/responsable-admission/entretiens/responsable-admission-entretiens.component';
 import { ResponsableAdmissionDeliberationComponent } from './features/recrutement/responsable-admission/deliberation/responsable-admission-deliberation.component';
 import { ResponsableAdmissionLayoutComponent } from './features/recrutement/responsable-admission/layout/responsable-admission-layout.component';
+import { ResponsableAdmissionTestsComponent } from './features/recrutement/responsable-admission/tests/responsable-admission-tests.component';
 import { Login } from './features/auth/login/login';
 import { Register } from './features/auth/register/register';
 import { VerifyOtp } from './features/auth/verify-otp/verify-otp';
@@ -85,6 +86,9 @@ export const routes: Routes = [
       { path: 'candidatures', component: ResponsableAdmissionCandidaturesComponent },
       { path: 'entretiens', component: ResponsableAdmissionEntretiensComponent },
       { path: 'deliberation', component: ResponsableAdmissionDeliberationComponent },
+      { path: 'tests', component: ResponsableAdmissionTestsComponent },
+      { path: 'statistiques', loadComponent: () => import('./features/recrutement/responsable-admission/statistiques/responsable-admission-statistiques.component').then(m => m.ResponsableAdmissionStatistiquesComponent) },
+      { path: 'settings', loadComponent: () => import('./features/recrutement/responsable-admission/settings/responsable-admission-settings.component').then(m => m.ResponsableAdmissionSettingsComponent) },
     ]
   },
   {path:"politique-de-confidentialite", component:PolitiqueConfidentialite},

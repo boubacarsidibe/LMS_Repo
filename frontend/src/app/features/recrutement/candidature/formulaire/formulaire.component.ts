@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { RecrutementService, SessionCandidatureResponse, CandidatureRequest, CandidatureResponse } from '../../../../core/recrutement/services/recrutement.service';
+import { Auth } from '../../../../core/auth/services/authService';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
 import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 
-const STORAGE_KEY = 'candidature_brouillon';
+const STORAGE_KEY_PREFIX = 'candidature_brouillon';
 
 interface CandidatureFormData {
   etape: number;
@@ -53,8 +54,15 @@ export class FormulaireComponent implements OnInit {
 
   constructor(
     private recrutementService: RecrutementService,
-    private router: Router
+    private router: Router,
+    private auth: Auth
   ) {}
+
+  /** Clé localStorage scopée par utilisateur pour éviter les fuites de brouillons entre comptes */
+  private get storageKey(): string {
+    const userId = this.auth.currentUser()?.id;
+    return userId ? `${STORAGE_KEY_PREFIX}_${userId}` : STORAGE_KEY_PREFIX;
+  }
 
   ngOnInit(): void {
     // Vérification immédiate : si une candidature active existe, rediriger sans afficher le formulaire
@@ -79,7 +87,7 @@ export class FormulaireComponent implements OnInit {
     this.recrutementService.getCataloguePublic().subscribe({
       next: (data) => { this.sessions = data.filter(s => s.estActive); }
     });
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(this.storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -109,11 +117,23 @@ export class FormulaireComponent implements OnInit {
 
   saveDraft(): void {
     this.data.etape = this.etape;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+    localStorage.setItem(this.storageKey, JSON.stringify(this.data));
   }
 
   soumettre(): void {
     if (!this.data.consentement) { alert('Veuillez accepter les conditions.'); return; }
+
+    // Vérification des 4 pièces justificatives obligatoires
+    const piecesManquantes: string[] = [];
+    if (!this.data.fichierIdentite?.trim()) piecesManquantes.push('Pièce d\'identité');
+    if (!this.data.fichierCV?.trim()) piecesManquantes.push('CV');
+    if (!this.data.fichierMotivation?.trim()) piecesManquantes.push('Lettre de motivation');
+    if (!this.data.fichierReleves?.trim()) piecesManquantes.push('Relevés de notes');
+    if (piecesManquantes.length > 0) {
+      alert('❌ Documents obligatoires manquants :\n' + piecesManquantes.map((d, i) => `${i + 1}. ${d}`).join('\n'));
+      return;
+    }
+
     this.loading = true;
     const sessionId = this.sessions.length > 0 ? this.sessions[0].id : 1;
     const request: CandidatureRequest = {
@@ -178,7 +198,7 @@ export class FormulaireComponent implements OnInit {
   private onSubmitComplete(): void {
     this.loading = false;
     this.successMessage = 'Candidature soumise avec succès ! N° ' + (this.candidature?.numeroDossier || '');
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(this.storageKey);
     setTimeout(() => {
       this.router.navigate(['/recrutement/suivi']);
     }, 1500);

@@ -89,6 +89,36 @@ export interface EntretienRequest {
   candidatId: number;
 }
 
+// ===================== SESSIONS TYPES =====================
+
+export interface SessionsKpi {
+  totalSessionsActives: number;
+  totalCandidatures: number;
+  tauxRemplissage: number;
+  prochaineCloture: string;
+}
+
+export interface SessionRow {
+  id: number;
+  libelle: string;
+  dateOuverture: string;
+  dateFermeture: string;
+  estOuverte: boolean;
+  quotaMax: number;
+  quotaActuel: number;
+  status: string;
+  nombreCandidatures: number;
+  tauxRemplissage: number;
+  program: Program | null;
+}
+
+export interface Program {
+  id: number;
+  title: string;
+  level: string;
+  department: string;
+}
+
 export interface NotificationCandidatResponse {
   id: number;
   message: string;
@@ -107,6 +137,56 @@ export interface EntretienResponse {
   candidatId: number;
 }
 
+// ===================== DASHBOARD TYPES =====================
+
+export interface DashboardOverview {
+  sessionActive: SessionSummary | null;
+  totalCandidatures: number;
+  candidaturesValidees: number;
+  candidaturesEnAttente: number;
+  candidaturesRejetees: number;
+  candidaturesRecentes: CandidatureResume[];
+  testsAcademiques: TestSummary[];
+  entretiens: EntretienSummary[];
+}
+
+export interface SessionSummary {
+  id: number;
+  libelle: string;
+  estOuverte: boolean;
+  dateOuverture: string;
+  dateFermeture: string;
+  quotaMax: number;
+  quotaActuel: number;
+}
+
+export interface CandidatureResume {
+  id: number;
+  numeroDossier: string;
+  nomCandidat: string;
+  prenomCandidat: string;
+  email: string;
+  statut: string;
+  formation: string;
+  dateSoumission: string;
+}
+
+export interface TestSummary {
+  id: number;
+  nomEpreuve: string;
+  dateEpreuve: string;
+  nombreCandidats: number;
+  seuilReussite: number;
+}
+
+export interface EntretienSummary {
+  id: number;
+  commission: string;
+  salle: string;
+  jury: string;
+  dateEntretien: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -115,6 +195,204 @@ export class RecrutementService {
   private baseUrl = '/api';
 
   constructor(private http: HttpClient) { }
+
+  // ===================== ACADEMIC TESTS =====================
+
+  getAcademicTestKpis(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/academic-tests/kpis`);
+  }
+
+  listAcademicExams(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/academic-tests/exams`);
+  }
+
+  createAcademicExam(body: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/academic-tests/exams`, body);
+  }
+
+  changeExamStatus(nom: string, status: string): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/academic-tests/exams/${encodeURIComponent(nom)}/status`, { status });
+  }
+
+  getExamScores(nom: string, seuil: number = 60): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/academic-tests/exams/${encodeURIComponent(nom)}/scores?seuil=${seuil}`);
+  }
+
+  saveExamScores(nom: string, scores: any[]): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/academic-tests/exams/${encodeURIComponent(nom)}/scores/batch`, scores);
+  }
+
+  // ===================== SETTINGS =====================
+
+  getProgramsFromSessions(): Observable<Program[]> {
+    return this.http.get<Program[]>(`${this.baseUrl}/sessions/programs`);
+  }
+
+  getPrograms(): Observable<Program[]> {
+    return this.http.get<Program[]>(`${this.baseUrl}/settings/programs`);
+  }
+
+  updateProgram(id: number, body: Program): Observable<Program> {
+    return this.http.put<Program>(`${this.baseUrl}/settings/programs/${id}`, body);
+  }
+
+  deleteProgram(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/settings/programs/${id}`);
+  }
+
+  getRules(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/settings/rules`);
+  }
+
+  updateRules(body: any): Observable<any> {
+    return this.http.put(`${this.baseUrl}/settings/rules`, body);
+  }
+
+  // ===================== ANALYTICS =====================
+
+  getAnalyticsKpis(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/analytics/kpis`);
+  }
+
+  getVolumeByMonth(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/analytics/volume-by-month`);
+  }
+
+  getGeographicDistribution(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/analytics/geographic-distribution`);
+  }
+
+  getConversionFunnel(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/analytics/conversion-funnel`);
+  }
+
+  exportAnalyticsReport(annee: string = '2026-2027'): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/analytics/export-report?annee=${annee}`, { responseType: 'blob' });
+  }
+
+  // ===================== INTERVIEWS =====================
+
+  getInterviewKpis(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/interviews/kpis`);
+  }
+
+  listInterviews(tab: string = 'ALL', search?: string, page: number = 0, limit: number = 10): Observable<any[]> {
+    const params = new URLSearchParams();
+    params.set('tab', tab);
+    if (search) params.set('search', search);
+    params.set('page', String(page));
+    params.set('limit', String(limit));
+    return this.http.get<any[]>(`${this.baseUrl}/interviews?${params.toString()}`);
+  }
+
+  createInterview(body: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/interviews`, body);
+  }
+
+  updateInterview(id: number, body: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/interviews/${id}`, body);
+  }
+
+  saveEvaluation(id: number, body: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/interviews/${id}/evaluation`, body);
+  }
+
+  deleteInterview(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/interviews/${id}`);
+  }
+
+  // ===================== APPLICATIONS =====================
+
+  getApplicationKpis(filters?: { status?: string; sessionId?: number }): Observable<any> {
+    const params = new URLSearchParams();
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.sessionId) params.set('sessionId', String(filters.sessionId));
+    const qs = params.toString();
+    return this.http.get<any>(`${this.baseUrl}/applications/kpis${qs ? '?' + qs : ''}`);
+  }
+
+  listApplications(filters?: { search?: string; status?: string; programId?: number; sessionId?: number }): Observable<any[]> {
+    const params = new URLSearchParams();
+    if (filters?.search) params.set('search', filters.search);
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.sessionId) params.set('sessionId', String(filters.sessionId));
+    const qs = params.toString();
+    return this.http.get<any[]>(`${this.baseUrl}/applications${qs ? '?' + qs : ''}`);
+  }
+
+  sendReminder(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/applications/reminder-incomplets`, {});
+  }
+
+  exportApplications(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/applications/export`, { responseType: 'blob' });
+  }
+
+  updateDocumentStatus(applicationId: number, pieceId: number, valide: boolean): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/applications/${applicationId}/documents/status`, { pieceId, valide });
+  }
+
+  // ===================== SESSIONS =====================
+
+  getSessionKpis(): Observable<SessionsKpi> {
+    return this.http.get<SessionsKpi>(`${this.baseUrl}/sessions/kpis`);
+  }
+
+  listSessions(filters?: { q?: string; status?: string; level?: string }): Observable<SessionRow[]> {
+    let params = new (window as any).URLSearchParams();
+    if (filters) {
+      if (filters.q) params.set('q', filters.q);
+      if (filters.status) params.set('status', filters.status);
+      if (filters.level) params.set('level', filters.level);
+    }
+    return this.http.get<SessionRow[]>(`${this.baseUrl}/sessions?${params.toString()}`);
+  }
+
+  createSessionApi(body: any): Observable<SessionRow> {
+    return this.http.post<SessionRow>(`${this.baseUrl}/sessions`, body);
+  }
+
+  updateSession(id: number, body: any): Observable<SessionRow> {
+    return this.http.put<SessionRow>(`${this.baseUrl}/sessions/${id}`, body);
+  }
+
+  changeSessionStatus(id: number, status: string): Observable<SessionRow> {
+    return this.http.patch<SessionRow>(`${this.baseUrl}/sessions/${id}/status`, { status });
+  }
+
+  deleteSession(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/sessions/${id}`);
+  }
+
+  duplicateSession(id: number): Observable<SessionRow> {
+    return this.http.post<SessionRow>(`${this.baseUrl}/sessions/${id}/duplicate`, {});
+  }
+
+  exportSessions(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/sessions/export`, { responseType: 'blob' });
+  }
+
+  // ===================== DASHBOARD =====================
+
+  getDashboardOverview(): Observable<DashboardOverview> {
+    return this.http.get<DashboardOverview>(`${this.baseUrl}/dashboard/overview`);
+  }
+
+  createSession(body: { libelle: string; dateOuverture: string; dateFermeture: string; quotaMax: number }): Observable<SessionSummary> {
+    return this.http.post<SessionSummary>(`${this.baseUrl}/dashboard/sessions/new`, body);
+  }
+
+  closeSession(id: number): Observable<SessionSummary> {
+    return this.http.patch<SessionSummary>(`${this.baseUrl}/dashboard/sessions/${id}/close`, {});
+  }
+
+  getRecentApplications(limit: number = 5): Observable<CandidatureResume[]> {
+    return this.http.get<CandidatureResume[]>(`${this.baseUrl}/dashboard/applications/recent?limit=${limit}`);
+  }
+
+  searchApplications(q: string): Observable<CandidatureResume[]> {
+    return this.http.get<CandidatureResume[]>(`${this.baseUrl}/dashboard/applications/search?q=${encodeURIComponent(q)}`);
+  }
 
   // ===================== PUBLIC =====================
 

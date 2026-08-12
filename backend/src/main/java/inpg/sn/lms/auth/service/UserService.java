@@ -7,9 +7,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import inpg.sn.lms.auth.entity.ResponsableAdmission;
 import inpg.sn.lms.auth.entity.Role;
 import inpg.sn.lms.auth.entity.User;
+import inpg.sn.lms.auth.repository.ResponsableAdmissionRepository;
 import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
 
@@ -21,11 +24,13 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ResponsableAdmissionRepository responsableAdmissionRepository;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, ResponsableAdmissionRepository responsableAdmissionRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.responsableAdmissionRepository = responsableAdmissionRepository;
     }
 
     public List<User> getAllUsers() {
@@ -70,7 +75,18 @@ public class UserService implements UserDetailsService {
         if (roleResp != null) {
             user.addRole(roleResp);
         }
-        return userRepository.save(user);
+        user = userRepository.save(user);
+
+        // Persister les attributs spécifiques ResponsableAdmission
+        ResponsableAdmission responsable = new ResponsableAdmission(
+            user,
+            userDto.getNom() != null ? userDto.getNom() : "",
+            userDto.getPrenom() != null ? userDto.getPrenom() : "",
+            userDto.getTelephone() != null ? userDto.getTelephone() : ""
+        );
+        responsableAdmissionRepository.save(responsable);
+
+        return user;
     }
 
     public User findByUsername(String username) {
@@ -86,10 +102,15 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username);
         if (user == null) {
-            throw new UsernameNotFoundException("User not found with username: " + username);
+            // Essayer par email si le login est un email
+            user = userRepository.findByEmail(username);
+        }
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found: " + username);
         }
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.getCode()))

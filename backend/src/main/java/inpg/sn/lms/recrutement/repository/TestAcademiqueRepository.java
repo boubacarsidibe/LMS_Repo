@@ -11,4 +11,6 @@ import inpg.sn.lms.recrutement.entity.TestAcademique;
 public interface TestAcademiqueRepository extends JpaRepository<TestAcademique, Long> {
 
     List<TestAcademique> findByCandidatId(Long candidatId);
+
+    List<TestAcademique> findByNomEpreuve(String nomEpreuve);
 }

@@ -1,0 +1,168 @@
+<!-- ==================== STATISTIQUES ==================== -->
+
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-on-surface tracking-tight">Statistiques & Rapports</h2>
+    <p class="text-on-surface-variant text-sm mt-1">Analysez les tendances de recrutement et suivez vos indicateurs clés de performance.</p>
+  </div>
+  <div class="flex gap-3 items-center">
+    <select class="text-sm border border-surface-container-highest rounded-lg bg-surface-container-lowest text-on-surface py-2 pl-3 pr-8 cursor-pointer outline-none focus:ring-1 focus:ring-primary" [(ngModel)]="anneeAcademique" (change)="onAnneeChange()">
+      <option>2026-2027</option>
+      <option>2025-2026</option>
+    </select>
+    <button (click)="exportReport()" class="px-4 py-2 bg-primary text-on-primary font-medium rounded-lg hover:bg-opacity-90 transition-opacity shadow-sm text-sm flex items-center gap-2 cursor-pointer">
+      <span class="material-symbols-outlined text-[20px]">download</span>Exporter Rapport
+    </button>
+  </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Total Candidatures</span>
+      <span class="material-symbols-outlined text-[20px] text-primary">trending_up</span>
+    </div>
+    <p class="text-2xl font-bold text-on-surface">{{ kpis.totalCandidatures.toLocaleString('fr') }}</p>
+    <div class="flex items-center gap-1 mt-1">
+      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-success/10 text-success">+{{ kpis.variation }}%</span>
+      <span class="text-[10px] text-on-surface-variant">vs session précédente</span>
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Taux d'Admission</span>
+      <span class="material-symbols-outlined text-[20px] text-primary">school</span>
+    </div>
+    <p class="text-2xl font-bold text-on-surface">{{ kpis.tauxAdmission }}%</p>
+    <div class="flex items-center gap-1 mt-1">
+      <span class="text-[10px] text-on-surface-variant">Cible: {{ kpis.cibleAdmission }}%</span>
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Frais Collectés</span>
+      <span class="material-symbols-outlined text-[20px] text-primary">payments</span>
+    </div>
+    <p class="text-2xl font-bold text-on-surface">{{ formatFrais(kpis.fraisCollectes) }}</p>
+    <div class="flex items-center gap-1 mt-1">
+      <span class="text-[10px] text-on-surface-variant">Wave · PayDunya · Virement</span>
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Temps Traitement</span>
+      <span class="material-symbols-outlined text-[20px] text-primary">schedule</span>
+    </div>
+    <p class="text-2xl font-bold text-on-surface">{{ kpis.tempsTraitement }}j</p>
+    <div class="flex items-center gap-1 mt-1">
+      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-success/10 text-success">{{ kpis.deltaTemps }}j</span>
+      <span class="text-[10px] text-on-surface-variant">vs période précédente</span>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+  <!-- Volume by Month (2/3) -->
+  <div class="lg:col-span-2 bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm p-5">
+    <h3 class="font-bold text-on-surface text-sm mb-4 flex items-center gap-2">
+      <span class="material-symbols-outlined text-[20px] text-primary">bar_chart</span>Volume de Candidatures par Mois
+    </h3>
+    @if (volumeByMonth.length === 0) {
+    <div class="py-12 text-center text-on-surface-variant text-sm">Données insuffisantes pour la période sélectionnée.</div>
+    } @else {
+    <div class="space-y-4">
+      @for (entry of volumeByMonth; track entry.mois) {
+      <div>
+        <div class="flex justify-between text-xs text-on-surface-variant mb-1">
+          <span class="font-semibold">{{ entry.mois }}</span>
+          <span>{{ entry.total }} candidatures</span>
+        </div>
+        <div class="w-full h-5 bg-surface-container rounded-full overflow-hidden flex">
+          <div [style.width]="barWidth(entry.validees)" class="h-full bg-primary transition-all duration-500"></div>
+          <div [style.width]="barWidth(entry.rejetees)" class="h-full bg-error/60 transition-all duration-500"></div>
+        </div>
+        <div class="flex gap-4 text-[10px] text-on-surface-variant mt-1">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span>Validées: {{ entry.validees }}</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-error/60"></span>Rejetées: {{ entry.rejetees }}</span>
+        </div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+  <!-- Geographic Distribution (1/3) -->
+  <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm p-5">
+    <h3 class="font-bold text-on-surface text-sm mb-4 flex items-center gap-2">
+      <span class="material-symbols-outlined text-[20px] text-primary">public</span>Origine Géographique
+    </h3>
+    @if (geoDistribution.length === 0) {
+    <div class="py-12 text-center text-on-surface-variant text-sm">Données insuffisantes.</div>
+    } @else {
+    <div class="space-y-4">
+      @for (entry of geoDistribution; track entry.pays) {
+      <div>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="font-semibold text-on-surface">{{ entry.pays }}</span>
+          <span class="text-on-surface-variant">{{ entry.effectif }} ({{ entry.pourcentage }}%)</span>
+        </div>
+        <div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+          <div [style.width]="entry.pourcentage + '%'" class="h-full rounded-full transition-all duration-500"
+               [class.bg-primary]="entry.pays === 'Sénégal'"
+               [class.bg-secondary]="entry.pays === 'Mali'"
+               [class.bg-success]="entry.pays === 'Côte d\'Ivoire'"
+               [class.bg-surface-container-highest]="entry.pays === 'Autres'"></div>
+        </div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+</div>
+
+<!-- Conversion Funnel -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm p-5 mb-6">
+  <h3 class="font-bold text-on-surface text-sm mb-4 flex items-center gap-2">
+    <span class="material-symbols-outlined text-[20px] text-primary">filter_alt</span>Entonnoir de Conversion
+  </h3>
+  @if (funnel.length === 0) {
+  <div class="py-12 text-center text-on-surface-variant text-sm">Données insuffisantes.</div>
+  } @else {
+  <div class="flex flex-wrap justify-center gap-4">
+    @for (step of funnel; track step.etape; let idx = $index) {
+    <div class="flex flex-col items-center min-w-[140px]">
+      @if (idx > 0) {
+      <div class="w-0.5 h-6 bg-surface-container-highest"></div>
+      }
+      <div class="px-4 py-3 rounded-xl text-center transition-all"
+           [style.width]="(step.pourcentage * 1.5 + 80) + 'px'"
+           [style.max-width]="'220px'"
+           [class.bg-primary]="idx === 0"
+           [class.bg-primary/80]="idx === 1"
+           [class.bg-primary/60]="idx === 2"
+           [class.bg-primary/40]="idx === 3"
+           [class.bg-primary/20]="idx === 4">
+        <p class="text-xs font-bold" [class.text-on-primary]="idx <= 1" [class.text-on-surface]="idx > 1">{{ step.etape }}</p>
+        <p class="text-lg font-bold" [class.text-on-primary]="idx <= 1" [class.text-on-surface]="idx > 1">{{ step.nombre }}</p>
+        <p class="text-[10px] opacity-70" [class.text-on-primary/70]="idx <= 1" [class.text-on-surface-variant]="idx > 1">{{ step.pourcentage }}%</p>
+      </div>
+      @if (idx < funnel.length - 1) {
+      <span class="material-symbols-outlined text-[16px] text-on-surface-variant my-1">arrow_downward</span>
+      }
+    </div>
+    }
+  </div>
+  }
+</div>
+
+<!-- Toast -->
+@if (toastVisible) {
+<div class="fixed bottom-4 right-4 z-50 transform transition-all duration-300 flex items-center gap-3 px-4 py-3 bg-surface-container-lowest border rounded-lg shadow-lg"
+     [class.border-success/30]="toastType === 'success'" [class.border-error/30]="toastType === 'error'">
+  <span class="material-symbols-outlined text-[18px]" [class.text-success]="toastType === 'success'" [class.text-error]="toastType === 'error'">{{ toastType === 'success' ? 'check' : 'error' }}</span>
+  <p class="text-sm font-medium text-on-surface">{{ toastMessage }}</p>
+</div>
+}

@@ -1,75 +1,118 @@
-<div class="flex bg-surface min-h-screen">
-  <!-- SideNavBar -->
-  <nav class="fixed left-0 top-0 h-full flex flex-col z-40 w-64 border-r border-outline-variant bg-surface-container-lowest hidden md:flex">
-    <div class="p-6 flex items-center gap-4">
-      <div>
-        <h1 class="font-headline-sm text-headline-sm font-bold text-primary leading-tight">INPG LMS</h1>
-        <p class="font-label-sm text-label-sm text-on-surface-variant">Portail Admissions</p>
+<div class="flex bg-surface-container-low h-screen overflow-hidden">
+  <!-- ==================== SIDEBAR ==================== -->
+  <nav class="fixed left-0 top-0 h-screen flex flex-col z-40 w-64 bg-surface-container-lowest border-r border-surface-container-highest shadow-sm">
+    <div class="p-5 mb-2">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="min-w-[3.5rem] h-10 px-2 rounded-lg bg-primary flex items-center justify-center text-on-primary font-bold text-sm tracking-wide">INPG</div>
+        <div>
+          <h1 class="text-sm font-bold text-on-surface">INPG Portal</h1>
+          <p class="text-[11px] text-on-surface-variant font-medium">Academic Administration</p>
+        </div>
+      </div>
+      <span class="inline-block px-2 py-1 bg-surface-container text-[10px] font-semibold rounded text-on-surface-variant mt-2">BACK-OFFICE ADMISSIONS</span>
+    </div>
+
+    <div class="mx-4 mb-5 flex items-center gap-3 p-3 bg-surface-container rounded-lg border border-surface-container-highest">
+      <img class="w-10 h-10 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkuSMGuzb0Xq_i0jrC-JOMO-406O4P-PEusLqRJjbw23XaNGJfVZCGYkZu7yCZLTKpZ-Rbzb44UiKPZ608ssB2UTECkGy6NxuY_Ynh9afoGO5LQQvOiWek35OjHdRwrvhcs_vMhDUK5A2wJ-9sFgRhwq-GQfgPTZPxphwOU2z7Cn2ut9WySzt8g9RMyDNVg_vsESYvNWKgRCCn-sRD3Tf2DuuYjTQHygzu-JmQpDP6kCBQFQitR7DTDw" alt="Profile"/>
+      <div class="overflow-hidden">
+        <p class="text-sm font-semibold truncate text-on-surface">Dr. Cheikh Samba</p>
+        <p class="text-xs text-on-surface-variant truncate">Responsable Recrutement</p>
       </div>
     </div>
-    <div class="flex-1 overflow-y-auto px-2 space-y-1">
-      <a
-        *ngFor="let item of navItems"
-        [routerLink]="item.route"
-        class="flex items-center gap-3 px-4 py-2 rounded-lg font-label-md text-label-md transition-all duration-200"
+
+    <div class="flex-1 overflow-y-auto px-2 space-y-0.5">
+      <a *ngFor="let item of navItems" [routerLink]="item.route"
+        class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer font-label-md text-label-md"
         [class.bg-secondary-fixed]="isActive(item.route)"
-        [class.text-secondary]="isActive(item.route)"
+        [class.text-on-secondary-fixed]="isActive(item.route)"
+        [class.border-l-4]="isActive(item.route)"
+        [class.border-secondary]="isActive(item.route)"
+        [class.shadow-sm]="isActive(item.route)"
         [class.font-medium]="isActive(item.route)"
         [class.text-on-surface-variant]="!isActive(item.route)"
-        [class.hover:bg-surface-container-low]="!isActive(item.route)"
-      >
-        <span
-          class="material-symbols-outlined"
-          [style.font-variation-settings]="item.filled ? 'FILL 1' : 'FILL 0'"
-        >{{ item.icon }}</span>
+        [class.hover:bg-surface-container]="!isActive(item.route)">
+        <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="isActive(item.route) ? 'FILL 1' : 'FILL 0'">{{ item.icon }}</span>
         {{ item.label }}
       </a>
     </div>
-    <div class="p-4 border-t border-outline-variant space-y-1">
-      <a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 rounded-lg font-label-md text-label-md" href="#">
-        <span class="material-symbols-outlined">settings</span>
-        Paramètres
+
+    <div class="mt-3 p-4 border-t border-surface-container-highest space-y-1">
+      <a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 rounded-lg hover:bg-surface-container transition-all duration-200 text-sm cursor-pointer" routerLink="/responsable-admission/settings">
+        <span class="material-symbols-outlined text-[18px]" [style.font-variation-settings]="isActive('/responsable-admission/settings') ? 'FILL 1' : 'FILL 0'">settings</span>
+        <span>Settings</span>
       </a>
-      <a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 rounded-lg font-label-md text-label-md" href="#">
-        <span class="material-symbols-outlined">help</span>
-        Aide
+      <a class="flex items-center gap-3 text-on-surface-variant px-4 py-2 rounded-lg hover:bg-surface-container transition-all duration-200 text-sm cursor-pointer" href="#">
+        <span class="material-symbols-outlined text-[18px]">help</span>
+        <span>Support</span>
+      </a>
+      <a class="flex items-center gap-3 text-error px-4 py-2 rounded-lg hover:bg-error-container transition-all duration-200 text-sm cursor-pointer" (click)="logout()">
+        <span class="material-symbols-outlined text-[18px]">logout</span>
+        <span>Logout</span>
       </a>
     </div>
   </nav>
 
-  <!-- Main Content Wrapper -->
-  <div class="flex-1 md:ml-64 flex flex-col min-h-screen">
-    <!-- TopNavBar -->
-    <header class="fixed top-0 right-0 left-0 md:left-64 h-16 w-full md:w-auto border-b border-outline-variant bg-surface-container-lowest/80 backdrop-blur-md flex justify-between items-center px-4 md:px-margin-desktop z-30">
-      <div class="flex items-center gap-4 md:hidden">
-        <button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full">
-          <span class="material-symbols-outlined">menu</span>
-        </button>
-        <span class="font-headline-sm text-headline-sm font-bold text-primary">Admissions Portal</span>
-      </div>
-      <div class="hidden md:flex items-center flex-1 max-w-md">
-        <div class="relative w-full">
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <div class="flex-1 ml-64 flex flex-col h-screen overflow-hidden">
+    <header class="h-16 flex justify-between items-center px-8 bg-surface-container-lowest border-b border-surface-container-highest shrink-0 z-30 relative shadow-sm">
+      <div class="flex items-center gap-4 flex-1">
+        <div class="relative w-96">
           <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-          <input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all outline-none" placeholder="Rechercher..." type="text"/>
+          <input class="w-full pl-10 pr-4 py-2 bg-surface-container border-none rounded-lg text-sm focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all outline-none" placeholder="Rechercher (ex: INPG-2026-X)..." type="text" [(ngModel)]="searchQuery"/>
         </div>
       </div>
-      <div class="flex items-center gap-2 md:gap-4 ml-auto relative">
-        <button id="notification-btn" class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all relative" (click)="toggleDropdown('notification')">
-          <span class="material-symbols-outlined">notifications</span>
-          <span class="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-surface-container-lowest">3</span>
-        </button>
-        <button id="apps-btn" class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all hidden sm:block" (click)="toggleDropdown('apps')">
-          <span class="material-symbols-outlined">apps</span>
-        </button>
-        <button id="profile-btn" class="w-8 h-8 rounded-full bg-surface-tint flex items-center justify-center text-white font-label-md text-label-md ml-2 cursor-pointer border border-outline-variant" (click)="toggleDropdown('profile')">
-          <img alt="Admin User" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-WVxA88Wo21vi3wMfuzGlWUBqzUcoT-rwrVK0oKnc81b_R1Q7_RM0hx5CNKWRVOQWCJu3IpGpqGPAu99rWhE5IsknhXiJK8LziV4KEIzwvXuQg2YoWlwfCX6M0IvqE3EIEichT2thT1AgMPVrj2OErsAN0TrOA878F3u17y809avMzVGcakWsjhOn-nDD1IARyedTi2nV3dFqjDQWSJxyKJ86hC8JtVIm1_rt7U4Ax_4QAvXiDWnt"/>
-        </button>
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2 text-sm border-r border-surface-container-highest pr-6">
+          <span class="text-on-surface-variant">Année Académique:</span>
+          <select class="bg-transparent border-none font-semibold text-primary focus:ring-0 cursor-pointer p-0 pr-4" [(ngModel)]="selectedAnneeAcademique">
+            <option>2026-2027</option>
+            <option>2025-2026</option>
+          </select>
+        </div>
+        <div class="relative">
+          <button id="notification-btn" class="relative text-on-surface-variant hover:text-primary transition-colors cursor-pointer p-1" (click)="toggleDropdown('notification', $event)">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface-container-lowest" [class.hidden]="!hasUnreadNotifications"></span>
+          </button>
+          <div id="notification-dropdown" class="absolute right-0 mt-2 w-80 bg-surface-container-lowest border border-surface-container-highest rounded-xl shadow-lg z-50 overflow-hidden" [class.hidden]="!notificationOpen">
+            <div class="p-3 border-b border-surface-container-highest font-semibold text-sm text-on-surface flex justify-between items-center">
+              Notifications
+              <button class="text-xs font-medium text-primary hover:underline" (click)="markAllRead()">Tout marquer lu</button>
+            </div>
+            <div class="max-h-64 overflow-y-auto">
+              <div *ngFor="let notif of notifications" class="p-3 hover:bg-surface-container-low cursor-pointer border-b border-surface-container-highest/50 flex gap-3 transition-colors">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" [class.bg-primary-container]="notif.type === 'admission'" [class.bg-success/10]="notif.type === 'success'">
+                  <span class="material-symbols-outlined text-[16px]" [class.text-primary]="notif.type === 'admission'" [class.text-success]="notif.type === 'success'">{{ notif.type === 'admission' ? 'person_add' : 'task_alt' }}</span>
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-on-surface">{{ notif.message }}</p>
+                  <div class="flex justify-between items-center mt-1">
+                    <p class="text-xs text-on-surface-variant">{{ notif.time }}</p>
+                    <span class="text-xs cursor-pointer hover:underline font-medium text-secondary transition-colors">Voir dossier</span>
+                  </div>
+                </div>
+                <div class="w-2 h-2 rounded-full bg-primary self-center shrink-0" [class.hidden]="notif.read"></div>
+              </div>
+              <div *ngIf="notifications.length === 0" class="p-4 text-center text-sm text-on-surface-variant">Aucune notification</div>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
 
-    <!-- Page Content via Router Outlet -->
-    <main class="flex-1 pt-20 px-4 md:px-margin-desktop pb-12 overflow-x-hidden max-w-container-max mx-auto w-full">
-      <router-outlet></router-outlet>
+    <main class="flex-1 overflow-y-auto p-8 relative">
+      <div class="max-w-7xl mx-auto">
+        <router-outlet></router-outlet>
+      </div>
     </main>
   </div>
+</div>
+
+<!-- Toast -->
+<div class="fixed bottom-4 right-4 z-50 transform transition-all duration-300 pointer-events-none flex items-center gap-3 px-4 py-3 bg-surface-container-lowest border border-success/30 rounded-lg shadow-lg"
+     [class.translate-y-full]="!toastVisible" [class.opacity-0]="!toastVisible">
+  <div class="w-8 h-8 rounded-full bg-success/20 text-success flex items-center justify-center shrink-0">
+    <span class="material-symbols-outlined text-[18px]">check</span>
+  </div>
+  <p class="text-sm font-medium text-on-surface">{{ toastMessage }}</p>
 </div>

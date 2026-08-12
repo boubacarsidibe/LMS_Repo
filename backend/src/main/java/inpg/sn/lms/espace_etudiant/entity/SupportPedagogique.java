@@ -11,7 +11,7 @@ import jakarta.persistence.Id;
 @Entity
 public class SupportPedagogique {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private String titre;
     private EnumTypeSupport typeSupport;

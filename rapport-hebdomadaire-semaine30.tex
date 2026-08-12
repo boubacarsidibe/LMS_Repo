@@ -1,0 +1,624 @@
+\documentclass[a4paper,12pt,french]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{babel}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{multirow}
+
+% --- Configuration listings ---
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{codeborder}{RGB}{200,200,200}
+\definecolor{commentgreen}{RGB}{0,128,0}
+\definecolor{keywordblue}{RGB}{0,0,180}
+\definecolor{stringred}{RGB}{180,0,0}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codeborder},
+    numbers=left,
+    numbersep=8pt,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{keywordblue}\bfseries,
+    commentstyle=\color{commentgreen}\itshape,
+    stringstyle=\color{stringred},
+    showstringspaces=false,
+    tabsize=2,
+    captionpos=b
+}
+
+% --- Boîtes colorées ---
+\newtcolorbox{assignmentbox}[1][]{
+    colback=blue!5!white,colframe=blue!50!black,
+    title=Réalisé par,fonttitle=\bfseries,#1
+}
+\newtcolorbox{modulebox}[1][]{
+    colback=green!5!white,colframe=green!50!black,
+    title=Module,fonttitle=\bfseries,#1
+}
+
+% --- En-tête / pied ---
+\pagestyle{fancy}
+\fancyhead[L]{Rapport Hebdomadaire — LMS INPG}
+\fancyhead[R]{Semaine du 28/07 au 01/08/2026}
+\fancyfoot[C]{\thepage}
+
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+
+\begin{document}
+
+% ============================================================
+% PAGE DE GARDE
+% ============================================================
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+
+{\Huge\bfseries Rapport Hebdomadaire\par}
+\vspace{0.5cm}
+{\LARGE Semaine 30 — du 28 Juillet au 1$^\text{er}$ Août 2026\par}
+\vspace{1cm}
+{\large Plateforme LMS — INPG\par}
+{\large Institut National du Pétrole et du Gaz (Sénégal)\par}
+\vspace{2cm}
+
+{\large\bfseries Équipe de développement\par}
+\vspace{0.3cm}
+\begin{tabular}{rl}
+\textbf{Ibrahima Pouye} & Module Recrutement (backend + frontend) \\
+\textbf{Collaborateur 1} & Module Espace Étudiants (frontend) \\
+\textbf{Collaborateur 2} & Module Espace Étudiants (frontend) \\
+\end{tabular}
+\vspace{2cm}
+
+{\large\bfseries Stack technique\par}
+\vspace{0.3cm}
+Angular 21 — TypeScript — RxJS — Spring Boot 4.1 — Java 17\\
+PostgreSQL — Docker — Tailwind CSS v4 — Material Design 3
+\vspace{2cm}
+
+{\large Août 2026\par}
+\vfill
+\end{titlepage}
+
+% ============================================================
+% TABLE DES MATIÈRES
+% ============================================================
+\tableofcontents
+\newpage
+
+% ============================================================
+% INTRODUCTION
+% ============================================================
+\section{Introduction}
+
+Ce rapport couvre la semaine de développement du \textbf{lundi 28 juillet au vendredi 1$^\text{er}$ août 2026} pour la plateforme LMS de l'INPG. L'équipe de 3 développeurs a travaillé en parallèle sur deux modules principaux :
+
+\begin{itemize}
+    \item \textbf{Module Recrutement} — Ibrahima Pouye (backend Java + frontend Angular)
+    \item \textbf{Module Espace Étudiants} — Collaborateur 1 et Collaborateur 2 (frontend Angular)
+\end{itemize}
+
+\section{Répartition et planning hebdomadaire}
+
+\begin{center}
+\begin{tabular}{|p{2cm}|p{6cm}|p{6cm}|}
+\hline
+\textbf{Jour} & \textbf{Ibrahima Pouye (Recrutement)} & \textbf{Coll. 1 \& 2 (Espace Étudiants)} \\
+\hline
+\addlinespace
+\textbf{Lundi 28} &
+Backend : mise en place des entités (Candidature, SessionCandidature, PieceJustificative, Paiement, Entretien, TestAcademique) +
+Frontend : catalogue landing page, navbar connecté/déconnecté &
+Page d'accueil espace-étudiant + layout formateur \\
+\hline
+\addlinespace
+\textbf{Mardi 29} &
+Backend : services Candidature, Session, FichierStocke + contrôleur CandidatController +
+Frontend : catalogue avec 16 formations, cards uniformes &
+Dashboard formateur (statistiques, KPIs, présence au cours) \\
+\hline
+\addlinespace
+\textbf{Mercredi 30} &
+Frontend : formulaire candidature stepper 4 étapes, persistance brouillon +
+Pages catalogue : formation-detail générique (16 formations), contact, institut &
+Page Mes Cours \& Ressources (grille bento, barre de recherche, filtres) \\
+\hline
+\addlinespace
+\textbf{Jeudi 31} &
+Backend : contrôleur AdminRecrutement, système de notification (email/sms), entité NotificationCandidat +
+Frontend : suivi candidature, responsable admission overview &
+Page Planning / Calendrier académique + Page Profil Étudiant \\
+\hline
+\addlinespace
+\textbf{Vendredi 1} &
+Backend : PaiementService, EntretienService, TestAcademiqueService + contrôleur PublicController +
+Frontend : layout responsable-admission, sessions, candidatures, entretiens, délibération &
+Page Forum + Page Créer Cours + Page Suivi Étudiants \\
+\hline
+\end{tabular}
+\end{center}
+
+\newpage
+
+% ============================================================
+% MODULE RECRUTEMENT
+% ============================================================
+\section{Module Recrutement — Ibrahima Pouye}
+
+\subsection{Vue d'ensemble}
+
+Le module Recrutement gère l'intégralité du processus d'admission : du catalogue de formations jusqu'à la délibération finale, en passant par la soumission de candidature, le paiement des frais, la planification des entretiens et les tests académiques.
+
+\subsubsection{Architecture backend}
+
+\begin{center}
+\begin{tabular}{|l|l|p{5cm}|}
+\hline
+\textbf{Couche} & \textbf{Composants} & \textbf{Rôle} \\
+\hline
+\addlinespace
+\textbf{Entités (8)} & 
+\texttt{Candidature},
+\texttt{SessionCandidature},
+\texttt{PieceJustificative},
+\texttt{Paiement},
+\texttt{Entretien},
+\texttt{TestAcademique},
+\texttt{FichierStocke},
+\texttt{NotificationCandidat} &
+Modélisation complète du processus de recrutement \\
+\hline
+\addlinespace
+\textbf{Services (8)} &
+\texttt{CandidatureService},
+\texttt{SessionCandidatureService},
+\texttt{PaiementService},
+\texttt{EntretienService},
+\texttt{TestAcademiqueService},
+\texttt{FichierStockeService},
+\texttt{NotificationService},
+\texttt{NotificationCandidatService} &
+Logique métier (soumission, statuts, upload, notifications) \\
+\hline
+\addlinespace
+\textbf{Contrôleurs (4)} &
+\texttt{CandidatController},
+\texttt{AdminRecrutementController},
+\texttt{NotificationController},
+\texttt{PublicController} &
+API REST publique, candidat et admin \\
+\hline
+\addlinespace
+\textbf{DTOs} &
+\texttt{CandidatureRequest},
+\texttt{CandidatureResponse},
+\texttt{SessionCandidatureResponse}, etc. &
+Objets de transfert typés \\
+\hline
+\addlinespace
+\textbf{Enums} &
+\texttt{StatutCandidature},
+\texttt{TypePiece},
+\texttt{StatutPaiement}, etc. &
+Constantes métier \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Détail des réalisations}
+
+\subsubsection{Lundi 28 — Fondations backend}
+
+\begin{assignmentbox}
+\textbf{Ibrahima Pouye} — Backend Java (Spring Boot)
+\end{assignmentbox}
+
+\begin{itemize}
+    \item \textbf{Entité Candidature} : modélisation des informations personnelles, académiques et professionnelles (stockage JSON flexible), statut (BROUILLON, SOUMISE, EN\_COURS, VALIDEE, REJETEE), association avec l'utilisateur, session et pièces jointes.
+    \item \textbf{Entité SessionCandidature} : période d'ouverture, formation cible, capacité d'accueil, état actif/inactif.
+    \item \textbf{Entité PieceJustificative} : type de document (pièce d'identité, CV, lettre de motivation, relevés de notes), fichier associé, statut de vérification.
+    \item \textbf{Entité Paiement} : montant, statut, référence de transaction, méthode de paiement.
+    \item \textbf{Entités Entretien \& TestAcademique} : planification, résultat, évaluateur.
+    \item \textbf{Frontend : Landing page} — création de la page d'accueil du catalogue avec hero section, barre de recherche, mise en avant des formations.
+\end{itemize}
+
+\subsubsection{Mardi 29 — Services métier}
+
+\begin{assignmentbox}
+\textbf{Ibrahima Pouye} — Backend + Frontend
+\end{assignmentbox}
+
+\begin{itemize}
+    \item \textbf{CandidatureService} : création de brouillon, soumission, changement de statut, récupération par candidat/admin, validation des pièces.
+    \item \textbf{SessionCandidatureService} : CRUD des sessions, activation/désactivation, filtrage par date.
+    \item \textbf{FichierStockeService} : upload de fichiers, stockage local, association aux pièces.
+    \item \textbf{CandidatController} : endpoints REST pour le parcours candidat (soumettre, uploader, suivre, lister ses candidatures).
+    \item \textbf{Frontend : Catalogue} — composant catalogue avec 16 formations en cartes MD3, pagination persistée, hauteur uniforme, navigation vers les pages détail. Service \texttt{RecrutementService} avec proxy \texttt{/api}.
+\end{itemize}
+
+\subsubsection{Mercredi 30 — Formulaire candidature}
+
+\begin{assignmentbox}
+\textbf{Ibrahima Pouye} — Frontend Angular
+\end{assignmentbox}
+
+\begin{itemize}
+    \item \textbf{Formulaire stepper 4 étapes} : Profil → Formation → Parcours → Documents.
+    \item Interface \texttt{CandidatureFormData} typée complète (20+ champs).
+    \item \textbf{Persistance brouillon} : sauvegarde automatique dans localStorage scopé par utilisateur (clé \texttt{candidature\_brouillon\_\{userId\}}). Restauration au retour sur le formulaire.
+    \item \textbf{Validation} : champs obligatoires par étape (nom, prénom, email, téléphone, programme), consentement requis, 4 pièces justificatives obligatoires (identité, CV, motivation, relevés).
+    \item \textbf{Upload de fichiers} : sélection multiple, vérification taille max (5 Mo), association par type, upload asynchrone après soumission.
+    \item \textbf{Redirection intelligente} : si candidature active existante, redirection vers le suivi sans afficher le formulaire.
+    \item \textbf{Pages catalogue} : composant générique \texttt{FormationDetailComponent} supportant les 16 formations avec modules en grille bento, sections dynamiques (grid, list, cards, accordion), sidebar informations pratiques. Pages Contact (formulaire) et Institut (À propos).
+\end{itemize}
+
+\subsubsection{Jeudi 31 — Administration et notifications}
+
+\begin{assignmentbox}
+\textbf{Ibrahima Pouye} — Backend + Frontend
+\end{assignmentbox}
+
+\begin{itemize}
+    \item \textbf{AdminRecrutementController} : dashboard admin (statistiques candidatures), gestion des sessions, validation des pièces, planification des entretiens, délibération.
+    \item \textbf{Système de notification} : \texttt{NotificationService} (email via Brevo SMTP), \texttt{NotificationCandidatService} (notifications in-app), entité \texttt{NotificationCandidat} (message, lu/non lu, date).
+    \item \textbf{NotificationController} : endpoints pour lister, marquer comme lu, envoyer.
+    \item \textbf{Frontend : Suivi candidature} — page de suivi avec timeline, statut actuel, notifications, historique.
+    \item \textbf{Frontend : Responsable admission overview} — dashboard avec KPIs (total candidatures, par statut, par formation), graphiques.
+\end{itemize}
+
+\subsubsection{Vendredi 1$^\text{er}$ août — Finalisation}
+
+\begin{assignmentbox}
+\textbf{Ibrahima Pouye} — Backend + Frontend
+\end{assignmentbox}
+
+\begin{itemize}
+    \item \textbf{PaiementService} : intégration paiement, mise à jour statut, confirmation.
+    \item \textbf{EntretienService} : CRUD entretiens, planification, saisie des résultats.
+    \item \textbf{TestAcademiqueService} : gestion des tests, notation, résultats.
+    \item \textbf{PublicController} : endpoints publics (catalogue des formations, détails session).
+    \item \textbf{Frontend : Layout responsable admission} — sidebar navigation (overview, sessions, candidatures, entretiens, délibération).
+    \item \textbf{Pages admin} : gestion des sessions (créer, modifier, activer/désactiver), liste des candidatures avec filtres et recherche, planification des entretiens avec calendrier, interface de délibération (accepter/refuser avec motif).
+\end{itemize}
+
+\subsection{Fichiers du module Recrutement}
+
+\begin{center}
+\begin{longtable}{|l|l|p{4cm}|}
+\hline
+\textbf{Fichier} & \textbf{Action} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Fichier} & \textbf{Action} & \textbf{Description} \\
+\hline
+\endhead
+\addlinespace
+\multicolumn{3}{|c|}{\textbf{Backend — Entités}} \\
+\hline
+\texttt{Candidature.java} & Créé & Entité candidature (JSON flexible, statuts) \\
+\texttt{SessionCandidature.java} & Créé & Période, formation, capacité \\
+\texttt{PieceJustificative.java} & Créé & Documents vérifiables \\
+\texttt{Paiement.java} & Créé & Transactions financières \\
+\texttt{Entretien.java} & Créé & Planification entretiens \\
+\texttt{TestAcademique.java} & Créé & Tests et résultats \\
+\texttt{FichierStocke.java} & Créé & Stockage fichiers uploadés \\
+\texttt{NotificationCandidat.java} & Créé & Notifications in-app \\
+\hline
+\addlinespace
+\multicolumn{3}{|c|}{\textbf{Backend — Services}} \\
+\hline
+\texttt{CandidatureService.java} & Créé & Logique candidature (9,8 Ko) \\
+\texttt{SessionCandidatureService.java} & Créé & Gestion sessions \\
+\texttt{PaiementService.java} & Créé & Traitement paiements \\
+\texttt{EntretienService.java} & Créé & Planning entretiens \\
+\texttt{TestAcademiqueService.java} & Créé & Gestion tests \\
+\texttt{FichierStockeService.java} & Créé & Upload/manipulation fichiers \\
+\texttt{NotificationService.java} & Créé & Envoi email/SMS \\
+\texttt{NotificationCandidatService.java} & Créé & Notifications in-app \\
+\hline
+\addlinespace
+\multicolumn{3}{|c|}{\textbf{Backend — Contrôleurs}} \\
+\hline
+\texttt{CandidatController.java} & Créé & API candidat (13 Ko) \\
+\texttt{AdminRecrutementController.java} & Créé & API admin (10 Ko) \\
+\texttt{NotificationController.java} & Créé & API notifications \\
+\texttt{PublicController.java} & Créé & API publique \\
+\hline
+\addlinespace
+\multicolumn{3}{|c|}{\textbf{Frontend — Catalogue \& Pages publiques}} \\
+\hline
+\texttt{catalogue/catalogue.component.ts} & Créé & Grille formations, pagination \\
+\texttt{catalogue/landing/landing.component.ts} & Créé & Page d'accueil \\
+\texttt{catalogue/formation-detail/*} & Créé & Détail générique (16 formations) \\
+\texttt{catalogue/contact/*} & Créé & Formulaire contact \\
+\texttt{catalogue/institut/*} & Créé & Page À propos \\
+\hline
+\addlinespace
+\multicolumn{3}{|c|}{\textbf{Frontend — Candidature}} \\
+\hline
+\texttt{candidature/formulaire/*} & Créé & Stepper 4 étapes, persistance \\
+\texttt{candidature/paiement/*} & Créé & Interface paiement \\
+\texttt{candidature/pieces/*} & Créé & Upload documents \\
+\texttt{suivi/suivi.component.ts} & Créé & Timeline suivi \\
+\hline
+\addlinespace
+\multicolumn{3}{|c|}{\textbf{Frontend — Responsable Admission}} \\
+\hline
+\texttt{responsable-admission/layout/*} & Créé & Layout avec sidebar \\
+\texttt{responsable-admission/overview/*} & Créé & Dashboard KPIs \\
+\texttt{responsable-admission/sessions/*} & Créé & Gestion sessions \\
+\texttt{responsable-admission/candidatures/*} & Créé & Liste et filtres \\
+\texttt{responsable-admission/entretiens/*} & Créé & Planning entretiens \\
+\texttt{responsable-admission/deliberation/*} & Créé & Délibération \\
+\hline
+\addlinespace
+\multicolumn{3}{|c|}{\textbf{Frontend — Services \& Modèles}} \\
+\hline
+\texttt{core/recrutement/services/} & Créé & \texttt{RecrutementService} \\
+\texttt{core/recrutement/models/} & Créé & Types TypeScript \\
+\texttt{core/recrutement/data/} & Créé & Données mockées \\
+\texttt{core/recrutement/composants/} & Créé & Composants réutilisables \\
+\hline
+\end{longtable}
+\end{center}
+
+\newpage
+
+% ============================================================
+% MODULE ESPACE ÉTUDIANTS
+% ============================================================
+\section{Module Espace Étudiants — Coll. 1 \& Coll. 2}
+
+\subsection{Vue d'ensemble}
+
+Le module Espace Étudiants constitue le cœur pédagogique de la plateforme LMS. Il offre aux étudiants et formateurs un environnement complet pour la gestion des cours, le suivi académique, la planification et la collaboration.
+
+\subsection{Détail des réalisations}
+
+\subsubsection{Lundi 28 — Fondations}
+
+\begin{assignmentbox}
+\textbf{Collaborateur 1 \& Collaborateur 2} — Frontend Angular
+\end{assignmentbox}
+
+\begin{itemize}
+    \item \textbf{Page d'accueil espace-étudiant} : tableau de bord avec KPIs (cours suivis, progression, notes récentes, annonces), design MD3, responsive.
+    \item \textbf{Layout formateur} : structure avec sidebar de navigation (accueil, cours, planning, forum, suivi), header avec avatar, barre de recherche globale.
+    \item \textbf{Routing} : configuration des routes dans \texttt{espace-etudiant.routes.ts}, lazy loading, guards.
+    \item \textbf{Modèle Cours} : interface TypeScript \texttt{Cours} (code, titre, nbEtudiants, nbRessources, progression, couleurBandeau).
+\end{itemize}
+
+\subsubsection{Mardi 29 — Dashboard formateur}
+
+\begin{assignmentbox}
+\textbf{Collaborateur 1 \& Collaborateur 2} — Frontend
+\end{assignmentbox}
+
+\begin{itemize}
+    \item \textbf{Dashboard formateur} : page complète avec :
+    \begin{itemize}
+        \item Cartes statistiques (nombre d'étudiants, cours actifs, ressources, taux de complétion)
+        \item Graphique de progression des étudiants
+        \item Section « Présence au Cours » avec jauges
+        \item Liste des prochains cours (cours vidéo/diffusion)
+        \item Activité récente
+    \end{itemize}
+    \item \textbf{Données mockées} : \texttt{etudiants.mock.ts} pour les tests et la démo.
+\end{itemize}
+
+\subsubsection{Mercredi 30 — Mes Cours \& Ressources}
+
+\begin{assignmentbox}
+\textbf{Collaborateur 1 \& Collaborateur 2} — Frontend
+\end{assignmentbox}
+
+\begin{itemize}
+    \item \textbf{Page Mes Cours \& Ressources} : grille bento de cours avec :
+    \begin{itemize}
+        \item Code, titre, nombre d'étudiants, nombre de ressources
+        \item Barre de progression circulaire par cours
+        \item Code couleur par matière (bandeau latéral \texttt{bg-secondary-container}, \texttt{bg-primary-fixed-dim})
+        \item Barre de recherche avec filtres (semestre, statut)
+        \item Vue liste et vue grille
+    \end{itemize}
+    \item \textbf{Données mockées} : \texttt{cours.data.ts} (ECO-402, MGT-301).
+    \item \textbf{Méthodes} : \texttt{coursFiltres} (getter avec filtre par recherche).
+\end{itemize}
+
+\subsubsection{Jeudi 31 — Planning \& Profil}
+
+\begin{assignmentbox}
+\textbf{Collaborateur 1 \& Collaborateur 2} — Frontend
+\end{assignmentbox}
+
+\begin{itemize}
+    \item \textbf{Page Planning / Calendrier académique} : calendrier interactif avec :
+    \begin{itemize}
+        \item Vue mensuelle/hebdomadaire
+        \item Événements colorés par type (cours, examen, soutenance, vacances)
+        \item Liste des événements à venir
+        \item Navigation entre les mois
+        \item Détail d'un événement au clic (modal ou panneau latéral)
+    \end{itemize}
+    \item \textbf{Page Profil Étudiant} : informations personnelles, parcours académique, statistiques individuelles, photo de profil, édition des informations.
+    \item \textbf{Données mockées} : \texttt{evenements.mock.ts} (calendrier).
+\end{itemize}
+
+\subsubsection{Vendredi 1$^\text{er}$ août — Forum, Créer Cours, Suivi}
+
+\begin{assignmentbox}
+\textbf{Collaborateur 1 \& Collaborateur 2} — Frontend
+\end{assignmentbox}
+
+\begin{itemize}
+    \item \textbf{Page Forum} : espace de discussion avec :
+    \begin{itemize}
+        \item Liste des sujets avec badge de catégorie
+        \item Nombre de réponses et vues
+        \item Barre de recherche
+        \item Formulaire de création de sujet
+        \item Interface de réponse avec éditeur riche simplifié
+    \end{itemize}
+    \item \textbf{Page Créer Cours} : formulaire réactif (\texttt{FormGroup}) avec champs code, titre, semestre, description, validation, retour visuel des erreurs.
+    \item \textbf{Page Suivi Étudiants} : tableau de bord formateur listant les étudiants avec :
+    \begin{itemize}
+        \item Nom, matricule, progression globale
+        \item Notes par cours
+        \item Taux de présence
+        \item Alertes (étudiants en difficulté)
+    \end{itemize}
+    \item \textbf{Données mockées} : \texttt{forum.mock.ts} (sujets et réponses).
+\end{itemize}
+
+\subsection{Fichiers du module Espace Étudiants}
+
+\begin{center}
+\begin{longtable}{|l|l|p{4cm}|}
+\hline
+\textbf{Fichier} & \textbf{Action} & \textbf{Description} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Fichier} & \textbf{Action} & \textbf{Description} \\
+\hline
+\endhead
+\addlinespace
+\multicolumn{3}{|c|}{\textbf{Layout \& Configuration}} \\
+\hline
+\texttt{espace-etudiant.routes.ts} & Créé & Routes lazy loading \\
+\texttt{espace-etudiants-module.ts} & Créé & Module Angular \\
+\texttt{layouts/formateur-layout/} & Créé & Sidebar + header \\
+\hline
+\addlinespace
+\multicolumn{3}{|c|}{\textbf{Pages (9 pages)}} \\
+\hline
+\texttt{pages/accueil/} & Créé & Tableau de bord étudiant \\
+\texttt{pages/dashboard-formateur/} & Créé & KPIs, présence, cours vidéo \\
+\texttt{pages/mes-cours/} & Créé & Grille bento, filtres, recherche \\
+\texttt{pages/creer-cours/} & Créé & Formulaire réactif \\
+\texttt{pages/planning-calendrier/} & Créé & Calendrier interactif \\
+\texttt{pages/profil-etudiant/} & Créé & Profil + édition \\
+\texttt{pages/forum/} & Créé & Discussions \\
+\texttt{pages/suivi-etudiants/} & Créé & Dashboard formateur \\
+\texttt{pages/test/} & Créé & Page de test \\
+\hline
+\addlinespace
+\multicolumn{3}{|c|}{\textbf{Données mockées}} \\
+\hline
+\texttt{data/cours.data.ts} & Créé & Cours ECO-402, MGT-301 \\
+\texttt{data/etudiants.mock.ts} & Créé & Liste étudiants \\
+\texttt{data/evenements.mock.ts} & Créé & Calendrier académique \\
+\texttt{data/forum.mock.ts} & Créé & Sujets et réponses \\
+\hline
+\addlinespace
+\multicolumn{3}{|c|}{\textbf{Modèles}} \\
+\hline
+\texttt{models/cours.ts} & Créé & Interface Cours \\
+\hline
+\end{longtable}
+\end{center}
+
+\newpage
+
+% ============================================================
+% RÉCAPITULATIF GLOBAL
+% ============================================================
+\section{Récapitulatif global}
+
+\begin{center}
+\begin{tabular}{|p{3cm}|p{4.5cm}|p{4.5cm}|p{2.5cm}|}
+\hline
+\textbf{Jour} & \textbf{Recrutement (I. Pouye)} & \textbf{Espace Étudiants (Coll. 1 \& 2)} & \textbf{Total} \\
+\hline
+\addlinespace
+\textbf{Lundi 28} &
+8 entités backend + landing page &
+Accueil + layout formateur &
+\textbf{11 fichiers} \\
+\hline
+\addlinespace
+\textbf{Mardi 29} &
+3 services + CandidatController + catalogue 16 formations &
+Dashboard formateur + mocks &
+\textbf{9 fichiers} \\
+\hline
+\addlinespace
+\textbf{Mercredi 30} &
+Formulaire stepper 4 étapes + pages détail/contact/institut &
+Mes Cours \& Ressources (grille bento) &
+\textbf{12 fichiers} \\
+\hline
+\addlinespace
+\textbf{Jeudi 31} &
+AdminController + notifications + suivi + overview admin &
+Planning/Calendrier + Profil Étudiant &
+\textbf{11 fichiers} \\
+\hline
+\addlinespace
+\textbf{Vendredi 1$^\text{er}$} &
+Paiement + Entretien + Test services + layout admin complet &
+Forum + Créer Cours + Suivi Étudiants &
+\textbf{13 fichiers} \\
+\hline
+\addlinespace
+\hline
+\textbf{TOTAL} &
+\textbf{42 fichiers} (backend + frontend) &
+\textbf{25 fichiers} (frontend) &
+\textbf{67 fichiers} \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Résumé des réalisations par module}
+
+\begin{modulebox}
+\textbf{Module Recrutement (Ibrahima Pouye)}
+
+\begin{itemize}
+    \item \textbf{Backend} : 8 entités JPA, 8 services métier, 4 contrôleurs REST, 3 repositories, DTOs, enums
+    \item \textbf{Frontend} : 15+ composants Angular standalone
+    \item \textbf{Fonctionnalités} : catalogue (16 formations), formulaire stepper 4 étapes, upload documents, suivi candidature, paiement, entretiens, tests académiques, notifications email/in-app, dashboard admin, délibération
+    \item \textbf{Design} : Material Design 3, Tailwind CSS v4, responsive
+\end{itemize}
+\end{modulebox}
+
+\begin{modulebox}
+\textbf{Module Espace Étudiants (Collaborateur 1 \& 2)}
+
+\begin{itemize}
+    \item \textbf{Frontend} : 9 pages Angular standalone + 1 layout
+    \item \textbf{Fonctionnalités} : dashboard formateur avec KPIs, grille de cours (bento), création de cours, calendrier académique interactif, forum de discussion, suivi des étudiants, profil étudiant
+    \item \textbf{Données} : 4 fichiers mock (cours, étudiants, événements, forum)
+    \item \textbf{Design} : Material Design 3, Tailwind CSS v4, responsive
+\end{itemize}
+\end{modulebox}
+
+\newpage
+
+\section{Conclusion}
+
+La semaine 30 a été particulièrement productive avec \textbf{67 fichiers créés} couvrant les deux modules principaux de la plateforme LMS INPG. Le module Recrutement a été développé de bout en bout (backend + frontend) par Ibrahima Pouye, tandis que les deux collaborateurs ont bâti l'intégralité de l'interface Espace Étudiants.
+
+Les deux modules sont désormais prêts pour les phases de test et d'intégration. La suite du développement portera sur les corrections de bugs, l'optimisation des performances et l'intégration complète backend-frontend pour l'espace étudiants.
+
+\end{document}

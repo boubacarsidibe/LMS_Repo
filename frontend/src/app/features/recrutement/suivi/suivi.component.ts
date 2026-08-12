@@ -41,21 +41,21 @@ export class SuiviComponent implements OnInit {
     switch (statut) {
       case this.STATUT_SOUMIS:
       case this.STATUT_PRESELECTION: return 1; // Évaluation
-      case this.STATUT_REJETE: return 2;        // Bloqué au Test Académique
-      case this.STATUT_ADMIS1: return 2;        // Test Académique
+      case this.STATUT_REJETE: return 2; // Bloqué au Test Académique
+      case this.STATUT_ADMIS1: return 3; // Entretien
       case this.STATUT_ADMIS2: return 3;        // Entretien
-      case this.STATUT_ADMIS3: return 3;        // Entretien (terminé)
+      case this.STATUT_ADMIS3: return 4; // Terminé
       default: return 1;
     }
   }
 
   /** Indique si l'étape "step" (0-3) est complétée */
   isStepCompleted(stepIndex: number): boolean {
-    const actif = this.activeStepIndex;
-    return stepIndex < actif;
+    return stepIndex < this.activeStepIndex;
   }
 
   /** Nom du responsable admissions */
+  // TODO: Ces données devraient idéalement provenir de l'objet 'candidature'
   responsableAdmissions = 'Claire Vallet';
 
   /** Score au test académique */
@@ -207,7 +207,7 @@ export class SuiviComponent implements OnInit {
       case this.STATUT_REJETE:
         return 'Malgré tout l\'intérêt que nous portons à votre candidature pour le Bachelor in Strategic Management, nous regrettons de vous informer que vos résultats au test ne nous permettent pas de poursuivre le processus d\'admission pour cette session.';
       case this.STATUT_ADMIS1:
-        return 'Malgré tout l\'intérêt que nous portons à votre candidature pour le Bachelor in Strategic Management, nous regrettons de vous informer que vos résultats au test ne nous permettent pas de poursuivre le processus d\'admission pour cette session.';
+        return 'Félicitations ! Vous avez brillamment réussi le test académique. La prochaine étape est l\'entretien.';
       case this.STATUT_ADMIS2:
         return 'Ton parcours de sélection avance avec succès. Ton dossier a retenu toute notre attention.';
       case this.STATUT_ADMIS3:

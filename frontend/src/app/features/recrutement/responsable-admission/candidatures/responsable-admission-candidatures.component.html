@@ -1,45 +1,252 @@
-<!-- ==================== CONTENU SEUL ==================== -->
-<div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-stack-lg gap-4">
+<!-- ==================== CANDIDATURES ==================== -->
+
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-6">
   <div>
-    <h2 class="font-headline-lg text-headline-lg text-on-surface">Revue des Candidatures</h2>
-    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Gérez et évaluez les candidatures soumises pour la session en cours.</p>
+    <h2 class="text-2xl font-bold text-on-surface tracking-tight">Gestion des Candidatures & Traitement des Dossiers</h2>
+    <p class="text-on-surface-variant text-sm mt-1">Vérifiez les pièces justificatives et gérez l'avancement des dossiers.</p>
   </div>
-  <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-    <button class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface"><span class="material-symbols-outlined text-sm">filter_list</span> Filtres</button>
-    <button class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface"><span class="material-symbols-outlined text-sm">sort</span> Trier par: Date</button>
+  <div class="flex gap-3">
+    <button (click)="openReminderModal()" class="px-4 py-2 border border-error/30 text-error font-medium rounded-lg hover:bg-error-container transition-colors shadow-sm text-sm flex items-center gap-2">
+      <span class="material-symbols-outlined text-[20px]">notification_important</span>Relancer les incomplets <span class="bg-error text-on-error text-[10px] px-1.5 py-0.5 rounded-full">{{ kpis.incomplets }}</span>
+    </button>
+    <button (click)="exportApplications()" class="px-4 py-2 bg-primary text-on-primary font-medium rounded-lg hover:bg-opacity-90 transition-opacity shadow-sm text-sm flex items-center gap-2">
+      <span class="material-symbols-outlined text-[20px]">download</span>Exporter
+    </button>
   </div>
 </div>
-<div class="flex overflow-x-auto pb-2 mb-stack-md gap-2 hide-scrollbar border-b border-outline-variant">
-  <button class="whitespace-nowrap px-4 py-2 font-label-md text-label-md text-secondary border-b-2 border-secondary font-bold">Tous (124)</button>
-  <button class="whitespace-nowrap px-4 py-2 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary"></span> À vérifier (45)</button>
-  <button class="whitespace-nowrap px-4 py-2 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span> Présélectionné (60)</button>
-  <button class="whitespace-nowrap px-4 py-2 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#f59e0b]"></span> Pièce manquante (12)</button>
-  <button class="whitespace-nowrap px-4 py-2 font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-error"></span> Rejeté (7)</button>
+
+<!-- KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  @if (chargementKpis) {
+    @for (i of [1,2,3,4]; track i) {
+    <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm animate-pulse"><div class="h-12 w-12 bg-surface-container rounded-lg"></div></div>
+    }
+  } @else {
+  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
+    <div class="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">folder_shared</span></div>
+    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Total Candidatures</p><p class="text-2xl font-bold text-on-surface">{{ kpis.totalCandidatures }}</p></div>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
+    <div class="w-12 h-12 rounded-lg bg-warning/10 text-warning flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">pending_actions</span></div>
+    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">À Vérifier</p><p class="text-2xl font-bold text-on-surface">{{ kpis.aVerifier }}</p></div>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
+    <div class="w-12 h-12 rounded-lg bg-success/10 text-success flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">verified</span></div>
+    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Conformes</p><p class="text-2xl font-bold text-on-surface">{{ kpis.conformes }}</p></div>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-highest shadow-sm flex items-center gap-4">
+    <div class="w-12 h-12 rounded-lg bg-error/10 text-error flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[24px]">warning</span></div>
+    <div><p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider">Incomplets</p><p class="text-2xl font-bold text-on-surface">{{ kpis.incomplets }}</p></div>
+  </div>
+  }
 </div>
-<div class="bg-surface rounded-xl border border-outline-variant overflow-hidden flex flex-col md:flex-row relative">
-  <div class="w-full md:w-2/3 lg:w-3/4 overflow-x-auto border-r border-outline-variant">
-    <table class="w-full text-left border-collapse min-w-[800px]">
-      <thead><tr class="bg-surface-container-low border-b border-outline-variant"><th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider w-10"><input class="rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"></th><th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th><th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">ID CANDIDATURE</th><th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Score</th><th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Frais Payés</th><th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut</th><th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th></tr></thead>
-      <tbody class="divide-y divide-outline-variant">
-        <tr class="bg-secondary-container/20 hover:bg-secondary-container/30 transition-colors group cursor-pointer border-l-4 border-l-secondary"><td class="p-4"><input class="rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"></td><td class="p-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container"><div class="w-full h-full flex items-center justify-center bg-primary-container text-on-primary-container font-bold text-xs">AB</div></div><div><div class="font-label-md text-label-md text-on-surface font-semibold">Amira Benali</div><div class="font-body-sm text-body-sm text-on-surface-variant">amirab&#64;example.com</div></div></div></td><td class="p-4 font-body-sm text-body-sm text-on-surface-variant">#CAND-2024-089</td><td class="p-4"><span class="font-label-md text-label-md font-semibold text-on-surface">85/100</span></td><td class="p-4"><span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm"><span class="material-symbols-outlined text-[14px]">check_circle</span> Confirmé</span></td><td class="p-4"><span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-container-high text-on-surface font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> À vérifier</span></td><td class="p-4 text-right"><div class="flex justify-end gap-1"><button class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors"><span class="material-symbols-outlined text-[20px]">check</span></button><button class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors"><span class="material-symbols-outlined text-[20px]">close</span></button><button class="p-1.5 rounded text-on-surface-variant hover:text-yellow-600 hover:bg-yellow-50 transition-colors"><span class="material-symbols-outlined text-[20px]">warning</span></button></div></td></tr>
-        <tr class="bg-surface hover:bg-surface-container-lowest transition-colors group cursor-pointer border-l-4 border-l-transparent"><td class="p-4"><input class="rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"></td><td class="p-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container"><div class="w-full h-full flex items-center justify-center bg-primary-container text-on-primary-container font-bold text-xs">YT</div></div><div><div class="font-label-md text-label-md text-on-surface font-semibold">Youssef Tazi</div><div class="font-body-sm text-body-sm text-on-surface-variant">ytazi&#64;example.com</div></div></div></td><td class="p-4 font-body-sm text-body-sm text-on-surface-variant">#CAND-2024-042</td><td class="p-4"><span class="font-label-md text-label-md font-semibold text-on-surface">92/100</span></td><td class="p-4"><span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm"><span class="material-symbols-outlined text-[14px]">check_circle</span> Confirmé</span></td><td class="p-4"><span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-primary-fixed-dim"></span> Présélectionné</span></td><td class="p-4 text-right"><div class="flex justify-end gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity"><button class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors"><span class="material-symbols-outlined text-[20px]">check</span></button><button class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors"><span class="material-symbols-outlined text-[20px]">close</span></button><button class="p-1.5 rounded text-on-surface-variant hover:text-yellow-600 hover:bg-yellow-50 transition-colors"><span class="material-symbols-outlined text-[20px]">warning</span></button></div></td></tr>
+
+<!-- Table Container -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest shadow-sm overflow-hidden flex flex-col">
+  <!-- Filters -->
+  <div class="p-4 border-b border-surface-container-highest flex flex-wrap items-center gap-4 bg-surface-container-low/50">
+    <div class="relative flex-1 min-w-[240px]">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+      <input class="w-full pl-10 pr-4 py-2 border border-surface-container-highest rounded-lg text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none" placeholder="Rechercher un candidat (Nom, ID, Email)..." type="text" [(ngModel)]="searchQuery" (input)="onSearchChange()"/>
+    </div>
+    <div class="flex items-center gap-2">
+      <select class="text-sm border border-surface-container-highest rounded-lg bg-surface-container-lowest py-2 pl-3 pr-8 focus:ring-1 focus:ring-primary outline-none" [(ngModel)]="filterStatus" (change)="onFilterChange()">
+        <option value="">Tous les statuts</option>
+        <option value="Validé">Validé</option>
+        <option value="En attente">En attente</option>
+        <option value="Incomplet">Incomplet</option>
+      </select>
+      <select class="text-sm border border-surface-container-highest rounded-lg bg-surface-container-lowest py-2 pl-3 pr-8 focus:ring-1 focus:ring-primary outline-none" [(ngModel)]="filterProgram" (change)="onFilterChange()">
+        <option value="">Tous les programmes</option>
+        <option value="Master">Master</option>
+        <option value="MBA">MBA</option>
+      </select>
+      <select class="text-sm border border-surface-container-highest rounded-lg bg-surface-container-lowest py-2 pl-3 pr-8 focus:ring-1 focus:ring-primary outline-none" [(ngModel)]="filterSession" (change)="onFilterChange()">
+        <option value="">Toutes les sessions</option>
+        <option>Session Mai - Août 2026</option>
+        <option>Session Janvier - Mai 2026</option>
+      </select>
+      <button class="text-sm font-medium text-primary hover:underline px-2" (click)="resetFilters()">Réinitialiser</button>
+    </div>
+  </div>
+
+  <!-- Bulk Actions Bar -->
+  @if (selectedCount > 0) {
+  <div class="bg-primary/5 px-6 py-3 border-b border-surface-container-highest flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <span class="text-sm font-bold text-primary">{{ selectedCount }} candidat(s) sélectionné(s)</span>
+      <div class="h-4 w-px bg-primary/20"></div>
+      <div class="flex gap-2">
+        <button class="text-xs font-bold text-primary hover:bg-primary/10 px-3 py-1.5 rounded transition-colors">Valider Pièces</button>
+        <button (click)="openReminderModal()" class="text-xs font-bold text-primary hover:bg-primary/10 px-3 py-1.5 rounded transition-colors">Relancer</button>
+      </div>
+    </div>
+    <button (click)="exportApplications()" class="text-xs font-bold text-on-surface-variant hover:text-primary flex items-center gap-1">
+      <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>Exporter
+    </button>
+  </div>
+  }
+
+  <!-- Table -->
+  @if (chargement) {
+  <div class="p-6 space-y-3"><div class="h-10 bg-surface-container rounded animate-pulse"></div><div class="h-10 bg-surface-container rounded animate-pulse"></div><div class="h-10 bg-surface-container rounded animate-pulse"></div></div>
+  } @else if (filteredCandidatures.length === 0) {
+  <div class="p-12 text-center text-on-surface-variant text-sm">Aucune candidature ne correspond à vos critères.</div>
+  } @else {
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm whitespace-nowrap">
+      <thead class="text-[11px] text-on-surface-variant uppercase bg-surface-container-low border-b border-surface-container-highest font-bold tracking-wider">
+        <tr>
+          <th class="px-6 py-3 w-10"><input class="rounded border-surface-container-highest text-primary focus:ring-primary" type="checkbox" (change)="toggleSelectAll($event)"/></th>
+          <th class="px-6 py-3">Candidat</th>
+          <th class="px-6 py-3">Formation</th>
+          <th class="px-6 py-3">Date</th>
+          <th class="px-6 py-3">Pièces</th>
+          <th class="px-6 py-3">Paiement</th>
+          <th class="px-6 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-surface-container-highest">
+        @for (cand of filteredCandidatures; track cand.id) {
+        <tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer group" (click)="openCandidateDrawer(cand)">
+          <td class="px-6 py-4" (click)="$event.stopPropagation()"><input class="rounded border-surface-container-highest text-primary focus:ring-primary" type="checkbox" [(ngModel)]="cand.selected" (change)="updateSelection()"/></td>
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold text-xs">{{ cand.initials }}</div>
+              <div>
+                <div class="font-semibold text-on-surface">{{ cand.nom }}</div>
+                <div class="text-[10px] text-on-surface-variant uppercase">{{ cand.nationalite }} • ID: {{ cand.idShort }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4 text-xs font-medium">{{ cand.formation }}</td>
+          <td class="px-6 py-4 text-xs text-on-surface-variant">{{ cand.dateSoumission }}</td>
+          <td class="px-6 py-4">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border"
+                  [class.bg-success/10]="cand.pieces === 'Validé' || cand.pieces === 'VALIDÉ'"
+                  [class.text-success]="cand.pieces === 'Validé' || cand.pieces === 'VALIDÉ'"
+                  [class.border-success/20]="cand.pieces === 'Validé' || cand.pieces === 'VALIDÉ'"
+                  [class.bg-warning/10]="cand.pieces === 'En attente' || cand.pieces === 'EN ATTENTE'"
+                  [class.text-warning]="cand.pieces === 'En attente' || cand.pieces === 'EN ATTENTE'"
+                  [class.border-warning/20]="cand.pieces === 'En attente' || cand.pieces === 'EN ATTENTE'"
+                  [class.bg-error/10]="cand.pieces === 'Incomplet' || cand.pieces === 'INCOMPLET'"
+                  [class.text-error]="cand.pieces === 'Incomplet' || cand.pieces === 'INCOMPLET'"
+                  [class.border-error/20]="cand.pieces === 'Incomplet' || cand.pieces === 'INCOMPLET'">{{ cand.pieces }}</span>
+          </td>
+          <td class="px-6 py-4">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"
+                  [class.bg-success/10]="cand.paiement === 'PAYÉ' || cand.paiement === 'Payé'"
+                  [class.text-success]="cand.paiement === 'PAYÉ' || cand.paiement === 'Payé'"
+                  [class.bg-surface-container-highest]="cand.paiement !== 'PAYÉ' && cand.paiement !== 'Payé'"
+                  [class.text-on-surface-variant]="cand.paiement !== 'PAYÉ' && cand.paiement !== 'Payé'">{{ cand.paiement }}</span>
+          </td>
+          <td class="px-6 py-4 text-right">
+            <button class="font-medium text-xs cursor-pointer hover:underline text-primary transition-colors" (click)="openCandidateDrawer(cand); $event.stopPropagation()">Voir dossier</button>
+          </td>
+        </tr>
+        }
       </tbody>
     </table>
   </div>
-  <div class="hidden md:flex md:w-1/3 lg:w-1/4 flex-col bg-surface-container-lowest h-[600px] overflow-y-auto">
-    <div class="p-6 border-b border-outline-variant sticky top-0 bg-surface-container-lowest z-10 flex justify-between items-start"><div class="flex flex-col gap-1"><span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Aperçu de la candidature</span><h3 class="font-headline-sm text-headline-sm text-on-surface">Amira Benali</h3><span class="font-body-sm text-body-sm text-on-surface-variant">#CAND-2024-089</span></div><button class="text-on-surface-variant hover:bg-surface-container-low p-1 rounded transition-colors"><span class="material-symbols-outlined">close</span></button></div>
-    <div class="p-6 flex flex-col gap-6">
-      <div class="grid grid-cols-2 gap-4"><div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant"><div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Score Calculé</div><div class="font-headline-sm text-headline-sm text-secondary font-bold">85/100</div></div><div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant"><div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Moy. Bac</div><div class="font-headline-sm text-headline-sm text-on-surface font-bold">16.5</div></div></div>
+  }
+
+  <!-- Pagination -->
+  <div class="p-4 border-t border-surface-container-highest bg-surface-container-low/30 flex justify-between items-center">
+    <p class="text-xs text-on-surface-variant">Affichage de {{ filteredCandidatures.length }} sur {{ candidatures.length }} candidatures</p>
+    <div class="flex gap-1">
+      <button class="w-8 h-8 flex items-center justify-center rounded border border-surface-container-highest bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+      <button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-on-primary font-bold text-xs">1</button>
+      <button class="w-8 h-8 flex items-center justify-center rounded border border-surface-container-highest bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container transition-colors text-xs">2</button>
+      <button class="w-8 h-8 flex items-center justify-center rounded border border-surface-container-highest bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
     </div>
-    <div class="mt-auto p-4 border-t border-outline-variant bg-surface-container-lowest sticky bottom-0 z-10 flex gap-2"><button class="flex-1 py-2 px-4 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors text-center">Fermer</button><button class="flex-[2] py-2 px-4 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg shadow-sm hover:bg-[#254d7d] transition-colors text-center flex items-center justify-center gap-2 border-t border-[#4a7ec2] shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">how_to_reg</span> Valider Candidature</button></div>
   </div>
 </div>
-<div class="flex items-center justify-between mt-6">
-  <div class="font-body-sm text-body-sm text-on-surface-variant">Affichage de 1 à 3 sur 124 candidatures</div>
-  <div class="flex items-center gap-1">
-    <button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-outline disabled:opacity-50" disabled><span class="material-symbols-outlined text-sm">chevron_left</span></button>
-    <button class="w-8 h-8 flex items-center justify-center rounded bg-secondary text-on-secondary font-label-sm text-label-sm">1</button>
-    <button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant hover:bg-surface-container text-on-surface font-label-sm text-label-sm transition-colors">2</button>
-    <button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-on-surface hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+
+<!-- ==================== DRAWER: DOSSIER CANDIDAT ==================== -->
+<div class="fixed inset-0 bg-black/40 z-40 transition-opacity duration-300 cursor-pointer" [class.hidden]="!drawerOpen" (click)="closeDrawer()"></div>
+<aside class="fixed inset-y-0 right-0 w-full max-w-lg bg-surface-container-lowest shadow-2xl z-50 transform transition-transform duration-300 overflow-hidden flex flex-col"
+       [class.translate-x-full]="!drawerOpen">
+  @if (selectedCandidate) {
+  <div class="p-6 border-b border-surface-container-highest flex justify-between items-start">
+    <div class="flex gap-4">
+      <div class="w-16 h-16 rounded-xl bg-primary-container text-primary flex items-center justify-center font-bold text-2xl">{{ selectedCandidate.initials }}</div>
+      <div>
+        <h3 class="text-xl font-bold text-on-surface">{{ selectedCandidate.nom }}</h3>
+        <p class="text-sm font-mono text-on-surface-variant">ID: {{ selectedCandidate.idShort }}</p>
+        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 mt-2"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>{{ selectedCandidate.pieces }}</span>
+      </div>
+    </div>
+    <button class="p-2 hover:bg-surface-container-low rounded-full transition-colors text-on-surface-variant" (click)="closeDrawer()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+  <div class="flex-1 overflow-y-auto p-6 space-y-8">
+    <section>
+      <h4 class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-4">Informations Générales</h4>
+      <div class="grid grid-cols-2 gap-y-4">
+        <div><p class="text-xs text-on-surface-variant">Formation</p><p class="text-sm font-semibold text-on-surface">{{ selectedCandidate.formation }}</p></div>
+        <div><p class="text-xs text-on-surface-variant">Date Soumission</p><p class="text-sm font-semibold text-on-surface">{{ selectedCandidate.dateSoumission }}</p></div>
+        <div><p class="text-xs text-on-surface-variant">Nationalité</p><p class="text-sm font-semibold text-on-surface">{{ selectedCandidate.nationalite }}</p></div>
+        <div><p class="text-xs text-on-surface-variant">Paiement</p><p class="text-sm font-semibold text-on-surface">{{ selectedCandidate.paiement }}</p></div>
+      </div>
+    </section>
+    <section>
+      <h4 class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-4">Dossier Académique</h4>
+      <div class="space-y-3">
+        @for (doc of documentsList; track doc.id) {
+        <div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg border border-surface-container">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined" [class.text-success]="doc.valide" [class.text-warning]="!doc.valide">{{ doc.valide ? 'check_circle' : 'pending' }}</span>
+            <span class="text-sm font-medium">{{ doc.nom }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button (click)="validerDocument(doc.id, true); $event.stopPropagation()" class="text-[10px] font-bold px-2 py-0.5 rounded bg-success/10 text-success hover:bg-success/20 transition-colors">Valider</button>
+            <button (click)="validerDocument(doc.id, false); $event.stopPropagation()" class="text-[10px] font-bold px-2 py-0.5 rounded bg-warning/10 text-warning hover:bg-warning/20 transition-colors">Rejeter</button>
+          </div>
+        </div>
+        }
+      </div>
+    </section>
+  </div>
+  <div class="p-6 border-t border-surface-container-highest bg-surface-container-low flex flex-col gap-3">
+    <button class="w-full py-3 bg-primary text-on-primary font-bold rounded-xl hover:bg-opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2 cursor-pointer" (click)="closeDrawer()">
+      <span class="material-symbols-outlined text-[20px]">calendar_add_on</span>Convoquer à l'entretien
+    </button>
+    <div class="grid grid-cols-2 gap-3">
+      <button class="py-2.5 px-4 border border-surface-container-highest text-on-surface font-semibold rounded-xl hover:bg-surface-container transition-colors flex items-center justify-center gap-2 text-sm cursor-pointer" (click)="closeDrawer()">
+        <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>Télécharger PDF
+      </button>
+      <button class="py-2.5 px-4 border border-error/30 text-error font-semibold rounded-xl hover:bg-error-container transition-colors flex items-center justify-center gap-2 text-sm cursor-pointer" (click)="closeDrawer()">
+        <span class="material-symbols-outlined text-[20px]">block</span>Rejeter
+      </button>
+    </div>
+  </div>
+  }
+</aside>
+
+<!-- ==================== MODAL: RELANCE ==================== -->
+@if (modalReminderOpen) {
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/50 backdrop-blur-sm">
+  <div class="bg-surface-container-lowest rounded-xl shadow-lg w-full max-w-md overflow-hidden flex flex-col p-6">
+    <div class="flex flex-col items-center text-center">
+      <div class="w-12 h-12 rounded-full bg-warning/20 text-warning flex items-center justify-center mb-4"><span class="material-symbols-outlined text-[28px]">notification_important</span></div>
+      <h3 class="text-lg font-bold text-on-surface mb-2">Relancer les incomplets</h3>
+      <p class="text-sm text-on-surface-variant mb-6">Un email de relance sera envoyé à <strong>{{ kpis.incomplets }}</strong> candidat(s) ayant un dossier incomplet.</p>
+      <div class="flex justify-center gap-3 w-full">
+        <button class="flex-1 px-4 py-2 text-sm font-medium border border-surface-container-highest text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" (click)="modalReminderOpen = false">Annuler</button>
+        <button class="flex-1 px-4 py-2 text-sm font-medium bg-primary text-on-primary rounded-lg hover:bg-opacity-90 transition-opacity" (click)="sendReminder()">Envoyer</button>
+      </div>
+    </div>
   </div>
 </div>
+}
+
+<!-- Toast -->
+@if (toastVisible) {
+<div class="fixed bottom-4 right-4 z-50 transform transition-all duration-300 flex items-center gap-3 px-4 py-3 bg-surface-container-lowest border rounded-lg shadow-lg"
+     [class.border-success/30]="toastType === 'success'" [class.border-error/30]="toastType === 'error'">
+  <span class="material-symbols-outlined text-[18px]" [class.text-success]="toastType === 'success'" [class.text-error]="toastType === 'error'">{{ toastType === 'success' ? 'check' : 'error' }}</span>
+  <p class="text-sm font-medium text-on-surface">{{ toastMessage }}</p>
+</div>
+}
