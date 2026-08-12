@@ -1,10 +1,10 @@
-import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
-import { Auth } from '../services/authService';
+import { roleGuard } from './role-guard';
 
-export const candidatGuard: CanActivateFn = (route, state) => {
-    const router = inject(Router);
-    const auth = inject(Auth);
-
-    return auth.isCandidate()
-    }
+/**
+ * Réservé aux candidats.
+ *
+ * Délègue à roleGuard : l'implémentation précédente lisait le signal currentUser()
+ * de façon synchrone et renvoyait donc false à chaque rechargement de page, avant
+ * que le profil n'ait été récupéré — et ne redirigeait nulle part en cas de refus.
+ */
+export const candidatGuard = roleGuard('ROLE_CANDIDAT');

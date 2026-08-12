@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormateurService, FormateurProfile } from '../../services/formateur.service';
 
 @Component({
   selector: 'app-mon-profil',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './mon-profil.html',
   styleUrl: './mon-profil.css',
 })

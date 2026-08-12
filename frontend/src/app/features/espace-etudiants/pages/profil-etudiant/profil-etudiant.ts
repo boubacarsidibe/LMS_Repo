@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Etudiant } from '../../data/etudiants.mock';
 import { EtudiantService } from '../../services/etudiant.service';
 
 @Component({
   selector: 'app-profil-etudiant',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, RouterLink],
   templateUrl: './profil-etudiant.html',
   styleUrl: './profil-etudiant.css',
 })

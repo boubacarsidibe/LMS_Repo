@@ -131,6 +131,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return user.email;
   }
 
+  getUserRoleLabel(): string {
+    const roles = this.auth.getUserRoles();
+    if (!roles || roles.length === 0) return '';
+    const r = roles[0];
+    switch (r) {
+      case 'ROLE_RESPONSABLE_ADMISSION': return 'RESPONSABLE ADMISSION';
+      case 'ROLE_CANDIDAT': return 'CANDIDAT';
+      case 'ROLE_ETUDIANT': return 'ETUDIANT';
+      case 'ROLE_FORMATEUR': return 'FORMATEUR';
+      default: return r.replace('ROLE_', '');
+    }
+  }
+
   /** Formatte la date relative : "il y a 2 min", "il y a 1 jour" */
   getRelativeTime(dateStr: string): string {
     const now = new Date();

@@ -8,12 +8,14 @@ import inpg.sn.lms.auth.service.FormateurService;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.service.OtpService;
 import inpg.sn.lms.auth.service.UserService;
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import inpg.sn.lms.security.JwtUtils;
 
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -55,14 +57,21 @@ public class AuthController {
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request) {
         String email = request.get("email");
-        
-        
+
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "L'e-mail est requis."));
         }
 
         String otp = otpService.generateOtp(email);
-        otpService.sendOtpEmail(email, otp);
+        try {
+            otpService.sendOtpEmail(email, otp);
+        } catch (MailException e) {
+            // Sans cette prise en charge, une panne SMTP remonte en 500 générique et
+            // laisse un code non délivré en cache : on l'invalide et on le signale.
+            otpService.invalidateOtp(email);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("message", "L'envoi de l'e-mail a échoué. Veuillez réessayer dans quelques instants."));
+        }
 
         return ResponseEntity.ok(Map.of("message", "Code OTP envoyé par e-mail avec succès."));
     }
@@ -79,6 +88,37 @@ public class AuthController {
         } else {
             return ResponseEntity.badRequest().body(Map.of("message", "Code OTP invalide ou expiré."));
         }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String code = request.get("code");
+        String newPassword = request.get("newPassword");
+
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "L'e-mail est requis."));
+        }
+        if (code == null || code.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Le code de vérification est requis."));
+        }
+        if (newPassword == null || newPassword.length() < 6) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Le nouveau mot de passe doit contenir au moins 6 caractères."));
+        }
+
+        boolean otpValide = otpService.validateOtp(email, code);
+        if (!otpValide) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Code de vérification invalide ou expiré."));
+        }
+
+        User user = userService.findByEmail(email);
+        if (user == null) {
+            throw new ResourceNotFoundException("Utilisateur", "email", email);
+        }
+
+        userService.ChangePassword(email, newPassword);
+        return ResponseEntity.ok(Map.of("message", "Mot de passe réinitialisé avec succès."));
     }
 
     @PostMapping("/login")
@@ -104,13 +144,12 @@ public class AuthController {
 
             // 5. Construction de l'objet utilisateur pour le frontend
             Map<String, Object> userMap = Map.of(
-                "id", user.getId(),
-                "username", user.getUsername(),
-                "email", user.getEmail(),
-                "roles", user.getRoles().stream()
-                    .map(role -> role.getCode())
-                    .toList()
-            );
+                    "id", user.getId(),
+                    "username", user.getUsername(),
+                    "email", user.getEmail(),
+                    "roles", user.getRoles().stream()
+                            .map(role -> role.getCode())
+                            .toList());
 
             // 6. Renvoyer le token + l'utilisateur
             return ResponseEntity.ok(Map.of(
@@ -181,20 +220,23 @@ public class AuthController {
             @RequestBody Map<String, String> request,
             @AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Utilisateur non authentifié"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Utilisateur non authentifié"));
         }
         String currentPassword = request.get("currentPassword");
         String newPassword = request.get("newPassword");
 
         if (newPassword == null || newPassword.length() < 6) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Le mot de passe doit contenir au moins 6 caractères."));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Le mot de passe doit contenir au moins 6 caractères."));
         }
         User user = userService.findByUsername(userDetails.getUsername());
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Utilisateur non trouvé"));
         }
         if (currentPassword == null || !passwordEncoder.matches(currentPassword, user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Mot de passe actuel incorrect."));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Mot de passe actuel incorrect."));
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         userService.save(user);

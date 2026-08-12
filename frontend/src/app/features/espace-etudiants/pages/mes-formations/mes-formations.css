@@ -5,3 +5,9 @@
 @media (min-width: 1024px) {
   .px-margin-desktop { padding-left: 48px; padding-right: 48px; }
 }
+
+.filters input[type="radio"] { accent-color: var(--primary,#2563eb); }
+.filters h3 { margin:0 0 8px 0; }
+.page-header .font-display { margin-top:4px; }
+.input { background: var(--surface-container, #f8fafc); border:1px solid rgba(15,23,42,0.04); }
+.card { background: white; }

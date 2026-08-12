@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -20,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,6 +46,7 @@ import inpg.sn.lms.espace_etudiant.dto.FormationDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportDto;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
+import inpg.sn.lms.espace_etudiant.entity.Formation;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
@@ -83,6 +86,45 @@ public class EspaceEtudiantController {
         this.promotionService = promotionService;
         this.supportService = supportService;
         this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize();
+    }
+
+    /**
+     * Les favoris sont une association LAZY et open-in-view est désactivé : sans
+     * transaction ouverte sur toute la méthode, l'entité User est détachée dès le
+     * retour du repository et la lecture de la collection lève une
+     * LazyInitializationException.
+     */
+    @GetMapping("/favorites")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<Long>> getFavorites(Authentication authentication) {
+        User user = findAuthenticatedUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        List<Long> list = user.getFavorites().stream()
+                .map(Formation::getId)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(list);
+    }
+
+    @PostMapping("/favorites/{id}")
+    @Transactional
+    public ResponseEntity<?> toggleFavorite(@PathVariable Long id, Authentication authentication) {
+        User user = findAuthenticatedUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Formation formation = formationService.findById(id).orElse(null);
+        if (formation == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Set<Formation> favoris = user.getFavorites();
+        boolean nowFavorite = !favoris.removeIf(f -> f.getId().equals(formation.getId()));
+        if (nowFavorite) {
+            favoris.add(formation);
+        }
+        userRepository.save(user);
+        return ResponseEntity.ok(Map.of("favorite", nowFavorite));
     }
 
     @GetMapping("/profile")

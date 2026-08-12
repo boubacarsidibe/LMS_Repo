@@ -25,7 +25,6 @@ public class AdminController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-
     public AdminController(UserService userService, UserRepository userRepository, RoleRepository roleRepository) {
         this.userService = userService;
         this.userRepository = userRepository;
@@ -45,9 +44,11 @@ public class AdminController {
         if (user == null) return ResponseEntity.notFound().build();
 
         user.getRoles().clear();
-        for (String roleCode : request.getRoles()) {
-            Role r = roleRepository.findByCode(roleCode);
-            if (r != null) user.addRole(r);
+        if (request != null && request.getRoles() != null) {
+            for (String roleCode : request.getRoles()) {
+                Role r = roleRepository.findByCode(roleCode);
+                if (r != null) user.addRole(r);
+            }
         }
         userRepository.save(user);
         return ResponseEntity.ok(user);
