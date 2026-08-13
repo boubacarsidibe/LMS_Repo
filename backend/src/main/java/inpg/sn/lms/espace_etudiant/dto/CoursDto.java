@@ -10,6 +10,7 @@ public record CoursDto(
         long nbEtudiants,
         long nbRessources,
         int progression,
-        String couleurBandeau) {
+        String couleurBandeau,
+        String imageUrl) {
 
 }

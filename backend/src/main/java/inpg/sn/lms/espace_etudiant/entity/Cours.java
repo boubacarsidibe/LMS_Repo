@@ -33,6 +33,9 @@ public class Cours {
 
     private String semestre;
 
+    @Column(nullable = true)
+    private String imageUrl;
+
     @ManyToMany
     @JoinTable(
         name = "cours_formateur", // Name of the join table in DB
@@ -89,6 +92,14 @@ public class Cours {
 
     public void setSemestre(String semestre) {
         this.semestre = semestre;
+    }
+
+    public String getImageUrl() {
+    return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
 }

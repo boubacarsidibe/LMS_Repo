@@ -448,6 +448,40 @@ public class EspaceEtudiantController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toSupportDto(savedSupport));
     }
 
+    @PostMapping(value = "/formateur/cours/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadCourseImage(
+        @PathVariable Long id,
+        @RequestParam("image") MultipartFile image,
+        Authentication authentication) {
+    Cours cours = findOwnedCourse(id, authentication);
+    if (cours == null) {
+        return ResponseEntity.notFound().build();
+    }
+    if (image.isEmpty()) {
+        return ResponseEntity.badRequest().body(Map.of("message", "Une image est requise."));
+    }
+
+    String contentType = image.getContentType();
+    if (contentType == null || !contentType.startsWith("image/")) {
+        return ResponseEntity.badRequest().body(Map.of("message", "Le fichier doit être une image."));
+    }
+
+    String originalName = Path.of(image.getOriginalFilename() == null ? "image" : image.getOriginalFilename())
+            .getFileName().toString();
+    String storedFileName = UUID.randomUUID() + "-" + originalName;
+    try {
+        Files.createDirectories(uploadDirectory);
+        Files.copy(image.getInputStream(), uploadDirectory.resolve(storedFileName), StandardCopyOption.REPLACE_EXISTING);
+    } catch (IOException exception) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "L'image n'a pas pu être enregistrée."));
+    }
+
+    cours.setImageUrl("/uploads/" + storedFileName);
+    Cours sauvegarde = coursService.save(cours);
+    return ResponseEntity.ok(toCoursDto(sauvegarde));
+    }
+
     @GetMapping("/formateur/etudiants")
     public ResponseEntity<?> listStudents(Authentication authentication) {
         if (findAuthenticatedFormateur(authentication) == null) {
@@ -487,18 +521,19 @@ public class EspaceEtudiantController {
         return new SeanceDto(seance.getId(), seance.getCours().getId(), seance.getCours().getTitre(), seance.getTitre(), seance.getType(), seance.getDateHeure(), seance.getDureeMinutes(), seance.getLieuOuLien());
     }
     private CoursDto toCoursDto(Cours cours) {
-        return new CoursDto(
-                cours.getId(),
-                cours.getNom(),
-                cours.getTitre(),
-                cours.getDescription(),
-                cours.getSemestre(),
-                cours.getVolumeHoraire(),
-                0,
-                supportService.countCourseSupports(cours.getId()),
-                0,
-                DEFAULT_COURSE_COLOR);
-    }
+    return new CoursDto(
+            cours.getId(),
+            cours.getNom(),
+            cours.getTitre(),
+            cours.getDescription(),
+            cours.getSemestre(),
+            cours.getVolumeHoraire(),
+            0,
+            supportService.countCourseSupports(cours.getId()),
+            0,
+            DEFAULT_COURSE_COLOR,
+            cours.getImageUrl());
+}
 
     private SupportDto toSupportDto(SupportCours support) {
         return new SupportDto(
