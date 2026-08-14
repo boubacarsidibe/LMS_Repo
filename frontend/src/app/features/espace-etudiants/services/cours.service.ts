@@ -33,4 +33,10 @@ export class CoursService {
   getSupports(id: number): Observable<Support[]> {
     return this.http.get<Support[]>(`${this.api}/formateur/cours/${id}/supports`);
   }
+
+  uploadImage(id: number, image: File): Observable<Cours> {
+  const formData = new FormData();
+  formData.append('image', image);
+  return this.http.post<Cours>(`${this.api}/formateur/cours/${id}/image`, formData);
+  }
 }

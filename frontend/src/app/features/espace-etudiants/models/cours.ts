@@ -9,6 +9,7 @@ export interface Cours {
   nbRessources: number;
   progression: number;
   couleurBandeau: string;
+  imageUrl?: string;
 }
 
 export interface CoursCreation {

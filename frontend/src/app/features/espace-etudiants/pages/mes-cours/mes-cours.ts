@@ -6,6 +6,7 @@ import { Cours, CoursCreation } from '../../models/cours';
 import { Support } from '../../models/support';
 import { CoursService } from '../../services/cours.service';
 import { SupportService } from '../../services/support.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-mes-cours',
@@ -186,4 +187,10 @@ export class MesCours implements OnInit {
       return correspondRecherche;
     });
   }
+
+  urlImage(cours: Cours): string {
+  if (!cours.imageUrl) return '';
+  const baseUrl = environment.apiUrl.replace('/api', '');
+  return `${baseUrl}${cours.imageUrl}`;
+}
 }

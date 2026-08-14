@@ -62,7 +62,7 @@ public class SecurityConfig {
             
             .authorizeHttpRequests(auth -> auth
                 // Public : authentification, catalogue, contact
-                .requestMatchers("/api/auth/**", "/api/recrutement/public/**", "/", "/error", "/login").permitAll()
+                .requestMatchers("/api/auth/**", "/api/recrutement/public/**", "/", "/error", "/login", "/uploads/**").permitAll()
                 // Tout utilisateur connecté peut soumettre une candidature : le rôle
                 // CANDIDAT n'est accordé qu'après une soumission réussie (voir
                 // CandidatController#soumettreCandidature), donc pas encore présent
