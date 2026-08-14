@@ -1,0 +1,82 @@
+<app-espace-navbar *ngIf="!dansEspaceFormateur"></app-espace-navbar>
+
+<div class="flex flex-col w-full p-margin-desktop space-y-stack-lg">
+
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-gutter">
+    <div class="flex flex-col space-y-base">
+      <div class="flex items-center gap-2 text-secondary font-label-sm uppercase tracking-widest">
+        <span class="w-8 h-[1px] bg-secondary"></span>
+        Vie de l'institut
+      </div>
+      <h1 class="font-display text-on-surface leading-tight">Photothèque</h1>
+      <p class="font-body-lg text-on-surface-variant max-w-2xl">
+        Revivez les temps forts de la vie étudiante : sorties, visites, activités parascolaires et événements de l'INPG.
+      </p>
+    </div>
+    <button *ngIf="isFormateurRole" (click)="ouvrirFormulaire()" class="flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md shadow-md hover:shadow-lg transition-all active:scale-95 shrink-0">
+      <span class="material-symbols-outlined text-[20px]">add_photo_alternate</span>
+      Ajouter une photo
+    </button>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-gutter">
+    <div *ngFor="let p of photos" class="group relative rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container-lowest shadow-sm aspect-square">
+      <img [src]="p.url" [alt]="p.titre" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+        <p class="text-white font-label-md truncate">{{ p.titre }}</p>
+        <p class="text-white/70 text-[11px]">{{ p.auteur }}<ng-container *ngIf="p.cohorteLibelle"> • {{ p.cohorteLibelle }}</ng-container></p>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="photos.length === 0" class="text-center text-body-md text-on-surface-variant py-8">
+    Aucune photo pour le moment.
+  </p>
+</div>
+
+<!-- Modal : ajouter une photo -->
+<div *ngIf="afficherFormulaire" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerFormulaire()">
+  <div class="bg-surface rounded-xl shadow-lg w-full max-w-md border border-outline-variant" (click)="$event.stopPropagation()">
+    <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+      <h3 class="font-headline-sm text-headline-sm text-primary">Ajouter une photo</h3>
+      <button type="button" (click)="fermerFormulaire()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors"><span class="material-symbols-outlined">close</span></button>
+    </div>
+
+    <form [formGroup]="photoForm" (ngSubmit)="onSubmit()" class="p-6 space-y-base">
+      <div class="space-y-1">
+        <label class="font-label-md text-on-surface-variant">Titre / légende</label>
+        <input formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" placeholder="Ex: Visite du site de Cayar" type="text">
+        <p *ngIf="photoForm.get('titre')?.invalid && photoForm.get('titre')?.touched" class="text-body-sm text-error">
+          Le titre est requis.
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <label class="font-label-md text-on-surface-variant">Cohorte (optionnel)</label>
+        <select formControlName="cohorteId" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
+          <option [ngValue]="null">Toutes les cohortes</option>
+          <option *ngFor="let c of cohortes" [ngValue]="c.id">{{ c.libelle }}{{ c.annee ? ' (' + c.annee + ')' : '' }}</option>
+        </select>
+      </div>
+
+      <div class="space-y-1">
+        <label class="font-label-md text-on-surface-variant">Image</label>
+        <input #fileInput (change)="onFichierSelectionne($event)" accept="image/*" class="hidden" type="file">
+        <button type="button" (click)="ouvrirExplorateur()" class="w-full p-3 bg-surface-container-low rounded-xl border border-dashed border-outline-variant text-body-sm text-on-surface-variant hover:bg-surface-container transition-all">
+          {{ fichierSelectionne ? fichierSelectionne.name : 'Choisir une image...' }}
+        </button>
+      </div>
+
+      <p *ngIf="errorMessage" class="text-body-sm text-error">{{ errorMessage }}</p>
+
+      <div class="flex gap-stack-md pt-2">
+        <button type="button" (click)="fermerFormulaire()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md hover:bg-outline-variant transition-all">
+          Annuler
+        </button>
+        <button [disabled]="isSubmitting" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
+          {{ isSubmitting ? 'Envoi…' : 'Ajouter' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

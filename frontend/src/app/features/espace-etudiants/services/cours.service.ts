@@ -17,4 +17,12 @@ export class CoursService {
   create(data: CoursCreation): Observable<Cours> {
     return this.http.post<Cours>(`${this.api}/formateur/cours`, data);
   }
+
+  update(coursId: number, data: CoursCreation): Observable<Cours> {
+    return this.http.patch<Cours>(`${this.api}/formateur/cours/${coursId}`, data);
+  }
+
+  updateCohortes(coursId: number, cohorteIds: number[]): Observable<Cours> {
+    return this.http.patch<Cours>(`${this.api}/formateur/cours/${coursId}/cohortes`, { cohorteIds });
+  }
 }

@@ -1,7 +1,9 @@
 package inpg.sn.lms.espace_etudiant.entity;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import inpg.sn.lms.auth.entity.Formateur;
 import jakarta.persistence.Column;
@@ -41,6 +43,14 @@ public class Cours {
     )
     private List<Formateur> formateurs = new ArrayList<>();
 
+    @ManyToMany
+    @JoinTable(
+        name = "cours_cohorte",
+        joinColumns = @JoinColumn(name = "cours_id"),
+        inverseJoinColumns = @JoinColumn(name = "cohorte_id")
+    )
+    private Set<Cohorte> cohortes = new LinkedHashSet<>();
+
 
 
     public Long getId() {
@@ -69,6 +79,14 @@ public class Cours {
 
     public List<Formateur> getFormateurs() {
         return formateurs;
+    }
+
+    public Set<Cohorte> getCohortes() {
+        return cohortes;
+    }
+
+    public void setCohortes(Set<Cohorte> cohortes) {
+        this.cohortes = cohortes;
     }
 
     public void setNom(String nom) {

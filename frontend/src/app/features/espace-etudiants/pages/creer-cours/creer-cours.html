@@ -51,6 +51,18 @@
         </p>
       </div>
 
+      <div class="space-y-base">
+        <label class="font-label-md text-on-surface-variant">Cohortes concernées (optionnel)</label>
+        <p class="text-body-sm text-on-surface-variant">Les étudiants de ces cohortes apparaîtront dans votre suivi étudiants.</p>
+        <div class="grid grid-cols-2 gap-2">
+          <label *ngFor="let c of cohortes" class="flex items-center gap-2 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+            <input class="w-4 h-4 accent-secondary" type="checkbox" (change)="toggleCohorte($any(c.id), $any($event.target).checked)">
+            <span class="font-body-sm text-on-surface">{{ c.libelle }}{{ c.annee ? ' (' + c.annee + ')' : '' }}</span>
+          </label>
+        </div>
+        <p *ngIf="!cohortes.length" class="text-body-sm text-on-surface-variant">Aucune cohorte disponible pour le moment.</p>
+      </div>
+
       <p *ngIf="errorMessage" class="text-body-sm text-error">{{ errorMessage }}</p>
 
       <div class="flex gap-stack-md pt-4">

@@ -22,6 +22,15 @@ export class SupportService {
     return this.http.get<Support>(`${this.api}/supports/pedagogiques/${id}`);
   }
 
+  /** Ressources des cours du formateur connecte uniquement. */
+  getMesSupports(): Observable<Support[]> {
+    return this.http.get<Support[]>(`${this.api}/formateur/supports`);
+  }
+
+  supprimer(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.api}/formateur/supports/${id}`);
+  }
+
   uploadCourseSupport(
     coursId: number,
     typeRessource: string,

@@ -1,5 +1,7 @@
 package inpg.sn.lms.espace_etudiant.dto;
 
+import java.util.List;
+
 public record CoursDto(
         Long id,
         String code,
@@ -10,6 +12,7 @@ public record CoursDto(
         long nbEtudiants,
         long nbRessources,
         int progression,
-        String couleurBandeau) {
+        String couleurBandeau,
+        List<CohorteDto> cohortes) {
 
 }

@@ -1,3 +1,5 @@
+import { Cohorte } from './cohorte';
+
 export interface Cours {
   id: number;
   code: string;
@@ -9,6 +11,7 @@ export interface Cours {
   nbRessources: number;
   progression: number;
   couleurBandeau: string;
+  cohortes: Cohorte[];
 }
 
 export interface CoursCreation {
@@ -17,4 +20,5 @@ export interface CoursCreation {
   semestre: string;
   description?: string;
   volumeHoraire?: number;
+  cohorteIds?: number[];
 }

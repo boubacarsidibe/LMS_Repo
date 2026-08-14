@@ -2,10 +2,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormationService } from '../../services/formation.service';
-import { PromotionService } from '../../services/promotion.service';
+import { CohorteService } from '../../services/cohorte.service';
 import { SupportService } from '../../services/support.service';
 import { Formation } from '../../models/formation';
-import { Promotion } from '../../models/promotion';
+import { Cohorte } from '../../models/cohorte';
 import { Support } from '../../models/support';
 import { Auth } from '../../../../core/auth/services/authService';
 import { EspaceNavbarComponent } from '../../../../shared/components/espace-navbar/espace-navbar.component';
@@ -21,18 +21,18 @@ export class Accueil implements OnInit {
   private auth = inject(Auth);
 
   formations: Formation[] = [];
-  promotions: Promotion[] = [];
+  cohortes: Cohorte[] = [];
   supports: Support[] = [];
 
   constructor(
     private formationService: FormationService,
-    private promotionService: PromotionService,
+    private cohorteService: CohorteService,
     private supportService: SupportService
   ) {}
 
   ngOnInit(): void {
     this.formationService.getAll().subscribe({ next: (data) => this.formations = data || [], error: () => this.formations = [] });
-    this.promotionService.getAll().subscribe({ next: (data) => this.promotions = data || [], error: () => this.promotions = [] });
+    this.cohorteService.getAll().subscribe({ next: (data) => this.cohortes = data || [], error: () => this.cohortes = [] });
     this.supportService.getCourseSupports().subscribe({ next: (data) => this.supports = data || [], error: () => this.supports = [] });
   }
 
@@ -41,6 +41,6 @@ export class Accueil implements OnInit {
   }
 
   get isFormateurRole(): boolean {
-    return this.auth.getUserRoles().includes('ROLE_FORMATEUR');
+    return this.auth.isFormateur();
   }
 }

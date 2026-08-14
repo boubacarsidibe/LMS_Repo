@@ -9,5 +9,6 @@ public record EtudiantSuiviDto(
         double noteMoyenne,
         String statut,
         String initiales,
-        String couleurAvatar) {
+        String couleurAvatar,
+        String matricule) {
 }

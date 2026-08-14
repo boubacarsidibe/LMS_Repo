@@ -80,12 +80,21 @@ public class AdminController {
 
     private Formateur nouveauFormateur(User user) {
         String[] nomPrenom = deriverNomPrenom(user.getUsername());
-        return new Formateur(user, nomPrenom[0], nomPrenom[1], "N/A");
+        return new Formateur(user, nomPrenom[0], nomPrenom[1], telephoneProvisoire(user));
     }
 
     private Etudiant nouvelEtudiant(User user) {
         String[] nomPrenom = deriverNomPrenom(user.getUsername());
-        return new Etudiant(user, nomPrenom[0], nomPrenom[1], "N/A");
+        return new Etudiant(user, nomPrenom[0], nomPrenom[1], telephoneProvisoire(user));
+    }
+
+    /**
+     * "N/A" en dur violait la contrainte unique dès le 2e formateur/étudiant
+     * créé via ce chemin (500 sur toute attribution de rôle suivante). L'id
+     * utilisateur est garanti unique et déjà persisté à ce stade de l'appel.
+     */
+    private String telephoneProvisoire(User user) {
+        return "N/A-" + user.getId();
     }
 
     /** Dérive un [nom, prenom] provisoire depuis le username (ex: "amina_diop" -> ["diop", "amina"]), à corriger par l'intéressé depuis son profil. */

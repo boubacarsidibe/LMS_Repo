@@ -1,22 +1,58 @@
 package inpg.sn.lms.config;
 
+import inpg.sn.lms.auth.entity.Etudiant;
+import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.entity.ResponsableAdmission;
 import inpg.sn.lms.auth.entity.Role;
 import inpg.sn.lms.auth.entity.User;
+import inpg.sn.lms.auth.repository.EtudiantRepository;
+import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.auth.repository.ResponsableAdmissionRepository;
 import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
+import inpg.sn.lms.espace_etudiant.entity.Annonce;
+import inpg.sn.lms.espace_etudiant.entity.Certificat;
+import inpg.sn.lms.espace_etudiant.entity.Cohorte;
+import inpg.sn.lms.espace_etudiant.entity.Cours;
+import inpg.sn.lms.espace_etudiant.entity.Evenement;
+import inpg.sn.lms.espace_etudiant.entity.Message;
+import inpg.sn.lms.espace_etudiant.entity.Photo;
+import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
+import inpg.sn.lms.espace_etudiant.entity.Sujet;
+import inpg.sn.lms.espace_etudiant.entity.SupportCours;
+import inpg.sn.lms.espace_etudiant.enums.EnumStatutRetour;
+import inpg.sn.lms.espace_etudiant.enums.EnumStatutSujet;
+import inpg.sn.lms.espace_etudiant.enums.EnumTypeEvenement;
+import inpg.sn.lms.espace_etudiant.repository.AnnonceRepository;
+import inpg.sn.lms.espace_etudiant.repository.CertificatRepository;
+import inpg.sn.lms.espace_etudiant.repository.CohorteRepository;
+import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
+import inpg.sn.lms.espace_etudiant.repository.EvenementRepository;
+import inpg.sn.lms.espace_etudiant.repository.PhotoRepository;
+import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
+import inpg.sn.lms.espace_etudiant.repository.SujetRepository;
+import inpg.sn.lms.espace_etudiant.repository.SupportCoursRepository;
 import inpg.sn.lms.recrutement.entity.Program;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
 import inpg.sn.lms.recrutement.repository.ProgramRepository;
 import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 @Configuration
 public class DataInitializer {
@@ -28,7 +64,19 @@ public class DataInitializer {
             RoleRepository roleRepository,
             UserRepository userRepository,
             ResponsableAdmissionRepository responsableAdmissionRepository,
-            PasswordEncoder passwordEncoder) {
+            SujetRepository sujetRepository,
+            FormateurRepository formateurRepository,
+            EtudiantRepository etudiantRepository,
+            CohorteRepository cohorteRepository,
+            CoursRepository coursRepository,
+            AnnonceRepository annonceRepository,
+            EvenementRepository evenementRepository,
+            RetourEvaluationRepository retourEvaluationRepository,
+            SupportCoursRepository supportCoursRepository,
+            PhotoRepository photoRepository,
+            CertificatRepository certificatRepository,
+            PasswordEncoder passwordEncoder,
+            @Value("${app.upload.dir:uploads}") String uploadDir) {
         return args -> {
             // ===================== PROGRAMMES =====================
             if (programRepository.count() == 0) {
@@ -145,7 +193,324 @@ public class DataInitializer {
 
                 System.out.println("Compte admin_admission cree");
             }
+
+            // ===================== FORUM (donnees de demo) =====================
+            if (sujetRepository.count() == 0) {
+                Sujet sujet1 = new Sujet();
+                sujet1.setTitre("Difficulte variable de simulation");
+                sujet1.setCoursNom("Macroeconomie Avancee");
+                sujet1.setModule("Module 3");
+                sujet1.setStatut(EnumStatutSujet.NOUVEAU);
+                sujet1.setAuteurNom("Alex Mercer");
+                sujet1.setDateCreation(LocalDateTime.now().minusMinutes(14));
+                Message message1 = new Message();
+                message1.setAuteurNom("Alex Mercer");
+                message1.setContenu("Bonjour Professeur,\n\nJe rencontre une difficulte bloquante sur le TP de simulation du Module 3. Le modele refuse de converger, meme apres 500 iterations. Est-ce un probleme de parametrage ?");
+                message1.setDateCreation(sujet1.getDateCreation());
+                message1.setSujet(sujet1);
+                sujet1.getMessages().add(message1);
+                sujetRepository.save(sujet1);
+
+                Sujet sujet2 = new Sujet();
+                sujet2.setTitre("Support PDF inaccessible");
+                sujet2.setCoursNom("Finance Durable");
+                sujet2.setModule("Module 2");
+                sujet2.setStatut(EnumStatutSujet.URGENT);
+                sujet2.setAuteurNom("Lydia Chen");
+                sujet2.setDateCreation(LocalDateTime.now().minusHours(2));
+                Message message2 = new Message();
+                message2.setAuteurNom("Lydia Chen");
+                message2.setContenu("Bonjour,\n\nLe support PDF du cours de Finance n'est pas telechargeable, j'obtiens une erreur 404. Pourriez-vous verifier ?");
+                message2.setDateCreation(sujet2.getDateCreation());
+                message2.setSujet(sujet2);
+                sujet2.getMessages().add(message2);
+                sujetRepository.save(sujet2);
+
+                System.out.println("Sujets de forum crees (2)");
+            }
+
+            // ===================== DONNEES DE DEMO (presentation client) =====================
+            if (userRepository.findByUsername("prof_demo") == null) {
+                Role roleFormateur = roleRepository.findByCode("ROLE_FORMATEUR");
+                Role roleEtudiant = roleRepository.findByCode("ROLE_ETUDIANT");
+
+                Cohorte cohorteDS = new Cohorte();
+                cohorteDS.setCode("M1-DS-2026");
+                cohorteDS.setLibelle("Master 1 - Data Science & IA");
+                cohorteDS.setDateDebut(LocalDate.of(2026, 9, 1));
+                cohorteDS.setDateFin(LocalDate.of(2027, 6, 30));
+                cohorteDS = cohorteRepository.save(cohorteDS);
+
+                Cohorte cohorteFinance = new Cohorte();
+                cohorteFinance.setCode("M2-FIN-2026");
+                cohorteFinance.setLibelle("Master 2 - Finance Durable");
+                cohorteFinance.setDateDebut(LocalDate.of(2026, 9, 1));
+                cohorteFinance.setDateFin(LocalDate.of(2027, 6, 30));
+                cohorteFinance = cohorteRepository.save(cohorteFinance);
+
+                Cohorte cohorteProcedes = new Cohorte();
+                cohorteProcedes.setCode("ING-PROC-2026");
+                cohorteProcedes.setLibelle("Cycle Ingenieur - Procedes Industriels");
+                cohorteProcedes.setDateDebut(LocalDate.of(2026, 9, 1));
+                cohorteProcedes.setDateFin(LocalDate.of(2029, 6, 30));
+                cohorteProcedes = cohorteRepository.save(cohorteProcedes);
+
+                User userFormateur = new User();
+                userFormateur.setUsername("prof_demo");
+                userFormateur.setEmail("prof.demo@inpg.sn");
+                userFormateur.setPassword(passwordEncoder.encode("Demo@2026"));
+                userFormateur.addRole(roleFormateur);
+                userFormateur = userRepository.save(userFormateur);
+                Formateur formateurDemo = new Formateur(userFormateur, "Ndiaye", "Moussa", "+221771112233");
+                formateurRepository.save(formateurDemo);
+
+                Etudiant aissatou = creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
+                        "aissatou_ba", "aissatou.ba@inpg-demo.sn", "Ba", "Aissatou", "+221770000001", cohorteDS);
+                Etudiant cheikh = creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
+                        "cheikh_fall", "cheikh.fall@inpg-demo.sn", "Fall", "Cheikh", "+221770000002", cohorteDS);
+                Etudiant fatou = creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
+                        "fatou_diagne", "fatou.diagne@inpg-demo.sn", "Diagne", "Fatou", "+221770000003", cohorteFinance);
+                creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
+                        "ibrahima_sow", "ibrahima.sow@inpg-demo.sn", "Sow", "Ibrahima", "+221770000004", cohorteFinance);
+                creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
+                        "mamadou_diallo", "mamadou.diallo@inpg-demo.sn", "Diallo", "Mamadou", "+221770000005", cohorteProcedes);
+                creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
+                        "awa_ndoye", "awa.ndoye@inpg-demo.sn", "Ndoye", "Awa", "+221770000006", cohorteProcedes);
+
+                Cours coursDS = new Cours();
+                coursDS.setNom("DS-101");
+                coursDS.setTitre("Introduction au Machine Learning");
+                coursDS.setDescription("Fondamentaux de l'apprentissage automatique : regression, classification, evaluation de modeles.");
+                coursDS.setSemestre("Semestre 1 - 2026");
+                coursDS.setVolumeHoraire(40L);
+                coursDS.getFormateurs().add(formateurDemo);
+                coursDS.getCohortes().add(cohorteDS);
+                coursDS = coursRepository.save(coursDS);
+
+                Cours coursFinance = new Cours();
+                coursFinance.setNom("FIN-201");
+                coursFinance.setTitre("Analyse Financiere Avancee");
+                coursFinance.setDescription("Evaluation d'actifs, gestion de portefeuille et criteres de durabilite (ESG).");
+                coursFinance.setSemestre("Semestre 1 - 2026");
+                coursFinance.setVolumeHoraire(36L);
+                coursFinance.getFormateurs().add(formateurDemo);
+                coursFinance.getCohortes().add(cohorteFinance);
+                coursFinance = coursRepository.save(coursFinance);
+
+                Cours coursProcedes = new Cours();
+                coursProcedes.setNom("PROC-301");
+                coursProcedes.setTitre("Genie des Procedes Industriels");
+                coursProcedes.setDescription("Dimensionnement d'unites industrielles et optimisation des procedes de production.");
+                coursProcedes.setSemestre("Semestre 1 - 2026");
+                coursProcedes.setVolumeHoraire(45L);
+                coursProcedes.getFormateurs().add(formateurDemo);
+                coursProcedes.getCohortes().add(cohorteProcedes);
+                coursProcedes = coursRepository.save(coursProcedes);
+
+                // ----- Supports de cours (fichiers PDF reels + liens externes) -----
+                Path uploadPath = Path.of(uploadDir).toAbsolutePath().normalize();
+                Files.createDirectories(uploadPath);
+                Files.createDirectories(uploadPath.resolve("photos"));
+
+                creerSupportPdf(supportCoursRepository, uploadPath, coursDS,
+                        "Slides - Introduction au Machine Learning", "demo-support-ds101-slides.pdf");
+                creerSupportLien(supportCoursRepository, coursDS,
+                        "Dataset Kaggle - Titanic", "https://www.kaggle.com/c/titanic");
+                creerSupportPdf(supportCoursRepository, uploadPath, coursFinance,
+                        "Support - Analyse Financiere Avancee", "demo-support-fin201-support.pdf");
+                creerSupportLien(supportCoursRepository, coursFinance,
+                        "Article ESG - Banque Mondiale", "https://www.worldbank.org");
+                creerSupportPdf(supportCoursRepository, uploadPath, coursProcedes,
+                        "Cours - Genie des Procedes Chapitre 1", "demo-support-proc301-chap1.pdf");
+                creerSupportLien(supportCoursRepository, coursProcedes,
+                        "Norme ISO 9001", "https://www.iso.org/standard/62085.html");
+
+                // ----- Photos (fichiers image reels, placeholder) -----
+                byte[] photoPlaceholder = Base64.getDecoder().decode(
+                        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+                creerPhotoDemo(photoRepository, uploadPath, photoPlaceholder,
+                        "Rentree M1 Data Science 2026", "demo-photo-ds.png", cohorteDS, "Moussa Ndiaye");
+                creerPhotoDemo(photoRepository, uploadPath, photoPlaceholder,
+                        "Seminaire Finance Durable", "demo-photo-fin.png", cohorteFinance, "Moussa Ndiaye");
+                creerPhotoDemo(photoRepository, uploadPath, photoPlaceholder,
+                        "Visite technique - Procedes Industriels", "demo-photo-proc.png", cohorteProcedes, "Moussa Ndiaye");
+
+                // ----- Certificats (le PDF est genere a la volee au telechargement, pas besoin de fichier) -----
+                certificatRepository.save(creerCertificatDemo(aissatou, "Introduction au Machine Learning", cohorteDS, "Moussa Ndiaye"));
+                certificatRepository.save(creerCertificatDemo(fatou, "Analyse Financiere Avancee", cohorteFinance, "Moussa Ndiaye"));
+
+                Annonce annonce1 = new Annonce();
+                annonce1.setTitre("Bienvenue a la rentree 2026");
+                annonce1.setContenu("L'ensemble des cours demarre la semaine du 1er septembre. Consultez votre planning pour les horaires de vos classes virtuelles.");
+                annonce1.setAuteurNom("Moussa Ndiaye");
+                annonce1.setDateCreation(LocalDateTime.now().minusDays(2));
+                annonce1.setEpinglee(true);
+                annonceRepository.save(annonce1);
+
+                Annonce annonce2 = new Annonce();
+                annonce2.setTitre("Modification de l'emploi du temps - Semaine 3");
+                annonce2.setContenu("La seance de tutorat Finance Durable est deplacee au jeudi 10h en raison d'un conflit de salle.");
+                annonce2.setAuteurNom("Moussa Ndiaye");
+                annonce2.setDateCreation(LocalDateTime.now().minusHours(6));
+                annonce2.setEpinglee(false);
+                annonceRepository.save(annonce2);
+
+                Evenement evenement1 = new Evenement();
+                evenement1.setTitre("Classe virtuelle - Introduction au Machine Learning");
+                evenement1.setDate(LocalDate.now().plusDays(2));
+                evenement1.setHeure("09:00");
+                evenement1.setType(EnumTypeEvenement.COURS);
+                evenement1.setLienVisio("https://meet.example.com/ds-101");
+                evenementRepository.save(evenement1);
+
+                Evenement evenement2 = new Evenement();
+                evenement2.setTitre("Tutorat - Analyse Financiere Avancee");
+                evenement2.setDate(LocalDate.now().plusDays(3));
+                evenement2.setHeure("14:30");
+                evenement2.setType(EnumTypeEvenement.TUTORAT);
+                evenementRepository.save(evenement2);
+
+                Evenement evenement3 = new Evenement();
+                evenement3.setTitre("Rendu de projet - Genie des Procedes");
+                evenement3.setDate(LocalDate.now().plusDays(7));
+                evenement3.setHeure("23:59");
+                evenement3.setType(EnumTypeEvenement.ECHEANCE);
+                evenementRepository.save(evenement3);
+
+                Evenement evenement4 = new Evenement();
+                evenement4.setTitre("Classe virtuelle - Analyse Financiere Avancee");
+                evenement4.setDate(LocalDate.now().plusDays(9));
+                evenement4.setHeure("10:00");
+                evenement4.setType(EnumTypeEvenement.COURS);
+                evenement4.setLienVisio("https://meet.example.com/fin-201");
+                evenementRepository.save(evenement4);
+
+                retourEvaluationRepository.save(creerRetourDemo(coursDS, aissatou, 5,
+                        "Cours tres bien structure, les exemples pratiques m'ont beaucoup aide."));
+                retourEvaluationRepository.save(creerRetourDemo(coursDS, cheikh, 4,
+                        "Bon rythme, j'aurais aime un peu plus de travaux pratiques sur les reseaux de neurones."));
+                retourEvaluationRepository.save(creerRetourDemo(coursFinance, fatou, 2,
+                        "Le volume de lecture pour le module 2 est tres dense, difficile a suivre avant le test."));
+
+                System.out.println("Donnees de demo creees (3 cohortes, 1 formateur, 6 etudiants, 3 cours, 6 supports, 3 photos, 2 certificats, 2 annonces, 4 evenements, 3 retours)");
+            }
         };
+    }
+
+    private Etudiant creerEtudiantDemo(UserRepository userRepository, EtudiantRepository etudiantRepository,
+            PasswordEncoder passwordEncoder, Role roleEtudiant, String username, String email, String nom,
+            String prenom, String telephone, Cohorte cohorte) {
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode("Etudiant@2026"));
+        user.addRole(roleEtudiant);
+        user = userRepository.save(user);
+        Etudiant etudiant = new Etudiant(user, nom, prenom, telephone);
+        etudiant.setCohorte(cohorte);
+        return etudiantRepository.save(etudiant);
+    }
+
+    private RetourEvaluation creerRetourDemo(Cours cours, Etudiant etudiant, int note, String commentaire) {
+        RetourEvaluation retour = new RetourEvaluation();
+        retour.setCours(cours);
+        retour.setEtudiant(etudiant);
+        retour.setNote(note);
+        retour.setCommentaire(commentaire);
+        retour.setDateCreation(LocalDateTime.now().minusDays(1));
+        retour.setStatut(note <= 3 ? EnumStatutRetour.ACTION_REQUISE : EnumStatutRetour.VALIDE);
+        retour.setEpingle(false);
+        return retour;
+    }
+
+    private void creerSupportPdf(SupportCoursRepository supportCoursRepository, Path uploadPath, Cours cours,
+            String titre, String nomFichier) throws IOException {
+        Path cible = uploadPath.resolve(nomFichier);
+        if (!Files.exists(cible)) {
+            Files.write(cible, genererPdfPlaceholder(titre));
+        }
+        SupportCours support = new SupportCours();
+        support.setTitre(titre);
+        support.setTypeRessource("pdf");
+        support.setFichierStocke(nomFichier);
+        support.setDatePublication(LocalDate.now().minusDays(3));
+        support.setCours(cours);
+        support = supportCoursRepository.save(support);
+        support.setUrl("/api/espace-etudiant/supports/cours/" + support.getId() + "/download");
+        supportCoursRepository.save(support);
+    }
+
+    private void creerSupportLien(SupportCoursRepository supportCoursRepository, Cours cours, String titre, String url) {
+        SupportCours support = new SupportCours();
+        support.setTitre(titre);
+        support.setTypeRessource("lien");
+        support.setUrl(url);
+        support.setDatePublication(LocalDate.now().minusDays(3));
+        support.setCours(cours);
+        supportCoursRepository.save(support);
+    }
+
+    private void creerPhotoDemo(PhotoRepository photoRepository, Path uploadPath, byte[] contenu, String titre,
+            String nomFichier, Cohorte cohorte, String auteurNom) throws IOException {
+        Path cible = uploadPath.resolve("photos").resolve(nomFichier);
+        if (!Files.exists(cible)) {
+            Files.write(cible, contenu);
+        }
+        Photo photo = new Photo();
+        photo.setTitre(titre);
+        photo.setNomFichier(nomFichier);
+        photo.setTypeContenu("image/png");
+        photo.setAuteurNom(auteurNom);
+        photo.setDateAjout(LocalDateTime.now().minusDays(1));
+        photo.setCohorte(cohorte);
+        photoRepository.save(photo);
+    }
+
+    private Certificat creerCertificatDemo(Etudiant etudiant, String intituleFormation, Cohorte cohorte, String formateurNom) {
+        Certificat certificat = new Certificat();
+        certificat.setEtudiant(etudiant);
+        certificat.setCohorte(cohorte);
+        certificat.setIntituleFormation(intituleFormation);
+        certificat.setFormateurNom(formateurNom);
+        return certificat;
+    }
+
+    /**
+     * Construit un PDF minimal valide (une page, un peu de texte) en calculant les
+     * offsets xref programmatiquement, pour eviter tout risque d'erreur de calcul
+     * manuel. Sert uniquement de contenu d'exemple pour les supports de demo.
+     */
+    private byte[] genererPdfPlaceholder(String titre) throws IOException {
+        String texte = titre.replace("\\", "").replace("(", "").replace(")", "");
+        String contenuFlux = "BT /F1 14 Tf 40 150 Td (" + texte + ") Tj ET";
+
+        List<String> objets = List.of(
+                "<< /Type /Catalog /Pages 2 0 R >>",
+                "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 200] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+                "<< /Length " + contenuFlux.length() + " >>\nstream\n" + contenuFlux + "\nendstream",
+                "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
+        );
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        List<Integer> offsets = new ArrayList<>();
+        out.write("%PDF-1.4\n".getBytes(StandardCharsets.US_ASCII));
+        int numero = 1;
+        for (String objet : objets) {
+            offsets.add(out.size());
+            out.write((numero + " 0 obj\n" + objet + "\nendobj\n").getBytes(StandardCharsets.US_ASCII));
+            numero++;
+        }
+        int xrefOffset = out.size();
+        StringBuilder xref = new StringBuilder();
+        xref.append("xref\n0 ").append(objets.size() + 1).append("\n0000000000 65535 f \n");
+        for (int offset : offsets) {
+            xref.append(String.format("%010d 00000 n \n", offset));
+        }
+        xref.append("trailer\n<< /Size ").append(objets.size() + 1).append(" /Root 1 0 R >>\nstartxref\n")
+                .append(xrefOffset).append("\n%%EOF");
+        out.write(xref.toString().getBytes(StandardCharsets.US_ASCII));
+        return out.toByteArray();
     }
 
     private Role ensureRole(RoleRepository roleRepository, String code, String libelle, String description) {

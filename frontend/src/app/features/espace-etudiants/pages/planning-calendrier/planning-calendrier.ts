@@ -1,29 +1,59 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EVENEMENTS_MOCK, EvenementCalendrier } from '../../data/evenements.mock';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Evenement } from '../../models/evenement';
+import { EvenementService } from '../../services/evenement.service';
 
 interface JourCalendrier {
   numero: number;
   date: Date;
   horsMois: boolean;
-  evenements: EvenementCalendrier[];
+  evenements: Evenement[];
 }
 
 @Component({
   selector: 'app-planning-calendrier',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './planning-calendrier.html',
   styleUrl: './planning-calendrier.css',
 })
-export class PlanningCalendrier {
+export class PlanningCalendrier implements OnInit {
   moisAffiche: Date = new Date();
   jours: JourCalendrier[] = [];
-  evenements: EvenementCalendrier[] = EVENEMENTS_MOCK;
+  evenements: Evenement[] = [];
   nomsMois = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  nomsJours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
-  constructor() {
-    this.genererCalendrier();
+  vueActive: 'mois' | 'semaine' | 'jour' | 'liste' = 'mois';
+
+  afficherFormulaire = false;
+  evenementForm: FormGroup;
+  isSubmitting = false;
+  errorMessage = '';
+  seanceEnEdition: Evenement | null = null;
+
+  constructor(private evenementService: EvenementService, private fb: FormBuilder) {
+    this.evenementForm = this.fb.group({
+      titre: ['', Validators.required],
+      date: ['', Validators.required],
+      heure: ['', Validators.required],
+      type: ['cours', Validators.required],
+      lienVisio: [''],
+    });
+  }
+
+  ngOnInit(): void {
+    this.evenementService.getAll().subscribe({
+      next: (data) => {
+        this.evenements = data;
+        this.genererCalendrier();
+      },
+      error: () => {
+        this.evenements = [];
+        this.genererCalendrier();
+      },
+    });
   }
 
   genererCalendrier() {
@@ -81,6 +111,92 @@ export class PlanningCalendrier {
     this.genererCalendrier();
   }
 
+  changerVue(vue: 'mois' | 'semaine' | 'jour' | 'liste') {
+    this.vueActive = vue;
+  }
+
+  precedent() {
+    if (this.vueActive === 'semaine') {
+      this.moisAffiche = this.ajouterJours(this.moisAffiche, -7);
+    } else if (this.vueActive === 'jour') {
+      this.moisAffiche = this.ajouterJours(this.moisAffiche, -1);
+    } else {
+      this.moisPrecedent();
+      return;
+    }
+    this.genererCalendrier();
+  }
+
+  suivant() {
+    if (this.vueActive === 'semaine') {
+      this.moisAffiche = this.ajouterJours(this.moisAffiche, 7);
+    } else if (this.vueActive === 'jour') {
+      this.moisAffiche = this.ajouterJours(this.moisAffiche, 1);
+    } else {
+      this.moisSuivant();
+      return;
+    }
+    this.genererCalendrier();
+  }
+
+  private ajouterJours(date: Date, n: number): Date {
+    const resultat = new Date(date);
+    resultat.setDate(resultat.getDate() + n);
+    return resultat;
+  }
+
+  private debutSemaine(date: Date): Date {
+    const resultat = new Date(date);
+    const decalage = (resultat.getDay() + 6) % 7; // 0 = lundi
+    resultat.setDate(resultat.getDate() - decalage);
+    resultat.setHours(0, 0, 0, 0);
+    return resultat;
+  }
+
+  get joursSemaine(): JourCalendrier[] {
+    const lundi = this.debutSemaine(this.moisAffiche);
+    const jours: JourCalendrier[] = [];
+    for (let i = 0; i < 7; i++) {
+      const date = this.ajouterJours(lundi, i);
+      jours.push({
+        numero: date.getDate(),
+        date,
+        horsMois: false,
+        evenements: this.evenements.filter(e => this.memesDates(e.date, date))
+      });
+    }
+    return jours;
+  }
+
+  get evenementsDuJour(): Evenement[] {
+    return this.evenements
+      .filter(e => this.memesDates(e.date, this.moisAffiche))
+      .sort((a, b) => a.heure.localeCompare(b.heure));
+  }
+
+  get evenementsListe(): Evenement[] {
+    return [...this.evenements].sort((a, b) =>
+      a.date.getTime() - b.date.getTime() || a.heure.localeCompare(b.heure)
+    );
+  }
+
+  get libellePeriode(): string {
+    if (this.vueActive === 'semaine') {
+      const lundi = this.debutSemaine(this.moisAffiche);
+      const dimanche = this.ajouterJours(lundi, 6);
+      const memeMois = lundi.getMonth() === dimanche.getMonth();
+      const debut = memeMois ? `${lundi.getDate()}` : `${lundi.getDate()} ${this.nomsMois[lundi.getMonth()]}`;
+      return `Semaine du ${debut} au ${dimanche.getDate()} ${this.nomsMois[dimanche.getMonth()]} ${dimanche.getFullYear()}`;
+    }
+    if (this.vueActive === 'jour') {
+      return `${this.nomsJours[(this.moisAffiche.getDay() + 6) % 7]} ${this.moisAffiche.getDate()} ${this.nomsMois[this.moisAffiche.getMonth()]} ${this.moisAffiche.getFullYear()}`;
+    }
+    if (this.vueActive === 'liste') {
+      return 'Tous les événements';
+    }
+    return `${this.nomsMois[this.moisAffiche.getMonth()]} ${this.moisAffiche.getFullYear()}`;
+  }
+
   estAujourdhui(date: Date): boolean {
     return this.memesDates(date, new Date());
   }
@@ -94,7 +210,7 @@ export class PlanningCalendrier {
     }
   }
 
-  get prochainesSeances(): (EvenementCalendrier & { libelleDate: string })[] {
+  get prochainesSeances(): (Evenement & { libelleDate: string })[] {
     const maintenant = new Date();
     maintenant.setHours(0, 0, 0, 0);
 
@@ -132,5 +248,77 @@ export class PlanningCalendrier {
       case 'echeance': return 'bg-error-container/20 text-error';
       default: return '';
     }
+  }
+
+  ouvrirFormulaire() {
+    this.errorMessage = '';
+    this.seanceEnEdition = null;
+    this.evenementForm.reset({ titre: '', date: '', heure: '', type: 'cours', lienVisio: '' });
+    this.afficherFormulaire = true;
+  }
+
+  ouvrirEdition(seance: Evenement) {
+    this.errorMessage = '';
+    this.seanceEnEdition = seance;
+    this.evenementForm.setValue({
+      titre: seance.titre,
+      date: this.formatDateForInput(seance.date),
+      heure: seance.heure,
+      type: seance.type,
+      lienVisio: seance.lienVisio || '',
+    });
+    this.afficherFormulaire = true;
+  }
+
+  private formatDateForInput(date: Date): string {
+    const annee = date.getFullYear();
+    const mois = String(date.getMonth() + 1).padStart(2, '0');
+    const jour = String(date.getDate()).padStart(2, '0');
+    return `${annee}-${mois}-${jour}`;
+  }
+
+  fermerFormulaire() {
+    this.afficherFormulaire = false;
+    this.seanceEnEdition = null;
+  }
+
+  lancerSeance(seance: Evenement) {
+    if (seance.lienVisio) {
+      window.open(seance.lienVisio, '_blank');
+    } else {
+      this.ouvrirEdition(seance);
+    }
+  }
+
+  onSubmit() {
+    if (this.evenementForm.invalid) {
+      this.evenementForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.errorMessage = '';
+    const donnees = this.evenementForm.getRawValue();
+    const requete = this.seanceEnEdition
+      ? this.evenementService.update(this.seanceEnEdition.id, donnees)
+      : this.evenementService.create(donnees);
+
+    requete.subscribe({
+      next: (evenement) => {
+        this.isSubmitting = false;
+        if (this.seanceEnEdition) {
+          this.evenements = this.evenements.map(e => e.id === evenement.id ? evenement : e);
+        } else {
+          this.evenements = [...this.evenements, evenement];
+        }
+        this.genererCalendrier();
+        this.afficherFormulaire = false;
+        this.seanceEnEdition = null;
+      },
+      error: (error) => {
+        this.isSubmitting = false;
+        this.errorMessage = error.error?.message || "L'enregistrement de l'événement a échoué.";
+      },
+    });
   }
 }

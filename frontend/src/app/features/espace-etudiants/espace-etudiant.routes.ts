@@ -12,6 +12,21 @@ export const routes: Routes = [
         canActivate: [roleGuard('ROLE_ETUDIANT')]
     },
     {
+        path: 'annonces',
+        loadComponent: () => import('./pages/annonces/annonces').then(m => m.Annonces),
+        canActivate: [roleGuard('ROLE_ETUDIANT', 'ROLE_FORMATEUR')]
+    },
+    {
+        path: 'phototheque',
+        loadComponent: () => import('./pages/phototheque/phototheque').then(m => m.Phototheque),
+        canActivate: [roleGuard('ROLE_ETUDIANT', 'ROLE_FORMATEUR')]
+    },
+    {
+        path: 'certificats',
+        loadComponent: () => import('./pages/certificats/certificats').then(m => m.Certificats),
+        canActivate: [roleGuard('ROLE_ETUDIANT', 'ROLE_FORMATEUR')]
+    },
+    {
         path: 'formateur',
         loadComponent: () => import('./layouts/formateur-layout/formateur-layout').then(m => m.FormateurLayout),
         canActivate: [roleGuard('ROLE_FORMATEUR')],
@@ -52,6 +67,22 @@ export const routes: Routes = [
             {
                 path: 'mon-profil',
                 loadComponent: () => import('./pages/mon-profil/mon-profil').then(m => m.MonProfil)
+            },
+            // Memes composants que les routes partagees ci-dessus (pas de duplication
+            // de code ni de donnees) : accessibles ici pour que le formateur reste
+            // dans son propre shell (sidebar) plutot que de basculer vers la navbar
+            // partagee. Voir Annonces.dansEspaceFormateur pour le detail.
+            {
+                path: 'annonces',
+                loadComponent: () => import('./pages/annonces/annonces').then(m => m.Annonces)
+            },
+            {
+                path: 'phototheque',
+                loadComponent: () => import('./pages/phototheque/phototheque').then(m => m.Phototheque)
+            },
+            {
+                path: 'certificats',
+                loadComponent: () => import('./pages/certificats/certificats').then(m => m.Certificats)
             }
         ]
     }

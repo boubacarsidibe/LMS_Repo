@@ -1,30 +1,188 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { FormateurService, FormateurProfile } from '../../services/formateur.service';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Auth } from '../../../../core/auth/services/authService';
+import { EtudiantService } from '../../services/etudiant.service';
+import { CoursService } from '../../services/cours.service';
+import { SupportService } from '../../services/support.service';
+import { Etudiant } from '../../models/etudiant';
+import { Cours } from '../../models/cours';
+import { Support } from '../../models/support';
+
+interface NavItem {
+  label: string;
+  icon: string;
+  route: string;
+}
 
 @Component({
   selector: 'app-formateur-layout',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './formateur-layout.html',
   styleUrl: './formateur-layout.css',
 })
 export class FormateurLayout implements OnInit {
-  profile: FormateurProfile | null = null;
-  loading = false;
+  notificationOpen = false;
+  profileOpen = false;
+  sidebarMobileOpen = false;
 
-  constructor(private formateurService: FormateurService) {}
+  searchQuery = '';
+  searchOpen = false;
+  private tousEtudiants: Etudiant[] = [];
+  private tousCours: Cours[] = [];
+  private tousSupports: Support[] = [];
+  resultatsEtudiants: Etudiant[] = [];
+  resultatsCours: Cours[] = [];
+  resultatsSupports: Support[] = [];
 
-  ngOnInit(): void {
-    this.loading = true;
-    this.formateurService.getProfile().subscribe({ next: p => { this.profile = p; this.loading = false; }, error: () => { this.profile = null; this.loading = false; } });
+  navItems: NavItem[] = [
+    { label: "Vue d'ensemble", icon: 'dashboard', route: 'dashboard-formateur' },
+    { label: 'Mes Cours & Ressources', icon: 'menu_book', route: 'mes-cours' },
+    { label: 'Suivi Étudiants', icon: 'analytics', route: 'suivi-etudiants' },
+    { label: 'Planning & Calendrier', icon: 'calendar_today', route: 'planning-calendrier' },
+    { label: 'Forum & Interaction', icon: 'forum', route: 'forum' },
+    { label: 'Retours & Évaluations', icon: 'assignment_turned_in', route: 'retours-evaluations' },
+    { label: 'Annonces', icon: 'campaign', route: 'annonces' },
+    { label: 'Photothèque', icon: 'photo_library', route: 'phototheque' },
+    { label: 'Certificats', icon: 'workspace_premium', route: 'certificats' },
+  ];
+
+  constructor(
+    private router: Router,
+    private auth: Auth,
+    private etudiantService: EtudiantService,
+    private coursService: CoursService,
+    private supportService: SupportService,
+  ) {
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe(() => {
+        this.sidebarMobileOpen = false;
+      });
   }
 
-  // Pas encore de page de profil self-service : on prévient honnêtement plutôt
-  // que de laisser un lien href="#" qui ne fait que remonter en haut de page.
-  profilBientotDisponible(event: Event): void {
-    event.preventDefault();
-    alert('La page "Mon profil" sera bientôt disponible.');
+  ngOnInit(): void {
+    this.etudiantService.getAll().subscribe({ next: (data) => (this.tousEtudiants = data), error: () => {} });
+    this.coursService.getAll().subscribe({ next: (data) => (this.tousCours = data), error: () => {} });
+    this.supportService.getMesSupports().subscribe({ next: (data) => (this.tousSupports = data), error: () => {} });
+  }
+
+  onSearchInput(): void {
+    const q = this.searchQuery.trim().toLowerCase();
+    if (!q) {
+      this.searchOpen = false;
+      this.resultatsEtudiants = [];
+      this.resultatsCours = [];
+      this.resultatsSupports = [];
+      return;
+    }
+    this.resultatsEtudiants = this.tousEtudiants.filter(e => e.nom.toLowerCase().includes(q)).slice(0, 5);
+    this.resultatsCours = this.tousCours
+      .filter(c => c.titre.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+      .slice(0, 5);
+    this.resultatsSupports = this.tousSupports
+      .filter(s => (s.titre ?? '').toLowerCase().includes(q))
+      .slice(0, 5);
+    this.searchOpen = true;
+  }
+
+  get aucunResultat(): boolean {
+    return this.resultatsEtudiants.length === 0 && this.resultatsCours.length === 0 && this.resultatsSupports.length === 0;
+  }
+
+  allerVersEtudiant(etudiant: Etudiant): void {
+    this.fermerRecherche();
+    this.router.navigate(['/espace-etudiant/formateur/profil-etudiant', etudiant.id]);
+  }
+
+  allerVersCoursEtFichiers(): void {
+    this.fermerRecherche();
+    this.router.navigate(['/espace-etudiant/formateur/mes-cours']);
+  }
+
+  private fermerRecherche(): void {
+    this.searchOpen = false;
+    this.searchQuery = '';
+  }
+
+  get userInitials(): string {
+    const user = this.auth.currentUser();
+    if (!user) return '';
+    const parts = (user as any).username ? (user as any).username.split('_') : [user.email.charAt(0)];
+    return parts.length >= 2
+      ? (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase()
+      : (parts[0].charAt(0) + (parts[0].charAt(1) || '')).toUpperCase();
+  }
+
+  get userDisplayName(): string {
+    const user = this.auth.currentUser();
+    if (!user) return '';
+    return (user as any).username ? (user as any).username.replace('_', ' ') : user.email;
+  }
+
+  get userEmail(): string {
+    return this.auth.currentUser()?.email || '';
+  }
+
+  logout(): void {
+    this.auth.logout().subscribe({
+      next: () => {
+        this.closeAll();
+        this.router.navigate(['/auth/login']);
+      },
+      error: () => {
+        this.auth.clearSession();
+        this.closeAll();
+        this.router.navigate(['/auth/login']);
+      },
+    });
+  }
+
+  private closeAll(): void {
+    this.notificationOpen = false;
+    this.profileOpen = false;
+  }
+
+  toggleDropdown(type: 'notification' | 'profile'): void {
+    if (type === 'notification') {
+      const wasOpen = this.notificationOpen;
+      this.closeAll();
+      this.notificationOpen = !wasOpen;
+    } else {
+      const wasOpen = this.profileOpen;
+      this.closeAll();
+      this.profileOpen = !wasOpen;
+    }
+  }
+
+  toggleSidebarMobile(): void {
+    this.sidebarMobileOpen = !this.sidebarMobileOpen;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (
+      target.closest('#notification-btn') ||
+      target.closest('#profile-btn') ||
+      target.closest('#mobile-menu-btn') ||
+      target.closest('#search-input') ||
+      target.closest('#search-results')
+    ) {
+      return;
+    }
+    if (
+      target.closest('#notification-dropdown') ||
+      target.closest('#profile-dropdown') ||
+      target.closest('#mobile-sidebar')
+    ) {
+      return;
+    }
+    this.closeAll();
+    this.sidebarMobileOpen = false;
+    this.searchOpen = false;
   }
 }

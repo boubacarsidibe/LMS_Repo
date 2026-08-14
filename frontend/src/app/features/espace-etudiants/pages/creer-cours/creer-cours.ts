@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CoursService } from '../../services/cours.service';
+import { CohorteService } from '../../services/cohorte.service';
+import { Cohorte } from '../../models/cohorte';
 
 @Component({
   selector: 'app-creer-cours',
@@ -11,12 +13,19 @@ import { CoursService } from '../../services/cours.service';
   templateUrl: './creer-cours.html',
   styleUrl: './creer-cours.css',
 })
-export class CreerCours {
+export class CreerCours implements OnInit {
   creerCoursForm: FormGroup;
   isSubmitting = false;
   errorMessage = '';
+  cohortes: Cohorte[] = [];
+  cohorteIdsSelectionnees = new Set<number>();
 
-  constructor(private fb: FormBuilder, private router: Router, private coursService: CoursService) {
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private coursService: CoursService,
+    private cohorteService: CohorteService
+  ) {
     this.creerCoursForm = this.fb.group({
       code: ['', Validators.required],
       titre: ['', Validators.required],
@@ -26,6 +35,21 @@ export class CreerCours {
     });
   }
 
+  ngOnInit(): void {
+    this.cohorteService.getAll().subscribe({
+      next: (data) => (this.cohortes = data || []),
+      error: () => (this.cohortes = [])
+    });
+  }
+
+  toggleCohorte(id: number, checked: boolean) {
+    if (checked) {
+      this.cohorteIdsSelectionnees.add(id);
+    } else {
+      this.cohorteIdsSelectionnees.delete(id);
+    }
+  }
+
   onSubmit() {
     if (this.creerCoursForm.invalid) {
       this.creerCoursForm.markAllAsTouched();
@@ -33,7 +57,11 @@ export class CreerCours {
     }
     this.isSubmitting = true;
     this.errorMessage = '';
-    this.coursService.create(this.creerCoursForm.getRawValue()).subscribe({
+    const payload = {
+      ...this.creerCoursForm.getRawValue(),
+      cohorteIds: Array.from(this.cohorteIdsSelectionnees)
+    };
+    this.coursService.create(payload).subscribe({
       next: () => this.router.navigate(['/espace-etudiant/formateur/mes-cours']),
       error: (error) => {
         this.isSubmitting = false;

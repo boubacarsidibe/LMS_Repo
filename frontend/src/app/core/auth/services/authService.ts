@@ -61,6 +61,10 @@ export class Auth {
     return this.getUserRoles().includes('ROLE_RESPONSABLE_ADMISSION');
   }
 
+  isFormateur(): boolean {
+    return this.getUserRoles().includes('ROLE_FORMATEUR');
+  }
+
   isLoggedIn(): boolean {
     return !!this.getToken();
   }

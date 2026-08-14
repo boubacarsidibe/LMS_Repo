@@ -17,7 +17,7 @@
         <span class="material-symbols-outlined text-[20px]">download</span>
         Exporter le Rapport
       </button>
-      <button disabled title="Bientôt disponible" class="flex items-center gap-2 px-6 py-3 bg-primary/40 text-on-primary rounded-lg font-label-md cursor-not-allowed">
+      <button disabled title="Bientôt disponible" class="flex items-center gap-2 px-6 py-3 bg-secondary/40 text-on-secondary rounded-lg font-label-md cursor-not-allowed">
         <span class="material-symbols-outlined text-[20px]">analytics</span>
         Analyse Comparative
       </button>
@@ -31,21 +31,13 @@
         <div class="p-3 bg-primary-container/10 rounded-lg text-primary">
           <span class="material-symbols-outlined">star_rate</span>
         </div>
-        <span class="text-label-sm font-bold text-secondary bg-secondary-container/20 px-2 py-1 rounded">+0.2 vs S1</span>
       </div>
       <div class="mt-stack-md">
         <p class="font-label-md text-on-surface-variant">Note Moyenne Globale</p>
         <div class="flex items-baseline gap-2">
-          <h2 class="font-display text-on-surface">4.8</h2>
+          <h2 class="font-display text-on-surface">{{ retours.length ? noteMoyenne.toFixed(1) : '—' }}</h2>
           <span class="font-headline-sm text-outline">/ 5</span>
         </div>
-      </div>
-      <div class="flex gap-0.5 mt-2">
-        <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">star</span>
-        <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">star</span>
-        <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">star</span>
-        <span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">star</span>
-        <span class="material-symbols-outlined text-secondary">star_half</span>
       </div>
     </div>
 
@@ -54,16 +46,10 @@
         <div class="p-3 bg-secondary-container/10 rounded-lg text-secondary">
           <span class="material-symbols-outlined">sentiment_satisfied</span>
         </div>
-        <svg class="w-12 h-12 transform -rotate-90">
-          <circle class="text-surface-container" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-width="4"></circle>
-          <circle class="text-secondary" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-dasharray="125.6" stroke-dashoffset="7.5" stroke-width="4"></circle>
-        </svg>
       </div>
       <p class="font-label-md text-on-surface-variant">Taux de Satisfaction</p>
-      <h2 class="font-display text-on-surface">94%</h2>
-      <div class="w-full bg-surface-container h-1.5 rounded-full mt-4 overflow-hidden">
-        <div class="bg-secondary h-full rounded-full" style="width: 94%"></div>
-      </div>
+      <h2 class="font-display text-on-surface">{{ retours.length ? tauxSatisfaction + '%' : '—' }}</h2>
+      <p class="text-body-sm text-on-surface-variant mt-1 italic">Part des avis notés 4/5 ou plus</p>
     </div>
 
     <div class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-sm border border-outline-variant/30 flex flex-col">
@@ -71,16 +57,11 @@
         <div class="p-3 bg-tertiary-fixed-dim/10 rounded-lg text-on-tertiary-fixed">
           <span class="material-symbols-outlined">forum</span>
         </div>
-        <div class="flex -space-x-2">
-          <div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest"></div>
-          <div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-high"></div>
-          <div class="w-8 h-8 rounded-full border-2 border-surface bg-primary flex items-center justify-center text-[10px] text-on-primary font-bold">+31</div>
-        </div>
       </div>
       <div class="mt-stack-md">
         <p class="font-label-md text-on-surface-variant">Volume de Retours</p>
-        <h2 class="font-display text-on-surface">342</h2>
-        <p class="font-body-sm text-on-surface-variant mt-1 italic">Avis collectés ce trimestre</p>
+        <h2 class="font-display text-on-surface">{{ retours.length }}</h2>
+        <p class="font-body-sm text-on-surface-variant mt-1 italic">Avis collectés sur vos cours</p>
       </div>
     </div>
   </div>
@@ -89,11 +70,9 @@
   <div class="flex flex-col md:flex-row items-center justify-between gap-stack-md bg-surface-container-low p-4 rounded-xl">
     <div class="flex flex-wrap items-center gap-stack-md w-full md:w-auto">
       <div class="relative min-w-[280px]">
-        <select class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-label-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all">
-          <option>Tous les cours</option>
-          <option>Théorie et Pratique Économiques</option>
-          <option>Macroéconomie Avancée</option>
-          <option>Économétrie Appliquée</option>
+        <select [(ngModel)]="coursSelectionne" class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-label-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all">
+          <option value="">Tous les cours</option>
+          <option *ngFor="let c of mesCours" [value]="c.titre">{{ c.titre }}</option>
         </select>
         <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
       </div>
@@ -143,7 +122,7 @@
       </div>
 
       <div class="flex items-center justify-end mt-6 pt-4 border-t border-outline-variant/30" *ngIf="r.statut === 'action-requise'">
-        <button (click)="ajusterCours()" class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg text-label-md hover:opacity-90 transition-all">
+        <button (click)="ajusterCours()" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg text-label-md hover:opacity-90 transition-all">
           <span class="material-symbols-outlined text-[18px]">tune</span>
           Ajuster le cours
         </button>
