@@ -81,8 +81,10 @@ public class NotificationController {
     private Candidat findCandidat(Authentication auth) {
         String name = auth.getName();
         inpg.sn.lms.auth.entity.User u = userRepository.findByUsername(name);
-        if (u == null) u = userRepository.findByEmail(name);
-        if (u == null) throw new RuntimeException("Utilisateur non trouvé: " + name);
+        if (u == null)
+            u = userRepository.findByEmail(name);
+        if (u == null)
+            throw new RuntimeException("Utilisateur non trouvé: " + name);
         return candidatRepository.findByUserId(u.getId())
                 .orElseThrow(() -> new RuntimeException("Candidat non trouvé pour l'utilisateur: " + name));
     }

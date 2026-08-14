@@ -48,6 +48,7 @@ import inpg.sn.lms.espace_etudiant.dto.EtudiantSuiviDto;
 import inpg.sn.lms.espace_etudiant.dto.FormateurProfileDto;
 import inpg.sn.lms.espace_etudiant.dto.FormationDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDto;
+import inpg.sn.lms.espace_etudiant.dto.SupportDetailDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportDto;
 import inpg.sn.lms.espace_etudiant.dto.SeanceDto;
 import inpg.sn.lms.espace_etudiant.dto.SeanceRequest;
@@ -58,6 +59,7 @@ import inpg.sn.lms.espace_etudiant.entity.Seance;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
+import inpg.sn.lms.espace_etudiant.service.SupportCoursStorageService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
 import inpg.sn.lms.espace_etudiant.service.SeanceService;
 
@@ -76,6 +78,7 @@ public class EspaceEtudiantController {
     private final PromotionService promotionService;
     private final SupportService supportService;
     private final SeanceService seanceService;
+    private final SupportCoursStorageService supportCoursStorageService;
     private final Path uploadDirectory;
 
     public EspaceEtudiantController(
@@ -87,6 +90,7 @@ public class EspaceEtudiantController {
             PromotionService promotionService,
             SupportService supportService,
             SeanceService seanceService,
+            SupportCoursStorageService supportCoursStorageService,
             @Value("${app.upload.dir:uploads}") String uploadDirectory) {
         this.userRepository = userRepository;
         this.etudiantRepository = etudiantRepository;
@@ -96,6 +100,7 @@ public class EspaceEtudiantController {
         this.promotionService = promotionService;
         this.supportService = supportService;
         this.seanceService = seanceService;
+        this.supportCoursStorageService = supportCoursStorageService;
         this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize();
     }
 
@@ -146,6 +151,55 @@ public class EspaceEtudiantController {
         }
 
         Etudiant etudiant = etudiantRepository.findByUserId(user.getId()).orElse(null);
+        return ResponseEntity.ok(toProfilePayload(user, etudiant));
+    }
+
+    /**
+     * Met à jour l'identité de l'étudiant connecté. L'email n'est pas modifiable
+     * ici : il sert d'identifiant de connexion et relève de l'espace
+     * d'authentification, pas du profil.
+     */
+    @PutMapping("/profile")
+    @Transactional
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> request, Authentication authentication) {
+        User user = findAuthenticatedUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Etudiant etudiant = etudiantRepository.findByUserId(user.getId()).orElse(null);
+        if (etudiant == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Aucune fiche étudiant n'est associée à ce compte."));
+        }
+
+        String nom = trimOrNull(request.get("nom"));
+        String prenom = trimOrNull(request.get("prenom"));
+        String telephone = trimOrNull(request.get("telephone"));
+
+        if (nom == null || prenom == null || telephone == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Le nom, le prénom et le téléphone sont obligatoires."));
+        }
+
+        // Le téléphone porte une contrainte d'unicité : on détecte le conflit ici
+        // pour renvoyer un message exploitable plutôt qu'une violation de contrainte.
+        Etudiant proprietaireDuNumero = etudiantRepository.findByTelephone(telephone).orElse(null);
+        if (proprietaireDuNumero != null && !proprietaireDuNumero.getId().equals(etudiant.getId())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Ce numéro de téléphone est déjà utilisé par un autre étudiant."));
+        }
+
+        etudiant.setNom(nom);
+        etudiant.setPrenom(prenom);
+        etudiant.setTelephone(telephone);
+        etudiantRepository.save(etudiant);
+
+        return ResponseEntity.ok(toProfilePayload(user, etudiant));
+    }
+
+    /** Format unique du profil, partagé par la lecture et la mise à jour. */
+    private Map<String, Object> toProfilePayload(User user, Etudiant etudiant) {
         Map<String, Object> profile = new LinkedHashMap<>();
         profile.put("userId", user.getId());
         profile.put("username", user.getUsername());
@@ -157,7 +211,15 @@ public class EspaceEtudiantController {
                     "prenom", etudiant.getPrenom(),
                     "telephone", etudiant.getTelephone()));
         }
-        return ResponseEntity.ok(profile);
+        return profile;
+    }
+
+    private String trimOrNull(String valeur) {
+        if (valeur == null) {
+            return null;
+        }
+        String trimmed = valeur.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     @GetMapping("/formations")
@@ -179,6 +241,28 @@ public class EspaceEtudiantController {
                 .map(p -> new PromotionDto(p.getId(), p.getCode(), p.getLibelle()))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(list);
+    }
+
+    /**
+     * Contenu d'un cours vu par l'étudiant : la fiche du cours et ses supports.
+     * Les endpoints /formateur/cours/{id}/supports existants sont réservés au
+     * propriétaire du cours et ne conviennent donc pas ici.
+     */
+    @GetMapping("/cours/{id}")
+    public ResponseEntity<?> getCours(@PathVariable Long id) {
+        return coursService.findById(id)
+                .<ResponseEntity<?>>map(cours -> ResponseEntity.ok(toCoursDto(cours)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/cours/{id}/supports")
+    public ResponseEntity<List<SupportDetailDto>> listSupportsOfCours(@PathVariable Long id) {
+        if (coursService.findById(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(supportService.getCourseSupports(id).stream()
+                .map(this::toSupportDetailDto)
+                .toList());
     }
 
     @GetMapping("/supports")
@@ -422,30 +506,14 @@ public class EspaceEtudiantController {
                     .body(Map.of("message", "Vous ne pouvez pas publier dans ce cours."));
         }
 
-        String originalName = Path.of(fichier.getOriginalFilename() == null ? "ressource" : fichier.getOriginalFilename())
-                .getFileName().toString();
-        if (originalName.isBlank()) {
-            originalName = "ressource";
-        }
-        String storedFileName = UUID.randomUUID() + "-" + originalName;
         try {
-            Files.createDirectories(uploadDirectory);
-            Files.copy(fichier.getInputStream(), uploadDirectory.resolve(storedFileName), StandardCopyOption.REPLACE_EXISTING);
+            SupportCours savedSupport = supportCoursStorageService.publier(cours, fichier, typeRessource,
+                    publicationDate);
+            return ResponseEntity.status(HttpStatus.CREATED).body(toSupportDto(savedSupport));
         } catch (IOException exception) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Le fichier n'a pas pu être enregistré."));
         }
-
-        SupportCours support = new SupportCours();
-        support.setCours(cours);
-        support.setTitre(originalName);
-        support.setTypeRessource(typeRessource);
-        support.setFichierStocke(storedFileName);
-        support.setDatePublication(publicationDate);
-        SupportCours savedSupport = supportService.saveCourseSupport(support);
-        savedSupport.setUrl("/api/espace-etudiant/supports/cours/" + savedSupport.getId() + "/download");
-        savedSupport = supportService.saveCourseSupport(savedSupport);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toSupportDto(savedSupport));
     }
 
     @PostMapping(value = "/formateur/cours/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -540,6 +608,16 @@ public class EspaceEtudiantController {
                 support.getId().toString(),
                 support.getTitre(),
                 support.getUrl());
+    }
+
+    private SupportDetailDto toSupportDetailDto(SupportCours support) {
+        return new SupportDetailDto(
+                support.getId(),
+                support.getTitre(),
+                support.getTypeRessource(),
+                support.getUrl(),
+                support.getDatePublication(),
+                support.getFichierStocke() != null && !support.getFichierStocke().isBlank());
     }
 
     private EtudiantSuiviDto toEtudiantSuiviDto(Etudiant etudiant) {

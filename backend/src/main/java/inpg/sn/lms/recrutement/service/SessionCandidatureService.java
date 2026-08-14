@@ -27,6 +27,7 @@ public class SessionCandidatureService {
         session.setDateOuverture(request.getDateOuverture());
         session.setDateFermeture(request.getDateFermeture());
         session.setEstOuverte(request.isEstOuverte());
+        appliquerCriteres(session, request);
 
         SessionCandidature saved = sessionRepository.save(session);
         return toResponse(saved);
@@ -40,9 +41,26 @@ public class SessionCandidatureService {
         session.setDateOuverture(request.getDateOuverture());
         session.setDateFermeture(request.getDateFermeture());
         session.setEstOuverte(request.isEstOuverte());
+        appliquerCriteres(session, request);
 
         SessionCandidature saved = sessionRepository.save(session);
         return toResponse(saved);
+    }
+
+    private void appliquerCriteres(SessionCandidature session, SessionCandidatureRequest request) {
+        session.setCriteresActifs(request.isCriteresActifs());
+        session.setCriteresNiveauEtudeMinimum(
+                request.getCriteresNiveauEtudeMinimum() == null || request.getCriteresNiveauEtudeMinimum().isBlank()
+                        ? null
+                        : request.getCriteresNiveauEtudeMinimum());
+        session.setCriteresAgeMinimum(request.getCriteresAgeMinimum());
+        session.setCriteresAgeMaximum(request.getCriteresAgeMaximum());
+        session.setCriteresGenre(
+                request.getCriteresGenre() == null || request.getCriteresGenre().isBlank()
+                        ? null
+                        : request.getCriteresGenre());
+        session.setCriteresExperienceMinimale(request.getCriteresExperienceMinimale());
+        session.setSeuilReussiteTest(request.getSeuilReussiteTest() != null ? request.getSeuilReussiteTest() : 10f);
     }
 
     public List<SessionCandidatureResponse> getSessionsOuvertes() {
@@ -80,6 +98,14 @@ public class SessionCandidatureService {
                 .dateFermeture(s.getDateFermeture())
                 .estOuverte(s.isEstOuverte())
                 .estActive(s.estSessionActive())
+                .criteresActifs(s.isCriteresActifs())
+                .criteresNiveauEtudeMinimum(s.getCriteresNiveauEtudeMinimum())
+                .criteresAgeMinimum(s.getCriteresAgeMinimum())
+                .criteresAgeMaximum(s.getCriteresAgeMaximum())
+                .criteresGenre(s.getCriteresGenre())
+                .criteresExperienceMinimale(s.getCriteresExperienceMinimale())
+                .seuilReussiteTest(s.getSeuilReussiteTest())
+                .nbCandidatures(s.getCandidatures().size())
                 .build();
     }
 }

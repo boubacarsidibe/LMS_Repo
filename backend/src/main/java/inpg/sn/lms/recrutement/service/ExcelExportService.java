@@ -13,6 +13,7 @@ import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xddf.usermodel.chart.AxisCrosses;
 import org.apache.poi.xddf.usermodel.chart.AxisPosition;
 import org.apache.poi.xddf.usermodel.chart.BarDirection;
@@ -39,6 +40,10 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ExcelExportService {
+
+    /** Largeur maximale d'une colonne auto-dimensionnée (en 1/256e de caractère), pour éviter
+     *  qu'une colonne à texte libre (ex: motif de rejet, documents) n'écrase toute la feuille. */
+    private static final int LARGEUR_COLONNE_MAX = 60 * 256;
 
     public byte[] genererClasseur(String nomFeuille, List<String> entetes, List<List<Object>> lignes) {
         return genererClasseur(nomFeuille, entetes, lignes, null, null, null, null);
@@ -81,6 +86,16 @@ public class ExcelExportService {
 
             for (int i = 0; i < entetes.size(); i++) {
                 sheet.autoSizeColumn(i);
+                if (sheet.getColumnWidth(i) > LARGEUR_COLONNE_MAX) {
+                    sheet.setColumnWidth(i, LARGEUR_COLONNE_MAX);
+                }
+            }
+
+            // En-tête figé + filtres automatiques : indispensables pour exploiter
+            // confortablement un export de plusieurs dizaines/centaines de lignes.
+            sheet.createFreezePane(0, 1);
+            if (!lignes.isEmpty()) {
+                sheet.setAutoFilter(new CellRangeAddress(0, 0, 0, entetes.size() - 1));
             }
 
             if (titreGraphique != null && categoriesGraphique != null && !categoriesGraphique.isEmpty()) {

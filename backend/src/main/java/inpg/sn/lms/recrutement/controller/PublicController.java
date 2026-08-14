@@ -14,9 +14,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import inpg.sn.lms.espace_etudiant.entity.Formation;
+import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
+import inpg.sn.lms.recrutement.dto.FormationDetailPubliqueDto;
+import inpg.sn.lms.recrutement.dto.FormationPubliqueDto;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureResponse;
 import inpg.sn.lms.recrutement.service.NotificationService;
 import inpg.sn.lms.recrutement.service.SessionCandidatureService;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/recrutement/public")
@@ -27,14 +36,81 @@ public class PublicController {
 
     private final SessionCandidatureService sessionCandidatureService;
     private final NotificationService notificationService;
+    private final FormationRepository formationRepository;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.admission.email:admin@inpg.sn}")
     private String emailAdmission;
 
     public PublicController(SessionCandidatureService sessionCandidatureService,
-                             NotificationService notificationService) {
+                             NotificationService notificationService,
+                             FormationRepository formationRepository,
+                             ObjectMapper objectMapper) {
         this.sessionCandidatureService = sessionCandidatureService;
         this.notificationService = notificationService;
+        this.formationRepository = formationRepository;
+        this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Catalogue public des formations.
+     *
+     * <p>Ces données vivaient dans deux tableaux TypeScript figés au cœur du
+     * front ; elles proviennent désormais de la base et suivent ce que le service
+     * pédagogique y publie.
+     */
+    @GetMapping("/formations")
+    public ResponseEntity<List<FormationPubliqueDto>> consulterFormations() {
+        return ResponseEntity.ok(formationRepository.findByPublieeTrueOrderByIntituleAsc().stream()
+                .map(this::toFormationDto)
+                .toList());
+    }
+
+    /** Fiche détaillée d'une formation publiée. */
+    @GetMapping("/formations/{id}")
+    public ResponseEntity<?> consulterFormation(@PathVariable Long id) {
+        Formation formation = formationRepository.findById(id).orElse(null);
+        // Une formation non publiée reste invisible du public : on ne distingue
+        // pas « inexistante » de « non publiée ».
+        if (formation == null || !formation.isPubliee()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(new FormationDetailPubliqueDto(
+                formation.getId(),
+                formation.getCode(),
+                formation.getIntitule(),
+                formation.getDescription(),
+                formation.getNiveau(),
+                formation.getDomaine(),
+                formation.getDuree(),
+                formation.getImageUrl(),
+                lireFiche(formation)));
+    }
+
+    private FormationPubliqueDto toFormationDto(Formation formation) {
+        return new FormationPubliqueDto(
+                formation.getId(),
+                formation.getCode(),
+                formation.getIntitule(),
+                formation.getDescription(),
+                formation.getNiveau(),
+                formation.getDomaine(),
+                formation.getDuree(),
+                formation.getImageUrl());
+    }
+
+    /** Renvoie la fiche éditoriale, ou {@code null} si elle est absente ou illisible. */
+    private JsonNode lireFiche(Formation formation) {
+        String fiche = formation.getFicheDetaillee();
+        if (fiche == null || fiche.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readTree(fiche);
+        } catch (JsonProcessingException e) {
+            log.warn("Fiche détaillée illisible pour la formation {} : {}", formation.getCode(), e.getMessage());
+            return null;
+        }
     }
 
     /**

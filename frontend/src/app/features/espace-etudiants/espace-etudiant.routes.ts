@@ -1,14 +1,33 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from '../../core/auth/guards/role-guard';
+
+/**
+ * Routes de l'espace étudiant.
+ *
+ * <p>Les rubriques de l'étudiant sont regroupées sous {@code EtudiantLayout}, qui
+ * fournit la navigation latérale et la cloche d'annonces. « Accueil » et les
+ * pages historiques restent en dehors : elles portent leur propre barre
+ * horizontale et sont référencées par la navigation publique.
+ */
 export const routes: Routes = [
     {
         path: 'accueil',
         loadComponent: () => import('./pages/accueil/accueil').then(m => m.Accueil),
-        canActivate: [roleGuard('ROLE_ETUDIANT', 'ROLE_FORMATEUR')]
+        canActivate: [roleGuard('ROLE_ETUDIANT')]
     },
     {
         path: 'mes-formations',
         loadComponent: () => import('./pages/mes-formations/mes-formations').then(m => m.MesFormations),
+        canActivate: [roleGuard('ROLE_ETUDIANT')]
+    },
+    {
+        path: 'cours',
+        loadComponent: () => import('./pages/mes-cours-etudiant/mes-cours-etudiant').then(m => m.MesCoursEtudiant),
+        canActivate: [roleGuard('ROLE_ETUDIANT')]
+    },
+    {
+        path: 'cours/:id',
+        loadComponent: () => import('./pages/cours-detail/cours-detail').then(m => m.CoursDetail),
         canActivate: [roleGuard('ROLE_ETUDIANT')]
     },
     {
@@ -52,6 +71,60 @@ export const routes: Routes = [
             {
                 path: 'mon-profil',
                 loadComponent: () => import('./pages/mon-profil/mon-profil').then(m => m.MonProfil)
+            }
+        ]
+    },
+
+    // ===================== Espace étudiant (navigation latérale) =====================
+    {
+        path: '',
+        loadComponent: () => import('./layouts/etudiant-layout/etudiant-layout').then(m => m.EtudiantLayout),
+        canActivate: [roleGuard('ROLE_ETUDIANT')],
+        children: [
+            { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+            {
+                path: 'dashboard',
+                loadComponent: () => import('./pages/tableau-bord/tableau-bord').then(m => m.TableauBord)
+            },
+            {
+                path: 'mes-cours',
+                loadComponent: () => import('./pages/mes-cours-autorises/mes-cours-autorises').then(m => m.MesCoursAutorises)
+            },
+            {
+                path: 'mes-cours/:id',
+                loadComponent: () => import('./pages/cours-detail-etudiant/cours-detail-etudiant').then(m => m.CoursDetailEtudiant)
+            },
+            {
+                path: 'calendrier',
+                loadComponent: () => import('./pages/calendrier-etudiant/calendrier-etudiant').then(m => m.CalendrierEtudiant)
+            },
+            {
+                path: 'annonces',
+                loadComponent: () => import('./pages/annonces-etudiant/annonces-etudiant').then(m => m.AnnoncesEtudiant)
+            },
+            {
+                path: 'forum',
+                loadComponent: () => import('./pages/forum-etudiant/forum-etudiant').then(m => m.ForumEtudiant)
+            },
+            {
+                path: 'forum/:id',
+                loadComponent: () => import('./pages/fil-forum/fil-forum').then(m => m.FilForum)
+            },
+            {
+                path: 'photheque',
+                loadComponent: () => import('./pages/photheque/photheque').then(m => m.Photheque)
+            },
+            {
+                path: 'ma-promotion',
+                loadComponent: () => import('./pages/ma-promotion/ma-promotion').then(m => m.MaPromotionPage)
+            },
+            {
+                path: 'mes-evaluations',
+                loadComponent: () => import('./pages/mes-evaluations/mes-evaluations').then(m => m.MesEvaluations)
+            },
+            {
+                path: 'mon-profil',
+                loadComponent: () => import('./pages/mon-profil-etudiant/mon-profil-etudiant').then(m => m.MonProfilEtudiant)
             }
         ]
     }

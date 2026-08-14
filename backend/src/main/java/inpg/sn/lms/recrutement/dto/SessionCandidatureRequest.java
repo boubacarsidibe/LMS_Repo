@@ -17,4 +17,11 @@ public class SessionCandidatureRequest {
     private LocalDate dateOuverture;
     private LocalDate dateFermeture;
     private boolean estOuverte;
+    private boolean criteresActifs;
+    private String criteresNiveauEtudeMinimum;
+    private Integer criteresAgeMinimum;
+    private Integer criteresAgeMaximum;
+    private String criteresGenre;
+    private Integer criteresExperienceMinimale;
+    private Float seuilReussiteTest;
 }

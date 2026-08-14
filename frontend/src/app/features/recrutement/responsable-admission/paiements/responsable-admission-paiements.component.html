@@ -1,0 +1,69 @@
+<div class="mb-stack-lg">
+  <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Historique des paiements</h1>
+  <p class="font-body-md text-body-md text-on-surface-variant mt-2">Suivi des frais de dossier réglés par les candidats, toutes sessions confondues.</p>
+</div>
+
+<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-gutter mb-stack-lg">
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Total encaissé</span><span class="material-symbols-outlined text-secondary">payments</span></div>
+    <div class="font-headline-lg text-headline-lg text-primary">{{ montantTotal | number:'1.0-0' }} <span class="font-body-md text-on-surface-variant font-normal">XOF</span></div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Paiements réussis</span><span class="material-symbols-outlined text-secondary">check_circle</span></div>
+    <div class="font-headline-lg text-headline-lg text-primary">{{ nbReussis }}</div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">En attente</span><span class="material-symbols-outlined text-outline">hourglass_empty</span></div>
+    <div class="font-headline-lg text-headline-lg text-primary">{{ nbEnAttente }}</div>
+  </div>
+</div>
+
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+  <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="flex items-center gap-2">
+      <button type="button" (click)="filtreStatut = 'TOUS'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtreStatut === 'TOUS'" [class.text-on-secondary]="filtreStatut === 'TOUS'" [class.text-on-surface-variant]="filtreStatut !== 'TOUS'">Tous</button>
+      <button type="button" (click)="filtreStatut = 'SUCCES'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtreStatut === 'SUCCES'" [class.text-on-secondary]="filtreStatut === 'SUCCES'" [class.text-on-surface-variant]="filtreStatut !== 'SUCCES'">Réussis</button>
+      <button type="button" (click)="filtreStatut = 'EN_ATTENTE'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtreStatut === 'EN_ATTENTE'" [class.text-on-secondary]="filtreStatut === 'EN_ATTENTE'" [class.text-on-surface-variant]="filtreStatut !== 'EN_ATTENTE'">En attente</button>
+    </div>
+    <div class="relative w-full sm:w-64">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+      <input [(ngModel)]="recherche" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Nom, dossier, référence..." type="text">
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement…</div>
+  <div *ngIf="!loading && paiementsFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md">Aucun paiement ne correspond à ces critères.</div>
+
+  <div class="overflow-x-auto" *ngIf="!loading && paiementsFiltres.length > 0">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low border-b border-outline-variant">
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Référence</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Montant</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant">
+        <tr *ngFor="let p of paiementsFiltres" class="hover:bg-surface-container-low transition-colors">
+          <td class="p-4">
+            <div class="font-label-md text-label-md text-primary">{{ p.candidatPrenom }} {{ p.candidatNom }}</div>
+            <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ p.numeroDossier }}</div>
+          </td>
+          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ p.referenceTransaction }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-primary">{{ p.montant | number:'1.0-0' }} {{ p.devise }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ p.datePaiement ? (p.datePaiement | date:'dd MMM yyyy, HH:mm') : '—' }}</td>
+          <td class="p-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-surface-container text-on-surface-variant'">
+              {{ p.statut === 'SUCCES' ? 'Réussi' : 'En attente' }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

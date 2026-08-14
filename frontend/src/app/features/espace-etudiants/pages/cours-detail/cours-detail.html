@@ -1,0 +1,80 @@
+<app-espace-navbar></app-espace-navbar>
+
+<div class="flex flex-col w-full max-w-container-max mx-auto p-margin-desktop gap-stack-lg">
+
+  <a routerLink="/espace-etudiant/cours"
+     class="inline-flex items-center gap-2 text-label-md text-secondary hover:underline w-fit">
+    <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+    Retour aux cours
+  </a>
+
+  <div *ngIf="chargement" class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm text-center">
+    <p class="text-body-md text-on-surface-variant">Chargement du cours…</p>
+  </div>
+
+  <div *ngIf="erreur && !chargement" class="bg-error-container rounded-xl p-stack-lg">
+    <p class="text-body-md text-on-error-container">{{ erreur }}</p>
+  </div>
+
+  <ng-container *ngIf="cours && !chargement">
+
+    <!-- Fiche du cours -->
+    <section class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm">
+      <span class="text-label-sm text-on-surface-variant uppercase tracking-widest">{{ cours.code }}</span>
+      <h1 class="text-headline-lg text-primary mt-1">{{ cours.titre }}</h1>
+      <p *ngIf="cours.description" class="text-body-md text-on-surface-variant mt-4 max-w-3xl">
+        {{ cours.description }}
+      </p>
+
+      <div class="flex flex-wrap gap-stack-md mt-6">
+        <div *ngIf="cours.semestre" class="bg-surface-container-high px-4 py-3 rounded-lg">
+          <span class="text-label-sm text-on-surface-variant block">Semestre</span>
+          <span class="text-body-md text-on-surface">{{ cours.semestre }}</span>
+        </div>
+        <div *ngIf="cours.volumeHoraire" class="bg-surface-container-high px-4 py-3 rounded-lg">
+          <span class="text-label-sm text-on-surface-variant block">Volume horaire</span>
+          <span class="text-body-md text-on-surface">{{ cours.volumeHoraire }} h</span>
+        </div>
+        <div class="bg-surface-container-high px-4 py-3 rounded-lg">
+          <span class="text-label-sm text-on-surface-variant block">Supports</span>
+          <span class="text-body-md text-on-surface">{{ supports.length }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Supports -->
+    <section class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm">
+      <h2 class="text-headline-sm text-primary flex items-center gap-2 mb-6">
+        <span class="material-symbols-outlined text-secondary">folder_open</span>
+        Supports du cours
+      </h2>
+
+      <div *ngIf="supports.length === 0" class="text-center py-stack-lg">
+        <span class="material-symbols-outlined text-4xl text-outline mb-2">folder_off</span>
+        <p class="text-body-md text-on-surface-variant">Aucun support n'a encore été publié pour ce cours.</p>
+      </div>
+
+      <ul *ngIf="supports.length > 0" class="flex flex-col gap-stack-sm">
+        <li *ngFor="let support of supports"
+            class="flex items-center gap-4 p-4 rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors">
+          <span class="material-symbols-outlined text-secondary">{{ iconeSupport(support.typeRessource) }}</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-body-md text-on-surface truncate" [title]="support.titre">{{ support.titre }}</p>
+            <p class="text-label-sm text-on-surface-variant mt-1">
+              <span *ngIf="support.typeRessource">{{ support.typeRessource }}</span>
+              <span *ngIf="support.typeRessource && support.datePublication"> · </span>
+              <span *ngIf="support.datePublication">Publié le {{ support.datePublication | date: 'dd/MM/yyyy' }}</span>
+            </p>
+          </div>
+          <a *ngIf="support.telechargeable && support.url" [href]="support.url"
+             class="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary text-label-md rounded-lg hover:opacity-90 transition-opacity no-underline">
+            <span class="material-symbols-outlined text-[20px]">download</span>
+            Télécharger
+          </a>
+          <span *ngIf="!support.telechargeable" class="text-label-sm text-outline">Fichier indisponible</span>
+        </li>
+      </ul>
+    </section>
+
+  </ng-container>
+</div>

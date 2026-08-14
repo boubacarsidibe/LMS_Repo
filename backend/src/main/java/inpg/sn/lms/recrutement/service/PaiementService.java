@@ -2,14 +2,19 @@ package inpg.sn.lms.recrutement.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import inpg.sn.lms.exception.BusinessException;
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import inpg.sn.lms.recrutement.dto.PaiementRequest;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
@@ -28,18 +33,28 @@ public class PaiementService {
     private final CandidatureRepository candidatureRepository;
     private final NotificationService notificationService;
     private final NotificationCandidatService notificationCandidatService;
+    private final RecuPaiementService recuPaiementService;
 
     @Value("${app.admission.email:admin@inpg.sn}")
     private String emailAdmission;
 
+    /** Frais de dossier, en unités de la devise ci-dessous. Fixés par l'établissement. */
+    @Value("${app.recrutement.frais-dossier:25000}")
+    private String fraisDossier;
+
+    @Value("${app.recrutement.devise:XOF}")
+    private String deviseFraisDossier;
+
     public PaiementService(PaiementRepository paiementRepository,
             CandidatureRepository candidatureRepository,
             NotificationService notificationService,
-            NotificationCandidatService notificationCandidatService) {
+            NotificationCandidatService notificationCandidatService,
+            RecuPaiementService recuPaiementService) {
         this.paiementRepository = paiementRepository;
         this.candidatureRepository = candidatureRepository;
         this.notificationService = notificationService;
         this.notificationCandidatService = notificationCandidatService;
+        this.recuPaiementService = recuPaiementService;
     }
 
     /**
@@ -58,9 +73,14 @@ public class PaiementService {
 
         Paiement paiement = new Paiement();
         paiement.setReferenceTransaction("PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        paiement.setMontant(request.getMontant() != null ? request.getMontant() : new BigDecimal("25000"));
-        paiement.setDevise(request.getDevise() != null ? request.getDevise() : "XOF");
+        // Tarif et devise proviennent de la configuration, jamais de la requête.
+        paiement.setMontant(new BigDecimal(fraisDossier));
+        paiement.setDevise(deviseFraisDossier);
         paiement.setStatut(EnumStatutPaiement.EN_ATTENTE);
+        paiement.setMethodePaiement(
+                request.getMethodePaiement() != null && !request.getMethodePaiement().isBlank()
+                        ? request.getMethodePaiement()
+                        : "Mobile Money");
         paiement.setCandidature(candidature);
 
         Paiement saved = paiementRepository.save(paiement);
@@ -117,6 +137,55 @@ public class PaiementService {
         return toResponse(paiement);
     }
 
+    /** Historique complet des paiements (admin), avec le contexte du dossier associé. */
+    public List<PaiementResponse> getAllPaiements() {
+        return paiementRepository.findAll()
+                .stream()
+                .map(this::toResponseAvecContexte)
+                .collect(Collectors.toList());
+    }
+
+    /** Reçu prêt à être servi : le contenu du PDF et le nom de fichier proposé au téléchargement. */
+    public record Recu(byte[] contenu, String nomFichier) {
+    }
+
+    /**
+     * Génère le reçu PDF d'un paiement, après vérification que le candidat
+     * authentifié en est bien le propriétaire.
+     *
+     * @param candidatId candidat authentifié ; {@code null} pour un accès back-office,
+     *                   qui n'est pas soumis au contrôle de propriété.
+     */
+    @Transactional(readOnly = true)
+    public Recu genererRecu(Long paiementId, Long candidatId) {
+        Paiement paiement = paiementRepository.findById(paiementId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paiement", "id", paiementId));
+
+        Candidature candidature = paiement.getCandidature();
+
+        if (candidatId != null) {
+            boolean proprietaire = candidature != null
+                    && candidature.getCandidat() != null
+                    && candidatId.equals(candidature.getCandidat().getId());
+            if (!proprietaire) {
+                throw new AccessDeniedException("Ce paiement n'appartient pas au candidat authentifié.");
+            }
+        }
+
+        if (paiement.getStatut() != EnumStatutPaiement.SUCCES) {
+            throw new BusinessException(
+                    "Aucun reçu disponible : le paiement n'est pas validé (statut actuel : " + paiement.getStatut()
+                            + ").");
+        }
+
+        String numeroDossier = candidature != null ? candidature.getNumeroDossier() : null;
+        String nomFichier = numeroDossier != null && !numeroDossier.isBlank()
+                ? "recu-" + numeroDossier + ".pdf"
+                : "recu-paiement.pdf";
+
+        return new Recu(recuPaiementService.genererRecu(paiement), nomFichier);
+    }
+
     private PaiementResponse toResponse(Paiement p) {
         return PaiementResponse.builder()
                 .id(p.getId())
@@ -125,6 +194,21 @@ public class PaiementService {
                 .devise(p.getDevise())
                 .statut(p.getStatut())
                 .datePaiement(p.getDatePaiement())
+                .methodePaiement(p.getMethodePaiement())
                 .build();
+    }
+
+    private PaiementResponse toResponseAvecContexte(Paiement p) {
+        PaiementResponse base = toResponse(p);
+        Candidature candidature = p.getCandidature();
+        if (candidature != null) {
+            base.setCandidatureId(candidature.getId());
+            base.setNumeroDossier(candidature.getNumeroDossier());
+            if (candidature.getCandidat() != null) {
+                base.setCandidatNom(candidature.getCandidat().getNom());
+                base.setCandidatPrenom(candidature.getCandidat().getPrenom());
+            }
+        }
+        return base;
     }
 }

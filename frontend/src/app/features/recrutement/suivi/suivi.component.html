@@ -1,5 +1,5 @@
 <div class="min-h-screen flex flex-col bg-surface">
-  <app-navbar></app-navbar>
+  <app-candidat-navbar></app-candidat-navbar>
 
   <!-- ==================== LOADING ==================== -->
   <main *ngIf="loading" class="flex-grow flex justify-center py-20">
@@ -14,7 +14,7 @@
     <div class="text-center">
       <span class="material-symbols-outlined text-6xl text-on-surface-variant/40" style="font-variation-settings:'FILL' 0;">inbox</span>
       <p class="mt-4 text-lg text-on-surface-variant">Aucune candidature trouvée.</p>
-      <a routerLink="/recrutement/candidature" class="mt-4 inline-block bg-secondary text-white px-6 py-2 rounded text-sm font-medium hover:bg-secondary/90 transition-colors">Démarrer une candidature</a>
+      <a routerLink="/recrutement/sessions" class="mt-4 inline-block bg-secondary text-white px-6 py-2 rounded text-sm font-medium hover:bg-secondary/90 transition-colors">Démarrer une candidature</a>
     </div>
   </main>
 
@@ -126,7 +126,7 @@
               <div class="w-12 h-12 rounded-full border-2 border-white/20 bg-white/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 0;">person</span></div>
               <div><p class="text-label-md font-bold">{{ responsableAdmissions }}</p><p class="text-label-sm opacity-80">Responsable Admissions</p></div>
             </div>
-            <button class="w-full bg-white text-secondary py-3 rounded-lg text-label-md font-bold hover:bg-opacity-90 transition-all">Contacter {{ responsableAdmissions.split(' ')[0] }}</button>
+            <button class="w-full bg-white text-secondary py-3 rounded-lg text-label-md font-bold hover:bg-opacity-90 transition-all">Contacter le service</button>
           </div>
           <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
         </div>
@@ -195,7 +195,8 @@
             <h3 class="text-xl font-semibold text-on-surface mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">analytics</span>Bilan de l'évaluation</h3>
             <p class="text-base text-on-surface-variant leading-relaxed mb-4">Nos standards d'admission sont conçus pour garantir que tous les étudiants possèdent les connaissances fondamentales nécessaires pour réussir dans notre cursus rigoureux.</p>
             <div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-error mb-4">
-              <p class="text-sm text-on-surface-variant">Score global : <strong class="text-on-surface">{{ scoreObtenu }}/100</strong><br><span class="italic opacity-80">Seuil requis pour cette session : {{ seuilScore }}/100</span></p>
+              <p class="text-sm text-on-surface-variant" *ngIf="aDesResultats; else scoreEnAttente">Score global : <strong class="text-on-surface">{{ noteGlobale }}</strong><span *ngIf="seuilScore !== null"><br><span class="italic opacity-80">Seuil requis pour cette session : {{ seuilScore }}</span></span></p>
+              <ng-template #scoreEnAttente><p class="text-sm text-on-surface-variant italic">Vos résultats ne sont pas encore publiés.</p></ng-template>
             </div>
             <p class="text-sm text-on-surface-variant">Bien que ce résultat soit défavorable, nous vous encourageons à considérer cela comme une pause momentanée dans votre parcours plutôt que comme une conclusion définitive.</p>
           </div>
@@ -259,7 +260,8 @@
           <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6">
             <h3 class="text-xl font-semibold text-on-surface mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">analytics</span>Bilan de l'évaluation</h3>
             <p class="text-base text-on-surface-variant leading-relaxed mb-4">Nos standards d'admission sont conçus pour garantir que tous les étudiants possèdent les connaissances fondamentales nécessaires pour réussir dans notre cursus rigoureux.</p>
-            <div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-error mb-4"><p class="text-sm text-on-surface-variant">Score global : <strong class="text-on-surface">{{ scoreObtenu }}/100</strong><br><span class="italic opacity-80">Seuil requis pour cette session : {{ seuilScore }}/100</span></p></div>
+            <div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-error mb-4"><p class="text-sm text-on-surface-variant" *ngIf="aDesResultats; else scoreEnAttente">Score global : <strong class="text-on-surface">{{ noteGlobale }}</strong><span *ngIf="seuilScore !== null"><br><span class="italic opacity-80">Seuil requis pour cette session : {{ seuilScore }}</span></span></p>
+              <ng-template #scoreEnAttente><p class="text-sm text-on-surface-variant italic">Vos résultats ne sont pas encore publiés.</p></ng-template></div>
             <p class="text-sm text-on-surface-variant">Bien que ce résultat soit défavorable, nous vous encourageons à considérer cela comme une pause momentanée dans votre parcours plutôt que comme une conclusion définitive.</p>
           </div>
         </div>
@@ -321,7 +323,7 @@
           <div class="flex-1">
             <div class="flex items-center gap-4 mb-6">
               <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">check_circle</span></div>
-              <div><h3 class="text-2xl font-semibold">Test Réussi</h3><p class="text-on-surface-variant text-sm">Score : {{ scoreTest }}/100 (Top 5% des candidats)</p></div>
+              <div><h3 class="text-2xl font-semibold">Test Réussi</h3><p class="text-on-surface-variant text-sm" *ngIf="aDesResultats">Score : {{ noteGlobale }}<span *ngIf="seuilScore !== null"> (seuil : {{ seuilScore }})</span></p></div>
             </div>
             <h4 class="text-xl font-semibold mb-4">Félicitations, vous êtes invité à un Entretien de Motivation</h4>
             <p class="text-base text-on-surface-variant mb-6 leading-relaxed">Cette étape est cruciale pour nous permettre de découvrir votre personnalité, vos ambitions et la cohérence de votre projet professionnel avec les valeurs de l'INPG.</p>
@@ -333,8 +335,8 @@
           <div class="w-full md:w-72 shrink-0 bg-surface-container-low rounded-2xl p-6 border border-outline-variant/50 flex flex-col justify-center">
             <div class="mb-6">
               <div class="flex items-center gap-2 text-on-surface-variant mb-1"><span class="material-symbols-outlined text-[20px]">event_available</span><span class="text-label-md">Date et Heure</span></div>
-              <p class="text-xl font-semibold text-secondary">{{ dateEntretien }}</p>
-              <div class="flex items-center gap-2 mt-1"><span class="text-2xl font-semibold text-primary">{{ heureEntretien }}</span><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary/10 text-secondary">GMT</span></div>
+              <p class="text-xl font-semibold text-secondary">{{ entretien?.dateHeure ? (entretien!.dateHeure | date: 'EEEE d MMMM') : 'Date à confirmer' }}</p>
+              <div class="flex items-center gap-2 mt-1"><span class="text-2xl font-semibold text-primary">{{ entretien?.dateHeure ? (entretien!.dateHeure | date: 'HH:mm') : '—' }}</span><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary/10 text-secondary">GMT</span></div>
             </div>
             <div class="flex flex-col gap-3">
               <button (click)="telechargerConvocation()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl text-label-md font-bold hover:bg-primary/90 transition-all group relative overflow-hidden">
@@ -380,7 +382,7 @@
           <div class="bg-white border border-outline-variant rounded-3xl overflow-hidden shadow-sm flex flex-col">
             <div class="p-6 pb-4">
               <h4 class="text-xl font-semibold mb-2">Lieu de l'entretien</h4>
-              <div class="flex items-start gap-3 mt-3"><span class="material-symbols-outlined text-secondary mt-0.5" style="font-variation-settings:'FILL' 1;">location_on</span><div><p class="text-label-md text-on-surface">{{ lieuEntretien }}</p><p class="text-on-surface-variant text-sm mt-1">{{ adresseEntretien }}</p><a class="inline-block mt-2 text-secondary text-sm font-medium hover:underline" [href]="mapUrl" target="_blank" rel="noopener">Voir l'itinéraire</a></div></div>
+              <div class="flex items-start gap-3 mt-3"><span class="material-symbols-outlined text-secondary mt-0.5" style="font-variation-settings:'FILL' 1;">location_on</span><div><p class="text-label-md text-on-surface">{{ lieuEntretien }}</p><a class="inline-block mt-2 text-secondary text-sm font-medium hover:underline" [href]="mapUrl" target="_blank" rel="noopener">Voir l'itinéraire</a></div></div>
             </div>
             <div class="h-40 w-full relative bg-surface-dim"><div class="w-full h-full bg-surface-dim flex items-center justify-center"><span class="material-symbols-outlined text-4xl text-on-surface-variant/40">map</span></div></div>
           </div>

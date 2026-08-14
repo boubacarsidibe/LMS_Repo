@@ -9,6 +9,14 @@ export interface SessionCandidatureResponse {
   dateFermeture: string;
   estOuverte: boolean;
   estActive: boolean;
+  criteresActifs: boolean;
+  criteresNiveauEtudeMinimum: string | null;
+  criteresAgeMinimum: number | null;
+  criteresAgeMaximum: number | null;
+  criteresGenre: string | null;
+  criteresExperienceMinimale: number | null;
+  seuilReussiteTest: number;
+  nbCandidatures: number;
 }
 
 export interface CandidatureRequest {
@@ -33,18 +41,11 @@ export interface CandidatureResponse {
   candidatAnneesExperience: number | null;
   candidatDateNaissance: string | null;
   candidatNiveauEtude: string | null;
+  candidatNationalite: string | null;
   sessionCandidatureId: number;
   sessionCandidatureLibelle: string;
   piecesJustificatives: PieceJustificativeResponse[];
   paiement: PaiementResponse | null;
-}
-
-export interface CritereSelection {
-  id?: number;
-  actif: boolean;
-  niveauEtudeMinimum: string | null;
-  ageMinimum: number | null;
-  ageMaximum: number | null;
 }
 
 export interface PieceJustificativeResponse {
@@ -62,12 +63,21 @@ export interface PaiementResponse {
   devise: string;
   statut: string;
   datePaiement: string | null;
+  methodePaiement: string | null;
+  candidatureId: number | null;
+  numeroDossier: string | null;
+  candidatNom: string | null;
+  candidatPrenom: string | null;
 }
 
+/**
+ * Le montant et la devise ne sont volontairement pas transmis : les frais de
+ * dossier sont fixés par le serveur. Les laisser à la main du client revenait à
+ * le laisser choisir le prix qu'il paie.
+ */
 export interface PaiementRequest {
   candidatureId: number;
-  montant: number;
-  devise: string;
+  methodePaiement?: string;
 }
 
 export interface SessionCandidatureRequest {
@@ -75,6 +85,39 @@ export interface SessionCandidatureRequest {
   dateOuverture: string;
   dateFermeture: string;
   estOuverte: boolean;
+  criteresActifs: boolean;
+  criteresNiveauEtudeMinimum: string | null;
+  criteresAgeMinimum: number | null;
+  criteresAgeMaximum: number | null;
+  criteresGenre: string | null;
+  criteresExperienceMinimale: number | null;
+  seuilReussiteTest: number;
+}
+
+export type EnumTypeNotification =
+  | 'VALIDATION_DOSSIER' | 'REJET_DOSSIER' | 'PAIEMENT_SUCCES'
+  | 'CONVOCATION_TEST' | 'CONVOCATION_ENTRETIEN'
+  | 'ADMISSION_TEST' | 'ADMISSION_ENTRETIEN' | 'ADMISSION_FINALE' | 'NON_ADMISSION'
+  | 'DOCUMENT_CONFORME' | 'DOCUMENT_NON_CONFORME';
+
+export interface NotificationTemplate {
+  type: EnumTypeNotification;
+  sujet: string;
+  corps: string;
+  actif: boolean;
+}
+
+export interface ConvocationTestGroupeeRequest {
+  candidatIds: number[];
+  nomEpreuve: string;
+  coefficient: number;
+  dateEpreuve: string;
+}
+
+export interface ConvocationEntretienGroupeeRequest {
+  candidatIds: number[];
+  dateHeure: string;
+  lieuOuLien: string;
 }
 
 export interface TestAcademiqueRequest {
@@ -100,6 +143,47 @@ export interface EntretienRequest {
   noteEntretien: number;
   appreciationGlobale: string;
   candidatId: number;
+}
+
+/** Formation du catalogue public. */
+export interface FormationPublique {
+  id: number;
+  code: string;
+  intitule: string;
+  description: string;
+  niveau: string | null;
+  domaine: string | null;
+  duree: string | null;
+  imageUrl: string | null;
+}
+
+/**
+ * Fiche détaillée. `ficheDetaillee` porte le contenu éditorial (modules, points
+ * clés, débouchés, encadré latéral) dans la forme attendue par le gabarit
+ * existant : il n'a donc pas eu à changer.
+ */
+export interface FormationDetailPublique extends FormationPublique {
+  ficheDetaillee: Record<string, any> | null;
+}
+
+/** Épreuve académique telle que le candidat peut la consulter. */
+export interface TestCandidat {
+  nomEpreuve: string;
+  coefficient: number | null;
+  noteObtenue: number | null;
+  dateEpreuve: string | null;
+}
+
+/** Convocation à un entretien. Les appréciations du jury ne sont pas exposées. */
+export interface EntretienCandidat {
+  dateHeure: string | null;
+  lieuOuLien: string | null;
+}
+
+export interface ParcoursCandidature {
+  tests: TestCandidat[];
+  entretiens: EntretienCandidat[];
+  seuilReussiteTest: number | null;
 }
 
 export interface NotificationCandidatResponse {
@@ -135,6 +219,28 @@ export class RecrutementService {
     return this.http.get<SessionCandidatureResponse[]>(`${this.baseUrl}/recrutement/public/catalogue`);
   }
 
+  /**
+   * Parcours d'évaluation du candidat : épreuves passées et entretiens planifiés.
+   * Remplace les notes et rendez-vous qui étaient écrits en dur dans la page de suivi.
+   */
+  getParcoursCandidature(candidatureId: number): Observable<ParcoursCandidature> {
+    return this.http.get<ParcoursCandidature>(
+      `${this.baseUrl}/recrutement/candidat/candidature/${candidatureId}/parcours`
+    );
+  }
+
+  /** Catalogue public des formations, servi par la base et non plus codé en dur. */
+  getFormationsPubliques(): Observable<FormationPublique[]> {
+    return this.http.get<FormationPublique[]>(`${this.baseUrl}/recrutement/public/formations`);
+  }
+
+  /** Fiche détaillée d'une formation publiée. */
+  getFormationPublique(id: number): Observable<FormationDetailPublique> {
+    return this.http.get<FormationDetailPublique>(
+      `${this.baseUrl}/recrutement/public/formations/${id}`
+    );
+  }
+
   poserQuestion(email: string, message: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/recrutement/public/question`, { email, message });
   }
@@ -157,6 +263,13 @@ export class RecrutementService {
 
   initierPaiement(request: PaiementRequest): Observable<PaiementResponse> {
     return this.http.post<PaiementResponse>(`${this.baseUrl}/recrutement/candidat/paiement`, request);
+  }
+
+  /** Reçu PDF des frais de dossier. Le backend refuse (403) le reçu d'un autre candidat. */
+  telechargerRecuPaiement(paiementId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/recrutement/candidat/paiement/${paiementId}/recu`, {
+      responseType: 'blob',
+    });
   }
 
   getMesCandidatures(): Observable<CandidatureResponse[]> {
@@ -227,17 +340,22 @@ export class RecrutementService {
     return this.http.get(`${this.baseUrl}/admin/recrutement/candidatures/export`, { responseType: 'blob', params });
   }
 
+  /** Télécharge, en une archive .zip, l'ensemble des documents des candidatures (filtrées par statut). */
+  exporterDocuments(statut?: string): Observable<Blob> {
+    let params = new HttpParams();
+    if (statut) {
+      params = params.set('statut', statut);
+    }
+    return this.http.get(`${this.baseUrl}/admin/recrutement/candidatures/documents/export`, { responseType: 'blob', params });
+  }
+
   telechargerPiece(pieceId: number): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/admin/recrutement/pieces/${pieceId}/telecharger`, { responseType: 'blob' });
   }
 
-  // Critères de sélection (premier filtre automatique)
-  getCriteres(): Observable<CritereSelection> {
-    return this.http.get<CritereSelection>(`${this.baseUrl}/admin/recrutement/criteres`);
-  }
-
-  modifierCriteres(request: CritereSelection): Observable<CritereSelection> {
-    return this.http.put<CritereSelection>(`${this.baseUrl}/admin/recrutement/criteres`, request);
+  modifierConformitePiece(pieceId: number, estConforme: boolean): Observable<{ id: number; estConforme: boolean }> {
+    return this.http.put<{ id: number; estConforme: boolean }>(
+      `${this.baseUrl}/admin/recrutement/pieces/${pieceId}/conformite`, { estConforme });
   }
 
   validerPreselection(id: number): Observable<CandidatureResponse> {
@@ -264,6 +382,10 @@ export class RecrutementService {
     return this.http.put<PaiementResponse>(`${this.baseUrl}/admin/recrutement/paiements/${id}/simuler-succes`, {});
   }
 
+  getAllPaiements(): Observable<PaiementResponse[]> {
+    return this.http.get<PaiementResponse[]>(`${this.baseUrl}/admin/recrutement/paiements`);
+  }
+
   // Tests Académiques
   getAllTests(): Observable<TestAcademiqueResponse[]> {
     return this.http.get<TestAcademiqueResponse[]>(`${this.baseUrl}/admin/recrutement/tests`);
@@ -281,6 +403,10 @@ export class RecrutementService {
     return this.http.delete(`${this.baseUrl}/admin/recrutement/tests/${id}`);
   }
 
+  convoquerTestsGroupe(request: ConvocationTestGroupeeRequest): Observable<TestAcademiqueResponse[]> {
+    return this.http.post<TestAcademiqueResponse[]>(`${this.baseUrl}/admin/recrutement/tests/convocation-groupee`, request);
+  }
+
   // Entretiens
   getAllEntretiens(): Observable<EntretienResponse[]> {
     return this.http.get<EntretienResponse[]>(`${this.baseUrl}/admin/recrutement/entretiens`);
@@ -296,6 +422,19 @@ export class RecrutementService {
 
   supprimerEntretien(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin/recrutement/entretiens/${id}`);
+  }
+
+  convoquerEntretiensGroupe(request: ConvocationEntretienGroupeeRequest): Observable<EntretienResponse[]> {
+    return this.http.post<EntretienResponse[]>(`${this.baseUrl}/admin/recrutement/entretiens/convocation-groupee`, request);
+  }
+
+  // Modèles de notifications
+  getAllTemplates(): Observable<NotificationTemplate[]> {
+    return this.http.get<NotificationTemplate[]>(`${this.baseUrl}/admin/recrutement/notifications/templates`);
+  }
+
+  modifierTemplate(type: EnumTypeNotification, request: NotificationTemplate): Observable<NotificationTemplate> {
+    return this.http.put<NotificationTemplate>(`${this.baseUrl}/admin/recrutement/notifications/templates/${type}`, request);
   }
 
   // ===================== NOTIFICATIONS CANDIDAT =====================

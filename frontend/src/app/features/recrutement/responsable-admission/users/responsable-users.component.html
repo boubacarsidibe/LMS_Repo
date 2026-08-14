@@ -1,5 +1,6 @@
 <section class="p-6">
   <h2 class="text-lg font-semibold mb-4">Gestion des rôles utilisateurs</h2>
+  <p class="text-xs text-gray-500 mb-4">Un compte ne peut détenir qu'un seul rôle à la fois. Changer le rôle retire automatiquement l'ancien.</p>
 
   <div *ngIf="loading" class="text-sm text-gray-600">Chargement...</div>
 
@@ -8,8 +9,7 @@
       <tr class="text-left text-xs text-gray-500">
         <th class="p-2">Utilisateur</th>
         <th class="p-2">E-mail</th>
-        <th class="p-2">Étudiant</th>
-        <th class="p-2">Formateur</th>
+        <th class="p-2">Rôle</th>
       </tr>
     </thead>
     <tbody>
@@ -17,12 +17,18 @@
         <td class="p-2">{{ u.username }}</td>
         <td class="p-2">{{ u.email }}</td>
         <td class="p-2">
-          <input type="checkbox" [attr.aria-label]="'Rôle étudiant pour ' + u.username"
-                 [checked]="u.roles.includes('ROLE_ETUDIANT')" (change)="onToggleRole(u, 'ROLE_ETUDIANT', $any($event.target).checked)" />
-        </td>
-        <td class="p-2">
-          <input type="checkbox" [attr.aria-label]="'Rôle formateur pour ' + u.username"
-                 [checked]="u.roles.includes('ROLE_FORMATEUR')" (change)="onToggleRole(u, 'ROLE_FORMATEUR', $any($event.target).checked)" />
+          <select class="border border-gray-300 rounded px-2 py-1 text-sm"
+                  [attr.aria-label]="'Rôle de ' + u.username"
+                  [attr.title]="'Rôle de ' + u.username"
+                  [ngModel]="currentRole(u)"
+                  (ngModelChange)="onRoleChange(u, $event)">
+            <option value="">Aucun rôle</option>
+            <option value="ROLE_CANDIDAT">Candidat</option>
+            <option value="ROLE_ETUDIANT">Étudiant</option>
+            <option value="ROLE_FORMATEUR">Formateur</option>
+            <option value="ROLE_RESPONSABLE_ADMISSION">Responsable Admission</option>
+            <option value="ROLE_RESPONSABLE_PEDAGOGIQUE">Responsable Pédagogique</option>
+          </select>
         </td>
       </tr>
     </tbody>

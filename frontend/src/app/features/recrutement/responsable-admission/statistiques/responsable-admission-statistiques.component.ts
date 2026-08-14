@@ -181,6 +181,28 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
     return this.candidatures.filter((c) => !c.candidatProfession || !c.candidatProfession.trim()).length;
   }
 
+  /** Nationalités déclarées les plus fréquentes (top 6). */
+  get topNationalites(): SegmentStatut[] {
+    const total = this.candidatures.length || 1;
+    const compte = new Map<string, number>();
+    for (const c of this.candidatures) {
+      const n = (c.candidatNationalite || '').trim();
+      if (!n) continue;
+      compte.set(n, (compte.get(n) || 0) + 1);
+    }
+    const couleurs = ['bg-primary', 'bg-secondary', 'bg-primary-fixed-dim', 'bg-green-600', 'bg-surface-tint', 'bg-error'];
+    return Array.from(compte.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([label, count], i) => ({
+        statut: label,
+        label,
+        couleur: couleurs[i % couleurs.length],
+        count,
+        pourcentage: Math.round((count / total) * 100),
+      }));
+  }
+
   exporter(): void {
     this.exporting = true;
     this.recrutementService.exporterCandidatures().subscribe({

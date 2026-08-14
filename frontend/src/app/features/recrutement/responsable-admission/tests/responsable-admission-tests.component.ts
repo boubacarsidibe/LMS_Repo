@@ -4,7 +4,9 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { RouterModule } from '@angular/router';
 import {
   CandidatureResponse,
+  ConvocationTestGroupeeRequest,
   RecrutementService,
+  SessionCandidatureResponse,
   TestAcademiqueRequest,
   TestAcademiqueResponse,
 } from '../../../../core/recrutement/services/recrutement.service';
@@ -15,8 +17,8 @@ interface TestAffiche extends TestAcademiqueResponse {
   numeroDossier: string;
 }
 
-/** Seuil d'admissibilité utilisé pour l'affichage du résultat (note sur 20). */
-const SEUIL_ADMISSIBILITE = 10;
+/** Seuil d'admissibilité par défaut si la session du candidat n'est pas identifiable. */
+const SEUIL_ADMISSIBILITE_DEFAUT = 10;
 
 @Component({
   selector: 'app-responsable-admission-tests',
@@ -27,6 +29,7 @@ const SEUIL_ADMISSIBILITE = 10;
 export class ResponsableAdmissionTestsComponent implements OnInit {
   tests: TestAcademiqueResponse[] = [];
   candidatures: CandidatureResponse[] = [];
+  sessions: SessionCandidatureResponse[] = [];
   loading = false;
   errorMessage = '';
   private chargementsEnCours = 0;
@@ -39,12 +42,23 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
   isSubmitting = false;
   formError = '';
 
+  convocationGroupeeOpen = false;
+  selectionCandidatIds = new Set<number>();
+  convocationForm: FormGroup;
+  envoiGroupeEnCours = false;
+  convocationFormError = '';
+
   constructor(private recrutementService: RecrutementService, private fb: FormBuilder) {
     this.testForm = this.fb.group({
       candidatId: ['', Validators.required],
       nomEpreuve: ['', Validators.required],
       coefficient: [1, [Validators.required, Validators.min(0.1)]],
       noteObtenue: [null],
+      dateEpreuve: ['', Validators.required],
+    });
+    this.convocationForm = this.fb.group({
+      nomEpreuve: ['', Validators.required],
+      coefficient: [1, [Validators.required, Validators.min(0.1)]],
       dateEpreuve: ['', Validators.required],
     });
   }
@@ -56,7 +70,7 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
   private charger(): void {
     this.loading = true;
     this.errorMessage = '';
-    this.chargementsEnCours = 2;
+    this.chargementsEnCours = 3;
 
     this.recrutementService.getAllTests().subscribe({
       next: (data) => (this.tests = data || []),
@@ -72,6 +86,19 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
       error: () => (this.candidatures = []),
       complete: () => this.finDeChargement(),
     });
+
+    this.recrutementService.getAllSessions().subscribe({
+      next: (data) => (this.sessions = data || []),
+      error: () => (this.sessions = []),
+      complete: () => this.finDeChargement(),
+    });
+  }
+
+  /** Seuil de réussite (note/20) de la session à laquelle appartient le candidat. */
+  private seuilPour(candidatId: number): number {
+    const candidature = this.candidatureDe(candidatId);
+    const session = candidature ? this.sessions.find((s) => s.id === candidature.sessionCandidatureId) : undefined;
+    return session?.seuilReussiteTest ?? SEUIL_ADMISSIBILITE_DEFAUT;
   }
 
   private finDeChargement(): void {
@@ -120,12 +147,13 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
   }
 
   get nbAdmissibles(): number {
-    return this.tests.filter((t) => (t.noteObtenue ?? -1) >= SEUIL_ADMISSIBILITE).length;
+    return this.tests.filter((t) => t.noteObtenue !== null && t.noteObtenue !== undefined
+      && t.noteObtenue >= this.seuilPour(t.candidatId)).length;
   }
 
   resultat(t: TestAcademiqueResponse): 'ADMISSIBLE' | 'INSUFFISANT' | 'EN_ATTENTE' {
     if (t.noteObtenue === null || t.noteObtenue === undefined) return 'EN_ATTENTE';
-    return t.noteObtenue >= SEUIL_ADMISSIBILITE ? 'ADMISSIBLE' : 'INSUFFISANT';
+    return t.noteObtenue >= this.seuilPour(t.candidatId) ? 'ADMISSIBLE' : 'INSUFFISANT';
   }
 
   openDrawer(test?: TestAcademiqueResponse): void {
@@ -183,6 +211,12 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
       next: () => {
         this.isSubmitting = false;
         this.closeDrawer();
+        // Note en dessous du seuil de réussite de la session : proposer le rejet immédiat
+        // du dossier avec notification au candidat (TDR : "envoyer un mail automatique
+        // aux candidats non retenus à l'entretien").
+        if (request.noteObtenue !== null && request.noteObtenue < this.seuilPour(request.candidatId)) {
+          this.proposerRejetSousSeuil(request.candidatId, request.noteObtenue);
+        }
         this.charger();
       },
       error: (err) => {
@@ -192,11 +226,84 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
     });
   }
 
+  private proposerRejetSousSeuil(candidatId: number, note: number): void {
+    const candidature = this.candidatureDe(candidatId);
+    if (!candidature || candidature.statut === 'REJETE') return;
+    const seuil = this.seuilPour(candidatId);
+    const confirme = confirm(
+      `${candidature.candidatPrenom} ${candidature.candidatNom} obtient ${note}/20, en dessous du seuil de réussite (${seuil}/20).\n\n` +
+      `Rejeter automatiquement son dossier et l'en informer par email ?`
+    );
+    if (!confirme) return;
+    this.recrutementService.rejeterDossier(candidature.id, `Note insuffisante au test académique (${note}/20, seuil requis : ${seuil}/20).`)
+      .subscribe({
+        next: () => this.charger(),
+        error: () => alert('Échec du rejet automatique du dossier.'),
+      });
+  }
+
   supprimer(test: TestAffiche): void {
     if (!confirm(`Supprimer le test "${test.nomEpreuve}" de ${test.candidatPrenom} ${test.candidatNom} ?`)) return;
     this.recrutementService.supprimerTest(test.id).subscribe({
       next: () => this.charger(),
       error: () => alert('Échec de la suppression du test.'),
+    });
+  }
+
+  // ===================== Convocation groupée =====================
+
+  ouvrirConvocationGroupee(): void {
+    this.convocationFormError = '';
+    this.selectionCandidatIds.clear();
+    this.convocationForm.reset({ nomEpreuve: '', coefficient: 1, dateEpreuve: '' });
+    this.convocationGroupeeOpen = true;
+  }
+
+  fermerConvocationGroupee(): void {
+    this.convocationGroupeeOpen = false;
+  }
+
+  basculerSelection(candidatId: number): void {
+    if (this.selectionCandidatIds.has(candidatId)) {
+      this.selectionCandidatIds.delete(candidatId);
+    } else {
+      this.selectionCandidatIds.add(candidatId);
+    }
+  }
+
+  toutSelectionner(): void {
+    if (this.selectionCandidatIds.size === this.candidatsEligibles.length) {
+      this.selectionCandidatIds.clear();
+    } else {
+      this.candidatsEligibles.forEach((c) => this.selectionCandidatIds.add(c.candidatId));
+    }
+  }
+
+  envoyerConvocationGroupee(): void {
+    if (this.convocationForm.invalid || this.selectionCandidatIds.size === 0) {
+      this.convocationForm.markAllAsTouched();
+      this.convocationFormError = this.selectionCandidatIds.size === 0 ? 'Sélectionnez au moins un candidat.' : '';
+      return;
+    }
+    this.envoiGroupeEnCours = true;
+    this.convocationFormError = '';
+    const brut = this.convocationForm.getRawValue();
+    const request: ConvocationTestGroupeeRequest = {
+      candidatIds: Array.from(this.selectionCandidatIds),
+      nomEpreuve: brut.nomEpreuve,
+      coefficient: Number(brut.coefficient),
+      dateEpreuve: brut.dateEpreuve,
+    };
+    this.recrutementService.convoquerTestsGroupe(request).subscribe({
+      next: () => {
+        this.envoiGroupeEnCours = false;
+        this.fermerConvocationGroupee();
+        this.charger();
+      },
+      error: (err) => {
+        this.envoiGroupeEnCours = false;
+        this.convocationFormError = err.error?.message || "Échec de l'envoi des convocations.";
+      },
     });
   }
 }

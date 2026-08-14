@@ -40,6 +40,12 @@ public class Entretien {
     @Column(length = 2000)
     private String appreciationGlobale;
 
+    @Column(columnDefinition = "boolean default false")
+    private boolean confirmeParCandidat = false;
+
+    @Column(length = 1000)
+    private String motifReport;
+
     @ManyToOne
     @JoinColumn(name = "candidat_id", nullable = false)
     private Candidat candidat;

@@ -12,7 +12,13 @@
       <a *ngIf="isEtudiantRole" routerLink="/espace-etudiant/mes-formations" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Mes formations</a>
       <a *ngIf="isFormateurRole" routerLink="/espace-etudiant/formateur/mes-cours" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Mes cours</a>
       <a *ngIf="isFormateurRole" routerLink="/espace-etudiant/formateur/planning-calendrier" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Planning</a>
-      <a routerLink="/institut" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Resources</a>
+      <a *ngIf="isPedagogiqueRole" routerLink="/pedagogie" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Offre pédagogique</a>
+      <a *ngIf="isResponsableAdmissionRole" routerLink="/responsable-admission" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Admission</a>
+      <a routerLink="/accueil" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" [routerLinkActiveOptions]="{ exact: true }" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Accueil</a>
+      <a routerLink="/recrutement/catalogue" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Formations</a>
+      <a routerLink="/recrutement/sessions" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Sessions ouvertes</a>
+      <a routerLink="/institut" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Institut</a>
+      <a routerLink="/contact" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Contact</a>
     </nav>
 
     <!-- Actions (Desktop) -->
@@ -77,7 +83,7 @@
                   </span>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm text-[#191c1e] leading-snug line-clamp-2"
+                  <p class="text-sm text-[#191c1e] leading-snug" [title]="notif.message"
                      [class.font-semibold]="!notif.lu">{{ notif.message }}</p>
                   <p class="text-xs text-[#77767f] mt-1">{{ getRelativeTime(notif.dateCreation) }}</p>
                 </div>
@@ -142,3 +148,11 @@
 <!-- Backdrops for closing dropdowns on outside click -->
 <div *ngIf="dropdownOpen" class="fixed inset-0 z-40" (click)="closeDropdown()"></div>
 <div *ngIf="notifDropdownOpen" class="fixed inset-0 z-40" (click)="closeNotifDropdown()"></div>
+
+<!-- Bouton flottant : suivi de candidature (visible dès que le rôle Candidat est acquis) -->
+<a *ngIf="isLoggedIn && isCandidatRole"
+   [routerLink]="candidatureUrl"
+   class="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-[#30609a] hover:bg-[#254d7d] active:scale-95 rounded-full shadow-lg shadow-[#30609a]/30 transition-all duration-200 no-underline">
+  <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">description</span>
+  <span class="hidden sm:inline">Suivre ma candidature</span>
+</a>

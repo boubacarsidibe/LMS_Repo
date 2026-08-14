@@ -43,12 +43,24 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   ];
   readonly colonnesExportParDefaut = ['libelle', 'dateOuverture', 'dateFermeture', 'estOuverte', 'estActive', 'nbCandidatures'];
 
+  readonly niveaux = ['Baccalauréat', 'Licence (L3)', 'Master 1 (M1)', 'Master 2 (M2)'];
+
+  triColonne: 'libelle' | 'dateOuverture' | 'dateFermeture' | 'nbCandidatures' = 'dateOuverture';
+  triDesc = true;
+
   constructor(private recrutementService: RecrutementService, private fb: FormBuilder) {
     this.sessionForm = this.fb.group({
       libelle: ['', Validators.required],
       dateOuverture: ['', Validators.required],
       dateFermeture: ['', Validators.required],
       estOuverte: [true],
+      criteresActifs: [false],
+      criteresNiveauEtudeMinimum: [null],
+      criteresAgeMinimum: [null],
+      criteresAgeMaximum: [null],
+      criteresGenre: [null],
+      criteresExperienceMinimale: [null],
+      seuilReussiteTest: [10],
     });
   }
 
@@ -74,7 +86,7 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
 
   get sessionsFiltrees(): SessionCandidatureResponse[] {
     const q = this.recherche.trim().toLowerCase();
-    return this.sessions.filter((s) => {
+    const filtrees = this.sessions.filter((s) => {
       if (q && !s.libelle.toLowerCase().includes(q)) return false;
       switch (this.filtreStatut) {
         case 'OUVERTES':
@@ -87,6 +99,21 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
           return true;
       }
     });
+    const sens = this.triDesc ? -1 : 1;
+    return [...filtrees].sort((a, b) => {
+      const colonne = this.triColonne;
+      if (colonne === 'nbCandidatures') return (a.nbCandidatures - b.nbCandidatures) * sens;
+      return a[colonne].localeCompare(b[colonne]) * sens;
+    });
+  }
+
+  trierPar(colonne: 'libelle' | 'dateOuverture' | 'dateFermeture' | 'nbCandidatures'): void {
+    if (this.triColonne === colonne) {
+      this.triDesc = !this.triDesc;
+    } else {
+      this.triColonne = colonne;
+      this.triDesc = false;
+    }
   }
 
   get totalSessions(): number {
@@ -119,10 +146,21 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
         dateOuverture: session.dateOuverture,
         dateFermeture: session.dateFermeture,
         estOuverte: session.estOuverte,
+        criteresActifs: session.criteresActifs,
+        criteresNiveauEtudeMinimum: session.criteresNiveauEtudeMinimum,
+        criteresAgeMinimum: session.criteresAgeMinimum,
+        criteresAgeMaximum: session.criteresAgeMaximum,
+        criteresGenre: session.criteresGenre,
+        criteresExperienceMinimale: session.criteresExperienceMinimale,
+        seuilReussiteTest: session.seuilReussiteTest ?? 10,
       });
     } else {
       this.sessionEnEdition = null;
-      this.sessionForm.reset({ libelle: '', dateOuverture: '', dateFermeture: '', estOuverte: true });
+      this.sessionForm.reset({
+        libelle: '', dateOuverture: '', dateFermeture: '', estOuverte: true,
+        criteresActifs: false, criteresNiveauEtudeMinimum: null, criteresAgeMinimum: null, criteresAgeMaximum: null,
+        criteresGenre: null, criteresExperienceMinimale: null, seuilReussiteTest: 10,
+      });
     }
     this.drawerOpen = true;
   }

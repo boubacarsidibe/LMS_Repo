@@ -13,6 +13,13 @@ export const RECRUTEMENT_ROUTES: Routes = [
         (m) => m.FormationDetailComponent
       ),
   },
+  {
+    path: 'sessions',
+    loadComponent: () =>
+      import('./sessions-publiques/sessions-publiques.component').then(
+        (m) => m.SessionsPubliquesComponent
+      ),
+  },
 
   // Tout utilisateur connecté peut candidater : ROLE_CANDIDAT n'est accordé
   // qu'après une soumission réussie (voir CandidatController côté backend),

@@ -1,11 +1,12 @@
 package inpg.sn.lms.auth.entity;
 
+import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -33,6 +34,28 @@ public class Etudiant  {
 
     @Column(nullable = false, unique = true)
     private String telephone;
+
+    /**
+     * Identifiant unique de l'étudiant (TDR §3.2 : « créer automatiquement un
+     * identifiant unique pour chaque étudiant ou apprenant »), au format
+     * {@code INPG-<année>-<séquence>}.
+     *
+     * <p>Volontairement nullable : la colonne est ajoutée par {@code ddl-auto=update}
+     * sur une table qui contient déjà des lignes, qu'une contrainte NOT NULL
+     * rendrait impossible à créer. Le rattrapage est fait au démarrage par
+     * {@code MatriculeService}.
+     */
+    @Column(unique = true)
+    private String matricule;
+
+    /**
+     * Promotion suivie par l'étudiant. C'est le premier maillon de la chaîne
+     * Etudiant → Promotion → Formation → Cours qui détermine ses « cours autorisés ».
+     * Nullable tant que la scolarité n'a pas affecté l'étudiant à une cohorte.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promotion_id")
+    private Promotion promotion;
 
     @OneToOne
     @MapsId

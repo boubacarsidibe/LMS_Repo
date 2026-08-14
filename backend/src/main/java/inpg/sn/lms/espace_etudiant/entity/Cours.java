@@ -1,7 +1,11 @@
 package inpg.sn.lms.espace_etudiant.entity;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import inpg.sn.lms.auth.entity.Formateur;
 import jakarta.persistence.Column;
@@ -44,7 +48,22 @@ public class Cours {
     )
     private List<Formateur> formateurs = new ArrayList<>();
 
+    /**
+     * Formations dont ce cours fait partie. Côté inverse : la table de jointure
+     * {@code formation_cours} est écrite par {@link Formation}. Sert à retrouver
+     * les cours autorisés d'un étudiant via sa promotion.
+     */
+    @ManyToMany(mappedBy = "cours")
+    @JsonIgnore
+    private Set<Formation> formations = new HashSet<>();
 
+    public Set<Formation> getFormations() {
+        return formations;
+    }
+
+    public void setFormations(Set<Formation> formations) {
+        this.formations = formations;
+    }
 
     public Long getId() {
         return id;

@@ -20,6 +20,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -243,7 +244,13 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Mot de passe modifié avec succès."));
     }
 
+    /**
+     * Crée un compte formateur. Réservé à l'administration : l'opération attribue
+     * le rôle FORMATEUR, qui ouvre l'accès à l'ensemble des dossiers étudiants et
+     * des supports de cours.
+     */
     @PostMapping("/formateurs")
+    @PreAuthorize("hasAuthority('ROLE_RESPONSABLE_ADMISSION')")
     public ResponseEntity<?> createFormateur(@RequestBody FormateurDto formateurDto) {
         try {
             Formateur created = formateurService.createFormateur(formateurDto);
@@ -259,6 +266,7 @@ public class AuthController {
     }
 
     @GetMapping("/formateurs")
+    @PreAuthorize("hasAnyAuthority('ROLE_RESPONSABLE_ADMISSION', 'ROLE_RESPONSABLE_PEDAGOGIQUE')")
     public ResponseEntity<?> getAllFormateurs() {
         return ResponseEntity.ok(formateurService.getAllFormateurs());
     }

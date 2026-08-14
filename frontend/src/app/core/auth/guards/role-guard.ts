@@ -26,8 +26,10 @@ export function roleGuard(...requiredRoles: string[]): CanActivateFn {
 
       if (userRoles.includes('ROLE_RESPONSABLE_ADMISSION')) {
         router.navigate(['/responsable-admission']);
+      } else if (userRoles.includes('ROLE_RESPONSABLE_PEDAGOGIQUE')) {
+        router.navigate(['/pedagogie']);
       } else if (userRoles.includes('ROLE_CANDIDAT')) {
-        router.navigate(['/recrutement/catalogue']);
+        router.navigate(['/recrutement/suivi']);
       } else if (userRoles.includes('ROLE_ETUDIANT')) {
         router.navigate(['/espace-etudiant/accueil']);
       } else if (userRoles.includes('ROLE_FORMATEUR')) {

@@ -1,5 +1,5 @@
 <div class="min-h-screen flex flex-col bg-[#F8FAFC]">
-  <app-navbar></app-navbar>
+  <app-candidat-navbar></app-candidat-navbar>
 
   <!-- Loader de vérification initiale -->
   <main *ngIf="verifierCandidatureExistante" class="flex-grow flex items-center justify-center py-20">
@@ -185,6 +185,16 @@
                 <option *ngFor="let s of sessions" [ngValue]="s.id">{{ s.libelle }} (clôture le {{ s.dateFermeture | date:'dd/MM/yyyy' }})</option>
               </select>
               <p *ngIf="showErrors && sessionInvalide" class="text-xs text-[#ba1a1a]">Veuillez choisir une session de candidature.</p>
+              <div *ngIf="avertissementsCriteres.length > 0" class="p-3 rounded-lg bg-[#fff3cd] text-[#664d03] text-xs space-y-1">
+                <p class="font-semibold flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-[16px]">warning</span>
+                  D'après vos informations, vous pourriez ne pas remplir les critères de cette session :
+                </p>
+                <ul class="list-disc list-inside">
+                  <li *ngFor="let a of avertissementsCriteres">{{ a }}</li>
+                </ul>
+                <p>Vous pouvez tout de même soumettre votre dossier ; la décision finale revient à l'INPG.</p>
+              </div>
             </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Type de Formation</label>
@@ -333,6 +343,17 @@
               </label>
               <p *ngIf="data.fichierReleves" class="text-xs text-[#30609a] truncate">{{ data.fichierReleves }}</p>
             </div>
+          </div>
+
+          <!-- Rappel des critères, avec toutes les informations désormais connues -->
+          <div *ngIf="avertissementsCriteres.length > 0" class="p-4 rounded-lg bg-[#fff3cd] text-[#664d03] text-sm space-y-1 mb-4">
+            <p class="font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[18px]">warning</span>
+              Vérifiez avant d'envoyer : vous pourriez ne pas remplir les critères de cette session
+            </p>
+            <ul class="list-disc list-inside">
+              <li *ngFor="let a of avertissementsCriteres">{{ a }}</li>
+            </ul>
           </div>
 
           <!-- Consentement -->

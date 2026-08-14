@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { RouterModule } from '@angular/router';
 import {
   CandidatureResponse,
+  ConvocationEntretienGroupeeRequest,
   EntretienRequest,
   EntretienResponse,
   RecrutementService,
@@ -37,6 +38,12 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
   isSubmitting = false;
   formError = '';
 
+  convocationGroupeeOpen = false;
+  selectionCandidatIds = new Set<number>();
+  convocationForm: FormGroup;
+  envoiGroupeEnCours = false;
+  convocationFormError = '';
+
   constructor(private recrutementService: RecrutementService, private fb: FormBuilder) {
     this.entretienForm = this.fb.group({
       candidatId: ['', Validators.required],
@@ -44,6 +51,10 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
       lieuOuLien: ['', Validators.required],
       noteEntretien: [null],
       appreciationGlobale: [''],
+    });
+    this.convocationForm = this.fb.group({
+      dateHeure: ['', Validators.required],
+      lieuOuLien: ['', Validators.required],
     });
   }
 
@@ -208,6 +219,62 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
     this.recrutementService.supprimerEntretien(entretien.id).subscribe({
       next: () => this.charger(),
       error: () => alert("Échec de l'annulation de l'entretien."),
+    });
+  }
+
+  // ===================== Convocation groupée =====================
+
+  ouvrirConvocationGroupee(): void {
+    this.convocationFormError = '';
+    this.selectionCandidatIds.clear();
+    this.convocationForm.reset({ dateHeure: '', lieuOuLien: '' });
+    this.convocationGroupeeOpen = true;
+  }
+
+  fermerConvocationGroupee(): void {
+    this.convocationGroupeeOpen = false;
+  }
+
+  basculerSelection(candidatId: number): void {
+    if (this.selectionCandidatIds.has(candidatId)) {
+      this.selectionCandidatIds.delete(candidatId);
+    } else {
+      this.selectionCandidatIds.add(candidatId);
+    }
+  }
+
+  toutSelectionner(): void {
+    if (this.selectionCandidatIds.size === this.candidatsEligibles.length) {
+      this.selectionCandidatIds.clear();
+    } else {
+      this.candidatsEligibles.forEach((c) => this.selectionCandidatIds.add(c.candidatId));
+    }
+  }
+
+  envoyerConvocationGroupee(): void {
+    if (this.convocationForm.invalid || this.selectionCandidatIds.size === 0) {
+      this.convocationForm.markAllAsTouched();
+      this.convocationFormError = this.selectionCandidatIds.size === 0 ? 'Sélectionnez au moins un candidat.' : '';
+      return;
+    }
+    this.envoiGroupeEnCours = true;
+    this.convocationFormError = '';
+    const brut = this.convocationForm.getRawValue();
+    const request: ConvocationEntretienGroupeeRequest = {
+      candidatIds: Array.from(this.selectionCandidatIds),
+      dateHeure: brut.dateHeure,
+      lieuOuLien: brut.lieuOuLien,
+    };
+    this.recrutementService.convoquerEntretiensGroupe(request).subscribe({
+      next: () => {
+        this.envoiGroupeEnCours = false;
+        this.fermerConvocationGroupee();
+        this.charger();
+      },
+      error: (err) => {
+        this.envoiGroupeEnCours = false;
+        this.convocationFormError = err.error?.message || "Échec de l'envoi des convocations.";
+      },
     });
   }
 }

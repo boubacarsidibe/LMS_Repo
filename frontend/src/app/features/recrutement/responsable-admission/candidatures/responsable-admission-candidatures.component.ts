@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { CandidatureResponse, PieceJustificativeResponse, RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
@@ -22,10 +22,12 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
 
   recherche = '';
   filtreStatut: StatutFiltre = 'TOUS';
+  filtreSessionId: number | null = null;
 
   candidatureSelectionnee: CandidatureResponse | null = null;
   actionEnCours = false;
   exporting = false;
+  exportingDocuments = false;
   exportModalOpen = false;
 
   readonly colonnesExport: ColonneExport[] = [
@@ -41,13 +43,31 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     { key: 'niveauEtude', label: "Niveau d'études" },
     { key: 'profession', label: 'Profession' },
     { key: 'anneesExperience', label: "Années d'expérience" },
+    { key: 'doc_CV', label: 'Document — CV' },
+    { key: 'doc_DIPLOME', label: 'Document — Diplôme' },
+    { key: 'doc_RELEVE_NOTES', label: 'Document — Relevé de notes' },
+    { key: 'doc_PIECE_IDENTITE', label: "Document — Pièce d'identité" },
+    { key: 'doc_LETTRE_MOTIVATION', label: 'Document — Lettre de motivation' },
   ];
   readonly colonnesExportParDefaut = ['numeroDossier', 'nom', 'prenom', 'email', 'session', 'statut', 'dateSoumission', 'motifRejet'];
 
-  constructor(private recrutementService: RecrutementService) {}
+  constructor(private recrutementService: RecrutementService, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    const sessionParam = this.route.snapshot.queryParamMap.get('session');
+    if (sessionParam) this.filtreSessionId = Number(sessionParam);
     this.chargerCandidatures();
+  }
+
+  /** Sessions distinctes présentes dans les candidatures chargées, pour le filtre. */
+  get sessionsDisponibles(): { id: number; libelle: string }[] {
+    const vues = new Map<number, string>();
+    for (const c of this.candidatures) {
+      if (!vues.has(c.sessionCandidatureId)) vues.set(c.sessionCandidatureId, c.sessionCandidatureLibelle);
+    }
+    return Array.from(vues.entries())
+      .map(([id, libelle]) => ({ id, libelle }))
+      .sort((a, b) => a.libelle.localeCompare(b.libelle));
   }
 
   private chargerCandidatures(): void {
@@ -70,6 +90,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     const q = this.recherche.trim().toLowerCase();
     return this.candidatures.filter((c) => {
       if (this.filtreStatut !== 'TOUS' && c.statut !== this.filtreStatut) return false;
+      if (this.filtreSessionId !== null && c.sessionCandidatureId !== this.filtreSessionId) return false;
       if (!q) return true;
       return (
         (c.candidatNom || '').toLowerCase().includes(q) ||
@@ -198,6 +219,15 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     });
   }
 
+  /** Marque/démarque une pièce comme conforme, une fois l'admin l'a consultée. */
+  basculerConformitePiece(piece: PieceJustificativeResponse): void {
+    const nouvelEtat = !piece.estConforme;
+    this.recrutementService.modifierConformitePiece(piece.id, nouvelEtat).subscribe({
+      next: () => (piece.estConforme = nouvelEtat),
+      error: () => alert('Échec de la mise à jour de la conformité du document.'),
+    });
+  }
+
   exporter(colonnes: string[]): void {
     this.exporting = true;
     const statut = this.filtreStatut === 'TOUS' ? undefined : this.filtreStatut;
@@ -209,6 +239,22 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       error: () => {
         this.exporting = false;
         alert("Échec de l'export Excel.");
+      },
+    });
+  }
+
+  /** Télécharge les documents (pièces justificatives) des candidatures actuellement filtrées par statut, en .zip. */
+  exporterDocuments(): void {
+    this.exportingDocuments = true;
+    const statut = this.filtreStatut === 'TOUS' ? undefined : this.filtreStatut;
+    this.recrutementService.exporterDocuments(statut).subscribe({
+      next: (blob) => {
+        downloadBlob(blob, `documents_candidatures_${new Date().toISOString().slice(0, 10)}.zip`);
+        this.exportingDocuments = false;
+      },
+      error: (err) => {
+        this.exportingDocuments = false;
+        alert(err.status === 400 ? "Aucun document à exporter pour cette sélection." : "Échec de l'export des documents.");
       },
     });
   }

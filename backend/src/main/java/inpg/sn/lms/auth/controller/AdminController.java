@@ -54,10 +54,16 @@ public class AdminController {
         if (user == null) return ResponseEntity.notFound().build();
 
         user.getRoles().clear();
+        // Un compte ne peut détenir qu'un seul rôle à la fois (Candidat, Étudiant, Formateur
+        // ou Responsable Admission) : on n'applique que le premier rôle valide demandé, même
+        // si le client en envoie plusieurs.
         if (request != null && request.getRoles() != null) {
             for (String roleCode : request.getRoles()) {
                 Role r = roleRepository.findByCode(roleCode);
-                if (r != null) user.addRole(r);
+                if (r != null) {
+                    user.addRole(r);
+                    break;
+                }
             }
         }
         userRepository.save(user);
@@ -80,13 +86,16 @@ public class AdminController {
 
     private Formateur nouveauFormateur(User user) {
         String[] nomPrenom = deriverNomPrenom(user.getUsername());
-        return new Formateur(user, nomPrenom[0], nomPrenom[1], "N/A");
+        // "N/A" seul violerait la contrainte unique sur telephone dès le 2e profil sans
+        // numéro : on le rend unique par utilisateur, comme AdminRecrutementController#inscrireCommeEtudiant.
+        return new Formateur(user, nomPrenom[0], nomPrenom[1], "N/A-" + user.getId());
     }
 
     private Etudiant nouvelEtudiant(User user) {
         String[] nomPrenom = deriverNomPrenom(user.getUsername());
-        return new Etudiant(user, nomPrenom[0], nomPrenom[1], "N/A");
+        return new Etudiant(user, nomPrenom[0], nomPrenom[1], "N/A-" + user.getId());
     }
+    
 
     /** Dérive un [nom, prenom] provisoire depuis le username (ex: "amina_diop" -> ["diop", "amina"]), à corriger par l'intéressé depuis son profil. */
     private String[] deriverNomPrenom(String username) {

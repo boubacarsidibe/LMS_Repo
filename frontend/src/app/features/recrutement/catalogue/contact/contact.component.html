@@ -109,6 +109,13 @@
               </div>
               <textarea [(ngModel)]="message" name="message" id="message" class="w-full bg-[#f7f9fb] border border-[#c7c5d0] rounded-lg px-4 py-3 focus:outline-none focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 transition-all text-base text-[#191c1e] placeholder:text-[#77767f] resize-y" maxlength="500" placeholder="Comment pouvons-nous vous aider ?" required rows="5"></textarea>
             </div>
+            <p
+              *ngIf="erreur"
+              class="mt-2 text-sm text-[#ba1a1a] bg-[#ffdad6] rounded-lg px-4 py-3"
+              role="alert"
+            >
+              {{ erreur }}
+            </p>
             <div class="mt-2 flex justify-end">
               <button
                 type="submit"

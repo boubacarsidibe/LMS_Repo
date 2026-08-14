@@ -109,13 +109,6 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'criteres',
-        loadComponent: () =>
-          import('./features/recrutement/responsable-admission/criteres/responsable-admission-criteres.component').then(
-            (m) => m.ResponsableAdmissionCriteresComponent
-          ),
-      },
-      {
         path: 'deliberation',
         loadComponent: () =>
           import(
@@ -137,6 +130,20 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'paiements',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/paiements/responsable-admission-paiements.component').then(
+            (m) => m.ResponsableAdmissionPaiementsComponent
+          ),
+      },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/notifications/responsable-admission-notifications.component').then(
+            (m) => m.ResponsableAdmissionNotificationsComponent
+          ),
+      },
+      {
         path: 'parametres',
         loadComponent: () =>
           import('./features/recrutement/responsable-admission/parametres/responsable-admission-parametres.component').then(
@@ -151,6 +158,12 @@ export const routes: Routes = [
           ),
       },
     ],
+  },
+  // Espace Responsable Pédagogique (offre d'enseignement : cours et supports)
+  {
+    path: 'pedagogie',
+    canActivate: [authGuard, roleGuard('ROLE_RESPONSABLE_PEDAGOGIQUE')],
+    loadChildren: () => import('./features/pedagogie/pedagogie.routes').then((m) => m.PEDAGOGIE_ROUTES),
   },
   {
     path: 'politique-de-confidentialite',
@@ -174,7 +187,7 @@ export const routes: Routes = [
   // Redirection de sécurité si l'URL saisie n'existe pas
   { path: '**', redirectTo: 'auth/login' },
 
-  
+
 
 
 ];

@@ -3,6 +3,7 @@ package inpg.sn.lms.config;
 import inpg.sn.lms.security.JwtRequestFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -61,8 +62,30 @@ public class SecurityConfig {
             
             
             .authorizeHttpRequests(auth -> auth
-                // Public : authentification, catalogue, contact
-                .requestMatchers("/api/auth/**", "/api/recrutement/public/**", "/", "/error", "/login", "/uploads/**").permitAll()
+                // Public : strictement les opérations nécessaires avant d'être connecté.
+                // Surtout PAS « /api/auth/** » en bloc : ce préfixe héberge aussi la
+                // création de comptes formateur et les listings d'utilisateurs et de
+                // candidats, qu'un tel joker rendrait accessibles anonymement.
+                .requestMatchers(HttpMethod.POST,
+                        "/api/auth/login",
+                        "/api/auth/register",
+                        "/api/auth/send-otp",
+                        "/api/auth/verify-otp",
+                        "/api/auth/reset-password").permitAll()
+                .requestMatchers("/api/recrutement/public/**", "/", "/error", "/login", "/uploads/**").permitAll()
+                // Administration des comptes : création de formateurs, listings nominatifs,
+                // inscription directe d'un candidat ou d'un étudiant. Ces opérations
+                // attribuent des rôles ou exposent des données personnelles.
+                .requestMatchers(
+                        "/api/auth/formateurs",
+                        "/api/auth/getAllUsers",
+                        "/api/auth/getAllCandidats",
+                        "/api/auth/user",
+                        "/api/auth/registerCandidat",
+                        "/api/auth/registerEtudiant").hasRole("RESPONSABLE_ADMISSION")
+                // Gestion des utilisateurs et des rôles : filet de sécurité pour que tout
+                // futur endpoint ajouté sous /api/admin ne soit pas exposé par omission.
+                .requestMatchers("/api/admin/**").hasRole("RESPONSABLE_ADMISSION")
                 // Tout utilisateur connecté peut soumettre une candidature : le rôle
                 // CANDIDAT n'est accordé qu'après une soumission réussie (voir
                 // CandidatController#soumettreCandidature), donc pas encore présent
@@ -70,6 +93,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/recrutement/candidat/**").authenticated()
                 // Admin : gestion recrutement
                 .requestMatchers("/api/admin/recrutement/**").hasRole("RESPONSABLE_ADMISSION")
+                // Pilotage de l'offre pédagogique : cours et supports, tous formateurs confondus.
+                .requestMatchers("/api/pedagogie/**").hasRole("RESPONSABLE_PEDAGOGIQUE")
                 // Espace pédagogique : les opérations d'enseignant restent réservées aux formateurs.
                 .requestMatchers("/api/espace-etudiant/formateur/**").hasRole("FORMATEUR")
                 .requestMatchers("/api/espace-etudiant/**").hasAnyRole("ETUDIANT", "FORMATEUR")

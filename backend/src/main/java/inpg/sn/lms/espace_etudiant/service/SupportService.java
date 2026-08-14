@@ -1,6 +1,7 @@
 package inpg.sn.lms.espace_etudiant.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -44,6 +45,14 @@ public class SupportService {
 
     public List<SupportCours> getCourseSupports(Long coursId) {
         return supportCoursRepository.findByCoursIdOrderByDatePublicationDesc(coursId);
+    }
+
+    public Optional<SupportCours> findCourseSupportById(Long id) {
+        return supportCoursRepository.findById(id);
+    }
+
+    public void deleteCourseSupport(SupportCours support) {
+        supportCoursRepository.delete(support);
     }
 
     public void deleteCourseSupports(Long coursId) {

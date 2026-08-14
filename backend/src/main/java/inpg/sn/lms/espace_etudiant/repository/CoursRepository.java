@@ -13,4 +13,11 @@ public interface CoursRepository extends JpaRepository<Cours, Long> {
 
     @EntityGraph(attributePaths = "formateurs")
     List<Cours> findByFormateurs_Id(Long formateurId);
+
+    /**
+     * Cours au programme d'une formation — c'est la requête qui matérialise les
+     * « cours autorisés » d'un étudiant, via sa promotion puis sa formation.
+     */
+    @EntityGraph(attributePaths = "formateurs")
+    List<Cours> findByFormations_Id(Long formationId);
 }

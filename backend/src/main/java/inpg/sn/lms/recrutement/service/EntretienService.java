@@ -103,6 +103,34 @@ public class EntretienService {
         entretienRepository.deleteById(id);
     }
 
+    public EntretienResponse confirmerPresence(Long entretienId, Long candidatId) {
+        Entretien entretien = entretienRepository.findById(entretienId)
+                .orElseThrow(() -> new RuntimeException("Entretien non trouvé avec l'ID: " + entretienId));
+        if (!entretien.getCandidat().getId().equals(candidatId)) {
+            throw new RuntimeException("Accès non autorisé à cet entretien.");
+        }
+        entretien.setConfirmeParCandidat(true);
+        Entretien saved = entretienRepository.save(entretien);
+        return toResponse(saved);
+    }
+
+    public EntretienResponse demanderReport(Long entretienId, Long candidatId, String motif) {
+        Entretien entretien = entretienRepository.findById(entretienId)
+                .orElseThrow(() -> new RuntimeException("Entretien non trouvé avec l'ID: " + entretienId));
+        if (!entretien.getCandidat().getId().equals(candidatId)) {
+            throw new RuntimeException("Accès non autorisé à cet entretien.");
+        }
+        entretien.setMotifReport(motif != null ? motif : "Demande de report sans motif spécifié");
+        entretien.setConfirmeParCandidat(false);
+        Entretien saved = entretienRepository.save(entretien);
+        return toResponse(saved);
+    }
+
+    public Entretien getEntretienEntity(Long id) {
+        return entretienRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Entretien non trouvé avec l'ID: " + id));
+    }
+
     private EntretienResponse toResponse(Entretien e) {
         return EntretienResponse.builder()
                 .id(e.getId())
@@ -110,6 +138,8 @@ public class EntretienService {
                 .lieuOuLien(e.getLieuOuLien())
                 .noteEntretien(e.getNoteEntretien())
                 .appreciationGlobale(e.getAppreciationGlobale())
+                .confirmeParCandidat(e.isConfirmeParCandidat())
+                .motifReport(e.getMotifReport())
                 .candidatId(e.getCandidat().getId())
                 .build();
     }

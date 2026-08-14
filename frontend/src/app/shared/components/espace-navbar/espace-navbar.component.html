@@ -10,8 +10,10 @@
 
     <!-- Navigation Links (Desktop) - centered -->
     <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
-      <a routerLink="/espace-etudiant/accueil" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Accueil</a>
-      <a *ngIf="isEtudiantRole" routerLink="/espace-etudiant/mes-formations" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Mes formations</a>
+      <a *ngIf="isEtudiantRole" routerLink="/espace-etudiant/mes-formations" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Formations</a>
+      <a *ngIf="isEtudiantRole" routerLink="/espace-etudiant/cours" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Cours</a>
+      <a *ngIf="isEtudiantRole" routerLink="/espace-etudiant/dashboard" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Dashboard</a>
+      <a routerLink="/espace-etudiant/accueil" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" [routerLinkActiveOptions]="{ exact: true }" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Accueil</a>
       <a *ngIf="isFormateurRole" routerLink="/espace-etudiant/formateur/dashboard-formateur" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Espace formateur</a>
     </nav>
 
@@ -46,6 +48,10 @@
           <a (click)="goToDashboard()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#f2f4f6] hover:text-[#30609a] cursor-pointer transition-colors">
             <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">dashboard</span>
             Tableau de bord
+          </a>
+          <a (click)="goToProfil()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#f2f4f6] hover:text-[#30609a] cursor-pointer transition-colors">
+            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">person</span>
+            Mon profil
           </a>
           <hr class="my-1 border-[#c7c5d0]/40">
           <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#ffdad6] hover:text-[#ba1a1a] cursor-pointer transition-colors">

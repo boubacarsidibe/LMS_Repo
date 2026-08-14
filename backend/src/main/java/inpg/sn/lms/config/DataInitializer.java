@@ -12,6 +12,7 @@ import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
@@ -20,6 +21,7 @@ import java.time.LocalDate;
 public class DataInitializer {
 
     @Bean
+    @Order(1) // Doit précéder PedagogieDataInitializer, qui s'appuie sur les rôles créés ici.
     CommandLineRunner initData(
             SessionCandidatureRepository sessionRepository,
             RoleRepository roleRepository,
@@ -38,6 +40,8 @@ public class DataInitializer {
                     "Étudiant admis — accès à l'espace étudiant");
             ensureRole(roleRepository, "ROLE_FORMATEUR", "Formateur",
                     "Enseignant — gère ses cours et ses supports pédagogiques");
+            ensureRole(roleRepository, "ROLE_RESPONSABLE_PEDAGOGIQUE", "Responsable Pédagogique",
+                    "Staff pédagogique — pilote l'offre de formation et le suivi des enseignements");
 
             // ===================== SESSIONS =====================
             if (sessionRepository.count() == 0) {
