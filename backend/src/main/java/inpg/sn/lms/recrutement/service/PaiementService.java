@@ -4,6 +4,7 @@ import inpg.sn.lms.exception.DuplicateResourceException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -59,45 +60,111 @@ public class PaiementService {
     }
 
     /**
-     * Initie un paiement pour une candidature (simulation)
+     * Ouvre une tentative de paiement des frais de dossier, au statut EN_ATTENTE.
+     *
+     * <p>La confirmation est une étape distincte ({@link #confirmerPaiement}) : c'est le
+     * point de raccordement d'un agrégateur réel (PayDunya, Touch, Kalpay), qui redirige
+     * le candidat puis rappelle le serveur de façon asynchrone. Aujourd'hui la simulation
+     * enchaîne les deux immédiatement, mais la séparation existe déjà — sans elle, brancher
+     * une passerelle imposerait de reprendre tout le parcours.
+     *
+     * <p>Un paiement déjà réglé bloque une nouvelle tentative ; un paiement resté EN_ATTENTE
+     * ou soldé en ECHEC est en revanche <strong>rejoué</strong>. La règle précédente refusait
+     * toute candidature possédant un paiement, quel que soit son statut : un candidat dont la
+     * transaction avait échoué se retrouvait dans une impasse définitive, sans aucun moyen de
+     * régler ses frais.
      */
     public PaiementResponse initierPaiement(PaiementRequest request) {
         Candidature candidature = candidatureRepository.findById(request.getCandidatureId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Candidature non trouvée avec l'ID: " + request.getCandidatureId()));
 
-        // Vérifier qu'il n'y a pas déjà un paiement en cours
-        paiementRepository.findByCandidatureId(request.getCandidatureId())
-                .ifPresent(p -> {
-                    throw new DuplicateResourceException("Un paiement existe déjà pour cette candidature.");
-                });
+        Optional<Paiement> existant = paiementRepository.findByCandidatureId(request.getCandidatureId());
+        if (existant.isPresent()) {
+            Paiement precedent = existant.get();
+            if (precedent.getStatut() == EnumStatutPaiement.SUCCES) {
+                throw new DuplicateResourceException(
+                        "Les frais de dossier ont déjà été réglés pour cette candidature.");
+            }
+            // Nouvelle référence : l'ancienne tentative peut encore aboutir chez l'agrégateur,
+            // et deux tentatives ne doivent jamais partager le même identifiant de transaction.
+            precedent.setReferenceTransaction(genererReference());
+            precedent.setStatut(EnumStatutPaiement.EN_ATTENTE);
+            precedent.setDatePaiement(null);
+            precedent.setMethodePaiement(methodeOuDefaut(request));
+            return toResponse(paiementRepository.save(precedent));
+        }
 
         Paiement paiement = new Paiement();
-        paiement.setReferenceTransaction("PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        paiement.setReferenceTransaction(genererReference());
         // Tarif et devise proviennent de la configuration, jamais de la requête.
         paiement.setMontant(new BigDecimal(fraisDossier));
         paiement.setDevise(deviseFraisDossier);
         paiement.setStatut(EnumStatutPaiement.EN_ATTENTE);
-        paiement.setMethodePaiement(
-                request.getMethodePaiement() != null && !request.getMethodePaiement().isBlank()
-                        ? request.getMethodePaiement()
-                        : "Mobile Money");
+        paiement.setMethodePaiement(methodeOuDefaut(request));
         paiement.setCandidature(candidature);
 
         Paiement saved = paiementRepository.save(paiement);
         return toResponse(saved);
     }
 
+    /** Référence de transaction, unique en base : deux tentatives ne doivent jamais la partager. */
+    private String genererReference() {
+        return "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private String methodeOuDefaut(PaiementRequest request) {
+        return request.getMethodePaiement() != null && !request.getMethodePaiement().isBlank()
+                ? request.getMethodePaiement()
+                : "Mobile Money";
+    }
+
     /**
-     * Simule le succès du paiement
+     * Enregistre l'échec d'une tentative. Aucun code n'affectait jamais ECHEC : seul le
+     * chemin nominal était câblé, si bien qu'une transaction refusée laissait le dossier
+     * indéfiniment EN_ATTENTE, sans que ni le candidat ni l'administration ne le sachent.
      */
-    public PaiementResponse simulerSuccesPaiement(Long paiementId) {
+    public PaiementResponse echouerPaiement(Long paiementId, String motif) {
         Paiement paiement = paiementRepository.findById(paiementId)
                 .orElseThrow(() -> new ResourceNotFoundException("Paiement non trouvé avec l'ID: " + paiementId));
 
+        if (paiement.getStatut() == EnumStatutPaiement.SUCCES) {
+            throw new BusinessException("Un paiement déjà validé ne peut pas être marqué en échec.");
+        }
+        paiement.setStatut(EnumStatutPaiement.ECHEC);
+        Paiement saved = paiementRepository.save(paiement);
+
+        Candidature candidature = saved.getCandidature();
+        if (candidature != null && candidature.getCandidat() != null) {
+            notificationCandidatService.creerNotification(candidature.getCandidat().getId(),
+                    "Le règlement des frais de dossier n°" + candidature.getNumeroDossier()
+                            + " n'a pas abouti" + (motif != null && !motif.isBlank() ? " : " + motif : "")
+                            + ". Vous pouvez renouveler la tentative.",
+                    "PAIEMENT", "/recrutement/suivi");
+        }
+        return toResponse(saved);
+    }
+
+    /**
+     * Confirme un paiement.
+     *
+     * <p>C'est ici qu'un agrégateur réel viendra se brancher : sa notification (webhook)
+     * appellera cette méthode après avoir vérifié la signature du message. La méthode est
+     * <strong>idempotente</strong> — une passerelle réémet ses notifications jusqu'à obtenir
+     * un accusé, et rejouer une confirmation ne doit ni dupliquer l'encaissement, ni renvoyer
+     * une seconde fois les courriels au candidat.
+     */
+    public PaiementResponse confirmerPaiement(Long paiementId) {
+        Paiement paiement = paiementRepository.findById(paiementId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paiement non trouvé avec l'ID: " + paiementId));
+
+        if (paiement.getStatut() == EnumStatutPaiement.SUCCES) {
+            // Déjà confirmé : on rend le même résultat sans rejouer les effets de bord.
+            return toResponse(paiement);
+        }
         if (!paiement.effectuerPaiement()) {
-            throw new BusinessException("Le paiement ne peut pas être finalisé (statut actuel: " + paiement.getStatut()
-                    + ").");
+            throw new BusinessException("Le paiement ne peut pas être finalisé (statut actuel: "
+                    + paiement.getStatut() + ").");
         }
 
         Paiement saved = paiementRepository.save(paiement);

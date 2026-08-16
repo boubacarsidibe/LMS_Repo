@@ -504,10 +504,33 @@ public class AdminRecrutementController {
 
     // ===================== PAIEMENT =====================
 
+    /**
+     * Confirme manuellement l'encaissement des frais de dossier.
+     *
+     * <p>Répond à l'exigence du TDR « à l'INPG de confirmer le statut payé le cas
+     * échéant » : le versement peut arriver hors ligne (virement, espèces au guichet),
+     * ou la notification de l'agrégateur se perdre. L'opération est idempotente — la
+     * rejouer sur un paiement déjà validé renvoie le même résultat sans réexpédier les
+     * courriels au candidat.
+     */
     @PutMapping("/paiements/{id}/simuler-succes")
     public ResponseEntity<PaiementResponse> simulerSuccesPaiement(@PathVariable Long id) {
-        PaiementResponse response = paiementService.simulerSuccesPaiement(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(paiementService.confirmerPaiement(id));
+    }
+
+    /**
+     * Solde une tentative de paiement en échec.
+     *
+     * <p>Le statut ECHEC existait dans l'énumération sans qu'aucun code ne l'affecte
+     * jamais : une transaction refusée laissait le dossier indéfiniment EN_ATTENTE, sans
+     * que le candidat sache qu'il devait recommencer. Le candidat est notifié et peut
+     * relancer un paiement, ce que la règle « un paiement par candidature » interdisait.
+     */
+    @PutMapping("/paiements/{id}/echec")
+    public ResponseEntity<PaiementResponse> marquerPaiementEnEchec(@PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> corps) {
+        String motif = corps != null ? corps.get("motif") : null;
+        return ResponseEntity.ok(paiementService.echouerPaiement(id, motif));
     }
 
     /** Historique des paiements, toutes candidatures confondues. */

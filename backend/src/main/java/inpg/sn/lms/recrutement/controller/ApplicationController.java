@@ -16,11 +16,13 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import inpg.sn.lms.recrutement.entity.Candidature;
+import inpg.sn.lms.recrutement.enums.EnumStatutPaiement;
 import inpg.sn.lms.recrutement.entity.Paiement;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
@@ -39,6 +41,7 @@ public class ApplicationController {
     // ==============================================
     // GET /api/applications/kpis
     // ==============================================
+    @Transactional(readOnly = true)
     @GetMapping("/kpis")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<Map<String, Object>> getKpis(
@@ -87,6 +90,7 @@ public class ApplicationController {
     // ==============================================
     // GET /api/applications (list + filtres)
     // ==============================================
+    @Transactional(readOnly = true)
     @GetMapping
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<List<Map<String, Object>>> listApplications(
@@ -121,6 +125,7 @@ public class ApplicationController {
     // ==============================================
     // GET /api/applications/:id
     // ==============================================
+    @Transactional(readOnly = true)
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<Map<String, Object>> getApplication(@PathVariable Long id) {
@@ -152,6 +157,7 @@ public class ApplicationController {
     // ==============================================
     // GET /api/applications/export
     // ==============================================
+    @Transactional(readOnly = true)
     @GetMapping("/export")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<byte[]> exportApplications() {
@@ -163,9 +169,17 @@ public class ApplicationController {
             String prenom = c.getCandidat() != null && c.getCandidat().getPrenom() != null ? c.getCandidat().getPrenom() : "";
             String email = c.getCandidat() != null && c.getCandidat().getUser() != null ? c.getCandidat().getUser().getEmail() : "";
             String pieces = allDocsValid(c) ? "VALIDÉ" : isDossierIncomplet(c) ? "INCOMPLET" : "EN ATTENTE";
-            String paiement = c.getPaiement() != null && "SUCCESS".equalsIgnoreCase(c.getPaiement().getStatut().name()) ? "PAYÉ" : "NON PAYÉ";
-            csv.append(String.format("\"%s\",\"%s %s\",\"%s\",\"%s\",%s,%s,%s\n",
-                    c.getNumeroDossier(), nom, prenom, email, c.getStatut(), pieces, paiement));
+            String paiement = estPaye(c) ? "PAYÉ" : "NON PAYÉ";
+            String session = c.getSessionCandidature() != null ? c.getSessionCandidature().getLibelle() : "";
+            String dateSoumission = c.getDateSoumission() != null ? c.getDateSoumission().toString() : "";
+            // L'en-tête annonce neuf colonnes ; le gabarit n'en produisait que huit, pour sept
+            // valeurs — d'où un IllegalFormatException à chaque appel. « Session » et « Date
+            // Soumission » n'étaient jamais écrites, et nom et prénom se retrouvaient fusionnés
+            // dans une seule cellule. Cet export n'a donc jamais abouti.
+            csv.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s%n",
+                    cellule(c.getNumeroDossier()), cellule(nom), cellule(prenom), cellule(email),
+                    cellule(String.valueOf(c.getStatut())), cellule(session), cellule(dateSoumission),
+                    cellule(pieces), cellule(paiement)));
         }
         byte[] bytes = csv.toString().getBytes();
         return ResponseEntity.ok()
@@ -200,7 +214,7 @@ public class ApplicationController {
         m.put("statut", c.getStatut().name());
         m.put("dateSoumission", c.getDateSoumission() != null ? c.getDateSoumission().toString() : null);
         m.put("documentStatus", allDocsValid(c) ? "VALIDÉ" : (isDossierIncomplet(c) ? "INCOMPLET" : "EN ATTENTE"));
-        m.put("paymentStatus", c.getPaiement() != null && "SUCCESS".equalsIgnoreCase(c.getPaiement().getStatut().name()) ? "PAYÉ" : "NON PAYÉ");
+        m.put("paymentStatus", estPaye(c) ? "PAYÉ" : "NON PAYÉ");
         if (c.getCandidat() != null) {
             m.put("candidatNom", c.getCandidat().getNom() != null ? c.getCandidat().getNom() : "");
             m.put("candidatPrenom", c.getCandidat().getPrenom() != null ? c.getCandidat().getPrenom() : "");
@@ -241,4 +255,27 @@ public class ApplicationController {
         }
         return m;
     }
+
+    /**
+     * Un dossier est paye lorsque son paiement est au statut SUCCES.
+     *
+     * <p>Le test etait ecrit {@code "SUCCESS".equalsIgnoreCase(statut.name())}, avec deux S :
+     * l'enumeration vaut SUCCES. La comparaison etait donc TOUJOURS fausse, et tout dossier
+     * regle s'affichait « NON PAYE » dans la fiche et dans l'export CSV. Comparer l'enumeration
+     * a elle-meme rend la faute impossible : le compilateur refuserait une constante inexistante.
+     */
+    private boolean estPaye(Candidature c) {
+        return c.getPaiement() != null && c.getPaiement().getStatut() == EnumStatutPaiement.SUCCES;
+    }
+
+    /**
+     * Encadre une valeur pour le CSV. Un nom de famille contenant une virgule, ou un motif
+     * de rejet contenant un guillemet, decalerait sinon toutes les colonnes suivantes du
+     * fichier — la convention veut qu'un guillemet interne soit double.
+     */
+    private String cellule(String valeur) {
+        String contenu = valeur != null ? valeur : "";
+        return "\"" + contenu.replace("\"", "\"\"") + "\"";
+    }
+
 }

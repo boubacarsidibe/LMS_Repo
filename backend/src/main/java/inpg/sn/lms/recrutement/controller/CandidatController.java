@@ -444,7 +444,7 @@ public class CandidatController {
      * passerelle réelle (PayDunya/Touch/Kalpay) n'est connectée pour l'instant :
      * le paiement est immédiatement confirmé, comme le ferait une passerelle
      * réelle depuis le point de vue du candidat (email + notification déjà
-     * câblés dans PaiementService#simulerSuccesPaiement).
+     * câblés dans PaiementService#confirmerPaiement).
      */
     @PostMapping("/paiement")
     public ResponseEntity<?> initierPaiement(@RequestBody PaiementRequest request, Authentication authentication) {
@@ -460,7 +460,9 @@ public class CandidatController {
         }
 
         PaiementResponse paiement = paiementService.initierPaiement(request);
-        PaiementResponse confirme = paiementService.simulerSuccesPaiement(paiement.getId());
+        // Deux etapes distinctes, meme si la simulation les enchaine : c'est la couture ou
+        // se branchera l'agregateur reel, qui confirmera de facon asynchrone par webhook.
+        PaiementResponse confirme = paiementService.confirmerPaiement(paiement.getId());
         return ResponseEntity.ok(confirme);
     }
 
