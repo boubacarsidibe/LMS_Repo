@@ -22,6 +22,15 @@ public interface CandidatureRepository extends JpaRepository<Candidature, Long> 
 
     List<Candidature> findBySessionCandidatureId(Long sessionId);
 
+    /**
+     * Nombre de dossiers déposés sur une session — le « remplissage » affiché au
+     * back-office. Il était auparavant stocké dans {@code sessions_candidature.quota_actuel},
+     * colonne que rien n'incrémentait jamais : le taux affiché ne bougeait pas d'un pouce,
+     * quel que soit le nombre réel de candidatures. Compter à la demande coûte une requête
+     * et ne peut pas se désynchroniser.
+     */
+    long countBySessionCandidatureId(Long sessionId);
+
     List<Candidature> findByCandidatIdAndStatut(Long candidatId, EnumStatutCandidature statut);
 
     List<Candidature> findTop5ByOrderByDateSoumissionDesc();

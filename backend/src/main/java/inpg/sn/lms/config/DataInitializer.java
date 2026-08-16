@@ -151,7 +151,6 @@ public class DataInitializer {
                 s1.setDateFermeture(LocalDate.of(2026, 9, 30));
                 s1.setEstOuverte(true);
                 s1.setQuotaMax(220);
-                s1.setQuotaActuel(186);
                 s1.setStatus("OUVERT");
                 s1.setProgram(p1);
                 sessionRepository.save(s1);
@@ -162,7 +161,6 @@ public class DataInitializer {
                 s2.setDateFermeture(LocalDate.of(2027, 5, 30));
                 s2.setEstOuverte(true);
                 s2.setQuotaMax(150);
-                s2.setQuotaActuel(45);
                 s2.setStatus("OUVERT");
                 s2.setProgram(p2);
                 sessionRepository.save(s2);
@@ -173,7 +171,6 @@ public class DataInitializer {
                 s3.setDateFermeture(LocalDate.of(2027, 1, 31));
                 s3.setEstOuverte(false);
                 s3.setQuotaMax(60);
-                s3.setQuotaActuel(0);
                 s3.setStatus("BROUILLON");
                 s3.setProgram(p3);
                 sessionRepository.save(s3);
@@ -184,7 +181,6 @@ public class DataInitializer {
                 s4.setDateFermeture(LocalDate.of(2026, 3, 15));
                 s4.setEstOuverte(false);
                 s4.setQuotaMax(100);
-                s4.setQuotaActuel(98);
                 s4.setStatus("CLOTURE");
                 s4.setProgram(p4);
                 sessionRepository.save(s4);

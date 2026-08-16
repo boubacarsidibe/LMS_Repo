@@ -49,11 +49,19 @@ public class SessionCandidature {
     @Column(nullable = false)
     private boolean estOuverte;
 
+    /**
+     * Nombre de places annoncé pour la session. Purement indicatif : l'INPG suit le
+     * remplissage, il ne bloque pas les dépôts au-delà.
+     *
+     * <p>Le compteur {@code quotaActuel} qui l'accompagnait a été retiré : aucune ligne
+     * de code ne l'incrémentait à la soumission d'un dossier, si bien que le « taux de
+     * remplissage » du tableau de bord et de l'export CSV restait figé à sa valeur
+     * initiale. Le nombre de dossiers se lit désormais dans la table {@code candidatures}
+     * (voir {@code CandidatureRepository#countBySessionCandidatureId}), où il ne peut pas
+     * diverger de la réalité.
+     */
     @Column(nullable = false)
     private int quotaMax = 220;
-
-    @Column(nullable = false)
-    private int quotaActuel = 0;
 
     @Column(length = 500)
     private String description;

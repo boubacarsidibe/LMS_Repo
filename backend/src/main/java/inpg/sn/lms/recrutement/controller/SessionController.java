@@ -57,7 +57,9 @@ public class SessionController {
         long totalCandidatures = all.stream().mapToLong(s -> s.getCandidatures().size()).sum();
 
         long totalQuota = all.stream().mapToLong(SessionCandidature::getQuotaMax).sum();
-        long totalInscrits = all.stream().mapToLong(SessionCandidature::getQuotaActuel).sum();
+        // Le remplissage se lit dans les candidatures réellement déposées. Il provenait
+        // de la colonne quota_actuel, que rien n'incrémentait : le taux restait figé.
+        long totalInscrits = candidatureRepo.count();
         int tauxRemplissage = totalQuota > 0 ? (int) ((totalInscrits * 100) / totalQuota) : 0;
 
         Optional<SessionCandidature> prochaineCloture = all.stream()
@@ -125,7 +127,6 @@ public class SessionController {
         session.setDateFermeture(body.get("dateFermeture") != null
                 ? LocalDate.parse((String) body.get("dateFermeture")) : LocalDate.now().plusMonths(3));
         session.setQuotaMax(body.get("quotaMax") != null ? ((Number) body.get("quotaMax")).intValue() : 220);
-        session.setQuotaActuel(0);
 
         String statut = (String) body.getOrDefault("status", "BROUILLON");
         session.setStatus(statut);
@@ -222,7 +223,6 @@ public class SessionController {
         copy.setDateFermeture(LocalDate.now().plusMonths(9));
         copy.setEstOuverte(false);
         copy.setQuotaMax(original.getQuotaMax());
-        copy.setQuotaActuel(0);
         copy.setStatus("BROUILLON");
         copy.setProgram(original.getProgram());
         copy = sessionRepo.save(copy);
@@ -241,10 +241,11 @@ public class SessionController {
         for (SessionCandidature s : sessions) {
             String programTitle = s.getProgram() != null ? s.getProgram().getTitle() : "N/A";
             String level = s.getProgram() != null ? s.getProgram().getLevel() : "N/A";
-            int taux = s.getQuotaMax() > 0 ? (s.getQuotaActuel() * 100 / s.getQuotaMax()) : 0;
+            long inscrits = candidatureRepo.countBySessionCandidatureId(s.getId());
+            int taux = s.getQuotaMax() > 0 ? (int) (inscrits * 100 / s.getQuotaMax()) : 0;
             csv.append(String.format("\"%s\",\"%s\",\"%s\",%d,%d,%d%%,%s,%s,%s\n",
                     s.getLibelle(), programTitle, level,
-                    s.getQuotaMax(), s.getQuotaActuel(), taux, s.getStatus(),
+                    s.getQuotaMax(), inscrits, taux, s.getStatus(),
                     s.getDateOuverture(), s.getDateFermeture()));
         }
         byte[] bytes = csv.toString().getBytes();
@@ -273,10 +274,12 @@ public class SessionController {
         m.put("dateOuverture", s.getDateOuverture().toString());
         m.put("dateFermeture", s.getDateFermeture().toString());
         m.put("estOuverte", s.isEstOuverte());
+        long inscrits = candidatureRepo.countBySessionCandidatureId(s.getId());
         m.put("quotaMax", s.getQuotaMax());
-        m.put("quotaActuel", s.getQuotaActuel());
+        // Le contrat avec le frontend ne change pas : même clé, mais une valeur juste.
+        m.put("quotaActuel", inscrits);
         m.put("status", s.getStatus());
-        m.put("nombreCandidatures", s.getCandidatures().size());
+        m.put("nombreCandidatures", inscrits);
         if (s.getProgram() != null) {
             Map<String, Object> prog = new HashMap<>();
             prog.put("id", s.getProgram().getId());
@@ -287,7 +290,7 @@ public class SessionController {
             m.put("program", null);
         }
         // Quota percentage
-        int taux = s.getQuotaMax() > 0 ? (s.getQuotaActuel() * 100 / s.getQuotaMax()) : 0;
+        int taux = s.getQuotaMax() > 0 ? (int) (inscrits * 100 / s.getQuotaMax()) : 0;
         m.put("tauxRemplissage", taux);
         return m;
     }

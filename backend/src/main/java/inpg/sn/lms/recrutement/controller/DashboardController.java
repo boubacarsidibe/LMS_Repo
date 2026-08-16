@@ -76,7 +76,7 @@ public class DashboardController {
             sessionDTO.setDateOuverture(sessionActive.getDateOuverture());
             sessionDTO.setDateFermeture(sessionActive.getDateFermeture());
             sessionDTO.setQuotaMax(sessionActive.getQuotaMax());
-            sessionDTO.setQuotaActuel(sessionActive.getQuotaActuel());
+            sessionDTO.setQuotaActuel((int) candidatureRepo.countBySessionCandidatureId(sessionActive.getId()));
             dto.setSessionActive(sessionDTO);
         }
 
@@ -147,7 +147,6 @@ public class DashboardController {
         session.setDateFermeture(dateFermeture);
         session.setEstOuverte("OUVERT".equalsIgnoreCase(status));
         session.setQuotaMax(quotaMax);
-        session.setQuotaActuel(0);
         session.setStatus(status);
 
         // Associer un programme si fourni
@@ -165,7 +164,7 @@ public class DashboardController {
         dto.setDateOuverture(session.getDateOuverture());
         dto.setDateFermeture(session.getDateFermeture());
         dto.setQuotaMax(session.getQuotaMax());
-        dto.setQuotaActuel(session.getQuotaActuel());
+        dto.setQuotaActuel((int) candidatureRepo.countBySessionCandidatureId(session.getId()));
         return ResponseEntity.ok(dto);
     }
 
@@ -188,7 +187,7 @@ public class DashboardController {
         dto.setDateOuverture(session.getDateOuverture());
         dto.setDateFermeture(session.getDateFermeture());
         dto.setQuotaMax(session.getQuotaMax());
-        dto.setQuotaActuel(session.getQuotaActuel());
+        dto.setQuotaActuel((int) candidatureRepo.countBySessionCandidatureId(session.getId()));
         return ResponseEntity.ok(dto);
     }
 
