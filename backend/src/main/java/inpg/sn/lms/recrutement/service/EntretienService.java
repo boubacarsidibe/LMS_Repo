@@ -1,5 +1,7 @@
 package inpg.sn.lms.recrutement.service;
 
+import org.springframework.security.access.AccessDeniedException;
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +40,7 @@ public class EntretienService {
 
     public EntretienResponse creerEntretien(EntretienRequest request) {
         Candidat candidat = candidatRepository.findById(request.getCandidatId())
-                .orElseThrow(() -> new RuntimeException("Candidat non trouvé avec l'ID: " + request.getCandidatId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé avec l'ID: " + request.getCandidatId()));
 
         Entretien entretien = new Entretien();
         entretien.setDateHeure(request.getDateHeure());
@@ -71,7 +73,7 @@ public class EntretienService {
 
     public EntretienResponse modifierEntretien(Long id, EntretienRequest request) {
         Entretien entretien = entretienRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Entretien non trouvé avec l'ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Entretien non trouvé avec l'ID: " + id));
 
         entretien.setDateHeure(request.getDateHeure());
         entretien.setLieuOuLien(request.getLieuOuLien());
@@ -98,16 +100,16 @@ public class EntretienService {
 
     public void supprimerEntretien(Long id) {
         if (!entretienRepository.existsById(id)) {
-            throw new RuntimeException("Entretien non trouvé avec l'ID: " + id);
+            throw new ResourceNotFoundException("Entretien non trouvé avec l'ID: " + id);
         }
         entretienRepository.deleteById(id);
     }
 
     public EntretienResponse confirmerPresence(Long entretienId, Long candidatId) {
         Entretien entretien = entretienRepository.findById(entretienId)
-                .orElseThrow(() -> new RuntimeException("Entretien non trouvé avec l'ID: " + entretienId));
+                .orElseThrow(() -> new ResourceNotFoundException("Entretien non trouvé avec l'ID: " + entretienId));
         if (!entretien.getCandidat().getId().equals(candidatId)) {
-            throw new RuntimeException("Accès non autorisé à cet entretien.");
+            throw new AccessDeniedException("Accès non autorisé à cet entretien.");
         }
         entretien.setConfirmeParCandidat(true);
         Entretien saved = entretienRepository.save(entretien);
@@ -116,9 +118,9 @@ public class EntretienService {
 
     public EntretienResponse demanderReport(Long entretienId, Long candidatId, String motif) {
         Entretien entretien = entretienRepository.findById(entretienId)
-                .orElseThrow(() -> new RuntimeException("Entretien non trouvé avec l'ID: " + entretienId));
+                .orElseThrow(() -> new ResourceNotFoundException("Entretien non trouvé avec l'ID: " + entretienId));
         if (!entretien.getCandidat().getId().equals(candidatId)) {
-            throw new RuntimeException("Accès non autorisé à cet entretien.");
+            throw new AccessDeniedException("Accès non autorisé à cet entretien.");
         }
         entretien.setMotifReport(motif != null ? motif : "Demande de report sans motif spécifié");
         entretien.setConfirmeParCandidat(false);
@@ -128,7 +130,7 @@ public class EntretienService {
 
     public Entretien getEntretienEntity(Long id) {
         return entretienRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Entretien non trouvé avec l'ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Entretien non trouvé avec l'ID: " + id));
     }
 
     private EntretienResponse toResponse(Entretien e) {

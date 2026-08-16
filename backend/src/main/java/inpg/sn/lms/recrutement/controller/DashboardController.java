@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.controller;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -176,7 +177,7 @@ public class DashboardController {
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<SessionSummaryDTO> closeSession(@PathVariable Long id) {
         SessionCandidature session = sessionRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("Session introuvable"));
         session.setEstOuverte(false);
         session = sessionRepo.save(session);
 

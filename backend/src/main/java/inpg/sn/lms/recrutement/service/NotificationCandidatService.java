@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.service;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -33,7 +34,7 @@ public class NotificationCandidatService {
     /** Variante pratique pour les appelants qui n'ont que l'ID du candidat (ex: contrôleurs admin). */
     public NotificationCandidat creerNotification(Long candidatId, String message, String type, String lien) {
         Candidat candidat = candidatRepository.findById(candidatId)
-                .orElseThrow(() -> new RuntimeException("Candidat non trouvé avec l'ID: " + candidatId));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé avec l'ID: " + candidatId));
         return creerNotification(candidat, message, type, lien);
     }
 
@@ -63,7 +64,7 @@ public class NotificationCandidatService {
      */
     public NotificationCandidat marquerCommeLue(Long notificationId) {
         NotificationCandidat notif = repository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification non trouvée avec l'ID: " + notificationId));
+                .orElseThrow(() -> new ResourceNotFoundException("Notification non trouvée avec l'ID: " + notificationId));
         notif.setLu(true);
         return repository.save(notif);
     }

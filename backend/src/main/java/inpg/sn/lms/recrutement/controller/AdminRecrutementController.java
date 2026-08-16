@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.controller;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -614,7 +615,7 @@ public class AdminRecrutementController {
     @PutMapping("/pieces/{id}/conformite")
     public ResponseEntity<?> modifierConformitePiece(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
         PieceJustificative piece = pieceJustificativeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pièce justificative non trouvée avec l'ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Pièce justificative non trouvée avec l'ID: " + id));
         boolean conforme = Boolean.TRUE.equals(body.get("estConforme"));
         piece.setEstConforme(conforme);
         pieceJustificativeRepository.save(piece);
@@ -663,7 +664,7 @@ public class AdminRecrutementController {
     @GetMapping("/pieces/{id}/telecharger")
     public ResponseEntity<byte[]> telechargerPiece(@PathVariable Long id) {
         PieceJustificative piece = pieceJustificativeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pièce justificative non trouvée avec l'ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Pièce justificative non trouvée avec l'ID: " + id));
         FichierStocke fichier = piece.getFichierStocke();
         if (fichier == null) {
             return ResponseEntity.notFound().build();

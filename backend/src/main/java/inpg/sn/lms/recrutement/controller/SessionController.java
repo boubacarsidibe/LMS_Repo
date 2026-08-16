@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.controller;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -148,7 +149,7 @@ public class SessionController {
     public ResponseEntity<Map<String, Object>> updateSession(@PathVariable Long id,
                                                               @RequestBody Map<String, Object> body) {
         SessionCandidature session = sessionRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("Session introuvable"));
 
         if (body.containsKey("libelle")) session.setLibelle((String) body.get("libelle"));
         if (body.containsKey("dateOuverture"))
@@ -179,7 +180,7 @@ public class SessionController {
     public ResponseEntity<Map<String, Object>> changeStatus(@PathVariable Long id,
                                                              @RequestBody Map<String, String> body) {
         SessionCandidature session = sessionRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("Session introuvable"));
         String newStatus = body.getOrDefault("status", "OUVERT");
         session.setStatus(newStatus);
         session.setEstOuverte("OUVERT".equalsIgnoreCase(newStatus));
@@ -194,7 +195,7 @@ public class SessionController {
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<Map<String, String>> deleteSession(@PathVariable Long id) {
         SessionCandidature session = sessionRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("Session introuvable"));
         if (!session.getCandidatures().isEmpty()) {
             Map<String, String> err = new HashMap<>();
             err.put("error", "Impossible de supprimer une session avec des candidats inscrits");
@@ -213,7 +214,7 @@ public class SessionController {
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<Map<String, Object>> duplicateSession(@PathVariable Long id) {
         SessionCandidature original = sessionRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session introuvable"));
+                .orElseThrow(() -> new ResourceNotFoundException("Session introuvable"));
 
         SessionCandidature copy = new SessionCandidature();
         copy.setLibelle(original.getLibelle() + " (Copie)");

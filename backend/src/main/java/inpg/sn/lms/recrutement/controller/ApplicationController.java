@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.controller;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -123,7 +124,7 @@ public class ApplicationController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<Map<String, Object>> getApplication(@PathVariable Long id) {
-        Candidature c = candidatureRepo.findById(id).orElseThrow(() -> new RuntimeException("Candidature introuvable"));
+        Candidature c = candidatureRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Candidature introuvable"));
         return ResponseEntity.ok(toApplicationDetailMap(c));
     }
 
@@ -134,7 +135,7 @@ public class ApplicationController {
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<Map<String, Object>> updateDocumentStatus(@PathVariable Long id,
                                                                      @RequestBody Map<String, Object> body) {
-        Candidature c = candidatureRepo.findById(id).orElseThrow(() -> new RuntimeException("Candidature introuvable"));
+        Candidature c = candidatureRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Candidature introuvable"));
         Long pieceId = body.get("pieceId") != null ? ((Number) body.get("pieceId")).longValue() : null;
         Boolean valide = body.get("valide") != null ? (Boolean) body.get("valide") : null;
         if (pieceId != null && valide != null) {

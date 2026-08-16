@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.service;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,7 +65,7 @@ public class FichierStockeService {
 
     public FichierStocke trouverParId(Long id) {
         return fichierStockeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Fichier non trouvé avec l'ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Fichier non trouvé avec l'ID: " + id));
     }
 
     public byte[] lireContenu(FichierStocke fichier) {

@@ -1,12 +1,14 @@
 package inpg.sn.lms.recrutement.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +17,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,6 +32,7 @@ import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.CandidatRepository;
 import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
+import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.recrutement.dto.CandidatureRequest;
 import inpg.sn.lms.recrutement.dto.CandidatureResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
@@ -91,6 +98,13 @@ class CandidatControllerSoumissionTest {
     @Mock private LettreAdmissionPdfService lettreAdmissionPdfService;
 
     @Mock private Authentication authentication;
+
+    /**
+     * Un vrai ObjectMapper, pas un mock : c'est lui qui remplace le découpage manuel du
+     * JSON d'état civil. Un mock renverrait {@code null} et masquerait précisément ce
+     * que ces tests doivent vérifier.
+     */
+    @Spy private ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @InjectMocks private CandidatController controller;
 
@@ -208,6 +222,47 @@ class CandidatControllerSoumissionTest {
         assertEquals(HttpStatus.OK, reponse.getStatusCode());
         assertEquals(EnumStatutCandidature.SOUMIS, enAttente.getStatut());
         verify(candidatureRepository).save(enAttente);
+    }
+
+    // ===================== Lecture de l'état civil =====================
+
+    /**
+     * Le découpage manuel qui précédait ne reconnaissait que les valeurs entre
+     * guillemets : {@code "anneesExperience": 5}, un nombre JSON parfaitement légitime,
+     * était perdu sans erreur. Ce champ alimente le filtre automatique de présélection.
+     */
+    @Test
+    void les_champs_numeriques_et_les_dates_sont_bien_lus() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        Candidature enAttente = candidature(EnumStatutCandidature.SOUMIS);
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of(enAttente));
+        when(brouillonRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.empty());
+        when(candidatureService.getCandidatureById(any())).thenReturn(new CandidatureResponse());
+        requete.setInformationsPersonnelles(
+                "{\"anneesExperience\":5,\"dateNaissance\":\"1995-03-10\",\"profession\":\"Ingénieur\"}");
+
+        assertEquals(HttpStatus.OK,
+                controller.soumettreCandidature(requete, authentication).getStatusCode());
+
+        assertEquals(5, candidat.getAnneesExperience());
+        assertEquals(LocalDate.of(1995, 3, 10), candidat.getDateNaissance());
+        assertEquals("Ingénieur", candidat.getProfession());
+        // Un champ absent du JSON ne doit pas écraser ce qui existe déjà.
+        assertEquals("Diop", candidat.getNom());
+    }
+
+    /** Un JSON illisible doit être signalé, non ignoré en silence. */
+    @Test
+    void un_etat_civil_illisible_est_refuse() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of());
+        requete.setInformationsPersonnelles("{ceci n'est pas du JSON");
+
+        assertThrows(BusinessException.class,
+                () -> controller.soumettreCandidature(requete, authentication));
+        verify(candidatRepository, never()).save(any());
     }
 
     /** Un dossier rejeté n'est pas « actif » : il n'empêche pas de déposer à nouveau. */

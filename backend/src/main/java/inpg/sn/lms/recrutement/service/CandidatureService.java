@@ -1,5 +1,7 @@
 package inpg.sn.lms.recrutement.service;
 
+import inpg.sn.lms.exception.BusinessException;
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -36,48 +38,12 @@ public class CandidatureService {
         this.candidatRepository = candidatRepository;
     }
 
-    /**
-     * Crée une nouvelle candidature en brouillon
-     */
-    public CandidatureResponse creerBrouillon(Long candidatId, CandidatureRequest request) {
-        Candidat candidat = candidatRepository.findById(candidatId)
-                .orElseThrow(() -> new RuntimeException("Candidat non trouvé avec l'ID: " + candidatId));
-
-        SessionCandidature session = sessionCandidatureRepository.findById(request.getSessionCandidatureId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Session de candidature non trouvée avec l'ID: " + request.getSessionCandidatureId()));
-
-        if (!session.estSessionActive()) {
-            throw new RuntimeException("La session de candidature n'est pas active.");
-        }
-
-        Candidature candidature = new Candidature();
-        candidature.setNumeroDossier(genererNumeroDossier());
-        candidature.setStatut(EnumStatutCandidature.BROUILLON);
-        candidature.setDateSoumission(LocalDateTime.now());
-        candidature.setCandidat(candidat);
-        candidature.setSessionCandidature(session);
-
-        Candidature saved = candidatureRepository.save(candidature);
-        return toResponse(saved);
-    }
-
-    /**
-     * Soumet une candidature (brouillon → soumis)
-     */
-    public CandidatureResponse soumettreCandidature(Long candidatureId) {
-        Candidature candidature = candidatureRepository.findById(candidatureId)
-                .orElseThrow(
-                        () -> new RuntimeException("Candidature non trouvée avec l'ID: " + candidatureId));
-
-        if (candidature.getStatut() != EnumStatutCandidature.BROUILLON) {
-            throw new RuntimeException("Seule une candidature en brouillon peut être soumise.");
-        }
-
-        candidature.soumettre();
-        Candidature saved = candidatureRepository.save(candidature);
-        return toResponse(saved);
-    }
+    // creerBrouillon() et soumettreCandidature() vivaient ici sans aucun appelant :
+    // CandidatController fait tout lui-même sur /candidature/soumettre. Elles étaient
+    // les seules à produire le statut BROUILLON, resté de ce fait inatteignable — d'où
+    // une branche de estTransitionValide() ci-dessous que rien ne peut emprunter. Le
+    // brouillon réel est géré par BrouillonCandidature, une entité distincte, ce qui
+    // rendait ce code d'autant plus trompeur à la lecture.
 
     /**
      * Met à jour le statut d'une candidature (utilisé par l'admin)
@@ -85,11 +51,11 @@ public class CandidatureService {
     public CandidatureResponse changerStatut(Long candidatureId, EnumStatutCandidature nouveauStatut, String motif) {
         Candidature candidature = candidatureRepository.findById(candidatureId)
                 .orElseThrow(
-                        () -> new RuntimeException("Candidature non trouvée avec l'ID: " + candidatureId));
+                        () -> new ResourceNotFoundException("Candidature non trouvée avec l'ID: " + candidatureId));
 
         // Validation des transitions autorisées
         if (!estTransitionValide(candidature.getStatut(), nouveauStatut)) {
-            throw new RuntimeException("Transition de statut non autorisée: "
+            throw new BusinessException("Transition de statut non autorisée: "
                     + candidature.getStatut() + " → " + nouveauStatut);
         }
 
@@ -137,7 +103,7 @@ public class CandidatureService {
      */
     public CandidatureResponse getCandidatureById(Long id) {
         Candidature candidature = candidatureRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Candidature non trouvée avec l'ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée avec l'ID: " + id));
         return toResponse(candidature);
     }
 
@@ -147,7 +113,7 @@ public class CandidatureService {
     public CandidatureResponse getCandidatureByNumeroDossier(String numeroDossier) {
         Candidature candidature = candidatureRepository.findByNumeroDossier(numeroDossier)
                 .orElseThrow(
-                        () -> new RuntimeException("Candidature non trouvée avec le numéro: " + numeroDossier));
+                        () -> new ResourceNotFoundException("Candidature non trouvée avec le numéro: " + numeroDossier));
         return toResponse(candidature);
     }
 

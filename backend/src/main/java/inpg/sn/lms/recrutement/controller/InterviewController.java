@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.controller;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -115,7 +116,7 @@ public class InterviewController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<Map<String, Object>> updateInterview(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        Entretien e = entretienRepo.findById(id).orElseThrow(() -> new RuntimeException("Entretien introuvable"));
+        Entretien e = entretienRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Entretien introuvable"));
         if (body.containsKey("dateHeure")) e.setDateHeure(LocalDateTime.parse((String) body.get("dateHeure")));
         if (body.containsKey("lieuOuLien")) e.setLieuOuLien((String) body.get("lieuOuLien"));
         e = entretienRepo.save(e);
@@ -128,7 +129,7 @@ public class InterviewController {
     @PostMapping("/{id}/evaluation")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<Map<String, Object>> saveEvaluation(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        Entretien e = entretienRepo.findById(id).orElseThrow(() -> new RuntimeException("Entretien introuvable"));
+        Entretien e = entretienRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Entretien introuvable"));
         if (body.containsKey("noteEntretien")) e.setNoteEntretien(((Number) body.get("noteEntretien")).floatValue());
         if (body.containsKey("appreciationGlobale")) e.setAppreciationGlobale((String) body.get("appreciationGlobale"));
         // Calculer le score total
@@ -149,7 +150,7 @@ public class InterviewController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<Map<String, String>> deleteInterview(@PathVariable Long id) {
-        entretienRepo.findById(id).orElseThrow(() -> new RuntimeException("Entretien introuvable"));
+        entretienRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Entretien introuvable"));
         entretienRepo.deleteById(id);
         Map<String, String> ok = new HashMap<>();
         ok.put("message", "Entretien annulé");

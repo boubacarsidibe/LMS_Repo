@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.service;
 
+import inpg.sn.lms.exception.DuplicateResourceException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -62,13 +63,13 @@ public class PaiementService {
      */
     public PaiementResponse initierPaiement(PaiementRequest request) {
         Candidature candidature = candidatureRepository.findById(request.getCandidatureId())
-                .orElseThrow(() -> new RuntimeException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Candidature non trouvée avec l'ID: " + request.getCandidatureId()));
 
         // Vérifier qu'il n'y a pas déjà un paiement en cours
         paiementRepository.findByCandidatureId(request.getCandidatureId())
                 .ifPresent(p -> {
-                    throw new RuntimeException("Un paiement existe déjà pour cette candidature.");
+                    throw new DuplicateResourceException("Un paiement existe déjà pour cette candidature.");
                 });
 
         Paiement paiement = new Paiement();
@@ -92,10 +93,10 @@ public class PaiementService {
      */
     public PaiementResponse simulerSuccesPaiement(Long paiementId) {
         Paiement paiement = paiementRepository.findById(paiementId)
-                .orElseThrow(() -> new RuntimeException("Paiement non trouvé avec l'ID: " + paiementId));
+                .orElseThrow(() -> new ResourceNotFoundException("Paiement non trouvé avec l'ID: " + paiementId));
 
         if (!paiement.effectuerPaiement()) {
-            throw new RuntimeException("Le paiement ne peut pas être finalisé (statut actuel: " + paiement.getStatut()
+            throw new BusinessException("Le paiement ne peut pas être finalisé (statut actuel: " + paiement.getStatut()
                     + ").");
         }
 
@@ -133,7 +134,7 @@ public class PaiementService {
     public PaiementResponse getPaiementByCandidatureId(Long candidatureId) {
         Paiement paiement = paiementRepository.findByCandidatureId(candidatureId)
                 .orElseThrow(
-                        () -> new RuntimeException("Aucun paiement trouvé pour la candidature: " + candidatureId));
+                        () -> new BusinessException("Aucun paiement trouvé pour la candidature: " + candidatureId));
         return toResponse(paiement);
     }
 

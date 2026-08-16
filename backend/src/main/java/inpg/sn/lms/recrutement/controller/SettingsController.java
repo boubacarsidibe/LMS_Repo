@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.controller;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.util.*;
 
 import org.springframework.http.ResponseEntity;
@@ -36,7 +37,7 @@ public class SettingsController {
     @PutMapping("/programs/{id}")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
     public ResponseEntity<Program> updateProgram(@PathVariable Long id, @RequestBody Program body) {
-        Program p = programRepo.findById(id).orElseThrow(() -> new RuntimeException("Programme introuvable"));
+        Program p = programRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Programme introuvable"));
         p.setTitle(body.getTitle());
         p.setLevel(body.getLevel());
         p.setDepartment(body.getDepartment());

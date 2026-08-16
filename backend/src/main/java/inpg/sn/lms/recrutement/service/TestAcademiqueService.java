@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.service;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,7 +41,7 @@ public class TestAcademiqueService {
 
     public TestAcademiqueResponse creerTest(TestAcademiqueRequest request) {
         Candidat candidat = candidatRepository.findById(request.getCandidatId())
-                .orElseThrow(() -> new RuntimeException("Candidat non trouvé avec l'ID: " + request.getCandidatId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé avec l'ID: " + request.getCandidatId()));
 
         TestAcademique test = new TestAcademique();
         test.setNomEpreuve(request.getNomEpreuve());
@@ -72,7 +73,7 @@ public class TestAcademiqueService {
 
     public TestAcademiqueResponse modifierTest(Long id, TestAcademiqueRequest request) {
         TestAcademique test = testAcademiqueRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Test non trouvé avec l'ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Test non trouvé avec l'ID: " + id));
 
         test.setNomEpreuve(request.getNomEpreuve());
         test.setCoefficient(request.getCoefficient());
@@ -99,7 +100,7 @@ public class TestAcademiqueService {
 
     public void supprimerTest(Long id) {
         if (!testAcademiqueRepository.existsById(id)) {
-            throw new RuntimeException("Test non trouvé avec l'ID: " + id);
+            throw new ResourceNotFoundException("Test non trouvé avec l'ID: " + id);
         }
         testAcademiqueRepository.deleteById(id);
     }

@@ -1,12 +1,18 @@
 package inpg.sn.lms.recrutement.controller;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.auth.entity.Role;
 import inpg.sn.lms.auth.repository.CandidatRepository;
 import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.recrutement.dto.CandidatureRequest;
 import inpg.sn.lms.recrutement.dto.CandidatureResponse;
+import inpg.sn.lms.recrutement.dto.InfosPersonnellesDto;
 import inpg.sn.lms.recrutement.dto.PaiementRequest;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.entity.BrouillonCandidature;
@@ -91,6 +97,16 @@ public class CandidatController {
             EnumStatutCandidature.BROUILLON,
             EnumStatutCandidature.SOUMIS);
 
+    /** Repli quand le formulaire ne fournit pas de date : la colonne est NOT NULL en base. */
+    private static final LocalDate DATE_NAISSANCE_PAR_DEFAUT = LocalDate.of(2000, 1, 1);
+
+    /**
+     * Plafond par pièce justificative, plus strict que la limite multipart globale
+     * (10 Mo, {@code spring.servlet.multipart.max-file-size}) : un scan de diplôme ou
+     * de pièce d'identité tient largement dans 5 Mo.
+     */
+    private static final long TAILLE_MAX_PIECE_OCTETS = 5L * 1024 * 1024;
+
     private final CandidatureService candidatureService;
     private final CandidatRepository candidatRepository;
     private final UserRepository userRepository;
@@ -108,6 +124,7 @@ public class CandidatController {
     private final EntretienService entretienService;
     private final ConvocationPdfService convocationPdfService;
     private final LettreAdmissionPdfService lettreAdmissionPdfService;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.admission.email:admin@inpg.sn}")
     private String emailAdmission;
@@ -129,7 +146,9 @@ public class CandidatController {
             EntretienRepository entretienRepository,
             EntretienService entretienService,
             ConvocationPdfService convocationPdfService,
-            LettreAdmissionPdfService lettreAdmissionPdfService) {
+            LettreAdmissionPdfService lettreAdmissionPdfService,
+            ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
         this.testAcademiqueRepository = testAcademiqueRepository;
         this.entretienRepository = entretienRepository;
         this.entretienService = entretienService;
@@ -216,34 +235,15 @@ public class CandidatController {
         }
 
         // 3. Chercher ou créer le Candidat avec les infos du formulaire
-        final String infosPerso = request.getInformationsPersonnelles();
-        Candidat candidat = candidatExistant
-                .orElseGet(() -> creerCandidatDepuisUser(user, infosPerso));
-        // Mettre à jour le candidat existant avec les nouvelles infos
-        if (infosPerso != null && !infosPerso.isBlank()) {
-            String nom = extractJsonField(infosPerso, "nom");
-            String prenom = extractJsonField(infosPerso, "prenom");
-            String telephone = extractJsonField(infosPerso, "telephone");
-            String nationalite = extractJsonField(infosPerso, "nationalite");
-            String dateNaissanceStr = extractJsonField(infosPerso, "dateNaissance");
-            String niveauEtude = extractJsonField(infosPerso, "niveauEtude");
-            String genre = extractJsonField(infosPerso, "genre");
-            String profession = extractJsonField(infosPerso, "profession");
-            String anneesExperienceStr = extractJsonField(infosPerso, "anneesExperience");
-            if (!nom.isBlank()) candidat.setNom(nom);
-            if (!prenom.isBlank()) candidat.setPrenom(prenom);
-            if (!telephone.isBlank()) candidat.setTelephone(telephone);
-            if (!nationalite.isBlank()) candidat.setNationalite(nationalite);
-            if (!dateNaissanceStr.isBlank()) {
-                try { candidat.setDateNaissance(LocalDate.parse(dateNaissanceStr)); } catch (Exception e) { /* ignorer */ }
-            }
-            if (!niveauEtude.isBlank()) candidat.setNiveauEtude(niveauEtude);
-            if (!genre.isBlank()) candidat.setGenre(genre);
-            if (!profession.isBlank()) candidat.setProfession(profession);
-            if (!anneesExperienceStr.isBlank()) {
-                try { candidat.setAnneesExperience(Integer.parseInt(anneesExperienceStr)); } catch (Exception e) { /* ignorer */ }
-            }
+        InfosPersonnellesDto infos = lireInfosPersonnelles(request.getInformationsPersonnelles());
+        Candidat candidat;
+        if (candidatExistant.isPresent()) {
+            candidat = candidatExistant.get();
+            appliquerInfosPersonnelles(candidat, infos);
             candidatRepository.save(candidat);
+        } else {
+            // creerCandidatDepuisUser applique déjà ces informations et enregistre.
+            candidat = creerCandidatDepuisUser(user, infos);
         }
 
         // 4. Vérifier si une candidature existe déjà (non rejetée)
@@ -268,7 +268,7 @@ public class CandidatController {
 
         // 5. Créer une nouvelle candidature SOUMIS
         SessionCandidature session = sessionRepository.findById(request.getSessionCandidatureId())
-                .orElseThrow(() -> new RuntimeException("Session non trouvée"));
+                .orElseThrow(() -> new ResourceNotFoundException("Session non trouvée"));
 
         // Le TDR impose de suspendre le dépôt de candidature une fois le délai dépassé ;
         // l'administrateur garde la main pour rouvrir temporairement la session si besoin.
@@ -394,10 +394,10 @@ public class CandidatController {
         // Vérifier que le candidat est bien le propriétaire
         inpg.sn.lms.auth.entity.User user = findUser(authentication);
         Candidat candidat = candidatRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Candidat non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé"));
 
         Candidature candidature = candidatureRepository.findById(candidatureId)
-                .orElseThrow(() -> new RuntimeException("Candidature non trouvée"));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée"));
 
         if (!candidature.getCandidat().getId().equals(candidat.getId())) {
             return ResponseEntity.status(403).body(java.util.Map.of("message", "Accès non autorisé"));
@@ -412,25 +412,18 @@ public class CandidatController {
                     .body(java.util.Map.of("message", "Type de document invalide: " + typeDocumentStr));
         }
 
-        // Valider le fichier lui-même : le contrôle affiché côté formulaire (taille, format)
-        // n'est qu'un confort UX, un client qui le contourne ne doit pas pouvoir déposer
-        // n'importe quoi (exécutable, fichier surdimensionné...).
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("message", "Le fichier est vide."));
-        }
-        long tailleMaxOctets = 5L * 1024 * 1024;
-        if (file.getSize() > tailleMaxOctets) {
+        // Seule la taille est contrôlée ici : c'est la seule règle que
+        // FichierStockeService ne porte pas. Le fichier vide et le format étaient
+        // vérifiés en double, avec une liste plus étroite (sans WEBP) et fondée sur le
+        // seul type MIME — que le client déclare et falsifie trivialement.
+        // ValidationFichier, appelée juste en dessous, vérifie d'abord l'extension,
+        // qui est ce qui décide réellement du Content-Type de réponse.
+        if (file.getSize() > TAILLE_MAX_PIECE_OCTETS) {
             return ResponseEntity.badRequest()
                     .body(java.util.Map.of("message", "Le fichier dépasse la taille maximale autorisée (5 Mo)."));
         }
-        String mimeType = file.getContentType();
-        List<String> mimesAutorises = List.of("application/pdf", "image/jpeg", "image/png");
-        if (mimeType == null || !mimesAutorises.contains(mimeType.toLowerCase())) {
-            return ResponseEntity.badRequest()
-                    .body(java.util.Map.of("message", "Format de fichier non autorisé (PDF, JPG ou PNG uniquement)."));
-        }
 
-        // Enregistrer le fichier
+        // Enregistrer le fichier (extension, type MIME et chemin de destination validés)
         FichierStocke fichier = fichierStockeService.enregistrerFichier(file);
 
         // Créer la pièce justificative
@@ -457,10 +450,10 @@ public class CandidatController {
     public ResponseEntity<?> initierPaiement(@RequestBody PaiementRequest request, Authentication authentication) {
         inpg.sn.lms.auth.entity.User user = findUser(authentication);
         Candidat candidat = candidatRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Candidat non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé"));
 
         Candidature candidature = candidatureRepository.findById(request.getCandidatureId())
-                .orElseThrow(() -> new RuntimeException("Candidature non trouvée"));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée"));
 
         if (!candidature.getCandidat().getId().equals(candidat.getId())) {
             return ResponseEntity.status(403).body(Map.of("message", "Accès non autorisé"));
@@ -479,7 +472,7 @@ public class CandidatController {
     public ResponseEntity<byte[]> telechargerRecu(@PathVariable Long id, Authentication authentication) {
         inpg.sn.lms.auth.entity.User user = findUser(authentication);
         Candidat candidat = candidatRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Candidat non trouvé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé"));
 
         PaiementService.Recu recu = paiementService.genererRecu(id, candidat.getId());
 
@@ -567,81 +560,82 @@ public class CandidatController {
 
     // --- Méthodes privées ---
 
-    private Candidat creerCandidatDepuisUser(inpg.sn.lms.auth.entity.User user, String infosPerso) {
+    private Candidat creerCandidatDepuisUser(inpg.sn.lms.auth.entity.User user, InfosPersonnellesDto infos) {
         String username = user.getUsername();
         // Supprimer le suffixe numérique (ex: "ibrahima_pouye1" → "ibrahima_pouye")
         String cleanUsername = username != null ? username.replaceAll("\\d+$", "") : "";
         String prenom = cleanUsername;
         String nom = "";
-        if (cleanUsername != null && cleanUsername.contains("_")) {
+        if (cleanUsername.contains("_")) {
             String[] parts = cleanUsername.split("_", 2);
             prenom = parts[0];
             nom = parts.length > 1 ? parts[1] : "";
         }
-        String telephone = "";
-        String nationalite = "Sénégalaise";
-        String dateNaissanceStr = "";
-        String niveauEtude = "Non spécifié";
-        String genre = "";
-        String profession = "";
-        String anneesExperienceStr = "";
-        // Essayer d'extraire du JSON si fourni
-        if (infosPerso != null && !infosPerso.isBlank()) {
-            nom = extractJsonField(infosPerso, "nom");
-            prenom = extractJsonField(infosPerso, "prenom");
-            telephone = extractJsonField(infosPerso, "telephone");
-            String jsonNationalite = extractJsonField(infosPerso, "nationalite");
-            if (!jsonNationalite.isBlank()) nationalite = jsonNationalite;
-            dateNaissanceStr = extractJsonField(infosPerso, "dateNaissance");
-            String jsonNiveau = extractJsonField(infosPerso, "niveauEtude");
-            if (!jsonNiveau.isBlank()) niveauEtude = jsonNiveau;
-            genre = extractJsonField(infosPerso, "genre");
-            profession = extractJsonField(infosPerso, "profession");
-            anneesExperienceStr = extractJsonField(infosPerso, "anneesExperience");
-        }
+
         Candidat c = new Candidat();
         c.setUser(user);
+        // Valeurs de repli, remplacées ensuite par ce que le formulaire a réellement fourni.
         c.setNom(nom.isEmpty() ? prenom : nom);
         c.setPrenom(prenom);
-        c.setTelephone(telephone.isEmpty() ? "N/A" : telephone);
-        c.setNationalite(nationalite);
-        if (!dateNaissanceStr.isBlank()) {
-            try { c.setDateNaissance(LocalDate.parse(dateNaissanceStr)); } catch (Exception e) { c.setDateNaissance(LocalDate.of(2000, 1, 1)); }
-        } else {
-            c.setDateNaissance(LocalDate.of(2000, 1, 1));
-        }
-        c.setNiveauEtude(niveauEtude);
-        if (!genre.isBlank()) c.setGenre(genre);
-        if (!profession.isBlank()) c.setProfession(profession);
-        if (!anneesExperienceStr.isBlank()) {
-            try { c.setAnneesExperience(Integer.parseInt(anneesExperienceStr)); } catch (Exception e) { /* ignorer */ }
-        }
+        c.setTelephone("N/A");
+        c.setNationalite("Sénégalaise");
+        c.setDateNaissance(DATE_NAISSANCE_PAR_DEFAUT);
+        c.setNiveauEtude("Non spécifié");
+
+        appliquerInfosPersonnelles(c, infos);
         return candidatRepository.save(c);
+    }
+
+    /**
+     * Reporte sur le candidat les champs réellement renseignés du formulaire. Un champ
+     * absent laisse la valeur existante en place — c'est ce qui permet de compléter un
+     * dossier en plusieurs fois sans effacer ce qui avait déjà été saisi.
+     */
+    private void appliquerInfosPersonnelles(Candidat candidat, InfosPersonnellesDto infos) {
+        if (infos == null) {
+            return;
+        }
+        if (infos.aNom()) candidat.setNom(infos.nom());
+        if (infos.aPrenom()) candidat.setPrenom(infos.prenom());
+        if (infos.aTelephone()) candidat.setTelephone(infos.telephone());
+        if (infos.aNationalite()) candidat.setNationalite(infos.nationalite());
+        if (infos.dateNaissance() != null) candidat.setDateNaissance(infos.dateNaissance());
+        if (infos.aNiveauEtude()) candidat.setNiveauEtude(infos.niveauEtude());
+        if (infos.aGenre()) candidat.setGenre(infos.genre());
+        if (infos.aProfession()) candidat.setProfession(infos.profession());
+        if (infos.anneesExperience() != null) candidat.setAnneesExperience(infos.anneesExperience());
+    }
+
+    /**
+     * Désérialise l'état civil transmis par le formulaire.
+     *
+     * <p>Le découpage manuel de la chaîne qui tenait ce rôle ne reconnaissait que les
+     * valeurs entre guillemets : un {@code "anneesExperience": 5} était silencieusement
+     * perdu, alors que ce champ sert au filtre automatique de présélection. Un JSON
+     * illisible est désormais signalé au candidat plutôt qu'ignoré.
+     */
+    private InfosPersonnellesDto lireInfosPersonnelles(String json) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(json, InfosPersonnellesDto.class);
+        } catch (JsonProcessingException e) {
+            log.warn("Informations personnelles illisibles : {}", e.getOriginalMessage());
+            throw new BusinessException(
+                    "Les informations personnelles transmises n'ont pas pu être lues. Vérifiez le formulaire.");
+        }
     }
 
     private inpg.sn.lms.auth.entity.User findUser(Authentication auth) {
         String name = auth.getName();
         inpg.sn.lms.auth.entity.User u = userRepository.findByUsername(name);
         if (u == null) u = userRepository.findByEmail(name);
-        if (u == null) throw new RuntimeException("Utilisateur non trouvé: " + name);
+        if (u == null) throw new ResourceNotFoundException("Utilisateur non trouvé: " + name);
         return u;
     }
 
     private String genererNumeroDossier() {
         return "INPG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-    }
-
-    /**
-     * Extrait la valeur d'un champ d'une chaîne JSON simple.
-     * Ex: extractJsonField("{\"nom\":\"Pouye\"}", "nom") → "Pouye"
-     */
-    private String extractJsonField(String json, String fieldName) {
-        String search = "\"" + fieldName + "\":\"";
-        int start = json.indexOf(search);
-        if (start == -1) return "";
-        start += search.length();
-        int end = json.indexOf("\"", start);
-        if (end == -1) return "";
-        return json.substring(start, end);
     }
 }

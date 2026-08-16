@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.controller;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.util.List;
 import java.util.Map;
 
@@ -89,8 +90,8 @@ public class NotificationController {
         if (u == null)
             u = userRepository.findByEmail(name);
         if (u == null)
-            throw new RuntimeException("Utilisateur non trouvé: " + name);
+            throw new ResourceNotFoundException("Utilisateur non trouvé: " + name);
         return candidatRepository.findByUserId(u.getId())
-                .orElseThrow(() -> new RuntimeException("Candidat non trouvé pour l'utilisateur: " + name));
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé pour l'utilisateur: " + name));
     }
 }

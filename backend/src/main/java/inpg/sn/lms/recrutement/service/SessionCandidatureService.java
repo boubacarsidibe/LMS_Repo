@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.service;
 
+import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,7 +36,7 @@ public class SessionCandidatureService {
 
     public SessionCandidatureResponse modifierSession(Long id, SessionCandidatureRequest request) {
         SessionCandidature session = sessionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session non trouvée avec l'ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Session non trouvée avec l'ID: " + id));
 
         session.setLibelle(request.getLibelle());
         session.setDateOuverture(request.getDateOuverture());
@@ -79,13 +80,13 @@ public class SessionCandidatureService {
 
     public SessionCandidatureResponse getSessionById(Long id) {
         SessionCandidature session = sessionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Session non trouvée avec l'ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Session non trouvée avec l'ID: " + id));
         return toResponse(session);
     }
 
     public void supprimerSession(Long id) {
         if (!sessionRepository.existsById(id)) {
-            throw new RuntimeException("Session non trouvée avec l'ID: " + id);
+            throw new ResourceNotFoundException("Session non trouvée avec l'ID: " + id);
         }
         sessionRepository.deleteById(id);
     }
