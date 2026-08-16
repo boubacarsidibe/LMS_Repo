@@ -81,16 +81,15 @@ import inpg.sn.lms.espace_etudiant.entity.Certificat;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.Evenement;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
-import inpg.sn.lms.espace_etudiant.entity.Message;
+import inpg.sn.lms.espace_etudiant.entity.ForumMessage;
 import inpg.sn.lms.espace_etudiant.entity.NoteModule;
 import inpg.sn.lms.espace_etudiant.entity.Presence;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.entity.Seance;
 import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
-import inpg.sn.lms.espace_etudiant.entity.Sujet;
+import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 import inpg.sn.lms.espace_etudiant.enums.EnumStatutRetour;
-import inpg.sn.lms.espace_etudiant.enums.EnumStatutSujet;
 import inpg.sn.lms.espace_etudiant.enums.EnumTypeEvenement;
 import inpg.sn.lms.espace_etudiant.service.CertificatPdfService;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
@@ -99,7 +98,8 @@ import inpg.sn.lms.espace_etudiant.service.EvenementService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.PerimetreFormateurService;
 import inpg.sn.lms.espace_etudiant.service.RetourEvaluationService;
-import inpg.sn.lms.espace_etudiant.service.SujetService;
+import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.service.NoteModuleService;
 import inpg.sn.lms.espace_etudiant.service.PresenceService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
@@ -122,7 +122,8 @@ public class EspaceEtudiantController {
     private final PromotionService promotionService;
     private final SupportService supportService;
     private final EvenementService evenementService;
-    private final SujetService sujetService;
+    private final ForumSujetRepository forumSujetRepository;
+    private final ForumMessageRepository forumMessageRepository;
     private final CertificatService certificatService;
     private final CertificatPdfService certificatPdfService;
     private final inpg.sn.lms.recrutement.service.NotificationService notificationService;
@@ -143,7 +144,8 @@ public class EspaceEtudiantController {
             PromotionService promotionService,
             SupportService supportService,
             EvenementService evenementService,
-            SujetService sujetService,
+            ForumSujetRepository forumSujetRepository,
+            ForumMessageRepository forumMessageRepository,
             CertificatService certificatService,
             CertificatPdfService certificatPdfService,
             inpg.sn.lms.recrutement.service.NotificationService notificationService,
@@ -162,7 +164,8 @@ public class EspaceEtudiantController {
         this.promotionService = promotionService;
         this.supportService = supportService;
         this.evenementService = evenementService;
-        this.sujetService = sujetService;
+        this.forumSujetRepository = forumSujetRepository;
+        this.forumMessageRepository = forumMessageRepository;
         this.certificatService = certificatService;
         this.certificatPdfService = certificatPdfService;
         this.notificationService = notificationService;
@@ -368,12 +371,14 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/sujets")
     public ResponseEntity<List<SujetDto>> listSujets() {
-        return ResponseEntity.ok(sujetService.getAll().stream().map(this::toSujetDto).toList());
+        return ResponseEntity.ok(forumSujetRepository.findAll().stream().map(this::toSujetDto).toList());
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional
     @PostMapping(value = "/sujets/{id}/messages", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> repondreAuSujet(
             @PathVariable Long id,
@@ -388,9 +393,13 @@ public class EspaceEtudiantController {
         if (isBlank(contenu)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le message ne peut pas être vide."));
         }
-        Sujet sujet = sujetService.findById(id).orElse(null);
+        ForumSujet sujet = forumSujetRepository.findById(id).orElse(null);
         if (sujet == null) {
             return ResponseEntity.notFound().build();
+        }
+        if (sujet.isClos() && !marquerCommeResolu) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Ce sujet est clos : il n'accepte plus de reponse."));
         }
 
         String pieceJointeNomOriginal = null;
@@ -423,15 +432,23 @@ public class EspaceEtudiantController {
             }
         }
 
-        Sujet updated = sujetService.addMessage(sujet, displayName(user), contenu.trim(), marquerCommeResolu,
-                pieceJointeNomOriginal, pieceJointeNomStocke, pieceJointeTypeContenu);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toSujetDto(updated));
+        ForumMessage message = new ForumMessage(sujet, user, contenu.trim());
+        message.setPieceJointeNomOriginal(pieceJointeNomOriginal);
+        message.setPieceJointeNomStocke(pieceJointeNomStocke);
+        message.setPieceJointeTypeContenu(pieceJointeTypeContenu);
+        forumMessageRepository.save(message);
+        if (marquerCommeResolu) {
+            sujet.setClos(true);
+            forumSujetRepository.save(sujet);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(toSujetDto(sujet));
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/sujets/messages/{messageId}/piece-jointe")
     public ResponseEntity<Resource> downloadMessageAttachment(@PathVariable Long messageId) {
-        Message message = sujetService.findMessageById(messageId).orElse(null);
+        ForumMessage message = forumMessageRepository.findById(messageId).orElse(null);
         if (message == null || message.getPieceJointeNomStocke() == null) {
             return ResponseEntity.notFound().build();
         }
@@ -452,46 +469,53 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PatchMapping("/formateur/sujets/{id}/urgence")
     public ResponseEntity<?> toggleUrgenceSujet(@PathVariable Long id, Authentication authentication) {
         if (findAuthenticatedFormateur(authentication) == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
-        Sujet sujet = sujetService.findById(id).orElse(null);
+        ForumSujet sujet = forumSujetRepository.findById(id).orElse(null);
         if (sujet == null) {
             return ResponseEntity.notFound().build();
         }
-        sujet.setStatut(sujet.getStatut() == EnumStatutSujet.URGENT ? EnumStatutSujet.NOUVEAU : EnumStatutSujet.URGENT);
-        return ResponseEntity.ok(toSujetDto(sujetService.save(sujet)));
+        // « Urgent » se materialise par l'epinglage : le sujet remonte en tete de liste,
+        // ce qui est exactement l'effet recherche par le formateur.
+        sujet.setEpingle(!sujet.isEpingle());
+        return ResponseEntity.ok(toSujetDto(forumSujetRepository.save(sujet)));
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PatchMapping("/formateur/sujets/{id}/resoudre")
     public ResponseEntity<?> marquerSujetResolu(@PathVariable Long id, Authentication authentication) {
         if (findAuthenticatedFormateur(authentication) == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
-        Sujet sujet = sujetService.findById(id).orElse(null);
+        ForumSujet sujet = forumSujetRepository.findById(id).orElse(null);
         if (sujet == null) {
             return ResponseEntity.notFound().build();
         }
-        sujet.setStatut(EnumStatutSujet.RESOLU);
-        return ResponseEntity.ok(toSujetDto(sujetService.save(sujet)));
+        // Un sujet resolu est clos : il reste consultable mais n'accepte plus de reponse.
+        sujet.setClos(true);
+        sujet.setEpingle(false);
+        return ResponseEntity.ok(toSujetDto(forumSujetRepository.save(sujet)));
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @DeleteMapping("/formateur/sujets/{id}")
     public ResponseEntity<?> supprimerSujet(@PathVariable Long id, Authentication authentication) {
         if (findAuthenticatedFormateur(authentication) == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
-        if (sujetService.findById(id).isEmpty()) {
+        if (forumSujetRepository.findById(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        sujetService.deleteById(id);
+        forumSujetRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -1642,33 +1666,55 @@ public class EspaceEtudiantController {
         return new PromotionDto(cohorte.getId(), cohorte.getCode(), cohorte.getLibelle(), annee);
     }
 
-    private SujetDto toSujetDto(Sujet sujet) {
-        List<MessageDto> messages = sujet.getMessages().stream().map(this::toMessageDto).toList();
+    /**
+     * Forme de reponse inchangee apres la fusion des deux forums (migration V5) :
+     * l'ecran formateur consomme le meme SujetDto, desormais alimente par
+     * forum_sujets. Les champs autrefois stockes en clair sont derives des vraies
+     * associations — le cours par sa cle etrangere, l'auteur par son compte.
+     */
+    private SujetDto toSujetDto(ForumSujet sujet) {
+        List<MessageDto> messages = forumMessageRepository.findBySujetIdOrderByDateCreationAsc(sujet.getId())
+                .stream().map(this::toMessageDto).toList();
         String apercu = messages.isEmpty() ? "" : messages.get(0).contenu();
         if (apercu.length() > 140) {
             apercu = apercu.substring(0, 140) + "…";
         }
         int paletteIndex = (int) Math.floorMod(sujet.getId(), AVATAR_BACKGROUNDS.length);
+        String auteurNom = sujet.getAuteur() != null ? displayName(sujet.getAuteur()) : "Auteur inconnu";
         return new SujetDto(
                 sujet.getId(),
-                sujet.getAuteurNom(),
-                initialsFromFullName(sujet.getAuteurNom()),
+                auteurNom,
+                initialsFromFullName(auteurNom),
                 AVATAR_BACKGROUNDS[paletteIndex],
                 AVATAR_TEXTS[paletteIndex],
-                sujet.getCoursNom(),
-                sujet.getModule(),
+                sujet.getCours() != null ? sujet.getCours().getTitre() : "Général",
+                sujet.getCours() != null ? sujet.getCours().getNom() : "",
                 sujet.getTitre(),
                 apercu,
                 sujet.getDateCreation().format(DATE_HEURE_FORUM),
-                sujet.getStatut().name().toLowerCase(),
+                statutLisible(sujet),
                 messages);
     }
 
-    private MessageDto toMessageDto(Message message) {
+    /**
+     * Traduit l'etat du sujet dans le vocabulaire attendu par l'ecran formateur.
+     * L'ancien modele portait une enumeration NOUVEAU / URGENT / RESOLU ; le modele
+     * conserve exprime la meme chose avec deux booleens, « clos » l'emportant sur
+     * « epingle » puisqu'un sujet resolu n'est plus a traiter.
+     */
+    private String statutLisible(ForumSujet sujet) {
+        if (sujet.isClos()) {
+            return "resolu";
+        }
+        return sujet.isEpingle() ? "urgent" : "nouveau";
+    }
+
+    private MessageDto toMessageDto(ForumMessage message) {
+        String auteurNom = message.getAuteur() != null ? displayName(message.getAuteur()) : "Auteur inconnu";
         return new MessageDto(
                 message.getId(),
-                message.getAuteurNom(),
-                initialsFromFullName(message.getAuteurNom()),
+                auteurNom,
+                initialsFromFullName(auteurNom),
                 message.getContenu(),
                 message.getDateCreation().format(DATE_HEURE_FORUM),
                 message.getPieceJointeNomOriginal());

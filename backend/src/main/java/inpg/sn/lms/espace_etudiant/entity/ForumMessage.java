@@ -50,6 +50,25 @@ public class ForumMessage {
     @Column(nullable = false)
     private LocalDateTime dateCreation = LocalDateTime.now();
 
+    /**
+     * Pièce jointe facultative, reprise du modèle {@code Message} auquel ce forum
+     * s'est substitué : le formateur s'en sert pour joindre une correction ou une
+     * capture à sa réponse.
+     *
+     * <p>Trois informations sont nécessaires. Le nom d'origine est celui montré à
+     * l'utilisateur ; le nom stocké porte un préfixe UUID, sans lequel deux envois
+     * du même fichier s'écraseraient ; le type de contenu est rejoué tel quel dans
+     * la réponse HTTP au téléchargement.
+     */
+    @Column
+    private String pieceJointeNomOriginal;
+
+    @Column
+    private String pieceJointeNomStocke;
+
+    @Column
+    private String pieceJointeTypeContenu;
+
     public ForumMessage(ForumSujet sujet, User auteur, String contenu) {
         this.sujet = sujet;
         this.auteur = auteur;

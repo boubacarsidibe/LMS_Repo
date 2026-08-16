@@ -15,14 +15,13 @@ import inpg.sn.lms.espace_etudiant.entity.Annonce;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.Evenement;
-import inpg.sn.lms.espace_etudiant.entity.Message;
+import inpg.sn.lms.espace_etudiant.entity.ForumMessage;
+import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.Photo;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
-import inpg.sn.lms.espace_etudiant.entity.Sujet;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 import inpg.sn.lms.espace_etudiant.enums.EnumStatutRetour;
-import inpg.sn.lms.espace_etudiant.enums.EnumStatutSujet;
 import inpg.sn.lms.espace_etudiant.enums.EnumTypeAnnonce;
 import inpg.sn.lms.espace_etudiant.enums.EnumTypeEvenement;
 import inpg.sn.lms.espace_etudiant.repository.AlbumPhotoRepository;
@@ -33,7 +32,8 @@ import inpg.sn.lms.espace_etudiant.repository.EvenementRepository;
 import inpg.sn.lms.espace_etudiant.repository.PhotoRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
-import inpg.sn.lms.espace_etudiant.repository.SujetRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.repository.SupportCoursRepository;
 import inpg.sn.lms.recrutement.entity.Program;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
@@ -69,7 +69,8 @@ public class DataInitializer {
             RoleRepository roleRepository,
             UserRepository userRepository,
             ResponsableAdmissionRepository responsableAdmissionRepository,
-            SujetRepository sujetRepository,
+            ForumSujetRepository forumSujetRepository,
+            ForumMessageRepository forumMessageRepository,
             FormateurRepository formateurRepository,
             EtudiantRepository etudiantRepository,
             PromotionRepository promotionRepository,
@@ -208,40 +209,6 @@ public class DataInitializer {
                 System.out.println("Compte admin_admission cree");
             }
 
-            // ===================== FORUM (donnees de demo) =====================
-            if (sujetRepository.count() == 0) {
-                Sujet sujet1 = new Sujet();
-                sujet1.setTitre("Difficulte variable de simulation");
-                sujet1.setCoursNom("Macroeconomie Avancee");
-                sujet1.setModule("Module 3");
-                sujet1.setStatut(EnumStatutSujet.NOUVEAU);
-                sujet1.setAuteurNom("Alex Mercer");
-                sujet1.setDateCreation(LocalDateTime.now().minusMinutes(14));
-                Message message1 = new Message();
-                message1.setAuteurNom("Alex Mercer");
-                message1.setContenu("Bonjour Professeur,\n\nJe rencontre une difficulte bloquante sur le TP de simulation du Module 3. Le modele refuse de converger, meme apres 500 iterations. Est-ce un probleme de parametrage ?");
-                message1.setDateCreation(sujet1.getDateCreation());
-                message1.setSujet(sujet1);
-                sujet1.getMessages().add(message1);
-                sujetRepository.save(sujet1);
-
-                Sujet sujet2 = new Sujet();
-                sujet2.setTitre("Support PDF inaccessible");
-                sujet2.setCoursNom("Finance Durable");
-                sujet2.setModule("Module 2");
-                sujet2.setStatut(EnumStatutSujet.URGENT);
-                sujet2.setAuteurNom("Lydia Chen");
-                sujet2.setDateCreation(LocalDateTime.now().minusHours(2));
-                Message message2 = new Message();
-                message2.setAuteurNom("Lydia Chen");
-                message2.setContenu("Bonjour,\n\nLe support PDF du cours de Finance n'est pas telechargeable, j'obtiens une erreur 404. Pourriez-vous verifier ?");
-                message2.setDateCreation(sujet2.getDateCreation());
-                message2.setSujet(sujet2);
-                sujet2.getMessages().add(message2);
-                sujetRepository.save(sujet2);
-
-                System.out.println("Sujets de forum crees (2)");
-            }
 
             // ===================== DONNEES DE DEMO (presentation client) =====================
             if (userRepository.findByUsername("prof_demo") == null) {
@@ -395,6 +362,21 @@ public class DataInitializer {
                 evenement4.setLienVisio("https://meet.example.com/fin-201");
                 evenementRepository.save(evenement4);
 
+                // ----- Forum : un sujet par cours, avec de vraies associations -----
+                // Depuis la fusion des deux forums (migration V5), l'auteur est un User et
+                // le cours une cle etrangere : c'est ce qui permet a ForumController de
+                // restreindre la visibilite aux cours de la promotion de l'etudiant.
+                creerSujetForumDemo(forumSujetRepository, forumMessageRepository, coursDS, aissatou.getUser(),
+                        "Difficulte sur le TP de simulation",
+                        "Bonjour Professeur,\n\nLe modele du TP refuse de converger, meme apres 500 iterations."
+                                + " Est-ce un probleme de parametrage ?",
+                        false, LocalDateTime.now().minusMinutes(14));
+                creerSujetForumDemo(forumSujetRepository, forumMessageRepository, coursFinance, fatou.getUser(),
+                        "Support PDF inaccessible",
+                        "Bonjour,\n\nLe support PDF du cours n'est pas telechargeable, j'obtiens une erreur 404."
+                                + " Pourriez-vous verifier ?",
+                        true, LocalDateTime.now().minusHours(2));
+
                 retourEvaluationRepository.save(creerRetourDemo(coursDS, aissatou, 5,
                         "Cours tres bien structure, les exemples pratiques m'ont beaucoup aide."));
                 retourEvaluationRepository.save(creerRetourDemo(coursDS, cheikh, 4,
@@ -419,6 +401,22 @@ public class DataInitializer {
         Etudiant etudiant = new Etudiant(user, nom, prenom, telephone);
         etudiant.setPromotion(promotion);
         return etudiantRepository.save(etudiant);
+    }
+
+    /**
+     * Cree un sujet de forum et son premier message. {@code epingle} materialise
+     * l'ancien statut « urgent » : le sujet remonte en tete de la liste du formateur.
+     */
+    private void creerSujetForumDemo(ForumSujetRepository sujetRepository,
+            ForumMessageRepository messageRepository, Cours cours, User auteur,
+            String titre, String contenu, boolean epingle, LocalDateTime date) {
+        ForumSujet sujet = new ForumSujet(titre, cours, auteur);
+        sujet.setDateCreation(date);
+        sujet.setEpingle(epingle);
+        sujet = sujetRepository.save(sujet);
+        ForumMessage message = new ForumMessage(sujet, auteur, contenu);
+        message.setDateCreation(date);
+        messageRepository.save(message);
     }
 
     private RetourEvaluation creerRetourDemo(Cours cours, Etudiant etudiant, int note, String commentaire) {

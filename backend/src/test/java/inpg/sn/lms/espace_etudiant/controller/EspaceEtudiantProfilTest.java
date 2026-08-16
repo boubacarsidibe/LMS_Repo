@@ -36,7 +36,8 @@ import inpg.sn.lms.espace_etudiant.service.PresenceService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
 import inpg.sn.lms.espace_etudiant.service.RetourEvaluationService;
 import inpg.sn.lms.espace_etudiant.service.SeanceService;
-import inpg.sn.lms.espace_etudiant.service.SujetService;
+import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.service.SupportCoursStorageService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
 import inpg.sn.lms.recrutement.service.NotificationService;
@@ -66,7 +67,9 @@ class EspaceEtudiantProfilTest {
     @Mock
     private EvenementService evenementService;
     @Mock
-    private SujetService sujetService;
+    private ForumSujetRepository forumSujetRepository;
+    @Mock
+    private ForumMessageRepository forumMessageRepository;
     @Mock
     private CertificatService certificatService;
     @Mock
@@ -98,7 +101,8 @@ class EspaceEtudiantProfilTest {
         // tests de profil ci-dessous — les autres mocks ne sont jamais stubbés.
         controller = new EspaceEtudiantController(userRepository, etudiantRepository, formateurRepository,
                 formationService, coursService, promotionService, supportService, evenementService,
-                sujetService, certificatService, certificatPdfService, notificationService,
+                forumSujetRepository, forumMessageRepository, certificatService, certificatPdfService,
+                notificationService,
                 retourEvaluationService, perimetreFormateurService, noteModuleService, presenceService,
                 seanceService, supportCoursStorageService, "uploads");
 
