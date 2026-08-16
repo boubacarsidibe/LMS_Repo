@@ -1,10 +1,19 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from '../../core/auth/guards/role-guard';
+
+/**
+ * Routes de l'espace étudiant.
+ *
+ * <p>Les rubriques de l'étudiant sont regroupées sous {@code EtudiantLayout}, qui
+ * fournit la navigation latérale et la cloche d'annonces. « Accueil » et les
+ * pages historiques restent en dehors : elles portent leur propre barre
+ * horizontale et sont référencées par la navigation publique.
+ */
 export const routes: Routes = [
     {
         path: 'accueil',
         loadComponent: () => import('./pages/accueil/accueil').then(m => m.Accueil),
-        canActivate: [roleGuard('ROLE_ETUDIANT', 'ROLE_FORMATEUR')]
+        canActivate: [roleGuard('ROLE_ETUDIANT')]
     },
     {
         path: 'mes-formations',
@@ -12,11 +21,10 @@ export const routes: Routes = [
         canActivate: [roleGuard('ROLE_ETUDIANT')]
     },
     {
-        path: 'annonces',
-        loadComponent: () => import('./pages/annonces/annonces').then(m => m.Annonces),
-        canActivate: [roleGuard('ROLE_ETUDIANT', 'ROLE_FORMATEUR')]
-    },
-    {
+        // Formateur uniquement desormais : un etudiant qui vise /annonces recoit la
+        // page dediee AnnoncesEtudiant (sous EtudiantLayout plus bas), qui gere en
+        // plus les accuses de lecture. Le formateur y accede via formateur/annonces
+        // (meme composant Annonces, route imbriquee plus bas) donc rien n'est perdu.
         path: 'phototheque',
         loadComponent: () => import('./pages/phototheque/phototheque').then(m => m.Phototheque),
         canActivate: [roleGuard('ROLE_ETUDIANT', 'ROLE_FORMATEUR')]
@@ -25,6 +33,16 @@ export const routes: Routes = [
         path: 'certificats',
         loadComponent: () => import('./pages/certificats/certificats').then(m => m.Certificats),
         canActivate: [roleGuard('ROLE_ETUDIANT', 'ROLE_FORMATEUR')]
+    },
+    {
+        path: 'cours',
+        loadComponent: () => import('./pages/mes-cours-etudiant/mes-cours-etudiant').then(m => m.MesCoursEtudiant),
+        canActivate: [roleGuard('ROLE_ETUDIANT')]
+    },
+    {
+        path: 'cours/:id',
+        loadComponent: () => import('./pages/cours-detail/cours-detail').then(m => m.CoursDetail),
+        canActivate: [roleGuard('ROLE_ETUDIANT')]
     },
     {
         path: 'formateur',
@@ -83,6 +101,60 @@ export const routes: Routes = [
             {
                 path: 'certificats',
                 loadComponent: () => import('./pages/certificats/certificats').then(m => m.Certificats)
+            }
+        ]
+    },
+
+    // ===================== Espace étudiant (navigation latérale) =====================
+    {
+        path: '',
+        loadComponent: () => import('./layouts/etudiant-layout/etudiant-layout').then(m => m.EtudiantLayout),
+        canActivate: [roleGuard('ROLE_ETUDIANT')],
+        children: [
+            { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+            {
+                path: 'dashboard',
+                loadComponent: () => import('./pages/tableau-bord/tableau-bord').then(m => m.TableauBord)
+            },
+            {
+                path: 'mes-cours',
+                loadComponent: () => import('./pages/mes-cours-autorises/mes-cours-autorises').then(m => m.MesCoursAutorises)
+            },
+            {
+                path: 'mes-cours/:id',
+                loadComponent: () => import('./pages/cours-detail-etudiant/cours-detail-etudiant').then(m => m.CoursDetailEtudiant)
+            },
+            {
+                path: 'calendrier',
+                loadComponent: () => import('./pages/calendrier-etudiant/calendrier-etudiant').then(m => m.CalendrierEtudiant)
+            },
+            {
+                path: 'annonces',
+                loadComponent: () => import('./pages/annonces-etudiant/annonces-etudiant').then(m => m.AnnoncesEtudiant)
+            },
+            {
+                path: 'forum',
+                loadComponent: () => import('./pages/forum-etudiant/forum-etudiant').then(m => m.ForumEtudiant)
+            },
+            {
+                path: 'forum/:id',
+                loadComponent: () => import('./pages/fil-forum/fil-forum').then(m => m.FilForum)
+            },
+            {
+                path: 'photheque',
+                loadComponent: () => import('./pages/photheque/photheque').then(m => m.Photheque)
+            },
+            {
+                path: 'ma-promotion',
+                loadComponent: () => import('./pages/ma-promotion/ma-promotion').then(m => m.MaPromotionPage)
+            },
+            {
+                path: 'mes-evaluations',
+                loadComponent: () => import('./pages/mes-evaluations/mes-evaluations').then(m => m.MesEvaluations)
+            },
+            {
+                path: 'mon-profil',
+                loadComponent: () => import('./pages/mon-profil-etudiant/mon-profil-etudiant').then(m => m.MonProfilEtudiant)
             }
         ]
     }

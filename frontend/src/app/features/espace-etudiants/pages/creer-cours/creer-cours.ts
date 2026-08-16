@@ -19,6 +19,8 @@ export class CreerCours implements OnInit {
   errorMessage = '';
   cohortes: Cohorte[] = [];
   cohorteIdsSelectionnees = new Set<number>();
+  imageSelectionnee: File | null = null;
+  imageApercu: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -50,6 +52,16 @@ export class CreerCours implements OnInit {
     }
   }
 
+  onImageSelectionnee(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.imageSelectionnee = input.files[0];
+      const reader = new FileReader();
+      reader.onload = () => this.imageApercu = reader.result as string;
+      reader.readAsDataURL(this.imageSelectionnee);
+    }
+  }
+
   onSubmit() {
     if (this.creerCoursForm.invalid) {
       this.creerCoursForm.markAllAsTouched();
@@ -62,7 +74,20 @@ export class CreerCours implements OnInit {
       cohorteIds: Array.from(this.cohorteIdsSelectionnees)
     };
     this.coursService.create(payload).subscribe({
-      next: () => this.router.navigate(['/espace-etudiant/formateur/mes-cours']),
+      next: (coursCree) => {
+        if (this.imageSelectionnee) {
+          this.coursService.uploadImage(coursCree.id, this.imageSelectionnee).subscribe({
+            next: () => this.router.navigate(['/espace-etudiant/formateur/mes-cours']),
+            error: () => {
+              // Le cours est créé même si l'image échoue : on n'en fait pas un blocage.
+              console.error("L'image n'a pas pu être associée au cours.");
+              this.router.navigate(['/espace-etudiant/formateur/mes-cours']);
+            }
+          });
+        } else {
+          this.router.navigate(['/espace-etudiant/formateur/mes-cours']);
+        }
+      },
       error: (error) => {
         this.isSubmitting = false;
         this.errorMessage = error.error?.message || 'La création du cours a échoué.';

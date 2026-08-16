@@ -10,25 +10,28 @@ import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.auth.repository.ResponsableAdmissionRepository;
 import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
+import inpg.sn.lms.espace_etudiant.entity.AlbumPhoto;
 import inpg.sn.lms.espace_etudiant.entity.Annonce;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
-import inpg.sn.lms.espace_etudiant.entity.Cohorte;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.Evenement;
 import inpg.sn.lms.espace_etudiant.entity.Message;
 import inpg.sn.lms.espace_etudiant.entity.Photo;
+import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
 import inpg.sn.lms.espace_etudiant.entity.Sujet;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 import inpg.sn.lms.espace_etudiant.enums.EnumStatutRetour;
 import inpg.sn.lms.espace_etudiant.enums.EnumStatutSujet;
+import inpg.sn.lms.espace_etudiant.enums.EnumTypeAnnonce;
 import inpg.sn.lms.espace_etudiant.enums.EnumTypeEvenement;
+import inpg.sn.lms.espace_etudiant.repository.AlbumPhotoRepository;
 import inpg.sn.lms.espace_etudiant.repository.AnnonceRepository;
 import inpg.sn.lms.espace_etudiant.repository.CertificatRepository;
-import inpg.sn.lms.espace_etudiant.repository.CohorteRepository;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.EvenementRepository;
 import inpg.sn.lms.espace_etudiant.repository.PhotoRepository;
+import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.repository.SujetRepository;
 import inpg.sn.lms.espace_etudiant.repository.SupportCoursRepository;
@@ -41,6 +44,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.io.ByteArrayOutputStream;
@@ -58,6 +62,7 @@ import java.util.List;
 public class DataInitializer {
 
     @Bean
+    @Order(1) // Doit précéder PedagogieDataInitializer, qui s'appuie sur les rôles créés ici.
     CommandLineRunner initData(
             SessionCandidatureRepository sessionRepository,
             ProgramRepository programRepository,
@@ -67,18 +72,23 @@ public class DataInitializer {
             SujetRepository sujetRepository,
             FormateurRepository formateurRepository,
             EtudiantRepository etudiantRepository,
-            CohorteRepository cohorteRepository,
+            PromotionRepository promotionRepository,
             CoursRepository coursRepository,
             AnnonceRepository annonceRepository,
             EvenementRepository evenementRepository,
             RetourEvaluationRepository retourEvaluationRepository,
             SupportCoursRepository supportCoursRepository,
             PhotoRepository photoRepository,
+            AlbumPhotoRepository albumPhotoRepository,
             CertificatRepository certificatRepository,
             PasswordEncoder passwordEncoder,
             @Value("${app.upload.dir:uploads}") String uploadDir) {
         return args -> {
             // ===================== PROGRAMMES =====================
+            // Les sessions de candidature plus bas rattachent chacune un Program :
+            // ce bloc doit donc rester AVANT elles. Il avait été retiré lors de la
+            // fusion, à tort — CatalogueDataInitializer amorce les Formation, pas
+            // les Program — et toute base neuve échouait alors sur une liste vide.
             if (programRepository.count() == 0) {
                 Program p1 = new Program();
                 p1.setTitle("Master 1 Data Science & AI");
@@ -118,10 +128,18 @@ public class DataInitializer {
                     "Étudiant admis — accès à l'espace étudiant");
             ensureRole(roleRepository, "ROLE_FORMATEUR", "Formateur",
                     "Enseignant — gère ses cours et ses supports pédagogiques");
+            ensureRole(roleRepository, "ROLE_RESPONSABLE_PEDAGOGIQUE", "Responsable Pédagogique",
+                    "Staff pédagogique — pilote l'offre de formation et le suivi des enseignements");
 
             // ===================== SESSIONS =====================
-            if (sessionRepository.count() == 0) {
-                var programs = programRepository.findAll();
+            // Garde-fou : plutôt qu'un IndexOutOfBoundsException opaque au démarrage,
+            // on dit ce qui manque et on saute ce seul bloc — les sections suivantes
+            // (compte responsable, forum, données de démo) doivent rester exécutées.
+            var programs = programRepository.findAll();
+            if (sessionRepository.count() == 0 && programs.size() < 4) {
+                System.out.println("Sessions de demo ignorees : " + programs.size()
+                        + " programme(s) en base, 4 attendus.");
+            } else if (sessionRepository.count() == 0) {
                 Program p1 = programs.get(0);
                 Program p2 = programs.get(1);
                 Program p3 = programs.get(2);
@@ -234,26 +252,26 @@ public class DataInitializer {
                 Role roleFormateur = roleRepository.findByCode("ROLE_FORMATEUR");
                 Role roleEtudiant = roleRepository.findByCode("ROLE_ETUDIANT");
 
-                Cohorte cohorteDS = new Cohorte();
-                cohorteDS.setCode("M1-DS-2026");
-                cohorteDS.setLibelle("Master 1 - Data Science & IA");
-                cohorteDS.setDateDebut(LocalDate.of(2026, 9, 1));
-                cohorteDS.setDateFin(LocalDate.of(2027, 6, 30));
-                cohorteDS = cohorteRepository.save(cohorteDS);
+                Promotion promotionDS = new Promotion();
+                promotionDS.setCode("M1-DS-2026");
+                promotionDS.setLibelle("Master 1 - Data Science & IA");
+                promotionDS.setDateDebut(LocalDate.of(2026, 9, 1));
+                promotionDS.setDateFin(LocalDate.of(2027, 6, 30));
+                promotionDS = promotionRepository.save(promotionDS);
 
-                Cohorte cohorteFinance = new Cohorte();
-                cohorteFinance.setCode("M2-FIN-2026");
-                cohorteFinance.setLibelle("Master 2 - Finance Durable");
-                cohorteFinance.setDateDebut(LocalDate.of(2026, 9, 1));
-                cohorteFinance.setDateFin(LocalDate.of(2027, 6, 30));
-                cohorteFinance = cohorteRepository.save(cohorteFinance);
+                Promotion promotionFinance = new Promotion();
+                promotionFinance.setCode("M2-FIN-2026");
+                promotionFinance.setLibelle("Master 2 - Finance Durable");
+                promotionFinance.setDateDebut(LocalDate.of(2026, 9, 1));
+                promotionFinance.setDateFin(LocalDate.of(2027, 6, 30));
+                promotionFinance = promotionRepository.save(promotionFinance);
 
-                Cohorte cohorteProcedes = new Cohorte();
-                cohorteProcedes.setCode("ING-PROC-2026");
-                cohorteProcedes.setLibelle("Cycle Ingenieur - Procedes Industriels");
-                cohorteProcedes.setDateDebut(LocalDate.of(2026, 9, 1));
-                cohorteProcedes.setDateFin(LocalDate.of(2029, 6, 30));
-                cohorteProcedes = cohorteRepository.save(cohorteProcedes);
+                Promotion promotionProcedes = new Promotion();
+                promotionProcedes.setCode("ING-PROC-2026");
+                promotionProcedes.setLibelle("Cycle Ingenieur - Procedes Industriels");
+                promotionProcedes.setDateDebut(LocalDate.of(2026, 9, 1));
+                promotionProcedes.setDateFin(LocalDate.of(2029, 6, 30));
+                promotionProcedes = promotionRepository.save(promotionProcedes);
 
                 User userFormateur = new User();
                 userFormateur.setUsername("prof_demo");
@@ -265,17 +283,17 @@ public class DataInitializer {
                 formateurRepository.save(formateurDemo);
 
                 Etudiant aissatou = creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
-                        "aissatou_ba", "aissatou.ba@inpg-demo.sn", "Ba", "Aissatou", "+221770000001", cohorteDS);
+                        "aissatou_ba", "aissatou.ba@inpg-demo.sn", "Ba", "Aissatou", "+221770000001", promotionDS);
                 Etudiant cheikh = creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
-                        "cheikh_fall", "cheikh.fall@inpg-demo.sn", "Fall", "Cheikh", "+221770000002", cohorteDS);
+                        "cheikh_fall", "cheikh.fall@inpg-demo.sn", "Fall", "Cheikh", "+221770000002", promotionDS);
                 Etudiant fatou = creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
-                        "fatou_diagne", "fatou.diagne@inpg-demo.sn", "Diagne", "Fatou", "+221770000003", cohorteFinance);
+                        "fatou_diagne", "fatou.diagne@inpg-demo.sn", "Diagne", "Fatou", "+221770000003", promotionFinance);
                 creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
-                        "ibrahima_sow", "ibrahima.sow@inpg-demo.sn", "Sow", "Ibrahima", "+221770000004", cohorteFinance);
+                        "ibrahima_sow", "ibrahima.sow@inpg-demo.sn", "Sow", "Ibrahima", "+221770000004", promotionFinance);
                 creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
-                        "mamadou_diallo", "mamadou.diallo@inpg-demo.sn", "Diallo", "Mamadou", "+221770000005", cohorteProcedes);
+                        "mamadou_diallo", "mamadou.diallo@inpg-demo.sn", "Diallo", "Mamadou", "+221770000005", promotionProcedes);
                 creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
-                        "awa_ndoye", "awa.ndoye@inpg-demo.sn", "Ndoye", "Awa", "+221770000006", cohorteProcedes);
+                        "awa_ndoye", "awa.ndoye@inpg-demo.sn", "Ndoye", "Awa", "+221770000006", promotionProcedes);
 
                 Cours coursDS = new Cours();
                 coursDS.setNom("DS-101");
@@ -284,7 +302,7 @@ public class DataInitializer {
                 coursDS.setSemestre("Semestre 1 - 2026");
                 coursDS.setVolumeHoraire(40L);
                 coursDS.getFormateurs().add(formateurDemo);
-                coursDS.getCohortes().add(cohorteDS);
+                coursDS.getPromotions().add(promotionDS);
                 coursDS = coursRepository.save(coursDS);
 
                 Cours coursFinance = new Cours();
@@ -294,7 +312,7 @@ public class DataInitializer {
                 coursFinance.setSemestre("Semestre 1 - 2026");
                 coursFinance.setVolumeHoraire(36L);
                 coursFinance.getFormateurs().add(formateurDemo);
-                coursFinance.getCohortes().add(cohorteFinance);
+                coursFinance.getPromotions().add(promotionFinance);
                 coursFinance = coursRepository.save(coursFinance);
 
                 Cours coursProcedes = new Cours();
@@ -304,7 +322,7 @@ public class DataInitializer {
                 coursProcedes.setSemestre("Semestre 1 - 2026");
                 coursProcedes.setVolumeHoraire(45L);
                 coursProcedes.getFormateurs().add(formateurDemo);
-                coursProcedes.getCohortes().add(cohorteProcedes);
+                coursProcedes.getPromotions().add(promotionProcedes);
                 coursProcedes = coursRepository.save(coursProcedes);
 
                 // ----- Supports de cours (fichiers PDF reels + liens externes) -----
@@ -328,30 +346,26 @@ public class DataInitializer {
                 // ----- Photos (fichiers image reels, placeholder) -----
                 byte[] photoPlaceholder = Base64.getDecoder().decode(
                         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
-                creerPhotoDemo(photoRepository, uploadPath, photoPlaceholder,
-                        "Rentree M1 Data Science 2026", "demo-photo-ds.png", cohorteDS, "Moussa Ndiaye");
-                creerPhotoDemo(photoRepository, uploadPath, photoPlaceholder,
-                        "Seminaire Finance Durable", "demo-photo-fin.png", cohorteFinance, "Moussa Ndiaye");
-                creerPhotoDemo(photoRepository, uploadPath, photoPlaceholder,
-                        "Visite technique - Procedes Industriels", "demo-photo-proc.png", cohorteProcedes, "Moussa Ndiaye");
+                creerPhotoDemo(photoRepository, albumPhotoRepository, uploadPath, photoPlaceholder,
+                        "Rentree M1 Data Science 2026", "demo-photo-ds.png", promotionDS);
+                creerPhotoDemo(photoRepository, albumPhotoRepository, uploadPath, photoPlaceholder,
+                        "Seminaire Finance Durable", "demo-photo-fin.png", promotionFinance);
+                creerPhotoDemo(photoRepository, albumPhotoRepository, uploadPath, photoPlaceholder,
+                        "Visite technique - Procedes Industriels", "demo-photo-proc.png", promotionProcedes);
 
                 // ----- Certificats (le PDF est genere a la volee au telechargement, pas besoin de fichier) -----
-                certificatRepository.save(creerCertificatDemo(aissatou, "Introduction au Machine Learning", cohorteDS, "Moussa Ndiaye"));
-                certificatRepository.save(creerCertificatDemo(fatou, "Analyse Financiere Avancee", cohorteFinance, "Moussa Ndiaye"));
+                certificatRepository.save(creerCertificatDemo(aissatou, "Introduction au Machine Learning", promotionDS, "Moussa Ndiaye"));
+                certificatRepository.save(creerCertificatDemo(fatou, "Analyse Financiere Avancee", promotionFinance, "Moussa Ndiaye"));
 
-                Annonce annonce1 = new Annonce();
-                annonce1.setTitre("Bienvenue a la rentree 2026");
-                annonce1.setContenu("L'ensemble des cours demarre la semaine du 1er septembre. Consultez votre planning pour les horaires de vos classes virtuelles.");
-                annonce1.setAuteurNom("Moussa Ndiaye");
-                annonce1.setDateCreation(LocalDateTime.now().minusDays(2));
+                Annonce annonce1 = new Annonce("Bienvenue a la rentree 2026",
+                        "L'ensemble des cours demarre la semaine du 1er septembre. Consultez votre planning pour les horaires de vos classes virtuelles.",
+                        EnumTypeAnnonce.ANNONCE, userFormateur, null);
                 annonce1.setEpinglee(true);
                 annonceRepository.save(annonce1);
 
-                Annonce annonce2 = new Annonce();
-                annonce2.setTitre("Modification de l'emploi du temps - Semaine 3");
-                annonce2.setContenu("La seance de tutorat Finance Durable est deplacee au jeudi 10h en raison d'un conflit de salle.");
-                annonce2.setAuteurNom("Moussa Ndiaye");
-                annonce2.setDateCreation(LocalDateTime.now().minusHours(6));
+                Annonce annonce2 = new Annonce("Modification de l'emploi du temps - Semaine 3",
+                        "La seance de tutorat Finance Durable est deplacee au jeudi 10h en raison d'un conflit de salle.",
+                        EnumTypeAnnonce.MESSAGE, userFormateur, promotionFinance);
                 annonce2.setEpinglee(false);
                 annonceRepository.save(annonce2);
 
@@ -399,7 +413,7 @@ public class DataInitializer {
 
     private Etudiant creerEtudiantDemo(UserRepository userRepository, EtudiantRepository etudiantRepository,
             PasswordEncoder passwordEncoder, Role roleEtudiant, String username, String email, String nom,
-            String prenom, String telephone, Cohorte cohorte) {
+            String prenom, String telephone, Promotion promotion) {
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
@@ -407,7 +421,7 @@ public class DataInitializer {
         user.addRole(roleEtudiant);
         user = userRepository.save(user);
         Etudiant etudiant = new Etudiant(user, nom, prenom, telephone);
-        etudiant.setCohorte(cohorte);
+        etudiant.setPromotion(promotion);
         return etudiantRepository.save(etudiant);
     }
 
@@ -450,26 +464,22 @@ public class DataInitializer {
         supportCoursRepository.save(support);
     }
 
-    private void creerPhotoDemo(PhotoRepository photoRepository, Path uploadPath, byte[] contenu, String titre,
-            String nomFichier, Cohorte cohorte, String auteurNom) throws IOException {
+    private void creerPhotoDemo(PhotoRepository photoRepository, AlbumPhotoRepository albumPhotoRepository,
+            Path uploadPath, byte[] contenu, String titre, String nomFichier, Promotion promotion) throws IOException {
         Path cible = uploadPath.resolve("photos").resolve(nomFichier);
         if (!Files.exists(cible)) {
             Files.write(cible, contenu);
         }
-        Photo photo = new Photo();
-        photo.setTitre(titre);
-        photo.setNomFichier(nomFichier);
-        photo.setTypeContenu("image/png");
-        photo.setAuteurNom(auteurNom);
-        photo.setDateAjout(LocalDateTime.now().minusDays(1));
-        photo.setCohorte(cohorte);
+        AlbumPhoto album = new AlbumPhoto(titre, null, promotion, LocalDate.now().minusDays(1));
+        album = albumPhotoRepository.save(album);
+        Photo photo = new Photo(album, nomFichier, nomFichier, titre);
         photoRepository.save(photo);
     }
 
-    private Certificat creerCertificatDemo(Etudiant etudiant, String intituleFormation, Cohorte cohorte, String formateurNom) {
+    private Certificat creerCertificatDemo(Etudiant etudiant, String intituleFormation, Promotion promotion, String formateurNom) {
         Certificat certificat = new Certificat();
         certificat.setEtudiant(etudiant);
-        certificat.setCohorte(cohorte);
+        certificat.setPromotion(promotion);
         certificat.setIntituleFormation(intituleFormation);
         certificat.setFormateurNom(formateurNom);
         return certificat;

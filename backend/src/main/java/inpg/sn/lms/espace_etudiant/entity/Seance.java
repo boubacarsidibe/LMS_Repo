@@ -1,6 +1,6 @@
 package inpg.sn.lms.espace_etudiant.entity;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,41 +16,35 @@ public class Seance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "cours_id", nullable = false)
-    private Cours cours;
-
     @Column(nullable = false)
     private String titre;
 
     @Column(nullable = false)
-    private LocalDate date;
+    private String type;
 
-    public Long getId() {
-        return id;
-    }
+    @Column(nullable = false)
+    private LocalDateTime dateHeure;
 
-    public Cours getCours() {
-        return cours;
-    }
+    @Column(nullable = false)
+    private Integer dureeMinutes;
 
-    public void setCours(Cours cours) {
-        this.cours = cours;
-    }
+    private String lieuOuLien;
 
-    public String getTitre() {
-        return titre;
-    }
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "cours_id")
+    private Cours cours;
 
-    public void setTitre(String titre) {
-        this.titre = titre;
-    }
-
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public void setDate(LocalDate date) {
-        this.date = date;
-    }
+    public Long getId() { return id; }
+    public String getTitre() { return titre; }
+    public String getType() { return type; }
+    public LocalDateTime getDateHeure() { return dateHeure; }
+    public Integer getDureeMinutes() { return dureeMinutes; }
+    public String getLieuOuLien() { return lieuOuLien; }
+    public Cours getCours() { return cours; }
+    public void setTitre(String titre) { this.titre = titre; }
+    public void setType(String type) { this.type = type; }
+    public void setDateHeure(LocalDateTime dateHeure) { this.dateHeure = dateHeure; }
+    public void setDureeMinutes(Integer dureeMinutes) { this.dureeMinutes = dureeMinutes; }
+    public void setLieuOuLien(String lieuOuLien) { this.lieuOuLien = lieuOuLien; }
+    public void setCours(Cours cours) { this.cours = cours; }
 }

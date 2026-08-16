@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.auth.repository.CandidatRepository;
@@ -21,6 +22,12 @@ import inpg.sn.lms.recrutement.service.NotificationCandidatService;
 @RestController
 @RequestMapping("/api/recrutement/candidat")
 @CrossOrigin(origins = "http://localhost:4200")
+/*
+ * Autorisation rendue explicite : elle ne reposait que sur le prefixe d'URL filtre
+ * dans SecurityConfig. Un endpoint ajoute hors de ce prefixe aurait ete ouvert sans
+ * que rien ne le signale. Les regles d'URL restent en place et s'appliquent en plus.
+ */
+@PreAuthorize("isAuthenticated()")
 public class NotificationController {
 
     private final NotificationCandidatService notificationCandidatService;
@@ -81,8 +88,10 @@ public class NotificationController {
     private Candidat findCandidat(Authentication auth) {
         String name = auth.getName();
         inpg.sn.lms.auth.entity.User u = userRepository.findByUsername(name);
-        if (u == null) u = userRepository.findByEmail(name);
-        if (u == null) throw new RuntimeException("Utilisateur non trouvé: " + name);
+        if (u == null)
+            u = userRepository.findByEmail(name);
+        if (u == null)
+            throw new RuntimeException("Utilisateur non trouvé: " + name);
         return candidatRepository.findByUserId(u.getId())
                 .orElseThrow(() -> new RuntimeException("Candidat non trouvé pour l'utilisateur: " + name));
     }

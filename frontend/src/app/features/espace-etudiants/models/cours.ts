@@ -12,6 +12,7 @@ export interface Cours {
   progression: number;
   couleurBandeau: string;
   cohortes: Cohorte[];
+  imageUrl?: string;
 }
 
 export interface CoursCreation {

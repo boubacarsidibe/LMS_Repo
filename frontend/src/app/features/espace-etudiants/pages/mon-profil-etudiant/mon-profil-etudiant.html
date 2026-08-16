@@ -1,0 +1,146 @@
+<div class="flex flex-col w-full max-w-container-max mx-auto p-margin-desktop gap-stack-lg">
+
+  <!-- En-tête -->
+  <div>
+    <span class="text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Mon compte</span>
+    <h1 class="text-headline-lg text-primary">Mon profil</h1>
+    <p class="text-body-md text-on-surface-variant mt-2">
+      Consultez et mettez à jour les informations rattachées à votre compte étudiant.
+    </p>
+  </div>
+
+  <!-- Chargement -->
+  <div *ngIf="chargement" class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm text-center">
+    <p class="text-body-md text-on-surface-variant">Chargement du profil…</p>
+  </div>
+
+  <!-- Erreur de chargement -->
+  <div *ngIf="erreur && !chargement" class="bg-error-container rounded-xl p-stack-lg">
+    <p class="text-body-md text-on-error-container">{{ erreur }}</p>
+  </div>
+
+  <ng-container *ngIf="profil && !chargement">
+
+    <!-- Carte identité -->
+    <section class="bg-surface-container-lowest rounded-xl shadow-sm p-stack-lg flex flex-col md:flex-row items-center gap-stack-lg">
+      <div class="w-24 h-24 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0 shadow-md">
+        <span class="text-headline-md text-on-primary-container">{{ initiales }}</span>
+      </div>
+      <div class="flex-1 text-center md:text-left">
+        <h2 class="text-headline-sm text-on-surface">
+          {{ identite.prenom }} {{ identite.nom }}
+        </h2>
+        <p class="text-label-md text-on-surface-variant mt-1">Étudiant</p>
+        <div class="flex items-center gap-2 text-on-surface-variant justify-center md:justify-start mt-3">
+          <span class="material-symbols-outlined text-outline text-[20px]">mail</span>
+          <span class="text-label-md">{{ profil.email }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Aucune fiche étudiant rattachée -->
+    <div *ngIf="ficheAbsente" class="bg-surface-container-low rounded-xl p-stack-lg">
+      <p class="text-body-md text-on-surface-variant">
+        Aucune fiche étudiant n'est rattachée à ce compte : vos informations personnelles ne peuvent pas
+        encore être modifiées. Contactez le secrétariat pédagogique pour la création de votre fiche.
+      </p>
+    </div>
+
+    <div *ngIf="!ficheAbsente" class="grid grid-cols-12 gap-gutter">
+
+      <!-- Informations personnelles -->
+      <section class="col-span-12 lg:col-span-7 bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm">
+        <h3 class="text-headline-sm text-primary flex items-center gap-2 mb-6">
+          <span class="material-symbols-outlined text-secondary">badge</span>
+          Informations personnelles
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+          <div class="flex flex-col gap-base">
+            <label for="prenom" class="text-label-md text-on-surface-variant">Prénom</label>
+            <input id="prenom" type="text" name="prenom" [(ngModel)]="identite.prenom"
+                   class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+          </div>
+          <div class="flex flex-col gap-base">
+            <label for="nom" class="text-label-md text-on-surface-variant">Nom</label>
+            <input id="nom" type="text" name="nom" [(ngModel)]="identite.nom"
+                   class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+          </div>
+          <div class="flex flex-col gap-base">
+            <label for="telephone" class="text-label-md text-on-surface-variant">Téléphone</label>
+            <input id="telephone" type="tel" name="telephone" [(ngModel)]="identite.telephone"
+                   placeholder="77 123 45 67"
+                   class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+          </div>
+          <div class="flex flex-col gap-base">
+            <label for="email" class="text-label-md text-on-surface-variant">Adresse email</label>
+            <div class="relative">
+              <input id="email" type="email" [value]="profil.email" readonly
+                     class="w-full bg-surface-container border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface-variant cursor-not-allowed">
+              <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">lock</span>
+            </div>
+            <span class="text-label-sm text-outline">Sert d'identifiant de connexion, non modifiable ici.</span>
+          </div>
+        </div>
+
+        <p *ngIf="messageIdentite" class="text-label-md text-secondary mt-6">{{ messageIdentite }}</p>
+        <p *ngIf="erreurIdentite" class="text-label-md text-error mt-6">{{ erreurIdentite }}</p>
+
+        <div class="flex flex-wrap gap-stack-sm mt-6">
+          <button type="button" (click)="enregistrerIdentite()"
+                  [disabled]="!identiteModifiee || !identiteComplete || enregistrement"
+                  class="px-6 py-3 bg-secondary text-on-secondary text-label-md rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-default">
+            <span class="material-symbols-outlined text-[20px]">save</span>
+            {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
+          </button>
+          <button type="button" (click)="annulerIdentite()" *ngIf="identiteModifiee && !enregistrement"
+                  class="px-6 py-3 bg-surface-container-low text-on-surface-variant text-label-md rounded-lg border border-outline-variant hover:bg-surface-container transition-colors cursor-pointer">
+            Annuler
+          </button>
+        </div>
+      </section>
+
+      <!-- Mot de passe -->
+      <section class="col-span-12 lg:col-span-5 bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm">
+        <h3 class="text-headline-sm text-primary flex items-center gap-2 mb-6">
+          <span class="material-symbols-outlined text-secondary">lock</span>
+          Mot de passe
+        </h3>
+
+        <div class="flex flex-col gap-stack-md">
+          <div class="flex flex-col gap-base">
+            <label for="mdp-actuel" class="text-label-md text-on-surface-variant">Mot de passe actuel</label>
+            <input id="mdp-actuel" type="password" name="motDePasseActuel" [(ngModel)]="motDePasseActuel"
+                   autocomplete="current-password"
+                   class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+          </div>
+          <div class="flex flex-col gap-base">
+            <label for="mdp-nouveau" class="text-label-md text-on-surface-variant">Nouveau mot de passe</label>
+            <input id="mdp-nouveau" type="password" name="nouveauMotDePasse" [(ngModel)]="nouveauMotDePasse"
+                   autocomplete="new-password"
+                   class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+            <span class="text-label-sm text-outline">6 caractères minimum.</span>
+          </div>
+          <div class="flex flex-col gap-base">
+            <label for="mdp-confirmation" class="text-label-md text-on-surface-variant">Confirmer le nouveau mot de passe</label>
+            <input id="mdp-confirmation" type="password" name="confirmationMotDePasse" [(ngModel)]="confirmationMotDePasse"
+                   autocomplete="new-password"
+                   class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+          </div>
+        </div>
+
+        <p *ngIf="messageMotDePasse" class="text-label-md text-secondary mt-6">{{ messageMotDePasse }}</p>
+        <p *ngIf="erreurMotDePasse" class="text-label-md text-error mt-6">{{ erreurMotDePasse }}</p>
+
+        <button type="button" (click)="changerMotDePasse()"
+                [disabled]="!motDePasseActuel || !nouveauMotDePasse || !confirmationMotDePasse || changementMotDePasse"
+                class="w-full mt-6 px-6 py-3 bg-secondary text-on-secondary text-label-md rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-default">
+          <span class="material-symbols-outlined text-[20px]">key</span>
+          {{ changementMotDePasse ? 'Modification…' : 'Modifier le mot de passe' }}
+        </button>
+      </section>
+
+    </div>
+  </ng-container>
+
+</div>

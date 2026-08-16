@@ -20,5 +20,7 @@ public class EntretienResponse {
     private String lieuOuLien;
     private Float noteEntretien;
     private String appreciationGlobale;
+    private boolean confirmeParCandidat;
+    private String motifReport;
     private Long candidatId;
 }

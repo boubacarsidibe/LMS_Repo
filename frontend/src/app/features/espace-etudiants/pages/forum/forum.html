@@ -99,7 +99,7 @@
           </div>
         </div>
         <div class="flex items-center gap-stack-md">
-          <button (click)="toggleUrgence()"
+          <button [attr.aria-label]="sel.statut === 'urgent' ? 'Ne plus signaler comme urgent' : 'Signaler comme urgent'" (click)="toggleUrgence()"
                   class="p-2 transition-colors hover:text-on-surface"
                   [class.text-error]="sel.statut === 'urgent'"
                   [class.text-outline]="sel.statut !== 'urgent'"

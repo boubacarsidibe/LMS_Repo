@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MessageForum, SujetForum } from '../../models/sujet';
 import { SujetService } from '../../services/sujet.service';
 import { versHtmlForum } from '../../utils/formatage-forum';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 @Component({
   selector: 'app-forum',
@@ -25,7 +26,9 @@ export class Forum implements OnInit {
   telechargementEnCoursId: number | null = null;
   readonly caractereCode = '`';
 
-  constructor(private sujetService: SujetService) {}
+  constructor(private sujetService: SujetService,
+    private confirmation: ConfirmationService
+  ) {}
 
   ngOnInit(): void {
     this.sujetService.getAll().subscribe({
@@ -165,12 +168,19 @@ export class Forum implements OnInit {
     if (!this.sujetSelectionne) return;
     const sujetId = this.sujetSelectionne.id;
     this.optionsOuvertes = false;
-    if (!confirm(`Supprimer définitivement le sujet "${this.sujetSelectionne.titre}" ?`)) return;
-    this.sujetService.supprimer(sujetId).subscribe({
-      next: () => {
-        this.sujets = this.sujets.filter(s => s.id !== sujetId);
-        this.sujetSelectionne = this.sujets[0] ?? null;
-      },
+    this.confirmation.demander({
+      titre: 'Supprimer le sujet',
+      message: `« ${this.sujetSelectionne.titre} » et toutes ses réponses seront définitivement supprimés.`,
+      libelleConfirmer: 'Supprimer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.sujetService.supprimer(sujetId).subscribe({
+        next: () => {
+          this.sujets = this.sujets.filter(s => s.id !== sujetId);
+          this.sujetSelectionne = this.sujets[0] ?? null;
+        },
+      });
     });
   }
 

@@ -1,7 +1,16 @@
 package inpg.sn.lms.espace_etudiant.dto;
 
-import java.util.List;
+import inpg.sn.lms.espace_etudiant.enums.EnumTypeAnnonce;
 
-public record AnnonceCreateRequest(String titre, String contenu, boolean epinglee, List<Long> cohorteIds) {
-
+/**
+ * Publication d'une annonce, d'un message ou d'un mémo.
+ *
+ * <p>{@code promotionId} à {@code null} vaut diffusion à tous les étudiants.
+ */
+public record AnnonceCreateRequest(
+        String titre,
+        String contenu,
+        EnumTypeAnnonce type,
+        Long promotionId,
+        Boolean epinglee) {
 }

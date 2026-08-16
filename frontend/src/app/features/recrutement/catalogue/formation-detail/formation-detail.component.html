@@ -196,7 +196,7 @@
           <!-- ===== CTA Full-width ===== -->
           <div *ngIf="formation.ctaText && !formation.sidebar" class="text-center bg-white border border-[#c7c5d0] rounded-xl p-8">
             <p class="text-sm text-[#46464e] mb-3">{{ formation.ctaText }}</p>
-            <button type="button" routerLink="/recrutement/candidature" class="bg-[#30609a] text-white px-6 py-2.5 rounded text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#254d7d] transition-colors border-t border-[#a5c8ff]/40">
+            <button type="button" routerLink="/recrutement/sessions" class="bg-[#30609a] text-white px-6 py-2.5 rounded text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#254d7d] transition-colors border-t border-[#a5c8ff]/40">
               Postuler maintenant
             </button>
           </div>
@@ -262,13 +262,15 @@
 
             <!-- Actions -->
             <div class="flex flex-col gap-3">
-              <button *ngIf="formation.sidebar.boutonTexte" type="button" routerLink="/recrutement/candidature" class="w-full bg-[#30609a] text-white px-4 py-3 rounded text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#254d7d] transition-colors border-t border-[#a5c8ff]/40 flex items-center justify-center gap-2">
+              <button *ngIf="formation.sidebar.boutonTexte" type="button" routerLink="/recrutement/sessions" class="w-full bg-[#30609a] text-white px-4 py-3 rounded text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#254d7d] transition-colors border-t border-[#a5c8ff]/40 flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">how_to_reg</span>
                 {{ formation.sidebar.boutonTexte }}
               </button>
-              <button *ngIf="formation.sidebar.brochure" type="button" (click)="brochureIndisponible()" class="w-full bg-white text-[#000002] border border-[#c7c5d0] px-4 py-3 rounded text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#f2f4f6] transition-colors flex items-center justify-center gap-2">
+              <!-- Aucune brochure n'est encore générée côté serveur : le bouton
+                   l'annonce honnêtement au lieu d'ouvrir une boîte de dialogue. -->
+              <button *ngIf="formation.sidebar.brochure" type="button" disabled title="Brochure PDF à venir" class="w-full bg-white text-[#77767f] border border-[#c7c5d0] px-4 py-3 rounded text-sm leading-4 tracking-[0.01em] font-medium flex items-center justify-center gap-2 cursor-not-allowed opacity-70">
                 <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">download</span>
-                Brochure (PDF)
+                Brochure (PDF) — bientôt
               </button>
             </div>
 

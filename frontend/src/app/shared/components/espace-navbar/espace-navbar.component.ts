@@ -83,6 +83,7 @@ export class EspaceNavbarComponent implements OnInit {
     const r = roles[0];
     switch (r) {
       case 'ROLE_RESPONSABLE_ADMISSION': return 'RESPONSABLE ADMISSION';
+      case 'ROLE_RESPONSABLE_PEDAGOGIQUE': return 'RESPONSABLE PÉDAGOGIQUE';
       case 'ROLE_CANDIDAT': return 'CANDIDAT';
       case 'ROLE_ETUDIANT': return 'ETUDIANT';
       case 'ROLE_FORMATEUR': return 'FORMATEUR';
@@ -114,6 +115,20 @@ export class EspaceNavbarComponent implements OnInit {
 
   goToDashboard(): void {
     this.dropdownOpen = false;
-    this.router.navigate(['/espace-etudiant/accueil']);
+    if (this.isEtudiantRole) {
+      this.router.navigate(['/espace-etudiant/dashboard']);
+    } else {
+      this.router.navigate(['/espace-etudiant/formateur/dashboard-formateur']);
+    }
+  }
+
+  /** Le formateur a sa propre page profil, servie par son layout dédié. */
+  goToProfil(): void {
+    this.dropdownOpen = false;
+    if (this.isEtudiantRole) {
+      this.router.navigate(['/espace-etudiant/mon-profil']);
+    } else {
+      this.router.navigate(['/espace-etudiant/formateur/mon-profil']);
+    }
   }
 }

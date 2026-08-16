@@ -1,0 +1,95 @@
+<header class="bg-surface-container-lowest border-b border-outline-variant">
+  <div class="flex justify-between items-center w-full max-w-container-max mx-auto px-margin-desktop h-[72px]">
+    <a routerLink="/pedagogie" class="text-headline-sm text-secondary no-underline">
+      INPG<span class="text-primary"> Pédagogie</span>
+    </a>
+  </div>
+</header>
+
+<div class="flex flex-col w-full max-w-container-max mx-auto p-margin-desktop gap-stack-lg">
+
+  <a routerLink="/pedagogie" class="inline-flex items-center gap-2 text-label-md text-secondary hover:underline w-fit">
+    <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+    Retour au catalogue
+  </a>
+
+  <div *ngIf="chargement" class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm text-center">
+    <p class="text-body-md text-on-surface-variant">Chargement…</p>
+  </div>
+
+  <ng-container *ngIf="!chargement">
+    <div>
+      <span class="text-label-sm text-on-surface-variant uppercase tracking-widest block mb-2">
+        {{ cours?.code || 'Cours' }}
+      </span>
+      <h1 class="text-headline-lg text-primary">{{ cours?.titre || 'Supports du cours' }}</h1>
+      <p class="text-body-md text-on-surface-variant mt-2">
+        Les supports publiés ici sont immédiatement visibles par les étudiants dans leur espace.
+      </p>
+    </div>
+
+    <p *ngIf="erreur" class="text-label-md text-error">{{ erreur }}</p>
+
+    <!-- Publication -->
+    <section class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm">
+      <h2 class="text-headline-sm text-primary flex items-center gap-2 mb-6">
+        <span class="material-symbols-outlined text-secondary">upload_file</span>
+        Publier un support
+      </h2>
+      <div class="flex flex-wrap items-end gap-stack-md">
+        <div class="flex flex-col gap-base">
+          <label for="type" class="text-label-md text-on-surface-variant">Type de ressource</label>
+          <select id="type" name="typeRessource" [(ngModel)]="typeRessource"
+                  class="bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+            <option *ngFor="let type of typesRessource" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-base flex-1 min-w-[240px]">
+          <label for="fichier" class="text-label-md text-on-surface-variant">Fichier</label>
+          <input id="fichier" type="file" (change)="onFichierChange($event)"
+                 class="bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md text-on-surface">
+        </div>
+        <button type="button" (click)="publier()" [disabled]="!fichier || publication"
+                class="px-6 py-3 bg-secondary text-on-secondary text-label-md rounded-lg hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-default">
+          {{ publication ? 'Publication…' : 'Publier' }}
+        </button>
+      </div>
+    </section>
+
+    <!-- Liste -->
+    <section class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm">
+      <h2 class="text-headline-sm text-primary flex items-center gap-2 mb-6">
+        <span class="material-symbols-outlined text-secondary">folder_open</span>
+        Supports publiés ({{ supports.length }})
+      </h2>
+
+      <div *ngIf="supports.length === 0" class="text-center py-stack-lg">
+        <span class="material-symbols-outlined text-4xl text-outline mb-2">folder_off</span>
+        <p class="text-body-md text-on-surface-variant">Aucun support publié pour ce cours.</p>
+      </div>
+
+      <ul *ngIf="supports.length > 0" class="flex flex-col gap-stack-sm">
+        <li *ngFor="let support of supports"
+            class="flex items-center gap-4 p-4 rounded-lg border border-outline-variant">
+          <span class="material-symbols-outlined text-secondary">description</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-body-md text-on-surface truncate" [title]="support.titre">{{ support.titre }}</p>
+            <p class="text-label-sm text-on-surface-variant mt-1">
+              <span *ngIf="support.typeRessource">{{ support.typeRessource }}</span>
+              <span *ngIf="support.typeRessource && support.datePublication"> · </span>
+              <span *ngIf="support.datePublication">{{ support.datePublication | date: 'dd/MM/yyyy' }}</span>
+            </p>
+          </div>
+          <a *ngIf="support.telechargeable && support.url" [href]="support.url" title="Télécharger"
+             class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-secondary hover:bg-surface-container transition-colors no-underline">
+            <span class="material-symbols-outlined text-[20px]">download</span>
+          </a>
+          <button type="button" (click)="supprimer(support)" title="Retirer"
+                  class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-error hover:bg-error-container transition-colors border-0 bg-transparent cursor-pointer">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+          </button>
+        </li>
+      </ul>
+    </section>
+  </ng-container>
+</div>

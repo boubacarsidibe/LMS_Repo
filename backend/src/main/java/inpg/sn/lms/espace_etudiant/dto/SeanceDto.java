@@ -1,5 +1,6 @@
 package inpg.sn.lms.espace_etudiant.dto;
 
-public record SeanceDto(Long id, String titre, String date, Long coursId, String coursCode) {
+import java.time.LocalDateTime;
 
-}
+public record SeanceDto(Long id, Long coursId, String coursTitre, String titre, String type,
+        LocalDateTime dateHeure, Integer dureeMinutes, String lieuOuLien) {}

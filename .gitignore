@@ -1,0 +1,44 @@
+# ===================== Secrets =====================
+# Aucun fichier d'environnement ne doit être versionné : la seule exception est
+# le modèle .env.example, qui ne contient que des clés vides.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# ===================== Journaux =====================
+*.log
+# Rapports de plantage et de replay de la JVM (générés dans le dossier courant
+# au moment du crash, propres au poste qui les a produits).
+hs_err_pid*.log
+replay_pid*.log
+hs_err_pid*
+replay_pid*
+
+# ===================== Build =====================
+target/
+dist/
+node_modules/
+build/
+
+# ===================== Données d'exécution =====================
+# Fichiers déposés par l'application (supports de cours, pièces justificatives,
+# photos). En conteneur ils vivent dans le volume Docker « backend_uploads » ;
+# ce dossier n'apparaît en local que si l'on lance le backend hors Docker.
+uploads/
+
+# ===================== Outils / IDE =====================
+.DS_Store
+Thumbs.db
+*.iml
+.idea/
+# Configuration locale de l'assistant IA (permissions, préférences de poste) :
+# propre à chaque développeur, pas à partager sur le dépôt.
+.claude/
+
+# ===================== Documents de travail =====================
+# Rapports hebdomadaires et exports bureautiques : livrables de suivi, pas du code.
+~$*.xlsx
+~$*.docx

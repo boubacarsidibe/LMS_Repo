@@ -54,10 +54,16 @@ public class AdminController {
         if (user == null) return ResponseEntity.notFound().build();
 
         user.getRoles().clear();
+        // Un compte ne peut détenir qu'un seul rôle à la fois (Candidat, Étudiant, Formateur
+        // ou Responsable Admission) : on n'applique que le premier rôle valide demandé, même
+        // si le client en envoie plusieurs.
         if (request != null && request.getRoles() != null) {
             for (String roleCode : request.getRoles()) {
                 Role r = roleRepository.findByCode(roleCode);
-                if (r != null) user.addRole(r);
+                if (r != null) {
+                    user.addRole(r);
+                    break;
+                }
             }
         }
         userRepository.save(user);
@@ -96,6 +102,7 @@ public class AdminController {
     private String telephoneProvisoire(User user) {
         return "N/A-" + user.getId();
     }
+    
 
     /** Dérive un [nom, prenom] provisoire depuis le username (ex: "amina_diop" -> ["diop", "amina"]), à corriger par l'intéressé depuis son profil. */
     private String[] deriverNomPrenom(String username) {

@@ -1,21 +1,23 @@
 <!-- TopNavBar : utilisée uniquement dans l'espace étudiant authentifié
      (route guardée ROLE_ETUDIANT) — pas de branche "non connecté" ni de
      notifications de candidature, qui n'ont pas de sens pour cette page. -->
-<header class="bg-white/95 backdrop-blur-sm border-b border-[#c7c5d0]/40 fixed top-0 left-0 right-0 z-50">
+<header class="bg-white/95 backdrop-blur-sm border-b border-outline-variant/40 fixed top-0 left-0 right-0 z-50">
   <div class="flex justify-between items-center w-full max-w-[1280px] mx-auto px-4 md:px-10 h-[72px]">
     <!-- Brand -->
-    <a routerLink="/espace-etudiant/accueil" class="text-2xl font-extrabold tracking-tight text-[#30609a] no-underline hover:opacity-80 transition-opacity">
+    <a routerLink="/espace-etudiant/accueil" class="text-2xl font-extrabold tracking-tight text-primary no-underline hover:opacity-80 transition-opacity">
       INPG<span class="text-[#131741]"> LMS</span>
     </a>
 
     <!-- Navigation Links (Desktop) - centered -->
     <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
-      <a routerLink="/espace-etudiant/accueil" routerLinkActive="text-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Accueil</a>
-      <a *ngIf="isEtudiantRole" routerLink="/espace-etudiant/mes-formations" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Mes formations</a>
-      <a routerLink="/espace-etudiant/annonces" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Annonces</a>
-      <a routerLink="/espace-etudiant/phototheque" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Photothèque</a>
-      <a routerLink="/espace-etudiant/certificats" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Certificats</a>
-      <a *ngIf="isFormateurRole" routerLink="/espace-etudiant/formateur/dashboard-formateur" routerLinkActive="text-[#30609a] border-b-2 border-[#30609a]" class="px-3 py-2 text-sm font-medium text-[#46464e] hover:text-[#30609a]">Espace formateur</a>
+      <a routerLink="/espace-etudiant/accueil" routerLinkActive="text-primary border-b-2 border-primary" [routerLinkActiveOptions]="{ exact: true }" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Accueil</a>
+      <a *ngIf="isEtudiantRole" routerLink="/espace-etudiant/mes-formations" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
+      <a *ngIf="isEtudiantRole" routerLink="/espace-etudiant/cours" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Cours</a>
+      <a *ngIf="isEtudiantRole" routerLink="/espace-etudiant/dashboard" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Dashboard</a>
+      <a routerLink="/espace-etudiant/annonces" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Annonces</a>
+      <a routerLink="/espace-etudiant/phototheque" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Photothèque</a>
+      <a routerLink="/espace-etudiant/certificats" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Certificats</a>
+      <a *ngIf="isFormateurRole" routerLink="/espace-etudiant/formateur/dashboard-formateur" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Espace formateur</a>
     </nav>
 
     <!-- Avatar utilisateur + dropdown -->
@@ -24,16 +26,16 @@
         <button
           id="profile-btn"
           (click)="toggleDropdown()"
-          class="flex items-center gap-3 p-1.5 rounded-full hover:bg-[#f2f4f6] transition-colors cursor-pointer border-0 bg-transparent"
+          class="flex items-center gap-3 p-1.5 rounded-full hover:bg-surface-container-low transition-colors cursor-pointer border-0 bg-transparent"
           aria-label="Menu utilisateur">
-          <div class="w-9 h-9 rounded-full bg-[#30609a] text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+          <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold shadow-sm">
             {{ userInitials }}
           </div>
           <div class="hidden sm:flex flex-col items-start leading-tight">
-            <span class="text-sm font-medium text-[#191c1e]">{{ userDisplayName }}</span>
-            <span class="text-xs uppercase text-[#77767f]">{{ getUserRoleLabel() }}</span>
+            <span class="text-sm font-medium text-on-surface">{{ userDisplayName }}</span>
+            <span class="text-xs uppercase text-outline">{{ getUserRoleLabel() }}</span>
           </div>
-          <span class="material-symbols-outlined text-[#77767f] text-[20px]" style="font-variation-settings: 'FILL' 0;">
+          <span class="material-symbols-outlined text-outline text-[20px]" style="font-variation-settings: 'FILL' 0;">
             {{ dropdownOpen ? 'expand_less' : 'expand_more' }}
           </span>
         </button>
@@ -42,16 +44,20 @@
         <div
           *ngIf="dropdownOpen"
           id="profile-dropdown"
-          class="absolute right-0 mt-2 w-56 bg-white border border-[#c7c5d0] rounded-xl shadow-lg py-1 z-50 origin-top-right animate-in fade-in zoom-in-95">
-          <div class="px-4 py-3 border-b border-[#c7c5d0]/40">
+          class="absolute right-0 mt-2 w-56 bg-white border border-outline-variant rounded-xl shadow-lg py-1 z-50 origin-top-right animate-in fade-in zoom-in-95">
+          <div class="px-4 py-3 border-b border-outline-variant/40">
             <p class="text-sm font-semibold text-[#000002] capitalize">{{ userDisplayName }}</p>
           </div>
-          <a (click)="goToDashboard()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#f2f4f6] hover:text-[#30609a] cursor-pointer transition-colors">
+          <a (click)="goToDashboard()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
             <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">dashboard</span>
             Tableau de bord
           </a>
-          <hr class="my-1 border-[#c7c5d0]/40">
-          <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#46464e] hover:bg-[#ffdad6] hover:text-[#ba1a1a] cursor-pointer transition-colors">
+          <a (click)="goToProfil()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
+            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">person</span>
+            Mon profil
+          </a>
+          <hr class="my-1 border-outline-variant/40">
+          <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
             <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">logout</span>
             Déconnexion
           </a>

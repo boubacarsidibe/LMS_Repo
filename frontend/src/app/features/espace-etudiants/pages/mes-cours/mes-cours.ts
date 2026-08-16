@@ -1,7 +1,7 @@
 import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Cours } from '../../models/cours';
 import { Cohorte } from '../../models/cohorte';
 import { Support } from '../../models/support';
@@ -12,6 +12,9 @@ import { CohorteService } from '../../services/cohorte.service';
 import { SupportService } from '../../services/support.service';
 import { SeanceService } from '../../services/seance.service';
 import { PresenceService } from '../../services/presence.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-mes-cours',
@@ -54,13 +57,25 @@ export class MesCours implements OnInit {
   uploadMessage = '';
   uploadError = '';
 
+  suppressionCoursEnCoursId: number | null = null;
+
+  /**
+   * Cours à mettre en avant, transmis par « Ajuster le cours » depuis la page des
+   * retours : sans cela, on arrivait sur la liste complète sans savoir lequel
+   * l'avis visait.
+   */
+  coursMisEnAvantId: number | null = null;
+
   constructor(
     private fb: FormBuilder,
     private coursService: CoursService,
     private cohorteService: CohorteService,
     private supportService: SupportService,
     private seanceService: SeanceService,
-    private presenceService: PresenceService
+    private presenceService: PresenceService,
+    private confirmation: ConfirmationService,
+    private notifications: NotificationService,
+    private route: ActivatedRoute
   ) {
     // datePublication n'est pas obligatoire : par defaut on publie immediatement.
     // La renseigner dans le futur programme la mise en ligne (la ressource reste
@@ -75,7 +90,7 @@ export class MesCours implements OnInit {
       titre: ['', Validators.required],
       semestre: [''],
       description: [''],
-      volumeHoraire: [0, [Validators.min(0)]]
+      volumeHoraire: [0, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -92,17 +107,26 @@ export class MesCours implements OnInit {
   }
 
   supprimerSupport(support: Support): void {
-    if (!confirm(`Supprimer définitivement « ${support.titre} » ?`)) {
-      return;
-    }
-    this.suppressionEnCoursId = support.id;
-    this.supportService.supprimer(support.id).subscribe({
-      next: () => {
-        this.suppressionEnCoursId = null;
-        this.chargerSupports();
-        this.loadCours(); // le compteur de ressources de la carte cours change
-      },
-      error: () => { this.suppressionEnCoursId = null; }
+    this.confirmation.demander({
+      titre: 'Supprimer la ressource',
+      message: `« ${support.titre} » sera définitivement supprimée de ce cours.`,
+      libelleConfirmer: 'Supprimer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.suppressionEnCoursId = support.id;
+      this.supportService.supprimer(support.id).subscribe({
+        next: () => {
+          this.suppressionEnCoursId = null;
+          this.chargerSupports();
+          this.loadCours(); // le compteur de ressources de la carte cours change
+          this.notifications.succes('Ressource supprimée.');
+        },
+        error: () => {
+          this.suppressionEnCoursId = null;
+          this.notifications.erreur('La suppression de la ressource a échoué.');
+        }
+      });
     });
   }
 
@@ -115,12 +139,28 @@ export class MesCours implements OnInit {
   }
 
   ngOnInit(): void {
+    // ?cours=<id> vient de « Ajuster le cours » sur la page des retours.
+    const cible = this.route.snapshot.queryParamMap.get('cours');
+    this.coursMisEnAvantId = cible ? Number(cible) : null;
+
     this.loadCours();
     this.chargerSupports();
     this.cohorteService.getAll().subscribe({
       next: (data) => (this.toutesCohortes = data || []),
       error: () => (this.toutesCohortes = [])
     });
+  }
+
+  /**
+   * Amène la carte ciblée à l'écran une fois la liste rendue. Le délai laisse
+   * Angular peindre les cartes : sans lui, l'élément n'existe pas encore.
+   */
+  private mettreEnAvantLeCoursCible(): void {
+    if (this.coursMisEnAvantId === null) return;
+    setTimeout(() => {
+      document.getElementById('cours-' + this.coursMisEnAvantId)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   }
 
   ouvrirGestionCohortes(cours: Cours) {
@@ -198,6 +238,29 @@ export class MesCours implements OnInit {
         this.isSavingEdition = false;
         this.editionError = error.error?.message || "La modification du cours a échoué.";
       }
+    });
+  }
+
+  supprimerCours(cours: Cours): void {
+    this.confirmation.demander({
+      titre: 'Supprimer le cours',
+      message: `« ${cours.titre} » et toutes ses ressources seront définitivement supprimés.`,
+      libelleConfirmer: 'Supprimer le cours',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.suppressionCoursEnCoursId = cours.id;
+      this.coursService.delete(cours.id).subscribe({
+        next: () => {
+          this.suppressionCoursEnCoursId = null;
+          this.loadCours();
+          this.notifications.succes(`Le cours « ${cours.titre} » a été supprimé.`);
+        },
+        error: () => {
+          this.suppressionCoursEnCoursId = null;
+          this.notifications.erreur('La suppression du cours a échoué.');
+        }
+      });
     });
   }
 
@@ -285,6 +348,7 @@ export class MesCours implements OnInit {
     this.coursService.getAll().subscribe({
       next: (data) => {
         this.cours = data || [];
+        this.mettreEnAvantLeCoursCible();
       },
       error: () => {
         this.cours = [];
@@ -379,5 +443,11 @@ export class MesCours implements OnInit {
         || (c.cohortes || []).some(coh => String(coh.id) === this.cohorteSelectionnee);
       return correspondRecherche && correspondSemestre && correspondCohorte;
     });
+  }
+
+  urlImage(cours: Cours): string {
+    if (!cours.imageUrl) return '';
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    return `${baseUrl}${cours.imageUrl}`;
   }
 }

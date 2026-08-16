@@ -35,12 +35,13 @@ export class ResponsableUsersComponent implements OnInit {
     });
   }
 
-  onToggleRole(user: User, roleCode: string, checked: boolean) {
-    // Ensure we operate on strings (role codes). Backend expects List<String>.
-    const currentRoles = (user.roles || []).map((r: any) => typeof r === 'string' ? r : r.code);
-    const rolesSet = new Set(currentRoles);
-    if (checked) rolesSet.add(roleCode); else rolesSet.delete(roleCode);
-    const roles = Array.from(rolesSet);
+  /** Un compte ne peut détenir qu'un seul rôle à la fois : le sélecteur est un choix unique. */
+  currentRole(user: User): string {
+    return (user.roles && user.roles[0]) || '';
+  }
+
+  onRoleChange(user: User, newRoleCode: string) {
+    const roles = newRoleCode ? [newRoleCode] : [];
     this.admin.changeRoles(user.id, roles).subscribe({
       next: (updated: any) => { user.roles = (updated.roles || []).map((r: any) => typeof r === 'string' ? r : r.code); },
       error: () => { alert('Erreur lors de la mise à jour des rôles'); this.loadUsers(); }

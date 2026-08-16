@@ -43,22 +43,28 @@
         </div>
       </div>
     </div>
-</section>
+  </section>
 
   <!-- Grille principale -->
   <section class="px-margin-desktop grid grid-cols-12 gap-gutter pb-stack-lg">
 
-    <!-- Cartes de cours (dynamique) -->
-    <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-gutter">
-
-        <div *ngFor="let c of coursFiltres" class="group bg-surface-container-lowest rounded-2xl ...">
-        <div class="h-3 w-full" [ngClass]="c.couleurBandeau"></div>
+    <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-gutter items-start">
+      <div *ngFor="let c of coursFiltres" [id]="'cours-' + c.id"
+           class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden border"
+           [ngClass]="coursMisEnAvantId === c.id
+                        ? 'border-secondary ring-2 ring-secondary/30'
+                        : 'border-outline-variant/30'">
+        <!-- Image ou fallback couleur -->
+        <div class="h-3 w-full" [ngClass]="!c.imageUrl ? c.couleurBandeau : ''">
+          <img *ngIf="c.imageUrl" [src]="urlImage(c)" class="w-full h-full object-cover" alt="">
+        </div>
         <div class="p-stack-md flex flex-col h-full">
           <div class="flex justify-between items-start mb-4">
             <span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full font-label-sm uppercase tracking-tighter">{{ c.code }}</span>
             <button (click)="ouvrirEditionCours(c)" title="Modifier le cours" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">edit</span></button>
           </div>
           <h3 class="font-headline-sm text-on-surface mb-2 group-hover:text-secondary transition-colors">{{ c.titre }}</h3>
+          <p class="text-body-sm text-on-surface-variant line-clamp-2 mb-2" *ngIf="c.description">{{ c.description }}</p>
           <div class="grid grid-cols-2 gap-stack-sm my-4">
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-outline text-[18px]">group</span>
@@ -78,7 +84,7 @@
               <div class="h-full bg-secondary rounded-full transition-all duration-1000" [style.width.%]="c.progression"></div>
             </div>
           </div>
-          <div class="grid grid-cols-4 gap-2 mt-6">
+          <div class="grid grid-cols-5 gap-2 mt-6">
             <button (click)="ouvrirGestionCohortes(c)" class="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-secondary/5 transition-colors text-on-surface-variant hover:text-secondary">
               <span class="material-symbols-outlined text-[20px]">inventory_2</span>
               <span class="text-[10px] font-bold uppercase">Gérer</span>
@@ -95,6 +101,10 @@
               <span class="material-symbols-outlined text-[20px]">query_stats</span>
               <span class="text-[10px] font-bold uppercase">Stats</span>
             </button>
+            <button [disabled]="suppressionCoursEnCoursId === c.id" (click)="supprimerCours(c)" class="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-error-container/20 transition-colors text-on-surface-variant hover:text-error disabled:opacity-40">
+              <span class="material-symbols-outlined text-[20px]">delete</span>
+              <span class="text-[10px] font-bold uppercase">Suppr.</span>
+            </button>
           </div>
         </div>
       </div>
@@ -110,7 +120,6 @@
             {{ mesSupports.length }}
           </span>
         </div>
-
         <p *ngIf="chargementSupports" class="font-body-sm text-on-surface-variant">Chargement…</p>
 
         <p *ngIf="!chargementSupports && !mesSupports.length" class="font-body-sm text-on-surface-variant py-4 text-center">
@@ -152,7 +161,7 @@
 
     <!-- Panneau dépôt rapide -->
     <aside #depotRapide class="col-span-12 lg:col-span-4 space-y-stack-lg">
-      <div class="bg-surface-container-lowest p-stack-lg rounded-2xl shadow-sm border border-outline-variant/20 sticky top-24">
+      <div id="depot-rapide" class="bg-surface-container-lowest p-stack-lg rounded-2xl shadow-sm border border-outline-variant/20 sticky top-24">
         <div class="flex items-center gap-3 mb-stack-md">
           <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
             <span class="material-symbols-outlined">upload_file</span>
@@ -160,39 +169,39 @@
           <h3 class="font-headline-sm text-on-surface">Dépôt Rapide</h3>
         </div>
         <div class="space-y-stack-md">
-         <div (click)="ouvrirExplorateur()" class="border-2 border-dashed border-outline-variant rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-surface-container-low/50 hover:bg-secondary/5 hover:border-secondary transition-all cursor-pointer group">
+          <div (click)="ouvrirExplorateur()" class="border-2 border-dashed border-outline-variant rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-surface-container-low/50 hover:bg-secondary/5 hover:border-secondary transition-all cursor-pointer group">
             <span class="material-symbols-outlined text-[48px] text-outline group-hover:text-secondary transition-colors">cloud_upload</span>
             <div class="text-center">
-                <p class="font-label-md text-on-surface">Glissez vos fichiers ici</p>
-                <p class="text-body-sm text-outline">PDF, PPTX ou ZIP (Max. 50MB)</p>
+              <p class="font-label-md text-on-surface">Glissez vos fichiers ici</p>
+              <p class="text-body-sm text-outline">PDF, PPTX ou ZIP (Max. 50MB)</p>
             </div>
             <input #fileInput class="hidden" type="file" (change)="onFichierSelectionne($event)">
-         </div>
+          </div>
         </div>
         <p *ngIf="fichierSelectionne" class="text-body-sm text-secondary font-medium">
           Fichier sélectionné : {{ fichierSelectionne.name }}
         </p>
-          <form [formGroup]="depotForm" (ngSubmit)="onSubmit()" class="space-y-stack-md">
-            <div class="space-y-base">
-                <label class="font-label-md text-on-surface-variant">Type de ressource</label>
-                <div class="grid grid-cols-1 gap-2">
-                <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                    <input formControlName="typeRessource" value="pdf" class="w-4 h-4 accent-secondary" name="res_type" type="radio">
-                    <span class="material-symbols-outlined text-on-surface-variant">description</span>
-                    <span class="font-body-sm text-on-surface">Support de cours (PDF)</span>
-                </label>
-                <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                    <input formControlName="typeRessource" value="lien" class="w-4 h-4 accent-secondary" name="res_type" type="radio">
-                    <span class="material-symbols-outlined text-on-surface-variant">link</span>
-                    <span class="font-body-sm text-on-surface">Lien externe</span>
-                </label>
-                <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                    <input formControlName="typeRessource" value="video" class="w-4 h-4 accent-secondary" name="res_type" type="radio">
-                    <span class="material-symbols-outlined text-on-surface-variant">videocam</span>
-                    <span class="font-body-sm text-on-surface">Visioconférence / Vidéo</span>
-                </label>
-                </div>
+        <form [formGroup]="depotForm" (ngSubmit)="onSubmit()" class="space-y-stack-md">
+          <div class="space-y-base">
+            <label class="font-label-md text-on-surface-variant">Type de ressource</label>
+            <div class="grid grid-cols-1 gap-2">
+              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+                <input formControlName="typeRessource" value="pdf" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
+                <span class="material-symbols-outlined text-on-surface-variant">description</span>
+                <span class="font-body-sm text-on-surface">Support de cours (PDF)</span>
+              </label>
+              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+                <input formControlName="typeRessource" value="lien" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
+                <span class="material-symbols-outlined text-on-surface-variant">link</span>
+                <span class="font-body-sm text-on-surface">Lien externe</span>
+              </label>
+              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+                <input formControlName="typeRessource" value="video" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
+                <span class="material-symbols-outlined text-on-surface-variant">videocam</span>
+                <span class="font-body-sm text-on-surface">Visioconférence / Vidéo</span>
+              </label>
             </div>
+          </div>
 
             <div class="space-y-base">
                 <label class="font-label-md text-on-surface-variant">Cours cible</label>
@@ -238,7 +247,6 @@
             </button>
             </form>
         </div>
-    
 
       <div class="p-stack-md bg-surface-container rounded-2xl space-y-stack-sm">
         <h4 class="font-label-md text-on-surface flex items-center gap-2">
@@ -333,7 +341,7 @@
           <button *ngFor="let s of seancesDuCours" (click)="selectionnerSeance(s)"
                   class="flex items-center justify-between p-3 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors text-left">
             <span class="font-body-sm text-on-surface">{{ s.titre }}</span>
-            <span class="text-label-sm text-outline">{{ s.date | date:'dd/MM/yyyy' }}</span>
+            <span class="text-label-sm text-outline">{{ s.dateHeure | date:'dd/MM/yyyy' }}</span>
           </button>
           <p *ngIf="!seancesDuCours.length" class="text-body-sm text-on-surface-variant py-2">Aucune séance pour l'instant.</p>
         </div>
@@ -364,7 +372,7 @@
           Retour aux séances
         </button>
         <h3 class="font-headline-sm text-on-surface">{{ seanceSelectionnee.titre }}</h3>
-        <p class="text-body-sm text-on-surface-variant">{{ seanceSelectionnee.date | date:'dd/MM/yyyy' }}</p>
+        <p class="text-body-sm text-on-surface-variant">{{ seanceSelectionnee.dateHeure | date:'dd/MM/yyyy' }}</p>
 
         <p *ngIf="chargementRoster" class="text-body-sm text-on-surface-variant py-4 text-center">Chargement…</p>
 

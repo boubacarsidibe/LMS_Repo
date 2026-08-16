@@ -41,8 +41,10 @@ export class Auth {
     const roles: string[] = (user as any)?.roles || [];
     if (roles.includes('ROLE_RESPONSABLE_ADMISSION')) {
       router.navigate(['/responsable-admission']);
+    } else if (roles.includes('ROLE_RESPONSABLE_PEDAGOGIQUE')) {
+      router.navigate(['/pedagogie']);
     } else if (roles.includes('ROLE_CANDIDAT')) {
-      router.navigate(['/recrutement/catalogue']);
+      router.navigate(['/recrutement/suivi']);
     } else if (roles.includes('ROLE_ETUDIANT')) {
       router.navigate(['/espace-etudiant/accueil']);
     } else if (roles.includes('ROLE_FORMATEUR')) {

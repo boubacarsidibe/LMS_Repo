@@ -69,8 +69,8 @@ public class CertificatPdfService {
 
                 ecrireCentre(content, texteFont, 12, "pour avoir suivi avec succes la formation", largeur, hauteur - 280);
                 ecrireCentre(content, titreFont, 16, certificat.getIntituleFormation(), largeur, hauteur - 305);
-                if (certificat.getCohorte() != null) {
-                    ecrireCentre(content, texteFont, 11, "Cohorte : " + certificat.getCohorte().getLibelle(), largeur, hauteur - 328);
+                if (certificat.getPromotion() != null) {
+                    ecrireCentre(content, texteFont, 11, "Promotion : " + certificat.getPromotion().getLibelle(), largeur, hauteur - 328);
                 }
 
                 ecrireCentre(content, texteFont, 11,

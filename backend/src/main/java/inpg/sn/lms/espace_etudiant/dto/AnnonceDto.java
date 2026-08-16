@@ -1,8 +1,18 @@
 package inpg.sn.lms.espace_etudiant.dto;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
-public record AnnonceDto(Long id, String titre, String contenu, String auteur, String date, boolean epinglee,
-        List<CohorteDto> cohortes) {
+import inpg.sn.lms.espace_etudiant.enums.EnumTypeAnnonce;
 
+/** Communication de l'INPG telle que présentée à l'étudiant. */
+public record AnnonceDto(
+        Long id,
+        String titre,
+        String contenu,
+        EnumTypeAnnonce type,
+        LocalDateTime datePublication,
+        String auteur,
+        String promotionLibelle,
+        boolean epinglee,
+        boolean lue) {
 }

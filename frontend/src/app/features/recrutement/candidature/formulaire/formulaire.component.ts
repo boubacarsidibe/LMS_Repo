@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { RecrutementService, SessionCandidatureResponse, CandidatureRequest, CandidatureResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
+import { CandidatNavbarComponent } from '../../../../shared/components/candidat-navbar/candidat-navbar.component';
 import { Auth } from '../../../../core/auth/services/authService';
 
 const STORAGE_KEY = 'candidature_brouillon';
@@ -19,7 +19,7 @@ interface CandidatureFormData {
   etape: number;
   nom: string; prenom: string; email: string; telephone: string;
   adresse: string; phonePrefix: string; dateNaissance: string; nationalite: string;
-  genre: string; profession: string; anneesExperience: string;
+  genre: string; profession: string; anneesExperience: number | null;
   sessionCandidatureId: number | null;
   typeFormation: string; niveauVise: string; programme: string; campus: string;
   sessionRentree: string; niveauActuel: string; etablissement: string;
@@ -31,7 +31,7 @@ interface CandidatureFormData {
 @Component({
   selector: 'app-formulaire',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, CandidatNavbarComponent],
   templateUrl: './formulaire.component.html'
 })
 export class FormulaireComponent implements OnInit {
@@ -52,7 +52,7 @@ export class FormulaireComponent implements OnInit {
   data: CandidatureFormData = {
     etape: 1, nom: '', prenom: '', email: '', telephone: '', adresse: '',
     phonePrefix: '+221', dateNaissance: '', nationalite: '',
-    genre: '', profession: '', anneesExperience: '',
+    genre: '', profession: '', anneesExperience: null,
     sessionCandidatureId: null,
     typeFormation: '', niveauVise: '', programme: '', campus: '',
     sessionRentree: '', niveauActuel: '', etablissement: '',
@@ -61,13 +61,25 @@ export class FormulaireComponent implements OnInit {
     consentement: false,
   };
 
+  /** Session imposée via l'URL (ex: venant de la page « Sessions ouvertes ») : prioritaire sur un brouillon existant. */
+  private sessionImposeeParUrl: number | null = null;
+
   constructor(
     private recrutementService: RecrutementService,
     private router: Router,
+    private route: ActivatedRoute,
     private auth: Auth
   ) {}
 
   ngOnInit(): void {
+    // Session choisie depuis la page « Sessions ouvertes » (?session=<id>) : prioritaire
+    // sur toute session déjà présente dans un brouillon restauré.
+    const sessionParam = this.route.snapshot.queryParamMap.get('session');
+    if (sessionParam) {
+      this.sessionImposeeParUrl = Number(sessionParam);
+      this.data.sessionCandidatureId = this.sessionImposeeParUrl;
+    }
+
     // Vérification immédiate : si une candidature active existe, rediriger sans afficher le formulaire
     this.recrutementService.getMesCandidatures().subscribe({
       next: (candidatures) => {
@@ -123,6 +135,10 @@ export class FormulaireComponent implements OnInit {
       this.data = { ...this.data, ...parsed };
       this.etape = this.data.etape || 1;
     } catch { /* ignore */ }
+    // Une session choisie explicitement depuis l'URL prime sur celle d'un brouillon restauré.
+    if (this.sessionImposeeParUrl !== null) {
+      this.data.sessionCandidatureId = this.sessionImposeeParUrl;
+    }
   }
 
   get etapeLabels(): string[] { return ['Profil', 'Formation', 'Parcours', 'Documents']; }
@@ -155,16 +171,74 @@ export class FormulaireComponent implements OnInit {
     return !['Homme', 'Femme', 'Autre'].includes(this.data.genre);
   }
 
-  /** Champ optionnel : invalide seulement si rempli avec une valeur hors bornes plausibles. */
+  /** Champ optionnel (input number : ngModel le lie déjà à un number|null) : invalide seulement si hors bornes plausibles. */
   get anneesExperienceInvalide(): boolean {
-    if (!this.data.anneesExperience.trim()) return false;
-    const n = Number(this.data.anneesExperience);
+    const n = this.data.anneesExperience;
+    if (n === null || n === undefined) return false;
     return !Number.isFinite(n) || n < 0 || n > 60;
   }
 
   /** La session choisie doit exister parmi celles réellement publiées/ouvertes par l'admin. */
   get sessionInvalide(): boolean {
     return !this.sessions.some(s => s.id === this.data.sessionCandidatureId);
+  }
+
+  get sessionSelectionnee(): SessionCandidatureResponse | undefined {
+    return this.sessions.find(s => s.id === this.data.sessionCandidatureId);
+  }
+
+  private calculerAge(dateNaissance: string): number | null {
+    if (!dateNaissance) return null;
+    const naissance = new Date(dateNaissance);
+    if (Number.isNaN(naissance.getTime())) return null;
+    const aujourdhui = new Date();
+    let age = aujourdhui.getFullYear() - naissance.getFullYear();
+    const moisEcoule = aujourdhui.getMonth() - naissance.getMonth();
+    if (moisEcoule < 0 || (moisEcoule === 0 && aujourdhui.getDate() < naissance.getDate())) age--;
+    return age;
+  }
+
+  /**
+   * Avertit le candidat, dès qu'il a rempli assez d'informations, s'il ne semble pas
+   * remplir les critères de la session choisie — plutôt que de le laisser découvrir
+   * un rejet automatique après la soumission (TDR : filtre appliqué "sur ces champs").
+   * Purement informatif : ne bloque jamais la progression, la décision finale reste
+   * celle du serveur au moment de la soumission.
+   */
+  get avertissementsCriteres(): string[] {
+    const session = this.sessionSelectionnee;
+    if (!session || !session.criteresActifs) return [];
+    const avertissements: string[] = [];
+
+    if (session.criteresNiveauEtudeMinimum && this.data.niveauActuel) {
+      const niveaux = ['Baccalauréat', 'Licence (L3)', 'Master 1 (M1)', 'Master 2 (M2)'];
+      const seuil = niveaux.indexOf(session.criteresNiveauEtudeMinimum);
+      const actuel = niveaux.indexOf(this.data.niveauActuel);
+      if (seuil >= 0 && actuel >= 0 && actuel < seuil) {
+        avertissements.push(`Niveau d'études minimum requis pour cette session : ${session.criteresNiveauEtudeMinimum}.`);
+      }
+    }
+
+    const age = this.calculerAge(this.data.dateNaissance);
+    if (age !== null) {
+      if (session.criteresAgeMinimum && age < session.criteresAgeMinimum) {
+        avertissements.push(`Âge minimum requis pour cette session : ${session.criteresAgeMinimum} ans.`);
+      }
+      if (session.criteresAgeMaximum && age > session.criteresAgeMaximum) {
+        avertissements.push(`Âge maximum autorisé pour cette session : ${session.criteresAgeMaximum} ans.`);
+      }
+    }
+
+    if (session.criteresGenre && this.data.genre && session.criteresGenre !== this.data.genre) {
+      avertissements.push(`Cette session est réservée aux candidats de genre "${session.criteresGenre}".`);
+    }
+
+    if (session.criteresExperienceMinimale && this.data.anneesExperience !== null
+        && this.data.anneesExperience < session.criteresExperienceMinimale) {
+      avertissements.push(`Expérience minimale requise pour cette session : ${session.criteresExperienceMinimale} an(s).`);
+    }
+
+    return avertissements;
   }
 
   precedent(): void { if (this.etape > 1) { this.etape--; this.saveDraft(); } }
@@ -224,7 +298,7 @@ export class FormulaireComponent implements OnInit {
         dateNaissance: this.data.dateNaissance, nationalite: this.data.nationalite,
         niveauEtude: this.data.niveauActuel,
         genre: this.data.genre, profession: this.data.profession,
-        anneesExperience: this.data.anneesExperience,
+        anneesExperience: this.data.anneesExperience !== null ? String(this.data.anneesExperience) : '',
       }),
       informationsAcademiques: JSON.stringify({
         typeFormation: this.data.typeFormation, niveauVise: this.data.niveauVise,

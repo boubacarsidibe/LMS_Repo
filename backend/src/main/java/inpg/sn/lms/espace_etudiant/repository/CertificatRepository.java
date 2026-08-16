@@ -11,13 +11,13 @@ import inpg.sn.lms.espace_etudiant.entity.Certificat;
 public interface CertificatRepository extends JpaRepository<Certificat, Long> {
 
     @Override
-    @EntityGraph(attributePaths = { "etudiant", "cohorte" })
+    @EntityGraph(attributePaths = { "etudiant", "promotion" })
     List<Certificat> findAll();
 
     @Override
-    @EntityGraph(attributePaths = { "etudiant", "cohorte" })
+    @EntityGraph(attributePaths = { "etudiant", "promotion" })
     Optional<Certificat> findById(Long id);
 
-    @EntityGraph(attributePaths = { "etudiant", "cohorte" })
+    @EntityGraph(attributePaths = { "etudiant", "promotion" })
     List<Certificat> findByEtudiant_IdOrderByDateEmissionDesc(Long etudiantId);
 }

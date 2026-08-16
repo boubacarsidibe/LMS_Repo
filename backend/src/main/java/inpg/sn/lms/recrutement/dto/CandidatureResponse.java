@@ -27,14 +27,19 @@ public class CandidatureResponse {
     private String candidatNom;
     private String candidatPrenom;
     private String candidatEmail;
+
     /** Champs démographiques du candidat, exposés uniquement pour les statistiques du back-office. */
     private String candidatGenre;
     private String candidatProfession;
     private Integer candidatAnneesExperience;
+    
     private LocalDate candidatDateNaissance;
     private String candidatNiveauEtude;
+    private String candidatNationalite;
     private Long sessionCandidatureId;
     private String sessionCandidatureLibelle;
+    private String informationsAcademiques;
+    private String informationsProfessionnelles;
     private List<PieceJustificativeResponse> piecesJustificatives;
     private PaiementResponse paiement;
 }

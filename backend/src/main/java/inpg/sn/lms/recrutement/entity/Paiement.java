@@ -47,6 +47,15 @@ public class Paiement {
     @Column
     private LocalDateTime datePaiement;
 
+    /**
+     * Moyen de paiement choisi par le candidat (ex. « Wave », « Carte Bancaire »).
+     * Persisté pour que le reçu reste fidèle quand on le régénère : il ne peut pas
+     * être reconstitué depuis l'état du formulaire une fois la page quittée.
+     * Null pour les paiements antérieurs à l'ajout de la colonne.
+     */
+    @Column
+    private String methodePaiement;
+
     @OneToOne
     @JoinColumn(name = "candidature_id", unique = true)
     private Candidature candidature;

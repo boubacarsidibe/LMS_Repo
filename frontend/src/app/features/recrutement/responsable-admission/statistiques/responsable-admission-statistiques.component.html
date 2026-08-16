@@ -92,7 +92,7 @@
   <!-- Statistiques démographiques -->
   <div *ngIf="prefs.showDemographie" class="mt-stack-lg">
     <h3 class="font-headline-sm text-headline-sm text-primary mb-4">Profil démographique des candidats</h3>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-gutter">
       <!-- Genre -->
       <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
         <h4 class="font-label-lg text-label-lg text-on-surface mb-4">Genre</h4>
@@ -143,6 +143,23 @@
           <p *ngIf="nbSansProfessionDeclaree > 0" class="font-body-sm text-body-sm text-on-surface-variant pt-1">{{ nbSansProfessionDeclaree }} candidat(s) sans profession déclarée.</p>
         </div>
         <ng-template #aucuneDonneeProfession><p class="text-body-sm text-on-surface-variant py-6 text-center">Aucune donnée.</p></ng-template>
+      </div>
+
+      <!-- Nationalités -->
+      <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+        <h4 class="font-label-lg text-label-lg text-on-surface mb-4">Nationalités</h4>
+        <div class="space-y-3" *ngIf="topNationalites.length > 0; else aucuneDonneeNationalite">
+          <div *ngFor="let seg of topNationalites">
+            <div class="flex justify-between items-baseline mb-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">{{ seg.label }}</span>
+              <span class="font-label-sm text-label-sm text-on-surface">{{ seg.count }} <span class="text-on-surface-variant">({{ seg.pourcentage }}%)</span></span>
+            </div>
+            <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" [ngClass]="seg.couleur" [style.width.%]="seg.pourcentage"></div>
+            </div>
+          </div>
+        </div>
+        <ng-template #aucuneDonneeNationalite><p class="text-body-sm text-on-surface-variant py-6 text-center">Aucune donnée.</p></ng-template>
       </div>
     </div>
   </div>

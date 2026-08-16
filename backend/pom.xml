@@ -81,6 +81,31 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+
+        <!--
+          Migrations de schéma versionnées. Hibernate en ddl-auto=update savait
+          ajouter une colonne mais ni en supprimer une, ni en renommer : le
+          renommage Cohorte -> Promotion a laissé une colonne « date » NOT NULL
+          orpheline qui empêchait toute insertion de séance. Flyway rend chaque
+          changement explicite et rejouable à l'identique par toute l'équipe.
+        -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+        <!--
+          Spring Boot 4 a éclaté ses auto-configurations en modules dédiés :
+          sans cet artefact, flyway-core est bien sur le classpath mais aucune
+          migration n'est déclenchée au démarrage — un échec silencieux.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-flyway</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -136,6 +161,12 @@
             <artifactId>javase</artifactId>
             <version>3.5.3</version>
         </dependency>
+        <!-- Génération PDF (reçus de paiement) -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>2.0.3</version>
+        </dependency>
 
         <!-- Tests -->
         <dependency>
@@ -156,6 +187,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<mainClass>inpg.sn.lms.LmsApplication</mainClass>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

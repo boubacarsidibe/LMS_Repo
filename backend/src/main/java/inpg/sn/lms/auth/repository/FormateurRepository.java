@@ -9,4 +9,7 @@ public interface FormateurRepository extends JpaRepository<Formateur,Long> {
     Optional<Formateur> findByUserId(Long userId);
 
     Object findByUser_Username(String username);
+
+    /** Sert à détecter un conflit avant d'écrire : le téléphone porte une contrainte d'unicité. */
+    Optional<Formateur> findByTelephone(String telephone);
 }

@@ -23,4 +23,11 @@ public class PaiementResponse {
     private String devise;
     private EnumStatutPaiement statut;
     private LocalDateTime datePaiement;
+    private String methodePaiement;
+
+    /** Renseignés uniquement dans le contexte de l'historique des paiements (admin). */
+    private Long candidatureId;
+    private String numeroDossier;
+    private String candidatNom;
+    private String candidatPrenom;
 }

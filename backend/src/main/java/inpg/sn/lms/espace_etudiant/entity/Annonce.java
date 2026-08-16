@@ -1,20 +1,36 @@
 package inpg.sn.lms.espace_etudiant.entity;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
+import inpg.sn.lms.auth.entity.User;
+import inpg.sn.lms.espace_etudiant.enums.EnumTypeAnnonce;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+/**
+ * Annonce, message ou mémo diffusé par l'INPG aux étudiants (TDR §3.2).
+ */
 @Entity
+@Table(name = "annonces")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Annonce {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,78 +38,39 @@ public class Annonce {
     @Column(nullable = false)
     private String titre;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "text")
     private String contenu;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String auteurNom;
-
-    @Column(nullable = false)
-    private LocalDateTime dateCreation;
+    private EnumTypeAnnonce type;
 
     @Column(nullable = false)
-    private boolean epinglee;
+    private LocalDateTime datePublication = LocalDateTime.now();
 
-    // Cohortes ciblees par l'annonce. Vide = annonce diffusee a tout le monde
-    // (institutionnelle), non vide = visible seulement par les etudiants de ces
-    // cohortes et les formateurs qui les enseignent.
-    @ManyToMany
-    @JoinTable(
-        name = "annonce_cohorte",
-        joinColumns = @JoinColumn(name = "annonce_id"),
-        inverseJoinColumns = @JoinColumn(name = "cohorte_id")
-    )
-    private List<Cohorte> cohortes = new ArrayList<>();
+    /** Auteur de la communication (membre du personnel INPG). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "auteur_id")
+    private User auteur;
 
-    public Long getId() {
-        return id;
-    }
+    /**
+     * Promotion destinataire. {@code null} signifie une diffusion à l'ensemble
+     * des étudiants, toutes promotions confondues.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promotion_id")
+    private Promotion promotion;
 
-    public String getTitre() {
-        return titre;
-    }
+    /** Une annonce épinglée reste en tête de liste quelle que soit sa date. */
+    @Column(nullable = false)
+    private boolean epinglee = false;
 
-    public String getContenu() {
-        return contenu;
-    }
-
-    public String getAuteurNom() {
-        return auteurNom;
-    }
-
-    public LocalDateTime getDateCreation() {
-        return dateCreation;
-    }
-
-    public boolean isEpinglee() {
-        return epinglee;
-    }
-
-    public List<Cohorte> getCohortes() {
-        return cohortes;
-    }
-
-    public void setCohortes(List<Cohorte> cohortes) {
-        this.cohortes = cohortes;
-    }
-
-    public void setTitre(String titre) {
+    public Annonce(String titre, String contenu, EnumTypeAnnonce type, User auteur, Promotion promotion) {
         this.titre = titre;
-    }
-
-    public void setContenu(String contenu) {
         this.contenu = contenu;
-    }
-
-    public void setAuteurNom(String auteurNom) {
-        this.auteurNom = auteurNom;
-    }
-
-    public void setDateCreation(LocalDateTime dateCreation) {
-        this.dateCreation = dateCreation;
-    }
-
-    public void setEpinglee(boolean epinglee) {
-        this.epinglee = epinglee;
+        this.type = type;
+        this.auteur = auteur;
+        this.promotion = promotion;
+        this.datePublication = LocalDateTime.now();
     }
 }

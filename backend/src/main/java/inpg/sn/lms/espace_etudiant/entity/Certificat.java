@@ -25,8 +25,8 @@ public class Certificat {
     private Etudiant etudiant;
 
     @ManyToOne
-    @JoinColumn(name = "cohorte_id")
-    private Cohorte cohorte;
+    @JoinColumn(name = "promotion_id")
+    private Promotion promotion;
 
     @Column(nullable = false)
     private String intituleFormation;
@@ -48,8 +48,8 @@ public class Certificat {
         return etudiant;
     }
 
-    public Cohorte getCohorte() {
-        return cohorte;
+    public Promotion getPromotion() {
+        return promotion;
     }
 
     public String getIntituleFormation() {
@@ -72,8 +72,8 @@ public class Certificat {
         this.etudiant = etudiant;
     }
 
-    public void setCohorte(Cohorte cohorte) {
-        this.cohorte = cohorte;
+    public void setPromotion(Promotion promotion) {
+        this.promotion = promotion;
     }
 
     public void setIntituleFormation(String intituleFormation) {

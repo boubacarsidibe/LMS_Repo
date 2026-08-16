@@ -34,8 +34,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,13 +48,12 @@ import inpg.sn.lms.auth.entity.Etudiant;
 import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
+import inpg.sn.lms.config.WebConfig;
+import inpg.sn.lms.fichier.ValidationFichier;
 import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
-import inpg.sn.lms.espace_etudiant.dto.AnnonceCreateRequest;
-import inpg.sn.lms.espace_etudiant.dto.AnnonceDto;
 import inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.CertificatDto;
-import inpg.sn.lms.espace_etudiant.dto.CohorteDto;
 import inpg.sn.lms.espace_etudiant.dto.CompteurParId;
 import inpg.sn.lms.espace_etudiant.dto.ContactEtudiantRequest;
 import inpg.sn.lms.espace_etudiant.dto.CoursCreateRequest;
@@ -66,45 +69,44 @@ import inpg.sn.lms.espace_etudiant.dto.NoteModuleDto;
 import inpg.sn.lms.espace_etudiant.dto.PresenceBulkUpdateRequest;
 import inpg.sn.lms.espace_etudiant.dto.PresenceEtudiantDto;
 import inpg.sn.lms.espace_etudiant.dto.PresenceHistoriqueDto;
-import inpg.sn.lms.espace_etudiant.dto.SeanceCreateRequest;
+import inpg.sn.lms.espace_etudiant.dto.PromotionDto;
+import inpg.sn.lms.espace_etudiant.dto.SupportDetailDto;
+import inpg.sn.lms.espace_etudiant.dto.SupportDto;
 import inpg.sn.lms.espace_etudiant.dto.SeanceDto;
-import inpg.sn.lms.espace_etudiant.dto.PhotoDto;
+import inpg.sn.lms.espace_etudiant.dto.SeanceRequest;
 import inpg.sn.lms.espace_etudiant.dto.RelanceCollectiveRequest;
 import inpg.sn.lms.espace_etudiant.dto.RetourCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.RetourEvaluationDto;
 import inpg.sn.lms.espace_etudiant.dto.SujetDto;
-import inpg.sn.lms.espace_etudiant.dto.SupportDto;
-import inpg.sn.lms.espace_etudiant.entity.Annonce;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
-import inpg.sn.lms.espace_etudiant.entity.Cohorte;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.Evenement;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
 import inpg.sn.lms.espace_etudiant.entity.Message;
 import inpg.sn.lms.espace_etudiant.entity.NoteModule;
 import inpg.sn.lms.espace_etudiant.entity.Presence;
+import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.entity.Seance;
-import inpg.sn.lms.espace_etudiant.entity.Photo;
 import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
 import inpg.sn.lms.espace_etudiant.entity.Sujet;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 import inpg.sn.lms.espace_etudiant.enums.EnumStatutRetour;
 import inpg.sn.lms.espace_etudiant.enums.EnumStatutSujet;
 import inpg.sn.lms.espace_etudiant.enums.EnumTypeEvenement;
-import inpg.sn.lms.espace_etudiant.service.AnnonceService;
 import inpg.sn.lms.espace_etudiant.service.CertificatPdfService;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
-import inpg.sn.lms.espace_etudiant.service.CohorteService;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
 import inpg.sn.lms.espace_etudiant.service.EvenementService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.PerimetreFormateurService;
-import inpg.sn.lms.espace_etudiant.service.PhotoService;
 import inpg.sn.lms.espace_etudiant.service.RetourEvaluationService;
 import inpg.sn.lms.espace_etudiant.service.SujetService;
 import inpg.sn.lms.espace_etudiant.service.NoteModuleService;
 import inpg.sn.lms.espace_etudiant.service.PresenceService;
+import inpg.sn.lms.espace_etudiant.service.PromotionService;
+import inpg.sn.lms.espace_etudiant.service.SupportCoursStorageService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
+import inpg.sn.lms.espace_etudiant.service.SeanceService;
 
 @RestController
 @RequestMapping("/api/espace-etudiant")
@@ -119,12 +121,10 @@ public class EspaceEtudiantController {
     private final FormateurRepository formateurRepository;
     private final FormationService formationService;
     private final CoursService coursService;
-    private final CohorteService cohorteService;
+    private final PromotionService promotionService;
     private final SupportService supportService;
     private final EvenementService evenementService;
     private final SujetService sujetService;
-    private final AnnonceService annonceService;
-    private final PhotoService photoService;
     private final CertificatService certificatService;
     private final CertificatPdfService certificatPdfService;
     private final inpg.sn.lms.recrutement.service.NotificationService notificationService;
@@ -132,6 +132,8 @@ public class EspaceEtudiantController {
     private final PerimetreFormateurService perimetreFormateurService;
     private final NoteModuleService noteModuleService;
     private final PresenceService presenceService;
+    private final SeanceService seanceService;
+    private final SupportCoursStorageService supportCoursStorageService;
     private final Path uploadDirectory;
 
     public EspaceEtudiantController(
@@ -140,12 +142,10 @@ public class EspaceEtudiantController {
             FormateurRepository formateurRepository,
             FormationService formationService,
             CoursService coursService,
-            CohorteService cohorteService,
+            PromotionService promotionService,
             SupportService supportService,
             EvenementService evenementService,
             SujetService sujetService,
-            AnnonceService annonceService,
-            PhotoService photoService,
             CertificatService certificatService,
             CertificatPdfService certificatPdfService,
             inpg.sn.lms.recrutement.service.NotificationService notificationService,
@@ -153,18 +153,18 @@ public class EspaceEtudiantController {
             PerimetreFormateurService perimetreFormateurService,
             NoteModuleService noteModuleService,
             PresenceService presenceService,
+            SeanceService seanceService,
+            SupportCoursStorageService supportCoursStorageService,
             @Value("${app.upload.dir:uploads}") String uploadDirectory) {
         this.userRepository = userRepository;
         this.etudiantRepository = etudiantRepository;
         this.formateurRepository = formateurRepository;
         this.formationService = formationService;
         this.coursService = coursService;
-        this.cohorteService = cohorteService;
+        this.promotionService = promotionService;
         this.supportService = supportService;
         this.evenementService = evenementService;
         this.sujetService = sujetService;
-        this.annonceService = annonceService;
-        this.photoService = photoService;
         this.certificatService = certificatService;
         this.certificatPdfService = certificatPdfService;
         this.notificationService = notificationService;
@@ -172,6 +172,8 @@ public class EspaceEtudiantController {
         this.perimetreFormateurService = perimetreFormateurService;
         this.noteModuleService = noteModuleService;
         this.presenceService = presenceService;
+        this.seanceService = seanceService;
+        this.supportCoursStorageService = supportCoursStorageService;
         this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize();
     }
 
@@ -225,6 +227,55 @@ public class EspaceEtudiantController {
         }
 
         Etudiant etudiant = etudiantRepository.findByUserId(user.getId()).orElse(null);
+        return ResponseEntity.ok(toProfilePayload(user, etudiant));
+    }
+
+    /**
+     * Met à jour l'identité de l'étudiant connecté. L'email n'est pas modifiable
+     * ici : il sert d'identifiant de connexion et relève de l'espace
+     * d'authentification, pas du profil.
+     */
+    @PutMapping("/profile")
+    @Transactional
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> request, Authentication authentication) {
+        User user = findAuthenticatedUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Etudiant etudiant = etudiantRepository.findByUserId(user.getId()).orElse(null);
+        if (etudiant == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Aucune fiche étudiant n'est associée à ce compte."));
+        }
+
+        String nom = trimOrNull(request.get("nom"));
+        String prenom = trimOrNull(request.get("prenom"));
+        String telephone = trimOrNull(request.get("telephone"));
+
+        if (nom == null || prenom == null || telephone == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Le nom, le prénom et le téléphone sont obligatoires."));
+        }
+
+        // Le téléphone porte une contrainte d'unicité : on détecte le conflit ici
+        // pour renvoyer un message exploitable plutôt qu'une violation de contrainte.
+        Etudiant proprietaireDuNumero = etudiantRepository.findByTelephone(telephone).orElse(null);
+        if (proprietaireDuNumero != null && !proprietaireDuNumero.getId().equals(etudiant.getId())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Ce numéro de téléphone est déjà utilisé par un autre étudiant."));
+        }
+
+        etudiant.setNom(nom);
+        etudiant.setPrenom(prenom);
+        etudiant.setTelephone(telephone);
+        etudiantRepository.save(etudiant);
+
+        return ResponseEntity.ok(toProfilePayload(user, etudiant));
+    }
+
+    /** Format unique du profil, partagé par la lecture et la mise à jour. */
+    private Map<String, Object> toProfilePayload(User user, Etudiant etudiant) {
         Map<String, Object> profile = new LinkedHashMap<>();
         profile.put("userId", user.getId());
         profile.put("username", user.getUsername());
@@ -237,7 +288,15 @@ public class EspaceEtudiantController {
                     "telephone", etudiant.getTelephone(),
                     "matricule", etudiant.getMatricule() != null ? etudiant.getMatricule() : ""));
         }
-        return ResponseEntity.ok(profile);
+        return profile;
+    }
+
+    private String trimOrNull(String valeur) {
+        if (valeur == null) {
+            return null;
+        }
+        String trimmed = valeur.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
@@ -257,21 +316,11 @@ public class EspaceEtudiantController {
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
     @GetMapping("/cohortes")
-    public ResponseEntity<List<CohorteDto>> listCohortes() {
-        List<CohorteDto> list = cohorteService.getAll().stream()
-                .map(this::toCohorteDto)
+    public ResponseEntity<List<PromotionDto>> listCohortes() {
+        List<PromotionDto> list = promotionService.getAll().stream()
+                .map(this::toPromotionDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(list);
-    }
-
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
-    @GetMapping("/annonces")
-    public ResponseEntity<List<AnnonceDto>> listAnnonces(Authentication authentication) {
-        User user = findAuthenticatedUser(authentication);
-        List<Long> mesCohorteIds = user != null ? cohorteIdsVisiblesPour(user) : List.of();
-        return ResponseEntity.ok(annonceService.getAll().stream()
-                .filter(a -> a.getCohortes().isEmpty() || a.getCohortes().stream().anyMatch(c -> mesCohorteIds.contains(c.getId())))
-                .map(this::toAnnonceDto).toList());
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
@@ -283,20 +332,14 @@ public class EspaceEtudiantController {
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
         List<Long> mesCohorteIds = cohorteIdsDuFormateur(formateur);
-        return ResponseEntity.ok(cohorteService.getAll().stream()
+        return ResponseEntity.ok(promotionService.getAll().stream()
                 .filter(c -> mesCohorteIds.contains(c.getId()))
-                .map(this::toCohorteDto)
+                .map(this::toPromotionDto)
                 .toList());
     }
 
     private List<Long> cohorteIdsVisiblesPour(User user) {
         return perimetreFormateurService.cohorteIdsVisiblesPour(user);
-    }
-
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
-    @GetMapping("/photos")
-    public ResponseEntity<List<PhotoDto>> listPhotos() {
-        return ResponseEntity.ok(photoService.getAll().stream().map(this::toPhotoDto).toList());
     }
 
     /**
@@ -356,18 +399,25 @@ public class EspaceEtudiantController {
         String pieceJointeNomStocke = null;
         String pieceJointeTypeContenu = null;
         if (fichier != null && !fichier.isEmpty()) {
-            pieceJointeNomOriginal = Path.of(
-                    fichier.getOriginalFilename() == null ? "fichier" : fichier.getOriginalFilename())
-                    .getFileName().toString();
-            if (pieceJointeNomOriginal.isBlank()) {
-                pieceJointeNomOriginal = "fichier";
+            // Le dossier « messages » est sous /uploads, donc atteignable en statique :
+            // une pièce jointe non filtrée y serait re-servie et exécutée.
+            try {
+                ValidationFichier.exiger(fichier,
+                        ValidationFichier.EXTENSIONS_SUPPORT_COURS,
+                        ValidationFichier.TYPES_SUPPORT_COURS,
+                        "PDF, Word, PowerPoint, Excel, images, archives ZIP, audio et vidéo");
+            } catch (IllegalArgumentException invalide) {
+                return ResponseEntity.badRequest().body(Map.of("message", invalide.getMessage()));
             }
+
+            pieceJointeNomOriginal = ValidationFichier.nomSur(fichier, "fichier");
             pieceJointeNomStocke = UUID.randomUUID() + "-" + pieceJointeNomOriginal;
             pieceJointeTypeContenu = fichier.getContentType();
             try {
                 Path messagesDirectory = uploadDirectory.resolve("messages");
                 Files.createDirectories(messagesDirectory);
-                Files.copy(fichier.getInputStream(), messagesDirectory.resolve(pieceJointeNomStocke),
+                Files.copy(fichier.getInputStream(),
+                        ValidationFichier.destinationSure(messagesDirectory, pieceJointeNomStocke),
                         StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException exception) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -445,6 +495,30 @@ public class EspaceEtudiantController {
         }
         sujetService.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Contenu d'un cours vu par l'étudiant : la fiche du cours et ses supports.
+     * Les endpoints /formateur/cours/{id}/supports existants sont réservés au
+     * propriétaire du cours et ne conviennent donc pas ici.
+     */
+    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @GetMapping("/cours/{id}")
+    public ResponseEntity<?> getCours(@PathVariable Long id) {
+        return coursService.findById(id)
+                .<ResponseEntity<?>>map(cours -> ResponseEntity.ok(toCoursDto(cours)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @GetMapping("/cours/{id}/supports")
+    public ResponseEntity<List<SupportDetailDto>> listSupportsOfCours(@PathVariable Long id) {
+        if (coursService.findById(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(supportService.getCourseSupports(id).stream()
+                .map(this::toSupportDetailDto)
+                .toList());
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
@@ -530,27 +604,6 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
-    @GetMapping("/photos/{id}/fichier")
-    public ResponseEntity<Resource> getPhotoFile(@PathVariable Long id) {
-        Photo photo = photoService.findById(id).orElse(null);
-        if (photo == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Path filePath = uploadDirectory.resolve("photos").resolve(photo.getNomFichier()).normalize();
-        if (!filePath.startsWith(uploadDirectory) || !Files.isRegularFile(filePath)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Resource resource = new FileSystemResource(filePath);
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(photo.getTypeContenu()))
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.inline().filename(photo.getTitre()).build().toString())
-                .body(resource);
-    }
-
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
     @GetMapping("/certificats/{id}/pdf")
     public ResponseEntity<?> telechargerCertificat(@PathVariable Long id, Authentication authentication) {
         User user = findAuthenticatedUser(authentication);
@@ -587,10 +640,126 @@ public class EspaceEtudiantController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
-        long numberOfCourses = coursService.getByFormateurId(formateur.getId()).size();
-        String fullName = String.join(" ", formateur.getPrenom(), formateur.getNom()).trim();
-        return ResponseEntity.ok(new FormateurProfileDto(
-                formateur.getId(), fullName, formateur.getUser().getEmail(), numberOfCourses));
+        return ResponseEntity.ok(toFormateurProfileDto(formateur));
+    }
+
+    /**
+     * Mise à jour de l'identité du formateur.
+     *
+     * <p>Même contrat que {@code PUT /profile} côté étudiant : champs obligatoires
+     * contrôlés ici, conflit de téléphone traduit en 409 plutôt qu'en violation de
+     * contrainte, et le profil complet est renvoyé pour que l'écran se rafraîchisse
+     * sans second appel.
+     *
+     * <p>L'e-mail n'est volontairement pas modifiable : il sert d'identifiant de
+     * connexion, le changer relève d'un parcours de vérification à part.
+     */
+    @PreAuthorize("hasRole('FORMATEUR')")
+    @PutMapping("/formateur/profile")
+    @Transactional
+    public ResponseEntity<?> updateFormateurProfile(@RequestBody Map<String, String> request,
+            Authentication authentication) {
+        Formateur formateur = findAuthenticatedFormateur(authentication);
+        if (formateur == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Profil formateur introuvable."));
+        }
+
+        String nom = trimOrNull(request.get("nom"));
+        String prenom = trimOrNull(request.get("prenom"));
+        String telephone = trimOrNull(request.get("telephone"));
+
+        if (nom == null || prenom == null || telephone == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Le nom, le prénom et le téléphone sont obligatoires."));
+        }
+
+        // Le téléphone est unique sur la table des formateurs : on détecte le conflit
+        // pour renvoyer un message exploitable plutôt qu'une erreur de contrainte.
+        Formateur proprietaireDuNumero = formateurRepository.findByTelephone(telephone).orElse(null);
+        if (proprietaireDuNumero != null && !proprietaireDuNumero.getId().equals(formateur.getId())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Ce numéro de téléphone est déjà utilisé par un autre formateur."));
+        }
+
+        formateur.setNom(nom);
+        formateur.setPrenom(prenom);
+        formateur.setTelephone(telephone);
+        formateurRepository.save(formateur);
+
+        return ResponseEntity.ok(toFormateurProfileDto(formateur));
+    }
+
+    /** Format unique du profil formateur, partagé par la lecture et la mise à jour. */
+    private FormateurProfileDto toFormateurProfileDto(Formateur formateur) {
+        long nbCours = coursService.getByFormateurId(formateur.getId()).size();
+        String nomComplet = String.join(" ", formateur.getPrenom(), formateur.getNom()).trim();
+        return new FormateurProfileDto(
+                formateur.getId(),
+                nomComplet,
+                formateur.getPrenom(),
+                formateur.getNom(),
+                formateur.getTelephone(),
+                formateur.getUser().getEmail(),
+                nbCours);
+    }
+
+    @PreAuthorize("hasRole('FORMATEUR')")
+    @GetMapping("/formateur/dashboard")
+    public ResponseEntity<?> getFormateurDashboard(Authentication authentication) {
+        Formateur formateur = findAuthenticatedFormateur(authentication);
+        if (formateur == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Profil formateur introuvable."));
+        }
+        List<Cours> cours = coursService.getByFormateurId(formateur.getId());
+        long nbRessources = cours.stream()
+                .mapToLong(item -> supportService.countCourseSupports(item.getId()))
+                .sum();
+        return ResponseEntity.ok(Map.of(
+                "nbCours", cours.size(),
+                "nbRessources", nbRessources));
+    }
+
+    @PreAuthorize("hasRole('FORMATEUR')")
+    @GetMapping("/formateur/seances")
+    public ResponseEntity<?> listMySessions(Authentication authentication) {
+        Formateur formateur = findAuthenticatedFormateur(authentication);
+        if (formateur == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Profil formateur introuvable."));
+        return ResponseEntity.ok(seanceService.getByFormateur(formateur.getId()).stream().map(this::toSeanceDto).toList());
+    }
+
+    @PreAuthorize("hasRole('FORMATEUR')")
+    @PostMapping("/formateur/seances")
+    public ResponseEntity<?> createSession(@RequestBody SeanceRequest request, Authentication authentication) {
+        Cours cours = request.coursId() == null ? null : findOwnedCourse(request.coursId(), authentication);
+        if (cours == null) return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Cours introuvable ou non autorisé."));
+        if (isBlank(request.titre()) || isBlank(request.type()) || request.dateHeure() == null || request.dureeMinutes() == null || request.dureeMinutes() <= 0)
+            return ResponseEntity.badRequest().body(Map.of("message", "Titre, type, date et durée positive sont requis."));
+        Seance seance = new Seance();
+        applySession(seance, request, cours);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toSeanceDto(seanceService.save(seance)));
+    }
+
+    @PreAuthorize("hasRole('FORMATEUR')")
+    @PutMapping("/formateur/seances/{id}")
+    public ResponseEntity<?> updateSession(@PathVariable Long id, @RequestBody SeanceRequest request, Authentication authentication) {
+        Seance seance = findOwnedSession(id, authentication);
+        Cours cours = request.coursId() == null ? null : findOwnedCourse(request.coursId(), authentication);
+        if (seance == null || cours == null) return ResponseEntity.notFound().build();
+        if (isBlank(request.titre()) || isBlank(request.type()) || request.dateHeure() == null || request.dureeMinutes() == null || request.dureeMinutes() <= 0)
+            return ResponseEntity.badRequest().body(Map.of("message", "Titre, type, date et durée positive sont requis."));
+        applySession(seance, request, cours);
+        return ResponseEntity.ok(toSeanceDto(seanceService.save(seance)));
+    }
+
+    @PreAuthorize("hasRole('FORMATEUR')")
+    @DeleteMapping("/formateur/seances/{id}")
+    public ResponseEntity<?> deleteSession(@PathVariable Long id, Authentication authentication) {
+        Seance seance = findOwnedSession(id, authentication);
+        if (seance == null) return ResponseEntity.notFound().build();
+        seanceService.delete(seance);
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
@@ -630,7 +799,7 @@ public class EspaceEtudiantController {
         cours.getFormateurs().add(formateur);
         if (request.cohorteIds() != null) {
             for (Long cohorteId : request.cohorteIds()) {
-                cohorteService.findById(cohorteId).ifPresent(cours.getCohortes()::add);
+                promotionService.findById(cohorteId).ifPresent(cours.getPromotions()::add);
             }
         }
 
@@ -638,23 +807,21 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
-    @PatchMapping("/formateur/cours/{id}")
+    @GetMapping("/formateur/cours/{id}")
+    public ResponseEntity<?> getMyCourse(@PathVariable Long id, Authentication authentication) {
+        Cours cours = findOwnedCourse(id, authentication);
+        return cours == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(toCoursDto(cours));
+    }
+
+    @PreAuthorize("hasRole('FORMATEUR')")
+    @PutMapping("/formateur/cours/{id}")
     public ResponseEntity<?> updateCourse(
             @PathVariable Long id,
             @RequestBody CoursCreateRequest request,
             Authentication authentication) {
-        Formateur formateur = findAuthenticatedFormateur(authentication);
-        if (formateur == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Profil formateur introuvable."));
-        }
-        Cours cours = coursService.findById(id).orElse(null);
+        Cours cours = findOwnedCourse(id, authentication);
         if (cours == null) {
             return ResponseEntity.notFound().build();
-        }
-        if (!perimetreFormateurService.estFormateurDuCours(formateur, cours)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Vous n'êtes pas formateur de ce cours."));
         }
         if (isBlank(request.code()) || isBlank(request.titre())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le code et le titre du cours sont requis."));
@@ -672,34 +839,38 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @DeleteMapping("/formateur/cours/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteCourse(@PathVariable Long id, Authentication authentication) {
+        Cours cours = findOwnedCourse(id, authentication);
+        if (cours == null) {
+            return ResponseEntity.notFound().build();
+        }
+        supportService.deleteCourseSupports(cours.getId());
+        coursService.delete(cours);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('FORMATEUR')")
     @PatchMapping("/formateur/cours/{id}/cohortes")
     public ResponseEntity<?> updateCoursCohortes(
             @PathVariable Long id,
             @RequestBody Map<String, List<Long>> body,
             Authentication authentication) {
-        Formateur formateur = findAuthenticatedFormateur(authentication);
-        if (formateur == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Profil formateur introuvable."));
-        }
-        Cours cours = coursService.findById(id).orElse(null);
+        Cours cours = findOwnedCourse(id, authentication);
         if (cours == null) {
             return ResponseEntity.notFound().build();
         }
-        if (!perimetreFormateurService.estFormateurDuCours(formateur, cours)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Vous n'êtes pas formateur de ce cours."));
-        }
         List<Long> cohorteIds = body.getOrDefault("cohorteIds", List.of());
-        Set<Cohorte> cohortes = new LinkedHashSet<>();
+        Set<Promotion> cohortes = new LinkedHashSet<>();
         for (Long cohorteId : cohorteIds) {
-            Cohorte cohorte = cohorteService.findById(cohorteId).orElse(null);
+            Promotion cohorte = promotionService.findById(cohorteId).orElse(null);
             if (cohorte == null) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Cohorte introuvable : " + cohorteId));
             }
             cohortes.add(cohorte);
         }
-        cours.setCohortes(cohortes);
+        cours.setPromotions(cohortes);
         return ResponseEntity.ok(toCoursDto(coursService.save(cours)));
     }
 
@@ -721,9 +892,9 @@ public class EspaceEtudiantController {
         if (etudiant == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Étudiant introuvable."));
         }
-        Cohorte cohorte = null;
+        Promotion cohorte = null;
         if (request.cohorteId() != null) {
-            cohorte = cohorteService.findById(request.cohorteId()).orElse(null);
+            cohorte = promotionService.findById(request.cohorteId()).orElse(null);
             if (cohorte == null) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Cohorte introuvable."));
             }
@@ -731,7 +902,7 @@ public class EspaceEtudiantController {
 
         Certificat certificat = new Certificat();
         certificat.setEtudiant(etudiant);
-        certificat.setCohorte(cohorte);
+        certificat.setPromotion(cohorte);
         certificat.setIntituleFormation(request.intituleFormation().trim());
         certificat.setFormateurNom(displayName(formateur.getUser()));
 
@@ -739,40 +910,15 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
-    @PostMapping("/formateur/annonces")
-    public ResponseEntity<?> creerAnnonce(
-            @RequestBody AnnonceCreateRequest request,
-            Authentication authentication) {
-        Formateur formateur = findAuthenticatedFormateur(authentication);
-        if (formateur == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Profil formateur introuvable."));
+    @GetMapping("/formateur/cours/{id}/supports")
+    public ResponseEntity<?> listMyCourseSupports(@PathVariable Long id, Authentication authentication) {
+        Cours cours = findOwnedCourse(id, authentication);
+        if (cours == null) {
+            return ResponseEntity.notFound().build();
         }
-        if (isBlank(request.titre()) || isBlank(request.contenu())) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Le titre et le contenu sont requis."));
-        }
-
-        List<Cohorte> cohortesCiblees = new ArrayList<>();
-        if (request.cohorteIds() != null && !request.cohorteIds().isEmpty()) {
-            List<Long> mesCohorteIds = cohorteIdsDuFormateur(formateur);
-            for (Long cohorteId : request.cohorteIds()) {
-                if (!mesCohorteIds.contains(cohorteId)) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("message", "Vous ne pouvez cibler que les cohortes de vos propres cours."));
-                }
-                cohorteService.findById(cohorteId).ifPresent(cohortesCiblees::add);
-            }
-        }
-
-        Annonce annonce = new Annonce();
-        annonce.setTitre(request.titre().trim());
-        annonce.setContenu(request.contenu().trim());
-        annonce.setAuteurNom(displayName(formateur.getUser()));
-        annonce.setDateCreation(java.time.LocalDateTime.now());
-        annonce.setEpinglee(request.epinglee());
-        annonce.setCohortes(cohortesCiblees);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(toAnnonceDto(annonceService.save(annonce)));
+        return ResponseEntity.ok(supportService.getCourseSupports(cours.getId()).stream()
+                .map(this::toSupportDto)
+                .toList());
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
@@ -852,60 +998,6 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
-    @PostMapping(value = "/formateur/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> uploadPhoto(
-            @RequestParam String titre,
-            @RequestParam(required = false) Long cohorteId,
-            @RequestParam("fichier") MultipartFile fichier,
-            Authentication authentication) {
-        Formateur formateur = findAuthenticatedFormateur(authentication);
-        if (formateur == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Profil formateur introuvable."));
-        }
-        if (fichier.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Un fichier est requis."));
-        }
-        if (isBlank(titre)) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Le titre est requis."));
-        }
-        String contentType = fichier.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Seuls les fichiers image sont acceptés."));
-        }
-
-        Cohorte cohorte = null;
-        if (cohorteId != null) {
-            cohorte = cohorteService.findById(cohorteId).orElse(null);
-            if (cohorte == null) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Cohorte introuvable."));
-            }
-        }
-
-        String storedFileName = UUID.randomUUID() + "-" + Path.of(
-                fichier.getOriginalFilename() == null ? "photo" : fichier.getOriginalFilename())
-                .getFileName().toString();
-        try {
-            Path photosDirectory = uploadDirectory.resolve("photos");
-            Files.createDirectories(photosDirectory);
-            Files.copy(fichier.getInputStream(), photosDirectory.resolve(storedFileName), StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException exception) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Le fichier n'a pas pu être enregistré."));
-        }
-
-        Photo photo = new Photo();
-        photo.setTitre(titre.trim());
-        photo.setNomFichier(storedFileName);
-        photo.setTypeContenu(contentType);
-        photo.setAuteurNom(displayName(formateur.getUser()));
-        photo.setDateAjout(java.time.LocalDateTime.now());
-        photo.setCohorte(cohorte);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(toPhotoDto(photoService.save(photo)));
-    }
-
-    @PreAuthorize("hasRole('FORMATEUR')")
     @PostMapping(value = "/formateur/supports", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadCourseSupport(
             @RequestParam Long coursId,
@@ -938,30 +1030,59 @@ public class EspaceEtudiantController {
                     .body(Map.of("message", "Vous ne pouvez pas publier dans ce cours."));
         }
 
-        String originalName = Path.of(fichier.getOriginalFilename() == null ? "ressource" : fichier.getOriginalFilename())
-                .getFileName().toString();
-        if (originalName.isBlank()) {
-            originalName = "ressource";
-        }
-        String storedFileName = UUID.randomUUID() + "-" + originalName;
         try {
-            Files.createDirectories(uploadDirectory);
-            Files.copy(fichier.getInputStream(), uploadDirectory.resolve(storedFileName), StandardCopyOption.REPLACE_EXISTING);
+            SupportCours savedSupport = supportCoursStorageService.publier(cours, fichier, typeRessource,
+                    publicationDate);
+            return ResponseEntity.status(HttpStatus.CREATED).body(toSupportDto(savedSupport));
         } catch (IOException exception) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Le fichier n'a pas pu être enregistré."));
         }
+    }
 
-        SupportCours support = new SupportCours();
-        support.setCours(cours);
-        support.setTitre(originalName);
-        support.setTypeRessource(typeRessource);
-        support.setFichierStocke(storedFileName);
-        support.setDatePublication(publicationDate);
-        SupportCours savedSupport = supportService.saveCourseSupport(support);
-        savedSupport.setUrl("/api/espace-etudiant/supports/cours/" + savedSupport.getId() + "/download");
-        savedSupport = supportService.saveCourseSupport(savedSupport);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toSupportDto(savedSupport));
+    @PostMapping(value = "/formateur/cours/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadCourseImage(
+        @PathVariable Long id,
+        @RequestParam("image") MultipartFile image,
+        Authentication authentication) {
+    Cours cours = findOwnedCourse(id, authentication);
+    if (cours == null) {
+        return ResponseEntity.notFound().build();
+    }
+    if (image.isEmpty()) {
+        return ResponseEntity.badRequest().body(Map.of("message", "Une image est requise."));
+    }
+
+    // L'image est ensuite servie en statique depuis /uploads : contrôler l'extension
+    // et pas seulement le type déclaré, sinon un SVG porteur de script — qui passe
+    // un test « commence par image/ » — serait exécuté depuis l'origine du site.
+    try {
+        ValidationFichier.exiger(image,
+                ValidationFichier.EXTENSIONS_IMAGE,
+                ValidationFichier.TYPES_IMAGE,
+                "JPEG, PNG, WEBP, GIF");
+    } catch (IllegalArgumentException invalide) {
+        return ResponseEntity.badRequest().body(Map.of("message", invalide.getMessage()));
+    }
+
+    String originalName = ValidationFichier.nomSur(image, "image");
+    String storedFileName = UUID.randomUUID() + "-" + originalName;
+    // L'image d'un cours est affichée par une balise <img>, qui ne peut pas porter
+    // d'en-tête d'authentification : c'est le seul contenu qui doit vivre dans le
+    // sous-dossier public exposé en statique.
+    Path repertoirePublic = uploadDirectory.resolve(WebConfig.DOSSIER_PUBLIC);
+    try {
+        Files.createDirectories(repertoirePublic);
+        Files.copy(image.getInputStream(), ValidationFichier.destinationSure(repertoirePublic, storedFileName),
+                StandardCopyOption.REPLACE_EXISTING);
+    } catch (IOException exception) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", "L'image n'a pas pu être enregistrée."));
+    }
+
+    cours.setImageUrl("/uploads/" + storedFileName);
+    Cours sauvegarde = coursService.save(cours);
+    return ResponseEntity.ok(toCoursDto(sauvegarde));
     }
 
     /**
@@ -1032,7 +1153,7 @@ public class EspaceEtudiantController {
         if (cohorteIds.isEmpty()) {
             return ResponseEntity.ok(List.of());
         }
-        return ResponseEntity.ok(etudiantRepository.findByCohorte_IdIn(cohorteIds).stream()
+        return ResponseEntity.ok(etudiantRepository.findByPromotion_IdIn(cohorteIds).stream()
                 .map(this::toEtudiantSuiviDto).toList());
     }
 
@@ -1046,7 +1167,7 @@ public class EspaceEtudiantController {
         }
         List<Long> cohorteIds = cohorteIdsDuFormateur(formateur);
         return etudiantRepository.findById(id)
-                .filter(etudiant -> etudiant.getCohorte() != null && cohorteIds.contains(etudiant.getCohorte().getId()))
+                .filter(etudiant -> etudiant.getPromotion() != null && cohorteIds.contains(etudiant.getPromotion().getId()))
                 .<ResponseEntity<?>>map(etudiant -> ResponseEntity.ok(toEtudiantSuiviDto(etudiant)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -1061,7 +1182,7 @@ public class EspaceEtudiantController {
         }
         List<Long> cohorteIds = cohorteIdsDuFormateur(formateur);
         Etudiant etudiant = etudiantRepository.findById(id)
-                .filter(e -> e.getCohorte() != null && cohorteIds.contains(e.getCohorte().getId()))
+                .filter(e -> e.getPromotion() != null && cohorteIds.contains(e.getPromotion().getId()))
                 .orElse(null);
         if (etudiant == null) {
             return ResponseEntity.notFound().build();
@@ -1082,7 +1203,7 @@ public class EspaceEtudiantController {
         }
         List<Long> cohorteIds = cohorteIdsDuFormateur(formateur);
         Etudiant etudiant = etudiantRepository.findById(id)
-                .filter(e -> e.getCohorte() != null && cohorteIds.contains(e.getCohorte().getId()))
+                .filter(e -> e.getPromotion() != null && cohorteIds.contains(e.getPromotion().getId()))
                 .orElse(null);
         if (etudiant == null) {
             return ResponseEntity.notFound().build();
@@ -1101,7 +1222,7 @@ public class EspaceEtudiantController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Vous n'enseignez pas ce cours."));
         }
-        if (cours.getCohortes().stream().noneMatch(c -> c.getId().equals(etudiant.getCohorte().getId()))) {
+        if (cours.getPromotions().stream().noneMatch(c -> c.getId().equals(etudiant.getPromotion().getId()))) {
             return ResponseEntity.badRequest().body(Map.of("message", "Cet étudiant ne suit pas ce cours."));
         }
 
@@ -1149,57 +1270,16 @@ public class EspaceEtudiantController {
                 note.getFormateurNom());
     }
 
+    /** Séances d'UN cours precis (utilise par la prise de presence formateur, cf. PresenceEtudiantDto). */
     @PreAuthorize("hasRole('FORMATEUR')")
-    @PostMapping("/formateur/cours/{coursId}/seances")
-    public ResponseEntity<?> creerSeance(
-            @PathVariable Long coursId,
-            @RequestBody SeanceCreateRequest request,
-            Authentication authentication) {
-        Formateur formateur = findAuthenticatedFormateur(authentication);
-        if (formateur == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Profil formateur introuvable."));
-        }
-        if (isBlank(request.titre())) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Le titre de la séance est requis."));
-        }
-        Cours cours = coursService.getByFormateurId(formateur.getId()).stream()
-                .filter(c -> c.getId().equals(coursId))
-                .findFirst()
-                .orElse(null);
+    @GetMapping("/formateur/cours/{coursId}/seances")
+    public ResponseEntity<?> listSeances(@PathVariable Long coursId, Authentication authentication) {
+        Cours cours = findOwnedCourse(coursId, authentication);
         if (cours == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Vous n'enseignez pas ce cours."));
         }
-        LocalDate date;
-        try {
-            date = isBlank(request.date()) ? LocalDate.now() : LocalDate.parse(request.date());
-        } catch (java.time.format.DateTimeParseException exception) {
-            return ResponseEntity.badRequest().body(Map.of("message", "La date est invalide."));
-        }
-
-        Seance seance = new Seance();
-        seance.setCours(cours);
-        seance.setTitre(request.titre().trim());
-        seance.setDate(date);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toSeanceDto(presenceService.saveSeance(seance)));
-    }
-
-    @PreAuthorize("hasRole('FORMATEUR')")
-    @GetMapping("/formateur/cours/{coursId}/seances")
-    public ResponseEntity<?> listSeances(@PathVariable Long coursId, Authentication authentication) {
-        Formateur formateur = findAuthenticatedFormateur(authentication);
-        if (formateur == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Profil formateur introuvable."));
-        }
-        boolean enseigneLeCours = coursService.getByFormateurId(formateur.getId()).stream()
-                .anyMatch(c -> c.getId().equals(coursId));
-        if (!enseigneLeCours) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Vous n'enseignez pas ce cours."));
-        }
-        return ResponseEntity.ok(presenceService.getSeancesByCoursId(coursId).stream().map(this::toSeanceDto).toList());
+        return ResponseEntity.ok(seanceService.getByCoursId(coursId).stream().map(this::toSeanceDto).toList());
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
@@ -1210,7 +1290,7 @@ public class EspaceEtudiantController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
-        Seance seance = presenceService.findSeanceById(id).orElse(null);
+        Seance seance = seanceService.findById(id).orElse(null);
         if (seance == null) {
             return ResponseEntity.notFound().build();
         }
@@ -1218,8 +1298,8 @@ public class EspaceEtudiantController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Vous n'êtes pas formateur de ce cours."));
         }
-        List<Long> cohorteIds = seance.getCours().getCohortes().stream().map(Cohorte::getId).toList();
-        List<Etudiant> etudiants = etudiantRepository.findByCohorte_IdIn(cohorteIds);
+        List<Long> cohorteIds = seance.getCours().getPromotions().stream().map(Promotion::getId).toList();
+        List<Etudiant> etudiants = etudiantRepository.findByPromotion_IdIn(cohorteIds);
         Map<Long, Boolean> presencesParEtudiant = presenceService.getPresencesBySeanceId(id).stream()
                 .collect(Collectors.toMap(p -> p.getEtudiant().getId(), Presence::isPresent));
         List<PresenceEtudiantDto> liste = etudiants.stream()
@@ -1244,7 +1324,7 @@ public class EspaceEtudiantController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
-        Seance seance = presenceService.findSeanceById(id).orElse(null);
+        Seance seance = seanceService.findById(id).orElse(null);
         if (seance == null) {
             return ResponseEntity.notFound().build();
         }
@@ -1252,10 +1332,10 @@ public class EspaceEtudiantController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Vous n'êtes pas formateur de ce cours."));
         }
-        List<Long> cohorteIds = seance.getCours().getCohortes().stream().map(Cohorte::getId).toList();
+        List<Long> cohorteIds = seance.getCours().getPromotions().stream().map(Promotion::getId).toList();
         for (PresenceBulkUpdateRequest.Entree entree : request.presences()) {
             Etudiant etudiant = etudiantRepository.findById(entree.etudiantId()).orElse(null);
-            if (etudiant == null || etudiant.getCohorte() == null || !cohorteIds.contains(etudiant.getCohorte().getId())) {
+            if (etudiant == null || etudiant.getPromotion() == null || !cohorteIds.contains(etudiant.getPromotion().getId())) {
                 continue; // etudiant hors perimetre de ce cours : ignore plutot que planter tout le lot
             }
             presenceService.marquerPresence(seance, etudiant, entree.present());
@@ -1273,7 +1353,7 @@ public class EspaceEtudiantController {
         }
         List<Long> cohorteIds = cohorteIdsDuFormateur(formateur);
         Etudiant etudiant = etudiantRepository.findById(id)
-                .filter(e -> e.getCohorte() != null && cohorteIds.contains(e.getCohorte().getId()))
+                .filter(e -> e.getPromotion() != null && cohorteIds.contains(e.getPromotion().getId()))
                 .orElse(null);
         if (etudiant == null) {
             return ResponseEntity.notFound().build();
@@ -1282,20 +1362,11 @@ public class EspaceEtudiantController {
                 .map(this::toPresenceHistoriqueDto).toList());
     }
 
-    private SeanceDto toSeanceDto(Seance seance) {
-        return new SeanceDto(
-                seance.getId(),
-                seance.getTitre(),
-                seance.getDate().toString(),
-                seance.getCours().getId(),
-                seance.getCours().getNom());
-    }
-
     private PresenceHistoriqueDto toPresenceHistoriqueDto(Presence presence) {
         Seance seance = presence.getSeance();
         return new PresenceHistoriqueDto(
                 presence.getId(),
-                seance.getDate().toString(),
+                seance.getDateHeure().format(DATE_HEURE_FORUM),
                 seance.getCours().getNom(),
                 seance.getCours().getTitre(),
                 seance.getTitre(),
@@ -1408,7 +1479,7 @@ public class EspaceEtudiantController {
         }
         List<Long> cohorteIds = cohorteIdsDuFormateur(formateur);
         Etudiant etudiant = etudiantRepository.findById(id)
-                .filter(e -> e.getCohorte() != null && cohorteIds.contains(e.getCohorte().getId()))
+                .filter(e -> e.getPromotion() != null && cohorteIds.contains(e.getPromotion().getId()))
                 .orElse(null);
         if (etudiant == null) {
             return ResponseEntity.notFound().build();
@@ -1440,7 +1511,7 @@ public class EspaceEtudiantController {
             return ResponseEntity.badRequest().body(Map.of("message", "Aucun étudiant sélectionné."));
         }
         List<Long> cohorteIds = cohorteIdsDuFormateur(formateur);
-        List<Etudiant> destinataires = etudiantRepository.findByCohorte_IdIn(cohorteIds).stream()
+        List<Etudiant> destinataires = etudiantRepository.findByPromotion_IdIn(cohorteIds).stream()
                 .filter(e -> request.etudiantIds().contains(e.getId()))
                 .toList();
         int envoyes = 0;
@@ -1475,12 +1546,12 @@ public class EspaceEtudiantController {
         if (cohorteId == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "cohorteId est requis."));
         }
-        Cohorte cohorte = cohorteService.findById(cohorteId).orElse(null);
+        Promotion cohorte = promotionService.findById(cohorteId).orElse(null);
         if (cohorte == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Cohorte introuvable."));
         }
 
-        etudiant.setCohorte(cohorte);
+        etudiant.setPromotion(cohorte);
         etudiantRepository.save(etudiant);
         return ResponseEntity.ok(toEtudiantSuiviDto(etudiant));
     }
@@ -1493,14 +1564,14 @@ public class EspaceEtudiantController {
     private List<CoursDto> toCoursDtoList(List<Cours> cours) {
         List<Long> coursIds = cours.stream().map(Cours::getId).toList();
         List<Long> cohorteIds = cours.stream()
-                .flatMap(c -> c.getCohortes().stream())
-                .map(Cohorte::getId)
+                .flatMap(c -> c.getPromotions().stream())
+                .map(Promotion::getId)
                 .distinct()
                 .toList();
 
         Map<Long, Long> etudiantsParCohorte = cohorteIds.isEmpty()
                 ? Map.of()
-                : etudiantRepository.compterParCohorte(cohorteIds).stream()
+                : etudiantRepository.compterParPromotion(cohorteIds).stream()
                         .collect(Collectors.toMap(CompteurParId::id, CompteurParId::total));
         Map<Long, Long> supportsParCours = supportService.compterSupportsParCours(coursIds).stream()
                 .collect(Collectors.toMap(CompteurParId::id, CompteurParId::total));
@@ -1514,11 +1585,11 @@ public class EspaceEtudiantController {
     }
 
     private CoursDto toCoursDto(Cours cours, Map<Long, Long> etudiantsParCohorte, Map<Long, Long> supportsParCours) {
-        long nbEtudiants = cours.getCohortes().stream()
+        long nbEtudiants = cours.getPromotions().stream()
                 .mapToLong(cohorte -> etudiantsParCohorte.getOrDefault(cohorte.getId(), 0L))
                 .sum();
-        List<CohorteDto> cohortes = cours.getCohortes().stream()
-                .map(this::toCohorteDto)
+        List<PromotionDto> cohortes = cours.getPromotions().stream()
+                .map(this::toPromotionDto)
                 .toList();
         return new CoursDto(
                 cours.getId(),
@@ -1531,7 +1602,8 @@ public class EspaceEtudiantController {
                 supportsParCours.getOrDefault(cours.getId(), 0L),
                 0,
                 DEFAULT_COURSE_COLOR,
-                cohortes);
+                cohortes,
+                cours.getImageUrl());
     }
 
     private CertificatDto toCertificatDto(Certificat certificat) {
@@ -1543,34 +1615,9 @@ public class EspaceEtudiantController {
                 String.join(" ", etudiant.getPrenom(), etudiant.getNom()).trim(),
                 etudiant.getMatricule(),
                 certificat.getIntituleFormation(),
-                certificat.getCohorte() != null ? certificat.getCohorte().getLibelle() : null,
+                certificat.getPromotion() != null ? certificat.getPromotion().getLibelle() : null,
                 certificat.getDateEmission().toString(),
                 certificat.getFormateurNom());
-    }
-
-    private PhotoDto toPhotoDto(Photo photo) {
-        return new PhotoDto(
-                photo.getId(),
-                photo.getTitre(),
-                "/api/espace-etudiant/photos/" + photo.getId() + "/fichier",
-                photo.getAuteurNom(),
-                photo.getDateAjout().toString(),
-                photo.getCohorte() != null ? photo.getCohorte().getId() : null,
-                photo.getCohorte() != null ? photo.getCohorte().getLibelle() : null);
-    }
-
-    private AnnonceDto toAnnonceDto(Annonce annonce) {
-        List<CohorteDto> cohortes = annonce.getCohortes().stream()
-                .map(this::toCohorteDto)
-                .toList();
-        return new AnnonceDto(
-                annonce.getId(),
-                annonce.getTitre(),
-                annonce.getContenu(),
-                annonce.getAuteurNom(),
-                annonce.getDateCreation().toString(),
-                annonce.isEpinglee(),
-                cohortes);
     }
 
     private EvenementDto toEvenementDto(Evenement evenement) {
@@ -1592,9 +1639,9 @@ public class EspaceEtudiantController {
             "text-on-secondary-container", "text-error", "text-on-surface-variant", "text-on-primary-container"
     };
 
-    private CohorteDto toCohorteDto(Cohorte cohorte) {
+    private PromotionDto toPromotionDto(Promotion cohorte) {
         Integer annee = cohorte.getDateDebut() != null ? cohorte.getDateDebut().getYear() : null;
-        return new CohorteDto(cohorte.getId(), cohorte.getCode(), cohorte.getLibelle(), annee);
+        return new PromotionDto(cohorte.getId(), cohorte.getCode(), cohorte.getLibelle(), annee);
     }
 
     private SujetDto toSujetDto(Sujet sujet) {
@@ -1648,6 +1695,25 @@ public class EspaceEtudiantController {
         return result.toUpperCase();
     }
 
+    private Seance findOwnedSession(Long id, Authentication authentication) {
+        Formateur formateur = findAuthenticatedFormateur(authentication);
+        if (formateur == null) return null;
+        return seanceService.getByFormateur(formateur.getId()).stream().filter(seance -> seance.getId().equals(id)).findFirst().orElse(null);
+    }
+
+    private void applySession(Seance seance, SeanceRequest request, Cours cours) {
+        seance.setCours(cours);
+        seance.setTitre(request.titre().trim());
+        seance.setType(request.type().trim().toLowerCase());
+        seance.setDateHeure(request.dateHeure());
+        seance.setDureeMinutes(request.dureeMinutes());
+        seance.setLieuOuLien(request.lieuOuLien() == null ? "" : request.lieuOuLien().trim());
+    }
+
+    private SeanceDto toSeanceDto(Seance seance) {
+        return new SeanceDto(seance.getId(), seance.getCours().getId(), seance.getCours().getTitre(), seance.getTitre(), seance.getType(), seance.getDateHeure(), seance.getDureeMinutes(), seance.getLieuOuLien());
+    }
+
     private SupportDto toSupportDto(SupportCours support) {
         Cours cours = support.getCours();
         return new SupportDto(
@@ -1661,13 +1727,21 @@ public class EspaceEtudiantController {
                 cours != null ? cours.getNom() : null);
     }
 
+    private SupportDetailDto toSupportDetailDto(SupportCours support) {
+        return new SupportDetailDto(
+                support.getId(),
+                support.getTitre(),
+                support.getTypeRessource(),
+                support.getUrl(),
+                support.getDatePublication(),
+                support.getFichierStocke() != null && !support.getFichierStocke().isBlank());
+    }
+
     private EtudiantSuiviDto toEtudiantSuiviDto(Etudiant etudiant) {
         String nomComplet = String.join(" ", etudiant.getPrenom(), etudiant.getNom()).trim();
-        String cohorte = etudiant.getCohorte() != null ? etudiant.getCohorte().getLibelle() : "Non affectée";
-        double noteMoyenne = noteModuleService.getByEtudiantId(etudiant.getId()).stream()
-                .mapToDouble(NoteModule::getNote)
-                .average()
-                .orElse(0);
+        String cohorte = etudiant.getPromotion() != null ? etudiant.getPromotion().getLibelle() : "Non affectée";
+        List<NoteModule> notes = noteModuleService.getByEtudiantId(etudiant.getId());
+        double noteMoyenne = notes.stream().mapToDouble(NoteModule::getNote).average().orElse(0);
         return new EtudiantSuiviDto(
                 etudiant.getId(),
                 nomComplet,
@@ -1675,10 +1749,23 @@ public class EspaceEtudiantController {
                 "Non renseignée",
                 0,
                 Math.round(noteMoyenne * 10) / 10.0,
-                "À risque",
+                statutSuivi(notes, noteMoyenne),
                 initials(etudiant.getPrenom(), etudiant.getNom()),
                 "bg-primary-container",
                 etudiant.getMatricule());
+    }
+
+    /**
+     * Ce champ valait toujours « À risque », quelle que soit la moyenne : le
+     * suivi affichait la même alerte sur un 18/20 que sur un 6/20. Faute d'un
+     * suivi d'activité réel (dernière connexion, avancement), le statut se
+     * limite à ce que les notes permettent d'affirmer.
+     */
+    private String statutSuivi(List<NoteModule> notes, double noteMoyenne) {
+        if (notes.isEmpty()) {
+            return "À risque"; // pas encore évalué : à surveiller par défaut
+        }
+        return noteMoyenne >= 12 ? "Actif" : "À risque";
     }
 
     private User findAuthenticatedUser(Authentication authentication) {
@@ -1695,6 +1782,16 @@ public class EspaceEtudiantController {
         return user == null ? null : formateurRepository.findByUserId(user.getId()).orElse(null);
     }
 
+    private Cours findOwnedCourse(Long courseId, Authentication authentication) {
+        Formateur formateur = findAuthenticatedFormateur(authentication);
+        if (formateur == null) {
+            return null;
+        }
+        return coursService.getByFormateurId(formateur.getId()).stream()
+                .filter(cours -> cours.getId().equals(courseId))
+                .findFirst()
+                .orElse(null);
+    }
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }

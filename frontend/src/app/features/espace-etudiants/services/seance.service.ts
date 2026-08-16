@@ -14,7 +14,19 @@ export class SeanceService {
     return this.http.get<Seance[]>(`${this.api}/formateur/cours/${coursId}/seances`);
   }
 
+  /**
+   * Creation rapide depuis la prise de presence : seul le titre et la date
+   * comptent pour ce flux, le reste (type/duree/lieu) prend une valeur par
+   * defaut raisonnable plutot que d'alourdir la modale de presence.
+   */
   creer(coursId: number, titre: string, date: string): Observable<Seance> {
-    return this.http.post<Seance>(`${this.api}/formateur/cours/${coursId}/seances`, { titre, date });
+    return this.http.post<Seance>(`${this.api}/formateur/seances`, {
+      coursId,
+      titre,
+      type: 'cours',
+      dateHeure: `${date}T09:00:00`,
+      dureeMinutes: 60,
+      lieuOuLien: null,
+    });
   }
 }

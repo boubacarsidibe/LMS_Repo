@@ -49,6 +49,12 @@ public class Candidature {
     @Column(length = 1000)
     private String motifRejet;
 
+    @Column(columnDefinition = "text")
+    private String informationsAcademiques;
+
+    @Column(columnDefinition = "text")
+    private String informationsProfessionnelles;
+
     @ManyToOne
     @JoinColumn(name = "candidat_id", nullable = false)
     private Candidat candidat;

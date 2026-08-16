@@ -59,4 +59,12 @@ public class SupportService {
         }
         return supportCoursRepository.compterParCours(coursIds);
     }
+
+    public List<SupportCours> getCourseSupports(Long coursId) {
+        return supportCoursRepository.findByCoursIdOrderByDatePublicationDesc(coursId);
+    }
+
+    public void deleteCourseSupports(Long coursId) {
+        supportCoursRepository.deleteByCoursId(coursId);
+    }
 }

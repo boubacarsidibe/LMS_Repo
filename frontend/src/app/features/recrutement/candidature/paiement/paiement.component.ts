@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RecrutementService, CandidatureResponse, PaiementResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
+import { CandidatNavbarComponent } from '../../../../shared/components/candidat-navbar/candidat-navbar.component';
+import { downloadBlob } from '../../../../shared/utils/download-file';
 
 @Component({
   selector: 'app-paiement',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, CandidatNavbarComponent],
   templateUrl: './paiement.component.html'
 })
 export class PaiementComponent implements OnInit {
@@ -17,6 +18,7 @@ export class PaiementComponent implements OnInit {
   candidatureId: number | null = null;
   paiement: PaiementResponse | null = null;
   loading = false;
+  telechargementRecu = false;
   currentDate = '';
 
   // Méthode de paiement
@@ -55,21 +57,26 @@ export class PaiementComponent implements OnInit {
   }
 
   get referenceTransaction(): string {
-    return this.paiement?.referenceTransaction || 'TXN-2024-99482';
+    return this.paiement?.referenceTransaction || '—';
   }
 
   get montantFormate(): string {
-    const montant = this.paiement?.montant || 15000;
-    return montant.toLocaleString('fr-FR') + ' FCFA';
+    const montant = this.paiement?.montant;
+    return montant == null ? 'Montant communiqué à la validation' : montant.toLocaleString('fr-FR') + ' FCFA';
+  }
+
+  /** Libellé lisible du moyen de paiement actuellement sélectionné dans le formulaire. */
+  private get methodeSelectionnee(): string {
+    if (this.paymentMethod === 'card') return 'Carte Bancaire';
+    if (this.paymentMethod === 'transfer') return 'Virement Bancaire';
+    return this.mobileOperators.find(op => op.code === this.selectedOperator)?.name || 'Mobile Money';
   }
 
   get methodePaiement(): string {
-    if (this.paiement?.statut === 'SUCCES' || this.paiement?.statut === 'CONFIRME') {
-      return this.paymentMethod === 'card' ? 'Carte Bancaire'
-        : this.paymentMethod === 'transfer' ? 'Virement Bancaire'
-        : this.selectedOperator.charAt(0).toUpperCase() + this.selectedOperator.slice(1);
-    }
-    return '—';
+    // Une fois le paiement enregistré, la valeur persistée fait foi : après un
+    // rechargement de la page, l'état du formulaire ne reflète plus le choix réel.
+    if (this.paiement?.methodePaiement) return this.paiement.methodePaiement;
+    return this.paiementReussi ? this.methodeSelectionnee : '—';
   }
 
   ngOnInit(): void {
@@ -104,10 +111,12 @@ export class PaiementComponent implements OnInit {
     if (!this.candidatureId) return;
     this.loading = true;
 
+    // Ni montant ni devise ne sont envoyés : les frais de dossier sont une donnée
+    // métier que le serveur détermine seul. Les transmettre depuis le navigateur
+    // laissait un client choisir le prix qu'il paie.
     this.recrutementService.initierPaiement({
       candidatureId: this.candidatureId,
-      montant: 15000,
-      devise: 'XOF'
+      methodePaiement: this.methodeSelectionnee
     }).subscribe({
       next: (response) => {
         this.paiement = response;
@@ -123,8 +132,20 @@ export class PaiementComponent implements OnInit {
   }
 
   telechargerRecu(): void {
-    // TODO: implémenter le téléchargement PDF via l'API
-    alert('Téléchargement du reçu à venir...');
+    if (!this.paiement?.id || this.telechargementRecu) return;
+    this.telechargementRecu = true;
+
+    this.recrutementService.telechargerRecuPaiement(this.paiement.id).subscribe({
+      next: (blob) => {
+        const dossier = this.candidature?.numeroDossier;
+        downloadBlob(blob, dossier ? `recu-${dossier}.pdf` : 'recu-paiement.pdf');
+        this.telechargementRecu = false;
+      },
+      error: () => {
+        this.telechargementRecu = false;
+        alert('Échec du téléchargement du reçu.');
+      }
+    });
   }
 
   accederEspaceCandidat(): void {

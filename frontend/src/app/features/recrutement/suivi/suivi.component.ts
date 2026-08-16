@@ -2,9 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { RecrutementService, CandidatureResponse } from '../../../core/recrutement/services/recrutement.service';
+import {
+  RecrutementService,
+  CandidatureResponse,
+  ParcoursCandidature,
+  EntretienCandidat,
+} from '../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
+import { CandidatNavbarComponent } from '../../../shared/components/candidat-navbar/candidat-navbar.component';
 
 interface TimelineItem {
   label: string;
@@ -17,7 +22,7 @@ interface TimelineItem {
 @Component({
   selector: 'app-suivi',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, CandidatNavbarComponent],
   templateUrl: './suivi.component.html'
 })
 export class SuiviComponent implements OnInit {
@@ -54,23 +59,53 @@ export class SuiviComponent implements OnInit {
     return stepIndex < this.activeStepIndex;
   }
 
-  /** Nom du responsable admissions */
-  // TODO: Ces données devraient idéalement provenir de l'objet 'candidature'
-  responsableAdmissions = 'Claire Vallet';
+  /**
+   * Interlocuteur affiché. Aucun nom de personne n'est inventé : le dossier n'est
+   * rattaché à aucun agent en base, seul le service l'est.
+   */
+  readonly responsableAdmissions = 'Service des admissions';
 
-  /** Score au test académique */
-  scoreTest = 88;
-  seuilScore = 60;
-  scoreObtenu = 42; // pour rejet
+  /**
+   * Parcours réel du candidat. Ces valeurs étaient auparavant codées en dur dans
+   * le composant — un score de 88, un seuil de 60, un entretien le « Mardi 24 Oct.
+   * » — alors que les tables tests_academiques et entretiens contenaient les
+   * vraies données et n'étaient jamais lues.
+   */
+  parcours: ParcoursCandidature | null = null;
 
-  /** Date d'entretien */
-  dateEntretien = 'Mardi 24 Oct.';
-  heureEntretien = '14h30';
-  lieuEntretien = 'INPG Campus Dakar';
-  adresseEntretien = 'VDN / Almadies, Dakar, Sénégal';
+  /** Note globale pondérée par les coefficients, ou null si aucune épreuve saisie. */
+  get noteGlobale(): number | null {
+    const tests = (this.parcours?.tests ?? []).filter((t) => t.noteObtenue != null);
+    if (tests.length === 0) return null;
+    const poidsTotal = tests.reduce((s, t) => s + (t.coefficient ?? 1), 0);
+    if (poidsTotal === 0) return null;
+    const somme = tests.reduce((s, t) => s + (t.noteObtenue ?? 0) * (t.coefficient ?? 1), 0);
+    return Math.round((somme / poidsTotal) * 100) / 100;
+  }
+
+  get seuilScore(): number | null {
+    return this.parcours?.seuilReussiteTest ?? null;
+  }
+
+  get aDesResultats(): boolean {
+    return this.noteGlobale !== null;
+  }
+
+  /** Prochain entretien planifié, s'il existe. */
+  get entretien(): EntretienCandidat | null {
+    const entretiens = this.parcours?.entretiens ?? [];
+    return entretiens.length > 0 ? entretiens[entretiens.length - 1] : null;
+  }
+
+  get lieuEntretien(): string {
+    return this.entretien?.lieuOuLien || 'Lieu communiqué par courriel';
+  }
 
   get mapUrl(): string {
-    return 'https://www.google.com/maps/search/' + encodeURIComponent(this.adresseEntretien || '');
+    const lieu = this.entretien?.lieuOuLien;
+    return lieu
+      ? 'https://www.google.com/maps/search/' + encodeURIComponent(lieu)
+      : 'https://www.google.com/maps/search/INPG+Dakar';
   }
 
   constructor(private recrutementService: RecrutementService) {}
@@ -81,6 +116,14 @@ export class SuiviComponent implements OnInit {
         // Prendre la candidature la plus récente (tous statuts)
         this.candidature = data.length > 0 ? data[data.length - 1] : null;
         this.loading = false;
+        if (this.candidature?.id) {
+          this.recrutementService.getParcoursCandidature(this.candidature.id).subscribe({
+            next: (parcours) => (this.parcours = parcours),
+            // Absence de parcours = aucune épreuve encore saisie : les blocs
+            // correspondants restent simplement masqués.
+            error: () => (this.parcours = null),
+          });
+        }
       },
       error: () => {
         this.loading = false;

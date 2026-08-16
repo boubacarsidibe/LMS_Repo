@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FormateurService, FormateurProfile } from '../../services/formateur.service';
+import { FormateurService, FormateurProfile, FormateurDashboard } from '../../services/formateur.service';
 import { CoursService } from '../../services/cours.service';
 import { Cours } from '../../models/cours';
 import { EvenementService } from '../../services/evenement.service';
@@ -20,6 +20,7 @@ import { Etudiant } from '../../models/etudiant';
 })
 export class DashboardFormateur implements OnInit {
   profile: FormateurProfile | null = null;
+  dashboard: FormateurDashboard | null = null;
   loading = false;
 
   mesCours: Cours[] = [];
@@ -50,6 +51,11 @@ export class DashboardFormateur implements OnInit {
     this.formateurService.getProfile().subscribe({
       next: p => { this.profile = p; this.loading = false; },
       error: () => { this.profile = null; this.loading = false; }
+    });
+
+    this.formateurService.getDashboard().subscribe({
+      next: dashboard => this.dashboard = dashboard,
+      error: () => this.dashboard = null
     });
 
     this.chargementCours = true;

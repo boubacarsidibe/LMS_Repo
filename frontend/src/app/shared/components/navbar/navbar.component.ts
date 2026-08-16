@@ -21,7 +21,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   notifDropdownOpen = false;
   userReady = false;
   hasCandidature = false;
-  candidatureUrl = '/recrutement/candidature';
+  candidatureUrl = '/recrutement/sessions';
 
   // Notifications
   notifications: NotificationCandidatResponse[] = [];
@@ -68,11 +68,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
       next: (candidatures: CandidatureResponse[]) => {
         const soumises = (candidatures || []).filter(c => c.statut !== 'BROUILLON');
         this.hasCandidature = soumises.length > 0;
-        this.candidatureUrl = this.hasCandidature ? '/recrutement/suivi' : '/recrutement/candidature';
+        // Sans candidature existante, on ne peut pas postuler sans avoir d'abord choisi
+        // une session : on renvoie vers la liste des sessions plutôt que le formulaire seul.
+        this.candidatureUrl = this.hasCandidature ? '/recrutement/suivi' : '/recrutement/sessions';
       },
       error: () => {
         this.hasCandidature = false;
-        this.candidatureUrl = '/recrutement/candidature';
+        this.candidatureUrl = '/recrutement/sessions';
       }
     });
   }
@@ -108,6 +110,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return roles.includes('ROLE_FORMATEUR');
   }
 
+  /**
+   * Sans ce lien, l'espace pédagogique était inatteignable : aucune barre n'y
+   * menait et la redirection après connexion l'ignorait.
+   */
+  get isPedagogiqueRole(): boolean {
+    const roles = this.auth.getUserRoles();
+    return roles.includes('ROLE_RESPONSABLE_PEDAGOGIQUE');
+  }
+
   get isCandidatRole(): boolean {
     const roles = this.auth.getUserRoles();
     return roles.includes('ROLE_CANDIDAT');
@@ -137,6 +148,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     const r = roles[0];
     switch (r) {
       case 'ROLE_RESPONSABLE_ADMISSION': return 'RESPONSABLE ADMISSION';
+      case 'ROLE_RESPONSABLE_PEDAGOGIQUE': return 'RESPONSABLE PÉDAGOGIQUE';
       case 'ROLE_CANDIDAT': return 'CANDIDAT';
       case 'ROLE_ETUDIANT': return 'ETUDIANT';
       case 'ROLE_FORMATEUR': return 'FORMATEUR';

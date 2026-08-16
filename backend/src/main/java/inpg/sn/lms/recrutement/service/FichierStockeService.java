@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import inpg.sn.lms.fichier.ValidationFichier;
 import inpg.sn.lms.recrutement.entity.FichierStocke;
 import inpg.sn.lms.recrutement.repository.FichierStockeRepository;
 
@@ -33,17 +34,26 @@ public class FichierStockeService {
     }
 
     public FichierStocke enregistrerFichier(MultipartFile file) {
-        String nomUnique = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        Path cheminFichier = uploadDir.resolve(nomUnique);
+        // Un dossier de candidature ne contient que des documents et des scans :
+        // tout le reste est refusé, en particulier les formats exécutables par un
+        // navigateur, qui seraient ensuite re-servis depuis l'origine du site.
+        ValidationFichier.exiger(file,
+                ValidationFichier.EXTENSIONS_DOCUMENT_CANDIDAT,
+                ValidationFichier.TYPES_DOCUMENT_CANDIDAT,
+                "PDF, JPEG, PNG, WEBP");
+
+        String nomOriginal = ValidationFichier.nomSur(file, "document");
+        String nomUnique = UUID.randomUUID().toString() + "_" + nomOriginal;
+        Path cheminFichier = ValidationFichier.destinationSure(uploadDir, nomUnique);
 
         try {
             Files.copy(file.getInputStream(), cheminFichier, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new RuntimeException("Échec de l'enregistrement du fichier: " + file.getOriginalFilename(), e);
+            throw new RuntimeException("Échec de l'enregistrement du fichier: " + nomOriginal, e);
         }
 
         FichierStocke fichier = new FichierStocke();
-        fichier.setNomOriginal(file.getOriginalFilename());
+        fichier.setNomOriginal(nomOriginal);
         fichier.setCheminStockage(cheminFichier.toString());
         fichier.setMimeType(file.getContentType());
         fichier.setTailleOctets(file.getSize());

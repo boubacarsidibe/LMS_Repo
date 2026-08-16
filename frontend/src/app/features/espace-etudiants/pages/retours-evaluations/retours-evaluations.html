@@ -9,17 +9,14 @@
       </div>
       <h1 class="font-display text-on-surface leading-tight">Retours &amp; Évaluations des Enseignements</h1>
       <p class="font-body-lg text-on-surface-variant max-w-2xl">
-        Analysez la satisfaction des étudiants et gérez les retours pédagogiques de vos cohortes pour optimiser vos parcours de formation.
+        Analysez la satisfaction des étudiants et gérez les retours pédagogiques de vos promotions pour ajuster vos enseignements.
       </p>
     </div>
     <div class="flex gap-stack-md">
-      <button disabled title="Bientôt disponible" class="flex items-center gap-2 px-6 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-on-surface-variant/50 cursor-not-allowed">
-        <span class="material-symbols-outlined text-[20px]">download</span>
-        Exporter le Rapport
-      </button>
-      <button disabled title="Bientôt disponible" class="flex items-center gap-2 px-6 py-3 bg-secondary/40 text-on-secondary rounded-lg font-label-md cursor-not-allowed">
-        <span class="material-symbols-outlined text-[20px]">analytics</span>
-        Analyse Comparative
+      <button type="button" (click)="exporter()"
+              class="flex items-center gap-2 px-6 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-on-surface hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-[20px]" aria-hidden="true">download</span>
+        Exporter (CSV)
       </button>
     </div>
   </div>
@@ -33,9 +30,9 @@
         </div>
       </div>
       <div class="mt-stack-md">
-        <p class="font-label-md text-on-surface-variant">Note Moyenne Globale</p>
+        <p class="font-label-md text-on-surface-variant">Note moyenne</p>
         <div class="flex items-baseline gap-2">
-          <h2 class="font-display text-on-surface">{{ retours.length ? noteMoyenne.toFixed(1) : '—' }}</h2>
+          <h2 class="font-display text-on-surface">{{ retoursDuPerimetre.length ? noteMoyenne.toFixed(1) : '—' }}</h2>
           <span class="font-headline-sm text-outline">/ 5</span>
         </div>
       </div>
@@ -48,7 +45,7 @@
         </div>
       </div>
       <p class="font-label-md text-on-surface-variant">Taux de Satisfaction</p>
-      <h2 class="font-display text-on-surface">{{ retours.length ? tauxSatisfaction + '%' : '—' }}</h2>
+      <h2 class="font-display text-on-surface">{{ retoursDuPerimetre.length ? tauxSatisfaction + '%' : '—' }}</h2>
       <p class="text-body-sm text-on-surface-variant mt-1 italic">Part des avis notés 4/5 ou plus</p>
     </div>
 
@@ -60,8 +57,33 @@
       </div>
       <div class="mt-stack-md">
         <p class="font-label-md text-on-surface-variant">Volume de Retours</p>
-        <h2 class="font-display text-on-surface">{{ retours.length }}</h2>
-        <p class="font-body-sm text-on-surface-variant mt-1 italic">Avis collectés sur vos cours</p>
+        <h2 class="font-display text-on-surface">{{ retoursDuPerimetre.length }}</h2>
+        <p class="font-body-sm text-on-surface-variant mt-1 italic">{{ libellePerimetre }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Répartition des notes -->
+  <div *ngIf="!chargement && retoursDuPerimetre.length"
+       class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-sm border border-outline-variant/30">
+    <h3 class="font-label-md text-on-surface-variant mb-4">Répartition des notes — {{ libellePerimetre }}</h3>
+    <div class="flex flex-col gap-2">
+      <div *ngFor="let ligne of repartition" class="flex items-center gap-3">
+        <span class="w-12 shrink-0 text-label-sm text-on-surface-variant flex items-center gap-1">
+          {{ ligne.note }}
+          <span class="material-symbols-outlined text-[14px] text-secondary"
+                style="font-variation-settings: 'FILL' 1" aria-hidden="true">star</span>
+        </span>
+        <div class="flex-1 h-2 bg-surface-container-highest rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-500"
+               [class.bg-secondary]="ligne.note >= 4"
+               [class.bg-outline]="ligne.note === 3"
+               [class.bg-error]="ligne.note <= 2"
+               [style.width.%]="ligne.pourcentage"></div>
+        </div>
+        <span class="w-16 shrink-0 text-right text-label-sm text-on-surface-variant">
+          {{ ligne.nombre }} ({{ ligne.pourcentage }}%)
+        </span>
       </div>
     </div>
   </div>
@@ -70,9 +92,9 @@
   <div class="flex flex-col md:flex-row items-center justify-between gap-stack-md bg-surface-container-low p-4 rounded-xl">
     <div class="flex flex-wrap items-center gap-stack-md w-full md:w-auto">
       <div class="relative min-w-[280px]">
-        <select [(ngModel)]="coursSelectionne" class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-label-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all">
-          <option value="">Tous les cours</option>
-          <option *ngFor="let c of mesCours" [value]="c.titre">{{ c.titre }}</option>
+        <select [(ngModel)]="coursSelectionne" aria-label="Filtrer par cours" class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-label-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all">
+          <option [ngValue]="null">Tous les cours</option>
+          <option *ngFor="let c of mesCours" [ngValue]="+c.id">{{ c.titre }}</option>
         </select>
         <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
       </div>
@@ -88,14 +110,25 @@
     </div>
   </div>
 
+  <!-- Chargement -->
+  <div *ngIf="chargement" class="flex items-center justify-center py-16">
+    <p class="text-body-md text-on-surface-variant">Chargement des retours…</p>
+  </div>
+
+  <!-- Erreur -->
+  <div *ngIf="erreur && !chargement" role="alert"
+       class="p-4 bg-error-container/20 text-error rounded-lg text-body-sm">
+    {{ erreur }}
+  </div>
+
   <!-- Grille des avis -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-gutter">
+  <div *ngIf="!chargement && !erreur" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-gutter">
     <div *ngFor="let r of retoursFiltres"
          class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 flex flex-col justify-between hover:translate-y-[-4px] transition-transform duration-300 relative"
          [class.border-l-4]="r.statut === 'action-requise'"
          [class.border-l-error]="r.statut === 'action-requise'">
 
-      <button (click)="togglePin(r)" class="absolute top-2 right-2 p-1.5 rounded-full hover:bg-surface-container transition-colors" [class.text-secondary]="r.epingle" [class.text-outline]="!r.epingle" title="Épingler cet avis">
+      <button type="button" (click)="togglePin(r)" class="absolute top-2 right-2 p-1.5 rounded-full hover:bg-surface-container transition-colors" [class.text-secondary]="r.epingle" [class.text-outline]="!r.epingle" [attr.title]="r.epingle ? 'Ne plus épingler cet avis' : 'Épingler cet avis'" [attr.aria-label]="r.epingle ? 'Ne plus épingler cet avis' : 'Épingler cet avis'" [attr.aria-pressed]="r.epingle">
         <span class="material-symbols-outlined text-[20px]" [style.font-variation-settings]="r.epingle ? &quot;'FILL' 1&quot; : &quot;'FILL' 0&quot;">push_pin</span>
       </button>
 
@@ -122,7 +155,7 @@
       </div>
 
       <div class="flex items-center justify-end mt-6 pt-4 border-t border-outline-variant/30" *ngIf="r.statut === 'action-requise'">
-        <button (click)="ajusterCours()" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg text-label-md hover:opacity-90 transition-all">
+        <button (click)="ajusterCours(r)" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg text-label-md hover:opacity-90 transition-all">
           <span class="material-symbols-outlined text-[18px]">tune</span>
           Ajuster le cours
         </button>
@@ -130,17 +163,16 @@
     </div>
   </div>
 
-  <p *ngIf="retoursFiltres.length === 0" class="text-center text-body-md text-on-surface-variant py-8">
-    Aucun avis ne correspond à ce filtre.
-  </p>
-
-  <!-- Pagination désactivée -->
-  <div class="flex flex-col items-center justify-center pt-stack-lg border-t border-outline-variant/20 opacity-40 pointer-events-none">
-    <div class="flex flex-col items-center gap-2">
-      <span class="text-label-md text-on-surface-variant">Afficher plus de retours</span>
-      <div class="p-2 bg-surface-container rounded-full">
-        <span class="material-symbols-outlined">keyboard_arrow_down</span>
-      </div>
-    </div>
+  <!-- Aucun résultat : distinguer « pas encore d'avis » de « le filtre n'en laisse aucun » -->
+  <div *ngIf="!chargement && !erreur && retoursFiltres.length === 0"
+       class="flex flex-col items-center gap-3 text-center py-12">
+    <span class="material-symbols-outlined text-[40px] text-outline" aria-hidden="true">reviews</span>
+    <p class="text-body-md text-on-surface-variant" *ngIf="retours.length === 0">
+      Aucun étudiant n'a encore déposé d'avis sur vos cours.
+    </p>
+    <p class="text-body-md text-on-surface-variant" *ngIf="retours.length > 0">
+      Aucun avis ne correspond à ce filtre.
+    </p>
   </div>
+
 </div>

@@ -1,0 +1,141 @@
+/**
+ * Types de l'espace étudiant, alignés sur les DTO du backend
+ * (`inpg.sn.lms.espace_etudiant.dto`).
+ */
+
+export type TypeAnnonce = 'ANNONCE' | 'MESSAGE' | 'MEMO';
+
+export interface PromotionDetail {
+  id: number;
+  code: string;
+  libelle: string;
+  dateDebut: string | null;
+  dateFin: string | null;
+  enCours: boolean;
+  programme: string | null;
+  activitesParascolaires: string | null;
+  formationCode: string | null;
+  formationIntitule: string | null;
+  formationDescription: string | null;
+  effectif: number;
+  nbCours: number;
+}
+
+/** Réponse de `GET /scolarite/ma-promotion`. */
+export interface MaPromotion {
+  matricule: string;
+  promotion: PromotionDetail | Record<string, never>;
+  message?: string;
+}
+
+export interface CoursEtudiant {
+  id: number;
+  code: string;
+  titre: string;
+  description: string;
+  semestre: string;
+  volumeHoraire: number;
+  imageUrl: string | null;
+  formateurs: string[];
+  nbSupports: number;
+  nbSupportsConsultes: number;
+  /** Pourcentage 0-100, dérivé des supports consultés. */
+  progression: number;
+  maNote: number | null;
+}
+
+export interface SupportEtudiant {
+  id: number;
+  titre: string;
+  typeRessource: string;
+  url: string;
+  datePublication: string | null;
+  consulte: boolean;
+}
+
+export interface SeanceEtudiant {
+  id: number;
+  titre: string;
+  type: string;
+  dateHeure: string;
+  dureeMinutes: number;
+  lieuOuLien: string | null;
+  coursId: number | null;
+  coursTitre: string | null;
+}
+
+export interface Annonce {
+  id: number;
+  titre: string;
+  contenu: string;
+  type: TypeAnnonce;
+  datePublication: string;
+  auteur: string;
+  promotionLibelle: string | null;
+  epinglee: boolean;
+  lue: boolean;
+}
+
+export interface ForumSujet {
+  id: number;
+  titre: string;
+  coursId: number | null;
+  coursTitre: string | null;
+  auteur: string;
+  dateCreation: string;
+  epingle: boolean;
+  clos: boolean;
+  nbMessages: number;
+  dateDernierMessage: string;
+}
+
+export interface ForumMessage {
+  id: number;
+  auteur: string;
+  contenu: string;
+  dateCreation: string;
+  estAuteur: boolean;
+}
+
+export interface FilForum {
+  sujet: ForumSujet;
+  messages: ForumMessage[];
+}
+
+export interface AlbumPhoto {
+  id: number;
+  titre: string;
+  description: string | null;
+  dateEvenement: string | null;
+  promotionLibelle: string | null;
+  nbPhotos: number;
+  couvertureUrl: string | null;
+}
+
+export interface Photo {
+  id: number;
+  url: string;
+  legende: string | null;
+  dateAjout: string;
+}
+
+export interface ContenuAlbum {
+  album: AlbumPhoto;
+  photos: Photo[];
+}
+
+export interface EvaluationCours {
+  id: number;
+  coursId: number;
+  coursTitre: string;
+  note: number;
+  commentaire: string | null;
+  dateSoumission: string;
+}
+
+export interface SyntheseEvaluation {
+  coursId: number;
+  coursTitre: string;
+  moyenne: number | null;
+  nombreEvaluations: number;
+}

@@ -14,7 +14,7 @@ public interface PresenceRepository extends JpaRepository<Presence, Long> {
     List<Presence> findBySeanceId(Long seanceId);
 
     @EntityGraph(attributePaths = { "seance", "seance.cours" })
-    List<Presence> findByEtudiantIdOrderBySeance_DateDesc(Long etudiantId);
+    List<Presence> findByEtudiantIdOrderBySeance_DateHeureDesc(Long etudiantId);
 
     Optional<Presence> findBySeanceIdAndEtudiantId(Long seanceId, Long etudiantId);
 }

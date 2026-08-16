@@ -1,7 +1,10 @@
 export interface Seance {
   id: number;
-  titre: string;
-  date: string;
   coursId: number;
-  coursCode: string;
+  coursTitre: string;
+  titre: string;
+  type: string;
+  dateHeure: string;
+  dureeMinutes: number;
+  lieuOuLien: string | null;
 }

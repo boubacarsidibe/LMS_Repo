@@ -40,7 +40,9 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-secretpassword}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # Le schéma est créé et fait évoluer par Flyway. Hibernate se contente de
+      # vérifier la correspondance entités/tables au démarrage.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_DEVTOOLS_RESTART_ENABLED: "true"
     # Sans ce volume, /app/uploads vit uniquement dans le conteneur : chaque
     # reconstruction de l'image effacait TOUS les supports de cours et photos

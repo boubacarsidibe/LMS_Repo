@@ -12,6 +12,7 @@ import { NoteModule } from '../../models/note-module';
 import { NoteModuleService } from '../../services/note-module.service';
 import { PresenceHistorique } from '../../models/presence';
 import { PresenceService } from '../../services/presence.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 interface ActiviteItem {
   type: 'note' | 'presence';
@@ -54,7 +55,8 @@ export class ProfilEtudiant implements OnInit {
     private cohorteService: CohorteService,
     private coursService: CoursService,
     private noteModuleService: NoteModuleService,
-    private presenceService: PresenceService
+    private presenceService: PresenceService,
+    private confirmation: ConfirmationService
   ) {}
 
   ngOnInit() {
@@ -151,12 +153,19 @@ export class ProfilEtudiant implements OnInit {
   }
 
   supprimerNote(note: NoteModule) {
-    if (!confirm(`Supprimer la note "${note.module}" (${note.note}/20) ?`)) return;
-    this.noteModuleService.supprimer(note.id).subscribe({
-      next: () => {
-        this.notes = this.notes.filter(n => n.id !== note.id);
-        this.rafraichirNoteMoyenne();
-      },
+    this.confirmation.demander({
+      titre: 'Supprimer la note',
+      message: `La note de ${note.note}/20 en « ${note.module} » sera supprimée et la moyenne recalculée.`,
+      libelleConfirmer: 'Supprimer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.noteModuleService.supprimer(note.id).subscribe({
+        next: () => {
+          this.notes = this.notes.filter(n => n.id !== note.id);
+          this.rafraichirNoteMoyenne();
+        },
+      });
     });
   }
 

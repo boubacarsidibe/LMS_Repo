@@ -38,10 +38,11 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
     { label: 'Statistiques', icon: 'bar_chart', route: '/responsable-admission/statistiques' },
     { label: 'Sessions', icon: 'calendar_today', route: '/responsable-admission/sessions' },
     { label: 'Candidatures', icon: 'folder_shared', route: '/responsable-admission/candidatures' },
-    { label: 'Critères auto', icon: 'filter_alt', route: '/responsable-admission/criteres' },
     { label: 'Tests Académiques', icon: 'quiz', route: '/responsable-admission/tests' },
     { label: 'Entretiens', icon: 'groups', route: '/responsable-admission/entretiens' },
     { label: 'Délibération', icon: 'gavel', route: '/responsable-admission/deliberation', filled: true },
+    { label: 'Paiements', icon: 'payments', route: '/responsable-admission/paiements' },
+    { label: 'Notifications', icon: 'mail', route: '/responsable-admission/notifications' },
   ];
 
   constructor(

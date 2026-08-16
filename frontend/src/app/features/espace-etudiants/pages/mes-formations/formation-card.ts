@@ -2,6 +2,8 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Formation } from '../../models/formation';
 import { FavoritesService } from '../../services/favorites.service';
+import { RecentlyViewedService } from '../../services/recently-viewed.service';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 @Component({
   selector: 'app-formation-card',
@@ -13,7 +15,9 @@ import { FavoritesService } from '../../services/favorites.service';
 export class FormationCard {
   @Input() formation!: Formation;
 
-  constructor(private favorites: FavoritesService) {}
+  constructor(private favorites: FavoritesService, private recentlyViewed: RecentlyViewedService,
+    private notifications: NotificationService
+  ) {}
   toggleFavorite(event?: Event): void {
     if (event) {
       event.stopPropagation();
@@ -34,6 +38,7 @@ export class FormationCard {
     if (event) {
       event.stopPropagation();
     }
-    alert('Le contenu de ce cours n\'est pas encore disponible en ligne.');
+    this.recentlyViewed.recordView(this.formation);
+    this.notifications.info("Le contenu de ce cours n'est pas encore disponible en ligne.");
   }
 }

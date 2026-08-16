@@ -10,8 +10,8 @@ import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.auth.repository.FormateurRepository;
-import inpg.sn.lms.espace_etudiant.entity.Cohorte;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
+import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 
 /**
@@ -36,20 +36,20 @@ public class PerimetreFormateurService {
     }
 
     /**
-     * Cohortes que le formateur enseigne, deduites des cohortes rattachees a ses cours.
-     * Un formateur sans cours, ou dont aucun cours n'a de cohorte, obtient une liste vide
+     * Promotions que le formateur enseigne, deduites des promotions rattachees a ses cours.
+     * Un formateur sans cours, ou dont aucun cours n'a de promotion, obtient une liste vide
      * (et ne verra donc aucun etudiant) : c'est le comportement voulu, pas un bug.
      */
     public List<Long> cohorteIdsDuFormateur(Formateur formateur) {
         return coursService.getByFormateurId(formateur.getId()).stream()
-                .flatMap(cours -> cours.getCohortes().stream())
-                .map(Cohorte::getId)
+                .flatMap(cours -> cours.getPromotions().stream())
+                .map(Promotion::getId)
                 .distinct()
                 .toList();
     }
 
     /**
-     * Cohortes visibles par un utilisateur quelconque, selon son profil :
+     * Promotions visibles par un utilisateur quelconque, selon son profil :
      * un formateur voit celles de ses cours, un etudiant uniquement la sienne.
      * Un utilisateur sans profil (ni formateur ni etudiant) ne voit rien.
      */
@@ -59,8 +59,8 @@ public class PerimetreFormateurService {
             return cohorteIdsDuFormateur(formateur);
         }
         Etudiant etudiant = etudiantRepository.findByUserId(user.getId()).orElse(null);
-        if (etudiant != null && etudiant.getCohorte() != null) {
-            return List.of(etudiant.getCohorte().getId());
+        if (etudiant != null && etudiant.getPromotion() != null) {
+            return List.of(etudiant.getPromotion().getId());
         }
         return List.of();
     }
@@ -71,11 +71,11 @@ public class PerimetreFormateurService {
                 .anyMatch(f -> f.getId().equals(formateur.getId()));
     }
 
-    /** Vrai si l'etudiant appartient a l'une des cohortes rattachees au cours. */
+    /** Vrai si l'etudiant appartient a l'une des promotions rattachees au cours. */
     public boolean etudiantSuitLeCours(Etudiant etudiant, Cours cours) {
-        return etudiant.getCohorte() != null
-                && cours.getCohortes().stream()
-                        .anyMatch(c -> c.getId().equals(etudiant.getCohorte().getId()));
+        return etudiant.getPromotion() != null
+                && cours.getPromotions().stream()
+                        .anyMatch(c -> c.getId().equals(etudiant.getPromotion().getId()));
     }
 
     /** Vrai si la ressource a une date de publication encore dans le futur. */
@@ -107,7 +107,7 @@ public class PerimetreFormateurService {
      * <p>Un support sans cours rattache (ressource pedagogique generale, hors du
      * perimetre "cours") n'est pas concerne par cette regle : toujours accessible.
      *
-     * @param mesCohorteIds cohortes visibles de l'appelant, voir {@link #cohorteIdsVisiblesPour}
+     * @param mesCohorteIds promotions visibles de l'appelant, voir {@link #cohorteIdsVisiblesPour}
      */
     public boolean coursDuSupportEstAccessible(SupportCours support, List<Long> mesCohorteIds, Formateur formateurConnecte) {
         Cours cours = support.getCours();
@@ -117,6 +117,6 @@ public class PerimetreFormateurService {
         if (formateurConnecte != null && estFormateurDuCours(formateurConnecte, cours)) {
             return true;
         }
-        return cours.getCohortes().stream().anyMatch(c -> mesCohorteIds.contains(c.getId()));
+        return cours.getPromotions().stream().anyMatch(c -> mesCohorteIds.contains(c.getId()));
     }
 }

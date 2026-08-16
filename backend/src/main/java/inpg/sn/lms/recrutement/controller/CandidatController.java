@@ -7,6 +7,8 @@ import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
 import inpg.sn.lms.recrutement.dto.CandidatureRequest;
 import inpg.sn.lms.recrutement.dto.CandidatureResponse;
+import inpg.sn.lms.recrutement.dto.PaiementRequest;
+import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.entity.BrouillonCandidature;
 import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.FichierStocke;
@@ -17,23 +19,34 @@ import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.repository.BrouillonCandidatureRepository;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
 import inpg.sn.lms.recrutement.repository.PieceJustificativeRepository;
+import inpg.sn.lms.recrutement.repository.EntretienRepository;
 import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
+import inpg.sn.lms.recrutement.repository.TestAcademiqueRepository;
 import inpg.sn.lms.recrutement.service.CandidatureService;
-import inpg.sn.lms.recrutement.service.CritereSelectionService;
+import inpg.sn.lms.recrutement.service.ConvocationPdfService;
+import inpg.sn.lms.recrutement.service.EntretienService;
 import inpg.sn.lms.recrutement.service.FichierStockeService;
+import inpg.sn.lms.recrutement.service.LettreAdmissionPdfService;
 import inpg.sn.lms.recrutement.service.NotificationCandidatService;
 import inpg.sn.lms.recrutement.service.NotificationService;
+import inpg.sn.lms.recrutement.service.PaiementService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +55,12 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/recrutement/candidat")
 @CrossOrigin(origins = "http://localhost:4200")
+/*
+ * Autorisation rendue explicite : elle ne reposait que sur le prefixe d'URL filtre
+ * dans SecurityConfig. Un endpoint ajoute hors de ce prefixe aurait ete ouvert sans
+ * que rien ne le signale. Les regles d'URL restent en place et s'appliquent en plus.
+ */
+@PreAuthorize("isAuthenticated()")
 public class CandidatController {
 
     private static final Logger log = LoggerFactory.getLogger(CandidatController.class);
@@ -55,9 +74,14 @@ public class CandidatController {
     private final FichierStockeService fichierStockeService;
     private final PieceJustificativeRepository pieceJustificativeRepository;
     private final BrouillonCandidatureRepository brouillonRepository;
-    private final CritereSelectionService critereSelectionService;
     private final NotificationService notificationService;
     private final NotificationCandidatService notificationCandidatService;
+    private final PaiementService paiementService;
+    private final TestAcademiqueRepository testAcademiqueRepository;
+    private final EntretienRepository entretienRepository;
+    private final EntretienService entretienService;
+    private final ConvocationPdfService convocationPdfService;
+    private final LettreAdmissionPdfService lettreAdmissionPdfService;
 
     @Value("${app.admission.email:admin@inpg.sn}")
     private String emailAdmission;
@@ -72,9 +96,19 @@ public class CandidatController {
             FichierStockeService fichierStockeService,
             PieceJustificativeRepository pieceJustificativeRepository,
             BrouillonCandidatureRepository brouillonRepository,
-            CritereSelectionService critereSelectionService,
             NotificationService notificationService,
-            NotificationCandidatService notificationCandidatService) {
+            NotificationCandidatService notificationCandidatService,
+            PaiementService paiementService,
+            TestAcademiqueRepository testAcademiqueRepository,
+            EntretienRepository entretienRepository,
+            EntretienService entretienService,
+            ConvocationPdfService convocationPdfService,
+            LettreAdmissionPdfService lettreAdmissionPdfService) {
+        this.testAcademiqueRepository = testAcademiqueRepository;
+        this.entretienRepository = entretienRepository;
+        this.entretienService = entretienService;
+        this.convocationPdfService = convocationPdfService;
+        this.lettreAdmissionPdfService = lettreAdmissionPdfService;
         this.candidatureService = candidatureService;
         this.candidatRepository = candidatRepository;
         this.userRepository = userRepository;
@@ -84,12 +118,15 @@ public class CandidatController {
         this.fichierStockeService = fichierStockeService;
         this.pieceJustificativeRepository = pieceJustificativeRepository;
         this.brouillonRepository = brouillonRepository;
-        this.critereSelectionService = critereSelectionService;
         this.notificationService = notificationService;
         this.notificationCandidatService = notificationCandidatService;
+        this.paiementService = paiementService;
     }
 
-    /** Accorde ROLE_CANDIDAT à l'utilisateur s'il ne l'a pas déjà (idempotent). */
+    /**
+     * Accorde ROLE_CANDIDAT à l'utilisateur (idempotent). Un compte ne peut détenir
+     * qu'un seul rôle à la fois : les rôles existants sont retirés avant l'ajout.
+     */
     private void garantirRoleCandidat(inpg.sn.lms.auth.entity.User user) {
         boolean dejaCandidat = user.getRoles().stream().anyMatch(r -> "ROLE_CANDIDAT".equals(r.getCode()));
         if (dejaCandidat) {
@@ -99,6 +136,7 @@ public class CandidatController {
         if (roleCandidat == null) {
             throw new IllegalStateException("Le rôle ROLE_CANDIDAT est introuvable.");
         }
+        user.getRoles().clear();
         user.addRole(roleCandidat);
         userRepository.save(user);
     }
@@ -115,6 +153,14 @@ public class CandidatController {
 
         // 1. Récupérer l'utilisateur connecté
         inpg.sn.lms.auth.entity.User user = findUser(authentication);
+
+        // Un compte Responsable Admission est strictement administratif : il ne peut pas
+        // cumuler le rôle Candidat (voir AdminController#changeUserRoles pour l'exclusivité).
+        boolean estAdmin = user.getRoles().stream().anyMatch(r -> "ROLE_RESPONSABLE_ADMISSION".equals(r.getCode()));
+        if (estAdmin) {
+            return ResponseEntity.status(403).body(Map.of(
+                    "message", "Un compte Responsable Admission ne peut pas déposer de candidature."));
+        }
 
         // 2. Chercher ou créer le Candidat avec les infos du formulaire
         final String infosPerso = request.getInformationsPersonnelles();
@@ -189,11 +235,14 @@ public class CandidatController {
         // immédiatement les dossiers ne remplissant pas les critères minimaux, ou fait
         // avancer directement les autres en présélection.
         String candidatEmail = user.getEmail();
-        if (critereSelectionService.evaluer(candidat)) {
+        if (session.respecteCriteres(candidat)) {
             candidatureService.changerStatut(saved.getId(), EnumStatutCandidature.EN_COURS_DE_PRESELECTION, null);
             notificationCandidatService.creerNotification(candidat,
                     "Votre dossier n°" + saved.getNumeroDossier() + " a été reçu et est en cours de présélection.",
                     "STATUT_CHANGE", "/recrutement/suivi");
+            if (candidatEmail != null) {
+                notificationService.notifierValidationDossier(candidatEmail, saved.getNumeroDossier());
+            }
         } else {
             candidatureService.changerStatut(saved.getId(), EnumStatutCandidature.REJETE,
                     "Critères de présélection automatique non remplis.");
@@ -306,6 +355,24 @@ public class CandidatController {
                     .body(java.util.Map.of("message", "Type de document invalide: " + typeDocumentStr));
         }
 
+        // Valider le fichier lui-même : le contrôle affiché côté formulaire (taille, format)
+        // n'est qu'un confort UX, un client qui le contourne ne doit pas pouvoir déposer
+        // n'importe quoi (exécutable, fichier surdimensionné...).
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", "Le fichier est vide."));
+        }
+        long tailleMaxOctets = 5L * 1024 * 1024;
+        if (file.getSize() > tailleMaxOctets) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("message", "Le fichier dépasse la taille maximale autorisée (5 Mo)."));
+        }
+        String mimeType = file.getContentType();
+        List<String> mimesAutorises = List.of("application/pdf", "image/jpeg", "image/png");
+        if (mimeType == null || !mimesAutorises.contains(mimeType.toLowerCase())) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("message", "Format de fichier non autorisé (PDF, JPG ou PNG uniquement)."));
+        }
+
         // Enregistrer le fichier
         FichierStocke fichier = fichierStockeService.enregistrerFichier(file);
 
@@ -322,9 +389,123 @@ public class CandidatController {
                 "fichierId", fichier.getId().toString()));
     }
 
+    /**
+     * Initie le paiement des frais de dossier pour une candidature. Aucune
+     * passerelle réelle (PayDunya/Touch/Kalpay) n'est connectée pour l'instant :
+     * le paiement est immédiatement confirmé, comme le ferait une passerelle
+     * réelle depuis le point de vue du candidat (email + notification déjà
+     * câblés dans PaiementService#simulerSuccesPaiement).
+     */
+    @PostMapping("/paiement")
+    public ResponseEntity<?> initierPaiement(@RequestBody PaiementRequest request, Authentication authentication) {
+        inpg.sn.lms.auth.entity.User user = findUser(authentication);
+        Candidat candidat = candidatRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new RuntimeException("Candidat non trouvé"));
+
+        Candidature candidature = candidatureRepository.findById(request.getCandidatureId())
+                .orElseThrow(() -> new RuntimeException("Candidature non trouvée"));
+
+        if (!candidature.getCandidat().getId().equals(candidat.getId())) {
+            return ResponseEntity.status(403).body(Map.of("message", "Accès non autorisé"));
+        }
+
+        PaiementResponse paiement = paiementService.initierPaiement(request);
+        PaiementResponse confirme = paiementService.simulerSuccesPaiement(paiement.getId());
+        return ResponseEntity.ok(confirme);
+    }
+
+    /**
+     * Reçu PDF des frais de dossier. Le contrôle de propriété est délégué au service :
+     * un candidat ne peut télécharger que le reçu de son propre paiement.
+     */
+    @GetMapping("/paiement/{id}/recu")
+    public ResponseEntity<byte[]> telechargerRecu(@PathVariable Long id, Authentication authentication) {
+        inpg.sn.lms.auth.entity.User user = findUser(authentication);
+        Candidat candidat = candidatRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new RuntimeException("Candidat non trouvé"));
+
+        PaiementService.Recu recu = paiementService.genererRecu(id, candidat.getId());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(
+                ContentDisposition.attachment().filename(recu.nomFichier(), StandardCharsets.UTF_8).build());
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .headers(headers)
+                .body(recu.contenu());
+    }
+
+    /**
+     * Suivi par numéro de dossier.
+     *
+     * <p>Le numéro de dossier circule dans les courriels, sur les reçus et dans les
+     * exports : ce n'est pas un secret. Sans contrôle de propriété, tout compte
+     * connecté pouvait donc lire l'état civil, la date de naissance et le dossier
+     * de paiement d'un autre candidat. La réponse est désormais réservée au
+     * titulaire du dossier.
+     */
     @GetMapping("/suivi/{numeroDossier}")
-    public ResponseEntity<CandidatureResponse> suivreAvancement(@PathVariable String numeroDossier) {
-        return ResponseEntity.ok(candidatureService.getCandidatureByNumeroDossier(numeroDossier));
+    public ResponseEntity<?> suivreAvancement(@PathVariable String numeroDossier, Authentication auth) {
+        CandidatureResponse reponse = candidatureService.getCandidatureByNumeroDossier(numeroDossier);
+        Optional<Candidat> candidat = candidatRepository.findByUserId(findUser(auth).getId());
+        if (candidat.isEmpty() || !reponse.getCandidatId().equals(candidat.get().getId())) {
+            return ResponseEntity.status(403).body(Map.of("message", "Accès non autorisé"));
+        }
+        return ResponseEntity.ok(reponse);
+    }
+
+    /**
+     * Parcours d'évaluation du candidat : épreuves passées et entretiens planifiés.
+     *
+     * <p>Alimente la page de suivi, qui affichait jusqu'ici des notes, un jury et un
+     * rendez-vous d'entretien écrits en dur dans le composant Angular. Les
+     * appréciations du jury ne sont volontairement pas exposées : elles relèvent de
+     * la délibération interne.
+     */
+    @GetMapping("/candidature/{id}/parcours")
+    public ResponseEntity<?> parcours(@PathVariable Long id, Authentication auth) {
+        CandidatureResponse candidature = candidatureService.getCandidatureById(id);
+        Optional<Candidat> candidatOpt = candidatRepository.findByUserId(findUser(auth).getId());
+        if (candidatOpt.isEmpty() || !candidature.getCandidatId().equals(candidatOpt.get().getId())) {
+            return ResponseEntity.status(403).body(Map.of("message", "Accès non autorisé"));
+        }
+        Long candidatId = candidatOpt.get().getId();
+
+        List<Map<String, Object>> tests = testAcademiqueRepository.findByCandidatId(candidatId).stream()
+                .map(test -> {
+                    Map<String, Object> ligne = new LinkedHashMap<>();
+                    ligne.put("nomEpreuve", test.getNomEpreuve());
+                    ligne.put("coefficient", test.getCoefficient());
+                    ligne.put("noteObtenue", test.getNoteObtenue());
+                    ligne.put("dateEpreuve", test.getDateEpreuve());
+                    return ligne;
+                })
+                .toList();
+
+        List<Map<String, Object>> entretiens = entretienRepository.findByCandidatId(candidatId).stream()
+                .map(entretien -> {
+                    Map<String, Object> ligne = new LinkedHashMap<>();
+                    ligne.put("dateHeure", entretien.getDateHeure());
+                    ligne.put("lieuOuLien", entretien.getLieuOuLien());
+                    return ligne;
+                })
+                .toList();
+
+        Map<String, Object> corps = new LinkedHashMap<>();
+        corps.put("tests", tests);
+        corps.put("entretiens", entretiens);
+        // Seuil réellement défini sur la session, plutôt qu'une valeur d'affichage.
+        corps.put("seuilReussiteTest", seuilDeLaSession(candidature));
+        return ResponseEntity.ok(corps);
+    }
+
+    private Float seuilDeLaSession(CandidatureResponse candidature) {
+        if (candidature.getSessionCandidatureId() == null) {
+            return null;
+        }
+        return sessionRepository.findById(candidature.getSessionCandidatureId())
+                .map(SessionCandidature::getSeuilReussiteTest)
+                .orElse(null);
     }
 
     // --- Méthodes privées ---

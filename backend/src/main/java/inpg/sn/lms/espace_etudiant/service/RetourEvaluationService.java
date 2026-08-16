@@ -21,7 +21,7 @@ public class RetourEvaluationService {
         if (coursIds.isEmpty()) {
             return List.of();
         }
-        return retourEvaluationRepository.findByCours_IdIn(coursIds);
+        return retourEvaluationRepository.findByCours_IdInOrderByEpingleDescDateCreationDesc(coursIds);
     }
 
     public Optional<RetourEvaluation> findById(Long id) {

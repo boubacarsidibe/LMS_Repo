@@ -9,13 +9,20 @@ import java.util.Optional;
 public interface CoursRepository extends JpaRepository<Cours, Long> {
 
     @Override
-    @EntityGraph(attributePaths = {"formateurs", "cohortes"})
+    @EntityGraph(attributePaths = {"formateurs", "promotions"})
     List<Cours> findAll();
 
     @Override
-    @EntityGraph(attributePaths = {"formateurs", "cohortes"})
+    @EntityGraph(attributePaths = {"formateurs", "promotions"})
     Optional<Cours> findById(Long id);
 
-    @EntityGraph(attributePaths = {"formateurs", "cohortes"})
+    @EntityGraph(attributePaths = {"formateurs", "promotions"})
     List<Cours> findByFormateurs_Id(Long formateurId);
+
+    /**
+     * Cours au programme d'une formation — c'est la requête qui matérialise les
+     * « cours autorisés » d'un étudiant, via sa promotion puis sa formation.
+     */
+    @EntityGraph(attributePaths = "formateurs")
+    List<Cours> findByFormations_Id(Long formationId);
 }

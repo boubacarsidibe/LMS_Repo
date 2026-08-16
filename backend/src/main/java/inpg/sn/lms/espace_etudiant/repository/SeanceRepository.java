@@ -10,18 +10,20 @@ import inpg.sn.lms.espace_etudiant.entity.Seance;
 
 public interface SeanceRepository extends JpaRepository<Seance, Long> {
 
+    List<Seance> findByCours_Formateurs_IdOrderByDateHeureAsc(Long formateurId);
+
+    /** Calendrier académique d'un étudiant : les séances de ses cours autorisés. */
+    List<Seance> findByCoursIdInOrderByDateHeureAsc(List<Long> coursIds);
+
     /**
-     * cours, cours.formateurs et cours.cohortes precharges : le mapping vers
+     * cours, cours.formateurs et cours.promotions precharges : le mapping vers
      * SeanceDto lit cours.getNom(), le controle de perimetre lit
      * cours.getFormateurs() (PerimetreFormateurService.estFormateurDuCours), et
-     * la liste de presence lit cours.getCohortes() pour retrouver les etudiants
-     * inscrits. Couvrir les deux methodes (liste ET findById) : c'est l'oubli de
+     * la liste de presence lit cours.getPromotions() pour retrouver les etudiants
+     * inscrits. Couvrir cette methode findById specifiquement : c'est l'oubli de
      * findById qui a cause le 5e episode du meme piege sur NoteModuleRepository.
      */
-    @EntityGraph(attributePaths = { "cours", "cours.formateurs", "cours.cohortes" })
-    List<Seance> findByCoursIdOrderByDateDesc(Long coursId);
-
     @Override
-    @EntityGraph(attributePaths = { "cours", "cours.formateurs", "cours.cohortes" })
+    @EntityGraph(attributePaths = { "cours", "cours.formateurs", "cours.promotions" })
     Optional<Seance> findById(Long id);
 }

@@ -13,6 +13,7 @@ public record CoursDto(
         long nbRessources,
         int progression,
         String couleurBandeau,
-        List<CohorteDto> cohortes) {
+        List<PromotionDto> promotions,
+        String imageUrl) {
 
 }

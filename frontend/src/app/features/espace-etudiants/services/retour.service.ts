@@ -22,6 +22,9 @@ function versRetour(dto: RetourEvaluationDto): RetourEvaluation {
     note: dto.note,
     commentaire: dto.commentaire,
     date: new Date(dto.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+    // La date brute est conservée : une fois localisée, elle n'est plus triable.
+    dateIso: dto.date,
+    coursId: dto.coursId,
     cours: dto.cours,
     statut: dto.statut === 'ACTION_REQUISE' ? 'action-requise' : 'valide',
     epingle: dto.epingle,

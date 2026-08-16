@@ -201,6 +201,7 @@ public class CandidatureService {
                     .devise(c.getPaiement().getDevise())
                     .statut(c.getPaiement().getStatut())
                     .datePaiement(c.getPaiement().getDatePaiement())
+                    .methodePaiement(c.getPaiement().getMethodePaiement())
                     .build();
         }
 
@@ -219,8 +220,11 @@ public class CandidatureService {
                 .candidatAnneesExperience(c.getCandidat().getAnneesExperience())
                 .candidatDateNaissance(c.getCandidat().getDateNaissance())
                 .candidatNiveauEtude(c.getCandidat().getNiveauEtude())
+                .candidatNationalite(c.getCandidat().getNationalite())
                 .sessionCandidatureId(c.getSessionCandidature().getId())
                 .sessionCandidatureLibelle(c.getSessionCandidature().getLibelle())
+                .informationsAcademiques(c.getInformationsAcademiques())
+                .informationsProfessionnelles(c.getInformationsProfessionnelles())
                 .piecesJustificatives(pieces)
                 .paiement(paiementResponse)
                 .build();

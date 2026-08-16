@@ -1,11 +1,18 @@
 package inpg.sn.lms.recrutement.controller;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -20,27 +27,42 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
+import inpg.sn.lms.auth.entity.Candidat;
+import inpg.sn.lms.auth.entity.Etudiant;
+import inpg.sn.lms.auth.entity.Role;
+import inpg.sn.lms.auth.entity.User;
+import inpg.sn.lms.auth.repository.CandidatRepository;
+import inpg.sn.lms.auth.repository.EtudiantRepository;
+import inpg.sn.lms.auth.repository.RoleRepository;
+import inpg.sn.lms.auth.repository.UserRepository;
 import inpg.sn.lms.recrutement.dto.CandidatureResponse;
+import inpg.sn.lms.recrutement.dto.ConvocationEntretienGroupeeRequest;
+import inpg.sn.lms.recrutement.dto.ConvocationTestGroupeeRequest;
 import inpg.sn.lms.recrutement.dto.EntretienRequest;
 import inpg.sn.lms.recrutement.dto.EntretienResponse;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
+import inpg.sn.lms.recrutement.dto.PieceJustificativeResponse;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureRequest;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureResponse;
 import inpg.sn.lms.recrutement.dto.TestAcademiqueRequest;
 import inpg.sn.lms.recrutement.dto.TestAcademiqueResponse;
-import inpg.sn.lms.recrutement.entity.CritereSelection;
+import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.FichierStocke;
+import inpg.sn.lms.recrutement.entity.NotificationTemplate;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
+import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
+import inpg.sn.lms.recrutement.enums.EnumTypeNotification;
 import inpg.sn.lms.recrutement.repository.PieceJustificativeRepository;
 import inpg.sn.lms.recrutement.service.CandidatureService;
-import inpg.sn.lms.recrutement.service.CritereSelectionService;
 import inpg.sn.lms.recrutement.service.EntretienService;
 import inpg.sn.lms.recrutement.service.ExcelExportService;
 import inpg.sn.lms.recrutement.service.FichierStockeService;
 import inpg.sn.lms.recrutement.service.NotificationCandidatService;
 import inpg.sn.lms.recrutement.service.NotificationService;
+import inpg.sn.lms.recrutement.service.NotificationTemplateService;
 import inpg.sn.lms.recrutement.service.PaiementService;
 import inpg.sn.lms.recrutement.service.SessionCandidatureService;
 import inpg.sn.lms.recrutement.service.TestAcademiqueService;
@@ -48,8 +70,15 @@ import inpg.sn.lms.recrutement.service.TestAcademiqueService;
 @RestController
 @RequestMapping("/api/admin/recrutement")
 @CrossOrigin(origins = "http://localhost:4200")
+/*
+ * Autorisation rendue explicite : elle ne reposait que sur le prefixe d'URL filtre
+ * dans SecurityConfig. Un endpoint ajoute hors de ce prefixe aurait ete ouvert sans
+ * que rien ne le signale. Les regles d'URL restent en place et s'appliquent en plus.
+ */
+@PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
 public class AdminRecrutementController {
 
+    private static final Logger log = LoggerFactory.getLogger(AdminRecrutementController.class);
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final MediaType XLSX = MediaType.parseMediaType(
@@ -63,9 +92,13 @@ public class AdminRecrutementController {
     private final NotificationService notificationService;
     private final NotificationCandidatService notificationCandidatService;
     private final ExcelExportService excelExportService;
-    private final CritereSelectionService critereSelectionService;
     private final PieceJustificativeRepository pieceJustificativeRepository;
     private final FichierStockeService fichierStockeService;
+    private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final EtudiantRepository etudiantRepository;
+    private final CandidatRepository candidatRepository;
+    private final NotificationTemplateService notificationTemplateService;
 
     public AdminRecrutementController(SessionCandidatureService sessionService,
             CandidatureService candidatureService,
@@ -75,9 +108,13 @@ public class AdminRecrutementController {
             NotificationService notificationService,
             NotificationCandidatService notificationCandidatService,
             ExcelExportService excelExportService,
-            CritereSelectionService critereSelectionService,
             PieceJustificativeRepository pieceJustificativeRepository,
-            FichierStockeService fichierStockeService) {
+            FichierStockeService fichierStockeService,
+            RoleRepository roleRepository,
+            UserRepository userRepository,
+            EtudiantRepository etudiantRepository,
+            CandidatRepository candidatRepository,
+            NotificationTemplateService notificationTemplateService) {
         this.sessionService = sessionService;
         this.candidatureService = candidatureService;
         this.paiementService = paiementService;
@@ -86,9 +123,13 @@ public class AdminRecrutementController {
         this.notificationService = notificationService;
         this.notificationCandidatService = notificationCandidatService;
         this.excelExportService = excelExportService;
-        this.critereSelectionService = critereSelectionService;
         this.pieceJustificativeRepository = pieceJustificativeRepository;
         this.fichierStockeService = fichierStockeService;
+        this.roleRepository = roleRepository;
+        this.userRepository = userRepository;
+        this.etudiantRepository = etudiantRepository;
+        this.candidatRepository = candidatRepository;
+        this.notificationTemplateService = notificationTemplateService;
     }
 
     private ResponseEntity<byte[]> telechargerXlsx(byte[] contenu, String nomFichier) {
@@ -218,6 +259,11 @@ public class AdminRecrutementController {
         COLONNES_CANDIDATURES.put("niveauEtude", "Niveau d'études");
         COLONNES_CANDIDATURES.put("profession", "Profession");
         COLONNES_CANDIDATURES.put("anneesExperience", "Années d'expérience");
+        COLONNES_CANDIDATURES.put("doc_CV", "CV");
+        COLONNES_CANDIDATURES.put("doc_DIPLOME", "Diplôme");
+        COLONNES_CANDIDATURES.put("doc_RELEVE_NOTES", "Relevé de notes");
+        COLONNES_CANDIDATURES.put("doc_PIECE_IDENTITE", "Pièce d'identité");
+        COLONNES_CANDIDATURES.put("doc_LETTRE_MOTIVATION", "Lettre de motivation");
     }
 
     @GetMapping("/candidatures/export")
@@ -257,6 +303,55 @@ public class AdminRecrutementController {
         return telechargerXlsx(fichier, "candidatures_recrutement.xlsx");
     }
 
+    /**
+     * Télécharge, en une seule archive .zip, l'ensemble des pièces justificatives
+     * déposées par les candidatures (filtrées par statut comme l'export Excel) —
+     * un dossier par candidature, nommé par son numéro de dossier.
+     */
+    @GetMapping("/candidatures/documents/export")
+    public ResponseEntity<byte[]> exporterDocuments(@RequestParam(required = false) String statut) throws IOException {
+        List<CandidatureResponse> candidatures = (statut == null || statut.isBlank())
+                ? candidatureService.getAllCandidatures()
+                : candidatureService.getCandidaturesByStatut(EnumStatutCandidature.valueOf(statut.toUpperCase()));
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int nbFichiers = 0;
+        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+            for (CandidatureResponse c : candidatures) {
+                if (c.getPiecesJustificatives() == null || c.getPiecesJustificatives().isEmpty()) continue;
+                String dossier = nomDossierZip(c);
+                for (PieceJustificativeResponse p : c.getPiecesJustificatives()) {
+                    if (p.getFichierStockeId() == null) continue;
+                    FichierStocke fichier = fichierStockeService.trouverParId(p.getFichierStockeId());
+                    byte[] contenu = fichierStockeService.lireContenu(fichier);
+                    String nomFichier = p.getTypeDocument() + "_"
+                            + (p.getFichierNomOriginal() != null ? p.getFichierNomOriginal() : ("document_" + p.getId()));
+                    zos.putNextEntry(new ZipEntry(dossier + "/" + nomFichier));
+                    zos.write(contenu);
+                    zos.closeEntry();
+                    nbFichiers++;
+                }
+            }
+        }
+
+        if (nbFichiers == 0) {
+            return ResponseEntity.badRequest().body(
+                    "Aucun document à exporter pour cette sélection.".getBytes(StandardCharsets.UTF_8));
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(
+                ContentDisposition.attachment().filename("documents_candidatures.zip", StandardCharsets.UTF_8).build());
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/zip")).headers(headers)
+                .body(baos.toByteArray());
+    }
+
+    /** Nom de dossier sûr (sans caractères interdits dans un chemin de fichier) pour l'archive de documents. */
+    private String nomDossierZip(CandidatureResponse c) {
+        String brut = nvl(c.getNumeroDossier()) + "_" + nvl(c.getCandidatNom()) + "_" + nvl(c.getCandidatPrenom());
+        return brut.replaceAll("[\\\\/:*?\"<>|]", "_");
+    }
+
     private Object valeurColonneCandidature(CandidatureResponse c, String cle) {
         return switch (cle) {
             case "numeroDossier" -> nvl(c.getNumeroDossier());
@@ -271,8 +366,24 @@ public class AdminRecrutementController {
             case "niveauEtude" -> nvl(c.getCandidatNiveauEtude());
             case "profession" -> nvl(c.getCandidatProfession());
             case "anneesExperience" -> c.getCandidatAnneesExperience() != null ? c.getCandidatAnneesExperience() : "";
+            case "doc_CV" -> statutDocument(c, "CV");
+            case "doc_DIPLOME" -> statutDocument(c, "DIPLOME");
+            case "doc_RELEVE_NOTES" -> statutDocument(c, "RELEVE_NOTES");
+            case "doc_PIECE_IDENTITE" -> statutDocument(c, "PIECE_IDENTITE");
+            case "doc_LETTRE_MOTIVATION" -> statutDocument(c, "LETTRE_MOTIVATION");
             default -> "";
         };
+    }
+
+    /** Statut d'un type de document précis pour une candidature : Conforme / Non vérifié / Absent. */
+    private String statutDocument(CandidatureResponse c, String typeDocument) {
+        List<PieceJustificativeResponse> pieces = c.getPiecesJustificatives();
+        if (pieces == null) return "Absent";
+        return pieces.stream()
+                .filter(p -> typeDocument.equals(p.getTypeDocument() != null ? p.getTypeDocument().name() : null))
+                .findFirst()
+                .map(p -> p.isEstConforme() ? "Conforme" : "Non vérifié")
+                .orElse("Absent");
     }
 
     @PutMapping("/candidatures/{id}/valider-preselection")
@@ -351,7 +462,39 @@ public class AdminRecrutementController {
         }
         notifierCandidatEnLigne(response, "Félicitations ! Votre candidature n°" + response.getNumeroDossier()
                 + " est définitivement admise à l'INPG.");
+        inscrireCommeEtudiant(response.getCandidatId());
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * L'admission finale (ADMIS3) doit donner un accès réel à l'espace étudiant :
+     * sans ceci, un candidat admis reste bloqué avec le seul ROLE_CANDIDAT et ne
+     * peut pas utiliser le LMS (même bug de fond que Formateur/Etudiant sans
+     * profil associé, déjà corrigé côté AdminController#changeUserRoles). Un compte
+     * ne peut détenir qu'un seul rôle à la fois : ROLE_CANDIDAT est retiré au profit
+     * de ROLE_ETUDIANT lors du passage Candidat -> Étudiant.
+     */
+    private void inscrireCommeEtudiant(Long candidatId) {
+        Candidat candidat = candidatRepository.findById(candidatId).orElse(null);
+        if (candidat == null || candidat.getUser() == null) return;
+        User user = candidat.getUser();
+
+        boolean dejaEtudiant = user.getRoles().stream().anyMatch(r -> "ROLE_ETUDIANT".equals(r.getCode()));
+        if (!dejaEtudiant) {
+            Role roleEtudiant = roleRepository.findByCode("ROLE_ETUDIANT");
+            if (roleEtudiant != null) {
+                user.getRoles().clear();
+                user.addRole(roleEtudiant);
+                userRepository.save(user);
+            }
+        }
+
+        if (etudiantRepository.findByUserId(user.getId()).isEmpty()) {
+            String telephone = candidat.getTelephone() != null && !candidat.getTelephone().isBlank()
+                    ? candidat.getTelephone()
+                    : "N/A-" + user.getId();
+            etudiantRepository.save(new Etudiant(user, candidat.getNom(), candidat.getPrenom(), telephone));
+        }
     }
 
     /** Notification in-app (cloche candidat) miroir de l'email envoyé à chaque changement de statut. */
@@ -366,6 +509,12 @@ public class AdminRecrutementController {
     public ResponseEntity<PaiementResponse> simulerSuccesPaiement(@PathVariable Long id) {
         PaiementResponse response = paiementService.simulerSuccesPaiement(id);
         return ResponseEntity.ok(response);
+    }
+
+    /** Historique des paiements, toutes candidatures confondues. */
+    @GetMapping("/paiements")
+    public ResponseEntity<List<PaiementResponse>> getAllPaiements() {
+        return ResponseEntity.ok(paiementService.getAllPaiements());
     }
 
     // ===================== TESTS ACADÉMIQUES =====================
@@ -392,6 +541,23 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(Map.of("message", "Test supprimé avec succès."));
     }
 
+    /** Planifie le même test pour plusieurs candidats à la fois (convocation groupée). */
+    @PostMapping("/tests/convocation-groupee")
+    public ResponseEntity<List<TestAcademiqueResponse>> convoquerTestsGroupe(
+            @RequestBody ConvocationTestGroupeeRequest request) {
+        List<TestAcademiqueResponse> resultats = request.getCandidatIds().stream()
+                .map(candidatId -> {
+                    TestAcademiqueRequest r = new TestAcademiqueRequest();
+                    r.setCandidatId(candidatId);
+                    r.setNomEpreuve(request.getNomEpreuve());
+                    r.setCoefficient(request.getCoefficient());
+                    r.setDateEpreuve(request.getDateEpreuve());
+                    return testAcademiqueService.creerTest(r);
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(resultats);
+    }
+
     // ===================== ENTRETIENS =====================
 
     @GetMapping("/entretiens")
@@ -416,19 +582,85 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(Map.of("message", "Entretien supprimé avec succès."));
     }
 
-    // ===================== CRITÈRES DE SÉLECTION (premier filtre automatique) =====================
-
-    @GetMapping("/criteres")
-    public ResponseEntity<CritereSelection> getCriteres() {
-        return ResponseEntity.ok(critereSelectionService.getConfig());
+    /** Planifie le même entretien pour plusieurs candidats à la fois (convocation groupée). */
+    @PostMapping("/entretiens/convocation-groupee")
+    public ResponseEntity<List<EntretienResponse>> convoquerEntretiensGroupe(
+            @RequestBody ConvocationEntretienGroupeeRequest request) {
+        List<EntretienResponse> resultats = request.getCandidatIds().stream()
+                .map(candidatId -> {
+                    EntretienRequest r = new EntretienRequest();
+                    r.setCandidatId(candidatId);
+                    r.setDateHeure(request.getDateHeure());
+                    r.setLieuOuLien(request.getLieuOuLien());
+                    return entretienService.creerEntretien(r);
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(resultats);
     }
 
-    @PutMapping("/criteres")
-    public ResponseEntity<CritereSelection> modifierCriteres(@RequestBody CritereSelection request) {
-        return ResponseEntity.ok(critereSelectionService.mettreAJour(request));
+    // ===================== MODÈLES DE NOTIFICATIONS =====================
+
+    @GetMapping("/notifications/templates")
+    public ResponseEntity<List<NotificationTemplate>> getAllTemplates() {
+        return ResponseEntity.ok(notificationTemplateService.getAllTemplates());
+    }
+
+    @PutMapping("/notifications/templates/{type}")
+    public ResponseEntity<NotificationTemplate> modifierTemplate(@PathVariable EnumTypeNotification type,
+            @RequestBody NotificationTemplate request) {
+        return ResponseEntity.ok(notificationTemplateService.mettreAJour(type, request));
     }
 
     // ===================== PIÈCES JUSTIFICATIVES (consultation admin) =====================
+
+    @PutMapping("/pieces/{id}/conformite")
+    public ResponseEntity<?> modifierConformitePiece(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
+        PieceJustificative piece = pieceJustificativeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pièce justificative non trouvée avec l'ID: " + id));
+        boolean conforme = Boolean.TRUE.equals(body.get("estConforme"));
+        piece.setEstConforme(conforme);
+        pieceJustificativeRepository.save(piece);
+
+        Candidature candidature = piece.getCandidature();
+        if (candidature != null && candidature.getCandidat() != null) {
+            String libelleType = libelleTypeDocument(piece.getTypeDocument());
+            String numeroDossier = candidature.getNumeroDossier();
+            String emailCandidat = candidature.getCandidat().getUser() != null
+                    ? candidature.getCandidat().getUser().getEmail()
+                    : null;
+            if (emailCandidat != null) {
+                try {
+                    if (conforme) {
+                        notificationService.notifierDocumentConforme(emailCandidat, numeroDossier, libelleType);
+                    } else {
+                        notificationService.notifierDocumentNonConforme(emailCandidat, numeroDossier, libelleType);
+                    }
+                } catch (Exception e) {
+                    log.error("Échec de l'envoi de l'email de conformité de document à {} : {}", emailCandidat,
+                            e.getMessage(), e);
+                }
+            }
+            notificationCandidatService.creerNotification(candidature.getCandidat().getId(),
+                    conforme
+                            ? "Votre document \"" + libelleType + "\" a été vérifié et validé."
+                            : "Votre document \"" + libelleType + "\" n'est pas conforme, merci de le remplacer.",
+                    "DOCUMENT", "/recrutement/suivi");
+        }
+
+        return ResponseEntity.ok(Map.of("id", piece.getId(), "estConforme", piece.isEstConforme()));
+    }
+
+    /** Libellé français d'un type de document, réutilisé pour les emails et l'export Excel. */
+    private String libelleTypeDocument(EnumTypeDocument type) {
+        if (type == null) return "Document";
+        return switch (type) {
+            case CV -> "CV";
+            case DIPLOME -> "Diplôme";
+            case RELEVE_NOTES -> "Relevé de notes";
+            case PIECE_IDENTITE -> "Pièce d'identité";
+            case LETTRE_MOTIVATION -> "Lettre de motivation";
+        };
+    }
 
     @GetMapping("/pieces/{id}/telecharger")
     public ResponseEntity<byte[]> telechargerPiece(@PathVariable Long id) {

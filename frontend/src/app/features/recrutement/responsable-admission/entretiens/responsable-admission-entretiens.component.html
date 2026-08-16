@@ -5,6 +5,9 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-2">Planification et suivi des entretiens des candidats admis à cette étape.</p>
   </div>
   <div class="flex gap-3">
+    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : ''">
+      <span class="material-symbols-outlined text-[20px]">groups</span> Convocation groupée
+    </button>
     <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="openDrawer()" class="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg font-label-md text-label-md transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : ''">
       <span class="material-symbols-outlined text-[20px]">add</span> Nouvel Entretien
     </button>
@@ -125,3 +128,46 @@
     </div>
   </form>
 </aside>
+
+<!-- Modal Convocation groupée -->
+<div *ngIf="convocationGroupeeOpen" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerConvocationGroupee()">
+  <div class="bg-surface rounded-xl shadow-lg w-full max-w-lg border border-outline-variant max-h-[85vh] flex flex-col" (click)="$event.stopPropagation()">
+    <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+      <h3 class="font-headline-sm text-headline-sm text-primary">Convocation groupée à l'entretien</h3>
+      <button type="button" (click)="fermerConvocationGroupee()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <form [formGroup]="convocationForm" (ngSubmit)="envoyerConvocationGroupee()" class="flex-1 overflow-y-auto p-6 space-y-4">
+      <div *ngIf="convocationFormError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm">{{ convocationFormError }}</div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date et heure</label>
+          <input formControlName="dateHeure" aria-label="Date et heure" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="datetime-local"/>
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu ou lien visio</label>
+          <input formControlName="lieuOuLien" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B204" type="text"/>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="font-label-md text-label-md text-on-surface-variant">Candidats à convoquer ({{ selectionCandidatIds.size }} sélectionné(s))</label>
+          <button type="button" (click)="toutSelectionner()" class="font-label-sm text-label-sm text-secondary hover:underline">Tout sélectionner</button>
+        </div>
+        <div class="border border-outline-variant rounded-lg max-h-56 overflow-y-auto divide-y divide-outline-variant">
+          <label *ngFor="let c of candidatsEligibles" class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-surface-container-low">
+            <input type="checkbox" [checked]="selectionCandidatIds.has(c.candidatId)" (change)="basculerSelection(c.candidatId)" class="w-4 h-4 accent-secondary">
+            <span class="font-body-sm text-body-sm text-on-surface">{{ c.candidatPrenom }} {{ c.candidatNom }} — {{ c.numeroDossier }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="fermerConvocationGroupee()">Annuler</button>
+        <button type="submit" [disabled]="envoiGroupeEnCours" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+          {{ envoiGroupeEnCours ? 'Envoi…' : 'Envoyer les convocations' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
