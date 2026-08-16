@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,7 +26,6 @@ import inpg.sn.lms.auth.service.UserService;
 
 @RestController
 @RequestMapping("api/auth")
-@CrossOrigin(origins = "http://localhost:4200")
 public class CrudControlleur {
     private final UserService userService;
     private final inpg.sn.lms.security.JwtUtils jwtUtils;

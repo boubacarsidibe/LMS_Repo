@@ -56,7 +56,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/recrutement/candidat")
-@CrossOrigin(origins = "http://localhost:4200")
 /*
  * Autorisation rendue explicite : elle ne reposait que sur le prefixe d'URL filtre
  * dans SecurityConfig. Un endpoint ajoute hors de ce prefixe aurait ete ouvert sans

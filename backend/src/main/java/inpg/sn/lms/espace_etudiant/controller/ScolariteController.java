@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,7 +52,6 @@ import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
  */
 @RestController
 @RequestMapping("/api/espace-etudiant/scolarite")
-@CrossOrigin(origins = "http://localhost:4200")
 /*
  * Autorisation rendue explicite : elle ne reposait que sur le prefixe d'URL filtre
  * dans SecurityConfig. Un endpoint ajoute hors de ce prefixe aurait ete ouvert sans
