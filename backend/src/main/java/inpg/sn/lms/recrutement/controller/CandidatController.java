@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -50,6 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -64,6 +66,31 @@ import java.util.UUID;
 public class CandidatController {
 
     private static final Logger log = LoggerFactory.getLogger(CandidatController.class);
+
+    /**
+     * Rôles qui ouvrent déjà un espace de travail dans l'application. Un compte qui
+     * en détient un ne peut pas déposer de candidature : {@link #garantirRoleCandidat}
+     * vide les rôles avant d'accorder CANDIDAT, ce qui retirerait à ce compte l'accès
+     * à ses cours, ses notes et ses certificats — sans qu'il puisse le rétablir seul.
+     *
+     * <p>Le cas normal reste intact : un compte fraîchement créé n'a aucun rôle
+     * (voir UserService#createUser) et passe donc librement.
+     */
+    private static final Set<String> ROLES_OUVRANT_UN_ESPACE = Set.of(
+            "ROLE_ETUDIANT",
+            "ROLE_FORMATEUR",
+            "ROLE_RESPONSABLE_PEDAGOGIQUE",
+            "ROLE_RESPONSABLE_ADMISSION");
+
+    /**
+     * États depuis lesquels une nouvelle soumission reste légitime, c'est-à-dire tant
+     * que l'administration ne s'est pas prononcée. Le TDR demande explicitement qu'un
+     * candidat puisse « revenir plus tard pour poursuivre et finaliser sa candidature » ;
+     * il ne demande pas qu'il puisse revenir sur une décision déjà rendue.
+     */
+    private static final Set<EnumStatutCandidature> STATUTS_ENCORE_MODIFIABLES = Set.of(
+            EnumStatutCandidature.BROUILLON,
+            EnumStatutCandidature.SOUMIS);
 
     private final CandidatureService candidatureService;
     private final CandidatRepository candidatRepository;
@@ -154,17 +181,44 @@ public class CandidatController {
         // 1. Récupérer l'utilisateur connecté
         inpg.sn.lms.auth.entity.User user = findUser(authentication);
 
-        // Un compte Responsable Admission est strictement administratif : il ne peut pas
-        // cumuler le rôle Candidat (voir AdminController#changeUserRoles pour l'exclusivité).
-        boolean estAdmin = user.getRoles().stream().anyMatch(r -> "ROLE_RESPONSABLE_ADMISSION".equals(r.getCode()));
-        if (estAdmin) {
-            return ResponseEntity.status(403).body(Map.of(
-                    "message", "Un compte Responsable Admission ne peut pas déposer de candidature."));
+        // Le contrôle ne visait que le Responsable Admission, alors que garantirRoleCandidat()
+        // plus bas vide les rôles de N'IMPORTE QUEL compte. Un étudiant qui postulait à un
+        // second programme perdait donc silencieusement l'accès à son espace, sans recours.
+        // L'exclusivité des rôles reste la règle (voir AdminController#changeUserRoles) :
+        // c'est le périmètre du garde-fou qui était trop étroit.
+        Optional<Role> roleDejaAttribue = user.getRoles().stream()
+                .filter(r -> ROLES_OUVRANT_UN_ESPACE.contains(r.getCode()))
+                .findFirst();
+        if (roleDejaAttribue.isPresent()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "message", "Ce compte donne déjà accès à l'espace « " + roleDejaAttribue.get().getLibelle()
+                            + " ». Pour déposer une candidature, utilisez un compte distinct."));
         }
 
-        // 2. Chercher ou créer le Candidat avec les infos du formulaire
+        // 2. Un dossier déjà examiné se verrouille.
+        //    Ce contrôle précède délibérément toute écriture : placé plus bas, il aurait
+        //    laissé le bloc suivant réécrire l'état civil du candidat (nom, date de
+        //    naissance, niveau d'étude...) avant de refuser la soumission — soit une
+        //    modification de dossier obtenue malgré le refus.
+        Optional<Candidat> candidatExistant = candidatRepository.findByUserId(user.getId());
+        Optional<Candidature> dossierVerrouille = candidatExistant
+                .map(c -> candidatureRepository.findByCandidatId(c.getId()))
+                .orElseGet(List::of)
+                .stream()
+                .filter(c -> c.getStatut() != EnumStatutCandidature.REJETE)
+                .filter(c -> !STATUTS_ENCORE_MODIFIABLES.contains(c.getStatut()))
+                .findFirst();
+        if (dossierVerrouille.isPresent()) {
+            Candidature verrouille = dossierVerrouille.get();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "message", "Votre dossier n°" + verrouille.getNumeroDossier()
+                            + " est déjà en cours d'examen : il ne peut plus être soumis à nouveau.",
+                    "statut", verrouille.getStatut().name()));
+        }
+
+        // 3. Chercher ou créer le Candidat avec les infos du formulaire
         final String infosPerso = request.getInformationsPersonnelles();
-        Candidat candidat = candidatRepository.findByUserId(user.getId())
+        Candidat candidat = candidatExistant
                 .orElseGet(() -> creerCandidatDepuisUser(user, infosPerso));
         // Mettre à jour le candidat existant avec les nouvelles infos
         if (infosPerso != null && !infosPerso.isBlank()) {
@@ -193,15 +247,19 @@ public class CandidatController {
             candidatRepository.save(candidat);
         }
 
-        // 3. Vérifier si une candidature existe déjà (non rejetée)
+        // 4. Vérifier si une candidature existe déjà (non rejetée)
         List<Candidature> existantes = candidatureRepository.findByCandidatId(candidat.getId());
         Optional<Candidature> active = existantes.stream()
                 .filter(c -> c.getStatut() != EnumStatutCandidature.REJETE)
                 .findFirst();
 
         if (active.isPresent()) {
-            // Mettre à jour la candidature existante si pas encore SOUMIS
             Candidature existante = active.get();
+            // soumettre() réécrit le statut à SOUMIS sans regarder d'où l'on vient : appelé
+            // sur un dossier déjà présélectionné, il le ramenait dans la pile « à traiter »
+            // et effaçait la décision du responsable d'admission. Le seul garde-fou est
+            // celui de l'étape 2, qui a déjà écarté ces dossiers — ne pas appeler cette
+            // méthode depuis un autre chemin sans reproduire ce contrôle.
             existante.soumettre(); // passe le statut à SOUMIS + date
             candidatureRepository.save(existante);
             garantirRoleCandidat(user);
@@ -209,7 +267,7 @@ public class CandidatController {
             return ResponseEntity.ok(candidatureService.getCandidatureById(existante.getId()));
         }
 
-        // 4. Créer une nouvelle candidature SOUMIS
+        // 5. Créer une nouvelle candidature SOUMIS
         SessionCandidature session = sessionRepository.findById(request.getSessionCandidatureId())
                 .orElseThrow(() -> new RuntimeException("Session non trouvée"));
 
