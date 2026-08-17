@@ -53,6 +53,11 @@ module.exports = {
           "surface-container-low": "#f2f4f6",
           "on-tertiary-fixed-variant": "#3f4948",
           "surface-variant": "#e0e3e5",
+          // Bleu nuit de la marque : le « LMS » du logotype. Utilise en dur dans
+          // six fichiers (navbar, footer, espace candidat, authentification)
+          // sans exister comme jeton, ce qui empechait les autres espaces de
+          // reprendre la meme charte.
+          "brand": "#131741",
           "success": "#16a34a",
           "warning": "#eab308"
         },

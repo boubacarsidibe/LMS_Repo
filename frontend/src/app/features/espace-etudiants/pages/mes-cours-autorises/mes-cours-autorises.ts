@@ -105,7 +105,7 @@ import { ScolariteService } from '../../services/scolarite.service';
               class="w-full h-full object-cover"
             />
             <ng-template #symbole>
-              <span class="material-symbols-outlined text-primary-fixed text-[36px]">menu_book</span>
+              <span class="material-symbols-outlined text-on-primary-container text-[36px]">menu_book</span>
             </ng-template>
           </div>
 

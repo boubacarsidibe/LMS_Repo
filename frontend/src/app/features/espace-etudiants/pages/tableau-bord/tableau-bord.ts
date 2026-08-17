@@ -145,7 +145,7 @@ import { ScolariteService } from '../../services/scolarite.service';
                 class="bg-surface-container-lowest rounded-xl p-stack-md border border-outline-variant flex gap-4"
               >
                 <div
-                  class="w-12 shrink-0 text-center rounded-lg bg-primary-container text-primary-fixed py-1"
+                  class="w-12 shrink-0 text-center rounded-lg bg-primary-container text-on-primary-container py-1"
                 >
                   <p class="text-label-sm uppercase">{{ s.dateHeure | date: 'MMM' }}</p>
                   <p class="font-label-md tabular-nums">{{ s.dateHeure | date: 'dd' }}</p>

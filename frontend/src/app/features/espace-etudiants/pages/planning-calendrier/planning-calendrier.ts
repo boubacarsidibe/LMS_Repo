@@ -243,7 +243,7 @@ export class PlanningCalendrier implements OnInit {
 
   fondIconeEvenement(type: string): string {
     switch (type) {
-      case 'cours': return 'bg-primary-container text-on-primary';
+      case 'cours': return 'bg-primary-container text-on-primary-container';
       case 'tutorat': return 'bg-secondary-container/30 text-secondary';
       case 'echeance': return 'bg-error-container/20 text-error';
       default: return '';
