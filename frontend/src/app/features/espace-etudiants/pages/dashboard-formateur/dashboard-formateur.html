@@ -3,9 +3,9 @@
   <!-- En-tête avec stats clés -->
   <div class="grid grid-cols-12 gap-gutter items-end">
     <div class="col-span-12 lg:col-span-8">
-      <span class="font-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Vue d'ensemble institutionnelle</span>
-      <h1 class="font-display text-on-surface leading-none -ml-1">Pilotage Pédagogique</h1>
-      <p class="font-body-lg text-on-surface-variant mt-4 max-w-2xl">
+      <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Vue d'ensemble institutionnelle</span>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Pilotage Pédagogique</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
         <ng-container *ngIf="!loading">
           <span *ngIf="profile; else noProfile">Ravi de vous revoir, <span class="font-bold">{{ profile.nom }}</span>.</span>
           <ng-template #noProfile>Ravi de vous revoir.</ng-template>
@@ -16,12 +16,12 @@
     </div>
     <div class="col-span-12 lg:col-span-4 flex justify-end gap-stack-md pb-1">
       <div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col min-w-[140px]">
-        <span class="font-label-sm text-on-surface-variant">Étudiants Suivis</span>
-        <span class="font-headline-md text-on-surface">{{ chargementEtudiants ? '—' : mesEtudiants.length }}</span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Étudiants Suivis</span>
+        <span class="font-headline-md text-headline-md text-on-surface">{{ chargementEtudiants ? '—' : mesEtudiants.length }}</span>
       </div>
       <div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col min-w-[140px]">
-        <span class="font-label-sm text-on-surface-variant">Cours Actifs</span>
-        <span class="font-headline-md text-on-surface">{{ chargementCours ? '—' : mesCours.length }}</span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Cours Actifs</span>
+        <span class="font-headline-md text-headline-md text-on-surface">{{ chargementCours ? '—' : mesCours.length }}</span>
       </div>
     </div>
   </div>
@@ -32,7 +32,7 @@
     <!-- Progression étudiante -->
     <div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm">
       <div class="flex justify-between items-center mb-8">
-        <h2 class="font-headline-sm text-primary flex items-center gap-2">
+        <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
           <span class="material-symbols-outlined text-secondary">analytics</span>
           Analyse de la Progression Étudiante
         </h2>
@@ -40,17 +40,17 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div class="flex flex-col items-center justify-center p-6 bg-surface-container-low rounded-2xl relative overflow-hidden">
           <span class="material-symbols-outlined text-[48px] text-outline">bar_chart</span>
-          <span class="font-label-sm text-on-surface-variant mt-2">Bientôt disponible</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant mt-2">Bientôt disponible</span>
         </div>
         <div class="md:col-span-2 space-y-6 flex flex-col justify-center">
-          <p class="font-body-md text-on-surface-variant">
+          <p class="font-body-md text-body-md text-on-surface-variant">
             Le suivi de présence et de progression par cours arrive prochainement. En attendant, retrouvez la liste détaillée de vos étudiants.
           </p>
           <div class="bg-surface-container-low p-4 rounded-lg flex items-center gap-4">
             <span class="material-symbols-outlined text-secondary">groups</span>
             <div>
-              <p class="font-label-md text-on-surface">{{ chargementEtudiants ? '…' : mesEtudiants.length }} étudiant(s) suivi(s)</p>
-              <p class="font-body-sm text-on-surface-variant">Répartis sur {{ chargementCours ? '…' : mesCours.length }} cours.</p>
+              <p class="font-label-md text-label-md text-on-surface">{{ chargementEtudiants ? '…' : mesEtudiants.length }} étudiant(s) suivi(s)</p>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">Répartis sur {{ chargementCours ? '…' : mesCours.length }} cours.</p>
             </div>
             <button routerLink="/espace-etudiant/formateur/suivi-etudiants" class="ml-auto text-label-sm font-bold text-secondary uppercase hover:underline">Voir la liste</button>
           </div>
@@ -61,24 +61,24 @@
     <!-- Publier du contenu -->
     <div class="col-span-12 lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm flex flex-col justify-between">
       <div>
-        <h2 class="font-headline-sm text-primary mb-2">Publier du Contenu</h2>
-        <p class="font-body-md text-on-surface-variant mb-8">Déployez instantanément des cours, évaluations ou supports de lecture à vos cohortes actives.</p>
+        <h2 class="font-headline-sm text-headline-sm text-primary mb-2">Publier du Contenu</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-8">Déployez instantanément des cours, évaluations ou supports de lecture à vos cohortes actives.</p>
         <div class="space-y-3">
           <div routerLink="/espace-etudiant/formateur/mes-cours" class="flex items-center gap-3 bg-surface-container-low p-3 rounded-lg hover:bg-surface-container transition-all cursor-pointer border border-outline-variant/30">
             <span class="material-symbols-outlined text-secondary">description</span>
-            <span class="font-label-md text-on-surface">Télécharger PDF / Documents</span>
+            <span class="font-label-md text-label-md text-on-surface">Télécharger PDF / Documents</span>
           </div>
           <div routerLink="/espace-etudiant/formateur/mes-cours" class="flex items-center gap-3 bg-surface-container-low p-3 rounded-lg hover:bg-surface-container transition-all cursor-pointer border border-outline-variant/30">
             <span class="material-symbols-outlined text-secondary">link</span>
-            <span class="font-label-md text-on-surface">Lien vers Ressource Externe</span>
+            <span class="font-label-md text-label-md text-on-surface">Lien vers Ressource Externe</span>
           </div>
           <div routerLink="/espace-etudiant/formateur/mes-cours" class="flex items-center gap-3 bg-surface-container-low p-3 rounded-lg hover:bg-surface-container transition-all cursor-pointer border border-outline-variant/30">
             <span class="material-symbols-outlined text-secondary">videocam</span>
-            <span class="font-label-md text-on-surface">Cours Vidéo / Diffusion</span>
+            <span class="font-label-md text-label-md text-on-surface">Cours Vidéo / Diffusion</span>
           </div>
         </div>
       </div>
-      <button routerLink="/espace-etudiant/formateur/mes-cours" class="mt-8 w-full py-4 bg-secondary text-on-secondary font-headline-sm rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2">
+      <button routerLink="/espace-etudiant/formateur/mes-cours" class="mt-8 w-full py-4 bg-secondary text-on-secondary font-headline-sm text-headline-sm rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2">
         <span class="material-symbols-outlined">add_circle</span>
         Créer une nouvelle ressource
       </button>
@@ -87,24 +87,24 @@
     <!-- Prochaines sessions -->
     <div class="col-span-12 lg:col-span-5 bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm">
       <div class="flex justify-between items-center mb-6">
-        <h2 class="font-headline-sm text-primary">Prochaines Sessions</h2>
+        <h2 class="font-headline-sm text-headline-sm text-primary">Prochaines Sessions</h2>
         <span class="material-symbols-outlined text-on-surface-variant cursor-pointer">calendar_month</span>
       </div>
       <div class="space-y-4">
         <div *ngFor="let s of prochainesSeances" class="flex gap-4">
           <div class="flex flex-col items-center min-w-[50px]">
-            <span class="font-label-sm text-on-surface-variant uppercase">{{ moisCourt(s.date) }}</span>
-            <span class="font-headline-md text-on-surface leading-none">{{ jourCourt(s.date) }}</span>
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase">{{ moisCourt(s.date) }}</span>
+            <span class="font-headline-md text-headline-md text-on-surface leading-none">{{ jourCourt(s.date) }}</span>
           </div>
           <div class="flex-1 bg-surface-container-low p-4 rounded-xl">
             <div class="flex justify-between">
-              <span class="font-label-sm uppercase font-bold" [ngClass]="classeTypeEvenement(s.type)">{{ libelleTypeEvenement(s.type) }}</span>
-              <span class="font-label-sm text-on-surface-variant">{{ s.heure }}</span>
+              <span class="font-label-sm text-label-sm uppercase font-bold" [ngClass]="classeTypeEvenement(s.type)">{{ libelleTypeEvenement(s.type) }}</span>
+              <span class="font-label-sm text-label-sm text-on-surface-variant">{{ s.heure }}</span>
             </div>
-            <p class="font-headline-sm text-primary mt-1">{{ s.titre }}</p>
+            <p class="font-headline-sm text-headline-sm text-primary mt-1">{{ s.titre }}</p>
           </div>
         </div>
-        <p *ngIf="!chargementSeances && !prochainesSeances.length" class="font-body-sm text-on-surface-variant text-center py-6">
+        <p *ngIf="!chargementSeances && !prochainesSeances.length" class="font-body-sm text-body-sm text-on-surface-variant text-center py-6">
           Aucune séance à venir.
         </p>
       </div>
@@ -114,7 +114,7 @@
     <!-- Aperçu forum (allégé, sans réponse rapide) -->
     <div class="col-span-12 lg:col-span-7 bg-surface-container-lowest rounded-xl shadow-sm flex flex-col overflow-hidden">
       <div class="p-stack-lg border-b border-outline-variant flex justify-between items-center">
-        <h2 class="font-headline-sm text-primary flex items-center gap-2">
+        <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
           <span class="material-symbols-outlined text-secondary">forum</span>
           Activité du Forum
         </h2>
@@ -124,11 +124,11 @@
         <div *ngFor="let sujet of derniersSujets" class="flex gap-4">
           <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold" [ngClass]="[sujet.couleurAvatar, sujet.couleurTexte]">{{ sujet.initiales }}</div>
           <div class="flex-1">
-            <h4 class="font-label-md text-on-surface">{{ sujet.auteur }} <span class="font-normal text-on-surface-variant ml-2">• {{ sujet.date }}</span></h4>
-            <p class="font-body-md text-on-surface-variant mt-1 line-clamp-2">{{ sujet.apercu }}</p>
+            <h4 class="font-label-md text-label-md text-on-surface">{{ sujet.auteur }} <span class="font-normal text-on-surface-variant ml-2">• {{ sujet.date }}</span></h4>
+            <p class="font-body-md text-body-md text-on-surface-variant mt-1 line-clamp-2">{{ sujet.apercu }}</p>
           </div>
         </div>
-        <p *ngIf="!chargementSujets && !derniersSujets.length" class="font-body-sm text-on-surface-variant text-center py-6">
+        <p *ngIf="!chargementSujets && !derniersSujets.length" class="font-body-sm text-body-sm text-on-surface-variant text-center py-6">
           Aucun sujet de forum pour l'instant.
         </p>
       </div>
@@ -140,13 +140,13 @@
       <div>
         <div class="flex justify-between items-start mb-6">
           <div>
-            <h2 class="font-headline-sm text-primary">Retours Qualitatifs</h2>
+            <h2 class="font-headline-sm text-headline-sm text-primary">Retours Qualitatifs</h2>
             <p class="text-body-sm text-on-surface-variant">Bientôt disponible</p>
           </div>
         </div>
         <div class="flex items-center gap-4 mb-6 text-on-surface-variant">
           <span class="material-symbols-outlined text-[32px]">rate_review</span>
-          <p class="font-body-sm">La collecte des retours étudiants par cours arrive prochainement.</p>
+          <p class="font-body-sm text-body-sm">La collecte des retours étudiants par cours arrive prochainement.</p>
         </div>
       </div>
       <button routerLink="/espace-etudiant/formateur/retours-evaluations" class="w-full py-3 text-label-md font-bold text-center border border-secondary/20 rounded-lg hover:bg-secondary/5 transition-all text-primary">Voir tous les retours</button>

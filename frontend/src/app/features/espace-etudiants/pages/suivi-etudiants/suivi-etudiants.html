@@ -2,7 +2,7 @@
 
   <!-- En-tête -->
   <div class="px-margin-desktop py-stack-lg flex flex-col gap-base">
-    <h1 class="font-headline-lg text-primary tracking-tight">Suivi des Étudiants &amp; Progression</h1>
+    <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Suivi des Étudiants &amp; Progression</h1>
     <p class="text-body-md text-on-surface-variant max-w-2xl">Analysez la performance de vos cohortes et identifiez les besoins d'accompagnement personnalisés.</p>
   </div>
 
@@ -14,7 +14,7 @@
         <span class="material-symbols-outlined text-secondary">groups</span>
       </div>
       <div class="flex items-baseline gap-2">
-        <span class="font-display text-primary tracking-tighter">{{ etudiants.length }}</span>
+        <span class="font-display text-display text-primary tracking-tighter">{{ etudiants.length }}</span>
       </div>
     </div>
     <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center items-center text-center gap-1">
@@ -39,12 +39,12 @@
           <span class="material-symbols-outlined">mail</span>
         </div>
         <div>
-          <h3 class="font-headline-sm text-primary">Communication avec vos étudiants</h3>
+          <h3 class="font-headline-sm text-headline-sm text-primary">Communication avec vos étudiants</h3>
           <p class="text-body-sm text-on-surface-variant">Envoyez un email aux {{ etudiantsFiltres.length }} étudiant(s) actuellement affiché(s).</p>
         </div>
       </div>
       <div class="flex items-center gap-stack-md shrink-0">
-        <button (click)="ouvrirRelanceCollective()" class="bg-secondary text-on-secondary px-6 py-2.5 rounded-lg font-label-md shadow-sm hover:opacity-90 transition-all flex items-center gap-2">
+        <button (click)="ouvrirRelanceCollective()" class="bg-secondary text-on-secondary px-6 py-2.5 rounded-lg font-label-md text-label-md shadow-sm hover:opacity-90 transition-all flex items-center gap-2">
           <span class="material-symbols-outlined text-[18px]">mail</span>
           Envoyer une relance collective
         </button>
@@ -97,7 +97,7 @@
                     {{ e.initiales }}
                   </div>
                   <div class="flex flex-col">
-                    <span class="font-label-md text-primary">{{ e.nom }}</span>
+                    <span class="font-label-md text-label-md text-primary">{{ e.nom }}</span>
                     <span *ngIf="e.matricule" class="text-[11px] text-outline font-mono">{{ e.matricule }}</span>
                   </div>
                 </div>
@@ -154,27 +154,27 @@
   <div *ngIf="etudiantEnContact || afficherRelanceCollective" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerModalMessage()">
     <div class="bg-surface rounded-xl shadow-lg w-full max-w-md border border-outline-variant" (click)="$event.stopPropagation()">
       <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-        <h3 class="font-headline-sm text-primary">
+        <h3 class="font-headline-sm text-headline-sm text-primary">
           {{ etudiantEnContact ? 'Contacter ' + etudiantEnContact.nom : 'Relance collective (' + etudiantsFiltres.length + ' étudiant(s))' }}
         </h3>
         <button type="button" aria-label="Fermer la fenetre" (click)="fermerModalMessage()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors"><span class="material-symbols-outlined">close</span></button>
       </div>
       <div class="p-6 space-y-base">
         <div class="space-y-1">
-          <label class="font-label-md text-on-surface-variant">Objet</label>
-          <input [(ngModel)]="objetMessage" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" placeholder="Ex: Relance suivi de cours" type="text">
+          <label class="font-label-md text-label-md text-on-surface-variant">Objet</label>
+          <input [(ngModel)]="objetMessage" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Relance suivi de cours" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-on-surface-variant">Message</label>
-          <textarea [(ngModel)]="contenuMessage" rows="5" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface resize-none" placeholder="Votre message..."></textarea>
+          <label class="font-label-md text-label-md text-on-surface-variant">Message</label>
+          <textarea [(ngModel)]="contenuMessage" rows="5" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none" placeholder="Votre message..."></textarea>
         </div>
         <p *ngIf="messageErreur" class="text-body-sm text-error">{{ messageErreur }}</p>
         <p *ngIf="messageSucces" class="text-body-sm text-secondary font-medium">{{ messageSucces }}</p>
         <div class="flex gap-stack-md pt-2">
-          <button type="button" (click)="fermerModalMessage()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md hover:bg-outline-variant transition-all">
+          <button type="button" (click)="fermerModalMessage()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
             Fermer
           </button>
-          <button [disabled]="isEnvoiEnCours" (click)="envoyerMessage()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all disabled:opacity-60">
+          <button [disabled]="isEnvoiEnCours" (click)="envoyerMessage()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
             {{ isEnvoiEnCours ? 'Envoi…' : 'Envoyer' }}
           </button>
         </div>

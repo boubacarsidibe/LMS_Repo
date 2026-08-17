@@ -3,8 +3,8 @@
   <!-- En-tête + KPI -->
   <div class="flex flex-col gap-stack-lg p-margin-desktop">
     <div class="flex flex-col gap-base">
-      <span class="font-label-sm text-secondary uppercase tracking-widest">Interaction &amp; Engagement</span>
-      <h1 class="font-headline-lg text-primary">Forum de Discussion &amp; Animation des Cohortes</h1>
+      <span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest">Interaction &amp; Engagement</span>
+      <h1 class="font-headline-lg text-headline-lg text-primary">Forum de Discussion &amp; Animation des Cohortes</h1>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
       <div class="bg-surface-container-lowest p-stack-lg rounded-xl flex items-center gap-stack-md shadow-sm">
@@ -12,8 +12,8 @@
           <span class="material-symbols-outlined">mark_chat_unread</span>
         </div>
         <div class="flex flex-col">
-          <span class="font-display text-on-surface leading-none">05</span>
-          <span class="font-label-md text-on-surface-variant">Messages non lus</span>
+          <span class="font-display text-display text-on-surface leading-none">05</span>
+          <span class="font-label-md text-label-md text-on-surface-variant">Messages non lus</span>
         </div>
       </div>
       <div class="bg-surface-container-lowest p-stack-lg rounded-xl flex items-center gap-stack-md shadow-sm">
@@ -21,8 +21,8 @@
           <span class="material-symbols-outlined">task_alt</span>
         </div>
         <div class="flex flex-col">
-          <span class="font-display text-on-surface leading-none">12</span>
-          <span class="font-label-md text-on-surface-variant">Sujets résolus / semaine</span>
+          <span class="font-display text-display text-on-surface leading-none">12</span>
+          <span class="font-label-md text-label-md text-on-surface-variant">Sujets résolus / semaine</span>
         </div>
       </div>
       <div class="bg-surface-container-lowest p-stack-lg rounded-xl flex items-center gap-stack-md shadow-sm">
@@ -31,10 +31,10 @@
         </div>
         <div class="flex flex-col">
           <div class="flex items-baseline gap-1">
-            <span class="font-display text-on-surface leading-none">02</span>
-            <span class="font-headline-sm text-on-surface">h</span>
+            <span class="font-display text-display text-on-surface leading-none">02</span>
+            <span class="font-headline-sm text-headline-sm text-on-surface">h</span>
           </div>
-          <span class="font-label-md text-on-surface-variant">Temps de réponse moyen</span>
+          <span class="font-label-md text-label-md text-on-surface-variant">Temps de réponse moyen</span>
         </div>
       </div>
     </div>
@@ -47,9 +47,9 @@
     <div class="col-span-4 bg-surface-container-low border-r border-outline-variant flex flex-col h-full min-h-0">
       <div class="p-stack-md bg-surface-container-lowest/50 backdrop-blur-sm sticky top-0 z-10">
         <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          <button (click)="filtreActif = 'tous'" [class.bg-secondary]="filtreActif === 'tous'" [class.text-on-secondary]="filtreActif === 'tous'" [class.bg-surface-container-high]="filtreActif !== 'tous'" [class.text-on-surface-variant]="filtreActif !== 'tous'" class="px-4 py-2 rounded-full font-label-md whitespace-nowrap transition-colors">Tous les cours</button>
-          <button (click)="filtreActif = 'non-lus'" [class.bg-secondary]="filtreActif === 'non-lus'" [class.text-on-secondary]="filtreActif === 'non-lus'" [class.bg-surface-container-high]="filtreActif !== 'non-lus'" [class.text-on-surface-variant]="filtreActif !== 'non-lus'" class="px-4 py-2 rounded-full font-label-md whitespace-nowrap transition-colors">Non lus</button>
-          <button (click)="filtreActif = 'prioritaires'" [class.bg-secondary]="filtreActif === 'prioritaires'" [class.text-on-secondary]="filtreActif === 'prioritaires'" [class.bg-surface-container-high]="filtreActif !== 'prioritaires'" [class.text-on-surface-variant]="filtreActif !== 'prioritaires'" class="px-4 py-2 rounded-full font-label-md whitespace-nowrap transition-colors">Questions prioritaires</button>
+          <button (click)="filtreActif = 'tous'" [class.bg-secondary]="filtreActif === 'tous'" [class.text-on-secondary]="filtreActif === 'tous'" [class.bg-surface-container-high]="filtreActif !== 'tous'" [class.text-on-surface-variant]="filtreActif !== 'tous'" class="px-4 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors">Tous les cours</button>
+          <button (click)="filtreActif = 'non-lus'" [class.bg-secondary]="filtreActif === 'non-lus'" [class.text-on-secondary]="filtreActif === 'non-lus'" [class.bg-surface-container-high]="filtreActif !== 'non-lus'" [class.text-on-surface-variant]="filtreActif !== 'non-lus'" class="px-4 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors">Non lus</button>
+          <button (click)="filtreActif = 'prioritaires'" [class.bg-secondary]="filtreActif === 'prioritaires'" [class.text-on-secondary]="filtreActif === 'prioritaires'" [class.bg-surface-container-high]="filtreActif !== 'prioritaires'" [class.text-on-surface-variant]="filtreActif !== 'prioritaires'" class="px-4 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors">Questions prioritaires</button>
         </div>
       </div>
 
@@ -65,17 +65,17 @@
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" [ngClass]="[s.couleurAvatar, s.couleurTexte]">{{ s.initiales }}</div>
               <div>
-                <h3 class="font-label-md text-on-surface">{{ s.auteur }}</h3>
+                <h3 class="font-label-md text-label-md text-on-surface">{{ s.auteur }}</h3>
                 <p class="text-[10px] font-label-sm text-secondary uppercase tracking-tighter">{{ s.cours }}</p>
               </div>
             </div>
             <span class="text-label-sm text-outline">{{ s.date }}</span>
           </div>
-          <h4 class="font-headline-sm text-on-surface line-clamp-1 mb-2">{{ s.titre }}</h4>
-          <p class="font-body-sm text-on-surface-variant line-clamp-2 mb-3">{{ s.apercu }}</p>
+          <h4 class="font-headline-sm text-headline-sm text-on-surface line-clamp-1 mb-2">{{ s.titre }}</h4>
+          <p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2 mb-3">{{ s.apercu }}</p>
           <div class="flex items-center justify-between">
             <span class="px-2 py-0.5 text-[10px] font-bold rounded uppercase" [ngClass]="classeStatut(s.statut)">{{ s.statut === 'nouveau' ? 'Nouveau' : s.statut === 'urgent' ? 'Urgent' : 'Résolu' }}</span>
-            <div class="flex items-center gap-1 text-outline font-label-sm">
+            <div class="flex items-center gap-1 text-outline font-label-sm text-label-sm">
               <span class="material-symbols-outlined text-[16px]">chat_bubble</span>
               <span>{{ s.messages.length }}</span>
             </div>
@@ -89,7 +89,7 @@
 
       <div class="p-stack-lg border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest/80 backdrop-blur-md z-10">
         <div class="flex flex-col">
-          <h2 class="font-headline-md text-primary">{{ sel.titre }}</h2>
+          <h2 class="font-headline-md text-headline-md text-primary">{{ sel.titre }}</h2>
           <div class="flex items-center gap-2 text-label-sm text-on-surface-variant">
             <span class="font-bold text-secondary">{{ sel.cours }}</span>
             <span>•</span>
@@ -131,16 +131,16 @@
         <div *ngFor="let m of sel.messages" class="flex flex-col gap-stack-md max-w-3xl">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center font-bold text-on-secondary-container text-[12px]">{{ m.initiales }}</div>
-            <span class="font-label-md text-on-surface">{{ m.auteur }}</span>
+            <span class="font-label-md text-label-md text-on-surface">{{ m.auteur }}</span>
             <span class="text-label-sm text-outline">{{ m.date }}</span>
           </div>
           <div class="bg-surface-container-low p-stack-lg rounded-2xl rounded-tl-none border border-outline-variant/30 shadow-sm">
-            <div class="font-body-md text-on-surface leading-relaxed" [innerHTML]="convertirEnHtml(m.contenu)"></div>
+            <div class="font-body-md text-body-md text-on-surface leading-relaxed" [innerHTML]="convertirEnHtml(m.contenu)"></div>
             <button *ngIf="m.pieceJointeNom" (click)="telechargerPieceJointe(m)"
                     [disabled]="telechargementEnCoursId === m.id"
                     class="mt-3 flex items-center gap-2 px-3 py-2 bg-surface-container rounded-lg border border-outline-variant/50 hover:bg-surface-container-high transition-colors text-left disabled:opacity-60">
               <span class="material-symbols-outlined text-[20px] text-secondary">attach_file</span>
-              <span class="font-label-sm text-on-surface truncate max-w-[220px]">{{ m.pieceJointeNom }}</span>
+              <span class="font-label-sm text-label-sm text-on-surface truncate max-w-[220px]">{{ m.pieceJointeNom }}</span>
               <span class="material-symbols-outlined text-[18px] text-outline ml-1">{{ telechargementEnCoursId === m.id ? 'hourglass_empty' : 'download' }}</span>
             </button>
           </div>
@@ -158,10 +158,10 @@
             <div class="h-6 w-[1px] bg-outline-variant mx-1"></div>
             <button type="button" (click)="appliquerFormat(caractereCode, caractereCode, 'code', messageTextarea)" class="p-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Code (texte entre apostrophes inverses)"><span class="material-symbols-outlined text-[20px]">code</span></button>
           </div>
-          <textarea #messageTextarea [(ngModel)]="nouveauMessage" (keydown.control.enter)="envoyerReponse()" class="w-full min-h-[120px] p-4 bg-transparent border-none outline-none font-body-md text-on-surface resize-none focus:ring-0" placeholder="Rédigez votre réponse pédagogique ici..."></textarea>
+          <textarea #messageTextarea [(ngModel)]="nouveauMessage" (keydown.control.enter)="envoyerReponse()" class="w-full min-h-[120px] p-4 bg-transparent border-none outline-none font-body-md text-body-md text-on-surface resize-none focus:ring-0" placeholder="Rédigez votre réponse pédagogique ici..."></textarea>
           <div *ngIf="fichierSelectionne" class="flex items-center gap-2 px-4 py-2 bg-secondary-container/20 border-t border-outline-variant/30">
             <span class="material-symbols-outlined text-[18px] text-secondary">attach_file</span>
-            <span class="font-label-sm text-on-surface truncate max-w-xs">{{ fichierSelectionne.name }}</span>
+            <span class="font-label-sm text-label-sm text-on-surface truncate max-w-xs">{{ fichierSelectionne.name }}</span>
             <button (click)="retirerFichier()" class="ml-auto p-1 text-outline hover:text-error transition-colors" title="Retirer le fichier">
               <span class="material-symbols-outlined text-[16px]">close</span>
             </button>
@@ -169,7 +169,7 @@
           <div class="flex items-center justify-between p-stack-md bg-surface-container-low border-t border-outline-variant/30">
             <div class="flex items-center gap-stack-md">
               <input #fichierInput (change)="onFichierSelectionne($event)" class="hidden" type="file">
-              <button (click)="fichierInput.click()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-secondary hover:bg-secondary-container/20 transition-colors font-label-md" title="Joindre un fichier">
+              <button (click)="fichierInput.click()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-secondary hover:bg-secondary-container/20 transition-colors font-label-md text-label-md" title="Joindre un fichier">
                 <span class="material-symbols-outlined text-[20px]">attach_file</span>
                 <span>Joindre un fichier</span>
               </button>
@@ -178,7 +178,7 @@
                 <span class="text-label-sm text-on-surface-variant">Marquer comme solution</span>
               </label>
             </div>
-            <button (click)="envoyerReponse()" [disabled]="!nouveauMessage.trim() || isSending" class="flex items-center gap-2 px-6 py-2.5 bg-secondary text-on-secondary rounded-lg font-label-md hover:opacity-90 transition-all shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
+            <button (click)="envoyerReponse()" [disabled]="!nouveauMessage.trim() || isSending" class="flex items-center gap-2 px-6 py-2.5 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
               <span>{{ isSending ? 'Envoi…' : 'Publier la réponse' }}</span>
               <span class="material-symbols-outlined text-[20px]">send</span>
             </button>

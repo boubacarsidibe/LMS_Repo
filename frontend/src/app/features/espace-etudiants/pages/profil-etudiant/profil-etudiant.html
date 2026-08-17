@@ -10,7 +10,7 @@
         {{ etudiant.initiales }}
       </div>
       <div>
-        <h1 class="font-headline-lg text-primary tracking-tight">{{ etudiant.nom }}</h1>
+        <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">{{ etudiant.nom }}</h1>
         <p class="text-body-md text-on-surface-variant">{{ etudiant.cohorte }}</p>
         <p *ngIf="etudiant.matricule" class="text-label-sm text-outline font-mono mt-1">{{ etudiant.matricule }}</p>
       </div>
@@ -33,14 +33,14 @@
     </div>
     <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm">
       <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">Dernière connexion</span>
-      <p class="font-body-lg text-on-surface mt-2">{{ etudiant.derniereConnexion }}</p>
+      <p class="font-body-lg text-body-lg text-on-surface mt-2">{{ etudiant.derniereConnexion }}</p>
     </div>
   </div>
 
   <div class="px-margin-desktop mb-stack-lg">
     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="font-headline-sm text-primary">Statut</h2>
+        <h2 class="font-headline-sm text-headline-sm text-primary">Statut</h2>
         <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-tight bg-surface-container-high text-on-surface-variant">{{ etudiant.statut }}</span>
       </div>
       <p class="text-body-sm text-on-surface-variant">Voir les sections Présence et Activité ci-dessous.</p>
@@ -50,7 +50,7 @@
   <div class="px-margin-desktop mb-stack-lg">
     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="font-headline-sm text-primary">Activité récente</h2>
+        <h2 class="font-headline-sm text-headline-sm text-primary">Activité récente</h2>
       </div>
       <div *ngIf="activiteTimeline.length; else aucuneActivite" class="flex flex-col gap-stack-sm max-h-80 overflow-y-auto">
         <div *ngFor="let a of activiteTimeline" class="flex items-start gap-3 p-stack-sm border-b border-outline-variant/30 last:border-0">
@@ -58,7 +58,7 @@
             {{ a.type === 'note' ? 'grade' : (a.titre === 'Présent' ? 'check_circle' : 'cancel') }}
           </span>
           <div class="flex-1">
-            <p class="font-label-md text-on-surface">{{ a.titre }}</p>
+            <p class="font-label-md text-label-md text-on-surface">{{ a.titre }}</p>
             <p class="text-body-sm text-on-surface-variant">{{ a.detail }}</p>
           </div>
           <span class="text-label-sm text-outline whitespace-nowrap">{{ a.dateAffichee }}</span>
@@ -73,7 +73,7 @@
   <div class="px-margin-desktop mb-stack-lg">
     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="font-headline-sm text-primary">Présence</h2>
+        <h2 class="font-headline-sm text-headline-sm text-primary">Présence</h2>
         <span *ngIf="tauxPresence !== null" class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-tight"
               [ngClass]="tauxPresence >= 75 ? 'bg-secondary-container/30 text-on-secondary-container' : 'bg-error-container/20 text-error'">
           {{ tauxPresence }}% de présence
@@ -82,7 +82,7 @@
       <div *ngIf="presences.length; else aucunePresence" class="flex flex-col gap-stack-sm max-h-64 overflow-y-auto">
         <div *ngFor="let p of presences" class="flex items-center justify-between p-stack-sm bg-surface-container-low rounded-xl">
           <div>
-            <p class="font-label-md text-on-surface">{{ p.seanceTitre }}</p>
+            <p class="font-label-md text-label-md text-on-surface">{{ p.seanceTitre }}</p>
             <p class="text-label-sm text-on-surface-variant">{{ p.coursCode }} • {{ p.date | date:'dd/MM/yyyy' }}</p>
           </div>
           <span class="px-2 py-0.5 text-[10px] font-bold rounded uppercase" [ngClass]="p.present ? 'bg-secondary-container/30 text-on-secondary-container' : 'bg-error-container/20 text-error'">
@@ -98,13 +98,13 @@
 
   <div class="px-margin-desktop mb-stack-lg">
     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
-      <h2 class="font-headline-sm text-primary mb-4">Notes par module</h2>
+      <h2 class="font-headline-sm text-headline-sm text-primary mb-4">Notes par module</h2>
 
       <div *ngIf="notes.length; else aucuneNote" class="flex flex-col gap-stack-sm mb-stack-lg">
         <div *ngFor="let n of notes" class="flex items-start justify-between gap-stack-md p-stack-md bg-surface-container-low rounded-xl border border-outline-variant/40">
           <div class="flex-1">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-label-md text-on-surface">{{ n.module }}</span>
+              <span class="font-label-md text-label-md text-on-surface">{{ n.module }}</span>
               <span class="text-label-sm text-secondary font-bold uppercase">{{ n.coursCode }}</span>
               <span class="text-label-sm text-outline">{{ n.dateEvaluation }}</span>
             </div>
@@ -124,19 +124,19 @@
       </ng-template>
 
       <div class="border-t border-outline-variant pt-stack-lg">
-        <h3 class="font-label-md text-on-surface-variant uppercase tracking-wide mb-stack-md">Ajouter une note</h3>
+        <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide mb-stack-md">Ajouter une note</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-md mb-stack-md">
-          <select [(ngModel)]="nouvelleNoteCoursId" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
+          <select [(ngModel)]="nouvelleNoteCoursId" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
             <option [ngValue]="null">Sélectionnez un cours...</option>
             <option *ngFor="let c of mesCours" [ngValue]="c.id">{{ c.titre }} ({{ c.code }})</option>
           </select>
-          <input [(ngModel)]="nouvelleNoteModule" type="text" placeholder="Nom du module (ex: Module 3)" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
-          <input [(ngModel)]="nouvelleNoteValeur" type="number" min="0" max="20" step="0.5" placeholder="Note / 20" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
-          <input [(ngModel)]="nouvelleNoteCommentaire" type="text" placeholder="Commentaire (optionnel)" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
+          <input [(ngModel)]="nouvelleNoteModule" type="text" placeholder="Nom du module (ex: Module 3)" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+          <input [(ngModel)]="nouvelleNoteValeur" type="number" min="0" max="20" step="0.5" placeholder="Note / 20" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+          <input [(ngModel)]="nouvelleNoteCommentaire" type="text" placeholder="Commentaire (optionnel)" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
         </div>
         <button [disabled]="!nouvelleNoteCoursId || !nouvelleNoteModule.trim() || nouvelleNoteValeur === null || isSavingNote"
                 (click)="ajouterNote()"
-                class="px-6 py-3 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
+                class="px-6 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
           {{ isSavingNote ? 'Enregistrement…' : 'Ajouter la note' }}
         </button>
         <p *ngIf="noteErrorMessage" class="text-body-sm text-error mt-2">{{ noteErrorMessage }}</p>
@@ -146,14 +146,14 @@
 
   <div class="px-margin-desktop mb-stack-lg">
     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
-      <h2 class="font-headline-sm text-primary mb-4">Cohorte</h2>
+      <h2 class="font-headline-sm text-headline-sm text-primary mb-4">Cohorte</h2>
       <p class="text-body-sm text-on-surface-variant mb-4">Cohorte actuelle : <span class="font-bold text-on-surface">{{ etudiant.cohorte }}</span></p>
       <div class="flex flex-col sm:flex-row gap-stack-md">
-        <select [(ngModel)]="cohorteSelectionneeId" class="flex-1 p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
+        <select [(ngModel)]="cohorteSelectionneeId" class="flex-1 p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
           <option [ngValue]="null">Sélectionnez une cohorte...</option>
           <option *ngFor="let c of cohortes" [ngValue]="c.id">{{ c.libelle }}{{ c.annee ? ' (' + c.annee + ')' : '' }}</option>
         </select>
-        <button [disabled]="!cohorteSelectionneeId || isSaving" (click)="assignerCohorte()" class="px-6 py-3 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
+        <button [disabled]="!cohorteSelectionneeId || isSaving" (click)="assignerCohorte()" class="px-6 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
           {{ isSaving ? 'Enregistrement…' : 'Affecter' }}
         </button>
       </div>

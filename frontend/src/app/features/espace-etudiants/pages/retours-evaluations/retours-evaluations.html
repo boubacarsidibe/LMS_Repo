@@ -3,18 +3,18 @@
   <!-- En-tête -->
   <div class="flex flex-col md:flex-row md:items-end justify-between gap-gutter">
     <div class="flex flex-col space-y-base">
-      <div class="flex items-center gap-2 text-secondary font-label-sm uppercase tracking-widest">
+      <div class="flex items-center gap-2 text-secondary font-label-sm text-label-sm uppercase tracking-widest">
         <span class="w-8 h-[1px] bg-secondary"></span>
         Performance Pédagogique
       </div>
-      <h1 class="font-display text-on-surface leading-tight">Retours &amp; Évaluations des Enseignements</h1>
-      <p class="font-body-lg text-on-surface-variant max-w-2xl">
+      <h1 class="font-display text-display text-on-surface leading-tight">Retours &amp; Évaluations des Enseignements</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
         Analysez la satisfaction des étudiants et gérez les retours pédagogiques de vos promotions pour ajuster vos enseignements.
       </p>
     </div>
     <div class="flex gap-stack-md">
       <button type="button" (click)="exporter()"
-              class="flex items-center gap-2 px-6 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-on-surface hover:bg-surface-container transition-colors">
+              class="flex items-center gap-2 px-6 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container transition-colors">
         <span class="material-symbols-outlined text-[20px]" aria-hidden="true">download</span>
         Exporter (CSV)
       </button>
@@ -30,10 +30,10 @@
         </div>
       </div>
       <div class="mt-stack-md">
-        <p class="font-label-md text-on-surface-variant">Note moyenne</p>
+        <p class="font-label-md text-label-md text-on-surface-variant">Note moyenne</p>
         <div class="flex items-baseline gap-2">
-          <h2 class="font-display text-on-surface">{{ retoursDuPerimetre.length ? noteMoyenne.toFixed(1) : '—' }}</h2>
-          <span class="font-headline-sm text-outline">/ 5</span>
+          <h2 class="font-display text-display text-on-surface">{{ retoursDuPerimetre.length ? noteMoyenne.toFixed(1) : '—' }}</h2>
+          <span class="font-headline-sm text-headline-sm text-outline">/ 5</span>
         </div>
       </div>
     </div>
@@ -44,8 +44,8 @@
           <span class="material-symbols-outlined">sentiment_satisfied</span>
         </div>
       </div>
-      <p class="font-label-md text-on-surface-variant">Taux de Satisfaction</p>
-      <h2 class="font-display text-on-surface">{{ retoursDuPerimetre.length ? tauxSatisfaction + '%' : '—' }}</h2>
+      <p class="font-label-md text-label-md text-on-surface-variant">Taux de Satisfaction</p>
+      <h2 class="font-display text-display text-on-surface">{{ retoursDuPerimetre.length ? tauxSatisfaction + '%' : '—' }}</h2>
       <p class="text-body-sm text-on-surface-variant mt-1 italic">Part des avis notés 4/5 ou plus</p>
     </div>
 
@@ -56,9 +56,9 @@
         </div>
       </div>
       <div class="mt-stack-md">
-        <p class="font-label-md text-on-surface-variant">Volume de Retours</p>
-        <h2 class="font-display text-on-surface">{{ retoursDuPerimetre.length }}</h2>
-        <p class="font-body-sm text-on-surface-variant mt-1 italic">{{ libellePerimetre }}</p>
+        <p class="font-label-md text-label-md text-on-surface-variant">Volume de Retours</p>
+        <h2 class="font-display text-display text-on-surface">{{ retoursDuPerimetre.length }}</h2>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1 italic">{{ libellePerimetre }}</p>
       </div>
     </div>
   </div>
@@ -66,7 +66,7 @@
   <!-- Répartition des notes -->
   <div *ngIf="!chargement && retoursDuPerimetre.length"
        class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-sm border border-outline-variant/30">
-    <h3 class="font-label-md text-on-surface-variant mb-4">Répartition des notes — {{ libellePerimetre }}</h3>
+    <h3 class="font-label-md text-label-md text-on-surface-variant mb-4">Répartition des notes — {{ libellePerimetre }}</h3>
     <div class="flex flex-col gap-2">
       <div *ngFor="let ligne of repartition" class="flex items-center gap-3">
         <span class="w-12 shrink-0 text-label-sm text-on-surface-variant flex items-center gap-1">
@@ -92,7 +92,7 @@
   <div class="flex flex-col md:flex-row items-center justify-between gap-stack-md bg-surface-container-low p-4 rounded-xl">
     <div class="flex flex-wrap items-center gap-stack-md w-full md:w-auto">
       <div class="relative min-w-[280px]">
-        <select [(ngModel)]="coursSelectionne" aria-label="Filtrer par cours" class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-label-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all">
+        <select [(ngModel)]="coursSelectionne" aria-label="Filtrer par cours" class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-label-md text-label-md text-on-surface focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all">
           <option [ngValue]="null">Tous les cours</option>
           <option *ngFor="let c of mesCours" [ngValue]="+c.id">{{ c.titre }}</option>
         </select>
@@ -139,7 +139,7 @@
               <span class="material-symbols-outlined text-[20px]">person</span>
             </div>
             <div>
-              <p class="font-label-md text-on-surface">Anonyme</p>
+              <p class="font-label-md text-label-md text-on-surface">Anonyme</p>
               <p class="text-label-sm text-on-surface-variant">{{ r.date }} • {{ r.cours }}</p>
             </div>
           </div>
@@ -151,7 +151,7 @@
           <span *ngFor="let pleine of etoiles(r.note)" class="material-symbols-outlined text-[18px]" [class.text-secondary]="pleine" [class.text-outline]="!pleine" [style.font-variation-settings]="pleine ? &quot;'FILL' 1&quot; : &quot;'FILL' 0&quot;">star</span>
         </div>
 
-        <p class="font-body-md text-on-surface-variant italic">"{{ r.commentaire }}"</p>
+        <p class="font-body-md text-body-md text-on-surface-variant italic">"{{ r.commentaire }}"</p>
       </div>
 
       <div class="flex items-center justify-end mt-6 pt-4 border-t border-outline-variant/30" *ngIf="r.statut === 'action-requise'">

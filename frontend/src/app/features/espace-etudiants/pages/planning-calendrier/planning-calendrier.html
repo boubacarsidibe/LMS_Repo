@@ -4,7 +4,7 @@
   <div class="flex flex-col md:flex-row md:items-end justify-between gap-stack-md mb-stack-lg px-margin-desktop pt-stack-lg">
     <div class="flex flex-col gap-1">
       <span class="text-label-sm font-bold text-secondary tracking-widest uppercase">Espace Formateur</span>
-      <h1 class="font-headline-lg text-primary">Calendrier Pédagogique &amp; Classes Virtuelles</h1>
+      <h1 class="font-headline-lg text-headline-lg text-primary">Calendrier Pédagogique &amp; Classes Virtuelles</h1>
       <p class="text-body-md text-on-surface-variant max-w-2xl">Gérez vos sessions d'enseignement, classes virtuelles et échéances d'évaluation en temps réel.</p>
     </div>
     <div class="flex items-center gap-stack-md shrink-0">
@@ -14,7 +14,7 @@
         <button (click)="changerVue('jour')" class="px-4 py-2 rounded-md text-label-md transition-all" [class.font-bold]="vueActive === 'jour'" [class.font-medium]="vueActive !== 'jour'" [class.bg-surface-container-lowest]="vueActive === 'jour'" [class.text-primary]="vueActive === 'jour'" [class.shadow-sm]="vueActive === 'jour'" [class.text-on-surface-variant]="vueActive !== 'jour'">Jour</button>
         <button (click)="changerVue('liste')" class="px-4 py-2 rounded-md text-label-md transition-all" [class.font-bold]="vueActive === 'liste'" [class.font-medium]="vueActive !== 'liste'" [class.bg-surface-container-lowest]="vueActive === 'liste'" [class.text-primary]="vueActive === 'liste'" [class.shadow-sm]="vueActive === 'liste'" [class.text-on-surface-variant]="vueActive !== 'liste'">Liste</button>
       </div>
-      <button (click)="ouvrirFormulaire()" class="flex items-center gap-2 bg-secondary text-on-secondary px-6 py-3 rounded-lg font-label-md shadow-md hover:shadow-lg transition-all active:scale-95">
+      <button (click)="ouvrirFormulaire()" class="flex items-center gap-2 bg-secondary text-on-secondary px-6 py-3 rounded-lg font-label-md text-label-md shadow-md hover:shadow-lg transition-all active:scale-95">
         <span class="material-symbols-outlined text-[20px]">add_circle</span>
         Programmer une session
       </button>
@@ -28,7 +28,7 @@
 
       <div class="flex items-center justify-between p-stack-md border-b border-outline-variant/20">
         <div class="flex items-center gap-4">
-          <h2 class="font-headline-sm text-primary capitalize">{{ libellePeriode }}</h2>
+          <h2 class="font-headline-sm text-headline-sm text-primary capitalize">{{ libellePeriode }}</h2>
           <div *ngIf="vueActive !== 'liste'" class="flex items-center bg-surface-container rounded-full p-1">
             <button aria-label="Periode precedente" (click)="precedent()" class="p-1 hover:bg-surface-container-high rounded-full transition-colors">
               <span class="material-symbols-outlined">chevron_left</span>
@@ -65,7 +65,7 @@
         <div class="py-3 text-center border-b border-outline-variant/20 text-label-sm font-bold text-outline uppercase tracking-wider bg-surface-container-low">Dim</div>
 
         <div *ngFor="let j of jours"
-             class="min-h-[120px] p-2 border-r border-b border-outline-variant/10 font-label-sm hover:bg-surface-container-low/50 transition-colors"
+             class="min-h-[120px] p-2 border-r border-b border-outline-variant/10 font-label-sm text-label-sm hover:bg-surface-container-low/50 transition-colors"
              [class.text-outline-variant]="j.horsMois"
              [class.opacity-40]="j.horsMois"
              [class.text-on-surface]="!j.horsMois"
@@ -84,7 +84,7 @@
         <div *ngFor="let nom of nomsJours" class="py-3 text-center border-b border-outline-variant/20 text-label-sm font-bold text-outline uppercase tracking-wider bg-surface-container-low">{{ nom.slice(0, 3) }}</div>
 
         <div *ngFor="let j of joursSemaine"
-             class="min-h-[240px] p-2 border-r border-b border-outline-variant/10 font-label-sm hover:bg-surface-container-low/50 transition-colors"
+             class="min-h-[240px] p-2 border-r border-b border-outline-variant/10 font-label-sm text-label-sm hover:bg-surface-container-low/50 transition-colors"
              [class.ring-2]="estAujourdhui(j.date)"
              [class.ring-secondary]="estAujourdhui(j.date)"
              [class.ring-inset]="estAujourdhui(j.date)">
@@ -103,7 +103,7 @@
             <span class="material-symbols-outlined">{{ iconeEvenement(e.type) }}</span>
           </div>
           <div class="flex-1">
-            <p class="font-headline-sm text-on-surface">{{ e.titre }}</p>
+            <p class="font-headline-sm text-headline-sm text-on-surface">{{ e.titre }}</p>
             <p class="text-label-sm text-on-surface-variant">{{ e.heure }}</p>
           </div>
           <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase" [ngClass]="classeEvenement(e.type)">{{ e.type }}</span>
@@ -120,7 +120,7 @@
             <span class="material-symbols-outlined">{{ iconeEvenement(e.type) }}</span>
           </div>
           <div class="flex-1">
-            <p class="font-headline-sm text-on-surface">{{ e.titre }}</p>
+            <p class="font-headline-sm text-headline-sm text-on-surface">{{ e.titre }}</p>
             <p class="text-label-sm text-on-surface-variant">{{ e.date.getDate() }} {{ nomsMois[e.date.getMonth()] }} {{ e.date.getFullYear() }} • {{ e.heure }}</p>
           </div>
           <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase" [ngClass]="classeEvenement(e.type)">{{ e.type }}</span>
@@ -134,7 +134,7 @@
     <!-- Sidebar Prochaines Séances -->
     <div class="col-span-12 lg:col-span-4 xl:col-span-3 space-y-stack-lg">
       <div class="flex flex-col gap-stack-md">
-        <h3 class="font-headline-sm text-primary flex items-center justify-between">
+        <h3 class="font-headline-sm text-headline-sm text-primary flex items-center justify-between">
           Prochaines Séances
           <span class="text-label-sm font-medium text-on-surface-variant bg-surface-container px-2 py-1 rounded">48h</span>
         </h3>
@@ -149,14 +149,14 @@
                 <p class="text-label-sm font-bold uppercase tracking-tight" [class.text-secondary]="s.type !== 'echeance'" [class.text-error]="s.type === 'echeance'">
                   {{ s.libelleDate }} • {{ s.heure }}
                 </p>
-                <p class="font-headline-sm text-on-surface group-hover:text-secondary transition-colors">{{ s.titre }}</p>
+                <p class="font-headline-sm text-headline-sm text-on-surface group-hover:text-secondary transition-colors">{{ s.titre }}</p>
               </div>
             </div>
             <div class="grid grid-cols-2 gap-2" *ngIf="s.type === 'cours'">
-              <button (click)="lancerSeance(s)" class="bg-secondary text-on-secondary py-2 rounded-lg font-label-md hover:brightness-110 transition-all">Lancer</button>
-              <button (click)="ouvrirEdition(s)" class="bg-surface-container-low text-on-surface-variant py-2 rounded-lg font-label-md hover:bg-surface-container transition-all">Modifier</button>
+              <button (click)="lancerSeance(s)" class="bg-secondary text-on-secondary py-2 rounded-lg font-label-md text-label-md hover:brightness-110 transition-all">Lancer</button>
+              <button (click)="ouvrirEdition(s)" class="bg-surface-container-low text-on-surface-variant py-2 rounded-lg font-label-md text-label-md hover:bg-surface-container transition-all">Modifier</button>
             </div>
-            <button *ngIf="s.type === 'tutorat'" (click)="ouvrirEdition(s)" class="w-full border border-outline-variant text-on-surface-variant py-2 rounded-lg font-label-md hover:bg-surface-container-low transition-all">Gérer le rendez-vous</button>
+            <button *ngIf="s.type === 'tutorat'" (click)="ouvrirEdition(s)" class="w-full border border-outline-variant text-on-surface-variant py-2 rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-all">Gérer le rendez-vous</button>
           </div>
 
           <p *ngIf="prochainesSeances.length === 0" class="text-body-sm text-on-surface-variant text-center py-4">
@@ -167,7 +167,7 @@
 
       <div class="p-6 bg-surface-container-lowest border border-outline-variant rounded-xl relative overflow-hidden">
         <div class="relative z-10">
-          <p class="font-headline-sm text-primary mb-2">Synchronisation</p>
+          <p class="font-headline-sm text-headline-sm text-primary mb-2">Synchronisation</p>
           <p class="text-body-sm text-on-surface-variant mb-4">Synchronisez votre calendrier INPG avec Google Calendar ou Outlook pour ne rien manquer.</p>
           <button disabled class="text-label-md font-bold text-secondary underline underline-offset-4 opacity-60 cursor-not-allowed" title="Bientôt disponible">Lier mon agenda professionnel</button>
         </div>
@@ -187,32 +187,32 @@
 
       <form [formGroup]="evenementForm" (ngSubmit)="onSubmit()" class="p-6 space-y-base">
         <div class="space-y-1">
-          <label class="font-label-md text-on-surface-variant">Titre</label>
-          <input formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" placeholder="Ex: Macroéconomie" type="text">
+          <label class="font-label-md text-label-md text-on-surface-variant">Titre</label>
+          <input formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Macroéconomie" type="text">
           <p *ngIf="evenementForm.get('titre')?.invalid && evenementForm.get('titre')?.touched" class="text-body-sm text-error">
             Le titre est requis.
           </p>
         </div>
 
         <div class="space-y-1">
-          <label class="font-label-md text-on-surface-variant">Date</label>
-          <input formControlName="date" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" type="date">
+          <label class="font-label-md text-label-md text-on-surface-variant">Date</label>
+          <input formControlName="date" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
           <p *ngIf="evenementForm.get('date')?.invalid && evenementForm.get('date')?.touched" class="text-body-sm text-error">
             La date est requise.
           </p>
         </div>
 
         <div class="space-y-1">
-          <label class="font-label-md text-on-surface-variant">Heure</label>
-          <input formControlName="heure" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" type="time">
+          <label class="font-label-md text-label-md text-on-surface-variant">Heure</label>
+          <input formControlName="heure" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="time">
           <p *ngIf="evenementForm.get('heure')?.invalid && evenementForm.get('heure')?.touched" class="text-body-sm text-error">
             L'heure est requise.
           </p>
         </div>
 
         <div class="space-y-1">
-          <label class="font-label-md text-on-surface-variant">Type</label>
-          <select formControlName="type" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
+          <label class="font-label-md text-label-md text-on-surface-variant">Type</label>
+          <select formControlName="type" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
             <option value="cours">Classe virtuelle</option>
             <option value="echeance">Échéance</option>
             <option value="tutorat">Tutorat</option>
@@ -220,17 +220,17 @@
         </div>
 
         <div class="space-y-1" *ngIf="evenementForm.get('type')?.value === 'cours'">
-          <label class="font-label-md text-on-surface-variant">Lien de la classe virtuelle (optionnel)</label>
-          <input formControlName="lienVisio" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" placeholder="https://meet.google.com/..." type="url">
+          <label class="font-label-md text-label-md text-on-surface-variant">Lien de la classe virtuelle (optionnel)</label>
+          <input formControlName="lienVisio" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="https://meet.google.com/..." type="url">
         </div>
 
         <p *ngIf="errorMessage" class="text-body-sm text-error">{{ errorMessage }}</p>
 
         <div class="flex gap-stack-md pt-2">
-          <button type="button" (click)="fermerFormulaire()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md hover:bg-outline-variant transition-all">
+          <button type="button" (click)="fermerFormulaire()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
             Annuler
           </button>
-          <button [disabled]="isSubmitting" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
+          <button [disabled]="isSubmitting" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
             {{ isSubmitting ? 'Enregistrement…' : (seanceEnEdition ? 'Enregistrer' : 'Programmer') }}
           </button>
         </div>

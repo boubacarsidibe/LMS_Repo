@@ -172,7 +172,7 @@ import { ScolariteService } from '../../services/scolarite.service';
                 type="button"
                 (click)="telecharger(certificat)"
                 [disabled]="telechargementEnCoursId === certificat.id"
-                class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md hover:opacity-90 disabled:opacity-50 transition-opacity"
+                class="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 disabled:opacity-50 transition-opacity"
               >
                 <span class="material-symbols-outlined text-[18px]">download</span>
                 {{ telechargementEnCoursId === certificat.id ? 'Téléchargement…' : 'PDF' }}

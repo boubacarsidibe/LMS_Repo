@@ -46,7 +46,7 @@ import { CommunicationService } from '../../services/communication.service';
               <div
                 class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center shrink-0"
               >
-                <span class="text-on-primary-container font-label-sm">{{ initiales(m.auteur) }}</span>
+                <span class="text-on-primary-container font-label-sm text-label-sm">{{ initiales(m.auteur) }}</span>
               </div>
               <span class="font-label-md text-label-md text-on-surface">{{ m.auteur }}</span>
               <span class="font-body-sm text-body-sm text-on-surface-variant">

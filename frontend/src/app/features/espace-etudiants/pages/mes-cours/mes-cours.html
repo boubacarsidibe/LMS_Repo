@@ -5,14 +5,14 @@
     <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary-fixed-dim/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-stack-md">
       <div class="space-y-base">
-        <div class="flex items-center gap-2 text-secondary font-label-sm uppercase tracking-widest">
+        <div class="flex items-center gap-2 text-secondary font-label-sm text-label-sm uppercase tracking-widest">
           <span class="w-8 h-[1px] bg-secondary"></span>
           Espace Enseignant
         </div>
         <h1 class="font-display text-headline-lg text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
-        <p class="font-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos cohortes en temps réel.</p>
+        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos cohortes en temps réel.</p>
       </div>
-      <button routerLink="/espace-etudiant/formateur/creer-cours" class="group flex items-center gap-3 bg-secondary text-on-secondary px-6 py-4 rounded-xl font-label-md hover:bg-on-secondary-container transition-all shadow-md hover:shadow-xl active:scale-95">
+      <button routerLink="/espace-etudiant/formateur/creer-cours" class="group flex items-center gap-3 bg-secondary text-on-secondary px-6 py-4 rounded-xl font-label-md text-label-md hover:bg-on-secondary-container transition-all shadow-md hover:shadow-xl active:scale-95">
         <span class="material-symbols-outlined">add_circle</span>
         Créer un nouveau cours / module
       </button>
@@ -24,18 +24,18 @@
     <div class="bg-surface-container-lowest p-stack-md rounded-2xl shadow-sm flex flex-wrap items-center gap-gutter">
       <div class="flex-1 min-w-[300px] relative group">
         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary transition-colors">search</span>
-        <input [(ngModel)]="recherche" class="w-full pl-12 pr-4 py-3 bg-surface-container-low rounded-xl border-none focus:ring-2 focus:ring-secondary/20 outline-none font-body-sm transition-all" placeholder="Rechercher une ressource, un code ou un titre..." type="text">
+        <input [(ngModel)]="recherche" class="w-full pl-12 pr-4 py-3 bg-surface-container-low rounded-xl border-none focus:ring-2 focus:ring-secondary/20 outline-none font-body-sm text-body-sm transition-all" placeholder="Rechercher une ressource, un code ou un titre..." type="text">
       </div>
       <div class="flex items-center gap-stack-sm">
         <div class="relative">
-          <select [(ngModel)]="semestreSelectionne" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+          <select [(ngModel)]="semestreSelectionne" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
             <option value="">Tous les semestres</option>
             <option *ngFor="let s of semestresDisponibles" [value]="s">{{ s }}</option>
           </select>
           <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
         </div>
         <div class="relative">
-          <select [(ngModel)]="cohorteSelectionnee" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+          <select [(ngModel)]="cohorteSelectionnee" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
             <option value="">Toutes les cohortes</option>
             <option *ngFor="let coh of cohortesDisponibles" [value]="coh.id">{{ coh.libelle }}{{ coh.annee ? ' (' + coh.annee + ')' : '' }}</option>
           </select>
@@ -60,10 +60,10 @@
         </div>
         <div class="p-stack-md flex flex-col h-full">
           <div class="flex justify-between items-start mb-4">
-            <span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full font-label-sm uppercase tracking-tighter">{{ c.code }}</span>
+            <span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full font-label-sm text-label-sm uppercase tracking-tighter">{{ c.code }}</span>
             <button (click)="ouvrirEditionCours(c)" title="Modifier le cours" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">edit</span></button>
           </div>
-          <h3 class="font-headline-sm text-on-surface mb-2 group-hover:text-secondary transition-colors">{{ c.titre }}</h3>
+          <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2 group-hover:text-secondary transition-colors">{{ c.titre }}</h3>
           <p class="text-body-sm text-on-surface-variant line-clamp-2 mb-2" *ngIf="c.description">{{ c.description }}</p>
           <div class="grid grid-cols-2 gap-stack-sm my-4">
             <div class="flex items-center gap-2">
@@ -112,7 +112,7 @@
       <!-- Ressources deposees -->
       <div class="col-span-full bg-surface-container-lowest border border-outline-variant/30 p-stack-lg rounded-2xl shadow-sm">
         <div class="flex items-center justify-between mb-stack-md">
-          <h4 class="font-headline-sm text-on-surface flex items-center gap-2">
+          <h4 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
             <span class="material-symbols-outlined text-secondary">folder_open</span>
             Ressources déposées
           </h4>
@@ -120,9 +120,9 @@
             {{ mesSupports.length }}
           </span>
         </div>
-        <p *ngIf="chargementSupports" class="font-body-sm text-on-surface-variant">Chargement…</p>
+        <p *ngIf="chargementSupports" class="font-body-sm text-body-sm text-on-surface-variant">Chargement…</p>
 
-        <p *ngIf="!chargementSupports && !mesSupports.length" class="font-body-sm text-on-surface-variant py-4 text-center">
+        <p *ngIf="!chargementSupports && !mesSupports.length" class="font-body-sm text-body-sm text-on-surface-variant py-4 text-center">
           Aucune ressource déposée pour l'instant. Utilisez le panneau « Dépôt Rapide » ci-contre.
         </p>
 
@@ -131,7 +131,7 @@
             <span class="material-symbols-outlined text-on-surface-variant">{{ iconeTypeRessource(s.typeRessource) }}</span>
 
             <div class="flex-1 min-w-0">
-              <p class="font-label-md text-on-surface truncate">{{ s.titre }}</p>
+              <p class="font-label-md text-label-md text-on-surface truncate">{{ s.titre }}</p>
               <p class="text-label-sm text-on-surface-variant">
                 {{ s.coursCode }}
                 <ng-container *ngIf="s.datePublication"> • {{ s.datePublication | date:'dd/MM/yyyy' }}</ng-container>
@@ -166,13 +166,13 @@
           <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
             <span class="material-symbols-outlined">upload_file</span>
           </div>
-          <h3 class="font-headline-sm text-on-surface">Dépôt Rapide</h3>
+          <h3 class="font-headline-sm text-headline-sm text-on-surface">Dépôt Rapide</h3>
         </div>
         <div class="space-y-stack-md">
           <div (click)="ouvrirExplorateur()" class="border-2 border-dashed border-outline-variant rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-surface-container-low/50 hover:bg-secondary/5 hover:border-secondary transition-all cursor-pointer group">
             <span class="material-symbols-outlined text-[48px] text-outline group-hover:text-secondary transition-colors">cloud_upload</span>
             <div class="text-center">
-              <p class="font-label-md text-on-surface">Glissez vos fichiers ici</p>
+              <p class="font-label-md text-label-md text-on-surface">Glissez vos fichiers ici</p>
               <p class="text-body-sm text-outline">PDF, PPTX ou ZIP (Max. 50MB)</p>
             </div>
             <input #fileInput class="hidden" type="file" (change)="onFichierSelectionne($event)">
@@ -183,35 +183,35 @@
         </p>
         <form [formGroup]="depotForm" (ngSubmit)="onSubmit()" class="space-y-stack-md">
           <div class="space-y-base">
-            <label class="font-label-md text-on-surface-variant">Type de ressource</label>
+            <label class="font-label-md text-label-md text-on-surface-variant">Type de ressource</label>
             <div class="grid grid-cols-1 gap-2">
               <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
                 <input formControlName="typeRessource" value="pdf" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
                 <span class="material-symbols-outlined text-on-surface-variant">description</span>
-                <span class="font-body-sm text-on-surface">Support de cours (PDF)</span>
+                <span class="font-body-sm text-body-sm text-on-surface">Support de cours (PDF)</span>
               </label>
               <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
                 <input formControlName="typeRessource" value="lien" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
                 <span class="material-symbols-outlined text-on-surface-variant">link</span>
-                <span class="font-body-sm text-on-surface">Lien externe</span>
+                <span class="font-body-sm text-body-sm text-on-surface">Lien externe</span>
               </label>
               <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
                 <input formControlName="typeRessource" value="video" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
                 <span class="material-symbols-outlined text-on-surface-variant">videocam</span>
-                <span class="font-body-sm text-on-surface">Visioconférence / Vidéo</span>
+                <span class="font-body-sm text-body-sm text-on-surface">Visioconférence / Vidéo</span>
               </label>
             </div>
           </div>
 
             <div class="space-y-base">
-                <label class="font-label-md text-on-surface-variant">Cours cible</label>
-                <select *ngIf="cours.length" formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
+                <label class="font-label-md text-label-md text-on-surface-variant">Cours cible</label>
+                <select *ngIf="cours.length" formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
                 <option value="">Sélectionnez un cours...</option>
                 <option *ngFor="let c of cours" [value]="c.id">{{ c.code }} - {{ c.titre }}</option>
                 </select>
                 <!-- Sans cours, un menu vide ressemble a une panne : on explique et on oriente. -->
                 <div *ngIf="!cours.length" class="p-3 bg-surface-container-low rounded-xl space-y-2">
-                <p class="font-body-sm text-on-surface-variant">
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
                     Vous n'avez encore aucun cours : impossible d'y rattacher une ressource.
                 </p>
                 <a routerLink="/espace-etudiant/formateur/creer-cours" class="inline-flex items-center gap-1 text-label-sm font-bold text-secondary hover:underline">
@@ -225,8 +225,8 @@
             </div>
 
             <div class="space-y-base">
-                <label class="font-label-md text-on-surface-variant">Date de publication</label>
-                <input formControlName="datePublication" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" type="date">
+                <label class="font-label-md text-label-md text-on-surface-variant">Date de publication</label>
+                <input formControlName="datePublication" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
                 <p *ngIf="!publicationDifferee" class="text-body-sm text-on-surface-variant">
                 Publication immédiate. Choisissez une date future pour programmer la mise en ligne.
                 </p>
@@ -242,14 +242,14 @@
 
             <p *ngIf="uploadMessage" class="text-body-sm text-secondary font-medium">{{ uploadMessage }}</p>
             <p *ngIf="uploadError" class="text-body-sm text-error">{{ uploadError }}</p>
-            <button [disabled]="isUploading || !cours.length" class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all shadow-md mt-4 disabled:opacity-60 disabled:cursor-not-allowed" type="submit">
+            <button [disabled]="isUploading || !cours.length" class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all shadow-md mt-4 disabled:opacity-60 disabled:cursor-not-allowed" type="submit">
                 {{ isUploading ? 'Publication…' : 'Publier la ressource' }}
             </button>
             </form>
         </div>
 
       <div class="p-stack-md bg-surface-container rounded-2xl space-y-stack-sm">
-        <h4 class="font-label-md text-on-surface flex items-center gap-2">
+        <h4 class="font-label-md text-label-md text-on-surface flex items-center gap-2">
           <span class="material-symbols-outlined text-[18px]">info</span>
           Guide de publication
         </h4>
@@ -266,7 +266,7 @@
   <!-- Modal gestion des cohortes d'un cours -->
   <div *ngIf="coursEnGestion" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerGestionCohortes()">
     <div class="bg-surface-container-lowest rounded-2xl p-stack-lg max-w-md w-full space-y-stack-md" (click)="$event.stopPropagation()">
-      <h3 class="font-headline-sm text-on-surface">Cohortes du cours {{ coursEnGestion.code }}</h3>
+      <h3 class="font-headline-sm text-headline-sm text-on-surface">Cohortes du cours {{ coursEnGestion.code }}</h3>
       <p class="text-body-sm text-on-surface-variant">Sélectionnez les cohortes dont les étudiants doivent apparaître dans votre suivi.</p>
       <div class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
         <label *ngFor="let coh of toutesCohortes" class="flex items-center gap-2 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
@@ -275,16 +275,16 @@
             type="checkbox"
             [checked]="cohorteIdsGestion.has($any(coh.id))"
             (change)="toggleCohorteGestion($any(coh.id), $any($event.target).checked)">
-          <span class="font-body-sm text-on-surface">{{ coh.libelle }}{{ coh.annee ? ' (' + coh.annee + ')' : '' }}</span>
+          <span class="font-body-sm text-body-sm text-on-surface">{{ coh.libelle }}{{ coh.annee ? ' (' + coh.annee + ')' : '' }}</span>
         </label>
       </div>
       <p *ngIf="!toutesCohortes.length" class="text-body-sm text-on-surface-variant">Aucune cohorte disponible pour le moment.</p>
       <p *ngIf="gestionError" class="text-body-sm text-error">{{ gestionError }}</p>
       <div class="flex gap-stack-md pt-2">
-        <button (click)="fermerGestionCohortes()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md hover:bg-outline-variant transition-all">
+        <button (click)="fermerGestionCohortes()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
           Annuler
         </button>
-        <button [disabled]="isSavingCohortes" (click)="enregistrerCohortes()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all disabled:opacity-60">
+        <button [disabled]="isSavingCohortes" (click)="enregistrerCohortes()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
           {{ isSavingCohortes ? 'Enregistrement…' : 'Enregistrer' }}
         </button>
       </div>
@@ -294,34 +294,34 @@
   <!-- Modal edition d'un cours -->
   <div *ngIf="coursEnEdition" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerEditionCours()">
     <div class="bg-surface-container-lowest rounded-2xl p-stack-lg max-w-md w-full space-y-stack-md" (click)="$event.stopPropagation()">
-      <h3 class="font-headline-sm text-on-surface">Modifier le cours</h3>
+      <h3 class="font-headline-sm text-headline-sm text-on-surface">Modifier le cours</h3>
       <form [formGroup]="editionForm" (ngSubmit)="enregistrerEdition()" class="space-y-base">
         <div class="space-y-1">
-          <label class="font-label-md text-on-surface-variant">Code du cours</label>
-          <input formControlName="code" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" type="text">
+          <label class="font-label-md text-label-md text-on-surface-variant">Code du cours</label>
+          <input formControlName="code" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-on-surface-variant">Titre</label>
-          <input formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" type="text">
+          <label class="font-label-md text-label-md text-on-surface-variant">Titre</label>
+          <input formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-on-surface-variant">Semestre</label>
-          <input formControlName="semestre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" type="text">
+          <label class="font-label-md text-label-md text-on-surface-variant">Semestre</label>
+          <input formControlName="semestre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-on-surface-variant">Description</label>
-          <textarea formControlName="description" rows="3" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface resize-none"></textarea>
+          <label class="font-label-md text-label-md text-on-surface-variant">Description</label>
+          <textarea formControlName="description" rows="3" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none"></textarea>
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-on-surface-variant">Volume horaire</label>
-          <input formControlName="volumeHoraire" min="0" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface" type="number">
+          <label class="font-label-md text-label-md text-on-surface-variant">Volume horaire</label>
+          <input formControlName="volumeHoraire" min="0" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="number">
         </div>
         <p *ngIf="editionError" class="text-body-sm text-error">{{ editionError }}</p>
         <div class="flex gap-stack-md pt-2">
-          <button type="button" (click)="fermerEditionCours()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md hover:bg-outline-variant transition-all">
+          <button type="button" (click)="fermerEditionCours()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
             Annuler
           </button>
-          <button [disabled]="isSavingEdition" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all disabled:opacity-60">
+          <button [disabled]="isSavingEdition" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
             {{ isSavingEdition ? 'Enregistrement…' : 'Enregistrer' }}
           </button>
         </div>
@@ -335,32 +335,32 @@
 
       <!-- Etat 1 : liste des seances + creation -->
       <ng-container *ngIf="!seanceSelectionnee">
-        <h3 class="font-headline-sm text-on-surface">Séances de {{ coursEnPresence.code }}</h3>
+        <h3 class="font-headline-sm text-headline-sm text-on-surface">Séances de {{ coursEnPresence.code }}</h3>
 
         <div class="flex flex-col gap-stack-sm max-h-56 overflow-y-auto">
           <button *ngFor="let s of seancesDuCours" (click)="selectionnerSeance(s)"
                   class="flex items-center justify-between p-3 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors text-left">
-            <span class="font-body-sm text-on-surface">{{ s.titre }}</span>
+            <span class="font-body-sm text-body-sm text-on-surface">{{ s.titre }}</span>
             <span class="text-label-sm text-outline">{{ s.dateHeure | date:'dd/MM/yyyy' }}</span>
           </button>
           <p *ngIf="!seancesDuCours.length" class="text-body-sm text-on-surface-variant py-2">Aucune séance pour l'instant.</p>
         </div>
 
         <div class="border-t border-outline-variant pt-stack-md">
-          <h4 class="font-label-md text-on-surface-variant uppercase tracking-wide mb-stack-sm">Nouvelle séance</h4>
+          <h4 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide mb-stack-sm">Nouvelle séance</h4>
           <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-stack-sm">
-            <input [(ngModel)]="nouvelleSeanceTitre" type="text" placeholder="Titre (ex: Séance 3 - TP)" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
-            <input [(ngModel)]="nouvelleSeanceDate" type="date" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-on-surface">
+            <input [(ngModel)]="nouvelleSeanceTitre" type="text" placeholder="Titre (ex: Séance 3 - TP)" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+            <input [(ngModel)]="nouvelleSeanceDate" type="date" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
           </div>
           <button [disabled]="!nouvelleSeanceTitre.trim() || !nouvelleSeanceDate || isSavingSeance"
                   (click)="creerSeance()"
-                  class="w-full mt-stack-sm py-3 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all disabled:opacity-60">
+                  class="w-full mt-stack-sm py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
             {{ isSavingSeance ? 'Création…' : 'Créer la séance' }}
           </button>
         </div>
 
         <p *ngIf="presenceError" class="text-body-sm text-error">{{ presenceError }}</p>
-        <button (click)="fermerPresence()" class="w-full py-3 bg-surface-container text-on-surface rounded-xl font-label-md hover:bg-outline-variant transition-all">
+        <button (click)="fermerPresence()" class="w-full py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
           Fermer
         </button>
       </ng-container>
@@ -371,7 +371,7 @@
           <span class="material-symbols-outlined text-[18px]">arrow_back</span>
           Retour aux séances
         </button>
-        <h3 class="font-headline-sm text-on-surface">{{ seanceSelectionnee.titre }}</h3>
+        <h3 class="font-headline-sm text-headline-sm text-on-surface">{{ seanceSelectionnee.titre }}</h3>
         <p class="text-body-sm text-on-surface-variant">{{ seanceSelectionnee.dateHeure | date:'dd/MM/yyyy' }}</p>
 
         <p *ngIf="chargementRoster" class="text-body-sm text-on-surface-variant py-4 text-center">Chargement…</p>
@@ -380,7 +380,7 @@
           <div *ngFor="let e of rosterSeance" class="flex items-center justify-between p-3 bg-surface-container-low rounded-xl">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-[11px]" [ngClass]="e.couleurAvatar">{{ e.initiales }}</div>
-              <span class="font-body-sm text-on-surface">{{ e.nom }}</span>
+              <span class="font-body-sm text-body-sm text-on-surface">{{ e.nom }}</span>
             </div>
             <div class="flex items-center gap-1">
               <button (click)="marquerPresence(e, true)"
@@ -402,7 +402,7 @@
 
         <p *ngIf="presenceError" class="text-body-sm text-error">{{ presenceError }}</p>
         <button [disabled]="isSavingPresences" (click)="enregistrerPresences()"
-                class="w-full py-3 bg-secondary text-on-secondary rounded-xl font-label-md hover:opacity-90 transition-all disabled:opacity-60">
+                class="w-full py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
           {{ isSavingPresences ? 'Enregistrement…' : 'Enregistrer les présences' }}
         </button>
       </ng-container>

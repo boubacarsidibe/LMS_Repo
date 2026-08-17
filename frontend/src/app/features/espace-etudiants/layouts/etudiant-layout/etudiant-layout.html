@@ -10,7 +10,7 @@
       *ngFor="let entree of navigation"
       [routerLink]="entree.lien"
       routerLinkActive="bg-primary-container text-on-primary-container shadow-sm"
-      class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+      class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
     >
       <span class="material-symbols-outlined">{{ entree.icone }}</span>
       <span class="flex-1 text-label-md">{{ entree.libelle }}</span>
@@ -27,7 +27,7 @@
   <div class="p-4 border-t border-outline-variant">
     <div class="bg-surface-container-low p-4 rounded-xl">
       <span class="text-label-sm text-on-surface-variant">Matricule</span>
-      <p class="font-label-md text-on-surface tracking-tight">{{ matricule || '—' }}</p>
+      <p class="font-label-md text-label-md text-on-surface tracking-tight">{{ matricule || '—' }}</p>
       <p *ngIf="promotionLibelle" class="text-label-sm text-on-surface-variant mt-1">
         {{ promotionLibelle }}
       </p>
@@ -39,7 +39,7 @@
   <header
     class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop"
   >
-    <p class="font-label-md text-on-surface-variant">Espace étudiant</p>
+    <p class="font-label-md text-label-md text-on-surface-variant">Espace étudiant</p>
 
     <div class="flex items-center gap-stack-lg">
       <a
@@ -65,7 +65,7 @@
       <div class="flex items-center gap-3">
         <div class="text-right hidden sm:block">
           <ng-container *ngIf="!chargement">
-            <p class="font-label-md text-on-surface leading-tight">{{ nomAffiche }}</p>
+            <p class="font-label-md text-label-md text-on-surface leading-tight">{{ nomAffiche }}</p>
             <p class="text-label-sm text-on-surface-variant">{{ profile?.email }}</p>
           </ng-container>
           <div *ngIf="chargement" class="animate-pulse">
@@ -74,7 +74,7 @@
           </div>
         </div>
         <div class="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center">
-          <span class="text-on-primary-container font-label-md">{{ initiales }}</span>
+          <span class="text-on-primary-container font-label-md text-label-md">{{ initiales }}</span>
         </div>
         <button
           type="button"
