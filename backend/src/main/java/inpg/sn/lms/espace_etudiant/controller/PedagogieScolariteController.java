@@ -5,6 +5,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,13 +34,16 @@ import inpg.sn.lms.espace_etudiant.dto.CertificatDto;
 import inpg.sn.lms.espace_etudiant.dto.EtudiantSuiviDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDetailDto;
+import inpg.sn.lms.espace_etudiant.dto.QualiteCoursDto;
 import inpg.sn.lms.espace_etudiant.dto.RelanceCollectiveRequest;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
+import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
+import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
 import inpg.sn.lms.recrutement.service.NotificationService;
@@ -73,12 +79,13 @@ public class PedagogieScolariteController {
     private final CertificatService certificatService;
     private final CoursRepository coursRepository;
     private final NotificationService notificationService;
+    private final RetourEvaluationRepository retourRepository;
 
     public PedagogieScolariteController(PromotionRepository promotionRepository,
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
             EtudiantService etudiantService, MatriculeService matriculeService,
             CertificatService certificatService, CoursRepository coursRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService, RetourEvaluationRepository retourRepository) {
         this.promotionRepository = promotionRepository;
         this.formationRepository = formationRepository;
         this.etudiantRepository = etudiantRepository;
@@ -87,6 +94,7 @@ public class PedagogieScolariteController {
         this.certificatService = certificatService;
         this.coursRepository = coursRepository;
         this.notificationService = notificationService;
+        this.retourRepository = retourRepository;
     }
 
     // ===================== PROMOTIONS =====================
@@ -240,6 +248,84 @@ public class PedagogieScolariteController {
         return ResponseEntity.ok(toEtudiantDto(etudiantRepository.save(etudiant)));
     }
 
+    /**
+     * Import en masse depuis un fichier CSV.
+     *
+     * <p>Une rentree se compte en dizaines d'inscriptions : les saisir une a une est
+     * le poste de travail le plus couteux de la scolarite. Colonnes attendues, dans
+     * cet ordre : {@code nom;prenom;email;telephone}. La premiere ligne peut etre un
+     * en-tete, elle est ignoree si elle commence par « nom ».
+     *
+     * <p>L'import est TOLERANT : une ligne invalide n'interrompt pas les autres, et le
+     * compte rendu enumere les rejets avec leur motif. Un import de trente etudiants
+     * ne doit pas echouer en bloc parce qu'une adresse est mal formee.
+     */
+    @PostMapping("/etudiants/import")
+    @Transactional
+    public ResponseEntity<?> importerEtudiants(@RequestBody Map<String, Object> corps) {
+        String contenu = corps.get("csv") == null ? null : corps.get("csv").toString();
+        if (estVide(contenu)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Le contenu du fichier est vide."));
+        }
+        Long promotionId = corps.get("promotionId") == null ? null
+                : Long.valueOf(corps.get("promotionId").toString());
+        Promotion promotion = null;
+        if (promotionId != null) {
+            promotion = promotionRepository.findById(promotionId).orElse(null);
+            if (promotion == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Promotion introuvable."));
+            }
+        }
+
+        int crees = 0;
+        List<String> rejets = new ArrayList<>();
+        String[] lignes = contenu.replace("\r", "").split("\n");
+        for (int i = 0; i < lignes.length; i++) {
+            String ligne = lignes[i].trim();
+            if (ligne.isEmpty()) {
+                continue;
+            }
+            if (i == 0 && ligne.toLowerCase().startsWith("nom")) {
+                continue;   // en-tete
+            }
+            String[] cellules = ligne.split("[;,]");
+            if (cellules.length < 3) {
+                rejets.add("Ligne " + (i + 1) + " : nom, prenom et email sont requis.");
+                continue;
+            }
+            String nom = cellules[0].trim();
+            String prenom = cellules[1].trim();
+            String email = cellules[2].trim();
+            String telephone = cellules.length > 3 ? cellules[3].trim() : null;
+            if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty()) {
+                rejets.add("Ligne " + (i + 1) + " : nom, prenom et email sont requis.");
+                continue;
+            }
+
+            EtudiantDto dto = new EtudiantDto();
+            dto.setNom(nom);
+            dto.setPrenom(prenom);
+            dto.setEmail(email);
+            dto.setTelephone(telephone);
+            dto.setUsername(email.split("@")[0]);
+            // Mot de passe provisoire : l'etudiant le changera a sa premiere connexion.
+            dto.setPassword("INPG@" + LocalDate.now().getYear());
+            try {
+                Etudiant etudiant = etudiantService.createEtudiant(dto);
+                if (promotion != null) {
+                    etudiant.setPromotion(promotion);
+                }
+                matriculeService.attribuerSiAbsent(etudiant);
+                etudiantRepository.save(etudiant);
+                crees++;
+            } catch (Exception exception) {
+                log.warn("Import etudiant refuse ligne {} : {}", i + 1, exception.getMessage());
+                rejets.add("Ligne " + (i + 1) + " (" + email + ") : " + exception.getMessage());
+            }
+        }
+        return ResponseEntity.ok(Map.of("crees", crees, "rejets", rejets));
+    }
+
     // ===================== CERTIFICATS =====================
 
     @GetMapping("/certificats")
@@ -324,6 +410,61 @@ public class PedagogieScolariteController {
             }
         }
         return ResponseEntity.ok(Map.of("envoyes", envoyes, "echecs", echecs));
+    }
+
+    // ===================== SUIVI QUALITE =====================
+
+    /**
+     * Synthese des avis etudiants, par cours (TDR §3.7).
+     *
+     * <p>Ces avis existaient deja, mais seul le formateur concerne voyait les siens :
+     * personne ne disposait d'une vue d'ensemble, alors que c'est elle qui permet de
+     * reperer un cours en difficulte. Un avis d'au plus 3 sur 5 est compte comme
+     * appelant une action.
+     */
+    @GetMapping("/qualite")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> suiviQualite() {
+        List<RetourEvaluation> avis = retourRepository.findAllByOrderByDateCreationDesc().stream()
+                .filter(r -> r.getCours() != null)
+                .toList();
+
+        Map<Long, List<RetourEvaluation>> parCours = avis.stream()
+                .collect(Collectors.groupingBy(r -> r.getCours().getId(), LinkedHashMap::new, Collectors.toList()));
+
+        List<QualiteCoursDto.LigneQualite> lignes = parCours.values().stream()
+                .map(groupe -> {
+                    var cours = groupe.get(0).getCours();
+                    return new QualiteCoursDto.LigneQualite(
+                            cours.getId(),
+                            cours.getNom(),
+                            cours.getTitre(),
+                            moyenne(groupe),
+                            groupe.size(),
+                            (int) groupe.stream().filter(r -> r.getNote() <= 3).count(),
+                            groupe.stream()
+                                    .map(RetourEvaluation::getCommentaire)
+                                    .filter(c -> c != null && !c.isBlank())
+                                    .limit(3)
+                                    .toList());
+                })
+                // les cours les plus mal notes en tete : c'est la que l'attention est utile
+                .sorted(Comparator.comparing(
+                        (QualiteCoursDto.LigneQualite l) -> l.moyenne() == null ? Double.MAX_VALUE : l.moyenne()))
+                .toList();
+
+        return ResponseEntity.ok(new QualiteCoursDto(
+                moyenne(avis),
+                avis.size(),
+                lignes.size(),
+                (int) lignes.stream().filter(l -> l.moyenne() != null && l.moyenne() <= 3).count(),
+                lignes));
+    }
+
+    /** Moyenne arrondie au dixieme, {@code null} si la liste est vide. */
+    private Double moyenne(List<RetourEvaluation> avis) {
+        return avis.isEmpty() ? null
+                : Math.round(avis.stream().mapToInt(RetourEvaluation::getNote).average().orElse(0) * 10) / 10.0;
     }
 
     // ===================== Correspondances =====================

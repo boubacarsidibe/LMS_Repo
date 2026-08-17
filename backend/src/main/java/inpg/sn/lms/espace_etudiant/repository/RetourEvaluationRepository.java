@@ -41,6 +41,10 @@ public interface RetourEvaluationRepository extends JpaRepository<RetourEvaluati
     @EntityGraph(attributePaths = "cours")
     List<RetourEvaluation> findByEtudiantIdOrderByDateCreationDesc(Long etudiantId);
 
+    /** Tous les avis, cours precharge : sert au suivi qualite de l'etablissement. */
+    @EntityGraph(attributePaths = "cours")
+    List<RetourEvaluation> findAllByOrderByDateCreationDesc();
+
     long countByCoursId(Long coursId);
 
     /** Note moyenne du cours, {@code null} tant qu'aucun avis n'a été déposé. */
