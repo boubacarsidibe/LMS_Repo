@@ -81,8 +81,7 @@ public class SecurityConfig {
                         "/api/auth/getAllUsers",
                         "/api/auth/getAllCandidats",
                         "/api/auth/user",
-                        "/api/auth/registerCandidat",
-                        "/api/auth/registerEtudiant").hasRole("RESPONSABLE_ADMISSION")
+                        "/api/auth/registerCandidat").hasRole("RESPONSABLE_ADMISSION")
                 // Gestion des utilisateurs et des rôles : filet de sécurité pour que tout
                 // futur endpoint ajouté sous /api/admin ne soit pas exposé par omission.
                 .requestMatchers("/api/admin/**").hasRole("RESPONSABLE_ADMISSION")

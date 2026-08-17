@@ -83,11 +83,6 @@ public class CrudControlleur {
 
     
 
-    @PostMapping("/registerEtudiant")
-    public String registerEtudiant(@RequestBody EtudiantDto etudiantDto) {
-        etudiantService.createEtudiant(etudiantDto);
-        return "Etudiant registered successfully";
-    }
 
     @GetMapping("/getAllCandidats")
     public ResponseEntity<List<Candidat>> getCandidats() {

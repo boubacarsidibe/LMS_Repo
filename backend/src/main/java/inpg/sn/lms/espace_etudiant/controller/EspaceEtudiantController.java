@@ -933,42 +933,6 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
-    @Transactional
-    @PostMapping("/formateur/certificats")
-    public ResponseEntity<?> creerCertificat(
-            @RequestBody CertificatCreateRequest request,
-            Authentication authentication) {
-        Formateur formateur = findAuthenticatedFormateur(authentication);
-        if (formateur == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Profil formateur introuvable."));
-        }
-        if (request.etudiantId() == null || isBlank(request.intituleFormation())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("message", "L'étudiant et l'intitulé de la formation sont requis."));
-        }
-        Etudiant etudiant = etudiantRepository.findById(request.etudiantId()).orElse(null);
-        if (etudiant == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Étudiant introuvable."));
-        }
-        Promotion cohorte = null;
-        if (request.cohorteId() != null) {
-            cohorte = promotionService.findById(request.cohorteId()).orElse(null);
-            if (cohorte == null) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Cohorte introuvable."));
-            }
-        }
-
-        Certificat certificat = new Certificat();
-        certificat.setEtudiant(etudiant);
-        certificat.setPromotion(cohorte);
-        certificat.setIntituleFormation(request.intituleFormation().trim());
-        certificat.setFormateurNom(displayName(formateur.getUser()));
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(toCertificatDto(certificatService.save(certificat)));
-    }
-
-    @PreAuthorize("hasRole('FORMATEUR')")
     @Transactional(readOnly = true)
     @GetMapping("/formateur/cours/{id}/supports")
     public ResponseEntity<?> listMyCourseSupports(@PathVariable Long id, Authentication authentication) {
