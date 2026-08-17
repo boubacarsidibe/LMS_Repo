@@ -32,12 +32,16 @@
       </div>
       <p class="font-body-md text-body-md text-on-surface-variant whitespace-pre-line mb-4">{{ a.contenu }}</p>
       <div class="flex items-center gap-2 text-label-sm text-outline flex-wrap">
-        <span>{{ a.auteur }}</span>
+        <!-- Chaque separateur est lie a la valeur qui le precede : sans cela, une
+             donnee absente laissait une puce orpheline sur la carte. -->
+        <span *ngIf="a.auteur">{{ a.auteur }}</span>
+        <span *ngIf="a.auteur">•</span>
+        <span>{{ a.datePublication | date:'dd/MM/yyyy à HH:mm' }}</span>
         <span>•</span>
-        <span>{{ a.date | date:'dd/MM/yyyy à HH:mm' }}</span>
-        <span>•</span>
-        <span *ngIf="!a.cohortes.length" class="px-2 py-0.5 bg-surface-container text-on-surface-variant text-[10px] font-bold uppercase tracking-wider rounded">Toutes les cohortes</span>
-        <span *ngFor="let c of a.cohortes" class="px-2 py-0.5 bg-primary-container/20 text-primary text-[10px] font-bold uppercase tracking-wider rounded">{{ c.libelle }}{{ c.annee ? ' (' + c.annee + ')' : '' }}</span>
+        <span *ngIf="a.promotionLibelle; else toutesPromotions" class="px-2 py-0.5 bg-primary-container/20 text-primary text-[10px] font-bold uppercase tracking-wider rounded">{{ a.promotionLibelle }}</span>
+        <ng-template #toutesPromotions>
+          <span class="px-2 py-0.5 bg-surface-container text-on-surface-variant text-[10px] font-bold uppercase tracking-wider rounded">Toutes les promotions</span>
+        </ng-template>
       </div>
     </div>
 

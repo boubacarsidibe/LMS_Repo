@@ -55,7 +55,7 @@
                         ? 'border-secondary ring-2 ring-secondary/30'
                         : 'border-outline-variant/30'">
         <!-- Image ou fallback couleur -->
-        <div class="h-3 w-full" [ngClass]="!c.imageUrl ? c.couleurBandeau : ''">
+        <div class="w-full" [class.h-3]="!c.imageUrl" [class.h-32]="c.imageUrl" [ngClass]="!c.imageUrl ? c.couleurBandeau : ''">
           <img *ngIf="c.imageUrl" [src]="urlImage(c)" class="w-full h-full object-cover" alt="">
         </div>
         <div class="p-stack-md flex flex-col h-full">
@@ -74,37 +74,6 @@
               <span class="material-symbols-outlined text-outline text-[18px]">folder_open</span>
               <span class="text-body-sm text-on-surface-variant">{{ c.nbRessources }} ressources</span>
             </div>
-          </div>
-          <div class="mt-auto pt-4 border-t border-surface-container">
-            <div class="flex justify-between items-center mb-2">
-              <span class="text-label-sm text-on-surface-variant">Progression Globale</span>
-              <span class="text-label-md font-bold text-secondary">{{ c.progression }}%</span>
-            </div>
-            <div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-              <div class="h-full bg-secondary rounded-full transition-all duration-1000" [style.width.%]="c.progression"></div>
-            </div>
-          </div>
-          <div class="grid grid-cols-5 gap-2 mt-6">
-            <button (click)="ouvrirGestionCohortes(c)" class="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-secondary/5 transition-colors text-on-surface-variant hover:text-secondary">
-              <span class="material-symbols-outlined text-[20px]">inventory_2</span>
-              <span class="text-[10px] font-bold uppercase">Gérer</span>
-            </button>
-            <button (click)="preRemplirDepot(c)" class="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-secondary/5 transition-colors text-on-surface-variant hover:text-secondary">
-              <span class="material-symbols-outlined text-[20px]">add_box</span>
-              <span class="text-[10px] font-bold uppercase">Ajouter</span>
-            </button>
-            <button (click)="ouvrirPresence(c)" class="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-secondary/5 transition-colors text-on-surface-variant hover:text-secondary">
-              <span class="material-symbols-outlined text-[20px]">checklist</span>
-              <span class="text-[10px] font-bold uppercase">Présence</span>
-            </button>
-            <button disabled title="Bientôt disponible" class="flex flex-col items-center gap-1 p-2 rounded-lg text-on-surface-variant/50 cursor-not-allowed">
-              <span class="material-symbols-outlined text-[20px]">query_stats</span>
-              <span class="text-[10px] font-bold uppercase">Stats</span>
-            </button>
-            <button [disabled]="suppressionCoursEnCoursId === c.id" (click)="supprimerCours(c)" class="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-error-container/20 transition-colors text-on-surface-variant hover:text-error disabled:opacity-40">
-              <span class="material-symbols-outlined text-[20px]">delete</span>
-              <span class="text-[10px] font-bold uppercase">Suppr.</span>
-            </button>
           </div>
         </div>
       </div>

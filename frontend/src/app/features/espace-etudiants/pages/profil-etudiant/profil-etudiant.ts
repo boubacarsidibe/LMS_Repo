@@ -4,8 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Etudiant } from '../../models/etudiant';
 import { EtudiantService } from '../../services/etudiant.service';
-import { Cohorte } from '../../models/cohorte';
-import { CohorteService } from '../../services/cohorte.service';
 import { Cours } from '../../models/cours';
 import { CoursService } from '../../services/cours.service';
 import { NoteModule } from '../../models/note-module';
@@ -31,8 +29,6 @@ interface ActiviteItem {
 })
 export class ProfilEtudiant implements OnInit {
   etudiant: Etudiant | undefined;
-  cohortes: Cohorte[] = [];
-  cohorteSelectionneeId: number | null = null;
   isSaving = false;
   errorMessage = '';
 
@@ -52,7 +48,6 @@ export class ProfilEtudiant implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private etudiantService: EtudiantService,
-    private cohorteService: CohorteService,
     private coursService: CoursService,
     private noteModuleService: NoteModuleService,
     private presenceService: PresenceService,
@@ -66,10 +61,6 @@ export class ProfilEtudiant implements OnInit {
       this.etudiantService.getById(id).subscribe({
         next: e => this.etudiant = e,
         error: () => this.etudiant = undefined
-      });
-      this.cohorteService.getAll().subscribe({
-        next: list => this.cohortes = list,
-        error: () => this.cohortes = []
       });
       this.coursService.getAll().subscribe({
         next: list => this.mesCours = list,
@@ -110,16 +101,29 @@ export class ProfilEtudiant implements OnInit {
     }));
     const itemsPresences: ActiviteItem[] = this.presences.map(p => ({
       type: 'presence',
-      date: new Date(p.date),
-      dateAffichee: this.formatDateIso(p.date),
+      date: this.parseDateFr(p.date),
+      dateAffichee: p.date,
       titre: p.present ? 'Présent' : 'Absent',
       detail: `${p.seanceTitre} · ${p.coursCode}`,
     }));
     return [...itemsNotes, ...itemsPresences].sort((a, b) => b.date.getTime() - a.date.getTime());
   }
 
+  /**
+   * Analyse une date « jj/mm/aaaa », avec ou sans heure accolee.
+   *
+   * <p>Les presences arrivent au format « 06/08/2026 09:00 » : sans le retrait de
+   * l'heure, l'annee valait « 2026 09:00 » et la date etait invalide, ce qui
+   * desordonnait le fil d'activite.
+   */
   private parseDateFr(dateStr: string): Date {
-    const [jour, mois, annee] = dateStr.split('/').map(Number);
+    if (!dateStr) {
+      return new Date(0);
+    }
+    const [jour, mois, annee] = dateStr.trim().split(' ')[0].split('/').map(Number);
+    if ([jour, mois, annee].some(isNaN)) {
+      return new Date(0);
+    }
     return new Date(annee, mois - 1, jour);
   }
 
@@ -175,20 +179,4 @@ export class ProfilEtudiant implements OnInit {
     });
   }
 
-  assignerCohorte() {
-    if (!this.etudiant || !this.cohorteSelectionneeId) return;
-
-    this.isSaving = true;
-    this.errorMessage = '';
-    this.etudiantService.assignerCohorte(this.etudiant.id, this.cohorteSelectionneeId).subscribe({
-      next: e => {
-        this.isSaving = false;
-        this.etudiant = e;
-      },
-      error: (error) => {
-        this.isSaving = false;
-        this.errorMessage = error.error?.message || "L'affectation à la cohorte a échoué.";
-      }
-    });
-  }
 }

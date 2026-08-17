@@ -1,103 +1,201 @@
-import { Component, OnInit, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { Photo } from '../../models/photo';
-import { PhotoService } from '../../services/photo.service';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { environment } from '../../../../../environments/environment';
+import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
+import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
+import { AlbumPhoto, Photo } from '../../models/scolarite.models';
 import { Cohorte } from '../../models/cohorte';
 import { CohorteService } from '../../services/cohorte.service';
-import { Auth } from '../../../../core/auth/services/authService';
+import { PhotoService } from '../../services/photo.service';
 
+/**
+ * Photothèque du formateur : consultation des albums et dépôt de clichés.
+ *
+ * <p>L'écran s'adressait auparavant à `GET /photos` et `POST /formateur/photos`,
+ * disparus lors du passage à un modèle en albums — un cliché appartient
+ * désormais toujours à un album. Ni l'affichage ni l'envoi ne fonctionnaient.
+ *
+ * <p>Le dépôt se fait donc en deux temps, comme le prévoit l'API : on choisit
+ * (ou l'on crée) un album, puis on y ajoute des photos.
+ */
 @Component({
   selector: 'app-phototheque',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, UiSpinnerComponent, UiEmptyStateComponent],
   templateUrl: './phototheque.html',
-  styleUrl: './phototheque.css',
 })
 export class Phototheque implements OnInit {
-  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
-  private auth = inject(Auth);
-  private router = inject(Router);
+  private photoService = inject(PhotoService);
+  private cohorteService = inject(CohorteService);
 
-  // Voir Annonces pour le detail de ce mecanisme.
+  @ViewChild('champFichier') champFichier?: ElementRef<HTMLInputElement>;
 
-  photos: Photo[] = [];
+  albums: AlbumPhoto[] = [];
   cohortes: Cohorte[] = [];
-  afficherFormulaire = false;
-  photoForm: FormGroup;
-  fichierSelectionne: File | null = null;
-  isSubmitting = false;
-  errorMessage = '';
+  chargement = true;
 
-  constructor(
-    private photoService: PhotoService,
-    private cohorteService: CohorteService,
-    private fb: FormBuilder
-  ) {
-    this.photoForm = this.fb.group({
-      titre: ['', Validators.required],
-      cohorteId: [null],
-    });
-  }
+  /** Album ouvert dans la visionneuse, avec ses clichés. */
+  albumOuvert: AlbumPhoto | null = null;
+  photosAlbumOuvert: Photo[] = [];
+  chargementPhotos = false;
+
+  // ----- Création d'un album -----
+  formulaireAlbumOuvert = false;
+  nouveauTitre = '';
+  nouvelleDescription = '';
+  nouvelleDate = '';
+  nouvellePromotionId: number | null = null;
+
+  // ----- Dépôt d'un cliché -----
+  albumCibleId: number | null = null;
+  fichierSelectionne: File | null = null;
+  legende = '';
+
+  enCours = false;
+  messageErreur = '';
+  messageSucces = '';
 
   ngOnInit(): void {
-    this.chargerPhotos();
-    this.cohorteService.getAll().subscribe({ next: list => this.cohortes = list, error: () => this.cohortes = [] });
-  }
-
-  private chargerPhotos(): void {
-    this.photoService.getAll().subscribe({
-      next: (data) => (this.photos = data || []),
-      error: () => (this.photos = []),
+    this.charger();
+    this.cohorteService.getAll().subscribe({
+      next: (liste) => (this.cohortes = liste || []),
+      error: () => (this.cohortes = []),
     });
   }
 
-  get isFormateurRole(): boolean {
-    return this.auth.isFormateur();
+  private charger(): void {
+    this.chargement = true;
+    this.photoService.getAlbums().subscribe({
+      next: (liste) => {
+        this.albums = liste || [];
+        this.chargement = false;
+      },
+      error: () => {
+        this.albums = [];
+        this.chargement = false;
+        this.messageErreur = "Les albums n'ont pas pu être chargés.";
+      },
+    });
   }
 
-  ouvrirFormulaire(): void {
-    this.errorMessage = '';
-    this.fichierSelectionne = null;
-    this.photoForm.reset({ titre: '', cohorteId: null });
-    this.afficherFormulaire = true;
-  }
-
-  fermerFormulaire(): void {
-    this.afficherFormulaire = false;
-  }
-
-  ouvrirExplorateur(): void {
-    this.fileInput.nativeElement.click();
-  }
-
-  onFichierSelectionne(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.fichierSelectionne = input.files[0];
+  /** L'API renvoie des chemins relatifs : on les préfixe pour l'affichage. */
+  urlComplete(chemin: string | null): string {
+    if (!chemin) {
+      return '';
     }
+    return chemin.startsWith('http') ? chemin : `${environment.apiUrl.replace(/\/api$/, '')}${chemin}`;
   }
 
-  onSubmit(): void {
-    if (this.photoForm.invalid || !this.fichierSelectionne) {
-      this.photoForm.markAllAsTouched();
+  ouvrirAlbum(album: AlbumPhoto): void {
+    this.albumOuvert = album;
+    this.photosAlbumOuvert = [];
+    this.chargementPhotos = true;
+    this.photoService.getAlbum(album.id).subscribe({
+      next: (contenu) => {
+        this.photosAlbumOuvert = contenu.photos || [];
+        this.chargementPhotos = false;
+      },
+      error: () => {
+        this.chargementPhotos = false;
+        this.messageErreur = "Les photos de cet album n'ont pas pu être chargées.";
+      },
+    });
+  }
+
+  fermerAlbum(): void {
+    this.albumOuvert = null;
+    this.photosAlbumOuvert = [];
+  }
+
+  // ===================== Création d'un album =====================
+
+  ouvrirFormulaireAlbum(): void {
+    this.formulaireAlbumOuvert = true;
+    this.nouveauTitre = '';
+    this.nouvelleDescription = '';
+    this.nouvelleDate = '';
+    this.nouvellePromotionId = null;
+    this.reinitialiserMessages();
+  }
+
+  fermerFormulaireAlbum(): void {
+    this.formulaireAlbumOuvert = false;
+  }
+
+  creerAlbum(): void {
+    if (!this.nouveauTitre.trim()) {
+      this.messageErreur = "Le titre de l'album est requis.";
       return;
     }
+    this.enCours = true;
+    this.reinitialiserMessages();
+    this.photoService
+      .creerAlbum(
+        this.nouveauTitre.trim(),
+        this.nouvelleDescription.trim() || null,
+        this.nouvellePromotionId,
+        this.nouvelleDate || null
+      )
+      .subscribe({
+        next: (album) => {
+          this.enCours = false;
+          this.formulaireAlbumOuvert = false;
+          this.messageSucces = `Album « ${album.titre} » créé.`;
+          this.albumCibleId = album.id;
+          this.charger();
+        },
+        error: (erreur) => {
+          this.enCours = false;
+          this.messageErreur = erreur.error?.message || "L'album n'a pas pu être créé.";
+        },
+      });
+  }
 
-    this.isSubmitting = true;
-    this.errorMessage = '';
-    const { titre, cohorteId } = this.photoForm.getRawValue();
-    this.photoService.upload(titre, cohorteId, this.fichierSelectionne).subscribe({
-      next: () => {
-        this.isSubmitting = false;
-        this.afficherFormulaire = false;
-        this.chargerPhotos();
-      },
-      error: (error) => {
-        this.isSubmitting = false;
-        this.errorMessage = error.error?.message || "L'envoi de la photo a échoué.";
-      },
-    });
+  // ===================== Dépôt d'un cliché =====================
+
+  ouvrirExplorateur(): void {
+    this.champFichier?.nativeElement.click();
+  }
+
+  fichierChoisi(evenement: Event): void {
+    const champ = evenement.target as HTMLInputElement;
+    this.fichierSelectionne = champ.files?.length ? champ.files[0] : null;
+  }
+
+  get depotPossible(): boolean {
+    return !!this.albumCibleId && !!this.fichierSelectionne && !this.enCours;
+  }
+
+  envoyerPhoto(): void {
+    if (!this.albumCibleId || !this.fichierSelectionne) {
+      this.messageErreur = 'Choisissez un album et un fichier.';
+      return;
+    }
+    this.enCours = true;
+    this.reinitialiserMessages();
+    this.photoService
+      .ajouterPhoto(this.albumCibleId, this.fichierSelectionne, this.legende.trim() || null)
+      .subscribe({
+        next: () => {
+          this.enCours = false;
+          this.messageSucces = 'Photo ajoutée à l’album.';
+          this.fichierSelectionne = null;
+          this.legende = '';
+          if (this.champFichier) {
+            this.champFichier.nativeElement.value = '';
+          }
+          this.charger();
+        },
+        error: (erreur) => {
+          this.enCours = false;
+          this.messageErreur = erreur.error?.message || "L'envoi de la photo a échoué.";
+        },
+      });
+  }
+
+  private reinitialiserMessages(): void {
+    this.messageErreur = '';
+    this.messageSucces = '';
   }
 }

@@ -144,22 +144,6 @@
     </div>
   </div>
 
-  <div class="px-margin-desktop mb-stack-lg">
-    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
-      <h2 class="font-headline-sm text-headline-sm text-primary mb-4">Cohorte</h2>
-      <p class="text-body-sm text-on-surface-variant mb-4">Cohorte actuelle : <span class="font-bold text-on-surface">{{ etudiant.cohorte }}</span></p>
-      <div class="flex flex-col sm:flex-row gap-stack-md">
-        <select [(ngModel)]="cohorteSelectionneeId" class="flex-1 p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
-          <option [ngValue]="null">Sélectionnez une cohorte...</option>
-          <option *ngFor="let c of cohortes" [ngValue]="c.id">{{ c.libelle }}{{ c.annee ? ' (' + c.annee + ')' : '' }}</option>
-        </select>
-        <button [disabled]="!cohorteSelectionneeId || isSaving" (click)="assignerCohorte()" class="px-6 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
-          {{ isSaving ? 'Enregistrement…' : 'Affecter' }}
-        </button>
-      </div>
-      <p *ngIf="errorMessage" class="text-body-sm text-error mt-2">{{ errorMessage }}</p>
-    </div>
-  </div>
 
 </div>
 

@@ -1,81 +1,247 @@
-
-<div class="flex flex-col w-full p-margin-desktop space-y-stack-lg">
-
-  <div class="flex flex-col md:flex-row md:items-end justify-between gap-gutter">
-    <div class="flex flex-col space-y-base">
-      <div class="flex items-center gap-2 text-secondary font-label-sm text-label-sm uppercase tracking-widest">
-        <span class="w-8 h-[1px] bg-secondary"></span>
-        Vie de l'institut
-      </div>
-      <h1 class="font-display text-display text-on-surface leading-tight">Photothèque</h1>
-      <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
-        Revivez les temps forts de la vie étudiante : sorties, visites, activités parascolaires et événements de l'INPG.
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header class="flex items-start justify-between gap-stack-md flex-wrap">
+    <div>
+      <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Vie de l’institut</span>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Photothèque</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+        Les albums des sorties, visites et temps forts de l’INPG.
       </p>
     </div>
-    <button *ngIf="isFormateurRole" (click)="ouvrirFormulaire()" class="flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md transition-all shrink-0">
-      <span class="material-symbols-outlined text-[20px]">add_photo_alternate</span>
-      Ajouter une photo
+    <button
+      type="button"
+      (click)="ouvrirFormulaireAlbum()"
+      class="shrink-0 flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md leading-none hover:opacity-90 transition-colors">
+      <span class="material-symbols-outlined text-[20px] leading-none">add_photo_alternate</span>
+      Nouvel album
     </button>
-  </div>
+  </header>
 
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-gutter">
-    <div *ngFor="let p of photos" class="group relative rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container-lowest shadow-sm aspect-square">
-      <img [src]="p.url" [alt]="p.titre" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
-      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
-        <p class="text-white font-label-md text-label-md truncate">{{ p.titre }}</p>
-        <p class="text-white/70 text-[11px]">{{ p.auteur }}<ng-container *ngIf="p.cohorteLibelle"> • {{ p.cohorteLibelle }}</ng-container></p>
-      </div>
-    </div>
-  </div>
-
-  <p *ngIf="photos.length === 0" class="text-center text-body-md text-on-surface-variant py-8">
-    Aucune photo pour le moment.
+  <p *ngIf="messageSucces" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">
+    {{ messageSucces }}
   </p>
+  <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">
+    {{ messageErreur }}
+  </p>
+
+  <app-ui-spinner *ngIf="chargement" message="Chargement des albums…"></app-ui-spinner>
+
+  <ng-container *ngIf="!chargement">
+    <!-- ===================== Dépôt d'un cliché ===================== -->
+    <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg space-y-stack-md">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">upload</span>Ajouter une photo
+      </h2>
+
+      <app-ui-empty-state
+        *ngIf="albums.length === 0"
+        icone="photo_library"
+        titre="Aucun album"
+        description="Créez d’abord un album : une photo appartient toujours à un album."
+      ></app-ui-empty-state>
+
+      <div *ngIf="albums.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-gutter items-end">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Album</span>
+          <select
+            [(ngModel)]="albumCibleId"
+            class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+            <option [ngValue]="null">Choisissez un album…</option>
+            <option *ngFor="let a of albums" [ngValue]="a.id">{{ a.titre }}</option>
+          </select>
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Légende (facultative)</span>
+          <input
+            type="text"
+            [(ngModel)]="legende"
+            placeholder="Ex. : briefing sécurité"
+            class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+
+        <div class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Fichier</span>
+          <input #champFichier type="file" accept="image/*" (change)="fichierChoisi($event)" class="hidden" />
+          <button
+            type="button"
+            (click)="ouvrirExplorateur()"
+            class="p-3 bg-surface-container-low rounded-lg border border-dashed border-outline-variant font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container transition-colors text-left truncate">
+            {{ fichierSelectionne ? fichierSelectionne.name : 'Choisir une image…' }}
+          </button>
+        </div>
+      </div>
+
+      <button
+        *ngIf="albums.length > 0"
+        type="button"
+        [disabled]="!depotPossible"
+        (click)="envoyerPhoto()"
+        class="flex items-center gap-2 px-6 py-2.5 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md leading-none hover:opacity-90 transition-colors disabled:opacity-50">
+        <span class="material-symbols-outlined text-[20px] leading-none">send</span>
+        {{ enCours ? 'Envoi…' : 'Envoyer' }}
+      </button>
+    </section>
+
+    <!-- ===================== Albums ===================== -->
+    <section class="space-y-stack-md">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">photo_library</span>Albums
+      </h2>
+
+      <app-ui-empty-state
+        *ngIf="albums.length === 0"
+        icone="photo_library"
+        titre="Aucun album"
+        description="Les albums que vous créerez apparaîtront ici."
+      ></app-ui-empty-state>
+
+      <ul *ngIf="albums.length > 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-gutter">
+        <li *ngFor="let a of albums">
+          <button
+            type="button"
+            (click)="ouvrirAlbum(a)"
+            class="w-full h-full text-left bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden hover:border-secondary transition-colors">
+            <div class="h-40 bg-surface-container flex items-center justify-center">
+              <img
+                *ngIf="a.couvertureUrl; else sansCouverture"
+                [src]="urlComplete(a.couvertureUrl)"
+                [alt]="'Couverture de ' + a.titre"
+                class="w-full h-full object-cover" />
+              <ng-template #sansCouverture>
+                <span class="material-symbols-outlined text-on-surface-variant text-[40px]">image</span>
+              </ng-template>
+            </div>
+            <div class="p-stack-md">
+              <p class="font-label-md text-label-md text-on-surface">{{ a.titre }}</p>
+              <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                {{ a.nbPhotos }} photo(s)
+                <ng-container *ngIf="a.dateEvenement"> · {{ a.dateEvenement | date: 'dd/MM/yyyy' }}</ng-container>
+              </p>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">
+                {{ a.promotionLibelle || 'Tout l’institut' }}
+              </p>
+            </div>
+          </button>
+        </li>
+      </ul>
+    </section>
+  </ng-container>
 </div>
 
-<!-- Modal : ajouter une photo -->
-<div *ngIf="afficherFormulaire" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerFormulaire()">
-  <div class="bg-surface rounded-xl shadow-lg w-full max-w-md border border-outline-variant" (click)="$event.stopPropagation()">
-    <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-      <h3 class="font-headline-sm text-headline-sm text-primary">Ajouter une photo</h3>
-      <button type="button" aria-label="Fermer le formulaire" (click)="fermerFormulaire()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors"><span class="material-symbols-outlined">close</span></button>
-    </div>
-
-    <form [formGroup]="photoForm" (ngSubmit)="onSubmit()" class="p-6 space-y-base">
-      <div class="space-y-1">
-        <label class="font-label-md text-label-md text-on-surface-variant">Titre / légende</label>
-        <input formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Visite du site de Cayar" type="text">
-        <p *ngIf="photoForm.get('titre')?.invalid && photoForm.get('titre')?.touched" class="text-body-sm text-error">
-          Le titre est requis.
+<!-- ===================== Visionneuse d'un album ===================== -->
+<div
+  *ngIf="albumOuvert"
+  class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+  (click)="fermerAlbum()">
+  <div
+    class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant w-full max-w-4xl max-h-[85vh] overflow-y-auto"
+    (click)="$event.stopPropagation()">
+    <header class="flex items-start justify-between gap-4 px-stack-lg py-stack-md border-b border-outline-variant">
+      <div>
+        <h2 class="font-headline-sm text-headline-sm text-primary">{{ albumOuvert.titre }}</h2>
+        <p *ngIf="albumOuvert.description" class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+          {{ albumOuvert.description }}
         </p>
       </div>
+      <button
+        type="button"
+        (click)="fermerAlbum()"
+        aria-label="Fermer l’album"
+        class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
 
-      <div class="space-y-1">
-        <label class="font-label-md text-label-md text-on-surface-variant">Cohorte (optionnel)</label>
-        <select formControlName="cohorteId" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
-          <option [ngValue]="null">Toutes les cohortes</option>
-          <option *ngFor="let c of cohortes" [ngValue]="c.id">{{ c.libelle }}{{ c.annee ? ' (' + c.annee + ')' : '' }}</option>
+    <div class="p-stack-lg">
+      <app-ui-spinner *ngIf="chargementPhotos" message="Chargement des photos…"></app-ui-spinner>
+
+      <app-ui-empty-state
+        *ngIf="!chargementPhotos && photosAlbumOuvert.length === 0"
+        icone="image"
+        titre="Album vide"
+        description="Aucune photo n’a encore été déposée dans cet album."
+      ></app-ui-empty-state>
+
+      <ul *ngIf="!chargementPhotos && photosAlbumOuvert.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+        <li *ngFor="let p of photosAlbumOuvert" class="rounded-lg overflow-hidden border border-outline-variant">
+          <img [src]="urlComplete(p.url)" [alt]="p.legende || 'Photo'" class="w-full h-44 object-cover" />
+          <p *ngIf="p.legende" class="font-body-sm text-body-sm text-on-surface-variant p-2">{{ p.legende }}</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== Création d'un album ===================== -->
+<div
+  *ngIf="formulaireAlbumOuvert"
+  class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+  (click)="fermerFormulaireAlbum()">
+  <div
+    class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant w-full max-w-md"
+    (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant">
+      <h2 class="font-headline-sm text-headline-sm text-primary">Nouvel album</h2>
+      <button
+        type="button"
+        (click)="fermerFormulaireAlbum()"
+        aria-label="Fermer le formulaire"
+        class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+
+    <div class="p-stack-lg space-y-stack-md">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Titre</span>
+        <input
+          type="text"
+          [(ngModel)]="nouveauTitre"
+          placeholder="Ex. : Visite du terminal pétrolier"
+          class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Description (facultative)</span>
+        <textarea
+          rows="3"
+          [(ngModel)]="nouvelleDescription"
+          class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Date de l’événement (facultative)</span>
+        <input
+          type="date"
+          [(ngModel)]="nouvelleDate"
+          class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Promotion</span>
+        <select
+          [(ngModel)]="nouvellePromotionId"
+          class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+          <option [ngValue]="null">Tout l’institut</option>
+          <option *ngFor="let c of cohortes" [ngValue]="c.id">{{ c.libelle }}</option>
         </select>
-      </div>
-
-      <div class="space-y-1">
-        <label class="font-label-md text-label-md text-on-surface-variant">Image</label>
-        <input #fileInput (change)="onFichierSelectionne($event)" accept="image/*" class="hidden" type="file">
-        <button type="button" (click)="ouvrirExplorateur()" class="w-full p-3 bg-surface-container-low rounded-xl border border-dashed border-outline-variant text-body-sm text-on-surface-variant hover:bg-surface-container transition-all">
-          {{ fichierSelectionne ? fichierSelectionne.name : 'Choisir une image...' }}
-        </button>
-      </div>
-
-      <p *ngIf="errorMessage" class="text-body-sm text-error">{{ errorMessage }}</p>
+      </label>
 
       <div class="flex gap-stack-md pt-2">
-        <button type="button" (click)="fermerFormulaire()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
+        <button
+          type="button"
+          (click)="fermerFormulaireAlbum()"
+          class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">
           Annuler
         </button>
-        <button [disabled]="isSubmitting" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
-          {{ isSubmitting ? 'Envoi…' : 'Ajouter' }}
+        <button
+          type="button"
+          [disabled]="enCours || !nouveauTitre.trim()"
+          (click)="creerAlbum()"
+          class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+          {{ enCours ? 'Création…' : 'Créer' }}
         </button>
       </div>
-    </form>
+    </div>
   </div>
 </div>

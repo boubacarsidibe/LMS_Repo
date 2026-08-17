@@ -102,6 +102,7 @@ export class SuiviEtudiants implements OnInit {
         next: (res) => {
           this.isEnvoiEnCours = false;
           this.messageSucces = res.message;
+          this.fermerApresEnvoi();
         },
         error: (error) => {
           this.isEnvoiEnCours = false;
@@ -116,6 +117,7 @@ export class SuiviEtudiants implements OnInit {
           this.messageSucces = res.echecs.length
             ? `${res.envoyes} email(s) envoyé(s), ${res.echecs.length} échec(s).`
             : `${res.envoyes} email(s) envoyé(s) avec succès.`;
+          this.fermerApresEnvoi();
         },
         error: (error) => {
           this.isEnvoiEnCours = false;
@@ -123,5 +125,17 @@ export class SuiviEtudiants implements OnInit {
         }
       });
     }
+  }
+
+  /**
+   * Referme le formulaire une fois l'envoi abouti, en conservant le message de
+   * succes affiche sur la page. Sans cela la carte restait ouverte apres un envoi
+   * reussi, laissant croire que rien ne s'etait passe.
+   */
+  private fermerApresEnvoi(): void {
+    this.etudiantEnContact = null;
+    this.afficherRelanceCollective = false;
+    this.objetMessage = '';
+    this.contenuMessage = '';
   }
 }
