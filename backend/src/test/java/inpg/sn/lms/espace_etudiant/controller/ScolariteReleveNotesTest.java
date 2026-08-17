@@ -26,7 +26,7 @@ import inpg.sn.lms.espace_etudiant.dto.ReleveNotesDto;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.NoteModule;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
-import inpg.sn.lms.espace_etudiant.repository.EvaluationCoursRepository;
+import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.repository.ProgressionSupportRepository;
 import inpg.sn.lms.espace_etudiant.repository.SeanceRepository;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
@@ -56,7 +56,7 @@ class ScolariteReleveNotesTest {
     @Mock private SeanceRepository seanceRepository;
     @Mock private SupportService supportService;
     @Mock private ProgressionSupportRepository progressionRepository;
-    @Mock private EvaluationCoursRepository evaluationRepository;
+    @Mock private RetourEvaluationRepository retourRepository;
     @Mock private EtudiantRepository etudiantRepository;
     @Mock private HabilitationCoursService habilitation;
     @Mock private NoteModuleService noteModuleService;
@@ -68,7 +68,7 @@ class ScolariteReleveNotesTest {
     @BeforeEach
     void preparer() {
         controller = new ScolariteController(utilisateurCourant, matriculeService, coursRepository,
-                seanceRepository, supportService, progressionRepository, evaluationRepository,
+                seanceRepository, supportService, progressionRepository, retourRepository,
                 etudiantRepository, habilitation, noteModuleService);
 
         etudiant = new Etudiant();

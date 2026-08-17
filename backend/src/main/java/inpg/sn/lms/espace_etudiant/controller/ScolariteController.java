@@ -34,7 +34,7 @@ import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.entity.Seance;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
-import inpg.sn.lms.espace_etudiant.repository.EvaluationCoursRepository;
+import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.repository.ProgressionSupportRepository;
 import inpg.sn.lms.espace_etudiant.repository.SeanceRepository;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
@@ -73,14 +73,14 @@ public class ScolariteController {
     private final SeanceRepository seanceRepository;
     private final SupportService supportService;
     private final ProgressionSupportRepository progressionRepository;
-    private final EvaluationCoursRepository evaluationRepository;
+    private final RetourEvaluationRepository retourRepository;
     private final EtudiantRepository etudiantRepository;
     private final HabilitationCoursService habilitation;
     private final NoteModuleService noteModuleService;
 
     public ScolariteController(UtilisateurCourantService utilisateurCourant, MatriculeService matriculeService,
             CoursRepository coursRepository, SeanceRepository seanceRepository, SupportService supportService,
-            ProgressionSupportRepository progressionRepository, EvaluationCoursRepository evaluationRepository,
+            ProgressionSupportRepository progressionRepository, RetourEvaluationRepository retourRepository,
             EtudiantRepository etudiantRepository, HabilitationCoursService habilitation,
             NoteModuleService noteModuleService) {
         this.habilitation = habilitation;
@@ -90,7 +90,7 @@ public class ScolariteController {
         this.seanceRepository = seanceRepository;
         this.supportService = supportService;
         this.progressionRepository = progressionRepository;
-        this.evaluationRepository = evaluationRepository;
+        this.retourRepository = retourRepository;
         this.etudiantRepository = etudiantRepository;
         this.noteModuleService = noteModuleService;
     }
@@ -315,8 +315,10 @@ public class ScolariteController {
     private CoursEtudiantDto toCoursDto(Cours cours, Etudiant etudiant) {
         long nbSupports = supportService.countCourseSupports(cours.getId());
         long nbConsultes = progressionRepository.countByEtudiantIdAndSupport_Cours_Id(etudiant.getId(), cours.getId());
-        Integer maNote = evaluationRepository.findByEtudiantIdAndCoursId(etudiant.getId(), cours.getId())
-                .map(evaluation -> evaluation.getNote())
+        // Appreciation donnee AU cours par l'etudiant (1 a 5), a ne pas confondre avec
+        // ses notes academiques : celles-ci sont servies par /scolarite/mes-notes.
+        Integer maNote = retourRepository.findByEtudiantIdAndCoursId(etudiant.getId(), cours.getId())
+                .map(avis -> avis.getNote())
                 .orElse(null);
         return new CoursEtudiantDto(
                 cours.getId(),

@@ -75,7 +75,6 @@ import inpg.sn.lms.espace_etudiant.dto.SupportDto;
 import inpg.sn.lms.espace_etudiant.dto.SeanceDto;
 import inpg.sn.lms.espace_etudiant.dto.SeanceRequest;
 import inpg.sn.lms.espace_etudiant.dto.RelanceCollectiveRequest;
-import inpg.sn.lms.espace_etudiant.dto.RetourCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.RetourEvaluationDto;
 import inpg.sn.lms.espace_etudiant.dto.SujetDto;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
@@ -1497,46 +1496,6 @@ public class EspaceEtudiantController {
         }
         retour.setEpingle(!retour.isEpingle());
         return ResponseEntity.ok(toRetourEvaluationDto(retourEvaluationService.save(retour)));
-    }
-
-    @PreAuthorize("hasRole('ETUDIANT')")
-    @Transactional
-    @PostMapping("/retours")
-    public ResponseEntity<?> creerRetour(@RequestBody RetourCreateRequest request, Authentication authentication) {
-        User user = findAuthenticatedUser(authentication);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        Etudiant etudiant = etudiantRepository.findByUserId(user.getId()).orElse(null);
-        if (etudiant == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Seul un étudiant peut laisser un avis."));
-        }
-        if (request.coursId() == null || request.note() == null || isBlank(request.commentaire())) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Le cours, la note et le commentaire sont requis."));
-        }
-        if (request.note() < 1 || request.note() > 5) {
-            return ResponseEntity.badRequest().body(Map.of("message", "La note doit être comprise entre 1 et 5."));
-        }
-        Cours cours = coursService.findById(request.coursId()).orElse(null);
-        if (cours == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Cours introuvable."));
-        }
-        if (!perimetreFormateurService.etudiantSuitLeCours(etudiant, cours)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Vous ne suivez pas ce cours."));
-        }
-
-        RetourEvaluation retour = new RetourEvaluation();
-        retour.setCours(cours);
-        retour.setEtudiant(etudiant);
-        retour.setNote(request.note());
-        retour.setCommentaire(request.commentaire().trim());
-        retour.setDateCreation(LocalDateTime.now());
-        retour.setStatut(request.note() <= 3 ? EnumStatutRetour.ACTION_REQUISE : EnumStatutRetour.VALIDE);
-        retour.setEpingle(false);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(toRetourEvaluationDto(retourEvaluationService.save(retour)));
     }
 
     private RetourEvaluationDto toRetourEvaluationDto(RetourEvaluation retour) {

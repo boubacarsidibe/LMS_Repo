@@ -1,5 +1,6 @@
 package inpg.sn.lms.espace_etudiant.controller;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -19,9 +20,10 @@ import inpg.sn.lms.espace_etudiant.dto.EvaluationCoursDto;
 import inpg.sn.lms.espace_etudiant.dto.EvaluationRequest;
 import inpg.sn.lms.espace_etudiant.dto.SyntheseEvaluationDto;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
-import inpg.sn.lms.espace_etudiant.entity.EvaluationCours;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
-import inpg.sn.lms.espace_etudiant.repository.EvaluationCoursRepository;
+import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
+import inpg.sn.lms.espace_etudiant.enums.EnumStatutRetour;
+import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
@@ -32,6 +34,11 @@ import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
  * fois : une nouvelle soumission met à jour son avis plutôt que d'en empiler un
  * second. La synthèse par cours est ouverte aux formateurs comme aux étudiants,
  * mais reste anonyme — elle ne renvoie qu'une moyenne et un volume.
+ *
+ * <p>Les avis sont enregistrés dans {@code retour_evaluation}, la table que lit
+ * l'écran « Retours & évaluations » du formateur. Ils atterrissaient auparavant
+ * dans une seconde table qu'aucun formateur ne consultait : l'avis d'un étudiant
+ * n'atteignait jamais son destinataire.
  */
 @RestController
 @RequestMapping("/api/espace-etudiant/evaluations")
@@ -46,14 +53,14 @@ public class EvaluationController {
     private static final int NOTE_MIN = 1;
     private static final int NOTE_MAX = 5;
 
-    private final EvaluationCoursRepository evaluationRepository;
+    private final RetourEvaluationRepository retourRepository;
     private final CoursRepository coursRepository;
     private final UtilisateurCourantService utilisateurCourant;
     private final HabilitationCoursService habilitation;
 
-    public EvaluationController(EvaluationCoursRepository evaluationRepository, CoursRepository coursRepository,
+    public EvaluationController(RetourEvaluationRepository retourRepository, CoursRepository coursRepository,
             UtilisateurCourantService utilisateurCourant, HabilitationCoursService habilitation) {
-        this.evaluationRepository = evaluationRepository;
+        this.retourRepository = retourRepository;
         this.coursRepository = coursRepository;
         this.utilisateurCourant = utilisateurCourant;
         this.habilitation = habilitation;
@@ -67,7 +74,7 @@ public class EvaluationController {
         if (etudiant == null) {
             return profilIntrouvable();
         }
-        return ResponseEntity.ok(evaluationRepository.findByEtudiantIdOrderByDateSoumissionDesc(etudiant.getId())
+        return ResponseEntity.ok(retourRepository.findByEtudiantIdOrderByDateCreationDesc(etudiant.getId())
                 .stream().map(this::toDto).toList());
     }
 
@@ -91,14 +98,23 @@ public class EvaluationController {
         }
         String commentaire = request.commentaire() == null ? null : request.commentaire().trim();
 
-        EvaluationCours evaluation = evaluationRepository
+        RetourEvaluation avis = retourRepository
                 .findByEtudiantIdAndCoursId(etudiant.getId(), coursId)
-                .orElseGet(() -> new EvaluationCours(etudiant, cours, request.note(), commentaire));
-        evaluation.setNote(request.note());
-        evaluation.setCommentaire(commentaire);
-        evaluation = evaluationRepository.save(evaluation);
+                .orElseGet(() -> {
+                    RetourEvaluation nouveau = new RetourEvaluation();
+                    nouveau.setEtudiant(etudiant);
+                    nouveau.setCours(cours);
+                    nouveau.setEpingle(false);
+                    return nouveau;
+                });
+        avis.setNote(request.note());
+        avis.setCommentaire(commentaire);
+        avis.setDateCreation(LocalDateTime.now());
+        // Un avis d'au plus 3 sur 5 appelle une reaction du formateur : c'est ce
+        // statut que filtre son ecran « Retours & evaluations ».
+        avis.setStatut(request.note() <= 3 ? EnumStatutRetour.ACTION_REQUISE : EnumStatutRetour.VALIDE);
 
-        return ResponseEntity.ok(toDto(evaluation));
+        return ResponseEntity.ok(toDto(retourRepository.save(avis)));
     }
 
     /** Synthèse anonyme des retours sur un cours. */
@@ -119,19 +135,20 @@ public class EvaluationController {
         return ResponseEntity.ok(new SyntheseEvaluationDto(
                 cours.getId(),
                 cours.getTitre(),
-                evaluationRepository.moyenneParCours(coursId),
-                evaluationRepository.countByCoursId(coursId)));
+                retourRepository.moyenneParCours(coursId),
+                retourRepository.countByCoursId(coursId)));
     }
 
-    private EvaluationCoursDto toDto(EvaluationCours evaluation) {
-        Cours cours = evaluation.getCours();
+    /** La forme exposee est inchangee : le frontend n'a pas a connaitre la fusion. */
+    private EvaluationCoursDto toDto(RetourEvaluation avis) {
+        Cours cours = avis.getCours();
         return new EvaluationCoursDto(
-                evaluation.getId(),
+                avis.getId(),
                 cours == null ? null : cours.getId(),
                 cours == null ? null : cours.getTitre(),
-                evaluation.getNote(),
-                evaluation.getCommentaire(),
-                evaluation.getDateSoumission());
+                avis.getNote(),
+                avis.getCommentaire(),
+                avis.getDateCreation());
     }
 
     private ResponseEntity<?> profilIntrouvable() {
