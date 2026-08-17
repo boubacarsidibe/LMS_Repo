@@ -8,4 +8,7 @@ public interface FormationRepository extends JpaRepository<Formation, Long> {
     /** Catalogue public : seules les formations publiées sont exposées. */
     java.util.List<Formation> findByPublieeTrueOrderByIntituleAsc();
 
+    /** Le code est unique : sert à créer les programmes de démonstration sans doublon. */
+    java.util.Optional<Formation> findByCode(String code);
+
 }

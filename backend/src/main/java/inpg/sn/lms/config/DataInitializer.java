@@ -14,6 +14,7 @@ import inpg.sn.lms.espace_etudiant.entity.AlbumPhoto;
 import inpg.sn.lms.espace_etudiant.entity.Annonce;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
+import inpg.sn.lms.espace_etudiant.entity.Formation;
 import inpg.sn.lms.espace_etudiant.entity.Evenement;
 import inpg.sn.lms.espace_etudiant.entity.ForumMessage;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
@@ -28,6 +29,7 @@ import inpg.sn.lms.espace_etudiant.repository.AlbumPhotoRepository;
 import inpg.sn.lms.espace_etudiant.repository.AnnonceRepository;
 import inpg.sn.lms.espace_etudiant.repository.CertificatRepository;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
+import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
 import inpg.sn.lms.espace_etudiant.repository.EvenementRepository;
 import inpg.sn.lms.espace_etudiant.repository.PhotoRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
@@ -74,6 +76,7 @@ public class DataInitializer {
             FormateurRepository formateurRepository,
             EtudiantRepository etudiantRepository,
             PromotionRepository promotionRepository,
+            FormationRepository formationRepository,
             CoursRepository coursRepository,
             AnnonceRepository annonceRepository,
             EvenementRepository evenementRepository,
@@ -220,6 +223,9 @@ public class DataInitializer {
                 promotionDS.setLibelle("Master 1 - Data Science & IA");
                 promotionDS.setDateDebut(LocalDate.of(2026, 9, 1));
                 promotionDS.setDateFin(LocalDate.of(2027, 6, 30));
+                promotionDS.setFormation(formationDemo(formationRepository, "DEMO-DS",
+                        "Master Data Science & IA",
+                        "Programme de demonstration : fondamentaux de l'apprentissage automatique."));
                 promotionDS = promotionRepository.save(promotionDS);
 
                 Promotion promotionFinance = new Promotion();
@@ -227,6 +233,9 @@ public class DataInitializer {
                 promotionFinance.setLibelle("Master 2 - Finance Durable");
                 promotionFinance.setDateDebut(LocalDate.of(2026, 9, 1));
                 promotionFinance.setDateFin(LocalDate.of(2027, 6, 30));
+                promotionFinance.setFormation(formationDemo(formationRepository, "DEMO-FIN",
+                        "Master Finance Durable",
+                        "Programme de demonstration : evaluation d'actifs et criteres ESG."));
                 promotionFinance = promotionRepository.save(promotionFinance);
 
                 Promotion promotionProcedes = new Promotion();
@@ -234,6 +243,9 @@ public class DataInitializer {
                 promotionProcedes.setLibelle("Cycle Ingenieur - Procedes Industriels");
                 promotionProcedes.setDateDebut(LocalDate.of(2026, 9, 1));
                 promotionProcedes.setDateFin(LocalDate.of(2029, 6, 30));
+                promotionProcedes.setFormation(formationDemo(formationRepository, "DEMO-PROC",
+                        "Cycle Ingenieur Procedes Industriels",
+                        "Programme de demonstration : dimensionnement et optimisation d'unites."));
                 promotionProcedes = promotionRepository.save(promotionProcedes);
 
                 User userFormateur = new User();
@@ -265,8 +277,8 @@ public class DataInitializer {
                 coursDS.setSemestre("Semestre 1 - 2026");
                 coursDS.setVolumeHoraire(40L);
                 coursDS.getFormateurs().add(formateurDemo);
-                coursDS.getPromotions().add(promotionDS);
                 coursDS = coursRepository.save(coursDS);
+                inscrireAuProgramme(formationRepository, promotionDS, coursDS);
 
                 Cours coursFinance = new Cours();
                 coursFinance.setNom("FIN-201");
@@ -275,8 +287,8 @@ public class DataInitializer {
                 coursFinance.setSemestre("Semestre 1 - 2026");
                 coursFinance.setVolumeHoraire(36L);
                 coursFinance.getFormateurs().add(formateurDemo);
-                coursFinance.getPromotions().add(promotionFinance);
                 coursFinance = coursRepository.save(coursFinance);
+                inscrireAuProgramme(formationRepository, promotionFinance, coursFinance);
 
                 Cours coursProcedes = new Cours();
                 coursProcedes.setNom("PROC-301");
@@ -285,8 +297,8 @@ public class DataInitializer {
                 coursProcedes.setSemestre("Semestre 1 - 2026");
                 coursProcedes.setVolumeHoraire(45L);
                 coursProcedes.getFormateurs().add(formateurDemo);
-                coursProcedes.getPromotions().add(promotionProcedes);
                 coursProcedes = coursRepository.save(coursProcedes);
+                inscrireAuProgramme(formationRepository, promotionProcedes, coursProcedes);
 
                 // ----- Supports de cours (fichiers PDF reels + liens externes) -----
                 Path uploadPath = Path.of(uploadDir).toAbsolutePath().normalize();
@@ -387,6 +399,34 @@ public class DataInitializer {
                 System.out.println("Donnees de demo creees (3 cohortes, 1 formateur, 6 etudiants, 3 cours, 6 supports, 3 photos, 2 certificats, 2 annonces, 4 evenements, 3 retours)");
             }
         };
+    }
+
+    /**
+     * Programme de demonstration, cree si absent.
+     *
+     * <p>Les promotions de demonstration n'en avaient aucun. Or un cours se rattache
+     * desormais a une formation, jamais directement a une promotion : sans programme,
+     * les cours de demonstration seraient invisibles pour tout le monde.
+     */
+    private Formation formationDemo(FormationRepository formationRepository, String code, String intitule,
+            String description) {
+        return formationRepository.findByCode(code).orElseGet(() -> {
+            Formation formation = new Formation();
+            formation.setCode(code);
+            formation.setIntitule(intitule);
+            formation.setDescription(description);
+            return formationRepository.save(formation);
+        });
+    }
+
+    /** Inscrit le cours au programme suivi par cette promotion. */
+    private void inscrireAuProgramme(FormationRepository formationRepository, Promotion promotion, Cours cours) {
+        Formation formation = promotion.getFormation();
+        if (formation == null) {
+            return;
+        }
+        formation.getCours().add(cours);
+        formationRepository.save(formation);
     }
 
     private Etudiant creerEtudiantDemo(UserRepository userRepository, EtudiantRepository etudiantRepository,

@@ -22,12 +22,12 @@ public interface SupportCoursRepository extends JpaRepository<SupportCours, Long
      * promotions est un Set (meme pattern deja utilise dans CoursRepository).
      */
     @Override
-    @EntityGraph(attributePaths = { "cours", "cours.formateurs", "cours.promotions" })
+    @EntityGraph(attributePaths = { "cours", "cours.formateurs", "cours.formations" })
     List<SupportCours> findAll();
 
     /** Meme precharge que findAll. */
     @Override
-    @EntityGraph(attributePaths = { "cours", "cours.formateurs", "cours.promotions" })
+    @EntityGraph(attributePaths = { "cours", "cours.formateurs", "cours.formations" })
     Optional<SupportCours> findById(Long id);
 
     long countByCoursId(Long coursId);

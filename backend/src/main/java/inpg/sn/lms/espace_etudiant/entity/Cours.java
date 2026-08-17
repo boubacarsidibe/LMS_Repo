@@ -2,7 +2,6 @@ package inpg.sn.lms.espace_etudiant.entity;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -50,24 +49,16 @@ public class Cours {
     private List<Formateur> formateurs = new ArrayList<>();
 
     /**
-     * Promotions directement rattachées par un formateur (perimetre de
-     * "suivi etudiants", notes, presence, ciblage d'annonces...). Coexiste avec
-     * {@link #formations} : la chaine Etudiant -> Promotion -> Formation -> Cours
-     * (cours "autorises" du cahier des charges) est un chemin distinct, pas encore
-     * unifie avec ce rattachement manuel historique. A consolider plus tard.
-     */
-    @ManyToMany
-    @JoinTable(
-        name = "cours_promotion",
-        joinColumns = @JoinColumn(name = "cours_id"),
-        inverseJoinColumns = @JoinColumn(name = "promotion_id")
-    )
-    private Set<Promotion> promotions = new LinkedHashSet<>();
-
-    /**
      * Formations dont ce cours fait partie. Côté inverse : la table de jointure
      * {@code formation_cours} est écrite par {@link Formation}. Sert à retrouver
      * les cours autorisés d'un étudiant via sa promotion.
+     *
+     * <p>C'est désormais le <strong>seul</strong> rattachement d'un cours. Un champ
+     * {@code promotions} coexistait ici, adossé à la table {@code cours_promotion} :
+     * les deux relations répondaient à la même question et avaient divergé au point
+     * de ne plus désigner aucun cours commun. Pour savoir quelles promotions suivent
+     * un cours, passer par {@code PerimetreFormateurService.promotionsDuCours} — la
+     * promotion se déduit de la formation, elle ne se rattache plus à la main.
      */
     @ManyToMany(mappedBy = "cours")
     @JsonIgnore
@@ -107,14 +98,6 @@ public class Cours {
 
     public List<Formateur> getFormateurs() {
         return formateurs;
-    }
-
-    public Set<Promotion> getPromotions() {
-        return promotions;
-    }
-
-    public void setPromotions(Set<Promotion> promotions) {
-        this.promotions = promotions;
     }
 
     public void setNom(String nom) {

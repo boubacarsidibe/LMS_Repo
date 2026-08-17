@@ -83,4 +83,32 @@ class EspaceEtudiantGardeFousTest {
                 "getStudent doit rester @Transactional : toEtudiantSuiviDto lit la promotion "
                         + "en association paresseuse, et open-in-view est désactivé.");
     }
+
+    /**
+     * Chaque endpoint ouvre sa transaction.
+     *
+     * <p>Ce contrôleur construit ses réponses en traversant des associations chargées
+     * paresseusement — la promotion d'un étudiant, les formations d'un cours. Avec
+     * {@code open-in-view=false}, la session Hibernate se ferme à la sortie du service :
+     * toute lecture faite ensuite lève une {@code LazyInitializationException} et
+     * l'écran renvoie 500.
+     *
+     * <p>Ce défaut est survenu <strong>trois fois</strong> sur ce fichier, à chaque fois
+     * sur un endpoint différent, et à chaque fois invisible en test unitaire. La règle
+     * est donc posée globalement plutôt que constat par constat : un endpoint ajouté
+     * sans transaction fera échouer ce test.
+     */
+    @Test
+    void chaque_endpoint_ouvre_sa_transaction() {
+        List<String> sansTransaction = Arrays.stream(EspaceEtudiantController.class.getDeclaredMethods())
+                .filter(EspaceEtudiantGardeFousTest::estUneRoute)
+                .filter(methode -> !methode.isAnnotationPresent(Transactional.class))
+                .map(Method::getName)
+                .sorted()
+                .toList();
+
+        assertTrue(sansTransaction.isEmpty(),
+                "Ces endpoints n'ouvrent aucune transaction : toute lecture d'une association "
+                        + "paresseuse y renverra une erreur 500 en production. " + sansTransaction);
+    }
 }

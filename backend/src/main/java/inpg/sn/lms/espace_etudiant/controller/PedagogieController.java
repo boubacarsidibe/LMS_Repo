@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,6 +29,7 @@ import inpg.sn.lms.espace_etudiant.dto.FormationDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportDetailDto;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
+import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
@@ -76,6 +78,7 @@ public class PedagogieController {
 
     // ===================== OFFRE DE FORMATION =====================
 
+    @Transactional(readOnly = true)
     @GetMapping("/formations")
     public ResponseEntity<List<FormationDto>> listFormations() {
         return ResponseEntity.ok(formationService.getAll().stream()
@@ -83,6 +86,7 @@ public class PedagogieController {
                 .toList());
     }
 
+    @Transactional(readOnly = true)
     @GetMapping("/promotions")
     public ResponseEntity<List<PromotionDto>> listPromotions() {
         return ResponseEntity.ok(promotionService.getAll().stream()
@@ -93,11 +97,13 @@ public class PedagogieController {
 
     // ===================== COURS =====================
 
+    @Transactional(readOnly = true)
     @GetMapping("/cours")
     public ResponseEntity<List<CoursDto>> listCours() {
         return ResponseEntity.ok(coursService.getAll().stream().map(this::toCoursDto).toList());
     }
 
+    @Transactional(readOnly = true)
     @GetMapping("/cours/{id}")
     public ResponseEntity<?> getCours(@PathVariable Long id) {
         return coursService.findById(id)
@@ -105,6 +111,7 @@ public class PedagogieController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @Transactional
     @PostMapping("/cours")
     public ResponseEntity<?> creerCours(@RequestBody CoursCreateRequest request) {
         String erreur = validerCours(request);
@@ -113,9 +120,11 @@ public class PedagogieController {
         }
         Cours cours = new Cours();
         appliquer(request, cours);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toCoursDto(coursService.save(cours)));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(toCoursDto(rattacher(request, coursService.save(cours))));
     }
 
+    @Transactional
     @PutMapping("/cours/{id}")
     public ResponseEntity<?> modifierCours(@PathVariable Long id, @RequestBody CoursCreateRequest request) {
         Cours cours = coursService.findById(id).orElse(null);
@@ -127,7 +136,7 @@ public class PedagogieController {
             return ResponseEntity.badRequest().body(Map.of("message", erreur));
         }
         appliquer(request, cours);
-        return ResponseEntity.ok(toCoursDto(coursService.save(cours)));
+        return ResponseEntity.ok(toCoursDto(rattacher(request, coursService.save(cours))));
     }
 
     /** Les supports sont supprimés avec le cours : sans cela ils resteraient orphelins. */
@@ -139,12 +148,16 @@ public class PedagogieController {
             return ResponseEntity.notFound().build();
         }
         supportService.deleteCourseSupports(cours.getId());
+        // La table formation_cours reference le cours : sans ce detachement,
+        // la suppression echoue sur une violation de cle etrangere.
+        formationService.detacherDeToutProgramme(cours);
         coursService.delete(cours);
         return ResponseEntity.noContent().build();
     }
 
     // ===================== SUPPORTS =====================
 
+    @Transactional(readOnly = true)
     @GetMapping("/cours/{id}/supports")
     public ResponseEntity<List<SupportDetailDto>> listSupports(@PathVariable Long id) {
         if (coursService.findById(id).isEmpty()) {
@@ -155,6 +168,7 @@ public class PedagogieController {
                 .toList());
     }
 
+    @Transactional
     @PostMapping(value = "/supports", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> publierSupport(
             @RequestParam Long coursId,
@@ -187,6 +201,7 @@ public class PedagogieController {
         }
     }
 
+    @Transactional
     @DeleteMapping("/supports/{id}")
     public ResponseEntity<?> supprimerSupport(@PathVariable Long id) {
         SupportCours support = supportService.findCourseSupportById(id).orElse(null);
@@ -218,12 +233,34 @@ public class PedagogieController {
         cours.setVolumeHoraire(request.volumeHoraire() == null ? 0L : request.volumeHoraire());
     }
 
+    /**
+     * Inscrit le cours au programme des promotions demandees.
+     *
+     * <p>{@code cohorteIds} etait recu puis purement ignore : un cours cree ici
+     * n'etait rattache a rien, donc invisible pour tous les etudiants et tous les
+     * formateurs. C'est pourtant le chemin officiel de creation de l'offre.
+     *
+     * <p>Le cours doit deja etre enregistre : c'est la formation qui porte la table
+     * de jointure et elle a besoin de l'identifiant.
+     */
+    private Cours rattacher(CoursCreateRequest request, Cours coursEnregistre) {
+        if (request.cohorteIds() == null) {
+            return coursEnregistre;
+        }
+        List<Promotion> promotions = request.cohorteIds().stream()
+                .map(promotionService::findById)
+                .flatMap(Optional::stream)
+                .toList();
+        formationService.rattacherAuxFormationsDe(coursEnregistre, promotions);
+        return coursService.findById(coursEnregistre.getId()).orElse(coursEnregistre);
+    }
+
     private boolean estVide(String valeur) {
         return valeur == null || valeur.trim().isEmpty();
     }
 
     private CoursDto toCoursDto(Cours cours) {
-        List<PromotionDto> promotions = cours.getPromotions().stream()
+        List<PromotionDto> promotions = promotionService.desFormationsDuCours(cours).stream()
                 .map(p -> new PromotionDto(p.getId(), p.getCode(), p.getLibelle(),
                         p.getDateDebut() != null ? p.getDateDebut().getYear() : null))
                 .toList();

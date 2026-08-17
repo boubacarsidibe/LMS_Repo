@@ -24,6 +24,6 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
      * findById qui a cause le 5e episode du meme piege sur NoteModuleRepository.
      */
     @Override
-    @EntityGraph(attributePaths = { "cours", "cours.formateurs", "cours.promotions" })
+    @EntityGraph(attributePaths = { "cours", "cours.formateurs", "cours.formations" })
     Optional<Seance> findById(Long id);
 }

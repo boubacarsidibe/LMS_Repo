@@ -1,7 +1,9 @@
 package inpg.sn.lms.espace_etudiant.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -11,6 +13,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,6 +24,7 @@ import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
+import inpg.sn.lms.espace_etudiant.entity.Formation;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 
@@ -29,6 +33,15 @@ import inpg.sn.lms.espace_etudiant.entity.SupportCours;
  * formateur ne doit voir que les etudiants des promotions rattachees a SES cours.
  * Une regression sur ces regles rouvrirait une fuite de donnees, d'ou leur
  * presence ici.
+ *
+ * <p>Un cours ne se rattache plus directement a une promotion : il appartient a une
+ * formation, et une promotion suit une formation. La descente formation -> promotions
+ * est une requete, portee par {@link PromotionService} et couverte par son propre
+ * test ; elle est simulee ici. Ce qui reste verifie sur ce service est ce qu'il
+ * calcule lui-meme : l'extraction des formations des cours du formateur, le
+ * dedoublonnage, les cas vides, et les regles qui ne dependent d'aucune requete
+ * (appartenance d'un etudiant a un cours, propriete d'un cours, publication
+ * programmee).
  *
  * <p>L'entite Cohorte a ete renommee Promotion lors de la fusion avec la branche
  * pedagogie. Les methodes du service portent encore le prefixe {@code cohorteIds}
@@ -47,14 +60,26 @@ class PerimetreFormateurServiceTest {
     @Mock
     private EtudiantRepository etudiantRepository;
 
+    @Mock
+    private PromotionService promotionService;
+
     @InjectMocks
     private PerimetreFormateurService perimetreFormateurService;
 
     // ---------- Outils de construction d'objets de test ----------
 
+    /**
+     * Promotion dotee de son propre programme, portant le meme identifiant.
+     * Reproduit la structure reelle : chaque promotion suit une formation.
+     */
     private Promotion promotion(Long id) {
         Promotion promotion = new Promotion();
         setId(promotion, id);
+        Formation formation = new Formation();
+        setId(formation, id);
+        formation.setCode("F-" + id);
+        formation.setIntitule("Formation " + id);
+        promotion.setFormation(formation);
         return promotion;
     }
 
@@ -64,9 +89,17 @@ class PerimetreFormateurServiceTest {
         return formateur;
     }
 
+    /**
+     * Cours inscrit au programme de ces promotions. Les deux cotes de la relation
+     * sont cables, comme le ferait la base.
+     */
     private Cours cours(Promotion... promotions) {
         Cours cours = new Cours();
-        cours.getPromotions().addAll(List.of(promotions));
+        for (Promotion promotion : promotions) {
+            Formation formation = promotion.getFormation();
+            formation.getCours().add(cours);
+            cours.getFormations().add(formation);
+        }
         return cours;
     }
 
@@ -76,31 +109,34 @@ class PerimetreFormateurServiceTest {
         return etudiant;
     }
 
-    /** Promotion n'expose pas de setId (id genere par la base) : on le force par reflexion. */
-    private void setId(Promotion promotion, Long id) {
+    /** Ni Promotion ni Formation n'exposent setId (id genere par la base) : on le force par reflexion. */
+    private void setId(Object entite, Long id) {
         try {
-            var champ = Promotion.class.getDeclaredField("id");
+            var champ = entite.getClass().getDeclaredField("id");
             champ.setAccessible(true);
-            champ.set(promotion, id);
+            champ.set(entite, id);
         } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Impossible de fixer l'id de la promotion de test", e);
+            throw new IllegalStateException("Impossible de fixer l'id de " + entite.getClass().getSimpleName(), e);
         }
     }
 
     // ---------- cohorteIdsDuFormateur ----------
 
     @Test
-    @DisplayName("Retourne les promotions de tous les cours du formateur, sans doublon")
-    void promotionsDuFormateur_dedoublonne() {
-        Promotion dataScience = promotion(1L);
-        Promotion finance = promotion(2L);
+    @DisplayName("Interroge les formations de tous les cours du formateur, sans doublon")
+    void promotionsDuFormateur_dedoublonneLesFormations() {
         Formateur formateur = formateur(10L);
-        // Deux cours partagent la promotion Data Science : elle ne doit apparaitre qu'une fois.
+        // Deux cours partagent le programme 1 : il ne doit etre demande qu'une fois.
         when(coursService.getByFormateurId(10L))
-                .thenReturn(List.of(cours(dataScience), cours(dataScience, finance)));
+                .thenReturn(List.of(cours(promotion(1L)), cours(promotion(1L), promotion(2L))));
+        when(promotionService.promotionIdsDesFormations(anyList())).thenReturn(List.of(1L, 2L));
 
         List<Long> resultat = perimetreFormateurService.cohorteIdsDuFormateur(formateur);
 
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Long>> formationsDemandees = ArgumentCaptor.forClass(List.class);
+        verify(promotionService).promotionIdsDesFormations(formationsDemandees.capture());
+        assertThat(formationsDemandees.getValue()).containsExactlyInAnyOrder(1L, 2L);
         assertThat(resultat).containsExactlyInAnyOrder(1L, 2L);
     }
 
@@ -112,9 +148,10 @@ class PerimetreFormateurServiceTest {
         assertThat(perimetreFormateurService.cohorteIdsDuFormateur(formateur(10L))).isEmpty();
     }
 
+    /** Cas du cours cree hors de tout programme : il ne donne acces a personne. */
     @Test
-    @DisplayName("Un cours sans promotion rattachee ne donne acces a aucun etudiant")
-    void promotionsDuFormateur_coursSansPromotion() {
+    @DisplayName("Un cours hors programme ne donne acces a aucun etudiant")
+    void promotionsDuFormateur_coursSansFormation() {
         when(coursService.getByFormateurId(anyLong())).thenReturn(List.of(cours()));
 
         assertThat(perimetreFormateurService.cohorteIdsDuFormateur(formateur(10L))).isEmpty();
@@ -123,12 +160,13 @@ class PerimetreFormateurServiceTest {
     // ---------- cohorteIdsVisiblesPour ----------
 
     @Test
-    @DisplayName("Un formateur voit les promotions de ses cours")
+    @DisplayName("Un formateur voit les promotions des programmes de ses cours")
     void visiblesPour_formateur() {
         User user = new User();
         user.setId(100L);
         when(formateurRepository.findByUserId(100L)).thenReturn(Optional.of(formateur(10L)));
         when(coursService.getByFormateurId(10L)).thenReturn(List.of(cours(promotion(5L))));
+        when(promotionService.promotionIdsDesFormations(anyList())).thenReturn(List.of(5L));
 
         assertThat(perimetreFormateurService.cohorteIdsVisiblesPour(user)).containsExactly(5L);
     }
@@ -196,16 +234,17 @@ class PerimetreFormateurServiceTest {
     // ---------- etudiantSuitLeCours ----------
 
     @Test
-    @DisplayName("Un etudiant d'une promotion rattachee suit bien le cours")
-    void etudiantSuitLeCours_memePromotion() {
-        Cours cours = cours(promotion(1L), promotion(2L));
+    @DisplayName("Un etudiant dont le programme porte le cours le suit bien")
+    void etudiantSuitLeCours_memeProgramme() {
+        Promotion visee = promotion(2L);
+        Cours cours = cours(promotion(1L), visee);
 
-        assertThat(perimetreFormateurService.etudiantSuitLeCours(etudiant(promotion(2L)), cours)).isTrue();
+        assertThat(perimetreFormateurService.etudiantSuitLeCours(etudiant(visee), cours)).isTrue();
     }
 
     @Test
-    @DisplayName("Un etudiant d'une autre promotion ne suit pas le cours")
-    void etudiantSuitLeCours_autrePromotion() {
+    @DisplayName("Un etudiant d'un autre programme ne suit pas le cours")
+    void etudiantSuitLeCours_autreProgramme() {
         Cours cours = cours(promotion(1L));
 
         assertThat(perimetreFormateurService.etudiantSuitLeCours(etudiant(promotion(2L)), cours)).isFalse();
@@ -217,6 +256,20 @@ class PerimetreFormateurServiceTest {
         Cours cours = cours(promotion(1L));
 
         assertThat(perimetreFormateurService.etudiantSuitLeCours(etudiant(null), cours)).isFalse();
+    }
+
+    /**
+     * Une promotion non rattachee a un programme ne donne acces a rien : c'est le cas
+     * d'une promotion creee sans formation, qu'il vaut mieux voir vide que trop large.
+     */
+    @Test
+    @DisplayName("Un etudiant dont la promotion n'a pas de programme ne suit aucun cours")
+    void etudiantSuitLeCours_promotionSansProgramme() {
+        Promotion orpheline = promotion(3L);
+        orpheline.setFormation(null);
+
+        assertThat(perimetreFormateurService.etudiantSuitLeCours(etudiant(orpheline), cours(promotion(1L))))
+                .isFalse();
     }
 
     // ---------- Publication programmee des ressources ----------
@@ -308,7 +361,9 @@ class PerimetreFormateurServiceTest {
     @Test
     @DisplayName("Un etudiant de la bonne promotion accede au support de son cours")
     void coursDuSupportEstAccessible_etudiantConcerne() {
-        SupportCours support = support(cours(promotion(1L)), null);
+        Cours cours = cours(promotion(1L));
+        SupportCours support = support(cours, null);
+        when(promotionService.desFormationsDuCours(cours)).thenReturn(List.of(promotion(1L)));
 
         assertThat(perimetreFormateurService.coursDuSupportEstAccessible(support, List.of(1L), null)).isTrue();
     }
@@ -316,7 +371,9 @@ class PerimetreFormateurServiceTest {
     @Test
     @DisplayName("Un etudiant d'une autre promotion ne voit pas le support d'un cours qui ne le concerne pas")
     void coursDuSupportEstAccessible_etudiantEtranger() {
-        SupportCours support = support(cours(promotion(1L)), null);
+        Cours cours = cours(promotion(1L));
+        SupportCours support = support(cours, null);
+        when(promotionService.desFormationsDuCours(cours)).thenReturn(List.of(promotion(1L)));
 
         assertThat(perimetreFormateurService.coursDuSupportEstAccessible(support, List.of(2L), null)).isFalse();
     }
@@ -337,7 +394,9 @@ class PerimetreFormateurServiceTest {
         Cours cours = cours(promotion(1L));
         cours.getFormateurs().add(formateur(99L));
         SupportCours support = support(cours, null);
+        when(promotionService.desFormationsDuCours(cours)).thenReturn(List.of(promotion(1L)));
 
-        assertThat(perimetreFormateurService.coursDuSupportEstAccessible(support, List.of(), formateur(10L))).isFalse();
+        assertThat(perimetreFormateurService.coursDuSupportEstAccessible(support, List.of(), formateur(10L)))
+                .isFalse();
     }
 }

@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -220,6 +221,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(Authentication authentication) {
         User user = findAuthenticatedUser(authentication);
@@ -302,6 +304,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formations")
     public ResponseEntity<List<FormationDto>> listFormations() {
         List<FormationDto> list = formationService.getAll().stream()
@@ -311,12 +314,14 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/cours")
     public ResponseEntity<List<CoursDto>> listCours() {
         return ResponseEntity.ok(toCoursDtoList(coursService.getAll()));
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/cohortes")
     public ResponseEntity<List<PromotionDto>> listCohortes() {
         List<PromotionDto> list = promotionService.getAll().stream()
@@ -326,6 +331,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/cohortes")
     public ResponseEntity<?> listCohortesDuFormateur(Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -349,6 +355,7 @@ public class EspaceEtudiantController {
      * les siens (l'émission reste réservée au formateur, cf TDR §B).
      */
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/certificats")
     public ResponseEntity<?> listCertificats(Authentication authentication) {
         User user = findAuthenticatedUser(authentication);
@@ -366,6 +373,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/evenements")
     public ResponseEntity<List<EvenementDto>> listEvenements() {
         return ResponseEntity.ok(evenementService.getAll().stream().map(this::toEvenementDto).toList());
@@ -526,6 +534,7 @@ public class EspaceEtudiantController {
      * propriétaire du cours et ne conviennent donc pas ici.
      */
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/cours/{id}")
     public ResponseEntity<?> getCours(@PathVariable Long id) {
         return coursService.findById(id)
@@ -534,6 +543,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/cours/{id}/supports")
     public ResponseEntity<List<SupportDetailDto>> listSupportsOfCours(@PathVariable Long id) {
         if (coursService.findById(id).isEmpty()) {
@@ -545,6 +555,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/supports")
     public ResponseEntity<List<SupportDto>> listAllSupports(Authentication authentication) {
         User user = findAuthenticatedUser(authentication);
@@ -562,6 +573,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/supports/cours")
     public ResponseEntity<List<SupportDto>> listCourseSupports(Authentication authentication) {
         User user = findAuthenticatedUser(authentication);
@@ -575,6 +587,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/supports/pedagogiques")
     public ResponseEntity<List<SupportDto>> listPedagogicalSupports() {
         return ResponseEntity.ok(supportService.getAllPedagogicalSupports().stream()
@@ -583,6 +596,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/supports/pedagogiques/{id}")
     public ResponseEntity<SupportDto> getPedagogicalSupport(@PathVariable UUID id) {
         var support = supportService.findPedagogicalById(id);
@@ -593,6 +607,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/supports/cours/{id}/download")
     public ResponseEntity<Resource> downloadCourseSupport(@PathVariable Long id, Authentication authentication) {
         SupportCours support = supportService.getAllCourseSupports().stream()
@@ -627,6 +642,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/certificats/{id}/pdf")
     public ResponseEntity<?> telechargerCertificat(@PathVariable Long id, Authentication authentication) {
         User user = findAuthenticatedUser(authentication);
@@ -656,6 +672,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/profile")
     public ResponseEntity<?> getFormateurProfile(Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -728,6 +745,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/dashboard")
     public ResponseEntity<?> getFormateurDashboard(Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -745,6 +763,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/seances")
     public ResponseEntity<?> listMySessions(Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -753,6 +772,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PostMapping("/formateur/seances")
     public ResponseEntity<?> createSession(@RequestBody SeanceRequest request, Authentication authentication) {
         Cours cours = request.coursId() == null ? null : findOwnedCourse(request.coursId(), authentication);
@@ -765,6 +785,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PutMapping("/formateur/seances/{id}")
     public ResponseEntity<?> updateSession(@PathVariable Long id, @RequestBody SeanceRequest request, Authentication authentication) {
         Seance seance = findOwnedSession(id, authentication);
@@ -777,6 +798,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @DeleteMapping("/formateur/seances/{id}")
     public ResponseEntity<?> deleteSession(@PathVariable Long id, Authentication authentication) {
         Seance seance = findOwnedSession(id, authentication);
@@ -786,6 +808,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/cours")
     public ResponseEntity<?> listMyCourses(Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -797,6 +820,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PostMapping("/formateur/cours")
     public ResponseEntity<?> createCourse(
             @RequestBody CoursCreateRequest request,
@@ -820,16 +844,23 @@ public class EspaceEtudiantController {
         cours.setSemestre(request.semestre() == null ? "" : request.semestre().trim());
         cours.setVolumeHoraire(request.volumeHoraire() == null ? 0L : request.volumeHoraire());
         cours.getFormateurs().add(formateur);
-        if (request.cohorteIds() != null) {
-            for (Long cohorteId : request.cohorteIds()) {
-                promotionService.findById(cohorteId).ifPresent(cours.getPromotions()::add);
-            }
+
+        // Le rattachement au programme exige un cours deja enregistre : c'est la
+        // formation qui porte la table de jointure, et elle a besoin de l'identifiant.
+        Cours enregistre = coursService.save(cours);
+        if (request.cohorteIds() != null && !request.cohorteIds().isEmpty()) {
+            List<Promotion> promotions = request.cohorteIds().stream()
+                    .map(promotionService::findById)
+                    .flatMap(Optional::stream)
+                    .toList();
+            formationService.rattacherAuxFormationsDe(enregistre, promotions);
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(toCoursDto(coursService.save(cours)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(toCoursDto(coursService.findById(enregistre.getId()).orElse(enregistre)));
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/cours/{id}")
     public ResponseEntity<?> getMyCourse(@PathVariable Long id, Authentication authentication) {
         Cours cours = findOwnedCourse(id, authentication);
@@ -837,6 +868,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PutMapping("/formateur/cours/{id}")
     public ResponseEntity<?> updateCourse(
             @PathVariable Long id,
@@ -870,11 +902,15 @@ public class EspaceEtudiantController {
             return ResponseEntity.notFound().build();
         }
         supportService.deleteCourseSupports(cours.getId());
+        // La table formation_cours reference le cours : sans ce detachement,
+        // la suppression echoue sur une violation de cle etrangere.
+        formationService.detacherDeToutProgramme(cours);
         coursService.delete(cours);
         return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PatchMapping("/formateur/cours/{id}/cohortes")
     public ResponseEntity<?> updateCoursCohortes(
             @PathVariable Long id,
@@ -885,7 +921,7 @@ public class EspaceEtudiantController {
             return ResponseEntity.notFound().build();
         }
         List<Long> cohorteIds = body.getOrDefault("cohorteIds", List.of());
-        Set<Promotion> cohortes = new LinkedHashSet<>();
+        List<Promotion> cohortes = new ArrayList<>();
         for (Long cohorteId : cohorteIds) {
             Promotion cohorte = promotionService.findById(cohorteId).orElse(null);
             if (cohorte == null) {
@@ -893,11 +929,12 @@ public class EspaceEtudiantController {
             }
             cohortes.add(cohorte);
         }
-        cours.setPromotions(cohortes);
-        return ResponseEntity.ok(toCoursDto(coursService.save(cours)));
+        formationService.rattacherAuxFormationsDe(cours, cohortes);
+        return ResponseEntity.ok(toCoursDto(coursService.findById(cours.getId()).orElse(cours)));
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PostMapping("/formateur/certificats")
     public ResponseEntity<?> creerCertificat(
             @RequestBody CertificatCreateRequest request,
@@ -933,6 +970,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/cours/{id}/supports")
     public ResponseEntity<?> listMyCourseSupports(@PathVariable Long id, Authentication authentication) {
         Cours cours = findOwnedCourse(id, authentication);
@@ -945,6 +983,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PostMapping("/formateur/evenements")
     public ResponseEntity<?> createEvenement(
             @RequestBody EvenementCreateRequest request,
@@ -981,6 +1020,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PatchMapping("/formateur/evenements/{id}")
     public ResponseEntity<?> updateEvenement(
             @PathVariable Long id,
@@ -1021,6 +1061,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PostMapping(value = "/formateur/supports", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadCourseSupport(
             @RequestParam Long coursId,
@@ -1064,6 +1105,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PostMapping(value = "/formateur/cours/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadCourseImage(
         @PathVariable Long id,
@@ -1114,6 +1156,7 @@ public class EspaceEtudiantController {
      * /supports/cours qui expose celles de tous les cours de la plateforme.
      */
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/supports")
     public ResponseEntity<?> listMesSupports(Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -1132,6 +1175,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @DeleteMapping("/formateur/supports/{id}")
     public ResponseEntity<?> supprimerSupport(@PathVariable Long id, Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -1166,6 +1210,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/etudiants")
     public ResponseEntity<?> listStudents(Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -1206,6 +1251,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/etudiants/{id}/notes")
     public ResponseEntity<?> listNotesEtudiant(@PathVariable Long id, Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -1224,6 +1270,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PostMapping("/formateur/etudiants/{id}/notes")
     public ResponseEntity<?> ajouterNoteEtudiant(
             @PathVariable Long id,
@@ -1255,7 +1302,7 @@ public class EspaceEtudiantController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Vous n'enseignez pas ce cours."));
         }
-        if (cours.getPromotions().stream().noneMatch(c -> c.getId().equals(etudiant.getPromotion().getId()))) {
+        if (!perimetreFormateurService.etudiantSuitLeCours(etudiant, cours)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Cet étudiant ne suit pas ce cours."));
         }
 
@@ -1271,6 +1318,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @DeleteMapping("/formateur/notes/{noteId}")
     public ResponseEntity<?> supprimerNote(@PathVariable Long noteId, Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -1305,6 +1353,7 @@ public class EspaceEtudiantController {
 
     /** Séances d'UN cours precis (utilise par la prise de presence formateur, cf. PresenceEtudiantDto). */
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/cours/{coursId}/seances")
     public ResponseEntity<?> listSeances(@PathVariable Long coursId, Authentication authentication) {
         Cours cours = findOwnedCourse(coursId, authentication);
@@ -1316,6 +1365,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/seances/{id}/presences")
     public ResponseEntity<?> listPresencesSeance(@PathVariable Long id, Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -1331,7 +1381,7 @@ public class EspaceEtudiantController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Vous n'êtes pas formateur de ce cours."));
         }
-        List<Long> cohorteIds = seance.getCours().getPromotions().stream().map(Promotion::getId).toList();
+        List<Long> cohorteIds = perimetreFormateurService.promotionIdsDuCours(seance.getCours());
         List<Etudiant> etudiants = etudiantRepository.findByPromotion_IdIn(cohorteIds);
         Map<Long, Boolean> presencesParEtudiant = presenceService.getPresencesBySeanceId(id).stream()
                 .collect(Collectors.toMap(p -> p.getEtudiant().getId(), Presence::isPresent));
@@ -1347,6 +1397,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PostMapping("/formateur/seances/{id}/presences")
     public ResponseEntity<?> enregistrerPresences(
             @PathVariable Long id,
@@ -1365,7 +1416,7 @@ public class EspaceEtudiantController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Vous n'êtes pas formateur de ce cours."));
         }
-        List<Long> cohorteIds = seance.getCours().getPromotions().stream().map(Promotion::getId).toList();
+        List<Long> cohorteIds = perimetreFormateurService.promotionIdsDuCours(seance.getCours());
         for (PresenceBulkUpdateRequest.Entree entree : request.presences()) {
             Etudiant etudiant = etudiantRepository.findById(entree.etudiantId()).orElse(null);
             if (etudiant == null || etudiant.getPromotion() == null || !cohorteIds.contains(etudiant.getPromotion().getId())) {
@@ -1377,6 +1428,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/etudiants/{id}/presences")
     public ResponseEntity<?> listPresencesEtudiant(@PathVariable Long id, Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -1411,6 +1463,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional(readOnly = true)
     @GetMapping("/formateur/retours")
     public ResponseEntity<?> listRetours(Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -1426,6 +1479,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PatchMapping("/formateur/retours/{id}/epingle")
     public ResponseEntity<?> togglePinRetour(@PathVariable Long id, Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
@@ -1446,6 +1500,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('ETUDIANT')")
+    @Transactional
     @PostMapping("/retours")
     public ResponseEntity<?> creerRetour(@RequestBody RetourCreateRequest request, Authentication authentication) {
         User user = findAuthenticatedUser(authentication);
@@ -1497,6 +1552,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PostMapping("/formateur/etudiants/{id}/contacter")
     public ResponseEntity<?> contacterEtudiant(
             @PathVariable Long id,
@@ -1528,6 +1584,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PostMapping("/formateur/etudiants/relance")
     public ResponseEntity<?> relancerEtudiants(
             @RequestBody RelanceCollectiveRequest request,
@@ -1562,6 +1619,7 @@ public class EspaceEtudiantController {
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
     @PostMapping("/formateur/etudiants/{id}/cohorte")
     public ResponseEntity<?> assignerCohorte(
             @PathVariable Long id,
@@ -1597,8 +1655,7 @@ public class EspaceEtudiantController {
     private List<CoursDto> toCoursDtoList(List<Cours> cours) {
         List<Long> coursIds = cours.stream().map(Cours::getId).toList();
         List<Long> cohorteIds = cours.stream()
-                .flatMap(c -> c.getPromotions().stream())
-                .map(Promotion::getId)
+                .flatMap(c -> perimetreFormateurService.promotionIdsDuCours(c).stream())
                 .distinct()
                 .toList();
 
@@ -1618,10 +1675,11 @@ public class EspaceEtudiantController {
     }
 
     private CoursDto toCoursDto(Cours cours, Map<Long, Long> etudiantsParCohorte, Map<Long, Long> supportsParCours) {
-        long nbEtudiants = cours.getPromotions().stream()
+        List<Promotion> promotions = perimetreFormateurService.promotionsDuCours(cours);
+        long nbEtudiants = promotions.stream()
                 .mapToLong(cohorte -> etudiantsParCohorte.getOrDefault(cohorte.getId(), 0L))
                 .sum();
-        List<PromotionDto> cohortes = cours.getPromotions().stream()
+        List<PromotionDto> cohortes = promotions.stream()
                 .map(this::toPromotionDto)
                 .toList();
         return new CoursDto(

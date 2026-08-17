@@ -9,14 +9,14 @@ import java.util.Optional;
 public interface CoursRepository extends JpaRepository<Cours, Long> {
 
     @Override
-    @EntityGraph(attributePaths = {"formateurs", "promotions"})
+    @EntityGraph(attributePaths = {"formateurs", "formations"})
     List<Cours> findAll();
 
     @Override
-    @EntityGraph(attributePaths = {"formateurs", "promotions"})
+    @EntityGraph(attributePaths = {"formateurs", "formations"})
     Optional<Cours> findById(Long id);
 
-    @EntityGraph(attributePaths = {"formateurs", "promotions"})
+    @EntityGraph(attributePaths = {"formateurs", "formations"})
     List<Cours> findByFormateurs_Id(Long formateurId);
 
     /**
