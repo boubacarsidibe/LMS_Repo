@@ -28,8 +28,12 @@ import { ScolariteService } from '../../services/scolarite.service';
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header>
-        <h1 class="font-display text-display text-on-surface leading-tight">Tableau de bord</h1>
-        <p class="font-body-md text-body-md text-on-surface-variant mt-1">
+        <span
+          class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block"
+          >Ma scolarité</span
+        >
+        <h1 class="font-display text-display text-on-surface leading-none -ml-1">Tableau de bord</h1>
+        <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
           {{ libellePromotion || 'Votre scolarité en un coup d’œil' }}
         </p>
       </header>
@@ -41,7 +45,7 @@ import { ScolariteService } from '../../services/scolarite.service';
         <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter">
           <article
             *ngFor="let tuile of tuiles"
-            class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant"
+            class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant shadow-sm"
           >
             <div class="flex items-center gap-2 text-on-surface-variant">
               <span class="material-symbols-outlined text-[20px]">{{ tuile.icone }}</span>
@@ -57,12 +61,12 @@ import { ScolariteService } from '../../services/scolarite.service';
 
         <!-- Reprendre ou l'etudiant s'est arrete -->
         <section *ngIf="reprises.length > 0" class="space-y-stack-md">
-          <h2 class="font-headline-sm text-headline-sm text-on-surface">Reprendre où vous en étiez</h2>
+          <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2"><span class="material-symbols-outlined text-secondary">history</span>Reprendre où vous en étiez</h2>
           <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-gutter">
             <li *ngFor="let reprise of reprises">
               <a
                 [routerLink]="['/espace-etudiant/mes-cours', reprise.coursId]"
-                class="h-full bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant hover:border-secondary transition-colors flex items-start gap-3 no-underline"
+                class="h-full bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant shadow-sm hover:border-secondary transition-colors flex items-start gap-3 no-underline"
               >
                 <span class="material-symbols-outlined text-on-surface-variant shrink-0">{{
                   icone(reprise)
@@ -86,7 +90,7 @@ import { ScolariteService } from '../../services/scolarite.service';
         <!-- Progression par cours -->
         <section class="space-y-stack-md">
           <div class="flex items-center justify-between">
-            <h2 class="font-headline-sm text-headline-sm text-on-surface">Ma progression</h2>
+            <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2"><span class="material-symbols-outlined text-secondary">analytics</span>Ma progression</h2>
             <a
               routerLink="/espace-etudiant/mes-cours"
               class="font-label-md text-label-md text-secondary hover:underline"
@@ -105,7 +109,7 @@ import { ScolariteService } from '../../services/scolarite.service';
             <a
               *ngFor="let c of cours"
               [routerLink]="['/espace-etudiant/mes-cours', c.id]"
-              class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant hover:border-secondary transition-colors block"
+              class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant shadow-sm hover:border-secondary transition-colors block"
             >
               <div class="flex items-start justify-between gap-3">
                 <div>
@@ -132,7 +136,7 @@ import { ScolariteService } from '../../services/scolarite.service';
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
           <!-- Prochaines séances -->
           <section class="space-y-stack-md">
-            <h2 class="font-headline-sm text-headline-sm text-on-surface">Prochaines séances</h2>
+            <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2"><span class="material-symbols-outlined text-secondary">event_upcoming</span>Prochaines séances</h2>
             <app-ui-empty-state
               *ngIf="prochainesSeances.length === 0"
               icone="event_busy"
@@ -142,7 +146,7 @@ import { ScolariteService } from '../../services/scolarite.service';
             <ul *ngIf="prochainesSeances.length > 0" class="space-y-base">
               <li
                 *ngFor="let s of prochainesSeances"
-                class="bg-surface-container-lowest rounded-xl p-stack-md border border-outline-variant flex gap-4"
+                class="bg-surface-container-lowest rounded-xl p-stack-md border border-outline-variant shadow-sm flex gap-4"
               >
                 <div
                   class="w-12 shrink-0 text-center rounded-lg bg-primary-container text-on-primary-container py-1"
@@ -164,7 +168,7 @@ import { ScolariteService } from '../../services/scolarite.service';
           <!-- Dernières communications -->
           <section class="space-y-stack-md">
             <div class="flex items-center justify-between">
-              <h2 class="font-headline-sm text-headline-sm text-on-surface">Communications</h2>
+              <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2"><span class="material-symbols-outlined text-secondary">campaign</span>Communications</h2>
               <a
                 routerLink="/espace-etudiant/annonces"
                 class="font-label-md text-label-md text-secondary hover:underline"
@@ -180,7 +184,7 @@ import { ScolariteService } from '../../services/scolarite.service';
             <ul *ngIf="dernieresAnnonces.length > 0" class="space-y-base">
               <li
                 *ngFor="let a of dernieresAnnonces"
-                class="bg-surface-container-lowest rounded-xl p-stack-md border border-outline-variant"
+                class="bg-surface-container-lowest rounded-xl p-stack-md border border-outline-variant shadow-sm"
                 [class.border-secondary]="!a.lue"
               >
                 <div class="flex items-center gap-2">
