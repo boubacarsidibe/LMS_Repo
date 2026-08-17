@@ -6,12 +6,11 @@ import { FormationService } from '../../services/formation.service';
 import { mesFormationsMock } from '../../data/formations.data';
 import { FavoritesService } from '../../services/favorites.service';
 import { FormationCard } from './formation-card';
-import { EspaceNavbarComponent } from '../../../../shared/components/espace-navbar/espace-navbar.component';
 
 @Component({
   selector: 'app-mes-formations',
   standalone: true,
-  imports: [CommonModule, FormsModule, FormationCard, EspaceNavbarComponent],
+  imports: [CommonModule, FormsModule, FormationCard],
   templateUrl: './mes-formations.html',
   styleUrls: ['./mes-formations.css'],
 })

@@ -4,46 +4,19 @@ import { roleGuard } from '../../core/auth/guards/role-guard';
 /**
  * Routes de l'espace étudiant.
  *
- * <p>Les rubriques de l'étudiant sont regroupées sous {@code EtudiantLayout}, qui
- * fournit la navigation latérale et la cloche d'annonces. « Accueil » et les
- * pages historiques restent en dehors : elles portent leur propre barre
- * horizontale et sont référencées par la navigation publique.
+ * <p>Toutes les rubriques de l'étudiant sont regroupées sous {@code EtudiantLayout},
+ * qui fournit la navigation latérale et la cloche d'annonces.
+ *
+ * <p>Un second parcours coexistait auparavant hors de ce shell — « Accueil »,
+ * « Formations », une liste de cours et un détail de cours — avec sa propre barre
+ * horizontale. Il doublait la barre latérale écran pour écran, sur des composants
+ * distincts qu'il fallait maintenir en parallèle, et c'est là qu'atterrissait
+ * l'étudiant après sa connexion. Seule « Formations » n'avait pas d'équivalent :
+ * elle a été déplacée sous le shell plutôt que supprimée.
+ *
+ * <p>Ce qui reste hors du shell relève du seul formateur, qui dispose du sien.
  */
 export const routes: Routes = [
-    {
-        path: 'accueil',
-        loadComponent: () => import('./pages/accueil/accueil').then(m => m.Accueil),
-        canActivate: [roleGuard('ROLE_ETUDIANT')]
-    },
-    {
-        path: 'mes-formations',
-        loadComponent: () => import('./pages/mes-formations/mes-formations').then(m => m.MesFormations),
-        canActivate: [roleGuard('ROLE_ETUDIANT')]
-    },
-    {
-        // Formateur uniquement desormais : un etudiant qui vise /annonces recoit la
-        // page dediee AnnoncesEtudiant (sous EtudiantLayout plus bas), qui gere en
-        // plus les accuses de lecture. Le formateur y accede via formateur/annonces
-        // (meme composant Annonces, route imbriquee plus bas) donc rien n'est perdu.
-        path: 'phototheque',
-        loadComponent: () => import('./pages/phototheque/phototheque').then(m => m.Phototheque),
-        canActivate: [roleGuard('ROLE_ETUDIANT', 'ROLE_FORMATEUR')]
-    },
-    {
-        path: 'certificats',
-        loadComponent: () => import('./pages/certificats/certificats').then(m => m.Certificats),
-        canActivate: [roleGuard('ROLE_ETUDIANT', 'ROLE_FORMATEUR')]
-    },
-    {
-        path: 'cours',
-        loadComponent: () => import('./pages/mes-cours-etudiant/mes-cours-etudiant').then(m => m.MesCoursEtudiant),
-        canActivate: [roleGuard('ROLE_ETUDIANT')]
-    },
-    {
-        path: 'cours/:id',
-        loadComponent: () => import('./pages/cours-detail/cours-detail').then(m => m.CoursDetail),
-        canActivate: [roleGuard('ROLE_ETUDIANT')]
-    },
     {
         path: 'formateur',
         loadComponent: () => import('./layouts/formateur-layout/formateur-layout').then(m => m.FormateurLayout),
@@ -89,7 +62,6 @@ export const routes: Routes = [
             // Memes composants que les routes partagees ci-dessus (pas de duplication
             // de code ni de donnees) : accessibles ici pour que le formateur reste
             // dans son propre shell (sidebar) plutot que de basculer vers la navbar
-            // partagee. Voir Annonces.dansEspaceFormateur pour le detail.
             {
                 path: 'annonces',
                 loadComponent: () => import('./pages/annonces/annonces').then(m => m.Annonces)
@@ -147,6 +119,13 @@ export const routes: Routes = [
             {
                 path: 'ma-promotion',
                 loadComponent: () => import('./pages/ma-promotion/ma-promotion').then(m => m.MaPromotionPage)
+            },
+            {
+                // Catalogue de l'offre de formation. Seule rubrique de l'ancien
+                // parcours sans equivalent dans la barre laterale : deplacee ici
+                // plutot que retiree.
+                path: 'mes-formations',
+                loadComponent: () => import('./pages/mes-formations/mes-formations').then(m => m.MesFormations)
             },
             {
                 path: 'mes-evaluations',

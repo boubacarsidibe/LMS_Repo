@@ -40,6 +40,7 @@ export class EtudiantLayout implements OnInit, OnDestroy {
     { libelle: 'Annonces', lien: 'annonces', icone: 'campaign' },
     { libelle: 'Forum', lien: 'forum', icone: 'forum' },
     { libelle: 'Photothèque', lien: 'photheque', icone: 'photo_library' },
+    { libelle: 'Formations', lien: 'mes-formations', icone: 'school' },
     { libelle: 'Ma promotion', lien: 'ma-promotion', icone: 'groups' },
     { libelle: 'Mes évaluations', lien: 'mes-evaluations', icone: 'reviews' },
     { libelle: 'Mes résultats', lien: 'mes-resultats', icone: 'workspace_premium' },

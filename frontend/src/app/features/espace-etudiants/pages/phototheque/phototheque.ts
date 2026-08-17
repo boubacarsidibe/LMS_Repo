@@ -2,18 +2,16 @@ import { Component, OnInit, ViewChild, ElementRef, inject } from '@angular/core'
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { estDansEspaceFormateur } from '../../utils/contexte-navigation';
 import { Photo } from '../../models/photo';
 import { PhotoService } from '../../services/photo.service';
 import { Cohorte } from '../../models/cohorte';
 import { CohorteService } from '../../services/cohorte.service';
 import { Auth } from '../../../../core/auth/services/authService';
-import { EspaceNavbarComponent } from '../../../../shared/components/espace-navbar/espace-navbar.component';
 
 @Component({
   selector: 'app-phototheque',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, EspaceNavbarComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './phototheque.html',
   styleUrl: './phototheque.css',
 })
@@ -23,7 +21,6 @@ export class Phototheque implements OnInit {
   private router = inject(Router);
 
   // Voir Annonces pour le detail de ce mecanisme.
-  readonly dansEspaceFormateur = estDansEspaceFormateur(this.router);
 
   photos: Photo[] = [];
   cohortes: Cohorte[] = [];

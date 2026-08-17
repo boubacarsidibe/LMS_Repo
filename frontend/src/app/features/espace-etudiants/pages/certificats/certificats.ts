@@ -2,7 +2,6 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { estDansEspaceFormateur } from '../../utils/contexte-navigation';
 import { Certificat } from '../../models/certificat';
 import { CertificatService } from '../../services/certificat.service';
 import { Etudiant } from '../../models/etudiant';
@@ -10,12 +9,11 @@ import { EtudiantService } from '../../services/etudiant.service';
 import { Cohorte } from '../../models/cohorte';
 import { CohorteService } from '../../services/cohorte.service';
 import { Auth } from '../../../../core/auth/services/authService';
-import { EspaceNavbarComponent } from '../../../../shared/components/espace-navbar/espace-navbar.component';
 
 @Component({
   selector: 'app-certificats',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, EspaceNavbarComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './certificats.html',
   styleUrl: './certificats.css',
 })
@@ -24,7 +22,6 @@ export class Certificats implements OnInit {
   private router = inject(Router);
 
   // Voir Annonces pour le detail de ce mecanisme.
-  readonly dansEspaceFormateur = estDansEspaceFormateur(this.router);
 
   certificats: Certificat[] = [];
   etudiants: Etudiant[] = [];

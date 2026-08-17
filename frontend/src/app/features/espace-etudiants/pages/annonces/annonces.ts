@@ -2,17 +2,15 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { estDansEspaceFormateur } from '../../utils/contexte-navigation';
 import { Annonce } from '../../models/annonce';
 import { AnnonceService } from '../../services/annonce.service';
 import { Cohorte } from '../../models/cohorte';
 import { Auth } from '../../../../core/auth/services/authService';
-import { EspaceNavbarComponent } from '../../../../shared/components/espace-navbar/espace-navbar.component';
 
 @Component({
   selector: 'app-annonces',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, EspaceNavbarComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './annonces.html',
   styleUrl: './annonces.css',
 })
@@ -24,7 +22,6 @@ export class Annonces implements OnInit {
   // la navbar commune) ET en route imbriquee sous l'espace formateur (sa propre
   // sidebar tient lieu de navigation) : on masque la navbar commune dans ce
   // second cas pour ne pas dupliquer la navigation.
-  readonly dansEspaceFormateur = estDansEspaceFormateur(this.router);
 
   annonces: Annonce[] = [];
   afficherFormulaire = false;
