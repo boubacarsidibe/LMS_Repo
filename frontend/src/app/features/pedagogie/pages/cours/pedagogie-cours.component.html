@@ -2,8 +2,8 @@
      les autres espaces ayant chacun la leur (candidat, étudiant, admission). -->
 <header class="bg-surface-container-lowest border-b border-outline-variant">
   <div class="flex justify-between items-center w-full max-w-container-max mx-auto px-margin-desktop h-[72px]">
-    <a routerLink="/pedagogie" class="text-headline-sm text-secondary no-underline">
-      INPG<span class="text-primary"> Pédagogie</span>
+    <a routerLink="/pedagogie" class="text-2xl font-extrabold tracking-tight text-primary no-underline hover:opacity-80 transition-opacity">
+      INPG<span class="text-brand"> Pédagogie</span>
     </a>
     <div class="flex items-center gap-4">
       <div class="hidden sm:flex flex-col items-end leading-tight">
@@ -25,22 +25,22 @@
   <div class="flex flex-wrap justify-between items-end gap-stack-md">
     <div>
       <span class="text-label-sm text-on-surface-variant uppercase tracking-widest block mb-2">Offre d'enseignement</span>
-      <h1 class="text-headline-lg text-primary">Cours</h1>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Cours</h1>
     </div>
     <div class="flex gap-stack-md">
-      <div class="bg-surface-container-high px-4 py-3 rounded-xl min-w-[120px]">
+      <div class="bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-3 rounded-xl min-w-[120px]">
         <span class="text-label-sm text-on-surface-variant block">Cours</span>
         <span class="text-headline-md text-primary">{{ cours.length }}</span>
       </div>
-      <div class="bg-surface-container-high px-4 py-3 rounded-xl min-w-[120px]">
+      <div class="bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-3 rounded-xl min-w-[120px]">
         <span class="text-label-sm text-on-surface-variant block">Supports</span>
         <span class="text-headline-md text-primary">{{ totalSupports }}</span>
       </div>
-      <div class="bg-surface-container-high px-4 py-3 rounded-xl min-w-[120px]">
+      <div class="bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-3 rounded-xl min-w-[120px]">
         <span class="text-label-sm text-on-surface-variant block">Formations</span>
         <span class="text-headline-md text-primary">{{ formations.length }}</span>
       </div>
-      <div class="bg-surface-container-high px-4 py-3 rounded-xl min-w-[120px]">
+      <div class="bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-3 rounded-xl min-w-[120px]">
         <span class="text-label-sm text-on-surface-variant block">Promotions</span>
         <span class="text-headline-md text-primary">{{ promotions.length }}</span>
       </div>
@@ -48,8 +48,9 @@
   </div>
 
   <!-- Formulaire création / modification -->
-  <section *ngIf="formulaireOuvert" class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm">
-    <h2 class="text-headline-sm text-primary mb-6">
+  <section *ngIf="formulaireOuvert" class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm">
+    <h2 class="text-headline-sm text-primary flex items-center gap-2 mb-6">
+      <span class="material-symbols-outlined text-secondary">edit_note</span>
       {{ coursEnEdition ? 'Modifier le cours' : 'Nouveau cours' }}
     </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
@@ -92,7 +93,7 @@
   </section>
 
   <!-- Liste des cours -->
-  <section class="bg-surface-container-lowest rounded-xl p-stack-lg shadow-sm">
+  <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm">
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-headline-sm text-primary flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary">menu_book</span>
