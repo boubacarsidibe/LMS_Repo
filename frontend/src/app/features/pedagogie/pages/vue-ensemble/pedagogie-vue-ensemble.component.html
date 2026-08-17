@@ -1,0 +1,146 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header>
+    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
+      Offre d’enseignement
+    </span>
+    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Vue d’ensemble</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+      L’état du catalogue : ce qui est publié, ce qui reste à rattacher, ce qui manque encore
+      de contenu.
+    </p>
+  </header>
+
+  <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+
+  <ng-container *ngIf="!chargement">
+    <!-- Indicateurs -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter">
+      <a
+        *ngFor="let tuile of tuiles"
+        [routerLink]="tuile.lien"
+        class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
+        <div class="flex items-center gap-2 text-on-surface-variant">
+          <span class="material-symbols-outlined">{{ tuile.icone }}</span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider">{{ tuile.libelle }}</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ tuile.valeur }}</p>
+      </a>
+    </section>
+
+    <!-- Points d'attention -->
+    <section class="space-y-stack-md">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">priority_high</span>Points d’attention
+      </h2>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+        <!-- Cours hors programme : le plus couteux -->
+        <article
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg"
+          [class.border-error]="coursHorsProgramme.length > 0">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined" [class.text-error]="coursHorsProgramme.length > 0"
+              [class.text-on-surface-variant]="coursHorsProgramme.length === 0">link_off</span>
+            <span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+              Cours hors programme
+            </span>
+          </div>
+          <p class="font-headline-lg text-headline-lg mt-2 tabular-nums"
+             [class.text-error]="coursHorsProgramme.length > 0"
+             [class.text-on-surface]="coursHorsProgramme.length === 0">
+            {{ coursHorsProgramme.length }}
+          </p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+            <ng-container *ngIf="coursHorsProgramme.length > 0">
+              Rattachés à aucune formation, ils ne sont visibles d’aucun étudiant.
+            </ng-container>
+            <ng-container *ngIf="coursHorsProgramme.length === 0">
+              Tous les cours appartiennent à un programme.
+            </ng-container>
+          </p>
+          <ul *ngIf="coursHorsProgramme.length > 0" class="mt-3 space-y-1">
+            <li *ngFor="let c of coursHorsProgramme.slice(0, 4)" class="font-body-sm text-body-sm text-on-surface">
+              {{ c.code }} — {{ c.titre }}
+            </li>
+          </ul>
+          <a routerLink="../cours" class="inline-block mt-3 font-label-md text-label-md text-secondary hover:underline">
+            Ouvrir le catalogue
+          </a>
+        </article>
+
+        <!-- Cours sans ressource -->
+        <article class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+          <div class="flex items-center gap-2 text-on-surface-variant">
+            <span class="material-symbols-outlined">folder_off</span>
+            <span class="font-label-sm text-label-sm uppercase tracking-wider">Cours sans ressource</span>
+          </div>
+          <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">
+            {{ coursSansRessource.length }}
+          </p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+            Aucun support n’y a encore été déposé.
+          </p>
+        </article>
+
+        <!-- Promotions sans cours -->
+        <article class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+          <div class="flex items-center gap-2 text-on-surface-variant">
+            <span class="material-symbols-outlined">group_off</span>
+            <span class="font-label-sm text-label-sm uppercase tracking-wider">Promotions sans cours</span>
+          </div>
+          <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">
+            {{ promotionsSansCours.length }}
+          </p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+            Leur programme ne comporte encore aucun cours.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Derniers cours -->
+    <section class="space-y-stack-md">
+      <div class="flex items-center justify-between">
+        <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary">menu_book</span>Catalogue
+        </h2>
+        <a routerLink="../cours" class="font-label-md text-label-md text-secondary hover:underline">Tout voir</a>
+      </div>
+
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-outline-variant">
+                <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Code</th>
+                <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Intitulé</th>
+                <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Programme</th>
+                <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Ressources</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of cours.slice(0, 8)" class="border-b border-outline-variant/50 last:border-0">
+                <td class="px-stack-lg py-stack-md font-label-md text-label-md text-on-surface-variant">{{ c.code }}</td>
+                <td class="px-stack-lg py-stack-md font-label-md text-label-md text-on-surface">{{ c.titre }}</td>
+                <td class="px-stack-lg py-stack-md font-body-sm text-body-sm">
+                  <span *ngIf="c.promotions.length" class="text-on-surface-variant">
+                    {{ c.promotions.length }} promotion(s)
+                  </span>
+                  <span *ngIf="!c.promotions.length" class="text-error">Hors programme</span>
+                </td>
+                <td class="px-stack-lg py-stack-md text-right font-body-sm text-body-sm text-on-surface-variant tabular-nums">
+                  {{ c.nbRessources }}
+                </td>
+              </tr>
+              <tr *ngIf="cours.length === 0">
+                <td colspan="4" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+                  Aucun cours au catalogue.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

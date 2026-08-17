@@ -11,7 +11,9 @@ export interface Cours {
   nbRessources: number;
   progression: number;
   couleurBandeau: string;
-  cohortes: Cohorte[];
+  /** Promotions rattachées, telles que nommées par CoursDto. Le champ s'appelait
+   *  « cohortes » et ne correspondait donc a rien : il valait toujours undefined. */
+  promotions: Cohorte[];
   imageUrl?: string;
 }
 

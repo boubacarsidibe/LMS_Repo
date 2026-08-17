@@ -166,7 +166,7 @@ export class MesCours implements OnInit {
   ouvrirGestionCohortes(cours: Cours) {
     this.coursEnGestion = cours;
     this.gestionError = '';
-    this.cohorteIdsGestion = new Set((cours.cohortes || []).map(c => Number(c.id)));
+    this.cohorteIdsGestion = new Set((cours.promotions || []).map(c => Number(c.id)));
   }
 
   fermerGestionCohortes() {
@@ -428,7 +428,7 @@ export class MesCours implements OnInit {
   /** Idem pour les cohortes : seules celles rattachees a au moins un cours sont proposees. */
   get cohortesDisponibles(): Cohorte[] {
     const parId = new Map<string, Cohorte>();
-    this.cours.forEach(c => (c.cohortes || []).forEach(coh => parId.set(String(coh.id), coh)));
+    this.cours.forEach(c => (c.promotions || []).forEach(coh => parId.set(String(coh.id), coh)));
     return [...parId.values()];
   }
 
@@ -440,7 +440,7 @@ export class MesCours implements OnInit {
         || c.code.toLowerCase().includes(recherche);
       const correspondSemestre = !this.semestreSelectionne || c.semestre === this.semestreSelectionne;
       const correspondCohorte = !this.cohorteSelectionnee
-        || (c.cohortes || []).some(coh => String(coh.id) === this.cohorteSelectionnee);
+        || (c.promotions || []).some(coh => String(coh.id) === this.cohorteSelectionnee);
       return correspondRecherche && correspondSemestre && correspondCohorte;
     });
   }
