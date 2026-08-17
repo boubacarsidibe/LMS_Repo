@@ -6,6 +6,7 @@ import {
   CoursEtudiant,
   MaPromotion,
   SeanceEtudiant,
+  ReleveNotes,
   SupportEtudiant,
 } from '../models/scolarite.models';
 
@@ -25,6 +26,11 @@ export class ScolariteService {
   /** Promotion de l'étudiant et son matricule. */
   getMaPromotion(): Observable<MaPromotion> {
     return this.http.get<MaPromotion>(`${this.api}/ma-promotion`);
+  }
+
+  /** Relevé de notes : les résultats obtenus par l'étudiant, groupés par cours. */
+  getMesNotes(): Observable<ReleveNotes> {
+    return this.http.get<ReleveNotes>(`${this.api}/mes-notes`);
   }
 
   getMesCours(): Observable<CoursEtudiant[]> {

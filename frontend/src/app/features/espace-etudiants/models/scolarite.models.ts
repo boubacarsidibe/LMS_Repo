@@ -139,3 +139,36 @@ export interface SyntheseEvaluation {
   moyenne: number | null;
   nombreEvaluations: number;
 }
+
+/**
+ * Relevé de notes de l'étudiant, groupé par cours.
+ *
+ * <p>À ne pas confondre avec `maNote` de CoursEtudiant, qui porte l'appréciation
+ * que l'étudiant donne au cours — pas la note qu'il reçoit.
+ */
+export interface NoteModule {
+  id: number;
+  module: string;
+  note: number;
+  commentaire: string | null;
+  dateEvaluation: string | null;
+  coursId: number | null;
+  coursCode: string | null;
+  coursTitre: string | null;
+  formateurNom: string | null;
+}
+
+export interface NotesCours {
+  coursId: number;
+  coursCode: string;
+  coursTitre: string;
+  /** null si aucune note n'a encore été saisie dans ce cours. */
+  moyenne: number | null;
+  notes: NoteModule[];
+}
+
+export interface ReleveNotes {
+  moyenneGenerale: number | null;
+  nombreNotes: number;
+  parCours: NotesCours[];
+}

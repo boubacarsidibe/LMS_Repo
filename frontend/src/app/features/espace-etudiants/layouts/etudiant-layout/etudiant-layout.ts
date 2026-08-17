@@ -42,6 +42,7 @@ export class EtudiantLayout implements OnInit, OnDestroy {
     { libelle: 'Photothèque', lien: 'photheque', icone: 'photo_library' },
     { libelle: 'Ma promotion', lien: 'ma-promotion', icone: 'groups' },
     { libelle: 'Mes évaluations', lien: 'mes-evaluations', icone: 'reviews' },
+    { libelle: 'Mes résultats', lien: 'mes-resultats', icone: 'workspace_premium' },
     { libelle: 'Mon profil', lien: 'mon-profil', icone: 'account_circle' },
   ];
 

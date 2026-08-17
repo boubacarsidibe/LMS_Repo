@@ -1,7 +1,10 @@
 package inpg.sn.lms.espace_etudiant.controller;
 
 import java.util.List;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +21,14 @@ import inpg.sn.lms.auth.entity.Etudiant;
 import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.espace_etudiant.dto.CoursEtudiantDto;
+import inpg.sn.lms.espace_etudiant.dto.NoteModuleDto;
+import inpg.sn.lms.espace_etudiant.dto.ReleveNotesDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDetailDto;
 import inpg.sn.lms.espace_etudiant.dto.SeanceEtudiantDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportEtudiantDto;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
+import inpg.sn.lms.espace_etudiant.entity.NoteModule;
 import inpg.sn.lms.espace_etudiant.entity.ProgressionSupport;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.entity.Seance;
@@ -33,6 +39,7 @@ import inpg.sn.lms.espace_etudiant.repository.ProgressionSupportRepository;
 import inpg.sn.lms.espace_etudiant.repository.SeanceRepository;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
+import inpg.sn.lms.espace_etudiant.service.NoteModuleService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
@@ -69,11 +76,13 @@ public class ScolariteController {
     private final EvaluationCoursRepository evaluationRepository;
     private final EtudiantRepository etudiantRepository;
     private final HabilitationCoursService habilitation;
+    private final NoteModuleService noteModuleService;
 
     public ScolariteController(UtilisateurCourantService utilisateurCourant, MatriculeService matriculeService,
             CoursRepository coursRepository, SeanceRepository seanceRepository, SupportService supportService,
             ProgressionSupportRepository progressionRepository, EvaluationCoursRepository evaluationRepository,
-            EtudiantRepository etudiantRepository, HabilitationCoursService habilitation) {
+            EtudiantRepository etudiantRepository, HabilitationCoursService habilitation,
+            NoteModuleService noteModuleService) {
         this.habilitation = habilitation;
         this.utilisateurCourant = utilisateurCourant;
         this.matriculeService = matriculeService;
@@ -83,6 +92,66 @@ public class ScolariteController {
         this.progressionRepository = progressionRepository;
         this.evaluationRepository = evaluationRepository;
         this.etudiantRepository = etudiantRepository;
+        this.noteModuleService = noteModuleService;
+    }
+
+    /**
+     * Relevé de notes de l'étudiant connecté, groupé par cours.
+     *
+     * <p>Ces notes existaient depuis l'origine mais n'étaient exposées que par des
+     * endpoints réservés au formateur : l'étudiant ne pouvait pas consulter ses propres
+     * résultats. Aucun filtre par cours autorisé n'est appliqué — une note appartient à
+     * l'étudiant qui l'a obtenue, et la retirer parce que le programme a changé
+     * reviendrait à effacer son parcours.
+     */
+    @GetMapping("/mes-notes")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> mesNotes(Authentication authentication) {
+        Etudiant etudiant = utilisateurCourant.etudiant(authentication);
+        if (etudiant == null) {
+            return profilIntrouvable();
+        }
+        List<NoteModule> notes = noteModuleService.getByEtudiantId(etudiant.getId());
+
+        Map<Long, List<NoteModule>> parCours = notes.stream()
+                .filter(note -> note.getCours() != null)
+                .collect(Collectors.groupingBy(note -> note.getCours().getId(), LinkedHashMap::new,
+                        Collectors.toList()));
+
+        List<ReleveNotesDto.NotesCoursDto> groupes = parCours.values().stream()
+                .map(notesDuCours -> {
+                    Cours cours = notesDuCours.get(0).getCours();
+                    return new ReleveNotesDto.NotesCoursDto(
+                            cours.getId(),
+                            cours.getNom(),
+                            cours.getTitre(),
+                            moyenne(notesDuCours),
+                            notesDuCours.stream().map(this::toNoteDto).toList());
+                })
+                .toList();
+
+        return ResponseEntity.ok(new ReleveNotesDto(moyenne(notes), notes.size(), groupes));
+    }
+
+    /** Moyenne arrondie au dixième, {@code null} si la liste est vide. */
+    private Double moyenne(List<NoteModule> notes) {
+        return notes.isEmpty() ? null
+                : Math.round(notes.stream().mapToDouble(NoteModule::getNote).average().orElse(0) * 10) / 10.0;
+    }
+
+    private NoteModuleDto toNoteDto(NoteModule note) {
+        Cours cours = note.getCours();
+        return new NoteModuleDto(
+                note.getId(),
+                note.getModule(),
+                note.getNote(),
+                note.getCommentaire(),
+                note.getDateEvaluation() == null ? null
+                        : note.getDateEvaluation().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                cours == null ? null : cours.getId(),
+                cours == null ? null : cours.getNom(),
+                cours == null ? null : cours.getTitre(),
+                note.getFormateurNom());
     }
 
     /** Fiche de la promotion de l'étudiant, matricule compris. */

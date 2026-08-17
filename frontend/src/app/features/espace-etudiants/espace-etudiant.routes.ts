@@ -153,6 +153,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/mes-evaluations/mes-evaluations').then(m => m.MesEvaluations)
             },
             {
+                path: 'mes-resultats',
+                loadComponent: () => import('./pages/mes-resultats/mes-resultats').then(m => m.MesResultats)
+            },
+            {
                 path: 'mon-profil',
                 loadComponent: () => import('./pages/mon-profil-etudiant/mon-profil-etudiant').then(m => m.MonProfilEtudiant)
             }
