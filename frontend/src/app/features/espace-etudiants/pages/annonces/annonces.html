@@ -12,7 +12,7 @@
         Retrouvez ici les annonces, messages et mémos publiés par l'INPG à destination des étudiants et formateurs.
       </p>
     </div>
-    <button *ngIf="isFormateurRole" (click)="ouvrirFormulaire()" class="flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md shadow-md hover:shadow-lg transition-all active:scale-95 shrink-0">
+    <button *ngIf="isFormateurRole" (click)="ouvrirFormulaire()" class="flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md transition-all shrink-0">
       <span class="material-symbols-outlined text-[20px]">add_circle</span>
       Publier une annonce
     </button>
@@ -95,7 +95,7 @@
         <button type="button" (click)="fermerFormulaire()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
           Annuler
         </button>
-        <button [disabled]="isSubmitting" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
+        <button [disabled]="isSubmitting" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
           {{ isSubmitting ? 'Publication…' : 'Publier' }}
         </button>
       </div>

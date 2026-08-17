@@ -95,7 +95,7 @@ import { ScolariteService } from '../../services/scolarite.service';
         <a
           *ngFor="let c of coursFiltres"
           [routerLink]="['/espace-etudiant/mes-cours', c.id]"
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:border-secondary transition-colors flex flex-col"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:border-secondary transition-colors flex flex-col shadow-sm"
         >
           <div class="h-28 bg-primary-container flex items-center justify-center">
             <img

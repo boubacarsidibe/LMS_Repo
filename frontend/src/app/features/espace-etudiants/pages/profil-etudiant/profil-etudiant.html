@@ -136,7 +136,7 @@
         </div>
         <button [disabled]="!nouvelleNoteCoursId || !nouvelleNoteModule.trim() || nouvelleNoteValeur === null || isSavingNote"
                 (click)="ajouterNote()"
-                class="px-6 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
+                class="px-6 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
           {{ isSavingNote ? 'Enregistrement…' : 'Ajouter la note' }}
         </button>
         <p *ngIf="noteErrorMessage" class="text-body-sm text-error mt-2">{{ noteErrorMessage }}</p>
@@ -153,7 +153,7 @@
           <option [ngValue]="null">Sélectionnez une cohorte...</option>
           <option *ngFor="let c of cohortes" [ngValue]="c.id">{{ c.libelle }}{{ c.annee ? ' (' + c.annee + ')' : '' }}</option>
         </select>
-        <button [disabled]="!cohorteSelectionneeId || isSaving" (click)="assignerCohorte()" class="px-6 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
+        <button [disabled]="!cohorteSelectionneeId || isSaving" (click)="assignerCohorte()" class="px-6 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
           {{ isSaving ? 'Enregistrement…' : 'Affecter' }}
         </button>
       </div>

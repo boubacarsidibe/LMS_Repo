@@ -79,7 +79,7 @@ import { CommunicationService } from '../../services/communication.service';
         <form
           *ngIf="!sujet.clos"
           (ngSubmit)="repondre()"
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg space-y-3"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg space-y-3 shadow-sm"
         >
           <label for="reponse" class="font-label-md text-label-md text-on-surface">Répondre</label>
           <textarea

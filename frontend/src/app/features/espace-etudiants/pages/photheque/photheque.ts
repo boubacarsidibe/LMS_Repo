@@ -37,7 +37,7 @@ import { environment } from '../../../../../environments/environment';
           *ngFor="let a of albums"
           type="button"
           (click)="ouvrir(a)"
-          class="text-left bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:border-secondary transition-colors"
+          class="text-left bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden hover:border-secondary transition-colors shadow-sm"
         >
           <div class="h-40 bg-surface-container flex items-center justify-center overflow-hidden">
             <img

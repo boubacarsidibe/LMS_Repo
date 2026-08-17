@@ -14,7 +14,7 @@
     </div>
     <div class="flex gap-stack-md">
       <button type="button" (click)="exporter()"
-              class="flex items-center gap-2 px-6 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container transition-colors">
+              class="flex items-center gap-2 px-6 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container transition-colors shadow-sm">
         <span class="material-symbols-outlined text-[20px]" aria-hidden="true">download</span>
         Exporter (CSV)
       </button>
@@ -124,7 +124,7 @@
   <!-- Grille des avis -->
   <div *ngIf="!chargement && !erreur" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-gutter">
     <div *ngFor="let r of retoursFiltres"
-         class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 flex flex-col justify-between hover:translate-y-[-4px] transition-transform duration-300 relative"
+         class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/30 flex flex-col justify-between hover:translate-y-[-4px] transition-transform duration-300 relative shadow-sm"
          [class.border-l-4]="r.statut === 'action-requise'"
          [class.border-l-error]="r.statut === 'action-requise'">
 

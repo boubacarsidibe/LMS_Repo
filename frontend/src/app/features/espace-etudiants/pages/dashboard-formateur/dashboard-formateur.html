@@ -15,11 +15,11 @@
       </p>
     </div>
     <div class="col-span-12 lg:col-span-4 flex justify-end gap-stack-md pb-1">
-      <div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col min-w-[140px]">
+      <div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col min-w-[140px] shadow-sm">
         <span class="font-label-sm text-label-sm text-on-surface-variant">Étudiants Suivis</span>
         <span class="font-headline-md text-headline-md text-on-surface">{{ chargementEtudiants ? '—' : mesEtudiants.length }}</span>
       </div>
-      <div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col min-w-[140px]">
+      <div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex flex-col min-w-[140px] shadow-sm">
         <span class="font-label-sm text-label-sm text-on-surface-variant">Cours Actifs</span>
         <span class="font-headline-md text-headline-md text-on-surface">{{ chargementCours ? '—' : mesCours.length }}</span>
       </div>
@@ -78,7 +78,7 @@
           </div>
         </div>
       </div>
-      <button routerLink="/espace-etudiant/formateur/mes-cours" class="mt-8 w-full py-4 bg-secondary text-on-secondary font-headline-sm text-headline-sm rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm flex items-center justify-center gap-2">
+      <button routerLink="/espace-etudiant/formateur/mes-cours" class="mt-8 w-full py-4 bg-secondary text-on-secondary font-headline-sm text-headline-sm rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2">
         <span class="material-symbols-outlined">add_circle</span>
         Créer une nouvelle ressource
       </button>

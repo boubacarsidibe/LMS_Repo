@@ -37,7 +37,7 @@ import { ScolariteService } from '../../services/scolarite.service';
           <ul class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
             <li
               *ngFor="let c of aEvaluer"
-              class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg flex items-center justify-between gap-4"
+              class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg flex items-center justify-between gap-4 shadow-sm"
             >
               <div class="min-w-0">
                 <p class="font-label-sm text-label-sm text-on-surface-variant">{{ c.code }}</p>
@@ -67,7 +67,7 @@ import { ScolariteService } from '../../services/scolarite.service';
           <ul *ngIf="evaluations.length > 0" class="space-y-base">
             <li
               *ngFor="let e of evaluations"
-              class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg"
+              class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm"
             >
               <div class="flex flex-wrap items-center gap-3">
                 <a

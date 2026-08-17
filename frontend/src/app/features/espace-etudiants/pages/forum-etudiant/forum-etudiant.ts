@@ -40,7 +40,7 @@ import { ScolariteService } from '../../services/scolarite.service';
       <form
         *ngIf="formulaireOuvert"
         (ngSubmit)="ouvrirSujet()"
-        class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg space-y-3"
+        class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg space-y-3 shadow-sm"
       >
         <div>
           <label for="titre" class="font-label-md text-label-md text-on-surface">Titre</label>
@@ -102,7 +102,7 @@ import { ScolariteService } from '../../services/scolarite.service';
       <ul *ngIf="!chargement && sujets.length > 0" class="space-y-base">
         <li
           *ngFor="let s of sujets"
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant hover:border-secondary transition-colors"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant hover:border-secondary transition-colors shadow-sm"
         >
           <a [routerLink]="['/espace-etudiant/forum', s.id]" class="block p-stack-lg">
             <div class="flex flex-wrap items-center gap-2">

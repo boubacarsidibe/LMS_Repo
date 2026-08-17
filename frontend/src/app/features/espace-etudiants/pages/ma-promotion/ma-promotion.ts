@@ -33,7 +33,7 @@ import { ScolariteService } from '../../services/scolarite.service';
 
       <ng-container *ngIf="!chargement && promotion">
         <section
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm"
         >
           <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -86,7 +86,7 @@ import { ScolariteService } from '../../services/scolarite.service';
 
         <section
           *ngIf="promotion.formationIntitule"
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm"
         >
           <h2 class="font-headline-sm text-headline-sm text-on-surface">Formation suivie</h2>
           <p class="font-label-md text-label-md text-on-surface mt-2">
@@ -103,7 +103,7 @@ import { ScolariteService } from '../../services/scolarite.service';
 
         <section
           *ngIf="promotion.programme"
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm"
         >
           <h2 class="font-headline-sm text-headline-sm text-on-surface">Programme</h2>
           <p class="font-body-md text-body-md text-on-surface-variant mt-2 whitespace-pre-line">
@@ -113,7 +113,7 @@ import { ScolariteService } from '../../services/scolarite.service';
 
         <section
           *ngIf="promotion.activitesParascolaires"
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm"
         >
           <h2 class="font-headline-sm text-headline-sm text-on-surface">
             Activités, sorties et visites

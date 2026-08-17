@@ -63,7 +63,7 @@ interface CaseCalendrier {
 
       <section
         *ngIf="!chargement && seances.length > 0"
-        class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden"
+        class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden shadow-sm"
       >
         <div class="grid grid-cols-7 bg-surface-container-low border-b border-outline-variant">
           <div
@@ -108,7 +108,7 @@ interface CaseCalendrier {
         <ul class="space-y-base">
           <li
             *ngFor="let s of seancesDuMois"
-            class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-md flex flex-wrap items-center gap-4"
+            class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-md flex flex-wrap items-center gap-4 shadow-sm"
           >
             <span
               class="px-2 py-0.5 rounded-full font-label-sm text-label-sm"

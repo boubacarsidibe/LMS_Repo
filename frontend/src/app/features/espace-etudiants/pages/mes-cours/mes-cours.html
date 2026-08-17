@@ -12,7 +12,7 @@
         <h1 class="font-display text-headline-lg text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
         <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos cohortes en temps réel.</p>
       </div>
-      <button routerLink="/espace-etudiant/formateur/creer-cours" class="group flex items-center gap-3 bg-secondary text-on-secondary px-6 py-4 rounded-xl font-label-md text-label-md hover:bg-on-secondary-container transition-all shadow-md hover:shadow-xl active:scale-95">
+      <button routerLink="/espace-etudiant/formateur/creer-cours" class="group flex items-center gap-3 bg-secondary text-on-secondary px-6 py-4 rounded-xl font-label-md text-label-md hover:bg-on-secondary-container transition-all">
         <span class="material-symbols-outlined">add_circle</span>
         Créer un nouveau cours / module
       </button>
@@ -242,7 +242,7 @@
 
             <p *ngIf="uploadMessage" class="text-body-sm text-secondary font-medium">{{ uploadMessage }}</p>
             <p *ngIf="uploadError" class="text-body-sm text-error">{{ uploadError }}</p>
-            <button [disabled]="isUploading || !cours.length" class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all shadow-md mt-4 disabled:opacity-60 disabled:cursor-not-allowed" type="submit">
+            <button [disabled]="isUploading || !cours.length" class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all mt-4 disabled:opacity-60 disabled:cursor-not-allowed" type="submit">
                 {{ isUploading ? 'Publication…' : 'Publier la ressource' }}
             </button>
             </form>

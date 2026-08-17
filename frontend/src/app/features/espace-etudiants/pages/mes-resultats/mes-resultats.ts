@@ -38,7 +38,7 @@ import { ScolariteService } from '../../services/scolarite.service';
         <!-- Synthèse -->
         <section class="grid grid-cols-1 sm:grid-cols-3 gap-gutter">
           <article
-            class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant"
+            class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant shadow-sm"
           >
             <div class="flex items-center gap-2 text-on-surface-variant">
               <span class="material-symbols-outlined text-[20px]">grade</span>
@@ -51,7 +51,7 @@ import { ScolariteService } from '../../services/scolarite.service';
             </p>
           </article>
           <article
-            class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant"
+            class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant shadow-sm"
           >
             <div class="flex items-center gap-2 text-on-surface-variant">
               <span class="material-symbols-outlined text-[20px]">fact_check</span>
@@ -62,7 +62,7 @@ import { ScolariteService } from '../../services/scolarite.service';
             </p>
           </article>
           <article
-            class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant"
+            class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant shadow-sm"
           >
             <div class="flex items-center gap-2 text-on-surface-variant">
               <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
@@ -87,7 +87,7 @@ import { ScolariteService } from '../../services/scolarite.service';
 
           <article
             *ngFor="let cours of parCours"
-            class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden"
+            class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden shadow-sm"
           >
             <header
               class="flex items-center justify-between gap-4 px-stack-lg py-stack-md border-b border-outline-variant"
@@ -155,7 +155,7 @@ import { ScolariteService } from '../../services/scolarite.service';
           <ul *ngIf="certificats.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
             <li
               *ngFor="let certificat of certificats"
-              class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant flex items-start justify-between gap-4"
+              class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant flex items-start justify-between gap-4 shadow-sm"
             >
               <div class="min-w-0">
                 <p class="font-label-md text-label-md text-on-surface">

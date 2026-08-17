@@ -32,7 +32,7 @@ import { environment } from '../../../../../environments/environment';
 
       <ng-container *ngIf="!chargement && cours">
         <header
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm"
         >
           <p class="font-label-sm text-label-sm text-on-surface-variant">
             {{ cours.code }} · {{ cours.semestre }} · {{ cours.volumeHoraire }} h
@@ -77,7 +77,7 @@ import { environment } from '../../../../../environments/environment';
             <ul *ngIf="supports.length > 0" class="space-y-base">
               <li
                 *ngFor="let s of supports"
-                class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-md flex items-center gap-4"
+                class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-md flex items-center gap-4 shadow-sm"
               >
                 <span
                   class="material-symbols-outlined text-[22px]"
@@ -118,7 +118,7 @@ import { environment } from '../../../../../environments/environment';
           <aside class="space-y-stack-md">
             <h2 class="font-headline-sm text-headline-sm text-on-surface">Mon évaluation</h2>
             <div
-              class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg space-y-3"
+              class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg space-y-3 shadow-sm"
             >
               <p class="font-body-sm text-body-sm text-on-surface-variant">
                 Votre avis alimente le suivi qualité de la formation.
@@ -173,7 +173,7 @@ import { environment } from '../../../../../environments/environment';
 
             <div
               *ngIf="synthese"
-              class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg"
+              class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm"
             >
               <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
                 Satisfaction du groupe

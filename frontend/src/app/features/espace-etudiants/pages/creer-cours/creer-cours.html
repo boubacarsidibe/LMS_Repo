@@ -83,7 +83,7 @@
         <button type="button" (click)="annuler()" class="flex-1 py-4 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
           Annuler
         </button>
-        <button [disabled]="isSubmitting" type="submit" class="flex-1 py-4 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all shadow-md disabled:opacity-60">
+        <button [disabled]="isSubmitting" type="submit" class="flex-1 py-4 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
           {{ isSubmitting ? 'Création…' : 'Créer le cours' }}
         </button>
       </div>
