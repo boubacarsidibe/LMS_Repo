@@ -8,6 +8,7 @@ import {
   Annonce,
   CoursEtudiant,
   MaPromotion,
+  Reprise,
   SeanceEtudiant,
 } from '../../models/scolarite.models';
 import { CommunicationService } from '../../services/communication.service';
@@ -52,6 +53,34 @@ import { ScolariteService } from '../../services/scolarite.service';
               {{ tuile.valeur }}
             </p>
           </article>
+        </section>
+
+        <!-- Reprendre ou l'etudiant s'est arrete -->
+        <section *ngIf="reprises.length > 0" class="space-y-stack-md">
+          <h2 class="font-headline-sm text-headline-sm text-on-surface">Reprendre où vous en étiez</h2>
+          <ul class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-gutter">
+            <li *ngFor="let reprise of reprises">
+              <a
+                [routerLink]="['/espace-etudiant/mes-cours', reprise.coursId]"
+                class="h-full bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant hover:border-secondary transition-colors flex items-start gap-3 no-underline"
+              >
+                <span class="material-symbols-outlined text-on-surface-variant shrink-0">{{
+                  icone(reprise)
+                }}</span>
+                <div class="min-w-0">
+                  <p class="font-label-md text-label-md text-on-surface truncate">
+                    {{ reprise.supportTitre }}
+                  </p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                    {{ reprise.coursTitre }}
+                  </p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                    Ouvert le {{ reprise.dateConsultation | date: 'dd/MM/yyyy' }}
+                  </p>
+                </div>
+              </a>
+            </li>
+          </ul>
         </section>
 
         <!-- Progression par cours -->
@@ -182,6 +211,7 @@ export class TableauBord implements OnInit {
   cours: CoursEtudiant[] = [];
   prochainesSeances: SeanceEtudiant[] = [];
   dernieresAnnonces: Annonce[] = [];
+  reprises: Reprise[] = [];
   private nbNonLues = 0;
 
   constructor(
@@ -195,8 +225,9 @@ export class TableauBord implements OnInit {
       cours: this.scolarite.getMesCours(),
       calendrier: this.scolarite.getMonCalendrier(),
       annonces: this.communication.getAnnonces(),
+      reprises: this.scolarite.getReprendre(),
     }).subscribe({
-      next: ({ promotion, cours, calendrier, annonces }) => {
+      next: ({ promotion, cours, calendrier, annonces, reprises }) => {
         this.libellePromotion = (promotion as MaPromotion).promotion
           ? ((promotion as MaPromotion).promotion as { libelle?: string }).libelle ?? ''
           : '';
@@ -206,6 +237,8 @@ export class TableauBord implements OnInit {
           .filter((s) => new Date(s.dateHeure).getTime() >= maintenant)
           .slice(0, 4);
         this.dernieresAnnonces = annonces.slice(0, 4);
+        // Trois suffisent : au-dela, la reprise cesse d'etre un raccourci.
+        this.reprises = (reprises ?? []).slice(0, 3);
         this.nbNonLues = annonces.filter((a) => !a.lue).length;
         this.chargement = false;
       },
@@ -228,7 +261,19 @@ export class TableauBord implements OnInit {
     ];
   }
 
-  icone(annonce: Annonce): string {
+  /** Pictogramme d'une ressource, selon son type declare. */
+  icone(element: Annonce | Reprise): string {
+    if ('supportId' in element) {
+      const type = (element.typeRessource || '').toUpperCase();
+      if (type.includes('VIDEO')) return 'play_circle';
+      if (type.includes('PDF') || type.includes('DOCUMENT')) return 'picture_as_pdf';
+      if (type.includes('LIEN') || type.includes('URL')) return 'link';
+      return 'description';
+    }
+    return this.iconeAnnonce(element);
+  }
+
+  private iconeAnnonce(annonce: Annonce): string {
     switch (annonce.type) {
       case 'MEMO':
         return 'sticky_note_2';

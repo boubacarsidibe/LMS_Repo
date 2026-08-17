@@ -172,3 +172,20 @@ export interface ReleveNotes {
   nombreNotes: number;
   parCours: NotesCours[];
 }
+
+/**
+ * Support recemment ouvert, propose pour reprendre son travail.
+ *
+ * <p>Un suivi equivalent vivait dans le localStorage du navigateur : il enregistrait
+ * des formations du catalogue, pas le travail reel, et disparaissait au changement
+ * d'appareil. La trace est desormais serveur.
+ */
+export interface Reprise {
+  supportId: number;
+  supportTitre: string;
+  typeRessource: string | null;
+  url: string | null;
+  coursId: number;
+  coursTitre: string;
+  dateConsultation: string;
+}

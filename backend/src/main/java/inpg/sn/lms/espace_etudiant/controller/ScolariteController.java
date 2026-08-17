@@ -24,6 +24,7 @@ import inpg.sn.lms.espace_etudiant.dto.CoursEtudiantDto;
 import inpg.sn.lms.espace_etudiant.dto.NoteModuleDto;
 import inpg.sn.lms.espace_etudiant.dto.ReleveNotesDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDetailDto;
+import inpg.sn.lms.espace_etudiant.dto.RepriseDto;
 import inpg.sn.lms.espace_etudiant.dto.SeanceEtudiantDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportEtudiantDto;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
@@ -152,6 +153,46 @@ public class ScolariteController {
                 cours == null ? null : cours.getNom(),
                 cours == null ? null : cours.getTitre(),
                 note.getFormateurNom());
+    }
+
+    /**
+     * Derniers supports ouverts, pour reprendre son travail là où il s'est arrêté.
+     *
+     * <p>Contrairement au relevé de notes, la liste est <strong>filtrée</strong> sur les
+     * cours autorisés : une note est un résultat acquis, qu'on ne retire pas parce que
+     * le programme a changé, tandis qu'une reprise est un raccourci de navigation — elle
+     * doit mener quelque part. Proposer un cours devenu inaccessible n'offrirait qu'un
+     * lien vers un refus.
+     */
+    @GetMapping("/reprendre")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> reprendre(Authentication authentication) {
+        Etudiant etudiant = utilisateurCourant.etudiant(authentication);
+        if (etudiant == null) {
+            return profilIntrouvable();
+        }
+        List<Long> coursAutorises = habilitation.idsCoursAutorises(etudiant);
+        List<RepriseDto> reprises = progressionRepository
+                .findTop5ByEtudiantIdOrderByDateConsultationDesc(etudiant.getId()).stream()
+                .filter(progression -> progression.getSupport() != null
+                        && progression.getSupport().getCours() != null
+                        && coursAutorises.contains(progression.getSupport().getCours().getId()))
+                .map(this::toRepriseDto)
+                .toList();
+        return ResponseEntity.ok(reprises);
+    }
+
+    private RepriseDto toRepriseDto(ProgressionSupport progression) {
+        SupportCours support = progression.getSupport();
+        Cours cours = support.getCours();
+        return new RepriseDto(
+                support.getId(),
+                support.getTitre(),
+                support.getTypeRessource(),
+                support.getUrl(),
+                cours.getId(),
+                cours.getTitre(),
+                progression.getDateConsultation());
     }
 
     /** Fiche de la promotion de l'étudiant, matricule compris. */
