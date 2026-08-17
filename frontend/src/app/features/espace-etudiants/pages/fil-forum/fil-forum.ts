@@ -12,7 +12,7 @@ import { CommunicationService } from '../../services/communication.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, UiSpinnerComponent],
   template: `
-    <div class="p-margin-desktop space-y-stack-lg max-w-4xl">
+    <div class="p-margin-desktop space-y-stack-lg max-w-4xl mx-auto">
       <a
         routerLink="/espace-etudiant/forum"
         class="inline-flex items-center gap-1 font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors"

@@ -19,7 +19,7 @@ import { environment } from '../../../../../environments/environment';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, UiSpinnerComponent, UiEmptyStateComponent],
   template: `
-    <div class="p-margin-desktop space-y-stack-lg">
+    <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <a
         routerLink="/espace-etudiant/mes-cours"
         class="inline-flex items-center gap-1 font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors"

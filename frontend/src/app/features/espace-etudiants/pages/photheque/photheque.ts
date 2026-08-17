@@ -12,7 +12,7 @@ import { environment } from '../../../../../environments/environment';
   standalone: true,
   imports: [CommonModule, UiSpinnerComponent, UiEmptyStateComponent],
   template: `
-    <div class="p-margin-desktop space-y-stack-lg">
+    <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header>
         <h1 class="font-headline-lg text-headline-lg text-on-surface">Photothèque</h1>
         <p class="font-body-md text-body-md text-on-surface-variant mt-1">

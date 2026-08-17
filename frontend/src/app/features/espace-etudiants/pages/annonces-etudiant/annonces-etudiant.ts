@@ -16,7 +16,7 @@ import { CommunicationService } from '../../services/communication.service';
   standalone: true,
   imports: [CommonModule, UiSpinnerComponent, UiEmptyStateComponent],
   template: `
-    <div class="p-margin-desktop space-y-stack-lg">
+    <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header class="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 class="font-headline-lg text-headline-lg text-on-surface">Communications</h1>

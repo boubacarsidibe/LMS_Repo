@@ -24,7 +24,7 @@ import { ScolariteService } from '../../services/scolarite.service';
   standalone: true,
   imports: [CommonModule, RouterLink, UiSpinnerComponent, UiEmptyStateComponent],
   template: `
-    <div class="p-margin-desktop space-y-stack-lg">
+    <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header>
         <h1 class="font-headline-lg text-headline-lg text-on-surface">Mes résultats</h1>
         <p class="font-body-md text-body-md text-on-surface-variant mt-1">
