@@ -24,7 +24,7 @@ interface CaseCalendrier {
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header class="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 class="font-headline-lg text-headline-lg text-on-surface">Calendrier académique</h1>
+          <h1 class="font-display text-display text-on-surface leading-tight">Calendrier académique</h1>
           <p class="font-body-md text-body-md text-on-surface-variant mt-1">
             Les séances de vos cours.
           </p>

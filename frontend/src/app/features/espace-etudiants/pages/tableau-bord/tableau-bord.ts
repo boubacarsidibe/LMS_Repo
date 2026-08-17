@@ -28,7 +28,7 @@ import { ScolariteService } from '../../services/scolarite.service';
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header>
-        <h1 class="font-headline-lg text-headline-lg text-on-surface">Tableau de bord</h1>
+        <h1 class="font-display text-display text-on-surface leading-tight">Tableau de bord</h1>
         <p class="font-body-md text-body-md text-on-surface-variant mt-1">
           {{ libellePromotion || 'Votre scolarité en un coup d’œil' }}
         </p>

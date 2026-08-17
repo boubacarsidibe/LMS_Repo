@@ -16,7 +16,7 @@ import { ScolariteService } from '../../services/scolarite.service';
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-4xl mx-auto">
       <header>
-        <h1 class="font-headline-lg text-headline-lg text-on-surface">Ma promotion</h1>
+        <h1 class="font-display text-display text-on-surface leading-tight">Ma promotion</h1>
         <p class="font-body-md text-body-md text-on-surface-variant mt-1">
           Votre cursus et les informations archivées par l’INPG.
         </p>

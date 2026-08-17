@@ -23,7 +23,7 @@ import { ScolariteService } from '../../services/scolarite.service';
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header class="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 class="font-headline-lg text-headline-lg text-on-surface">Forum</h1>
+          <h1 class="font-display text-display text-on-surface leading-tight">Forum</h1>
           <p class="font-body-md text-body-md text-on-surface-variant mt-1">
             Échangez avec votre promotion et vos formateurs.
           </p>

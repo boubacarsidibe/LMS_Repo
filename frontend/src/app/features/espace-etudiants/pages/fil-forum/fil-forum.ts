@@ -25,7 +25,7 @@ import { CommunicationService } from '../../services/communication.service';
 
       <ng-container *ngIf="!chargement && sujet">
         <header class="border-b border-outline-variant pb-4">
-          <h1 class="font-headline-lg text-headline-lg text-on-surface">{{ sujet.titre }}</h1>
+          <h1 class="font-display text-display text-on-surface leading-tight">{{ sujet.titre }}</h1>
           <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
             {{ sujet.coursTitre || 'Salon général' }} · ouvert par {{ sujet.auteur }} ·
             {{ sujet.dateCreation | date: 'd MMMM y' }}

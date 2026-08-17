@@ -14,7 +14,7 @@ import { environment } from '../../../../../environments/environment';
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header>
-        <h1 class="font-headline-lg text-headline-lg text-on-surface">Photothèque</h1>
+        <h1 class="font-display text-display text-on-surface leading-tight">Photothèque</h1>
         <p class="font-body-md text-body-md text-on-surface-variant mt-1">
           Sorties, visites et temps forts de la vie de l’institut.
         </p>
