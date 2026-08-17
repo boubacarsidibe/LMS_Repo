@@ -1,0 +1,98 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header class="flex items-start justify-between gap-stack-md flex-wrap">
+    <div>
+      <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Scolarité</span>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Certificats</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+        Les attestations délivrées par l’institut, et le registre de leurs références.
+      </p>
+    </div>
+    <button type="button" (click)="ouvrirFormulaire()"
+            class="shrink-0 flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors">
+      <span class="material-symbols-outlined">workspace_premium</span>Délivrer un certificat
+    </button>
+  </header>
+
+  <p *ngIf="messageSucces" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">{{ messageSucces }}</p>
+  <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
+
+  <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+
+  <div *ngIf="!chargement" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-outline-variant">
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Référence</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Étudiant</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Intitulé</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Promotion</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Délivré le</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of certificats" class="border-b border-outline-variant/50 last:border-0">
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ c.reference }}</td>
+            <td class="px-stack-lg py-stack-md font-label-md text-label-md text-on-surface">{{ c.etudiantNom }}</td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface">{{ c.intituleFormation }}</td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant">{{ c.cohorteLibelle || '—' }}</td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ c.dateEmission || '—' }}</td>
+          </tr>
+          <tr *ngIf="certificats.length === 0">
+            <td colspan="5" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+              Aucun certificat délivré.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="formulaireOuvert" class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="formulaireOuvert = false">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm w-full max-w-lg" (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">workspace_premium</span>Délivrer un certificat
+      </h2>
+      <button type="button" (click)="formulaireOuvert = false" aria-label="Fermer" class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+    <div class="p-stack-lg space-y-stack-md">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Étudiant</span>
+        <select [(ngModel)]="etudiantId" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+          <option [ngValue]="null">Choisissez un étudiant…</option>
+          <option *ngFor="let e of etudiants" [ngValue]="e.id">{{ e.nom }} — {{ e.cohorte }}</option>
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Intitulé porté sur le certificat</span>
+        <input type="text" [(ngModel)]="intitule" placeholder="Master Pétrole & Gaz"
+               class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Promotion (facultative)</span>
+        <select [(ngModel)]="promotionId" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+          <option [ngValue]="null">Celle de l’étudiant</option>
+          <option *ngFor="let p of promotions" [ngValue]="p.id">{{ p.libelle }}</option>
+        </select>
+      </label>
+
+      <p class="font-body-sm text-body-sm text-on-surface-variant">
+        Le certificat est délivré au nom de l’institut : il porte
+        « INPG — Direction pédagogique », et non votre nom.
+      </p>
+
+      <div class="flex gap-stack-md pt-2">
+        <button type="button" (click)="formulaireOuvert = false" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Annuler</button>
+        <button type="button" [disabled]="!saisieValide || enregistrement" (click)="delivrer()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+          {{ enregistrement ? 'Délivrance…' : 'Délivrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -36,10 +36,10 @@ export class PedagogieLayoutComponent implements OnInit {
   readonly navigation: EntreeNavigation[] = [
     { libelle: 'Vue d’ensemble', lien: 'vue-ensemble', icone: 'dashboard' },
     { libelle: 'Cours', lien: 'cours', icone: 'menu_book' },
-    { libelle: 'Formations', lien: 'formations', icone: 'school' },
     { libelle: 'Promotions', lien: 'promotions', icone: 'groups' },
     { libelle: 'Étudiants', lien: 'etudiants', icone: 'badge' },
     { libelle: 'Certificats', lien: 'certificats', icone: 'workspace_premium' },
+    { libelle: 'Suivi qualité', lien: 'qualite', icone: 'analytics' },
   ];
 
   ngOnInit(): void {

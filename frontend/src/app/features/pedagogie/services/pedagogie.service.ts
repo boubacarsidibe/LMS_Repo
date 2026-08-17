@@ -70,4 +70,150 @@ export class PedagogieService {
   supprimerSupport(id: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/supports/${id}`);
   }
+
+  // ===================== Promotions =====================
+
+  creerPromotion(données: PromotionSaisie): Observable<PromotionDetail> {
+    return this.http.post<PromotionDetail>(`${this.api}/promotions`, données);
+  }
+
+  modifierPromotion(id: number, données: PromotionSaisie): Observable<PromotionDetail> {
+    return this.http.put<PromotionDetail>(`${this.api}/promotions/${id}`, données);
+  }
+
+  /** Refusé (409) tant que des étudiants sont rattachés à la promotion. */
+  supprimerPromotion(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/promotions/${id}`);
+  }
+
+  // ===================== Étudiants =====================
+
+  getEtudiants(recherche?: string): Observable<EtudiantScolarite[]> {
+    const url = recherche?.trim()
+      ? `${this.api}/etudiants?recherche=${encodeURIComponent(recherche.trim())}`
+      : `${this.api}/etudiants`;
+    return this.http.get<EtudiantScolarite[]>(url);
+  }
+
+  creerEtudiant(données: EtudiantSaisie): Observable<EtudiantScolarite> {
+    return this.http.post<EtudiantScolarite>(`${this.api}/etudiants`, données);
+  }
+
+  /** `promotionId` à null détache l'étudiant de sa promotion. */
+  affecterPromotion(etudiantId: number, promotionId: number | null): Observable<EtudiantScolarite> {
+    return this.http.put<EtudiantScolarite>(`${this.api}/etudiants/${etudiantId}/promotion`, { promotionId });
+  }
+
+  /** Import CSV tolérant : les lignes invalides sont rejetées une à une, pas en bloc. */
+  importerEtudiants(csv: string, promotionId: number | null): Observable<ResultatImport> {
+    return this.http.post<ResultatImport>(`${this.api}/etudiants/import`, { csv, promotionId });
+  }
+
+  // ===================== Certificats =====================
+
+  getCertificats(): Observable<Certificat[]> {
+    return this.http.get<Certificat[]>(`${this.api}/certificats`);
+  }
+
+  delivrerCertificat(etudiantId: number, intituleFormation: string, cohorteId: number | null): Observable<Certificat> {
+    return this.http.post<Certificat>(`${this.api}/certificats`, { etudiantId, intituleFormation, cohorteId });
+  }
+
+  // ===================== Qualité et rappels =====================
+
+  getQualite(): Observable<Qualite> {
+    return this.http.get<Qualite>(`${this.api}/qualite`);
+  }
+
+  envoyerRappel(objet: string, message: string, etudiantIds: number[]): Observable<ResultatRappel> {
+    return this.http.post<ResultatRappel>(`${this.api}/rappels`, { objet, message, etudiantIds });
+  }
+}
+
+export interface PromotionSaisie {
+  code: string;
+  libelle: string;
+  formationId: number | null;
+  dateDebut?: string | null;
+  dateFin?: string | null;
+  programme?: string | null;
+  activitesParascolaires?: string | null;
+}
+
+export interface PromotionDetail {
+  id: number;
+  code: string;
+  libelle: string;
+  dateDebut: string | null;
+  dateFin: string | null;
+  enCours: boolean;
+  programme: string | null;
+  activitesParascolaires: string | null;
+  formationCode: string | null;
+  formationIntitule: string | null;
+  formationDescription: string | null;
+  nbEtudiants: number;
+  nbCours: number;
+}
+
+export interface EtudiantScolarite {
+  id: number;
+  nom: string;
+  cohorte: string;
+  derniereConnexion: string;
+  progression: number;
+  noteMoyenne: number;
+  statut: string;
+  initiales: string;
+  couleurAvatar: string;
+  matricule: string | null;
+}
+
+export interface EtudiantSaisie {
+  username: string;
+  password: string;
+  email: string;
+  nom: string;
+  prenom: string;
+  telephone?: string | null;
+}
+
+export interface ResultatImport {
+  crees: number;
+  rejets: string[];
+}
+
+export interface ResultatRappel {
+  envoyes: number;
+  echecs: string[];
+}
+
+export interface Certificat {
+  id: number;
+  reference: string;
+  etudiantId: number | null;
+  etudiantNom: string | null;
+  etudiantMatricule: string | null;
+  intituleFormation: string;
+  cohorteLibelle: string | null;
+  dateEmission: string | null;
+  formateurNom: string | null;
+}
+
+export interface LigneQualite {
+  coursId: number;
+  coursCode: string;
+  coursTitre: string;
+  moyenne: number | null;
+  nombreAvis: number;
+  actionsRequises: number;
+  derniersCommentaires: string[];
+}
+
+export interface Qualite {
+  moyenneGenerale: number | null;
+  nombreAvis: number;
+  coursEvalues: number;
+  coursASurveiller: number;
+  parCours: LigneQualite[];
 }

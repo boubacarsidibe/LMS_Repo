@@ -29,6 +29,34 @@ export const PEDAGOGIE_ROUTES: Routes = [
           import('./pages/cours/pedagogie-cours.component').then((m) => m.PedagogieCoursComponent),
       },
       {
+        path: 'promotions',
+        loadComponent: () =>
+          import('./pages/promotions/pedagogie-promotions.component').then(
+            (m) => m.PedagogiePromotionsComponent
+          ),
+      },
+      {
+        path: 'etudiants',
+        loadComponent: () =>
+          import('./pages/etudiants/pedagogie-etudiants.component').then(
+            (m) => m.PedagogieEtudiantsComponent
+          ),
+      },
+      {
+        path: 'certificats',
+        loadComponent: () =>
+          import('./pages/certificats/pedagogie-certificats.component').then(
+            (m) => m.PedagogieCertificatsComponent
+          ),
+      },
+      {
+        path: 'qualite',
+        loadComponent: () =>
+          import('./pages/qualite/pedagogie-qualite.component').then(
+            (m) => m.PedagogieQualiteComponent
+          ),
+      },
+      {
         path: 'cours/:id',
         loadComponent: () =>
           import('./pages/cours-supports/pedagogie-cours-supports.component').then(
