@@ -236,6 +236,7 @@ public class EspaceEtudiantController {
      * ici : il sert d'identifiant de connexion et relève de l'espace
      * d'authentification, pas du profil.
      */
+    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
     @PutMapping("/profile")
     @Transactional
     public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> request, Authentication authentication) {
@@ -1062,6 +1063,7 @@ public class EspaceEtudiantController {
         }
     }
 
+    @PreAuthorize("hasRole('FORMATEUR')")
     @PostMapping(value = "/formateur/cours/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadCourseImage(
         @PathVariable Long id,
@@ -1179,8 +1181,17 @@ public class EspaceEtudiantController {
                 .map(this::toEtudiantSuiviDto).toList());
     }
 
+    /**
+     * Fiche de suivi d'un etudiant.
+     *
+     * <p>{@code @Transactional} est indispensable : avec {@code open-in-view=false} la
+     * session Hibernate se ferme a la sortie du service, or {@link #toEtudiantSuiviDto}
+     * lit la promotion, chargee paresseusement. Sans cette annotation l'ecran
+     * « Suivi des etudiants » renvoyait systematiquement une erreur 500.
+     */
     @PreAuthorize("hasRole('FORMATEUR')")
     @GetMapping("/formateur/etudiants/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getStudent(@PathVariable Long id, Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
         if (formateur == null) {
