@@ -75,6 +75,15 @@
               <span class="text-body-sm text-on-surface-variant">{{ c.nbRessources }} ressources</span>
             </div>
           </div>
+          <!-- Seul point d'entree vers la saisie des presences : la fiche etudiant
+               n'en montre que l'historique. -->
+          <button
+            type="button"
+            (click)="ouvrirPresence(c)"
+            class="mt-auto flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md leading-none hover:border-secondary hover:text-secondary transition-colors">
+            <span class="material-symbols-outlined text-[20px] leading-none">checklist</span>
+            Faire l'appel
+          </button>
         </div>
       </div>
 
