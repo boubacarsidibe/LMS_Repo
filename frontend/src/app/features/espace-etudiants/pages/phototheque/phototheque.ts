@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { environment } from '../../../../../environments/environment';
+import { MediaProtegeService } from '../../services/media-protege.service';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { AlbumPhoto, Photo } from '../../models/scolarite.models';
@@ -25,7 +25,7 @@ import { PhotoService } from '../../services/photo.service';
   imports: [CommonModule, FormsModule, UiSpinnerComponent, UiEmptyStateComponent],
   templateUrl: './phototheque.html',
 })
-export class Phototheque implements OnInit {
+export class Phototheque implements OnInit, OnDestroy {
   private photoService = inject(PhotoService);
   private cohorteService = inject(CohorteService);
 
@@ -79,12 +79,14 @@ export class Phototheque implements OnInit {
     });
   }
 
-  /** L'API renvoie des chemins relatifs : on les préfixe pour l'affichage. */
-  urlComplete(chemin: string | null): string {
-    if (!chemin) {
-      return '';
-    }
-    return chemin.startsWith('http') ? chemin : `${environment.apiUrl.replace(/\/api$/, '')}${chemin}`;
+  /**
+   * Les photos sont servies derriere le jeton : un <img src> direct recevait un 403.
+   * Le fichier passe par HttpClient, qui porte l'en-tete d'authentification.
+   */
+  media = inject(MediaProtegeService);
+
+  ngOnDestroy(): void {
+    this.media.libererTout();
   }
 
   ouvrirAlbum(album: AlbumPhoto): void {

@@ -104,7 +104,7 @@
             <div class="h-40 bg-surface-container flex items-center justify-center">
               <img
                 *ngIf="a.couvertureUrl; else sansCouverture"
-                [src]="urlComplete(a.couvertureUrl)"
+                [src]="media.image(a.couvertureUrl) | async"
                 [alt]="'Couverture de ' + a.titre"
                 class="w-full h-full object-cover" />
               <ng-template #sansCouverture>
@@ -164,7 +164,7 @@
 
       <ul *ngIf="!chargementPhotos && photosAlbumOuvert.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
         <li *ngFor="let p of photosAlbumOuvert" class="rounded-lg overflow-hidden border border-outline-variant">
-          <img [src]="urlComplete(p.url)" [alt]="p.legende || 'Photo'" class="w-full h-44 object-cover" />
+          <img [src]="media.image(p.url) | async" [alt]="p.legende || 'Photo'" class="w-full h-44 object-cover" />
           <p *ngIf="p.legende" class="font-body-sm text-body-sm text-on-surface-variant p-2">{{ p.legende }}</p>
         </li>
       </ul>

@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { AlbumPhoto, Photo } from '../../models/scolarite.models';
 import { CommunicationService } from '../../services/communication.service';
-import { environment } from '../../../../../environments/environment';
+import { MediaProtegeService } from '../../services/media-protege.service';
 
 /** Photothèque de l'institut (TDR §3.2) : albums d'événements et de sorties. */
 @Component({
@@ -42,7 +42,7 @@ import { environment } from '../../../../../environments/environment';
           <div class="h-40 bg-surface-container flex items-center justify-center overflow-hidden">
             <img
               *ngIf="a.couvertureUrl; else vide"
-              [src]="lienAbsolu(a.couvertureUrl)"
+              [src]="media.image(a.couvertureUrl) | async"
               [alt]="'Couverture de l’album ' + a.titre"
               class="w-full h-full object-cover"
             />
@@ -107,7 +107,7 @@ import { environment } from '../../../../../environments/environment';
           >
             <figure *ngFor="let p of photos" class="rounded-lg overflow-hidden bg-surface-container">
               <img
-                [src]="lienAbsolu(p.url)"
+                [src]="media.image(p.url) | async"
                 [alt]="p.legende || 'Photo de l’album ' + albumOuvert.titre"
                 class="w-full h-40 object-cover"
               />
@@ -124,14 +124,15 @@ import { environment } from '../../../../../environments/environment';
     </div>
   `,
 })
-export class Photheque implements OnInit {
+export class Photheque implements OnInit, OnDestroy {
   albums: AlbumPhoto[] = [];
   photos: Photo[] = [];
   albumOuvert: AlbumPhoto | null = null;
   chargement = true;
   chargementAlbum = false;
 
-  constructor(private communication: CommunicationService) {}
+  // « public » : le gabarit appelle media.image() directement, via le tube async.
+  constructor(private communication: CommunicationService, public media: MediaProtegeService) {}
 
   ngOnInit(): void {
     this.communication.getAlbums().subscribe({
@@ -161,10 +162,14 @@ export class Photheque implements OnInit {
     this.photos = [];
   }
 
-  lienAbsolu(url: string): string {
-    if (url.startsWith('http')) {
-      return url;
-    }
-    return environment.apiUrl.replace(/\/api$/, '') + url;
+  /**
+   * Rend la memoire des images chargees en quittant l'ecran.
+   *
+   * <p>Une URL blob: retient son contenu tant qu'elle n'est pas revoquee : sans cela,
+   * une phototheque parcourue longuement finirait par occuper autant de memoire que
+   * toutes les images vues.
+   */
+  ngOnDestroy(): void {
+    this.media.libererTout();
   }
 }

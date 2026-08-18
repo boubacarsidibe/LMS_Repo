@@ -8,7 +8,7 @@ import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.
 import { CoursEtudiant, SupportEtudiant, SyntheseEvaluation } from '../../models/scolarite.models';
 import { CommunicationService } from '../../services/communication.service';
 import { ScolariteService } from '../../services/scolarite.service';
-import { environment } from '../../../../../environments/environment';
+import { MediaProtegeService } from '../../services/media-protege.service';
 
 /**
  * Fiche d'un cours autorisé : ses supports, la progression de l'étudiant et
@@ -92,16 +92,14 @@ import { environment } from '../../../../../environments/environment';
                     <span *ngIf="s.datePublication"> · {{ s.datePublication | date: 'd MMM y' }}</span>
                   </p>
                 </div>
-                <a
+<button
+                  type="button"
                   *ngIf="s.url"
-                  [href]="lienAbsolu(s.url)"
-                  (click)="marquerConsulte(s)"
-                  target="_blank"
-                  rel="noopener"
-                  class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm hover:opacity-90 transition-opacity shrink-0"
+                  (click)="ouvrir(s)"
+                  class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm hover:opacity-90 transition-opacity shrink-0 border-0 cursor-pointer"
                 >
                   Ouvrir
-                </a>
+                </button>
                 <button
                   *ngIf="!s.consulte"
                   type="button"
@@ -210,7 +208,8 @@ export class CoursDetailEtudiant implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private scolarite: ScolariteService,
-    private communication: CommunicationService
+    private communication: CommunicationService,
+    private media: MediaProtegeService
   ) {}
 
   ngOnInit(): void {
@@ -235,12 +234,20 @@ export class CoursDetailEtudiant implements OnInit {
     });
   }
 
-  /** L'URL renvoyée par le serveur est relative à l'API. */
-  lienAbsolu(url: string): string {
-    if (url.startsWith('http')) {
-      return url;
+  /**
+   * Ouvre un support et le marque consulté.
+   *
+   * <p>C'était un simple lien vers l'URL du serveur. Le navigateur allait la chercher
+   * lui-même, sans l'en-tête d'authentification que pose l'intercepteur Angular : le
+   * serveur répondait 403 et l'étudiant tombait sur une page d'erreur brute. Le fichier
+   * passe désormais par HttpClient, qui porte le jeton.
+   */
+  ouvrir(support: SupportEtudiant): void {
+    if (!support.url) {
+      return;
     }
-    return environment.apiUrl.replace(/\/api$/, '') + url;
+    this.media.ouvrir(support.url);
+    this.marquerConsulte(support);
   }
 
   marquerConsulte(support: SupportEtudiant): void {
