@@ -41,6 +41,10 @@ import inpg.sn.lms.espace_etudiant.repository.SeanceRepository;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
 import inpg.sn.lms.espace_etudiant.service.NoteModuleService;
+import inpg.sn.lms.espace_etudiant.dto.ReleveDelivreDto;
+import inpg.sn.lms.espace_etudiant.entity.ReleveNotes;
+import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
+import inpg.sn.lms.espace_etudiant.service.ReleveNotesService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
@@ -78,13 +82,18 @@ public class ScolariteController {
     private final EtudiantRepository etudiantRepository;
     private final HabilitationCoursService habilitation;
     private final NoteModuleService noteModuleService;
+    private final ReleveNotesService releveNotesService;
+    private final ReleveDelivranceService releveDelivranceService;
 
     public ScolariteController(UtilisateurCourantService utilisateurCourant, MatriculeService matriculeService,
             CoursRepository coursRepository, SeanceRepository seanceRepository, SupportService supportService,
             ProgressionSupportRepository progressionRepository, RetourEvaluationRepository retourRepository,
             EtudiantRepository etudiantRepository, HabilitationCoursService habilitation,
-            NoteModuleService noteModuleService) {
+            NoteModuleService noteModuleService, ReleveNotesService releveNotesService,
+            ReleveDelivranceService releveDelivranceService) {
         this.habilitation = habilitation;
+        this.releveNotesService = releveNotesService;
+        this.releveDelivranceService = releveDelivranceService;
         this.utilisateurCourant = utilisateurCourant;
         this.matriculeService = matriculeService;
         this.coursRepository = coursRepository;
@@ -112,89 +121,52 @@ public class ScolariteController {
         if (etudiant == null) {
             return profilIntrouvable();
         }
-        List<NoteModule> notes = noteModuleService.getByEtudiantId(etudiant.getId());
-
-        Map<Long, List<NoteModule>> parCours = notes.stream()
-                .filter(note -> note.getCours() != null)
-                .collect(Collectors.groupingBy(note -> note.getCours().getId(), LinkedHashMap::new,
-                        Collectors.toList()));
-
-        List<ReleveNotesDto.NotesCoursDto> groupes = parCours.values().stream()
-                .map(notesDuCours -> {
-                    Cours cours = notesDuCours.get(0).getCours();
-                    return new ReleveNotesDto.NotesCoursDto(
-                            cours.getId(),
-                            cours.getNom(),
-                            cours.getTitre(),
-                            moyenne(notesDuCours),
-                            cours.getCoefficient(),
-                            notesDuCours.stream().map(this::toNoteDto).toList());
-                })
-                .toList();
-
-        List<NoteModule> orphelines = notes.stream().filter(note -> note.getCours() == null).toList();
-        return ResponseEntity.ok(
-                new ReleveNotesDto(moyenneGenerale(groupes, orphelines), notes.size(), groupes));
+        return ResponseEntity.ok(releveNotesService.duEtudiant(etudiant.getId()));
     }
 
     /**
-     * Moyenne générale, pondérée par le coefficient de chaque cours.
+     * Relevés officiels délivrés à l'étudiant par la direction pédagogique.
      *
-     * <p>Elle portait auparavant sur la liste à plat de toutes les notes. Le poids
-     * d'un cours dépendait donc du <strong>nombre de devoirs</strong> que son formateur
-     * avait saisis : un cours évalué trois fois pesait trois fois plus qu'un cours
-     * évalué une seule fois. Personne n'avait choisi cette pondération — elle venait
-     * d'une habitude de saisie, et faussait le bulletin de plus d'un point.
-     *
-     * <p>Chaque cours pèse désormais son coefficient, quel que soit le nombre
-     * d'évaluations qu'il contient. Les cours sans note sont écartés : les compter
-     * pour zéro sanctionnerait un étudiant pour un devoir que son formateur n'a pas
-     * encore corrigé.
-     *
-     * <p>Une note dont le cours a été supprimé n'a plus de coefficient à porter. Elle
-     * reste comptée, au poids de 1 : elle a bien été obtenue, et l'écarter ferait
-     * afficher « 1 note » sous une moyenne vide.
+     * <p>À distinguer de {@code /mes-notes}, qui montre les notes <em>en cours</em>,
+     * recalculées à chaque affichage. Un relevé délivré est un document : ses chiffres
+     * sont figés à sa date d'émission et porte une référence, seul moyen d'en vérifier
+     * l'authenticité. Les deux peuvent donc différer — c'est normal, et c'est même
+     * l'intérêt : sans cela, un document remis en janvier changerait en février.
      */
-    private Double moyenneGenerale(List<ReleveNotesDto.NotesCoursDto> groupes,
-            List<NoteModule> orphelines) {
-        double poids = 0;
-        double total = 0;
-
-        for (ReleveNotesDto.NotesCoursDto groupe : groupes) {
-            if (groupe.moyenne() == null || groupe.coefficient() <= 0) {
-                continue;
-            }
-            total += groupe.moyenne() * groupe.coefficient();
-            poids += groupe.coefficient();
+    @GetMapping("/mes-releves")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> mesReleves(Authentication authentication) {
+        Etudiant etudiant = utilisateurCourant.etudiant(authentication);
+        if (etudiant == null) {
+            return profilIntrouvable();
         }
-        for (NoteModule orpheline : orphelines) {
-            total += orpheline.getNote();
-            poids += 1;
-        }
-
-        return poids <= 0 ? null : Math.round(total / poids * 10) / 10.0;
+        return ResponseEntity.ok(releveDelivranceService.deLEtudiant(etudiant.getId()).stream()
+                .map(this::toReleveDelivreDto)
+                .toList());
     }
 
-    /** Moyenne d'un cours, arrondie au dixième, {@code null} si la liste est vide. */
-    private Double moyenne(List<NoteModule> notes) {
-        return notes.isEmpty() ? null
-                : Math.round(notes.stream().mapToDouble(NoteModule::getNote).average().orElse(0) * 10) / 10.0;
+    private ReleveDelivreDto toReleveDelivreDto(ReleveNotes releve) {
+        Etudiant etudiant = releve.getEtudiant();
+        return new ReleveDelivreDto(
+                releve.getId(),
+                releve.getReference(),
+                etudiant == null ? null : etudiant.getId(),
+                etudiant == null ? "" : (etudiant.getPrenom() + " " + etudiant.getNom()).trim(),
+                etudiant == null ? null : etudiant.getMatricule(),
+                releve.getPromotion() == null ? null : releve.getPromotion().getLibelle(),
+                releve.getPeriode(),
+                releve.getDateEmission(),
+                releve.getDelivrePar(),
+                releve.getMoyenneGenerale(),
+                releve.getNombreNotes(),
+                releve.getLignes().stream()
+                        .map(l -> new ReleveDelivreDto.LigneDto(
+                                l.getCoursCode(), l.getCoursTitre(), l.getCoefficient(), l.getMoyenne()))
+                        .toList());
     }
 
-    private NoteModuleDto toNoteDto(NoteModule note) {
-        Cours cours = note.getCours();
-        return new NoteModuleDto(
-                note.getId(),
-                note.getModule(),
-                note.getNote(),
-                note.getCommentaire(),
-                note.getDateEvaluation() == null ? null
-                        : note.getDateEvaluation().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                cours == null ? null : cours.getId(),
-                cours == null ? null : cours.getNom(),
-                cours == null ? null : cours.getTitre(),
-                note.getFormateurNom());
-    }
+
+
 
     /**
      * Derniers supports ouverts, pour reprendre son travail là où il s'est arrêté.

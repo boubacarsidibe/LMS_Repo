@@ -6,6 +6,7 @@ import {
   CoursEtudiant,
   MaPromotion,
   SeanceEtudiant,
+  ReleveDelivre,
   ReleveNotes,
   Reprise,
   SupportEtudiant,
@@ -35,6 +36,11 @@ export class ScolariteService {
   }
 
   /** Relevé de notes : les résultats obtenus par l'étudiant, groupés par cours. */
+  /** Relevés officiels délivrés par la direction pédagogique : figés, référencés. */
+  getMesReleves(): Observable<ReleveDelivre[]> {
+    return this.http.get<ReleveDelivre[]>(`${this.api}/mes-releves`);
+  }
+
   getMesNotes(): Observable<ReleveNotes> {
     return this.http.get<ReleveNotes>(`${this.api}/mes-notes`);
   }

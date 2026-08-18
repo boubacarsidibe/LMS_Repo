@@ -5,7 +5,7 @@ import { forkJoin } from 'rxjs';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { Certificat } from '../../models/certificat';
-import { NotesCours, ReleveNotes } from '../../models/scolarite.models';
+import { NotesCours, ReleveDelivre, ReleveNotes } from '../../models/scolarite.models';
 import { CertificatService } from '../../services/certificat.service';
 import { ScolariteService } from '../../services/scolarite.service';
 
@@ -147,6 +147,48 @@ import { ScolariteService } from '../../services/scolarite.service';
           </article>
         </section>
 
+        <!-- Relevés officiels délivrés -->
+        <section class="space-y-stack-md" *ngIf="releves.length > 0">
+          <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+            <span class="material-symbols-outlined text-secondary">description</span>
+            Relevés officiels
+          </h2>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">
+            Délivrés par la direction pédagogique. Leurs chiffres sont figés à la date
+            d’émission : ils peuvent donc différer de vos notes en cours ci-dessus.
+          </p>
+
+          <article *ngFor="let r of releves"
+                   class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+              <div class="min-w-0">
+                <p class="font-label-md text-label-md text-on-surface">{{ r.periode }}</p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  {{ r.reference }} · délivré le {{ r.dateEmission | date: 'dd/MM/yyyy' }}
+                </p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">{{ r.delivrePar }}</p>
+              </div>
+              <p class="font-headline-sm text-headline-sm text-secondary tabular-nums shrink-0">
+                {{ r.moyenneGenerale !== null ? (r.moyenneGenerale | number: '1.1-1') : '—' }}<span
+                  class="font-body-sm text-body-sm text-on-surface-variant">/20</span>
+              </p>
+            </div>
+
+            <ul class="mt-4 border-t border-outline-variant/50 pt-3 space-y-1">
+              <li *ngFor="let l of r.lignes"
+                  class="flex items-center justify-between gap-4 font-body-sm text-body-sm">
+                <span class="text-on-surface min-w-0 truncate">
+                  {{ l.coursCode }} — {{ l.coursTitre }}
+                  <span class="text-on-surface-variant">(coef. {{ l.coefficient }})</span>
+                </span>
+                <span class="text-on-surface tabular-nums shrink-0">
+                  {{ l.moyenne !== null ? (l.moyenne | number: '1.1-1') : '—' }}
+                </span>
+              </li>
+            </ul>
+          </article>
+        </section>
+
         <!-- Certificats -->
         <section class="space-y-stack-md">
           <h2 class="font-headline-sm text-headline-sm text-on-surface">Mes certificats</h2>
@@ -197,6 +239,7 @@ import { ScolariteService } from '../../services/scolarite.service';
 export class MesResultats implements OnInit {
   chargement = true;
   releve: ReleveNotes | null = null;
+  releves: ReleveDelivre[] = [];
   certificats: Certificat[] = [];
   telechargementEnCoursId: number | null = null;
   erreurTelechargement: string | null = null;
@@ -209,10 +252,12 @@ export class MesResultats implements OnInit {
   ngOnInit(): void {
     forkJoin({
       releve: this.scolarite.getMesNotes(),
+      releves: this.scolarite.getMesReleves(),
       certificats: this.certificatService.getAll(),
     }).subscribe({
-      next: ({ releve, certificats }) => {
+      next: ({ releve, releves, certificats }) => {
         this.releve = releve;
+        this.releves = releves || [];
         this.certificats = certificats ?? [];
         this.chargement = false;
       },

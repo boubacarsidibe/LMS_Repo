@@ -35,9 +35,14 @@ import inpg.sn.lms.espace_etudiant.dto.EtudiantSuiviDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDetailDto;
 import inpg.sn.lms.espace_etudiant.dto.QualiteCoursDto;
+import inpg.sn.lms.espace_etudiant.dto.ReleveCreateRequest;
+import inpg.sn.lms.espace_etudiant.dto.ReleveDelivreDto;
+import inpg.sn.lms.espace_etudiant.dto.ReleveNotesDto;
 import inpg.sn.lms.espace_etudiant.dto.RelanceCollectiveRequest;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
+import inpg.sn.lms.espace_etudiant.entity.ReleveLigne;
+import inpg.sn.lms.espace_etudiant.entity.ReleveNotes;
 import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
@@ -46,6 +51,8 @@ import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
+import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
+import inpg.sn.lms.espace_etudiant.service.ReleveNotesService;
 import inpg.sn.lms.recrutement.service.NotificationService;
 
 /**
@@ -80,12 +87,15 @@ public class PedagogieScolariteController {
     private final CoursRepository coursRepository;
     private final NotificationService notificationService;
     private final RetourEvaluationRepository retourRepository;
+    private final ReleveNotesService releveNotesService;
+    private final ReleveDelivranceService releveDelivranceService;
 
     public PedagogieScolariteController(PromotionRepository promotionRepository,
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
             EtudiantService etudiantService, MatriculeService matriculeService,
             CertificatService certificatService, CoursRepository coursRepository,
-            NotificationService notificationService, RetourEvaluationRepository retourRepository) {
+            NotificationService notificationService, RetourEvaluationRepository retourRepository,
+            ReleveNotesService releveNotesService, ReleveDelivranceService releveDelivranceService) {
         this.promotionRepository = promotionRepository;
         this.formationRepository = formationRepository;
         this.etudiantRepository = etudiantRepository;
@@ -95,6 +105,8 @@ public class PedagogieScolariteController {
         this.coursRepository = coursRepository;
         this.notificationService = notificationService;
         this.retourRepository = retourRepository;
+        this.releveNotesService = releveNotesService;
+        this.releveDelivranceService = releveDelivranceService;
     }
 
     // ===================== PROMOTIONS =====================
@@ -395,6 +407,91 @@ public class PedagogieScolariteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toCertificatDto(certificatService.save(certificat)));
     }
 
+    // ===================== RELEVES DE NOTES =====================
+
+    /**
+     * Relevé courant d'un étudiant, tel qu'il le voit lui-même.
+     *
+     * <p>Le responsable pédagogique délivre les relevés, mais n'avait aucun moyen de
+     * consulter celui d'un étudiant : seul l'intéressé y accédait. Il fallait donc
+     * délivrer un document sans pouvoir en vérifier le contenu.
+     *
+     * <p>Recalculé à chaque appel, contrairement à un relevé délivré.
+     */
+    @GetMapping("/etudiants/{id}/releve")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> releveCourant(@PathVariable Long id) {
+        if (!etudiantRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(releveNotesService.duEtudiant(id));
+    }
+
+    /** Registre des relevés délivrés, du plus récent au plus ancien. */
+    @GetMapping("/releves")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<ReleveDelivreDto>> listerReleves() {
+        return ResponseEntity.ok(releveDelivranceService.tous().stream().map(this::toReleveDto).toList());
+    }
+
+    /**
+     * Délivre un relevé à un ou plusieurs étudiants.
+     *
+     * <p>La délivrance <strong>fige</strong> les moyennes : le document remis ne changera
+     * plus si un formateur corrige une note ensuite. C'est ce qui le distingue de la
+     * consultation, et la raison pour laquelle les lignes sont recopiées.
+     *
+     * <p>Une promotion peut être visée sans lister ses étudiants : en fin de semestre,
+     * un relevé se délivre à la promotion entière, et le faire un par un serait la
+     * corvée qui pousse à ne pas le faire du tout.
+     *
+     * <p>Les étudiants sans aucune note sont écartés, et signalés dans le compte rendu :
+     * leur délivrer un relevé vide donnerait un document attestant de rien.
+     */
+    @PostMapping("/releves")
+    @Transactional
+    public ResponseEntity<?> delivrerReleves(@RequestBody ReleveCreateRequest request) {
+        if (estVide(request.periode())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "La période couverte par le relevé est requise."));
+        }
+
+        List<Etudiant> vises = new ArrayList<>();
+        if (request.etudiantIds() != null && !request.etudiantIds().isEmpty()) {
+            for (Long id : request.etudiantIds().stream().distinct().toList()) {
+                Etudiant etudiant = etudiantRepository.findById(id).orElse(null);
+                if (etudiant == null) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("message", "Étudiant introuvable : " + id));
+                }
+                vises.add(etudiant);
+            }
+        } else if (request.promotionId() != null) {
+            vises.addAll(etudiantRepository.findByPromotionId(request.promotionId()));
+            if (vises.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("message", "Aucun étudiant n'est rattaché à cette promotion."));
+            }
+        } else {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Désignez au moins un étudiant, ou une promotion."));
+        }
+
+        List<ReleveDelivreDto> delivres = new ArrayList<>();
+        List<String> sansNote = new ArrayList<>();
+        for (Etudiant etudiant : vises) {
+            if (releveNotesService.duEtudiant(etudiant.getId()).nombreNotes() == 0) {
+                sansNote.add(nomComplet(etudiant));
+                continue;
+            }
+            delivres.add(toReleveDto(
+                    releveDelivranceService.delivrer(etudiant, request.periode().trim())));
+        }
+
+        return ResponseEntity.status(delivres.isEmpty() ? HttpStatus.OK : HttpStatus.CREATED)
+                .body(Map.of("delivres", delivres, "sansNote", sansNote));
+    }
+
     // ===================== RAPPELS =====================
 
     /**
@@ -492,6 +589,26 @@ public class PedagogieScolariteController {
     }
 
     // ===================== Correspondances =====================
+
+    private ReleveDelivreDto toReleveDto(ReleveNotes releve) {
+        Etudiant etudiant = releve.getEtudiant();
+        return new ReleveDelivreDto(
+                releve.getId(),
+                releve.getReference(),
+                etudiant == null ? null : etudiant.getId(),
+                etudiant == null ? "" : nomComplet(etudiant),
+                etudiant == null ? null : etudiant.getMatricule(),
+                releve.getPromotion() == null ? null : releve.getPromotion().getLibelle(),
+                releve.getPeriode(),
+                releve.getDateEmission(),
+                releve.getDelivrePar(),
+                releve.getMoyenneGenerale(),
+                releve.getNombreNotes(),
+                releve.getLignes().stream()
+                        .map(l -> new ReleveDelivreDto.LigneDto(
+                                l.getCoursCode(), l.getCoursTitre(), l.getCoefficient(), l.getMoyenne()))
+                        .toList());
+    }
 
     private PromotionDetailDto toPromotionDto(Promotion promotion) {
         Formation formation = promotion.getFormation();

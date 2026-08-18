@@ -43,6 +43,13 @@ export const PEDAGOGIE_ROUTES: Routes = [
           ),
       },
       {
+        path: 'releves',
+        loadComponent: () =>
+          import('./pages/releves/pedagogie-releves.component').then(
+            (m) => m.PedagogieRelevesComponent
+          ),
+      },
+      {
         path: 'certificats',
         loadComponent: () =>
           import('./pages/certificats/pedagogie-certificats.component').then(

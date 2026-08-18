@@ -181,6 +181,18 @@ titre d'un cours le détache de tout, soit on ne peut plus jamais le détacher. 
 erreur, ni journal — seul un écran vide le révèle plus tard.
 `PedagogieCoursProgrammeTest` fige les trois cas.
 
+**Un relevé délivré fige ses valeurs, il ne les recalcule pas** (migration `V9`).
+`releve_ligne` recopie code, titre, coefficient et moyenne du cours ; elle n'a
+volontairement **aucune clé étrangère** vers `cours`. Sans cela, un document remis en
+janvier se réécrirait en février parce qu'un formateur a corrigé une note — ce serait
+un écran, pas un document. `ReleveDelivranceServiceTest` fige cette propriété ; ne pas
+« optimiser » ces colonnes en jointures.
+
+Deux notions à ne jamais confondre à l'écran comme au serveur :
+`GET /scolarite/mes-notes` renvoie le relevé **courant**, recalculé ;
+`GET /scolarite/mes-releves` renvoie les relevés **délivrés**, figés. Qu'ils diffèrent
+est normal, et c'est l'intérêt.
+
 **Le coefficient d'un cours ne se déduit de rien.** Ni du volume horaire, ni du
 nombre d'évaluations : c'est une valeur de la maquette pédagogique, saisie à la main
 (colonne `cours.coefficient`, migration `V8`, défaut 1). La moyenne générale portait

@@ -38,6 +38,7 @@ export class PedagogieLayoutComponent implements OnInit {
     { libelle: 'Cours', lien: 'cours', icone: 'menu_book' },
     { libelle: 'Promotions', lien: 'promotions', icone: 'groups' },
     { libelle: 'Étudiants', lien: 'etudiants', icone: 'badge' },
+    { libelle: 'Relevés', lien: 'releves', icone: 'description' },
     { libelle: 'Certificats', lien: 'certificats', icone: 'workspace_premium' },
     { libelle: 'Suivi qualité', lien: 'qualite', icone: 'analytics' },
   ];

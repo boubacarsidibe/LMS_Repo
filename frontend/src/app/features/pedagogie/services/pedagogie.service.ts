@@ -137,6 +137,69 @@ export class PedagogieService {
   envoyerRappel(objet: string, message: string, etudiantIds: number[]): Observable<ResultatRappel> {
     return this.http.post<ResultatRappel>(`${this.api}/rappels`, { objet, message, etudiantIds });
   }
+
+  // ===================== Relevés de notes =====================
+
+  /** Relevé COURANT d'un étudiant : recalculé, pas figé. Sert à vérifier avant de délivrer. */
+  getReleveCourant(etudiantId: number): Observable<ReleveCourant> {
+    return this.http.get<ReleveCourant>(`${this.api}/etudiants/${etudiantId}/releve`);
+  }
+
+  /** Registre des relevés délivrés. */
+  getReleves(): Observable<ReleveDelivre[]> {
+    return this.http.get<ReleveDelivre[]>(`${this.api}/releves`);
+  }
+
+  /**
+   * Délivre un relevé. Les moyennes sont figées à cet instant : le document remis ne
+   * changera plus si un formateur corrige une note ensuite.
+   */
+  delivrerReleves(
+    periode: string,
+    etudiantIds: number[],
+    promotionId: number | null
+  ): Observable<ResultatDelivrance> {
+    return this.http.post<ResultatDelivrance>(`${this.api}/releves`, {
+      periode,
+      etudiantIds,
+      promotionId,
+    });
+  }
+}
+
+/** Relevé recalculé à chaque appel — celui que l'étudiant voit en continu. */
+export interface ReleveCourant {
+  moyenneGenerale: number | null;
+  nombreNotes: number;
+  parCours: {
+    coursId: number;
+    coursCode: string;
+    coursTitre: string;
+    moyenne: number | null;
+    coefficient: number;
+  }[];
+}
+
+/** Relevé délivré : document daté, référencé, aux valeurs figées. */
+export interface ReleveDelivre {
+  id: number;
+  reference: string;
+  etudiantId: number;
+  etudiantNom: string;
+  matricule: string | null;
+  promotionLibelle: string | null;
+  periode: string;
+  dateEmission: string;
+  delivrePar: string;
+  moyenneGenerale: number | null;
+  nombreNotes: number;
+  lignes: { coursCode: string; coursTitre: string; coefficient: number; moyenne: number | null }[];
+}
+
+export interface ResultatDelivrance {
+  delivres: ReleveDelivre[];
+  /** Étudiants écartés faute de note : leur délivrer un relevé vide n'attesterait de rien. */
+  sansNote: string[];
 }
 
 export interface PromotionSaisie {

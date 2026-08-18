@@ -169,6 +169,27 @@ export interface NotesCours {
   notes: NoteModule[];
 }
 
+/**
+ * Relevé DÉLIVRÉ par la direction pédagogique : un document.
+ *
+ * <p>À distinguer de {@link ReleveNotes}, qui est le relevé courant, recalculé à
+ * chaque affichage. Les chiffres de celui-ci sont figés à sa date d'émission : les
+ * deux peuvent donc différer, et c'est justement l'intérêt.
+ */
+export interface ReleveDelivre {
+  id: number;
+  reference: string;
+  etudiantNom: string;
+  matricule: string | null;
+  promotionLibelle: string | null;
+  periode: string;
+  dateEmission: string;
+  delivrePar: string;
+  moyenneGenerale: number | null;
+  nombreNotes: number;
+  lignes: { coursCode: string; coursTitre: string; coefficient: number; moyenne: number | null }[];
+}
+
 export interface ReleveNotes {
   moyenneGenerale: number | null;
   nombreNotes: number;

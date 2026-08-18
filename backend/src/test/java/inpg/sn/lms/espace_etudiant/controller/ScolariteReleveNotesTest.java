@@ -32,6 +32,8 @@ import inpg.sn.lms.espace_etudiant.repository.SeanceRepository;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
 import inpg.sn.lms.espace_etudiant.service.NoteModuleService;
+import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
+import inpg.sn.lms.espace_etudiant.service.ReleveNotesService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
@@ -61,15 +63,22 @@ class ScolariteReleveNotesTest {
     @Mock private HabilitationCoursService habilitation;
     @Mock private NoteModuleService noteModuleService;
 
+    @Mock private ReleveDelivranceService releveDelivranceService;
+
     private ScolariteController controller;
     private Etudiant etudiant;
     private Authentication authentication;
 
     @BeforeEach
     void preparer() {
+        // ReleveNotesService est passé RÉEL, pas simulé : c'est lui qui porte désormais
+        // le calcul que ces tests vérifient. Le simuler ferait porter les assertions sur
+        // un mock, et la pondération ne serait plus couverte par rien.
+        ReleveNotesService releveNotesService = new ReleveNotesService(noteModuleService);
         controller = new ScolariteController(utilisateurCourant, matriculeService, coursRepository,
                 seanceRepository, supportService, progressionRepository, retourRepository,
-                etudiantRepository, habilitation, noteModuleService);
+                etudiantRepository, habilitation, noteModuleService, releveNotesService,
+                releveDelivranceService);
 
         etudiant = new Etudiant();
         etudiant.setId(38L);
