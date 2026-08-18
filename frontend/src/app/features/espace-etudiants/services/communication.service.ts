@@ -59,9 +59,20 @@ export class CommunicationService {
     return this.http.post<ForumSujet>(`${this.api}/forum/sujets`, payload);
   }
 
-  repondre(sujetId: number, contenu: string): Observable<ForumMessage> {
+  /**
+   * Personnes citables dans un fil : ses etudiants et ses formateurs.
+   *
+   * <p>Volontairement restreint au fil, et non a l'annuaire : une autocomplétion
+   * ouverte revelerait les noms de toutes les promotions.
+   */
+  citables(sujetId: number): Observable<Mentionnable[]> {
+    return this.http.get<Mentionnable[]>(`${this.api}/forum/sujets/${sujetId}/citables`);
+  }
+
+  repondre(sujetId: number, contenu: string, citeIds: number[] = []): Observable<ForumMessage> {
     return this.http.post<ForumMessage>(`${this.api}/forum/sujets/${sujetId}/messages`, {
       contenu,
+      citeIds,
     });
   }
 
@@ -99,4 +110,12 @@ export class CommunicationService {
   getSyntheseCours(coursId: number): Observable<SyntheseEvaluation> {
     return this.http.get<SyntheseEvaluation>(`${this.api}/evaluations/cours/${coursId}/synthese`);
   }
+}
+
+/** Personne citable dans un fil du forum. */
+export interface Mentionnable {
+  id: number;
+  nom: string;
+  /** « Étudiant » ou « Formateur » : distingue deux homonymes et dit à qui l'on parle. */
+  role: string;
 }

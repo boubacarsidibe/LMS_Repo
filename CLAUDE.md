@@ -181,6 +181,23 @@ titre d'un cours le détache de tout, soit on ne peut plus jamais le détacher. 
 erreur, ni journal — seul un écran vide le révèle plus tard.
 `PedagogieCoursProgrammeTest` fige les trois cas.
 
+**Une mention au forum suit l'accès, elle ne l'ouvre pas** (migration `V10`). Les
+personnes citables sont celles qui participent déjà au fil — étudiants du cours,
+formateurs du cours — jamais l'annuaire, qui révélerait les noms de toutes les
+promotions dans une autocomplétion. La liste envoyée par le navigateur **ne fait pas
+foi** : `MentionForumService` la recoupe côté serveur, sans quoi un identifiant glissé
+à la main notifierait n'importe qui en lui montrant le titre d'un fil interdit.
+`MentionForumServiceTest` fige ce recoupement.
+
+**Les citations sont stockées, pas redéduites du texte** (`forum_mention`). Un nom
+s'écrit de plusieurs façons, change, ou apparaît par hasard dans une phrase : relire le
+message donnerait des résultats différents selon le moment.
+
+**La cloche `notification` est adossée à l'utilisateur**, pas au candidat.
+`notifications_candidat` reste en place pour l'espace recrutement, qui a son propre
+parcours — ne pas les fusionner sans traiter les deux parcours. Le courriel n'a pas été
+retenu pour les mentions : trop fréquentes, elles feraient couper la notification.
+
 **L'admission ouvre l'accès, la pédagogie inscrit.** `AdminRecrutementController.
 inscrireCommeEtudiant` bascule `ROLE_CANDIDAT` en `ROLE_ETUDIANT` et crée la fiche
 étudiant — **sans promotion ni matricule**. Ne pas supprimer cette conversion au motif

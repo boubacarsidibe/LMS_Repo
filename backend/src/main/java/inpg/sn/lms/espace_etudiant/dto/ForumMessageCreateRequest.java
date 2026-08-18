@@ -1,5 +1,12 @@
 package inpg.sn.lms.espace_etudiant.dto;
 
-/** Réponse postée dans un sujet du forum. */
-public record ForumMessageCreateRequest(String contenu) {
+/**
+ * Réponse postée dans un sujet du forum.
+ *
+ * @param citeIds personnes citées dans le message. Recoupées côté serveur avec le
+ *                périmètre du fil : un identifiant glissé à la main dans la requête
+ *                notifierait sinon n'importe qui, en lui montrant au passage un
+ *                extrait d'un fil auquel il n'a pas accès.
+ */
+public record ForumMessageCreateRequest(String contenu, java.util.List<Long> citeIds) {
 }

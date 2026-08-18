@@ -29,6 +29,7 @@ import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
+import inpg.sn.lms.espace_etudiant.service.MentionForumService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
 /**
@@ -55,15 +56,17 @@ public class ForumController {
     private final CoursRepository coursRepository;
     private final UtilisateurCourantService utilisateurCourant;
     private final HabilitationCoursService habilitation;
+    private final MentionForumService mentions;
 
     public ForumController(ForumSujetRepository sujetRepository, ForumMessageRepository messageRepository,
             CoursRepository coursRepository, UtilisateurCourantService utilisateurCourant,
-            HabilitationCoursService habilitation) {
+            HabilitationCoursService habilitation, MentionForumService mentions) {
         this.sujetRepository = sujetRepository;
         this.messageRepository = messageRepository;
         this.coursRepository = coursRepository;
         this.utilisateurCourant = utilisateurCourant;
         this.habilitation = habilitation;
+        this.mentions = mentions;
     }
 
     /** Sujets accessibles au connecté, épinglés en tête. */
@@ -146,7 +149,33 @@ public class ForumController {
             return ResponseEntity.badRequest().body(Map.of("message", "Le message ne peut pas être vide."));
         }
         ForumMessage message = messageRepository.save(new ForumMessage(sujet, auteur, request.contenu().trim()));
+        mentions.enregistrer(message, request.citeIds(), auteur);
         return ResponseEntity.status(HttpStatus.CREATED).body(toMessageDto(message, auteur));
+    }
+
+    /**
+     * Personnes citables dans ce fil.
+     *
+     * <p>Proposer tout l'annuaire reviendrait à publier les noms de toutes les
+     * promotions dans une autocomplétion. Ne sont proposées que les personnes qui
+     * participent déjà au fil : les étudiants qui y ont accès, et les formateurs du
+     * cours. Citer quelqu'un ne lui ouvre aucun droit — la mention suit l'accès.
+     */
+    @GetMapping("/sujets/{id}/citables")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> citables(@PathVariable Long id, Authentication authentication) {
+        User demandeur = utilisateurCourant.utilisateur(authentication);
+        if (demandeur == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        ForumSujet sujet = sujetRepository.findById(id).orElse(null);
+        if (sujet == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!estVisible(sujet, authentication)) {
+            return sujetNonAccessible();
+        }
+        return ResponseEntity.ok(mentions.citablesDans(sujet, demandeur));
     }
 
     /** Supprime son propre message. */

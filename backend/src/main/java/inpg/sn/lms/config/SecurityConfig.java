@@ -94,6 +94,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/recrutement/**").hasRole("RESPONSABLE_ADMISSION")
                 // Pilotage de l'offre pédagogique : cours et supports, tous formateurs confondus.
                 .requestMatchers("/api/pedagogie/**").hasRole("RESPONSABLE_PEDAGOGIQUE")
+                // La cloche est commune aux trois espaces : elle est adossée à l'utilisateur,
+                // et chaque endpoint ne lit que les notifications du connecté. Déclarée AVANT
+                // la règle générale ci-dessous, qui sinon en exclurait le responsable
+                // pédagogique — l'ordre des règles décide, la plus précise doit venir d'abord.
+                .requestMatchers("/api/espace-etudiant/notifications/**", "/api/espace-etudiant/notifications")
+                    .hasAnyRole("ETUDIANT", "FORMATEUR", "RESPONSABLE_PEDAGOGIQUE")
                 // Espace pédagogique : les opérations d'enseignant restent réservées aux formateurs.
                 .requestMatchers("/api/espace-etudiant/formateur/**").hasRole("FORMATEUR")
                 .requestMatchers("/api/espace-etudiant/**").hasAnyRole("ETUDIANT", "FORMATEUR")
