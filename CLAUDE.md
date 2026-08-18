@@ -234,6 +234,15 @@ second, qui porte le `PromotionDetailDto` complet ; la version réduite du premi
 faisait afficher « Aucun programme » partout et **effaçait le rattachement** à la
 première édition.
 
+**Le cercle de profil en en-tête doit toujours mener quelque part.** Il l'a été posé
+sans lien ni gestionnaire de clic dans l'espace étudiant et l'espace pédagogique — un
+élément qui ressemble à un bouton mais n'en est pas un. Un chevron (`expand_more`)
+accompagne désormais chaque cercle pour signaler qu'il est cliquable. Le responsable
+pédagogique n'avait même aucune page « Mon profil » ; comme il n'a pas de fiche dédiée
+(pas de téléphone à tenir à jour), la sienne se limite à l'identité lue depuis
+`Auth.currentUser()` et au changement de mot de passe via l'endpoint générique
+`POST /api/auth/change-password`, qui sert les trois rôles.
+
 ---
 
 ## 4. Comptes et données

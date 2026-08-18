@@ -50,9 +50,16 @@
           <span class="font-label-md text-label-md text-on-surface">{{ nomAffiche }}</span>
           <span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Pédagogie</span>
         </div>
-        <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-sm">
-          <span class="text-white font-label-md text-label-md">{{ initiales }}</span>
-        </div>
+        <a
+          routerLink="mon-profil"
+          class="flex items-center gap-1 group cursor-pointer"
+          aria-label="Voir mon profil"
+          title="Mon profil">
+          <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-sm group-hover:opacity-90 transition-opacity">
+            <span class="text-white font-label-md text-label-md">{{ initiales }}</span>
+          </div>
+          <span class="material-symbols-outlined text-on-surface-variant text-[20px] group-hover:text-primary transition-colors">expand_more</span>
+        </a>
         <button
           type="button"
           (click)="seDeconnecter()"

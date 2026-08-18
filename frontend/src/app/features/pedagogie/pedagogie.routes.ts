@@ -64,6 +64,13 @@ export const PEDAGOGIE_ROUTES: Routes = [
           ),
       },
       {
+        path: 'mon-profil',
+        loadComponent: () =>
+          import('./pages/mon-profil/pedagogie-mon-profil.component').then(
+            (m) => m.PedagogieMonProfilComponent
+          ),
+      },
+      {
         path: 'cours/:id',
         loadComponent: () =>
           import('./pages/cours-supports/pedagogie-cours-supports.component').then(
