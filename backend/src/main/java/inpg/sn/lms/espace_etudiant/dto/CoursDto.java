@@ -15,6 +15,12 @@ public record CoursDto(
         String couleurBandeau,
         List<PromotionDto> promotions,
         /**
+         * Programmes auxquels le cours est inscrit. Vide signale une rupture : sans
+         * formation, aucune promotion ne le reçoit, donc aucun étudiant ne le voit.
+         * C'est le rattachement réel — {@code promotions} n'en est que la dérivation.
+         */
+        List<FormationDto> formations,
+        /**
          * Équipe pédagogique du cours. Vide signale une rupture : la table
          * {@code cours_formateur} commande tout le cloisonnement enseignant, donc un
          * cours sans formateur n'apparaît dans aucun espace formateur — ni supports,

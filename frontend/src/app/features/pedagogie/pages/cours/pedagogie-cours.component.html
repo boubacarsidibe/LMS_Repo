@@ -26,6 +26,30 @@
     </div>
   </div>
 
+  <!-- Alerte : un cours hors programme n'atteint aucun étudiant -->
+  <div *ngIf="!chargement && coursSansFormation.length > 0"
+       class="bg-surface-container-lowest rounded-xl border border-error shadow-sm p-stack-lg">
+    <div class="flex items-center gap-2 text-error">
+      <span class="material-symbols-outlined">warning</span>
+      <span class="font-label-md text-label-md">
+        {{ coursSansFormation.length }} cours hors programme
+      </span>
+    </div>
+    <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+      Ces cours n’appartiennent au cursus d’aucune formation : aucune promotion ne les
+      reçoit, donc aucun étudiant ne les voit. Rattachez-les à un programme.
+    </p>
+    <ul class="mt-4 flex flex-wrap gap-stack-sm">
+      <li *ngFor="let c of coursSansFormation">
+        <button type="button" (click)="ouvrirEdition(c)"
+                class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors">
+          <span class="material-symbols-outlined">link</span>
+          {{ c.code }}
+        </button>
+      </li>
+    </ul>
+  </div>
+
   <!-- Alerte : un cours sans formateur n'existe dans aucun espace enseignant -->
   <div *ngIf="!chargement && coursSansFormateur.length > 0"
        class="bg-surface-container-lowest rounded-xl border border-error shadow-sm p-stack-lg">
@@ -82,6 +106,31 @@
         <textarea id="description" name="description" rows="3" [(ngModel)]="saisie.description"
                   class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none"></textarea>
       </div>
+
+      <div class="flex flex-col gap-base md:col-span-2">
+        <span class="text-label-md font-label-md text-on-surface-variant">Programmes</span>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">
+          Le cours prend place dans le cursus de ces formations. Toutes leurs promotions
+          le reçoivent, y compris celles des rentrées suivantes.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-sm mt-2 max-h-64 overflow-y-auto">
+          <label *ngFor="let f of formations"
+                 class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                 [class.border-secondary]="formationChoisie(f.id)"
+                 [class.bg-secondary-container]="formationChoisie(f.id)"
+                 [class.border-outline-variant]="!formationChoisie(f.id)"
+                 [class.hover:bg-surface-container-low]="!formationChoisie(f.id)">
+            <input type="checkbox" [checked]="formationChoisie(f.id)" (change)="basculerFormation(f.id)"
+                   class="w-4 h-4 accent-secondary shrink-0" />
+            <span class="font-body-sm text-body-sm min-w-0 truncate" [title]="f.intitule"
+                  [class.text-on-secondary-container]="formationChoisie(f.id)"
+                  [class.text-on-surface]="!formationChoisie(f.id)">{{ f.intitule }}</span>
+          </label>
+        </div>
+        <p *ngIf="formationsChoisies.size === 0" class="font-body-sm text-body-sm text-error mt-2">
+          Sans programme, ce cours ne sera visible d’aucun étudiant.
+        </p>
+      </div>
     </div>
     <div class="flex flex-wrap gap-stack-sm mt-6">
       <button type="button" (click)="enregistrer()" [disabled]="!saisieValide || enregistrement"
@@ -123,6 +172,7 @@
           <tr class="border-b border-outline-variant">
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Code</th>
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Titre</th>
+            <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Programme</th>
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Semestre</th>
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Volume</th>
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Formateurs</th>
@@ -134,6 +184,12 @@
           <tr *ngFor="let c of cours" class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors">
             <td class="py-3 pr-4 text-body-md text-on-surface">{{ c.code }}</td>
             <td class="py-3 pr-4 text-body-md text-on-surface">{{ c.titre }}</td>
+            <td class="py-3 pr-4 text-body-md max-w-[16rem]">
+              <span *ngIf="c.formations?.length" class="text-on-surface-variant block truncate" [title]="nomsFormations(c)">
+                {{ nomsFormations(c) }}
+              </span>
+              <span *ngIf="!c.formations?.length" class="text-error">Hors programme</span>
+            </td>
             <td class="py-3 pr-4 text-body-md text-on-surface-variant">{{ c.semestre || '—' }}</td>
             <td class="py-3 pr-4 text-body-md text-on-surface-variant">{{ c.volumeHoraire || 0 }} h</td>
             <td class="py-3 pr-4 text-body-md">

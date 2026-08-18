@@ -38,6 +38,9 @@ export class PedagogieCoursComponent implements OnInit {
   saisie: CoursCreation = { code: '', titre: '', semestre: '', description: '', volumeHoraire: 0 };
   enregistrement = false;
 
+  /** Formations cochées dans le formulaire, avant enregistrement. */
+  formationsChoisies = new Set<number>();
+
   ngOnInit(): void {
     this.charger();
     this.pedagogie.getFormations().subscribe({
@@ -79,8 +82,24 @@ export class PedagogieCoursComponent implements OnInit {
     return this.cours.filter((c) => !c.formateurs?.length);
   }
 
+  /**
+   * Cours inscrits à aucun programme.
+   *
+   * <p>Un cours tient sa place dans le cursus de sa formation, et les promotions en
+   * héritent. Sans formation, aucune promotion ne le reçoit : le cours existe en base
+   * et n'est visible d'aucun étudiant. Le formulaire ne demandait pas la formation, si
+   * bien que tout cours créé ici naissait dans cet état.
+   */
+  get coursSansFormation(): Cours[] {
+    return this.cours.filter((c) => !c.formations?.length);
+  }
+
   nomsFormateurs(cours: Cours): string {
     return (cours.formateurs || []).map((f) => f.nomComplet).join(', ');
+  }
+
+  nomsFormations(cours: Cours): string {
+    return (cours.formations || []).map((f) => f.intitule).join(', ');
   }
 
   get saisieValide(): boolean {
@@ -90,6 +109,7 @@ export class PedagogieCoursComponent implements OnInit {
   ouvrirCreation(): void {
     this.coursEnEdition = null;
     this.saisie = { code: '', titre: '', semestre: '', description: '', volumeHoraire: 0 };
+    this.formationsChoisies = new Set();
     this.formulaireOuvert = true;
   }
 
@@ -102,6 +122,7 @@ export class PedagogieCoursComponent implements OnInit {
       description: cours.description || '',
       volumeHoraire: cours.volumeHoraire || 0,
     };
+    this.formationsChoisies = new Set((cours.formations || []).map((f) => f.id));
     this.formulaireOuvert = true;
   }
 
@@ -110,13 +131,40 @@ export class PedagogieCoursComponent implements OnInit {
     this.coursEnEdition = null;
   }
 
+  /** Formation.id est typé « number | string » dans le modèle partagé : on normalise ici. */
+  private idFormation(id: number | string | undefined): number | null {
+    const valeur = Number(id);
+    return id === undefined || id === null || Number.isNaN(valeur) ? null : valeur;
+  }
+
+  formationChoisie(id: number | string | undefined): boolean {
+    const valeur = this.idFormation(id);
+    return valeur !== null && this.formationsChoisies.has(valeur);
+  }
+
+  basculerFormation(id: number | string | undefined): void {
+    const valeur = this.idFormation(id);
+    if (valeur === null) {
+      return;
+    }
+    if (this.formationsChoisies.has(valeur)) {
+      this.formationsChoisies.delete(valeur);
+    } else {
+      this.formationsChoisies.add(valeur);
+    }
+  }
+
   enregistrer(): void {
     if (!this.saisieValide || this.enregistrement) return;
     this.enregistrement = true;
 
+    // Toujours transmis, y compris vide : le serveur distingue « tableau vide »
+    // (retirer de tout programme) de « champ absent » (ne pas y toucher).
+    const saisie: CoursCreation = { ...this.saisie, formationIds: [...this.formationsChoisies] };
+
     const requete = this.coursEnEdition
-      ? this.pedagogie.modifierCours(this.coursEnEdition.id, this.saisie)
-      : this.pedagogie.creerCours(this.saisie);
+      ? this.pedagogie.modifierCours(this.coursEnEdition.id, saisie)
+      : this.pedagogie.creerCours(saisie);
 
     requete.subscribe({
       next: () => {

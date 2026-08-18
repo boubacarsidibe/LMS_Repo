@@ -223,6 +223,15 @@ public class PedagogieController {
 
     // ===================== Méthodes privées =====================
 
+    /** Trié : {@code Cours.formations} est un HashSet, dont l'ordre varie d'un appel à l'autre. */
+    private static List<FormationDto> toFormationDtos(Cours cours) {
+        return cours.getFormations().stream()
+                .map(f -> new FormationDto(f.getId(), f.getCode(), f.getIntitule()))
+                .sorted(Comparator.comparing(FormationDto::intitule,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+    }
+
     private static FormateurBrefDto toFormateurDto(Formateur formateur) {
         return new FormateurBrefDto(formateur.getId(),
                 (formateur.getPrenom() + " " + formateur.getNom()).trim());
@@ -248,24 +257,31 @@ public class PedagogieController {
     }
 
     /**
-     * Inscrit le cours au programme des promotions demandees.
+     * Inscrit le cours au programme demande.
      *
-     * <p>{@code cohorteIds} etait recu puis purement ignore : un cours cree ici
-     * n'etait rattache a rien, donc invisible pour tous les etudiants et tous les
-     * formateurs. C'est pourtant le chemin officiel de creation de l'offre.
+     * <p>Le responsable pedagogique designe des formations : c'est le rattachement
+     * reel, et il vaut pour toutes les promotions a venir. La voie par promotions
+     * reste acceptee pour l'espace formateur, qui raisonne ainsi.
+     *
+     * <p>Aucun des deux champs renseigne : le programme n'est pas touche. C'est la
+     * difference avec une liste vide, qui retire le cours de tout programme — les
+     * confondre effacerait le rattachement a chaque modification du titre.
      *
      * <p>Le cours doit deja etre enregistre : c'est la formation qui porte la table
      * de jointure et elle a besoin de l'identifiant.
      */
     private Cours rattacher(CoursCreateRequest request, Cours coursEnregistre) {
-        if (request.cohorteIds() == null) {
+        if (request.formationIds() != null) {
+            formationService.rattacherAuxFormations(coursEnregistre, request.formationIds());
+        } else if (request.cohorteIds() != null) {
+            List<Promotion> promotions = request.cohorteIds().stream()
+                    .map(promotionService::findById)
+                    .flatMap(Optional::stream)
+                    .toList();
+            formationService.rattacherAuxFormationsDe(coursEnregistre, promotions);
+        } else {
             return coursEnregistre;
         }
-        List<Promotion> promotions = request.cohorteIds().stream()
-                .map(promotionService::findById)
-                .flatMap(Optional::stream)
-                .toList();
-        formationService.rattacherAuxFormationsDe(coursEnregistre, promotions);
         return coursService.findById(coursEnregistre.getId()).orElse(coursEnregistre);
     }
 
@@ -290,6 +306,7 @@ public class PedagogieController {
                 0,
                 COULEUR_BANDEAU_PAR_DEFAUT,
                 promotions,
+                toFormationDtos(cours),
                 cours.getFormateurs().stream().map(PedagogieController::toFormateurDto).toList(),
                 cours.getImageUrl());
     }

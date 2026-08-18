@@ -1618,6 +1618,11 @@ public class EspaceEtudiantController {
                 0,
                 DEFAULT_COURSE_COLOR,
                 cohortes,
+                cours.getFormations().stream()
+                        .map(f -> new FormationDto(f.getId(), f.getCode(), f.getIntitule()))
+                        .sorted(Comparator.comparing(FormationDto::intitule,
+                                Comparator.nullsLast(Comparator.naturalOrder())))
+                        .toList(),
                 cours.getFormateurs().stream()
                         .map(f -> new FormateurBrefDto(f.getId(), f.getPrenom() + " " + f.getNom()))
                         .toList(),

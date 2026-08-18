@@ -174,6 +174,13 @@ promotion `MPG-2026` pointait vers la formation « Rôles spécifiques » (0 cou
 tandis que les 9 cours étaient rattachés à « Master Pétrole & Gaz ». Les deux
 maillons existaient, ils ne se rejoignaient pas.
 
+**Sur `CoursCreateRequest`, `null` et `[]` ne veulent pas dire la même chose.** Champ
+absent = ne pas toucher au programme ; liste vide = retirer le cours de tous les
+programmes. Les confondre donne deux bugs muets et symétriques : soit modifier le
+titre d'un cours le détache de tout, soit on ne peut plus jamais le détacher. Ni
+erreur, ni journal — seul un écran vide le révèle plus tard.
+`PedagogieCoursProgrammeTest` fige les trois cas.
+
 **Deux contrôleurs répondent sur `/api/pedagogie`** : `PedagogieController` (offre
 d'enseignement) et `PedagogieScolariteController` (scolarité). Ne jamais déclarer la
 même route dans les deux — Spring refuse de démarrer. `GET /promotions` appartient au

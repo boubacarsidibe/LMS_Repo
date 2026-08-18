@@ -50,13 +50,34 @@ public class FormationService {
      */
     @Transactional
     public void rattacherAuxFormationsDe(Cours cours, Collection<Promotion> promotions) {
-        if (cours == null || cours.getId() == null) {
-            return;
-        }
-        Set<Long> formationsVoulues = promotions.stream()
+        rattacherAuxFormations(cours, promotions.stream()
                 .map(Promotion::getFormation)
                 .filter(Objects::nonNull)
                 .map(Formation::getId)
+                .filter(Objects::nonNull)
+                .toList());
+    }
+
+    /**
+     * Inscrit un cours au programme de ces formations, et l'en retire partout ailleurs.
+     *
+     * <p>Voie directe, empruntée par le responsable pédagogique : lui pilote l'offre et
+     * désigne la formation elle-même, là où le formateur passe par ses promotions. Le
+     * rattachement obtenu est le même — {@link #rattacherAuxFormationsDe} ne fait que
+     * remonter des promotions vers leurs formations avant d'arriver ici.
+     *
+     * <p>Une collection vide retire le cours de tout programme : c'est ce qu'attend
+     * {@link #detacherDeToutProgramme}. L'appelant doit donc distinguer « liste vide »
+     * de « champ absent » avant d'appeler.
+     *
+     * @param cours cours déjà enregistré — son identifiant doit être connu
+     */
+    @Transactional
+    public void rattacherAuxFormations(Cours cours, Collection<Long> formationIds) {
+        if (cours == null || cours.getId() == null) {
+            return;
+        }
+        Set<Long> formationsVoulues = formationIds.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
