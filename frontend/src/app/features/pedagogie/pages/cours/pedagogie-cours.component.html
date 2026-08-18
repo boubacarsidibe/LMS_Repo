@@ -101,6 +101,15 @@
         <input id="volume" type="number" min="0" name="volumeHoraire" [(ngModel)]="saisie.volumeHoraire"
                class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
       </div>
+      <div class="flex flex-col gap-base">
+        <label for="coefficient" class="text-label-md text-on-surface-variant">Coefficient</label>
+        <input id="coefficient" type="number" min="0.5" step="0.5" name="coefficient" [(ngModel)]="saisie.coefficient"
+               class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+        <span class="font-body-sm text-body-sm text-on-surface-variant">
+          Poids du cours dans la moyenne generale. Fixe par la maquette pedagogique : il ne
+          se deduit ni du volume horaire, ni du nombre de devoirs.
+        </span>
+      </div>
       <div class="flex flex-col gap-base md:col-span-2">
         <label for="description" class="text-label-md text-on-surface-variant">Description</label>
         <textarea id="description" name="description" rows="3" [(ngModel)]="saisie.description"
@@ -175,6 +184,7 @@
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Programme</th>
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Semestre</th>
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Volume</th>
+            <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Coef.</th>
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Formateurs</th>
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Supports</th>
             <th class="py-3 text-label-sm text-on-surface-variant uppercase tracking-widest text-right">Actions</th>
@@ -192,6 +202,7 @@
             </td>
             <td class="py-3 pr-4 text-body-md text-on-surface-variant">{{ c.semestre || '—' }}</td>
             <td class="py-3 pr-4 text-body-md text-on-surface-variant">{{ c.volumeHoraire || 0 }} h</td>
+            <td class="py-3 pr-4 text-body-md text-on-surface-variant tabular-nums">{{ c.coefficient ?? 1 }}</td>
             <td class="py-3 pr-4 text-body-md">
               <span *ngIf="c.formateurs?.length" class="text-on-surface-variant">
                 {{ nomsFormateurs(c) }}

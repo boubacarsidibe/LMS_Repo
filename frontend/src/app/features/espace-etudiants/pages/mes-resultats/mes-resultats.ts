@@ -49,6 +49,9 @@ import { ScolariteService } from '../../services/scolarite.service';
                   ? (releve!.moyenneGenerale | number: '1.1-1') + ' / 20'
                   : '—' }}
             </p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+              Pondérée par le coefficient de chaque cours, et non par le nombre de devoirs.
+            </p>
           </article>
           <article
             class="bg-surface-container-lowest rounded-xl p-stack-lg border border-outline-variant shadow-sm"
@@ -93,7 +96,10 @@ import { ScolariteService } from '../../services/scolarite.service';
               class="flex items-center justify-between gap-4 px-stack-lg py-stack-md border-b border-outline-variant"
             >
               <div class="min-w-0">
-                <p class="font-label-sm text-label-sm text-on-surface-variant">{{ cours.coursCode }}</p>
+                <p class="font-label-sm text-label-sm text-on-surface-variant">
+                  {{ cours.coursCode }}
+                  <span class="text-on-surface-variant">· coefficient {{ cours.coefficient }}</span>
+                </p>
                 <a
                   [routerLink]="['/espace-etudiant/mes-cours', cours.coursId]"
                   class="font-label-md text-label-md text-on-surface hover:underline"

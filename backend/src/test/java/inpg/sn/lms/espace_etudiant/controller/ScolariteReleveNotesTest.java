@@ -124,8 +124,18 @@ class ScolariteReleveNotesTest {
         ReleveNotesDto releve = releve();
 
         assertEquals(3, releve.nombreNotes());
-        // (16 + 15 + 13) / 3 = 14,666… arrondi au dixième
-        assertEquals(14.7, releve.moyenneGenerale());
+        // Moyenne pondérée par cours, et non moyenne à plat des trois notes.
+        //
+        // Cette assertion valait 14,7 — soit (16 + 15 + 13) / 3. C'était le bug :
+        // DS-101 pesait deux fois plus que FIN-201 parce que son formateur y avait
+        // saisi deux devoirs au lieu d'un. Le poids d'un cours venait donc d'une
+        // habitude de saisie, pas de la maquette pédagogique.
+        //
+        // Les deux cours étant ici au coefficient 1 (valeur par défaut) :
+        //   DS-101  (16 + 15) / 2 = 15,5   × 1
+        //   FIN-201             13        × 1
+        //   (15,5 + 13) / 2 = 14,25 → 14,3
+        assertEquals(14.3, releve.moyenneGenerale());
         assertEquals(2, releve.parCours().size());
 
         ReleveNotesDto.NotesCoursDto premier = releve.parCours().get(0);
@@ -180,6 +190,64 @@ class ScolariteReleveNotesTest {
         assertEquals(1, releve.nombreNotes());
         assertEquals(12.0, releve.moyenneGenerale());
         assertTrue(releve.parCours().isEmpty());
+    }
+
+    /**
+     * Le coefficient vient de la maquette pédagogique, pas du volume horaire ni du
+     * nombre d'évaluations. Un cours de 20 h peut peser 3.
+     *
+     * <p>Sans cette pondération, le relevé affichait 11,3 là où la maquette veut
+     * 12,5 : plus d'un point d'écart sur le bulletin, dans un sens dicté par le
+     * nombre de devoirs que chaque formateur avait saisis.
+     */
+    @Test
+    @DisplayName("La moyenne générale est pondérée par le coefficient de chaque cours")
+    void moyenne_generale_ponderee_par_les_coefficients() {
+        Cours ml = cours(9L, "DS-101", "Introduction au Machine Learning");
+        ml.setCoefficient(3);
+        Cours eco = cours(16L, "ECO-203", "Économie pétrolière");
+        eco.setCoefficient(1);
+
+        when(utilisateurCourant.etudiant(any())).thenReturn(etudiant);
+        when(noteModuleService.getByEtudiantId(38L)).thenReturn(List.of(
+                note(ml, "Fondamentaux", 8),
+                note(ml, "Supervisé", 10),
+                note(eco, "Marchés", 18)));
+
+        ReleveNotesDto releve = releve();
+
+        // DS-101 : (8 + 10) / 2 = 9   coefficient 3
+        // ECO-203 :          18       coefficient 1
+        // (9 x 3 + 18 x 1) / 4 = 45 / 4 = 11,25 -> 11,3
+        assertEquals(11.3, releve.moyenneGenerale());
+
+        // Le coefficient est renvoyé avec chaque cours : sans lui, l'étudiant ne
+        // peut pas refaire le calcul de son propre relevé.
+        assertEquals(3.0, releve.parCours().get(0).coefficient());
+    }
+
+    /**
+     * Garde-fou du cas par défaut : tant qu'aucun coefficient n'est saisi, tous les
+     * cours valent 1 et la moyenne générale est la moyenne des moyennes de cours.
+     */
+    @Test
+    @DisplayName("Sans coefficient saisi, chaque cours pèse 1")
+    void coefficient_par_defaut_egal_a_un() {
+        Cours ml = cours(9L, "DS-101", "Introduction au Machine Learning");
+        Cours eco = cours(16L, "ECO-203", "Économie pétrolière");
+
+        when(utilisateurCourant.etudiant(any())).thenReturn(etudiant);
+        when(noteModuleService.getByEtudiantId(38L)).thenReturn(List.of(
+                note(ml, "Fondamentaux", 8),
+                note(ml, "Supervisé", 10),
+                note(eco, "Marchés", 18)));
+
+        ReleveNotesDto releve = releve();
+
+        // (9 + 18) / 2 = 13,5 — et non (8 + 10 + 18) / 3 = 12,0, qui ferait peser
+        // DS-101 deux fois plus qu'ECO-203 pour la seule raison qu'il a deux notes.
+        assertEquals(13.5, releve.moyenneGenerale());
+        assertEquals(1.0, releve.parCours().get(0).coefficient());
     }
 
     @Test

@@ -22,6 +22,8 @@ public record CoursCreateRequest(
         String semestre,
         String description,
         Long volumeHoraire,
+        /** Absent ou <= 0 : le coefficient existant est conserve (1 a la creation). */
+        Double coefficient,
         List<Long> cohorteIds,
         List<Long> formationIds) {
 }

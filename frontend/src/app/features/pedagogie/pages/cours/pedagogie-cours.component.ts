@@ -35,7 +35,7 @@ export class PedagogieCoursComponent implements OnInit {
   /** Formulaire unique : en création quand coursEnEdition est null, sinon en modification. */
   formulaireOuvert = false;
   coursEnEdition: Cours | null = null;
-  saisie: CoursCreation = { code: '', titre: '', semestre: '', description: '', volumeHoraire: 0 };
+  saisie: CoursCreation = this.saisieVierge();
   enregistrement = false;
 
   /** Formations cochées dans le formulaire, avant enregistrement. */
@@ -106,9 +106,15 @@ export class PedagogieCoursComponent implements OnInit {
     return !!this.saisie.code.trim() && !!this.saisie.titre.trim() && (this.saisie.volumeHoraire ?? 0) >= 0;
   }
 
+  private saisieVierge(): CoursCreation {
+    // Coefficient 1 par defaut : un cours pese autant que les autres tant que la
+    // maquette n'en decide pas autrement.
+    return { code: '', titre: '', semestre: '', description: '', volumeHoraire: 0, coefficient: 1 };
+  }
+
   ouvrirCreation(): void {
     this.coursEnEdition = null;
-    this.saisie = { code: '', titre: '', semestre: '', description: '', volumeHoraire: 0 };
+    this.saisie = this.saisieVierge();
     this.formationsChoisies = new Set();
     this.formulaireOuvert = true;
   }
@@ -121,6 +127,7 @@ export class PedagogieCoursComponent implements OnInit {
       semestre: cours.semestre || '',
       description: cours.description || '',
       volumeHoraire: cours.volumeHoraire || 0,
+      coefficient: cours.coefficient ?? 1,
     };
     this.formationsChoisies = new Set((cours.formations || []).map((f) => f.id));
     this.formulaireOuvert = true;

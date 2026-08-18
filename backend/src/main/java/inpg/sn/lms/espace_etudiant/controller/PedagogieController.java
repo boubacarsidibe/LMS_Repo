@@ -254,6 +254,11 @@ public class PedagogieController {
         cours.setDescription(request.description() == null ? "" : request.description().trim());
         cours.setSemestre(request.semestre() == null ? "" : request.semestre().trim());
         cours.setVolumeHoraire(request.volumeHoraire() == null ? 0L : request.volumeHoraire());
+        // Absent ou invalide : on garde la valeur en place plutot que d'imposer 1, sans
+        // quoi une modification du titre remettrait le coefficient a plat.
+        if (request.coefficient() != null && request.coefficient() > 0) {
+            cours.setCoefficient(request.coefficient());
+        }
     }
 
     /**
@@ -301,6 +306,7 @@ public class PedagogieController {
                 cours.getDescription(),
                 cours.getSemestre(),
                 cours.getVolumeHoraire(),
+                cours.getCoefficient(),
                 0,
                 supportService.countCourseSupports(cours.getId()),
                 0,

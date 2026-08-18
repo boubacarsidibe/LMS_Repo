@@ -81,7 +81,7 @@ class PedagogieCoursProgrammeTest {
     }
 
     private CoursCreateRequest requete(List<Long> formationIds) {
-        return new CoursCreateRequest("GEO-101", "Geologie des reservoirs", "S1", "", 30L, null, formationIds);
+        return new CoursCreateRequest("GEO-101", "Geologie des reservoirs", "S1", "", 30L, null, null, formationIds);
     }
 
     private void simulerCoursEnBase() {

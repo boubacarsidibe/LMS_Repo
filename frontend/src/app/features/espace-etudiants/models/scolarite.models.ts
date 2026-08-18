@@ -164,6 +164,8 @@ export interface NotesCours {
   coursTitre: string;
   /** null si aucune note n'a encore été saisie dans ce cours. */
   moyenne: number | null;
+  /** Poids de ce cours dans la moyenne générale. Renvoyé pour que le relevé soit vérifiable. */
+  coefficient: number;
   notes: NoteModule[];
 }
 

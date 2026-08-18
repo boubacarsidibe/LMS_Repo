@@ -7,6 +7,8 @@ export interface Cours {
   description?: string;
   semestre?: string;
   volumeHoraire?: number;
+  /** Poids du cours dans la moyenne generale. Vaut 1 par defaut. */
+  coefficient?: number;
   nbEtudiants: number;
   nbRessources: number;
   progression: number;
@@ -27,6 +29,8 @@ export interface CoursCreation {
   semestre: string;
   description?: string;
   volumeHoraire?: number;
+  /** Absent ou <= 0 : le coefficient en place est conserve. */
+  coefficient?: number;
   /** Voie de l'espace formateur, qui raisonne en promotions. */
   cohorteIds?: number[];
   /**

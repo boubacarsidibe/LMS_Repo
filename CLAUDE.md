@@ -181,6 +181,14 @@ titre d'un cours le détache de tout, soit on ne peut plus jamais le détacher. 
 erreur, ni journal — seul un écran vide le révèle plus tard.
 `PedagogieCoursProgrammeTest` fige les trois cas.
 
+**Le coefficient d'un cours ne se déduit de rien.** Ni du volume horaire, ni du
+nombre d'évaluations : c'est une valeur de la maquette pédagogique, saisie à la main
+(colonne `cours.coefficient`, migration `V8`, défaut 1). La moyenne générale portait
+avant sur la liste à plat de toutes les notes — un cours évalué trois fois pesait donc
+trois fois plus qu'un cours évalué une fois, pondération que personne n'avait choisie.
+Elle se calcule désormais sur les moyennes **par cours**, chacune pesant son
+coefficient. `ScolariteReleveNotesTest` fige les deux cas et le cas par défaut.
+
 **Deux contrôleurs répondent sur `/api/pedagogie`** : `PedagogieController` (offre
 d'enseignement) et `PedagogieScolariteController` (scolarité). Ne jamais déclarer la
 même route dans les deux — Spring refuse de démarrer. `GET /promotions` appartient au

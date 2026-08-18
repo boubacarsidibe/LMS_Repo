@@ -11,7 +11,8 @@ import java.util.List;
  * {@link CoursEtudiantDto} ne s'y substituait pas — il porte l'appréciation que
  * l'étudiant donne au cours, pas la note qu'il reçoit.
  *
- * @param moyenneGenerale moyenne de toutes les notes, {@code null} s'il n'y en a aucune
+ * @param moyenneGenerale moyenne pondérée par les coefficients des cours, {@code null}
+ *                        s'il n'y a aucune note
  * @param nombreNotes     total, pour distinguer « pas encore de note » de « moyenne de 0 »
  */
 public record ReleveNotesDto(
@@ -22,13 +23,16 @@ public record ReleveNotesDto(
     /**
      * Notes obtenues dans un cours.
      *
-     * @param moyenne moyenne du cours, {@code null} si aucune note n'y a été saisie
+     * @param moyenne     moyenne du cours, {@code null} si aucune note n'y a été saisie
+     * @param coefficient poids de ce cours dans la moyenne générale ; affiché à l'étudiant
+     *                    pour que son relevé soit vérifiable
      */
     public record NotesCoursDto(
             Long coursId,
             String coursCode,
             String coursTitre,
             Double moyenne,
+            double coefficient,
             List<NoteModuleDto> notes) {
     }
 }

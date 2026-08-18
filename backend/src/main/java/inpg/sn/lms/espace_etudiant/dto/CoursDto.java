@@ -9,6 +9,8 @@ public record CoursDto(
         String description,
         String semestre,
         Long volumeHoraire,
+        /** Poids du cours dans la moyenne generale. Vaut 1 par defaut. */
+        double coefficient,
         long nbEtudiants,
         long nbRessources,
         int progression,

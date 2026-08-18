@@ -127,14 +127,55 @@ public class ScolariteController {
                             cours.getNom(),
                             cours.getTitre(),
                             moyenne(notesDuCours),
+                            cours.getCoefficient(),
                             notesDuCours.stream().map(this::toNoteDto).toList());
                 })
                 .toList();
 
-        return ResponseEntity.ok(new ReleveNotesDto(moyenne(notes), notes.size(), groupes));
+        List<NoteModule> orphelines = notes.stream().filter(note -> note.getCours() == null).toList();
+        return ResponseEntity.ok(
+                new ReleveNotesDto(moyenneGenerale(groupes, orphelines), notes.size(), groupes));
     }
 
-    /** Moyenne arrondie au dixième, {@code null} si la liste est vide. */
+    /**
+     * Moyenne générale, pondérée par le coefficient de chaque cours.
+     *
+     * <p>Elle portait auparavant sur la liste à plat de toutes les notes. Le poids
+     * d'un cours dépendait donc du <strong>nombre de devoirs</strong> que son formateur
+     * avait saisis : un cours évalué trois fois pesait trois fois plus qu'un cours
+     * évalué une seule fois. Personne n'avait choisi cette pondération — elle venait
+     * d'une habitude de saisie, et faussait le bulletin de plus d'un point.
+     *
+     * <p>Chaque cours pèse désormais son coefficient, quel que soit le nombre
+     * d'évaluations qu'il contient. Les cours sans note sont écartés : les compter
+     * pour zéro sanctionnerait un étudiant pour un devoir que son formateur n'a pas
+     * encore corrigé.
+     *
+     * <p>Une note dont le cours a été supprimé n'a plus de coefficient à porter. Elle
+     * reste comptée, au poids de 1 : elle a bien été obtenue, et l'écarter ferait
+     * afficher « 1 note » sous une moyenne vide.
+     */
+    private Double moyenneGenerale(List<ReleveNotesDto.NotesCoursDto> groupes,
+            List<NoteModule> orphelines) {
+        double poids = 0;
+        double total = 0;
+
+        for (ReleveNotesDto.NotesCoursDto groupe : groupes) {
+            if (groupe.moyenne() == null || groupe.coefficient() <= 0) {
+                continue;
+            }
+            total += groupe.moyenne() * groupe.coefficient();
+            poids += groupe.coefficient();
+        }
+        for (NoteModule orpheline : orphelines) {
+            total += orpheline.getNote();
+            poids += 1;
+        }
+
+        return poids <= 0 ? null : Math.round(total / poids * 10) / 10.0;
+    }
+
+    /** Moyenne d'un cours, arrondie au dixième, {@code null} si la liste est vide. */
     private Double moyenne(List<NoteModule> notes) {
         return notes.isEmpty() ? null
                 : Math.round(notes.stream().mapToDouble(NoteModule::getNote).average().orElse(0) * 10) / 10.0;

@@ -1613,6 +1613,7 @@ public class EspaceEtudiantController {
                 cours.getDescription(),
                 cours.getSemestre(),
                 cours.getVolumeHoraire(),
+                cours.getCoefficient(),
                 nbEtudiants,
                 supportsParCours.getOrDefault(cours.getId(), 0L),
                 0,

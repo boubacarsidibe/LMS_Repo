@@ -37,6 +37,16 @@ public class Cours {
 
     private String semestre;
 
+    /**
+     * Poids du cours dans la moyenne generale, fixe par la maquette pedagogique.
+     *
+     * <p>Ne se deduit ni du volume horaire ni du nombre d'evaluations : un cours de
+     * 20 h peut peser coefficient 3. Vaut 1 par defaut, ce qui donne un poids egal a
+     * tous les cours tant qu'aucun coefficient n'est saisi.
+     */
+    @Column(nullable = false)
+    private double coefficient = 1;
+
     @Column(nullable = true)
     private String imageUrl;
 
@@ -94,6 +104,14 @@ public class Cours {
 
     public String getSemestre() {
         return semestre;
+    }
+
+    public double getCoefficient() {
+        return coefficient;
+    }
+
+    public void setCoefficient(double coefficient) {
+        this.coefficient = coefficient;
     }
 
     public List<Formateur> getFormateurs() {
