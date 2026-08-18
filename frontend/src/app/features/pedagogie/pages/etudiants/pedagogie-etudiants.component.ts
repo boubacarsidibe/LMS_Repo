@@ -82,6 +82,19 @@ export class PedagogieEtudiantsComponent implements OnInit {
     return this.etudiants.filter((e) => !e.cohorte || e.cohorte === 'Sans promotion');
   }
 
+  /**
+   * Candidats définitivement admis dont l'inscription reste à faire.
+   *
+   * <p>L'admission ouvre l'accès, elle n'inscrit pas : le compte est créé sans
+   * promotion ni matricule, et c'est l'affectation faite ici qui achève l'inscription.
+   * Sans cette distinction, un admis de la veille et un compte oublié depuis des mois
+   * se présentaient à l'identique — or l'un appelle une inscription, l'autre une
+   * correction.
+   */
+  get admisEnAttente(): EtudiantScolarite[] {
+    return this.sansPromotion.filter((e) => !!e.origine);
+  }
+
   // ===================== Création =====================
 
   ouvrirCreation(): void {

@@ -181,6 +181,15 @@ titre d'un cours le détache de tout, soit on ne peut plus jamais le détacher. 
 erreur, ni journal — seul un écran vide le révèle plus tard.
 `PedagogieCoursProgrammeTest` fige les trois cas.
 
+**L'admission ouvre l'accès, la pédagogie inscrit.** `AdminRecrutementController.
+inscrireCommeEtudiant` bascule `ROLE_CANDIDAT` en `ROLE_ETUDIANT` et crée la fiche
+étudiant — **sans promotion ni matricule**. Ne pas supprimer cette conversion au motif
+que la scolarité appartient au responsable pédagogique : sans elle, un candidat admis
+resterait sans accès et sans que personne ne sache qu'il attend. C'est l'affectation
+d'une promotion, faite côté pédagogie, qui achève l'inscription et attribue le
+matricule. Le compte porte `origine = "Admission"` tant qu'un dossier de candidature
+existe derrière lui, pour distinguer un admis de la veille d'un compte oublié.
+
 **Un relevé délivré fige ses valeurs, il ne les recalcule pas** (migration `V9`).
 `releve_ligne` recopie code, titre, coefficient et moyenne du cours ; elle n'a
 volontairement **aucune clé étrangère** vers `cours`. Sans cela, un document remis en

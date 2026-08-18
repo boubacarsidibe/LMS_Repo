@@ -20,5 +20,15 @@ public record EtudiantSuiviDto(
         String statut,
         String initiales,
         String couleurAvatar,
-        String matricule) {
+        String matricule,
+        /**
+         * D'où vient ce compte : {@code "Admission"} s'il a été ouvert par la
+         * conversion d'un candidat admis, {@code null} s'il a été créé à la main.
+         *
+         * <p>Sans cette distinction, un candidat fraîchement admis et un compte que le
+         * responsable pédagogique avait oublié d'affecter s'affichent à l'identique :
+         * « sans promotion ». Le premier appelle une inscription, le second une
+         * correction — ce ne sont pas les mêmes gestes.
+         */
+        String origine) {
 }

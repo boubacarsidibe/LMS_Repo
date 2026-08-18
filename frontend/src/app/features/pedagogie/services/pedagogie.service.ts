@@ -249,6 +249,8 @@ export interface EtudiantScolarite {
   initiales: string;
   couleurAvatar: string;
   matricule: string | null;
+  /** « Admission » si le compte vient d'un candidat admis, null s'il a été créé à la main. */
+  origine: string | null;
 }
 
 export interface EtudiantSaisie {

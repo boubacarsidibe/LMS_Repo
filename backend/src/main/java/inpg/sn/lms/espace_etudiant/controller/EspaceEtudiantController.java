@@ -1804,7 +1804,9 @@ public class EspaceEtudiantController {
                 releveNotesService.statutDeSuivi(noteMoyenne),
                 initials(etudiant.getPrenom(), etudiant.getNom()),
                 "bg-primary-container",
-                etudiant.getMatricule());
+                etudiant.getMatricule(),
+                // Sans objet cote formateur : il enseigne a ses etudiants, il ne les inscrit pas.
+                null);
     }
 
 

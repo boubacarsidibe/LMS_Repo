@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import inpg.sn.lms.auth.dto.EtudiantDto;
 import inpg.sn.lms.auth.entity.Etudiant;
+import inpg.sn.lms.auth.repository.CandidatRepository;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.auth.service.EtudiantService;
 import inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest;
@@ -89,13 +90,15 @@ public class PedagogieScolariteController {
     private final RetourEvaluationRepository retourRepository;
     private final ReleveNotesService releveNotesService;
     private final ReleveDelivranceService releveDelivranceService;
+    private final CandidatRepository candidatRepository;
 
     public PedagogieScolariteController(PromotionRepository promotionRepository,
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
             EtudiantService etudiantService, MatriculeService matriculeService,
             CertificatService certificatService, CoursRepository coursRepository,
             NotificationService notificationService, RetourEvaluationRepository retourRepository,
-            ReleveNotesService releveNotesService, ReleveDelivranceService releveDelivranceService) {
+            ReleveNotesService releveNotesService, ReleveDelivranceService releveDelivranceService,
+            CandidatRepository candidatRepository) {
         this.promotionRepository = promotionRepository;
         this.formationRepository = formationRepository;
         this.etudiantRepository = etudiantRepository;
@@ -107,6 +110,7 @@ public class PedagogieScolariteController {
         this.retourRepository = retourRepository;
         this.releveNotesService = releveNotesService;
         this.releveDelivranceService = releveDelivranceService;
+        this.candidatRepository = candidatRepository;
     }
 
     // ===================== PROMOTIONS =====================
@@ -651,7 +655,9 @@ public class PedagogieScolariteController {
                 promotion == null ? "Sans promotion" : releveNotesService.statutDeSuivi(moyenne),
                 initiales(etudiant),
                 "bg-primary-container",
-                etudiant.getMatricule());
+                etudiant.getMatricule(),
+                // Un dossier de candidature derriere le compte = il vient de l'admission.
+                candidatRepository.findByUserId(etudiant.getId()).isPresent() ? "Admission" : null);
     }
 
     private CertificatDto toCertificatDto(Certificat certificat) {

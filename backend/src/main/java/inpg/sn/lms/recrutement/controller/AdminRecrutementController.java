@@ -466,7 +466,20 @@ public class AdminRecrutementController {
     }
 
     /**
-     * L'admission finale (ADMIS3) doit donner un accès réel à l'espace étudiant :
+     * Ouvre l'accès étudiant à un candidat définitivement admis.
+     *
+     * <p><strong>Cette méthode n'inscrit pas l'étudiant, elle lui ouvre la porte.</strong>
+     * Le compte créé n'a ni promotion ni matricule : c'est au responsable pédagogique,
+     * à qui revient la scolarité, de l'affecter — geste qui lui attribue son matricule.
+     * D'ici là, l'étudiant apparaît en rouge dans sa liste, marqué « Admission ».
+     *
+     * <p>Ne pas supprimer cette conversion au motif que la gestion des étudiants
+     * appartient au responsable pédagogique : sans elle, un candidat admis resterait
+     * avec le seul ROLE_CANDIDAT et n'aurait accès à rien, sans que personne ne sache
+     * qu'il attend. La frontière est ailleurs — l'admission ouvre l'accès, la pédagogie
+     * inscrit.
+     *
+     * <p>L'admission finale (ADMIS3) doit donner un accès réel à l'espace étudiant :
      * sans ceci, un candidat admis reste bloqué avec le seul ROLE_CANDIDAT et ne
      * peut pas utiliser le LMS (même bug de fond que Formateur/Etudiant sans
      * profil associé, déjà corrigé côté AdminController#changeUserRoles). Un compte
