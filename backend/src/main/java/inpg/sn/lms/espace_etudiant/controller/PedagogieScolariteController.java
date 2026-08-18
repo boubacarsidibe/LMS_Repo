@@ -477,19 +477,25 @@ public class PedagogieScolariteController {
                     .body(Map.of("message", "Désignez au moins un étudiant, ou une promotion."));
         }
 
+        String periode = request.periode().trim();
         List<ReleveDelivreDto> delivres = new ArrayList<>();
         List<String> sansNote = new ArrayList<>();
+        List<String> reemissions = new ArrayList<>();
         for (Etudiant etudiant : vises) {
             if (releveNotesService.duEtudiant(etudiant.getId()).nombreNotes() == 0) {
                 sansNote.add(nomComplet(etudiant));
                 continue;
             }
-            delivres.add(toReleveDto(
-                    releveDelivranceService.delivrer(etudiant, request.periode().trim())));
+            // Constate avant d'ecrire, sinon le releve qu'on vient de creer compterait
+            // comme son propre precedent et tout passerait pour une reemission.
+            if (releveDelivranceService.dejaDelivre(etudiant.getId(), periode)) {
+                reemissions.add(nomComplet(etudiant));
+            }
+            delivres.add(toReleveDto(releveDelivranceService.delivrer(etudiant, periode)));
         }
 
         return ResponseEntity.status(delivres.isEmpty() ? HttpStatus.OK : HttpStatus.CREATED)
-                .body(Map.of("delivres", delivres, "sansNote", sansNote));
+                .body(Map.of("delivres", delivres, "sansNote", sansNote, "reemissions", reemissions));
     }
 
     // ===================== RAPPELS =====================

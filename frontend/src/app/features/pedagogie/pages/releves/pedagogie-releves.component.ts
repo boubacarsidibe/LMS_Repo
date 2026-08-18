@@ -158,6 +158,30 @@ export class PedagogieRelevesComponent implements OnInit {
     return !!this.periode.trim() && (this.selection.size > 0 || this.promotionCiblee !== null);
   }
 
+  /**
+   * Étudiants visés qui ont déjà un relevé pour la période saisie.
+   *
+   * <p>Calculé sur le registre déjà chargé, sans appel supplémentaire. Réémettre est
+   * légitime — duplicata, relevé corrigé — mais un double clic produit exactement le
+   * même résultat qu'une réémission voulue. D'où l'avertissement, jamais un blocage :
+   * on ne supprime pas un document délivré, autant le faire sciemment.
+   */
+  get dejaDelivres(): string[] {
+    const periode = this.periode.trim().toLowerCase();
+    if (!periode) {
+      return [];
+    }
+    const vises =
+      this.selection.size > 0
+        ? this.etudiantsProposes.filter((e) => this.selection.has(e.id))
+        : this.etudiantsProposes;
+    return vises
+      .filter((e) =>
+        this.releves.some((r) => r.etudiantId === e.id && r.periode.trim().toLowerCase() === periode)
+      )
+      .map((e) => e.nom);
+  }
+
   delivrer(): void {
     if (!this.saisieValide || this.delivrance) {
       return;
@@ -172,7 +196,10 @@ export class PedagogieRelevesComponent implements OnInit {
           this.delivrance = false;
           this.fermerFormulaire();
           const nb = resultat.delivres.length;
-          this.messageSucces = `${nb} relevé${nb > 1 ? 's' : ''} délivré${nb > 1 ? 's' : ''}.`;
+          const reemis = resultat.reemissions?.length ?? 0;
+          this.messageSucces =
+            `${nb} relevé${nb > 1 ? 's' : ''} délivré${nb > 1 ? 's' : ''}` +
+            (reemis > 0 ? `, dont ${reemis} en réémission.` : '.');
           if (resultat.sansNote.length > 0) {
             // Signalé, pas caché : un relevé vide n'attesterait de rien, mais le
             // responsable doit savoir qui n'en a pas reçu, et pourquoi.

@@ -187,6 +187,25 @@
         </div>
       </div>
 
+      <!-- Avertissement de réémission : signalé, jamais bloquant -->
+      <div *ngIf="dejaDelivres.length > 0"
+           class="rounded-lg border border-error p-stack-md">
+        <div class="flex items-center gap-2 text-error">
+          <span class="material-symbols-outlined">history</span>
+          <span class="font-label-md text-label-md">
+            {{ dejaDelivres.length }} relevé(s) déjà délivré(s) pour cette période
+          </span>
+        </div>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+          {{ dejaDelivres.join(', ') }}.
+        </p>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+          Délivrer à nouveau crée un <strong>second document</strong>, avec sa propre
+          référence. C’est ce qu’il faut pour un duplicata ou un relevé corrigé — mais un
+          double clic donne le même résultat. Le précédent n’est jamais supprimé.
+        </p>
+      </div>
+
       <p class="font-body-sm text-body-sm text-on-surface-variant">
         Le relevé est délivré au nom de l’institut : il porte « INPG — Direction pédagogique »,
         et non votre nom. Les étudiants sans aucune note sont écartés et vous seront signalés.
@@ -199,7 +218,7 @@
         </button>
         <button type="button" [disabled]="!saisieValide || delivrance" (click)="delivrer()"
                 class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
-          {{ delivrance ? 'Délivrance…' : 'Délivrer' }}
+          {{ delivrance ? 'Délivrance…' : (dejaDelivres.length > 0 ? 'Délivrer quand même' : 'Délivrer') }}
         </button>
       </div>
     </div>

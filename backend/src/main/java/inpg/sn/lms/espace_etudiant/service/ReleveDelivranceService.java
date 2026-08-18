@@ -71,6 +71,17 @@ public class ReleveDelivranceService {
         return releveRepository.save(releve);
     }
 
+    /**
+     * Un relevé a-t-il déjà été délivré à cet étudiant pour cette période ?
+     *
+     * <p>La réponse sert à avertir, pas à bloquer : réémettre est légitime, se
+     * tromper l'est moins, et rien ne distinguait les deux.
+     */
+    @Transactional(readOnly = true)
+    public boolean dejaDelivre(Long etudiantId, String periode) {
+        return releveRepository.existsByEtudiant_IdAndPeriode(etudiantId, periode);
+    }
+
     @Transactional(readOnly = true)
     public List<ReleveNotes> tous() {
         return releveRepository.findAllByOrderByDateEmissionDesc();

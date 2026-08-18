@@ -200,6 +200,8 @@ export interface ResultatDelivrance {
   delivres: ReleveDelivre[];
   /** Étudiants écartés faute de note : leur délivrer un relevé vide n'attesterait de rien. */
   sansNote: string[];
+  /** Étudiants qui avaient déjà un relevé pour cette période. Signalé, jamais bloqué. */
+  reemissions: string[];
 }
 
 export interface PromotionSaisie {

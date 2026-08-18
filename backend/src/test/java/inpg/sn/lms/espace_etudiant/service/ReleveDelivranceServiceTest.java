@@ -147,6 +147,25 @@ class ReleveDelivranceServiceTest {
         assertThat(releve.getLignes().get(0).getCoursCode()).isEqualTo("DS-101");
     }
 
+    /**
+     * Réémettre est légitime — duplicata, relevé corrigé — et on ne supprime pas un
+     * document délivré. Mais un double clic produit le même résultat qu'une réémission
+     * voulue : le service doit pouvoir signaler le cas, sans jamais le bloquer.
+     */
+    @Test
+    @DisplayName("Un relevé déjà délivré pour la même période est signalé, pas refusé")
+    void une_reemission_est_signalee_sans_etre_bloquee() {
+        when(releveRepository.existsByEtudiant_IdAndPeriode(38L, "Semestre 1 — 2025/2026"))
+                .thenReturn(true);
+
+        assertThat(service.dejaDelivre(38L, "Semestre 1 — 2025/2026")).isTrue();
+
+        // Et la delivrance reste possible : c'est un avertissement, pas un verrou.
+        Cours ml = cours(9L, "DS-101", "Introduction au Machine Learning", 1);
+        when(noteModuleService.getByEtudiantId(38L)).thenReturn(List.of(note(ml, "Fondamentaux", 12)));
+        assertThat(service.delivrer(etudiant, "Semestre 1 — 2025/2026")).isNotNull();
+    }
+
     @Test
     @DisplayName("Le relevé est délivré au nom de l'établissement, pas de l'agent connecté")
     void delivre_au_nom_de_l_etablissement() {
