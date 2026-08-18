@@ -2,14 +2,21 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { PedagogieService, SupportDetail } from '../../services/pedagogie.service';
+import { forkJoin } from 'rxjs';
+import { FormateurBref, PedagogieService, SupportDetail } from '../../services/pedagogie.service';
 import { Cours } from '../../../espace-etudiants/models/cours';
-import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 /**
- * Supports d'un cours, côté responsable pédagogique : publication et retrait.
- * Ce sont exactement les supports que l'étudiant voit sur
- * /espace-etudiant/cours/:id.
+ * Fiche d'un cours, côté responsable pédagogique.
+ *
+ * <p>Cet écran servait à publier et retirer des supports. Ce n'est pas le rôle du
+ * responsable pédagogique : le contenu d'un cours est conçu par celui qui l'enseigne.
+ * S'il le faisait, c'est qu'il n'avait <strong>aucun moyen de désigner l'enseignant</strong> —
+ * il bouchait le trou à la place du formateur.
+ *
+ * <p>L'écran fait donc désormais ce qui lui revient : composer l'équipe pédagogique,
+ * et constater ce qui a été publié sans y toucher.
  */
 @Component({
   selector: 'app-pedagogie-cours-supports',
@@ -20,19 +27,18 @@ import { ConfirmationService } from '../../../../shared/components/ui/confirmati
 export class PedagogieCoursSupportsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private pedagogie = inject(PedagogieService);
-  private confirmation = inject(ConfirmationService);
+  private notifications = inject(NotificationService);
 
   coursId = 0;
   cours: Cours | null = null;
   supports: SupportDetail[] = [];
+  formateurs: FormateurBref[] = [];
   chargement = true;
-
-  typeRessource = 'Cours';
-  fichier: File | null = null;
-  publication = false;
   erreur: string | null = null;
 
-  typesRessource = ['Cours', 'TD', 'TP', 'Exercice', 'Video', 'Lien'];
+  /** Identifiants cochés dans le panneau d'affectation, avant enregistrement. */
+  selection = new Set<number>();
+  affectation = false;
 
   ngOnInit(): void {
     this.coursId = Number(this.route.snapshot.paramMap.get('id'));
@@ -41,62 +47,77 @@ export class PedagogieCoursSupportsComponent implements OnInit {
       this.chargement = false;
       return;
     }
-    this.pedagogie.getCours().subscribe({
-      next: (liste) => {
-        this.cours = (liste || []).find((c) => c.id === this.coursId) || null;
+    forkJoin({
+      cours: this.pedagogie.getCours(),
+      formateurs: this.pedagogie.getFormateurs(),
+      supports: this.pedagogie.getSupports(this.coursId),
+    }).subscribe({
+      next: ({ cours, formateurs, supports }) => {
+        this.cours = (cours || []).find((c) => c.id === this.coursId) || null;
+        this.formateurs = formateurs || [];
+        this.supports = supports || [];
+        this.reinitialiserSelection();
         this.chargement = false;
       },
-      error: () => (this.chargement = false),
-    });
-    this.chargerSupports();
-  }
-
-  private chargerSupports(): void {
-    this.pedagogie.getSupports(this.coursId).subscribe({
-      next: (data) => (this.supports = data || []),
-      error: () => (this.supports = []),
+      error: () => {
+        this.erreur = 'La fiche du cours n’a pas pu être chargée.';
+        this.chargement = false;
+      },
     });
   }
 
-  onFichierChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.fichier = input.files && input.files.length > 0 ? input.files[0] : null;
+  private reinitialiserSelection(): void {
+    this.selection = new Set((this.cours?.formateurs || []).map((f) => f.id));
   }
 
-  publier(): void {
-    if (!this.fichier || this.publication) return;
-    this.publication = true;
+  /** Un cours sans formateur n'apparaît dans aucun espace enseignant. */
+  get sansFormateur(): boolean {
+    return !this.cours?.formateurs?.length;
+  }
+
+  estSelectionne(id: number): boolean {
+    return this.selection.has(id);
+  }
+
+  basculer(id: number): void {
+    if (this.selection.has(id)) {
+      this.selection.delete(id);
+    } else {
+      this.selection.add(id);
+    }
+  }
+
+  /** Vrai tant que la sélection diffère de l'équipe enregistrée. */
+  get selectionModifiee(): boolean {
+    const enregistres = (this.cours?.formateurs || []).map((f) => f.id);
+    return (
+      enregistres.length !== this.selection.size ||
+      enregistres.some((id) => !this.selection.has(id))
+    );
+  }
+
+  enregistrerEquipe(): void {
+    if (this.affectation || this.selection.size === 0) {
+      return;
+    }
+    this.affectation = true;
     this.erreur = null;
 
-    this.pedagogie.publierSupport(this.coursId, this.typeRessource, this.fichier).subscribe({
-      next: () => {
-        this.publication = false;
-        this.fichier = null;
-        // Réinitialise le champ fichier : sans cela, republier le même fichier
-        // ne déclenche pas de nouvel événement change.
-        const input = document.getElementById('fichier') as HTMLInputElement | null;
-        if (input) input.value = '';
-        this.chargerSupports();
+    this.pedagogie.affecterFormateurs(this.coursId, [...this.selection]).subscribe({
+      next: (cours) => {
+        this.affectation = false;
+        this.cours = cours;
+        this.reinitialiserSelection();
+        this.notifications.succes('L’équipe pédagogique a été enregistrée.');
       },
       error: (err) => {
-        this.publication = false;
-        this.erreur = err?.error?.message || "La publication du support a échoué.";
+        this.affectation = false;
+        this.erreur = err?.error?.message || 'L’affectation a échoué.';
       },
     });
   }
 
-  supprimer(support: SupportDetail): void {
-    this.confirmation.demander({
-      titre: 'Retirer la ressource',
-      message: `« ${support.titre} » sera retirée de ce cours.`,
-      libelleConfirmer: 'Retirer',
-      destructif: true,
-    }).subscribe((confirme) => {
-      if (!confirme) return;
-      this.pedagogie.supprimerSupport(support.id).subscribe({
-        next: () => this.chargerSupports(),
-        error: () => (this.erreur = 'La suppression a échoué.'),
-      });
-    });
+  annulerSelection(): void {
+    this.reinitialiserSelection();
   }
 }

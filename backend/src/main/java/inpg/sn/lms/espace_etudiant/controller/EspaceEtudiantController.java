@@ -62,6 +62,7 @@ import inpg.sn.lms.espace_etudiant.dto.EtudiantSuiviDto;
 import inpg.sn.lms.espace_etudiant.dto.EvenementCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.EvenementDto;
 import inpg.sn.lms.espace_etudiant.dto.FormateurProfileDto;
+import inpg.sn.lms.espace_etudiant.dto.FormateurBrefDto;
 import inpg.sn.lms.espace_etudiant.dto.FormationDto;
 import inpg.sn.lms.espace_etudiant.dto.MessageDto;
 import inpg.sn.lms.espace_etudiant.dto.NoteModuleCreateRequest;
@@ -1617,6 +1618,9 @@ public class EspaceEtudiantController {
                 0,
                 DEFAULT_COURSE_COLOR,
                 cohortes,
+                cours.getFormateurs().stream()
+                        .map(f -> new FormateurBrefDto(f.getId(), f.getPrenom() + " " + f.getNom()))
+                        .toList(),
                 cours.getImageUrl());
     }
 

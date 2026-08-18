@@ -35,12 +35,29 @@ export class PedagogieService {
     return this.http.get<Formation[]>(`${this.api}/formations`);
   }
 
-  getPromotions(): Observable<Promotion[]> {
-    return this.http.get<Promotion[]>(`${this.api}/promotions`);
+  /**
+   * Promotions avec leur programme et leurs effectifs.
+   *
+   * <p>Renvoyait auparavant une forme réduite sans la formation rattachée : l'écran
+   * affichait « Aucun programme » pour toutes, et l'édition effaçait le rattachement
+   * faute de le retrouver.
+   */
+  getPromotions(): Observable<PromotionDetail[]> {
+    return this.http.get<PromotionDetail[]>(`${this.api}/promotions`);
   }
 
   getCours(): Observable<Cours[]> {
     return this.http.get<Cours[]>(`${this.api}/cours`);
+  }
+
+  /** Formateurs affectables à un cours. */
+  getFormateurs(): Observable<FormateurBref[]> {
+    return this.http.get<FormateurBref[]>(`${this.api}/formateurs`);
+  }
+
+  /** Remplace l'équipe pédagogique du cours. Une liste vide est refusée (400). */
+  affecterFormateurs(coursId: number, formateurIds: number[]): Observable<Cours> {
+    return this.http.put<Cours>(`${this.api}/cours/${coursId}/formateurs`, { formateurIds });
   }
 
   creerCours(data: CoursCreation): Observable<Cours> {
@@ -59,17 +76,9 @@ export class PedagogieService {
     return this.http.get<SupportDetail[]>(`${this.api}/cours/${coursId}/supports`);
   }
 
-  publierSupport(coursId: number, typeRessource: string, fichier: File): Observable<SupportDetail> {
-    const payload = new FormData();
-    payload.append('coursId', String(coursId));
-    payload.append('typeRessource', typeRessource);
-    payload.append('fichier', fichier);
-    return this.http.post<SupportDetail>(`${this.api}/supports`, payload);
-  }
-
-  supprimerSupport(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.api}/supports/${id}`);
-  }
+  // La publication et le retrait d'un support sont rendus au formateur : c'est lui
+  // qui conçoit le contenu de son cours. Le responsable pédagogique garde la
+  // consultation, qui lui sert à vérifier qu'un cours n'est pas vide.
 
   // ===================== Promotions =====================
 
@@ -152,8 +161,15 @@ export interface PromotionDetail {
   formationCode: string | null;
   formationIntitule: string | null;
   formationDescription: string | null;
-  nbEtudiants: number;
+  /** Nommé « effectif » côté serveur (PromotionDetailDto), partagé avec l'espace étudiant. */
+  effectif: number;
   nbCours: number;
+}
+
+/** Identité d'un formateur, telle que renvoyée avec un cours. */
+export interface FormateurBref {
+  id: number;
+  nomComplet: string;
 }
 
 export interface EtudiantScolarite {

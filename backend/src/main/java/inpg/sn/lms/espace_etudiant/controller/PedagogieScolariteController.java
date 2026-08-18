@@ -99,6 +99,30 @@ public class PedagogieScolariteController {
 
     // ===================== PROMOTIONS =====================
 
+    /**
+     * Liste des promotions avec leur programme et leurs effectifs.
+     *
+     * <p>Cet endpoint vivait dans {@code PedagogieController} et ne renvoyait que
+     * {@code {id, code, libelle, annee}}. L'écran, lui, affiche le programme rattaché :
+     * toutes les promotions se présentaient donc comme « sans programme », y compris
+     * celles qui en avaient un. Plus grave, l'écran d'édition ne retrouvait pas la
+     * formation et renvoyait {@code formationId: null} — un simple aller-retour dans la
+     * fiche <strong>effaçait</strong> le rattachement.
+     *
+     * <p>La lecture rejoint donc l'écriture, dans le contrôleur qui porte déjà le
+     * {@link PromotionDetailDto}. Deux contrôleurs répondant sur {@code /api/pedagogie},
+     * garder les deux aurait produit un conflit de routage au démarrage.
+     */
+    @GetMapping("/promotions")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PromotionDetailDto>> listerPromotions() {
+        return ResponseEntity.ok(promotionRepository.findAll().stream()
+                .sorted(Comparator.comparing(Promotion::getCode,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(this::toPromotionDto)
+                .toList());
+    }
+
     @PostMapping("/promotions")
     @Transactional
     public ResponseEntity<?> creerPromotion(@RequestBody PromotionCreateRequest request) {

@@ -1,63 +1,98 @@
 <div class="flex flex-col w-full max-w-container-max mx-auto p-margin-desktop gap-stack-lg">
 
-  <a routerLink="/pedagogie" class="inline-flex items-center gap-2 text-label-md text-secondary hover:underline w-fit">
-    <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+  <a routerLink="/pedagogie/cours" class="inline-flex items-center gap-2 text-label-md font-label-md text-secondary hover:underline w-fit">
+    <span class="material-symbols-outlined">arrow_back</span>
     Retour au catalogue
   </a>
 
   <div *ngIf="chargement" class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm text-center">
-    <p class="text-body-md text-on-surface-variant">Chargement…</p>
+    <p class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
   </div>
 
   <ng-container *ngIf="!chargement">
-    <div>
-      <span class="text-label-sm text-on-surface-variant uppercase tracking-widest block mb-2">
+    <header>
+      <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
         {{ cours?.code || 'Cours' }}
       </span>
-      <h1 class="font-display text-display text-on-surface leading-none -ml-1">{{ cours?.titre || 'Supports du cours' }}</h1>
-      <p class="text-body-md text-on-surface-variant mt-2">
-        Les supports publiés ici sont immédiatement visibles par les étudiants dans leur espace.
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">{{ cours?.titre || 'Fiche du cours' }}</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+        Qui enseigne ce cours, et ce qui y a été publié.
+      </p>
+    </header>
+
+    <p *ngIf="erreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ erreur }}</p>
+
+    <!-- Alerte : sans formateur, le cours n'existe dans aucun espace enseignant -->
+    <div *ngIf="sansFormateur" class="bg-surface-container-lowest rounded-xl border border-error shadow-sm p-stack-lg">
+      <div class="flex items-center gap-2 text-error">
+        <span class="material-symbols-outlined">warning</span>
+        <span class="font-label-md text-label-md">Aucun formateur affecté</span>
+      </div>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+        Ce cours n’apparaît dans l’espace d’aucun enseignant : personne ne peut y publier
+        de support, y tenir une séance ni y saisir de note. Affectez au moins un formateur.
       </p>
     </div>
 
-    <p *ngIf="erreur" class="text-label-md text-error">{{ erreur }}</p>
-
-    <!-- Publication -->
+    <!-- Équipe pédagogique -->
     <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm">
-      <h2 class="text-headline-sm text-primary flex items-center gap-2 mb-6">
-        <span class="material-symbols-outlined text-secondary">upload_file</span>
-        Publier un support
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2 mb-6">
+        <span class="material-symbols-outlined text-secondary">groups</span>
+        Équipe pédagogique
       </h2>
-      <div class="flex flex-wrap items-end gap-stack-md">
-        <div class="flex flex-col gap-base">
-          <label for="type" class="text-label-md text-on-surface-variant">Type de ressource</label>
-          <select id="type" name="typeRessource" [(ngModel)]="typeRessource"
-                  class="bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
-            <option *ngFor="let type of typesRessource" [value]="type">{{ type }}</option>
-          </select>
-        </div>
-        <div class="flex flex-col gap-base flex-1 min-w-[240px]">
-          <label for="fichier" class="text-label-md text-on-surface-variant">Fichier</label>
-          <input id="fichier" type="file" (change)="onFichierChange($event)"
-                 class="bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-body-md text-on-surface">
-        </div>
-        <button type="button" (click)="publier()" [disabled]="!fichier || publication"
-                class="px-6 py-3 bg-secondary text-on-secondary text-label-md rounded-lg hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-default">
-          {{ publication ? 'Publication…' : 'Publier' }}
+
+      <p *ngIf="formateurs.length === 0" class="font-body-md text-body-md text-on-surface-variant">
+        Aucun formateur n’est enregistré dans l’établissement.
+      </p>
+
+      <div *ngIf="formateurs.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-stack-md">
+        <label *ngFor="let f of formateurs"
+               class="flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors"
+               [class.border-secondary]="estSelectionne(f.id)"
+               [class.bg-secondary-container]="estSelectionne(f.id)"
+               [class.border-outline-variant]="!estSelectionne(f.id)"
+               [class.hover:bg-surface-container-low]="!estSelectionne(f.id)">
+          <input type="checkbox" [checked]="estSelectionne(f.id)" (change)="basculer(f.id)"
+                 class="w-4 h-4 accent-secondary shrink-0" />
+          <span class="font-label-md text-label-md min-w-0 truncate"
+                [class.text-on-secondary-container]="estSelectionne(f.id)"
+                [class.text-on-surface]="!estSelectionne(f.id)">{{ f.nomComplet }}</span>
+        </label>
+      </div>
+
+      <p *ngIf="formateurs.length > 0 && selection.size === 0"
+         class="font-body-sm text-body-sm text-error mt-4">
+        Sélectionnez au moins un formateur : un cours sans enseignant n’est visible de personne.
+      </p>
+
+      <div *ngIf="selectionModifiee" class="flex flex-wrap gap-stack-sm mt-6">
+        <button type="button" (click)="enregistrerEquipe()" [disabled]="affectation || selection.size === 0"
+                class="px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-40">
+          {{ affectation ? 'Enregistrement…' : 'Enregistrer l’équipe' }}
+        </button>
+        <button type="button" (click)="annulerSelection()"
+                class="px-6 py-3 bg-surface-container-low text-on-surface-variant rounded-lg font-label-md text-label-md border border-outline-variant hover:bg-surface-container transition-colors">
+          Annuler
         </button>
       </div>
     </section>
 
-    <!-- Liste -->
+    <!-- Supports, en consultation -->
     <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm">
-      <h2 class="text-headline-sm text-primary flex items-center gap-2 mb-6">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2 mb-2">
         <span class="material-symbols-outlined text-secondary">folder_open</span>
         Supports publiés ({{ supports.length }})
       </h2>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mb-6">
+        Publiés par les formateurs du cours, et visibles par ses étudiants. La publication
+        leur revient : cet écran ne fait que la constater.
+      </p>
 
       <div *ngIf="supports.length === 0" class="text-center py-stack-lg">
-        <span class="material-symbols-outlined text-4xl text-outline mb-2">folder_off</span>
-        <p class="text-body-md text-on-surface-variant">Aucun support publié pour ce cours.</p>
+        <span class="material-symbols-outlined text-on-surface-variant mb-2 block">folder_off</span>
+        <p class="font-body-md text-body-md text-on-surface-variant">
+          Aucun support publié. Un rappel au formateur peut être utile avant le début des séances.
+        </p>
       </div>
 
       <ul *ngIf="supports.length > 0" class="flex flex-col gap-stack-sm">
@@ -65,8 +100,8 @@
             class="flex items-center gap-4 p-4 rounded-lg border border-outline-variant">
           <span class="material-symbols-outlined text-secondary">description</span>
           <div class="flex-1 min-w-0">
-            <p class="text-body-md text-on-surface truncate" [title]="support.titre">{{ support.titre }}</p>
-            <p class="text-label-sm text-on-surface-variant mt-1">
+            <p class="font-label-md text-label-md text-on-surface truncate" [title]="support.titre">{{ support.titre }}</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
               <span *ngIf="support.typeRessource">{{ support.typeRessource }}</span>
               <span *ngIf="support.typeRessource && support.datePublication"> · </span>
               <span *ngIf="support.datePublication">{{ support.datePublication | date: 'dd/MM/yyyy' }}</span>
@@ -74,12 +109,8 @@
           </div>
           <a *ngIf="support.telechargeable && support.url" [href]="support.url" title="Télécharger"
              class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-secondary hover:bg-surface-container transition-colors no-underline">
-            <span class="material-symbols-outlined text-[20px]">download</span>
+            <span class="material-symbols-outlined">download</span>
           </a>
-          <button type="button" (click)="supprimer(support)" title="Retirer"
-                  class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-error hover:bg-error-container transition-colors border-0 bg-transparent cursor-pointer">
-            <span class="material-symbols-outlined text-[20px]">delete</span>
-          </button>
         </li>
       </ul>
     </section>

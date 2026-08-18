@@ -68,6 +68,21 @@ export class PedagogieCoursComponent implements OnInit {
     return this.cours.reduce((somme, c) => somme + (c.nbRessources || 0), 0);
   }
 
+  /**
+   * Cours sans équipe pédagogique.
+   *
+   * <p>Le cloisonnement enseignant se lit dans la table cours_formateur : un cours
+   * qui n'y figure pas n'apparaît dans l'espace d'aucun formateur, donc rien ne peut
+   * y être publié, planifié ni noté. Rien ne le signalait jusqu'ici.
+   */
+  get coursSansFormateur(): Cours[] {
+    return this.cours.filter((c) => !c.formateurs?.length);
+  }
+
+  nomsFormateurs(cours: Cours): string {
+    return (cours.formateurs || []).map((f) => f.nomComplet).join(', ');
+  }
+
   get saisieValide(): boolean {
     return !!this.saisie.code.trim() && !!this.saisie.titre.trim() && (this.saisie.volumeHoraire ?? 0) >= 0;
   }

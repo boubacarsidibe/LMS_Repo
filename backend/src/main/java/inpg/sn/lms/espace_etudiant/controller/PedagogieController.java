@@ -1,14 +1,11 @@
 package inpg.sn.lms.espace_etudiant.controller;
 
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,13 +15,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import inpg.sn.lms.auth.entity.Formateur;
+import inpg.sn.lms.auth.repository.FormateurRepository;
+import inpg.sn.lms.espace_etudiant.dto.AffectationFormateursRequest;
 import inpg.sn.lms.espace_etudiant.dto.CoursCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.CoursDto;
+import inpg.sn.lms.espace_etudiant.dto.FormateurBrefDto;
 import inpg.sn.lms.espace_etudiant.dto.FormationDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportDetailDto;
@@ -34,7 +33,6 @@ import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
-import inpg.sn.lms.espace_etudiant.service.SupportCoursStorageService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
 
 /**
@@ -61,19 +59,19 @@ public class PedagogieController {
     private final PromotionService promotionService;
     private final CoursService coursService;
     private final SupportService supportService;
-    private final SupportCoursStorageService supportCoursStorageService;
+    private final FormateurRepository formateurRepository;
 
     public PedagogieController(
             FormationService formationService,
             PromotionService promotionService,
             CoursService coursService,
             SupportService supportService,
-            SupportCoursStorageService supportCoursStorageService) {
+            FormateurRepository formateurRepository) {
         this.formationService = formationService;
         this.promotionService = promotionService;
         this.coursService = coursService;
         this.supportService = supportService;
-        this.supportCoursStorageService = supportCoursStorageService;
+        this.formateurRepository = formateurRepository;
     }
 
     // ===================== OFFRE DE FORMATION =====================
@@ -86,12 +84,18 @@ public class PedagogieController {
                 .toList());
     }
 
+    /**
+     * Formateurs disponibles pour l'affectation à un cours.
+     *
+     * <p>Ne renvoie que l'identité : le téléphone porté par l'entité n'a pas à
+     * circuler pour composer une équipe pédagogique.
+     */
     @Transactional(readOnly = true)
-    @GetMapping("/promotions")
-    public ResponseEntity<List<PromotionDto>> listPromotions() {
-        return ResponseEntity.ok(promotionService.getAll().stream()
-                .map(p -> new PromotionDto(p.getId(), p.getCode(), p.getLibelle(),
-                        p.getDateDebut() != null ? p.getDateDebut().getYear() : null))
+    @GetMapping("/formateurs")
+    public ResponseEntity<List<FormateurBrefDto>> listFormateurs() {
+        return ResponseEntity.ok(formateurRepository.findAll().stream()
+                .map(PedagogieController::toFormateurDto)
+                .sorted(Comparator.comparing(FormateurBrefDto::nomComplet))
                 .toList());
     }
 
@@ -155,8 +159,57 @@ public class PedagogieController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Remplace l'équipe pédagogique d'un cours.
+     *
+     * <p>La table {@code cours_formateur} commande tout le cloisonnement enseignant :
+     * {@code PerimetreFormateurService} y lit « ce cours est-il le mien ? ». Elle
+     * n'était pourtant écrite que par le formateur créant son propre cours — un cours
+     * créé ici naissait donc orphelin, invisible de tout espace formateur, donc sans
+     * support, sans séance et sans note possibles. Six des neuf cours en base étaient
+     * dans ce cas.
+     *
+     * <p>Une liste vide est refusée : elle rendrait le cours orphelin, ce que rien à
+     * l'écran ne signalerait ensuite.
+     */
+    @Transactional
+    @PutMapping("/cours/{id}/formateurs")
+    public ResponseEntity<?> affecterFormateurs(
+            @PathVariable Long id,
+            @RequestBody AffectationFormateursRequest request) {
+        Cours cours = coursService.findById(id).orElse(null);
+        if (cours == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (request.formateurIds() == null || request.formateurIds().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "Un cours doit compter au moins un formateur : sans cela il n'apparaît dans aucun espace enseignant."));
+        }
+
+        List<Formateur> formateurs = request.formateurIds().stream()
+                .distinct()
+                .map(formateurRepository::findById)
+                .flatMap(Optional::stream)
+                .toList();
+        if (formateurs.size() != request.formateurIds().stream().distinct().count()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Un formateur demandé est introuvable."));
+        }
+
+        cours.getFormateurs().clear();
+        cours.getFormateurs().addAll(formateurs);
+        return ResponseEntity.ok(toCoursDto(coursService.save(cours)));
+    }
+
     // ===================== SUPPORTS =====================
 
+    /**
+     * Supports d'un cours, en consultation seule.
+     *
+     * <p>La publication et le retrait ont été rendus au formateur, à qui ils
+     * reviennent : c'est lui qui conçoit le contenu de son cours. Le responsable
+     * pédagogique garde la vue — vérifier qu'un cours dispose bien de supports fait
+     * partie du suivi — mais n'écrit plus à la place de l'enseignant.
+     */
     @Transactional(readOnly = true)
     @GetMapping("/cours/{id}/supports")
     public ResponseEntity<List<SupportDetailDto>> listSupports(@PathVariable Long id) {
@@ -168,51 +221,12 @@ public class PedagogieController {
                 .toList());
     }
 
-    @Transactional
-    @PostMapping(value = "/supports", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> publierSupport(
-            @RequestParam Long coursId,
-            @RequestParam String typeRessource,
-            @RequestParam(required = false) String datePublication,
-            @RequestParam("fichier") MultipartFile fichier) {
-        Cours cours = coursService.findById(coursId).orElse(null);
-        if (cours == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Cours introuvable."));
-        }
-        if (fichier.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Un fichier est requis."));
-        }
-
-        LocalDate publication;
-        try {
-            publication = datePublication == null || datePublication.isBlank()
-                    ? LocalDate.now()
-                    : LocalDate.parse(datePublication);
-        } catch (DateTimeParseException exception) {
-            return ResponseEntity.badRequest().body(Map.of("message", "La date de publication est invalide."));
-        }
-
-        try {
-            SupportCours support = supportCoursStorageService.publier(cours, fichier, typeRessource, publication);
-            return ResponseEntity.status(HttpStatus.CREATED).body(toSupportDetailDto(support));
-        } catch (IOException exception) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Le fichier n'a pas pu être enregistré."));
-        }
-    }
-
-    @Transactional
-    @DeleteMapping("/supports/{id}")
-    public ResponseEntity<?> supprimerSupport(@PathVariable Long id) {
-        SupportCours support = supportService.findCourseSupportById(id).orElse(null);
-        if (support == null) {
-            return ResponseEntity.notFound().build();
-        }
-        supportService.deleteCourseSupport(support);
-        return ResponseEntity.noContent().build();
-    }
-
     // ===================== Méthodes privées =====================
+
+    private static FormateurBrefDto toFormateurDto(Formateur formateur) {
+        return new FormateurBrefDto(formateur.getId(),
+                (formateur.getPrenom() + " " + formateur.getNom()).trim());
+    }
 
     private String validerCours(CoursCreateRequest request) {
         if (estVide(request.code()) || estVide(request.titre())) {
@@ -276,6 +290,7 @@ public class PedagogieController {
                 0,
                 COULEUR_BANDEAU_PAR_DEFAUT,
                 promotions,
+                cours.getFormateurs().stream().map(PedagogieController::toFormateurDto).toList(),
                 cours.getImageUrl());
     }
 

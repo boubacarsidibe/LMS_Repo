@@ -14,6 +14,8 @@ export interface Cours {
   /** Promotions rattachées, telles que nommées par CoursDto. Le champ s'appelait
    *  « cohortes » et ne correspondait donc a rien : il valait toujours undefined. */
   promotions: Cohorte[];
+  /** Équipe pédagogique. Vide = le cours n'apparaît dans aucun espace formateur. */
+  formateurs?: { id: number; nomComplet: string }[];
   imageUrl?: string;
 }
 

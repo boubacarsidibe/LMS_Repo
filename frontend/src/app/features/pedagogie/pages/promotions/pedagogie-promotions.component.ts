@@ -52,7 +52,7 @@ export class PedagogiePromotionsComponent implements OnInit {
       formations: this.pedagogie.getFormations(),
     }).subscribe({
       next: ({ promotions, formations }) => {
-        this.promotions = (promotions as unknown as PromotionDetail[]) || [];
+        this.promotions = promotions || [];
         this.formations = formations || [];
         this.chargement = false;
       },

@@ -39,6 +39,15 @@
       Leurs étudiants n’accèdent à aucun cours : une promotion tire son programme de la
       formation qu’elle suit. Rattachez-la pour ouvrir l’accès.
     </p>
+    <ul class="mt-4 flex flex-wrap gap-stack-sm">
+      <li *ngFor="let p of sansFormation">
+        <button type="button" (click)="ouvrirEdition(p)"
+                class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors">
+          <span class="material-symbols-outlined">link</span>
+          Rattacher {{ p.code }}
+        </button>
+      </li>
+    </ul>
   </div>
 
   <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
@@ -70,7 +79,7 @@
               <span *ngIf="p.formationIntitule" class="text-on-surface-variant">{{ p.formationIntitule }}</span>
               <span *ngIf="!p.formationIntitule" class="text-error">Aucun programme</span>
             </td>
-            <td class="px-stack-lg py-stack-md text-right font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ p.nbEtudiants }}</td>
+            <td class="px-stack-lg py-stack-md text-right font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ p.effectif }}</td>
             <td class="px-stack-lg py-stack-md text-right font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ p.nbCours }}</td>
             <td class="px-stack-lg py-stack-md text-right whitespace-nowrap">
               <button

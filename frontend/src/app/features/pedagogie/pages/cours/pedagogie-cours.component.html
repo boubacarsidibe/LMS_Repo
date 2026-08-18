@@ -26,6 +26,30 @@
     </div>
   </div>
 
+  <!-- Alerte : un cours sans formateur n'existe dans aucun espace enseignant -->
+  <div *ngIf="!chargement && coursSansFormateur.length > 0"
+       class="bg-surface-container-lowest rounded-xl border border-error shadow-sm p-stack-lg">
+    <div class="flex items-center gap-2 text-error">
+      <span class="material-symbols-outlined">warning</span>
+      <span class="font-label-md text-label-md">
+        {{ coursSansFormateur.length }} cours sans formateur
+      </span>
+    </div>
+    <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+      Ces cours n’apparaissent dans l’espace d’aucun enseignant : ni support, ni séance,
+      ni note n’y sont possibles. Ouvrez la fiche pour y affecter un formateur.
+    </p>
+    <ul class="mt-4 flex flex-wrap gap-stack-sm">
+      <li *ngFor="let c of coursSansFormateur">
+        <a [routerLink]="['/pedagogie/cours', c.id]"
+           class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors no-underline">
+          <span class="material-symbols-outlined">person_add</span>
+          {{ c.code }}
+        </a>
+      </li>
+    </ul>
+  </div>
+
   <!-- Formulaire création / modification -->
   <section *ngIf="formulaireOuvert" class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm">
     <h2 class="text-headline-sm text-primary flex items-center gap-2 mb-6">
@@ -101,6 +125,7 @@
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Titre</th>
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Semestre</th>
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Volume</th>
+            <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Formateurs</th>
             <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Supports</th>
             <th class="py-3 text-label-sm text-on-surface-variant uppercase tracking-widest text-right">Actions</th>
           </tr>
@@ -111,6 +136,12 @@
             <td class="py-3 pr-4 text-body-md text-on-surface">{{ c.titre }}</td>
             <td class="py-3 pr-4 text-body-md text-on-surface-variant">{{ c.semestre || '—' }}</td>
             <td class="py-3 pr-4 text-body-md text-on-surface-variant">{{ c.volumeHoraire || 0 }} h</td>
+            <td class="py-3 pr-4 text-body-md">
+              <span *ngIf="c.formateurs?.length" class="text-on-surface-variant">
+                {{ nomsFormateurs(c) }}
+              </span>
+              <span *ngIf="!c.formateurs?.length" class="text-error">Aucun</span>
+            </td>
             <td class="py-3 pr-4 text-body-md text-on-surface-variant">{{ c.nbRessources }}</td>
             <td class="py-3 text-right whitespace-nowrap">
               <a [routerLink]="['/pedagogie/cours', c.id]" title="Gérer les supports"

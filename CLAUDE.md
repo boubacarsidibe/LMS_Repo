@@ -154,6 +154,33 @@ de publier, `Photheque` est un visualiseur étudiant.
 ou sans `@PreAuthorize` — ne pas contourner ce test, il protège d'une famille de bugs
 survenue trois fois.
 
+**`cours_formateur` commande tout le cloisonnement enseignant.** `PerimetreFormateurService`
+y lit « ce cours est-il le mien ? ». Un cours absent de cette table n'apparaît dans
+**aucun** espace formateur : ni support, ni séance, ni note n'y sont possibles. Rien
+ne le signale côté base — `ddl-auto=validate` ne compare jamais deux relations entre
+elles. Six cours sur neuf étaient dans ce cas. L'affectation se fait par
+`PUT /api/pedagogie/cours/{id}/formateurs`, qui refuse une liste vide.
+
+**La chaîne d'accès a trois maillons, et chacun casse en silence :**
+
+```
+promotion → formation → cours → formateur
+```
+
+Un seul maillon rompu suffit à vider un écran, sans erreur ni journal. Les trois
+sont désormais signalés en rouge dans l'espace pédagogique — c'est la raison d'être
+de ces alertes, ne pas les retirer comme du bruit visuel. Piège rencontré : la
+promotion `MPG-2026` pointait vers la formation « Rôles spécifiques » (0 cours)
+tandis que les 9 cours étaient rattachés à « Master Pétrole & Gaz ». Les deux
+maillons existaient, ils ne se rejoignaient pas.
+
+**Deux contrôleurs répondent sur `/api/pedagogie`** : `PedagogieController` (offre
+d'enseignement) et `PedagogieScolariteController` (scolarité). Ne jamais déclarer la
+même route dans les deux — Spring refuse de démarrer. `GET /promotions` appartient au
+second, qui porte le `PromotionDetailDto` complet ; la version réduite du premier
+faisait afficher « Aucun programme » partout et **effaçait le rattachement** à la
+première édition.
+
 ---
 
 ## 4. Comptes et données
