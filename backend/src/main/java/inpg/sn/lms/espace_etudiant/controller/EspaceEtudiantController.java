@@ -1800,7 +1800,7 @@ public class EspaceEtudiantController {
                 cohorte,
                 "Non renseignée",
                 0,
-                noteMoyenne == null ? 0 : noteMoyenne,
+                noteMoyenne,
                 releveNotesService.statutDeSuivi(noteMoyenne),
                 initials(etudiant.getPrenom(), etudiant.getNom()),
                 "bg-primary-container",

@@ -112,7 +112,9 @@
                   <span class="text-[11px] font-bold text-on-surface-variant">{{ e.progression }}%</span>
                 </div>
               </td>
-              <td class="px-6 py-4 text-body-sm font-medium text-primary">{{ e.noteMoyenne }}/20</td>
+              <td class="px-6 py-4 text-body-sm font-medium text-primary"><ng-container *ngIf="e.noteMoyenne !== null && e.noteMoyenne !== undefined; else pasEncoreNote">{{ e.noteMoyenne | number: '1.1-1' }}/20</ng-container>
+              <ng-template #pasEncoreNote><span class="text-on-surface-variant">Pas encore noté</span></ng-template>
+            </td>
               <td class="px-6 py-4">
                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-tight" [ngClass]="classeStatut(e.statut)">{{ e.statut }}</span>
               </td>

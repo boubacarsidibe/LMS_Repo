@@ -243,7 +243,8 @@ export interface EtudiantScolarite {
   cohorte: string;
   derniereConnexion: string;
   progression: number;
-  noteMoyenne: number;
+  /** null tant qu'aucune note n'est saisie — a ne pas confondre avec un zero. */
+  noteMoyenne: number | null;
   statut: string;
   initiales: string;
   couleurAvatar: string;

@@ -647,7 +647,7 @@ public class PedagogieScolariteController {
                 promotion == null ? "Sans promotion" : promotion.getLibelle(),
                 "Non renseignée",
                 0,
-                moyenne == null ? 0 : moyenne,
+                moyenne,
                 promotion == null ? "Sans promotion" : releveNotesService.statutDeSuivi(moyenne),
                 initiales(etudiant),
                 "bg-primary-container",

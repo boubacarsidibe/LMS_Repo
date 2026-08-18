@@ -60,6 +60,8 @@
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Étudiant</th>
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Matricule</th>
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Promotion</th>
+            <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Moyenne</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Suivi</th>
           </tr>
         </thead>
         <tbody>
@@ -86,9 +88,23 @@
                 <option *ngFor="let p of promotions" [value]="p.id">{{ p.libelle }}</option>
               </select>
             </td>
+            <!-- « Pas encore noté » et non « 0,0 » : sans cette distinction, un étudiant
+                 non évalué et un étudiant ayant tout raté s'affichaient à l'identique,
+                 sur l'écran même où l'on décide qui relancer. -->
+            <td class="px-stack-lg py-stack-md text-right font-label-md text-label-md tabular-nums"
+                [class.text-error]="e.noteMoyenne !== null && e.noteMoyenne < 10"
+                [class.text-secondary]="e.noteMoyenne !== null && e.noteMoyenne >= 10"
+                [class.text-on-surface-variant]="e.noteMoyenne === null">
+              {{ e.noteMoyenne !== null ? (e.noteMoyenne | number: '1.1-1') + ' / 20' : 'Pas encore noté' }}
+            </td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm"
+                [class.text-error]="e.statut === 'À risque'"
+                [class.text-on-surface-variant]="e.statut !== 'À risque'">
+              {{ e.statut }}
+            </td>
           </tr>
           <tr *ngIf="etudiants.length === 0">
-            <td colspan="3" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+            <td colspan="5" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
               Aucun étudiant.
             </td>
           </tr>
