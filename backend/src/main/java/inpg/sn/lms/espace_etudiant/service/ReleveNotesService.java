@@ -106,6 +106,37 @@ public class ReleveNotesService {
         return poids <= 0 ? null : arrondi(total / poids);
     }
 
+    /**
+     * Moyenne générale d'un étudiant, pour les écrans de suivi.
+     *
+     * <p>Les listes d'étudiants du formateur et du responsable pédagogique affichaient
+     * chacune leur propre chiffre : le formateur une moyenne à plat, le responsable
+     * pédagogique un <strong>zéro codé en dur</strong>. Ni l'un ni l'autre ne
+     * correspondait au relevé que l'étudiant, lui, voyait — et c'est pourtant sur ces
+     * écrans qu'on décide de délivrer un relevé ou de signaler un étudiant en
+     * difficulté. Une seule définition, ici, pour les trois rôles.
+     *
+     * @return {@code null} si aucune note n'a été saisie — à distinguer d'un zéro
+     */
+    @Transactional(readOnly = true)
+    public Double moyenneDeLEtudiant(Long etudiantId) {
+        return duEtudiant(etudiantId).moyenneGenerale();
+    }
+
+    /**
+     * Statut de suivi déduit de la seule moyenne.
+     *
+     * <p>Faute d'un suivi d'activité réel (dernière connexion, avancement), le statut
+     * se limite à ce que les notes permettent d'affirmer. Un étudiant sans aucune note
+     * est « à surveiller » : rien ne permet encore de dire qu'il va bien.
+     */
+    public String statutDeSuivi(Double moyenne) {
+        if (moyenne == null) {
+            return "À surveiller";
+        }
+        return moyenne >= 12 ? "Actif" : "À risque";
+    }
+
     /** Moyenne d'un cours, {@code null} si la liste est vide. */
     public Double moyenneDuCours(List<NoteModule> notes) {
         return notes.isEmpty() ? null

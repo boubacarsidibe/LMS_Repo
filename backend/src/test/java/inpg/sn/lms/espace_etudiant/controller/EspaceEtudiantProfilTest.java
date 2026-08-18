@@ -33,6 +33,7 @@ import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.NoteModuleService;
 import inpg.sn.lms.espace_etudiant.service.PerimetreFormateurService;
 import inpg.sn.lms.espace_etudiant.service.PresenceService;
+import inpg.sn.lms.espace_etudiant.service.ReleveNotesService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
 import inpg.sn.lms.espace_etudiant.service.RetourEvaluationService;
 import inpg.sn.lms.espace_etudiant.service.SeanceService;
@@ -89,6 +90,8 @@ class EspaceEtudiantProfilTest {
     @Mock
     private SupportCoursStorageService supportCoursStorageService;
 
+    @Mock private ReleveNotesService releveNotesService;
+
     private EspaceEtudiantController controller;
     private Authentication authentication;
     private User user;
@@ -103,7 +106,8 @@ class EspaceEtudiantProfilTest {
                 formationService, coursService, promotionService, supportService, evenementService,
                 forumSujetRepository, forumMessageRepository, certificatService, certificatPdfService,
                 notificationService,
-                retourEvaluationService, perimetreFormateurService, noteModuleService, presenceService,
+                retourEvaluationService, perimetreFormateurService, noteModuleService,
+                releveNotesService, presenceService,
                 seanceService, supportCoursStorageService, "uploads");
 
         user = new User();

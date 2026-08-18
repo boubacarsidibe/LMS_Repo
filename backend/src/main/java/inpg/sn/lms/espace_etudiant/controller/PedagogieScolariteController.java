@@ -637,14 +637,18 @@ public class PedagogieScolariteController {
 
     private EtudiantSuiviDto toEtudiantDto(Etudiant etudiant) {
         Promotion promotion = etudiant.getPromotion();
+        // La moyenne valait zero pour tout le monde, codee en dur. C'est pourtant sur cet
+        // ecran qu'on decide de delivrer un releve ou de relancer un etudiant : la seule
+        // information utile a la decision manquait.
+        Double moyenne = releveNotesService.moyenneDeLEtudiant(etudiant.getId());
         return new EtudiantSuiviDto(
                 etudiant.getId(),
                 nomComplet(etudiant),
                 promotion == null ? "Sans promotion" : promotion.getLibelle(),
                 "Non renseignée",
                 0,
-                0,
-                promotion == null ? "Sans promotion" : "Actif",
+                moyenne == null ? 0 : moyenne,
+                promotion == null ? "Sans promotion" : releveNotesService.statutDeSuivi(moyenne),
                 initiales(etudiant),
                 "bg-primary-container",
                 etudiant.getMatricule());

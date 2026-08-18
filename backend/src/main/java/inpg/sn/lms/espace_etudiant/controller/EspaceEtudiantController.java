@@ -103,6 +103,7 @@ import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.service.NoteModuleService;
 import inpg.sn.lms.espace_etudiant.service.PresenceService;
+import inpg.sn.lms.espace_etudiant.service.ReleveNotesService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
 import inpg.sn.lms.espace_etudiant.service.SupportCoursStorageService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
@@ -131,6 +132,7 @@ public class EspaceEtudiantController {
     private final RetourEvaluationService retourEvaluationService;
     private final PerimetreFormateurService perimetreFormateurService;
     private final NoteModuleService noteModuleService;
+    private final ReleveNotesService releveNotesService;
     private final PresenceService presenceService;
     private final SeanceService seanceService;
     private final SupportCoursStorageService supportCoursStorageService;
@@ -153,6 +155,7 @@ public class EspaceEtudiantController {
             RetourEvaluationService retourEvaluationService,
             PerimetreFormateurService perimetreFormateurService,
             NoteModuleService noteModuleService,
+            ReleveNotesService releveNotesService,
             PresenceService presenceService,
             SeanceService seanceService,
             SupportCoursStorageService supportCoursStorageService,
@@ -173,6 +176,7 @@ public class EspaceEtudiantController {
         this.retourEvaluationService = retourEvaluationService;
         this.perimetreFormateurService = perimetreFormateurService;
         this.noteModuleService = noteModuleService;
+        this.releveNotesService = releveNotesService;
         this.presenceService = presenceService;
         this.seanceService = seanceService;
         this.supportCoursStorageService = supportCoursStorageService;
@@ -1786,33 +1790,23 @@ public class EspaceEtudiantController {
     private EtudiantSuiviDto toEtudiantSuiviDto(Etudiant etudiant) {
         String nomComplet = String.join(" ", etudiant.getPrenom(), etudiant.getNom()).trim();
         String cohorte = etudiant.getPromotion() != null ? etudiant.getPromotion().getLibelle() : "Non affectée";
-        List<NoteModule> notes = noteModuleService.getByEtudiantId(etudiant.getId());
-        double noteMoyenne = notes.stream().mapToDouble(NoteModule::getNote).average().orElse(0);
+        // Passe par le service : la moyenne a plat qui vivait ici comptait un cours
+        // autant de fois qu'il avait de devoirs, et ne correspondait donc pas au releve
+        // que l'etudiant voit de son cote.
+        Double noteMoyenne = releveNotesService.moyenneDeLEtudiant(etudiant.getId());
         return new EtudiantSuiviDto(
                 etudiant.getId(),
                 nomComplet,
                 cohorte,
                 "Non renseignée",
                 0,
-                Math.round(noteMoyenne * 10) / 10.0,
-                statutSuivi(notes, noteMoyenne),
+                noteMoyenne == null ? 0 : noteMoyenne,
+                releveNotesService.statutDeSuivi(noteMoyenne),
                 initials(etudiant.getPrenom(), etudiant.getNom()),
                 "bg-primary-container",
                 etudiant.getMatricule());
     }
 
-    /**
-     * Ce champ valait toujours « À risque », quelle que soit la moyenne : le
-     * suivi affichait la même alerte sur un 18/20 que sur un 6/20. Faute d'un
-     * suivi d'activité réel (dernière connexion, avancement), le statut se
-     * limite à ce que les notes permettent d'affirmer.
-     */
-    private String statutSuivi(List<NoteModule> notes, double noteMoyenne) {
-        if (notes.isEmpty()) {
-            return "À risque"; // pas encore évalué : à surveiller par défaut
-        }
-        return noteMoyenne >= 12 ? "Actif" : "À risque";
-    }
 
     private User findAuthenticatedUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
