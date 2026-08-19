@@ -75,7 +75,7 @@
   </div>
 
   <!-- Formulaire création / modification -->
-  <section *ngIf="formulaireOuvert" class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm">
+  <section #formulaire *ngIf="formulaireOuvert" class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm">
     <h2 class="text-headline-sm text-primary flex items-center gap-2 mb-6">
       <span class="material-symbols-outlined text-secondary">edit_note</span>
       {{ coursEnEdition ? 'Modifier le cours' : 'Nouveau cours' }}

@@ -100,14 +100,6 @@ import { MediaProtegeService } from '../../services/media-protege.service';
                 >
                   Ouvrir
                 </button>
-                <button
-                  *ngIf="!s.consulte"
-                  type="button"
-                  (click)="marquerConsulte(s)"
-                  class="px-3 py-1.5 rounded-lg border border-outline-variant font-label-sm text-label-sm text-on-surface-variant hover:border-secondary hover:text-secondary transition-colors shrink-0"
-                >
-                  Marquer lu
-                </button>
               </li>
             </ul>
           </section>

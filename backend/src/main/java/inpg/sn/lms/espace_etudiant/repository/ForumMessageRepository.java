@@ -13,4 +13,6 @@ public interface ForumMessageRepository extends JpaRepository<ForumMessage, Long
     List<ForumMessage> findBySujetIdOrderByDateCreationAsc(Long sujetId);
 
     long countBySujetId(Long sujetId);
+
+    void deleteBySujet_CoursId(Long coursId);
 }

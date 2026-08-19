@@ -21,4 +21,6 @@ public interface NoteModuleRepository extends JpaRepository<NoteModule, Long> {
     @Override
     @EntityGraph(attributePaths = { "cours", "cours.formateurs" })
     Optional<NoteModule> findById(Long id);
+
+    void deleteByCoursId(Long coursId);
 }

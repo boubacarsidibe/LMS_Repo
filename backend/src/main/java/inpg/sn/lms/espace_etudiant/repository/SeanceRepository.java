@@ -26,4 +26,6 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
     @Override
     @EntityGraph(attributePaths = { "cours", "cours.formateurs", "cours.formations" })
     Optional<Seance> findById(Long id);
+
+    void deleteByCoursId(Long coursId);
 }

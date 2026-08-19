@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -25,6 +25,11 @@ export class PedagogieCoursComponent implements OnInit {
   private router = inject(Router);
   private confirmation = inject(ConfirmationService);
   private notifications = inject(NotificationService);
+
+  // Le formulaire s'ouvre en haut de page : sur une longue liste, un clic sur
+  // « Modifier » tout en bas ne produisait aucun changement visible à l'écran
+  // sans ce défilement, et passait pour un bouton mort.
+  @ViewChild('formulaire') private formulaireRef?: ElementRef<HTMLElement>;
 
   cours: Cours[] = [];
   formations: Formation[] = [];
@@ -117,6 +122,7 @@ export class PedagogieCoursComponent implements OnInit {
     this.saisie = this.saisieVierge();
     this.formationsChoisies = new Set();
     this.formulaireOuvert = true;
+    this.defilerVersFormulaire();
   }
 
   ouvrirEdition(cours: Cours): void {
@@ -131,6 +137,12 @@ export class PedagogieCoursComponent implements OnInit {
     };
     this.formationsChoisies = new Set((cours.formations || []).map((f) => f.id));
     this.formulaireOuvert = true;
+    this.defilerVersFormulaire();
+  }
+
+  /** setTimeout : le formulaire n'existe dans le DOM qu'après le prochain cycle de détection. */
+  private defilerVersFormulaire(): void {
+    setTimeout(() => this.formulaireRef?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
 
   fermerFormulaire(): void {

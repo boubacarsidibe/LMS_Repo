@@ -1,0 +1,189 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header>
+    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
+      Offre d’enseignement
+    </span>
+    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Formations</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+      Chaque formation regroupe les cours de son programme et les promotions qui la suivent.
+    </p>
+  </header>
+
+  <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+  <p *ngIf="erreur" class="font-body-sm text-body-sm text-error">{{ erreur }}</p>
+
+  <ng-container *ngIf="!chargement && !erreur">
+    <!-- Chiffres clés -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-gutter">
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+        <div class="flex items-center gap-2 text-on-surface-variant">
+          <span class="material-symbols-outlined">school</span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider">Formations</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ detail.length }}</p>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+        <div class="flex items-center gap-2 text-on-surface-variant">
+          <span class="material-symbols-outlined text-success">check_circle</span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider">Actives</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">
+          {{ formationsActives.length }}<span class="font-body-md text-body-md text-on-surface-variant"> / {{ detail.length }}</span>
+        </p>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+        <div class="flex items-center gap-2 text-on-surface-variant">
+          <span class="material-symbols-outlined">menu_book</span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider">Cours couverts</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ totalCours }}</p>
+      </div>
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+        <div class="flex items-center gap-2 text-on-surface-variant">
+          <span class="material-symbols-outlined">groups</span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider">Promotions rattachées</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ totalPromotions }}</p>
+      </div>
+    </section>
+
+    <!-- Recherche et filtres -->
+    <section class="flex flex-wrap items-center gap-stack-md">
+      <label class="relative flex-1 min-w-[240px]">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
+          search
+        </span>
+        <input
+          type="text"
+          [(ngModel)]="recherche"
+          placeholder="Rechercher par code ou intitulé…"
+          class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant font-body-sm text-body-sm text-on-surface focus:border-secondary focus:outline-none"
+        />
+      </label>
+      <div class="flex flex-wrap gap-2">
+        <button
+          *ngFor="let f of filtres"
+          type="button"
+          (click)="filtre = f.valeur"
+          class="px-4 py-2 rounded-full font-label-sm text-label-sm transition-colors border"
+          [class.bg-secondary]="filtre === f.valeur"
+          [class.text-on-secondary]="filtre === f.valeur"
+          [class.border-secondary]="filtre === f.valeur"
+          [class.bg-surface-container-lowest]="filtre !== f.valeur"
+          [class.text-on-surface-variant]="filtre !== f.valeur"
+          [class.border-outline-variant]="filtre !== f.valeur"
+        >
+          {{ f.libelle }} · {{ f.nombre }}
+        </button>
+      </div>
+    </section>
+
+    <!-- Tableau -->
+    <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-outline-variant">
+              <th class="w-10"></th>
+              <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Formation</th>
+              <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Cours</th>
+              <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Promotions</th>
+              <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let d of detailFiltre">
+              <tr
+                (click)="basculer(d)"
+                class="border-b border-outline-variant/50 last:border-0 cursor-pointer hover:bg-surface-container transition-colors"
+              >
+                <td class="pl-stack-lg py-stack-md">
+                  <span
+                    class="material-symbols-outlined text-on-surface-variant text-[20px] inline-block transition-transform"
+                    [class.rotate-90]="estElargie(d)"
+                  >
+                    chevron_right
+                  </span>
+                </td>
+                <td class="py-stack-md pr-stack-lg">
+                  <p class="font-label-md text-label-md text-on-surface">{{ d.formation.intitule }}</p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">{{ d.formation.code }}</p>
+                </td>
+                <td class="px-stack-lg py-stack-md text-right font-body-sm text-body-sm text-on-surface-variant tabular-nums">
+                  {{ d.cours.length }}
+                </td>
+                <td class="px-stack-lg py-stack-md text-right font-body-sm text-body-sm text-on-surface-variant tabular-nums">
+                  {{ d.promotions.length }}
+                </td>
+                <td class="px-stack-lg py-stack-md">
+                  <span class="inline-flex px-3 py-1 rounded-full font-label-sm text-label-sm" [ngClass]="statut(d).classe">
+                    {{ statut(d).libelle }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="estElargie(d)" class="border-b border-outline-variant/50 last:border-0 bg-surface-container-low">
+                <td></td>
+                <td colspan="4" class="px-stack-lg py-stack-lg">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-stack-lg">
+                    <div>
+                      <h4 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-3">
+                        Cours du programme
+                      </h4>
+                      <ul *ngIf="d.cours.length > 0" class="space-y-2">
+                        <li *ngFor="let c of d.cours">
+                          <a
+                            [routerLink]="['/pedagogie/cours', c.id]"
+                            (click)="$event.stopPropagation()"
+                            class="flex items-center gap-3 px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest hover:border-secondary hover:text-secondary transition-colors no-underline group"
+                          >
+                            <span class="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-secondary transition-colors">menu_book</span>
+                            <span class="min-w-0 flex-1">
+                              <span class="font-label-md text-label-md text-on-surface block truncate">{{ c.titre }}</span>
+                              <span class="font-body-sm text-body-sm text-on-surface-variant">{{ c.code }}</span>
+                            </span>
+                            <span class="material-symbols-outlined text-[18px] text-on-surface-variant shrink-0">chevron_right</span>
+                          </a>
+                        </li>
+                      </ul>
+                      <p *ngIf="d.cours.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
+                        Aucun cours rattaché à ce programme.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-3">
+                        Promotions qui la suivent
+                      </h4>
+                      <ul *ngIf="d.promotions.length > 0" class="space-y-2">
+                        <li
+                          *ngFor="let p of d.promotions"
+                          class="flex items-center gap-3 px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest"
+                        >
+                          <span class="material-symbols-outlined text-[20px] text-on-surface-variant">groups</span>
+                          <span class="min-w-0 flex-1">
+                            <span class="font-label-md text-label-md text-on-surface block truncate">{{ p.libelle }}</span>
+                            <span class="font-body-sm text-body-sm text-on-surface-variant">
+                              {{ p.code }} · {{ p.effectif }} étudiant(s)
+                            </span>
+                          </span>
+                        </li>
+                      </ul>
+                      <p *ngIf="d.promotions.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
+                        Aucune promotion ne suit ce programme pour l’instant.
+                      </p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+            <tr *ngIf="detailFiltre.length === 0">
+              <td colspan="5" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+                Aucune formation ne correspond à la recherche.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+</div>

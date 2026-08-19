@@ -28,4 +28,6 @@ public interface ForumSujetRepository extends JpaRepository<ForumSujet, Long> {
     List<ForumSujet> findGeneraux();
 
     List<ForumSujet> findByCoursIdOrderByEpingleDescDateCreationDesc(Long coursId);
+
+    void deleteByCoursId(Long coursId);
 }

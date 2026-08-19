@@ -44,6 +44,11 @@ services:
       # vérifier la correspondance entités/tables au démarrage.
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+      # Origines autorisées en CORS. Le tunnel Cloudflare change de domaine a
+      # chaque redemarrage : mettre a jour APP_CORS_ORIGINS dans le .env a la
+      # racine (garder http://localhost:4200 dans la liste) puis recreer ce
+      # conteneur (pas besoin de rebuild, la valeur est lue au demarrage).
+      APP_CORS_ORIGINS: ${APP_CORS_ORIGINS:-http://localhost:4200}
     # Sans ce volume, /app/uploads vit uniquement dans le conteneur : chaque
     # reconstruction de l'image effacait TOUS les supports de cours et photos
     # deposes, alors que leurs lignes restaient en base (references mortes).

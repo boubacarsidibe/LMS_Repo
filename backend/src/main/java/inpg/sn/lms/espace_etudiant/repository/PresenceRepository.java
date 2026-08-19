@@ -17,4 +17,6 @@ public interface PresenceRepository extends JpaRepository<Presence, Long> {
     List<Presence> findByEtudiantIdOrderBySeance_DateHeureDesc(Long etudiantId);
 
     Optional<Presence> findBySeanceIdAndEtudiantId(Long seanceId, Long etudiantId);
+
+    void deleteBySeance_CoursId(Long coursId);
 }

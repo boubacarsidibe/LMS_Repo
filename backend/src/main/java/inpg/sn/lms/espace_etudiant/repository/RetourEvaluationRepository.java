@@ -50,4 +50,6 @@ public interface RetourEvaluationRepository extends JpaRepository<RetourEvaluati
     /** Note moyenne du cours, {@code null} tant qu'aucun avis n'a été déposé. */
     @Query("SELECT AVG(r.note) FROM RetourEvaluation r WHERE r.cours.id = :coursId")
     Double moyenneParCours(@Param("coursId") Long coursId);
+
+    void deleteByCoursId(Long coursId);
 }

@@ -29,6 +29,13 @@ export const PEDAGOGIE_ROUTES: Routes = [
           import('./pages/cours/pedagogie-cours.component').then((m) => m.PedagogieCoursComponent),
       },
       {
+        path: 'formations',
+        loadComponent: () =>
+          import('./pages/formations/pedagogie-formations.component').then(
+            (m) => m.PedagogieFormationsComponent
+          ),
+      },
+      {
         path: 'promotions',
         loadComponent: () =>
           import('./pages/promotions/pedagogie-promotions.component').then(

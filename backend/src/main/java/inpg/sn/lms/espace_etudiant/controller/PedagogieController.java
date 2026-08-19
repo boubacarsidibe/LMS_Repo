@@ -30,6 +30,13 @@ import inpg.sn.lms.espace_etudiant.dto.SupportDetailDto;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
+import inpg.sn.lms.espace_etudiant.repository.ForumMentionRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
+import inpg.sn.lms.espace_etudiant.repository.NoteModuleRepository;
+import inpg.sn.lms.espace_etudiant.repository.PresenceRepository;
+import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
+import inpg.sn.lms.espace_etudiant.repository.SeanceRepository;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
@@ -60,18 +67,39 @@ public class PedagogieController {
     private final CoursService coursService;
     private final SupportService supportService;
     private final FormateurRepository formateurRepository;
+    private final PresenceRepository presenceRepository;
+    private final SeanceRepository seanceRepository;
+    private final ForumMentionRepository forumMentionRepository;
+    private final ForumMessageRepository forumMessageRepository;
+    private final ForumSujetRepository forumSujetRepository;
+    private final NoteModuleRepository noteModuleRepository;
+    private final RetourEvaluationRepository retourEvaluationRepository;
 
     public PedagogieController(
             FormationService formationService,
             PromotionService promotionService,
             CoursService coursService,
             SupportService supportService,
-            FormateurRepository formateurRepository) {
+            FormateurRepository formateurRepository,
+            PresenceRepository presenceRepository,
+            SeanceRepository seanceRepository,
+            ForumMentionRepository forumMentionRepository,
+            ForumMessageRepository forumMessageRepository,
+            ForumSujetRepository forumSujetRepository,
+            NoteModuleRepository noteModuleRepository,
+            RetourEvaluationRepository retourEvaluationRepository) {
         this.formationService = formationService;
         this.promotionService = promotionService;
         this.coursService = coursService;
         this.supportService = supportService;
         this.formateurRepository = formateurRepository;
+        this.presenceRepository = presenceRepository;
+        this.seanceRepository = seanceRepository;
+        this.forumMentionRepository = forumMentionRepository;
+        this.forumMessageRepository = forumMessageRepository;
+        this.forumSujetRepository = forumSujetRepository;
+        this.noteModuleRepository = noteModuleRepository;
+        this.retourEvaluationRepository = retourEvaluationRepository;
     }
 
     // ===================== OFFRE DE FORMATION =====================
@@ -143,7 +171,14 @@ public class PedagogieController {
         return ResponseEntity.ok(toCoursDto(rattacher(request, coursService.save(cours))));
     }
 
-    /** Les supports sont supprimés avec le cours : sans cela ils resteraient orphelins. */
+    /**
+     * Le cours est référencé par sept tables (notes, séances, présences, avis,
+     * fils de forum...) toutes en {@code ON DELETE} restrictif : la ligne
+     * {@code cours} ne peut disparaître tant qu'une seule d'entre elles pointe
+     * encore vers elle. L'oubli d'une seule faisait échouer la suppression avec
+     * une violation de clé étrangère, sans qu'aucun message ne le précise —
+     * l'écran affichait juste « la suppression du cours a échoué ».
+     */
     @DeleteMapping("/cours/{id}")
     @Transactional
     public ResponseEntity<?> supprimerCours(@PathVariable Long id) {
@@ -151,6 +186,13 @@ public class PedagogieController {
         if (cours == null) {
             return ResponseEntity.notFound().build();
         }
+        presenceRepository.deleteBySeance_CoursId(cours.getId());
+        seanceRepository.deleteByCoursId(cours.getId());
+        forumMentionRepository.deleteByMessage_Sujet_CoursId(cours.getId());
+        forumMessageRepository.deleteBySujet_CoursId(cours.getId());
+        forumSujetRepository.deleteByCoursId(cours.getId());
+        noteModuleRepository.deleteByCoursId(cours.getId());
+        retourEvaluationRepository.deleteByCoursId(cours.getId());
         supportService.deleteCourseSupports(cours.getId());
         // La table formation_cours reference le cours : sans ce detachement,
         // la suppression echoue sur une violation de cle etrangere.
