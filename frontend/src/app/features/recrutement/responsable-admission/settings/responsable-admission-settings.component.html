@@ -125,7 +125,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-surface-container-highest">
-        <tr *ngFor="let user of users">
+        <tr *ngFor="let user of users; let i = index">
           <td class="px-6 py-4">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">{{ user.initials }}</div>
@@ -140,7 +140,7 @@
             </span>
           </td>
           <td class="px-6 py-4 text-right">
-            <button class="text-on-surface-variant hover:text-primary cursor-pointer">
+            <button (click)="openEditUserModal(i)" class="text-on-surface-variant hover:text-primary cursor-pointer">
               <span class="material-symbols-outlined text-[18px]">edit</span>
             </button>
           </td>
@@ -155,23 +155,21 @@
   <div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest p-6 shadow-sm">
     <div class="flex gap-6">
       <div class="w-64 space-y-2">
-        <button class="w-full text-left p-3 rounded-lg bg-primary/10 border border-primary/20 font-semibold text-primary cursor-pointer">Confirmation Inscription</button>
-        <button class="w-full text-left p-3 rounded-lg hover:bg-surface-container transition-colors cursor-pointer">Convocation Test</button>
+        <button *ngFor="let tpl of templates" (click)="selectTemplate(tpl.cle)"
+          class="w-full text-left p-3 rounded-lg cursor-pointer transition-colors"
+          [class.bg-primary/10]="selectedTemplateCle === tpl.cle"
+          [class.border]="selectedTemplateCle === tpl.cle"
+          [class.border-primary/20]="selectedTemplateCle === tpl.cle"
+          [class.font-semibold]="selectedTemplateCle === tpl.cle"
+          [class.text-primary]="selectedTemplateCle === tpl.cle"
+          [class.hover:bg-surface-container]="selectedTemplateCle !== tpl.cle">{{ tpl.label }}</button>
       </div>
       <div class="flex-1 space-y-4">
         <div>
           <label class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Objet de l'Email</label>
-          <input type="text" class="w-full rounded-lg border-surface-container-highest text-sm" value="Confirmation de réception de votre dossier - INPG"/>
+          <input type="text" [(ngModel)]="selectedTemplate.objet" class="w-full rounded-lg border-surface-container-highest text-sm"/>
         </div>
-        <textarea class="w-full rounded-lg border-surface-container-highest text-sm h-48 font-mono p-4">Bonjour &#123;NOM_CANDIDAT&#125;,
-
-Nous vous confirmons la bonne réception de votre dossier pour la session &#123;SESSION&#125;.
-Votre numéro de dossier est le : &#123;NUMERO_DOSSIER&#125;.
-
-Vous serez informé(e) des prochaines étapes par email.
-
-Cordialement,
-L'équipe Admissions INPG</textarea>
+        <textarea [(ngModel)]="selectedTemplate.corps" class="w-full rounded-lg border-surface-container-highest text-sm h-48 font-mono p-4"></textarea>
         <div class="flex justify-end">
           <button class="px-6 py-2 bg-primary text-on-primary font-bold rounded-lg cursor-pointer" (click)="saveSettings('Modèle enregistré avec succès.')">Enregistrer le modèle</button>
         </div>
@@ -184,7 +182,7 @@ L'équipe Admissions INPG</textarea>
 <div class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center" [class.hidden]="!modalAddUserOpen">
   <div class="bg-surface-container-lowest rounded-2xl w-full max-w-lg p-8 shadow-2xl flex flex-col gap-6">
     <div class="flex justify-between items-center">
-      <h3 class="text-xl font-bold text-on-surface">+ Ajouter un membre de l'équipe</h3>
+      <h3 class="text-xl font-bold text-on-surface">{{ modalTitle }}</h3>
       <button class="p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant cursor-pointer" (click)="closeAddUserModal()">
         <span class="material-symbols-outlined">close</span>
       </button>
@@ -193,20 +191,20 @@ L'équipe Admissions INPG</textarea>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Prénom</label>
-          <input type="text" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="ex: Jean"/>
+          <input type="text" [(ngModel)]="formPrenom" name="formPrenom" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="ex: Jean"/>
         </div>
         <div>
           <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Nom</label>
-          <input type="text" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="ex: Dupont"/>
+          <input type="text" [(ngModel)]="formNom" name="formNom" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="ex: Dupont"/>
         </div>
       </div>
       <div>
         <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Email Professionnel</label>
-        <input type="email" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="j.dupont@inpg.sn"/>
+        <input type="email" [(ngModel)]="formEmail" name="formEmail" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="j.dupont@inpg.sn"/>
       </div>
       <div>
         <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Rôle Attribué</label>
-        <select class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm cursor-pointer">
+        <select [(ngModel)]="formRole" name="formRole" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm cursor-pointer">
           <option>Super Admin</option>
           <option>Responsable Admissions</option>
           <option>Correcteur Test</option>
@@ -216,7 +214,7 @@ L'équipe Admissions INPG</textarea>
     </div>
     <div class="flex justify-end gap-3 pt-4 border-t border-surface-container-highest">
       <button class="px-6 py-2.5 text-sm font-semibold text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors cursor-pointer" (click)="closeAddUserModal()">Annuler</button>
-      <button class="px-6 py-2.5 text-sm font-bold bg-primary text-on-primary rounded-xl hover:bg-opacity-90 transition-opacity shadow-md cursor-pointer" (click)="createUser()">Créer le compte</button>
+      <button class="px-6 py-2.5 text-sm font-bold bg-primary text-on-primary rounded-xl hover:bg-opacity-90 transition-opacity shadow-md cursor-pointer" (click)="createUser()">{{ modalTitle.startsWith('Modifier') ? 'Enregistrer' : 'Créer le compte' }}</button>
     </div>
   </div>
 </div>

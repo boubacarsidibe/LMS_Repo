@@ -83,6 +83,11 @@ export class CatalogueComponent implements OnInit {
   }
   selectedNiveaux: string[] = [];
   selectedDomaines: string[] = [];
+  mobileFiltersOpen = false;
+
+  toggleMobileFilters(): void {
+    this.mobileFiltersOpen = !this.mobileFiltersOpen;
+  }
 
   // ---- Pagination ----
   currentPage = 1;

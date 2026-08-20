@@ -2,9 +2,19 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface FormationOption {
+  id: number;
+  code: string;
+  intitule: string;
+}
+
 export interface SessionCandidatureResponse {
   id: number;
   libelle: string;
+  formationId: number | null;
+  formationCode: string | null;
+  formationIntitule: string | null;
+  formationNiveau: string | null;
   dateOuverture: string;
   dateFermeture: string;
   estOuverte: boolean;
@@ -32,6 +42,8 @@ export interface CandidatureResponse {
   statut: string;
   dateSoumission: string;
   motifRejet: string | null;
+  /** Non nul si la dernière décision peut être annulée (bouton "Annuler"). */
+  statutPrecedent: string | null;
   candidatId: number;
   candidatNom: string;
   candidatPrenom: string;
@@ -68,6 +80,7 @@ export interface PaiementResponse {
   numeroDossier: string | null;
   candidatNom: string | null;
   candidatPrenom: string | null;
+  candidatureStatut: string | null;
 }
 
 /**
@@ -82,6 +95,7 @@ export interface PaiementRequest {
 
 export interface SessionCandidatureRequest {
   libelle: string;
+  formationId: number | null;
   dateOuverture: string;
   dateFermeture: string;
   estOuverte: boolean;
@@ -112,6 +126,7 @@ export interface ConvocationTestGroupeeRequest {
   nomEpreuve: string;
   coefficient: number;
   dateEpreuve: string;
+  lieu: string;
 }
 
 export interface ConvocationEntretienGroupeeRequest {
@@ -125,6 +140,7 @@ export interface TestAcademiqueRequest {
   coefficient: number;
   noteObtenue: number | null;
   dateEpreuve: string;
+  lieu: string | null;
   candidatId: number;
 }
 
@@ -134,6 +150,7 @@ export interface TestAcademiqueResponse {
   coefficient: number;
   noteObtenue: number | null;
   dateEpreuve: string;
+  lieu: string | null;
   candidatId: number;
 }
 
@@ -143,36 +160,6 @@ export interface EntretienRequest {
   noteEntretien: number;
   appreciationGlobale: string;
   candidatId: number;
-}
-
-// ===================== SESSIONS TYPES =====================
-
-export interface SessionsKpi {
-  totalSessionsActives: number;
-  totalCandidatures: number;
-  tauxRemplissage: number;
-  prochaineCloture: string;
-}
-
-export interface SessionRow {
-  id: number;
-  libelle: string;
-  dateOuverture: string;
-  dateFermeture: string;
-  estOuverte: boolean;
-  quotaMax: number;
-  quotaActuel: number;
-  status: string;
-  nombreCandidatures: number;
-  tauxRemplissage: number;
-  program: Program | null;
-}
-
-export interface Program {
-  id: number;
-  title: string;
-  level: string;
-  department: string;
 }
 
 /** Formation du catalogue public. */
@@ -202,12 +189,16 @@ export interface TestCandidat {
   coefficient: number | null;
   noteObtenue: number | null;
   dateEpreuve: string | null;
+  lieu: string | null;
 }
 
 /** Convocation à un entretien. Les appréciations du jury ne sont pas exposées. */
 export interface EntretienCandidat {
+  id: number;
   dateHeure: string | null;
   lieuOuLien: string | null;
+  confirmeParCandidat: boolean;
+  motifReport: string | null;
 }
 
 export interface ParcoursCandidature {
@@ -232,56 +223,6 @@ export interface EntretienResponse {
   noteEntretien: number | null;
   appreciationGlobale: string;
   candidatId: number;
-}
-
-// ===================== DASHBOARD TYPES =====================
-
-export interface DashboardOverview {
-  sessionActive: SessionSummary | null;
-  totalCandidatures: number;
-  candidaturesValidees: number;
-  candidaturesEnAttente: number;
-  candidaturesRejetees: number;
-  candidaturesRecentes: CandidatureResume[];
-  testsAcademiques: TestSummary[];
-  entretiens: EntretienSummary[];
-}
-
-export interface SessionSummary {
-  id: number;
-  libelle: string;
-  estOuverte: boolean;
-  dateOuverture: string;
-  dateFermeture: string;
-  quotaMax: number;
-  quotaActuel: number;
-}
-
-export interface CandidatureResume {
-  id: number;
-  numeroDossier: string;
-  nomCandidat: string;
-  prenomCandidat: string;
-  email: string;
-  statut: string;
-  formation: string;
-  dateSoumission: string;
-}
-
-export interface TestSummary {
-  id: number;
-  nomEpreuve: string;
-  dateEpreuve: string;
-  nombreCandidats: number;
-  seuilReussite: number;
-}
-
-export interface EntretienSummary {
-  id: number;
-  commission: string;
-  salle: string;
-  jury: string;
-  dateEntretien: string;
 }
 
 @Injectable({
@@ -317,32 +258,6 @@ export class RecrutementService {
 
   saveExamScores(nom: string, scores: any[]): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/academic-tests/exams/${encodeURIComponent(nom)}/scores/batch`, scores);
-  }
-
-  // ===================== SETTINGS =====================
-
-  getProgramsFromSessions(): Observable<Program[]> {
-    return this.http.get<Program[]>(`${this.baseUrl}/sessions/programs`);
-  }
-
-  getPrograms(): Observable<Program[]> {
-    return this.http.get<Program[]>(`${this.baseUrl}/settings/programs`);
-  }
-
-  updateProgram(id: number, body: Program): Observable<Program> {
-    return this.http.put<Program>(`${this.baseUrl}/settings/programs/${id}`, body);
-  }
-
-  deleteProgram(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/settings/programs/${id}`);
-  }
-
-  getRules(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/settings/rules`);
-  }
-
-  updateRules(body: any): Observable<any> {
-    return this.http.put(`${this.baseUrl}/settings/rules`, body);
   }
 
   // ===================== ANALYTICS =====================
@@ -429,67 +344,6 @@ export class RecrutementService {
     return this.http.patch<any>(`${this.baseUrl}/applications/${applicationId}/documents/status`, { pieceId, valide });
   }
 
-  // ===================== SESSIONS =====================
-
-  getSessionKpis(): Observable<SessionsKpi> {
-    return this.http.get<SessionsKpi>(`${this.baseUrl}/sessions/kpis`);
-  }
-
-  listSessions(filters?: { q?: string; status?: string; level?: string }): Observable<SessionRow[]> {
-    let params = new (window as any).URLSearchParams();
-    if (filters) {
-      if (filters.q) params.set('q', filters.q);
-      if (filters.status) params.set('status', filters.status);
-      if (filters.level) params.set('level', filters.level);
-    }
-    return this.http.get<SessionRow[]>(`${this.baseUrl}/sessions?${params.toString()}`);
-  }
-
-  createSessionApi(body: any): Observable<SessionRow> {
-    return this.http.post<SessionRow>(`${this.baseUrl}/sessions`, body);
-  }
-
-  updateSession(id: number, body: any): Observable<SessionRow> {
-    return this.http.put<SessionRow>(`${this.baseUrl}/sessions/${id}`, body);
-  }
-
-  changeSessionStatus(id: number, status: string): Observable<SessionRow> {
-    return this.http.patch<SessionRow>(`${this.baseUrl}/sessions/${id}/status`, { status });
-  }
-
-  deleteSession(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/sessions/${id}`);
-  }
-
-  duplicateSession(id: number): Observable<SessionRow> {
-    return this.http.post<SessionRow>(`${this.baseUrl}/sessions/${id}/duplicate`, {});
-  }
-
-  exportSessions(): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/sessions/export`, { responseType: 'blob' });
-  }
-
-  // ===================== DASHBOARD =====================
-
-  getDashboardOverview(): Observable<DashboardOverview> {
-    return this.http.get<DashboardOverview>(`${this.baseUrl}/dashboard/overview`);
-  }
-
-  createSession(body: { libelle: string; dateOuverture: string; dateFermeture: string; quotaMax: number }): Observable<SessionSummary> {
-    return this.http.post<SessionSummary>(`${this.baseUrl}/dashboard/sessions/new`, body);
-  }
-
-  closeSession(id: number): Observable<SessionSummary> {
-    return this.http.patch<SessionSummary>(`${this.baseUrl}/dashboard/sessions/${id}/close`, {});
-  }
-
-  getRecentApplications(limit: number = 5): Observable<CandidatureResume[]> {
-    return this.http.get<CandidatureResume[]>(`${this.baseUrl}/dashboard/applications/recent?limit=${limit}`);
-  }
-
-  searchApplications(q: string): Observable<CandidatureResume[]> {
-    return this.http.get<CandidatureResume[]>(`${this.baseUrl}/dashboard/applications/search?q=${encodeURIComponent(q)}`);
-  }
 
   // ===================== PUBLIC =====================
 
@@ -550,8 +404,30 @@ export class RecrutementService {
     });
   }
 
+  confirmerPresenceEntretien(entretienId: number): Observable<EntretienResponse> {
+    return this.http.put<EntretienResponse>(`${this.baseUrl}/recrutement/candidat/entretien/${entretienId}/confirmer-presence`, {});
+  }
+
+  demanderReportEntretien(entretienId: number, motif: string): Observable<EntretienResponse> {
+    return this.http.put<EntretienResponse>(`${this.baseUrl}/recrutement/candidat/entretien/${entretienId}/demander-report`, { motif });
+  }
+
+  /** Convocation PDF à l'entretien. Le backend refuse (403) la convocation d'un autre candidat. */
+  telechargerConvocationEntretien(entretienId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/recrutement/candidat/entretien/${entretienId}/convocation`, {
+      responseType: 'blob',
+    });
+  }
+
   getMesCandidatures(): Observable<CandidatureResponse[]> {
     return this.http.get<CandidatureResponse[]>(`${this.baseUrl}/recrutement/candidat/candidatures`);
+  }
+
+  /** Lettre d'admission PDF. Le backend refuse (403) la lettre d'un autre candidat, et (409) si la candidature n'est pas admise. */
+  telechargerLettreAdmission(candidatureId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/recrutement/candidat/candidature/${candidatureId}/lettre-admission`, {
+      responseType: 'blob',
+    });
   }
 
   getCandidature(id: number): Observable<CandidatureResponse> {
@@ -576,6 +452,11 @@ export class RecrutementService {
   // Sessions
   getAllSessions(): Observable<SessionCandidatureResponse[]> {
     return this.http.get<SessionCandidatureResponse[]>(`${this.baseUrl}/admin/recrutement/sessions`);
+  }
+
+  /** Formations proposables pour l'ouverture d'une session. */
+  getFormationsDisponibles(): Observable<FormationOption[]> {
+    return this.http.get<FormationOption[]>(`${this.baseUrl}/admin/recrutement/formations`);
   }
 
   creerSession(request: SessionCandidatureRequest): Observable<SessionCandidatureResponse> {
@@ -636,8 +517,20 @@ export class RecrutementService {
       `${this.baseUrl}/admin/recrutement/pieces/${pieceId}/conformite`, { estConforme });
   }
 
-  validerPreselection(id: number): Observable<CandidatureResponse> {
-    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/valider-preselection`, {});
+  annulerDerniereAction(id: number): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/annuler`, {});
+  }
+
+  reculerStatut(id: number, statut: string): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/reculer-statut`, { statut });
+  }
+
+  appliquerFiltreAutomatique(id: number): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/filtrer`, {});
+  }
+
+  mettreEnListeAttente(id: number): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/liste-attente`, {});
   }
 
   rejeterDossier(id: number, motif: string): Observable<CandidatureResponse> {
@@ -656,8 +549,18 @@ export class RecrutementService {
     return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/admettre-final`, {});
   }
 
+  enregistrerPaiementHorsLigne(candidatureId: number, methodePaiement?: string): Observable<PaiementResponse> {
+    return this.http.post<PaiementResponse>(
+      `${this.baseUrl}/admin/recrutement/candidatures/${candidatureId}/paiement/enregistrer`,
+      { methodePaiement });
+  }
+
   simulerSuccesPaiement(id: number): Observable<PaiementResponse> {
     return this.http.put<PaiementResponse>(`${this.baseUrl}/admin/recrutement/paiements/${id}/simuler-succes`, {});
+  }
+
+  marquerPaiementEnEchec(id: number, motif?: string): Observable<PaiementResponse> {
+    return this.http.put<PaiementResponse>(`${this.baseUrl}/admin/recrutement/paiements/${id}/echec`, { motif });
   }
 
   getAllPaiements(): Observable<PaiementResponse[]> {

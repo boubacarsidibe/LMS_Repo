@@ -288,44 +288,24 @@ public class CandidatController {
         garantirRoleCandidat(user);
         brouillonRepository.findByUserId(user.getId()).ifPresent(brouillonRepository::delete);
 
-        // Premier filtre automatique configurable par l'admin (TDR 3.1.1) : rejette
-        // immédiatement les dossiers ne remplissant pas les critères minimaux, ou fait
-        // avancer directement les autres en présélection.
+        // Le dossier reste en SOUMIS : le filtre automatique de premier niveau (TDR 3.1.1)
+        // est une action d'étape 2 déclenchée par l'admin (cf. AdminRecrutementController
+        // #appliquerFiltreAutomatique), pas un effet de bord de la soumission elle-même —
+        // sinon l'admin n'a jamais l'occasion de voir passer le dossier par l'état SOUMIS.
         String candidatEmail = user.getEmail();
-        if (session.respecteCriteres(candidat)) {
-            candidatureService.changerStatut(saved.getId(), EnumStatutCandidature.EN_COURS_DE_PRESELECTION, null);
-            notificationCandidatService.creerNotification(candidat,
-                    "Votre dossier n°" + saved.getNumeroDossier() + " a été reçu et est en cours de présélection.",
-                    "STATUT_CHANGE", "/recrutement/suivi");
-            if (candidatEmail != null) {
-                notificationService.notifierValidationDossier(candidatEmail, saved.getNumeroDossier());
-            }
-        } else {
-            candidatureService.changerStatut(saved.getId(), EnumStatutCandidature.REJETE,
-                    "Critères de présélection automatique non remplis.");
-            notificationCandidatService.creerNotification(candidat,
-                    "Votre dossier n°" + saved.getNumeroDossier() + " n'a pas pu être présélectionné.",
-                    "STATUT_CHANGE", "/recrutement/suivi");
-            if (candidatEmail != null) {
-                notificationService.notifierRejetDossier(candidatEmail, saved.getNumeroDossier(),
-                        "Critères de présélection automatique non remplis.");
-            }
-        }
+        notificationCandidatService.creerNotification(candidat,
+                "Votre dossier n°" + saved.getNumeroDossier() + " a été reçu et est en attente de présélection.",
+                "STATUT_CHANGE", "/recrutement/suivi");
 
-        // Notification immédiate à l'INPG (TDR 3.1.1) : ne doit pas faire échouer la
-        // soumission si le serveur SMTP est momentanément indisponible.
-        try {
-            notificationService.envoyerEmail(emailAdmission,
-                    "Nouvelle candidature reçue",
-                    "Une nouvelle candidature a été soumise.\n\n"
-                            + "N° de dossier : " + saved.getNumeroDossier() + "\n"
-                            + "Candidat : " + candidat.getPrenom() + " " + candidat.getNom() + "\n"
-                            + "Email : " + (candidatEmail != null ? candidatEmail : "N/A") + "\n"
-                            + "Session : " + session.getLibelle());
-        } catch (Exception e) {
-            log.error("Échec de l'envoi de l'email de notification de candidature à {} : {}", emailAdmission,
-                    e.getMessage(), e);
-        }
+        // Notification immédiate à l'INPG (TDR 3.1.1). envoyerEmail() est best-effort :
+        // un SMTP indisponible est journalisé sans faire échouer la soumission.
+        notificationService.envoyerEmail(emailAdmission,
+                "Nouvelle candidature reçue",
+                "Une nouvelle candidature a été soumise.\n\n"
+                        + "N° de dossier : " + saved.getNumeroDossier() + "\n"
+                        + "Candidat : " + candidat.getPrenom() + " " + candidat.getNom() + "\n"
+                        + "Email : " + (candidatEmail != null ? candidatEmail : "N/A") + "\n"
+                        + "Session : " + session.getLibelle());
 
         return ResponseEntity.ok(candidatureService.getCandidatureById(saved.getId()));
     }
@@ -379,6 +359,37 @@ public class CandidatController {
         CandidatureResponse resp = candidatureService.getCandidatureById(id);
         if (!resp.getCandidatId().equals(candidatOpt.get().getId())) return ResponseEntity.status(403).build();
         return ResponseEntity.ok(resp);
+    }
+
+    /**
+     * Lettre d'admission PDF. LettreAdmissionPdfService#genererLettreAdmission existait déjà
+     * complet mais n'était appelé nulle part : le bouton "Télécharger la lettre" de l'espace
+     * candidat n'avait aucune action câblée.
+     */
+    @GetMapping("/candidature/{id}/lettre-admission")
+    public ResponseEntity<byte[]> telechargerLettreAdmission(@PathVariable Long id, Authentication authentication) {
+        inpg.sn.lms.auth.entity.User user = findUser(authentication);
+        Candidat candidat = candidatRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé"));
+
+        Candidature candidature = candidatureRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée"));
+        if (!candidature.getCandidat().getId().equals(candidat.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if (candidature.getStatut() != EnumStatutCandidature.ADMIS3) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(("Lettre disponible uniquement pour une candidature admise.").getBytes(StandardCharsets.UTF_8));
+        }
+
+        byte[] pdf = lettreAdmissionPdfService.genererLettreAdmission(candidature);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(
+                ContentDisposition.attachment().filename("lettre-admission.pdf", StandardCharsets.UTF_8).build());
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .headers(headers)
+                .body(pdf);
     }
 
     /**
@@ -440,11 +451,17 @@ public class CandidatController {
     }
 
     /**
-     * Initie le paiement des frais de dossier pour une candidature. Aucune
-     * passerelle réelle (PayDunya/Touch/Kalpay) n'est connectée pour l'instant :
-     * le paiement est immédiatement confirmé, comme le ferait une passerelle
-     * réelle depuis le point de vue du candidat (email + notification déjà
-     * câblés dans PaiementService#confirmerPaiement).
+     * Initie le paiement des frais de dossier pour une candidature. Aucune passerelle
+     * réelle (PayDunya/Touch/Kalpay) n'est connectée : ce endpoint ne fait que ce que fait
+     * un candidat, à savoir déclencher la tentative — il rend EN_ATTENTE, jamais SUCCES.
+     *
+     * <p>La confirmation était auparavant enchaînée ici-même, juste après l'ouverture de la
+     * tentative : côté candidat, un paiement se soldait donc toujours par un succès immédiat,
+     * sans jamais passer par une étape distincte de validation. Cela court-circuitait
+     * {@code AdminRecrutementController#simulerSuccesPaiement}, qui existe justement pour
+     * jouer ce rôle (TDR étape 3 : "l'INPG valide le statut Payé sur le profil du candidat") —
+     * un webhook d'agrégateur réel appellerait demain {@link PaiementService#confirmerPaiement}
+     * exactement à cet endroit-là, pas depuis la requête du candidat.
      */
     @PostMapping("/paiement")
     public ResponseEntity<?> initierPaiement(@RequestBody PaiementRequest request, Authentication authentication) {
@@ -460,10 +477,7 @@ public class CandidatController {
         }
 
         PaiementResponse paiement = paiementService.initierPaiement(request);
-        // Deux etapes distinctes, meme si la simulation les enchaine : c'est la couture ou
-        // se branchera l'agregateur reel, qui confirmera de facon asynchrone par webhook.
-        PaiementResponse confirme = paiementService.confirmerPaiement(paiement.getId());
-        return ResponseEntity.ok(confirme);
+        return ResponseEntity.ok(paiement);
     }
 
     /**
@@ -485,6 +499,63 @@ public class CandidatController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .headers(headers)
                 .body(recu.contenu());
+    }
+
+    /**
+     * Confirme la présence du candidat à son entretien. EntretienService#confirmerPresence
+     * et le champ Entretien#confirmeParCandidat existaient déjà, prêts à l'emploi, mais
+     * aucune route n'y menait — le bouton "Confirmer ma présence" de l'espace candidat
+     * n'avait donc aucun effet réel (TDR étape 5).
+     */
+    @PutMapping("/entretien/{id}/confirmer-presence")
+    public ResponseEntity<?> confirmerPresenceEntretien(@PathVariable Long id, Authentication authentication) {
+        inpg.sn.lms.auth.entity.User user = findUser(authentication);
+        Candidat candidat = candidatRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé"));
+        return ResponseEntity.ok(entretienService.confirmerPresence(id, candidat.getId()));
+    }
+
+    /** Même constat que ci-dessus pour EntretienService#demanderReport. */
+    @PutMapping("/entretien/{id}/demander-report")
+    public ResponseEntity<?> demanderReportEntretien(@PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body, Authentication authentication) {
+        inpg.sn.lms.auth.entity.User user = findUser(authentication);
+        Candidat candidat = candidatRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé"));
+        String motif = body != null ? body.get("motif") : null;
+        return ResponseEntity.ok(entretienService.demanderReport(id, candidat.getId(), motif));
+    }
+
+    /**
+     * Convocation PDF à l'entretien. ConvocationPdfService#genererConvocation existait déjà
+     * complet (en-tête, détails, checklist, signature) mais n'était appelé nulle part : le
+     * bouton "Télécharger Convocation" affichait un message "bientôt disponible" alors que
+     * le PDF pouvait déjà être produit.
+     */
+    @GetMapping("/entretien/{id}/convocation")
+    public ResponseEntity<byte[]> telechargerConvocationEntretien(@PathVariable Long id, Authentication authentication) {
+        inpg.sn.lms.auth.entity.User user = findUser(authentication);
+        Candidat candidat = candidatRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé"));
+
+        var entretien = entretienService.getEntretienEntity(id);
+        if (!entretien.getCandidat().getId().equals(candidat.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        Candidature candidature = candidatureRepository.findByCandidatId(candidat.getId()).stream()
+                .filter(c -> c.getStatut() != EnumStatutCandidature.REJETE)
+                .findFirst()
+                .orElse(null);
+
+        byte[] pdf = convocationPdfService.genererConvocation(entretien, candidature);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(
+                ContentDisposition.attachment().filename("convocation-entretien.pdf", StandardCharsets.UTF_8).build());
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .headers(headers)
+                .body(pdf);
     }
 
     /**
@@ -530,6 +601,7 @@ public class CandidatController {
                     ligne.put("coefficient", test.getCoefficient());
                     ligne.put("noteObtenue", test.getNoteObtenue());
                     ligne.put("dateEpreuve", test.getDateEpreuve());
+                    ligne.put("lieu", test.getLieu());
                     return ligne;
                 })
                 .toList();
@@ -537,8 +609,11 @@ public class CandidatController {
         List<Map<String, Object>> entretiens = entretienRepository.findByCandidatId(candidatId).stream()
                 .map(entretien -> {
                     Map<String, Object> ligne = new LinkedHashMap<>();
+                    ligne.put("id", entretien.getId());
                     ligne.put("dateHeure", entretien.getDateHeure());
                     ligne.put("lieuOuLien", entretien.getLieuOuLien());
+                    ligne.put("confirmeParCandidat", entretien.isConfirmeParCandidat());
+                    ligne.put("motifReport", entretien.getMotifReport());
                     return ligne;
                 })
                 .toList();
@@ -637,7 +712,19 @@ public class CandidatController {
         return u;
     }
 
+    /**
+     * Numéro de dossier, unique en base (contrainte {@code unique = true}). Un UUID
+     * tronqué à 8 caractères a une probabilité de collision non nulle : la génération
+     * est retentée tant que le numéro existe déjà plutôt que de laisser l'INSERT
+     * échouer en pleine soumission de candidature.
+     */
     private String genererNumeroDossier() {
-        return "INPG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        for (int tentative = 0; tentative < 10; tentative++) {
+            String candidat = "INPG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            if (!candidatureRepository.existsByNumeroDossier(candidat)) {
+                return candidat;
+            }
+        }
+        throw new IllegalStateException("Impossible de générer un numéro de dossier unique.");
     }
 }

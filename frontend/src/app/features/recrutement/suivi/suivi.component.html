@@ -126,7 +126,7 @@
               <div class="w-12 h-12 rounded-full border-2 border-white/20 bg-white/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 0;">person</span></div>
               <div><p class="text-label-md font-bold">{{ responsableAdmissions }}</p><p class="text-label-sm opacity-80">Responsable Admissions</p></div>
             </div>
-            <button class="w-full bg-white text-secondary py-3 rounded-lg text-label-md font-bold hover:bg-opacity-90 transition-all">Contacter le service</button>
+            <a href="mailto:contact@inpg.sn" class="w-full bg-white text-secondary py-3 rounded-lg text-label-md font-bold hover:bg-opacity-90 transition-all text-center block no-underline">Contacter le service</a>
           </div>
           <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
         </div>
@@ -228,7 +228,7 @@
               <div class="w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 bg-white/10"><span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 0;">person</span></div>
               <div><p class="text-label-md font-bold">{{ responsableAdmissions }}</p><p class="text-xs opacity-80">Responsable Admissions</p></div>
             </div>
-            <button class="w-full bg-white text-secondary py-3 rounded-xl text-label-md font-bold hover:bg-opacity-90 transition-all">Réserver un entretien de conseil</button>
+            <button routerLink="/contact" class="w-full bg-white text-secondary py-3 rounded-xl text-label-md font-bold hover:bg-opacity-90 transition-all">Réserver un entretien de conseil</button>
           </div>
           <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
         </div>
@@ -236,47 +236,49 @@
     </div>
   </main>
 
-  <!-- ==================== ADMIS1 (TEST ACADÉMIQUE TERMINÉ - Template 2) ==================== -->
+  <!-- ==================== ADMIS1 (ADMIS À PASSER LE TEST ACADÉMIQUE) ==================== -->
   <main *ngIf="!loading && candidature && isStatut(STATUT_ADMIS1)" class="flex-grow flex justify-center py-16 px-4 md:px-10">
     <div class="max-w-4xl w-full space-y-8">
       <section class="bg-white rounded-xl border border-outline-variant shadow-sm p-8 relative overflow-hidden">
         <div class="absolute top-0 right-0 w-64 h-64 opacity-5 pointer-events-none"><span class="material-symbols-outlined text-[160px]" style="font-variation-settings:'FILL' 0;">school</span></div>
         <div class="relative z-10 space-y-6">
           <div class="flex flex-col gap-2">
-            <span class="bg-error-container text-on-error-container px-3 py-1 rounded-full text-label-sm w-fit font-bold">Test non concluant</span>
-            <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">Résultats du Test Académique</h2>
-            <p class="text-lg text-on-surface-variant max-w-2xl">Malgré tout l'intérêt que nous portons à votre candidature pour le Bachelor in Strategic Management, nous regrettons de vous informer que vos résultats au test ne nous permettent pas de poursuivre le processus d'admission pour cette session.</p>
+            <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-label-sm w-fit font-bold">Admis au Test Académique</span>
+            <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">{{ aDesResultats ? 'Résultats du Test Académique' : 'Vous êtes convoqué(e) au Test Académique' }}</h2>
+            <p class="text-lg text-on-surface-variant max-w-2xl" *ngIf="!aDesResultats">Votre dossier a été retenu à l'issue de la présélection. Voici les modalités de votre convocation — présentez-vous muni(e) d'une pièce d'identité.</p>
+            <p class="text-lg text-on-surface-variant max-w-2xl" *ngIf="aDesResultats">Votre épreuve a été corrigée. Le résultat détaillé figure ci-dessous ; la suite du parcours (entretien) vous sera communiquée séparément.</p>
           </div>
           <div class="flex items-start justify-between w-full pt-6">
             <div class="flex flex-col items-center gap-3 flex-1 relative"><div class="w-6 h-6 rounded-full bg-secondary text-white flex items-center justify-center z-10 shadow-sm"><span class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span></div><span class="text-label-md text-secondary font-bold">Dossier</span><div class="absolute top-3 left-1/2 w-full h-[2px] bg-secondary"></div></div>
-            <div class="flex flex-col items-center gap-3 flex-1 relative"><div class="w-6 h-6 rounded-full bg-secondary text-white flex items-center justify-center z-10 shadow-sm"><span class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span></div><span class="text-label-md text-secondary font-bold">Évaluation</span><div class="absolute top-3 left-1/2 w-full h-[2px] bg-error"></div></div>
-            <div class="flex flex-col items-center gap-3 flex-1 relative"><div class="w-6 h-6 rounded-full bg-error text-white flex items-center justify-center z-10 shadow-sm"><span class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">close</span></div><span class="text-label-md text-error font-bold">Test Académique</span><div class="absolute top-3 left-1/2 w-full h-[2px] bg-outline-variant"></div></div>
+            <div class="flex flex-col items-center gap-3 flex-1 relative"><div class="w-6 h-6 rounded-full bg-secondary text-white flex items-center justify-center z-10 shadow-sm"><span class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span></div><span class="text-label-md text-secondary font-bold">Évaluation</span><div class="absolute top-3 left-1/2 w-full h-[2px] bg-secondary"></div></div>
+            <div class="flex flex-col items-center gap-3 flex-1 relative"><div class="w-6 h-6 rounded-full flex items-center justify-center z-10 shadow-sm" [class.bg-secondary]="aDesResultats" [class.text-white]="aDesResultats" [class.border]="!aDesResultats" [class.border-outline-variant]="!aDesResultats" [class.bg-surface]="!aDesResultats"><span *ngIf="aDesResultats" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span><span *ngIf="!aDesResultats" class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span></div><span class="text-label-md font-bold" [class.text-secondary]="aDesResultats" [class.text-on-surface-variant]="!aDesResultats">Test Académique</span><div class="absolute top-3 left-1/2 w-full h-[2px] bg-outline-variant"></div></div>
             <div class="flex flex-col items-center gap-3"><div class="w-6 h-6 rounded-full border border-outline-variant bg-surface flex items-center justify-center z-10"><span class="text-[10px] font-bold text-on-surface-variant">4</span></div><span class="text-label-md text-on-surface-variant">Entretien</span></div>
           </div>
         </div>
       </section>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-6">
-          <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6">
+          <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6" *ngIf="!aDesResultats">
+            <h3 class="text-xl font-semibold text-on-surface mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">event_available</span>Convocation</h3>
+            <div class="space-y-4" *ngIf="prochainTest; else convocationEnAttente">
+              <div class="flex items-center gap-3"><span class="material-symbols-outlined text-secondary">schedule</span><div><p class="text-label-sm text-on-surface-variant">Date et heure</p><p class="text-label-md font-semibold text-on-surface">{{ prochainTest.dateEpreuve ? (prochainTest.dateEpreuve | date:'EEEE d MMMM, HH:mm') : 'À confirmer' }}</p></div></div>
+              <div class="flex items-center gap-3"><span class="material-symbols-outlined text-secondary">location_on</span><div><p class="text-label-sm text-on-surface-variant">Lieu</p><p class="text-label-md font-semibold text-on-surface">{{ prochainTest.lieu || 'Communiqué par courriel' }}</p></div></div>
+              <div class="flex items-center gap-3"><span class="material-symbols-outlined text-secondary">quiz</span><div><p class="text-label-sm text-on-surface-variant">Épreuve</p><p class="text-label-md font-semibold text-on-surface">{{ prochainTest.nomEpreuve }}</p></div></div>
+            </div>
+            <ng-template #convocationEnAttente><p class="text-sm text-on-surface-variant italic">Votre convocation vous sera communiquée prochainement par e-mail.</p></ng-template>
+          </div>
+          <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6" *ngIf="aDesResultats">
             <h3 class="text-xl font-semibold text-on-surface mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">analytics</span>Bilan de l'évaluation</h3>
-            <p class="text-base text-on-surface-variant leading-relaxed mb-4">Nos standards d'admission sont conçus pour garantir que tous les étudiants possèdent les connaissances fondamentales nécessaires pour réussir dans notre cursus rigoureux.</p>
-            <div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-error mb-4"><p class="text-sm text-on-surface-variant" *ngIf="aDesResultats; else scoreEnAttente">Score global : <strong class="text-on-surface">{{ noteGlobale }}</strong><span *ngIf="seuilScore !== null"><br><span class="italic opacity-80">Seuil requis pour cette session : {{ seuilScore }}</span></span></p>
-              <ng-template #scoreEnAttente><p class="text-sm text-on-surface-variant italic">Vos résultats ne sont pas encore publiés.</p></ng-template></div>
-            <p class="text-sm text-on-surface-variant">Bien que ce résultat soit défavorable, nous vous encourageons à considérer cela comme une pause momentanée dans votre parcours plutôt que comme une conclusion définitive.</p>
+            <div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-secondary mb-4"><p class="text-sm text-on-surface-variant">Score global : <strong class="text-on-surface">{{ noteGlobale }}</strong><span *ngIf="seuilScore !== null"><br><span class="italic opacity-80">Seuil requis pour cette session : {{ seuilScore }}</span></span></p></div>
+            <p class="text-sm text-on-surface-variant">La suite du parcours (convocation à l'entretien) vous sera communiquée séparément par e-mail.</p>
           </div>
         </div>
         <div class="space-y-6">
           <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6">
-            <h3 class="text-xl font-semibold text-on-surface mb-6">Prochaines opportunités</h3>
-            <div class="space-y-6">
-              <div class="group cursor-pointer"><div class="flex items-center gap-4 mb-2"><div class="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-white transition-colors"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 0;">event_repeat</span></div><h4 class="text-label-md font-bold group-hover:text-secondary transition-colors">Prochaine session d'admission</h4></div><p class="text-sm text-on-surface-variant ml-14">Vous êtes éligible pour vous représenter lors de la prochaine session de recrutement dans 6 mois.</p></div>
-            </div>
-          </div>
-          <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6">
-            <h3 class="text-xl font-semibold text-on-surface mb-6">Conseils pour la suite</h3>
+            <h3 class="text-xl font-semibold text-on-surface mb-6">À prévoir le jour J</h3>
             <ul class="space-y-4">
-              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary text-sm mt-0.5" style="font-variation-settings:'FILL' 0;">lightbulb</span><p class="text-sm text-on-surface-variant">Profitez de ce délai pour renforcer vos compétences fondamentales en théorie du management.</p></li>
-              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary text-sm mt-0.5" style="font-variation-settings:'FILL' 0;">lightbulb</span><p class="text-sm text-on-surface-variant">Pratiquez régulièrement des exercices d'analyse quantitative pour améliorer votre rapidité.</p></li>
+              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary text-sm mt-0.5" style="font-variation-settings:'FILL' 0;">badge</span><p class="text-sm text-on-surface-variant">Une pièce d'identité originale en cours de validité (CNI ou Passeport).</p></li>
+              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary text-sm mt-0.5" style="font-variation-settings:'FILL' 0;">schedule</span><p class="text-sm text-on-surface-variant">Présence 15 minutes avant l'heure fixée.</p></li>
             </ul>
           </div>
         </div>
@@ -285,12 +287,12 @@
         <div class="bg-secondary p-6 rounded-xl text-on-secondary shadow-sm relative overflow-hidden group h-full">
           <div class="relative z-10 space-y-4">
             <h4 class="text-xl font-semibold">Besoin d'aide ?</h4>
-            <p class="text-sm opacity-90">Votre conseillère admission est disponible pour répondre à vos questions et discuter de vos options futures.</p>
+            <p class="text-sm opacity-90">Votre conseillère admission est disponible pour répondre à vos questions.</p>
             <div class="flex items-center gap-3 py-4">
               <div class="w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 bg-white/10"><span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 0;">person</span></div>
               <div><p class="text-label-md font-bold">{{ responsableAdmissions }}</p><p class="text-xs opacity-80">Responsable Admissions</p></div>
             </div>
-            <button class="w-full bg-white text-secondary py-3 rounded-xl text-label-md font-bold hover:bg-opacity-90 transition-all">Réserver un entretien de conseil</button>
+            <a href="mailto:contact@inpg.sn" class="w-full bg-white text-secondary py-3 rounded-xl text-label-md font-bold hover:bg-opacity-90 transition-all text-center block no-underline">Contacter le service</a>
           </div>
           <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
         </div>
@@ -327,9 +329,11 @@
             </div>
             <h4 class="text-xl font-semibold mb-4">Félicitations, vous êtes invité à un Entretien de Motivation</h4>
             <p class="text-base text-on-surface-variant mb-6 leading-relaxed">Cette étape est cruciale pour nous permettre de découvrir votre personnalité, vos ambitions et la cohérence de votre projet professionnel avec les valeurs de l'INPG.</p>
+            <div *ngIf="entretien?.confirmeParCandidat" class="flex items-center gap-2 mb-4 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium w-fit"><span class="material-symbols-outlined text-[18px]">check_circle</span>Présence confirmée</div>
+            <div *ngIf="entretien?.motifReport && !entretien?.confirmeParCandidat" class="flex items-center gap-2 mb-4 px-4 py-2 bg-amber-50 text-amber-700 rounded-lg text-sm font-medium w-fit"><span class="material-symbols-outlined text-[18px]">edit_calendar</span>Report demandé — en attente de réponse du service admission</div>
             <div class="flex flex-col sm:flex-row gap-4 mb-2">
-              <button (click)="confirmerPresence()" class="flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-white rounded-xl text-label-md font-bold hover:bg-secondary/90 transition-all shadow-sm"><span class="material-symbols-outlined text-[20px]">how_to_reg</span>Confirmer ma présence</button>
-              <button (click)="demanderReport()" class="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-outline-variant text-on-surface rounded-xl text-label-md font-bold hover:bg-surface-container-low transition-all"><span class="material-symbols-outlined text-[20px]">edit_calendar</span>Demander un report de créneau</button>
+              <button (click)="confirmerPresence()" [disabled]="actionEntretienEnCours || entretien?.confirmeParCandidat" class="flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-white rounded-xl text-label-md font-bold hover:bg-secondary/90 transition-all shadow-sm disabled:opacity-50"><span class="material-symbols-outlined text-[20px]">how_to_reg</span>{{ entretien?.confirmeParCandidat ? 'Présence confirmée' : 'Confirmer ma présence' }}</button>
+              <button (click)="demanderReport()" [disabled]="actionEntretienEnCours" class="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-outline-variant text-on-surface rounded-xl text-label-md font-bold hover:bg-surface-container-low transition-all disabled:opacity-50"><span class="material-symbols-outlined text-[20px]">edit_calendar</span>Demander un report de créneau</button>
             </div>
           </div>
           <div class="w-full md:w-72 shrink-0 bg-surface-container-low rounded-2xl p-6 border border-outline-variant/50 flex flex-col justify-center">
@@ -355,16 +359,14 @@
               <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high border border-outline-variant text-xs font-medium text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">timer</span>Durée : 30 minutes</span>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label class="relative flex cursor-pointer rounded-2xl border bg-secondary/5 border-secondary p-4">
-                <input checked class="sr-only" name="interview_mode" type="radio" value="presentiel">
-                <span class="flex flex-1"><span class="flex flex-col"><span class="block text-sm font-medium text-on-surface flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 1;">storefront</span>Présentiel</span><span class="block text-xs text-on-surface-variant">Sur campus à Dakar</span></span></span>
-                <span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 1;">radio_button_checked</span>
-              </label>
-              <label class="relative flex cursor-pointer rounded-2xl border border-outline-variant bg-white p-4 hover:bg-surface-container-lowest">
-                <input class="sr-only" name="interview_mode" type="radio" value="visio">
-                <span class="flex flex-1"><span class="flex flex-col"><span class="block text-sm font-medium text-on-surface flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-on-surface-variant">video_camera_front</span>Visioconférence</span><span class="block text-xs text-on-surface-variant">Via Google Meet</span></span></span>
-                <span class="material-symbols-outlined text-outline">radio_button_unchecked</span>
-              </label>
+              <div class="relative flex rounded-2xl border p-4" [class.bg-secondary/5]="!estVisio" [class.border-secondary]="!estVisio" [class.border-outline-variant]="estVisio" [class.bg-white]="estVisio">
+                <span class="flex flex-1"><span class="flex flex-col"><span class="block text-sm font-medium text-on-surface flex items-center gap-2 mb-1"><span class="material-symbols-outlined" [class.text-secondary]="!estVisio" [class.text-on-surface-variant]="estVisio" [style.font-variation-settings]="!estVisio ? '\'FILL\' 1' : '\'FILL\' 0'">storefront</span>Présentiel</span><span class="block text-xs text-on-surface-variant">Sur campus à Dakar</span></span></span>
+                <span class="material-symbols-outlined" [class.text-secondary]="!estVisio" [class.text-outline]="estVisio" [style.font-variation-settings]="!estVisio ? '\'FILL\' 1' : '\'FILL\' 0'">{{ !estVisio ? 'radio_button_checked' : 'radio_button_unchecked' }}</span>
+              </div>
+              <div class="relative flex rounded-2xl border p-4" [class.bg-secondary/5]="estVisio" [class.border-secondary]="estVisio" [class.border-outline-variant]="!estVisio" [class.bg-white]="!estVisio">
+                <span class="flex flex-1"><span class="flex flex-col"><span class="block text-sm font-medium text-on-surface flex items-center gap-2 mb-1"><span class="material-symbols-outlined" [class.text-secondary]="estVisio" [class.text-on-surface-variant]="!estVisio">video_camera_front</span>Visioconférence</span><span class="block text-xs text-on-surface-variant">Lien communiqué par courriel</span></span></span>
+                <span class="material-symbols-outlined" [class.text-secondary]="estVisio" [class.text-outline]="!estVisio" [style.font-variation-settings]="estVisio ? '\'FILL\' 1' : '\'FILL\' 0'">{{ estVisio ? 'radio_button_checked' : 'radio_button_unchecked' }}</span>
+              </div>
             </div>
           </div>
           <div class="bg-white border border-outline-variant rounded-3xl p-6 shadow-sm flex-1">
@@ -423,8 +425,8 @@
                 <h3 class="text-3xl font-semibold text-primary">Lettre d'Admission</h3>
                 <p class="text-on-surface-variant text-base leading-relaxed">Cher candidat, nous avons le plaisir de vous informer que votre dossier a été retenu par le jury d'admission de l'INPG pour la formation {{ candidature.sessionCandidatureLibelle || 'Bachelor in Strategic Management' }}.</p>
                 <div class="flex gap-3 pt-2">
-                  <button class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-label-md font-bold hover:bg-primary/90 transition-all"><span class="material-symbols-outlined text-[20px]">download</span>Télécharger la lettre</button>
-                  <button class="flex items-center gap-2 px-5 py-2.5 bg-white border border-outline-variant text-on-surface rounded-lg text-label-md font-bold hover:bg-surface-container-low transition-all"><span class="material-symbols-outlined text-[20px]">share</span>Partager</button>
+                  <button (click)="telechargerLettreAdmission()" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-label-md font-bold hover:bg-primary/90 transition-all"><span class="material-symbols-outlined text-[20px]">download</span>Télécharger la lettre</button>
+                  <button (click)="partagerAdmission()" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-outline-variant text-on-surface rounded-lg text-label-md font-bold hover:bg-surface-container-low transition-all"><span class="material-symbols-outlined text-[20px]">share</span>Partager</button>
                 </div>
               </div>
             </div>
@@ -459,7 +461,7 @@
               <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center"><span class="material-symbols-outlined text-secondary">person</span></div>
               <div><p class="text-label-md font-bold">{{ responsableAdmissions }}</p><p class="text-xs text-on-surface-variant">Responsable Admissions</p></div>
             </div>
-            <button class="w-full bg-secondary text-white py-2.5 rounded-lg text-label-md font-bold hover:bg-secondary/90 transition-all">Contacter</button>
+            <a href="mailto:contact@inpg.sn" class="w-full bg-secondary text-white py-2.5 rounded-lg text-label-md font-bold hover:bg-secondary/90 transition-all text-center block no-underline">Contacter</a>
           </div>
         </div>
       </div>

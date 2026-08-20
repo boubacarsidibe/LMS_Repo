@@ -7,9 +7,11 @@ import {
   CandidatureResponse,
   ParcoursCandidature,
   EntretienCandidat,
+  TestCandidat,
 } from '../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
 import { CandidatNavbarComponent } from '../../../shared/components/candidat-navbar/candidat-navbar.component';
+import { downloadBlob } from '../../../shared/utils/download-file';
 
 interface TimelineItem {
   label: string;
@@ -38,6 +40,7 @@ export class SuiviComponent implements OnInit {
   readonly STATUT_ADMIS1 = 'ADMIS1';
   readonly STATUT_ADMIS2 = 'ADMIS2';
   readonly STATUT_ADMIS3 = 'ADMIS3';
+  readonly STATUT_LISTE_ATTENTE = 'LISTE_ATTENTE';
 
   /** Index de l'étape active dans le stepper (0 = Dossier, 1 = Évaluation, 2 = Test Académique, 3 = Entretien) */
   get activeStepIndex(): number {
@@ -49,6 +52,7 @@ export class SuiviComponent implements OnInit {
       case this.STATUT_REJETE: return 2; // Bloqué au Test Académique
       case this.STATUT_ADMIS1: return 3; // Entretien
       case this.STATUT_ADMIS2: return 3;        // Entretien
+      case this.STATUT_LISTE_ATTENTE: return 4; // En attente d'une place
       case this.STATUT_ADMIS3: return 4; // Terminé
       default: return 1;
     }
@@ -101,11 +105,28 @@ export class SuiviComponent implements OnInit {
     return this.entretien?.lieuOuLien || 'Lieu communiqué par courriel';
   }
 
+  /**
+   * L'entité Entretien n'a pas de champ « modalité » dédié : lieuOuLien porte soit une
+   * adresse (présentiel), soit un lien de visioconférence, selon ce que l'admin y a saisi.
+   * Les deux cartes Présentiel/Visio étaient jusqu'ici deux boutons radio statiques, l'un
+   * toujours pré-coché, sans lien avec l'entretien réellement planifié.
+   */
+  get estVisio(): boolean {
+    const lieu = this.entretien?.lieuOuLien || '';
+    return /^https?:\/\//i.test(lieu.trim());
+  }
+
   get mapUrl(): string {
     const lieu = this.entretien?.lieuOuLien;
     return lieu
       ? 'https://www.google.com/maps/search/' + encodeURIComponent(lieu)
       : 'https://www.google.com/maps/search/INPG+Dakar';
+  }
+
+  /** Prochaine épreuve non encore notée (convocation en attente de passage). */
+  get prochainTest(): TestCandidat | null {
+    const tests = (this.parcours?.tests ?? []).filter((t) => t.noteObtenue == null);
+    return tests.length > 0 ? tests[tests.length - 1] : null;
   }
 
   constructor(private recrutementService: RecrutementService) {}
@@ -136,56 +157,73 @@ export class SuiviComponent implements OnInit {
     return statuts.includes(this.candidature?.statut ?? '');
   }
 
+  /**
+   * Ordre réel du parcours (TDR) : dépôt → évaluation/présélection → paiement des frais
+   * de dossier → test académique → entretien. « Paiement confirmé » et « Dossier soumis »
+   * étaient auparavant codés en dur comme toujours acquis (jamais mis à jour selon le
+   * statut réel) et affichés AVANT « Dossier soumis » — un candidat qui n'avait encore
+   * rien déposé ni payé voyait déjà les deux coches vertes.
+   */
   get timelineItems(): TimelineItem[] {
     const statut = this.candidature?.statut;
+    const paiementConfirme = this.candidature?.paiement?.statut === 'SUCCES';
     const items: TimelineItem[] = [
-      { label: 'Paiement confirmé', desc: 'Frais de dossier réglés.', pending: false, active: false, erreur: false },
-      { label: 'Dossier soumis', desc: 'Tous les documents requis téléchargés.', pending: false, active: false, erreur: false },
-      { label: 'Évaluation en cours', desc: 'Le jury examine votre candidature.', pending: false, active: false, erreur: false },
+      { label: 'Dossier soumis', desc: 'Tous les documents requis téléchargés.', pending: true, active: false, erreur: false },
+      { label: 'Évaluation en cours', desc: 'Le jury examine votre candidature.', pending: true, active: false, erreur: false },
+      { label: 'Paiement confirmé', desc: 'Frais de dossier réglés.', pending: true, active: false, erreur: false },
       { label: 'Test Académique', desc: '', pending: true, active: false, erreur: false },
       { label: 'Entretien', desc: 'Rencontre avec le jury.', pending: true, active: false, erreur: false },
     ];
 
     if (!statut || statut === 'BROUILLON') {
-      items[2].pending = true;
+      items[0].active = true;
       return items;
     }
+    items[0].pending = false; // dossier déposé
 
-    if (statut === this.STATUT_REJETE) {
-      items[2].active = false;
-      items[3].active = false;
-      items[3].erreur = true;
-      return items;
-    }
-
-    // SOUMIS ou EN_COURS_DE_PRESELECTION
     if (statut === this.STATUT_SOUMIS || statut === this.STATUT_PRESELECTION) {
+      items[1].pending = false;
+      items[1].active = true;
+      return items;
+    }
+    items[1].pending = false; // évaluation/présélection franchie
+
+    if (statut === this.STATUT_REJETE && !paiementConfirme) {
+      // Rejeté dès le filtrage ou la présélection, avant tout paiement.
+      items[1].erreur = true;
+      return items;
+    }
+
+    if (!paiementConfirme) {
       items[2].pending = false;
       items[2].active = true;
       return items;
     }
+    items[2].pending = false; // paiement confirmé
 
-    // ADMIS1 : test académique réussi
+    if (statut === this.STATUT_REJETE) {
+      // Rejeté après paiement : la note insuffisante au test reste la cause la plus
+      // fréquente, faute d'un champ dédié à l'étape exacte du rejet.
+      items[3].erreur = true;
+      return items;
+    }
+
     if (statut === this.STATUT_ADMIS1) {
-      items[2].active = false;
       items[3].pending = false;
       items[3].active = true;
       return items;
     }
+    items[3].pending = false; // test académique franchi
 
-    // ADMIS2 : entretien réussi
     if (statut === this.STATUT_ADMIS2) {
-      items[2].active = false;
-      items[3].pending = false;
-      items[3].active = false;
+      items[4].pending = false;
+      items[4].active = true;
       return items;
     }
 
-    // ADMIS3 : terminé
-    if (statut === this.STATUT_ADMIS3) {
-      items[2].active = false;
-      items[3].pending = false;
-      items[3].active = false;
+    // ADMIS3 (admis final) ou LISTE_ATTENTE (entretien passé, décision en attente d'une place)
+    if (statut === this.STATUT_ADMIS3 || statut === this.STATUT_LISTE_ATTENTE) {
+      items[4].pending = false;
       return items;
     }
 
@@ -217,6 +255,7 @@ export class SuiviComponent implements OnInit {
   getStatutBadgeClass(): string {
     const s = this.candidature?.statut;
     if (s === this.STATUT_REJETE) return 'bg-error-container text-on-error-container';
+    if (s === this.STATUT_LISTE_ATTENTE) return 'bg-blue-100 text-blue-800';
     if (s === this.STATUT_ADMIS1 || s === this.STATUT_ADMIS2 || s === this.STATUT_ADMIS3) return 'bg-emerald-100 text-emerald-700';
     return 'bg-secondary-container text-on-secondary-container';
   }
@@ -229,6 +268,7 @@ export class SuiviComponent implements OnInit {
       case this.STATUT_REJETE: return 'Test non concluant';
       case this.STATUT_ADMIS1: return 'Test réussi';
       case this.STATUT_ADMIS2: return 'Entretien réussi';
+      case this.STATUT_LISTE_ATTENTE: return 'Liste complémentaire';
       case this.STATUT_ADMIS3: return 'ADMIS';
       default: return 'Candidature en cours';
     }
@@ -240,6 +280,7 @@ export class SuiviComponent implements OnInit {
       case this.STATUT_REJETE: return 'Résultats du Test Académique';
       case this.STATUT_ADMIS1: return 'Résultats du Test Académique';
       case this.STATUT_ADMIS2: return 'Tu y es presque !';
+      case this.STATUT_LISTE_ATTENTE: return 'Vous êtes sur liste complémentaire';
       case this.STATUT_ADMIS3: return 'Félicitations ! Bienvenue à l\'INPG';
       default: return 'Votre dossier est en cours d\'évaluation.';
     }
@@ -257,6 +298,8 @@ export class SuiviComponent implements OnInit {
         return 'Félicitations ! Vous avez brillamment réussi le test académique. La prochaine étape est l\'entretien.';
       case this.STATUT_ADMIS2:
         return 'Ton parcours de sélection avance avec succès. Ton dossier a retenu toute notre attention.';
+      case this.STATUT_LISTE_ATTENTE:
+        return 'Votre dossier a été jugé valable par le jury, mais aucune place n\'est disponible pour l\'instant. Nous reviendrons vers vous si une place se libère.';
       case this.STATUT_ADMIS3:
         return 'Votre candidature a été officiellement acceptée. Vous faites désormais partie de la promotion 2024-2025.';
       default: return '';
@@ -267,31 +310,111 @@ export class SuiviComponent implements OnInit {
   get etapeActuelle(): string {
     const s = this.candidature?.statut;
     if (s === this.STATUT_ADMIS2) return 'Étape 3 sur 4';
-    if (s === this.STATUT_ADMIS3) return 'Étape 4 sur 4';
+    if (s === this.STATUT_LISTE_ATTENTE || s === this.STATUT_ADMIS3) return 'Étape 4 sur 4';
     return '';
   }
 
-  // Ces 4 actions n'ont pas encore d'endpoint côté backend : on prévient
-  // honnêtement le candidat plutôt que de laisser croire que l'action a été
-  // enregistrée (aucun appel réseau, aucun effet réel).
+  actionEntretienEnCours = false;
 
-  /** Confirmation de présence à l'entretien */
+  /**
+   * Confirme la présence à l'entretien. EntretienService#confirmerPresence existait déjà
+   * côté backend (avec vérification de propriété), mais aucune route n'y menait — le
+   * bouton se contentait jusqu'ici d'un message "bientôt disponible".
+   */
   confirmerPresence(): void {
-    alert('La confirmation de présence en ligne sera bientôt disponible. En attendant, merci de contacter le service admission.');
+    const ent = this.entretien;
+    if (!ent) return;
+    this.actionEntretienEnCours = true;
+    this.recrutementService.confirmerPresenceEntretien(ent.id).subscribe({
+      next: () => {
+        this.actionEntretienEnCours = false;
+        this.rafraichirParcours();
+      },
+      error: (err) => {
+        this.actionEntretienEnCours = false;
+        alert(err.error?.message || 'Échec de la confirmation de présence.');
+      },
+    });
   }
 
-  /** Demande de report de créneau */
+  /** Demande de report de créneau — même constat que confirmerPresence. */
   demanderReport(): void {
-    alert('La demande de report en ligne sera bientôt disponible. En attendant, merci de contacter le service admission.');
+    const ent = this.entretien;
+    if (!ent) return;
+    const motif = window.prompt('Motif de la demande de report :');
+    if (motif === null) return;
+    this.actionEntretienEnCours = true;
+    this.recrutementService.demanderReportEntretien(ent.id, motif).subscribe({
+      next: () => {
+        this.actionEntretienEnCours = false;
+        this.rafraichirParcours();
+        alert('Votre demande de report a été transmise au service admission.');
+      },
+      error: (err) => {
+        this.actionEntretienEnCours = false;
+        alert(err.error?.message || 'Échec de la demande de report.');
+      },
+    });
   }
 
-  /** Télécharger convocation PDF */
+  /** Convocation PDF — ConvocationPdfService générait déjà le document, sans route pour l'atteindre. */
   telechargerConvocation(): void {
-    alert('Le téléchargement de la convocation sera bientôt disponible.');
+    const ent = this.entretien;
+    if (!ent) return;
+    this.recrutementService.telechargerConvocationEntretien(ent.id).subscribe({
+      next: (blob) => downloadBlob(blob, 'convocation-entretien.pdf'),
+      error: () => alert('Échec du téléchargement de la convocation.'),
+    });
   }
 
-  /** Ajouter à l'agenda */
+  /** Lettre d'admission PDF — LettreAdmissionPdfService générait déjà le document, sans route pour l'atteindre. */
+  telechargerLettreAdmission(): void {
+    if (!this.candidature?.id) return;
+    this.recrutementService.telechargerLettreAdmission(this.candidature.id).subscribe({
+      next: (blob) => downloadBlob(blob, 'lettre-admission.pdf'),
+      error: () => alert('Échec du téléchargement de la lettre.'),
+    });
+  }
+
+  /** Web Share API avec repli presse-papiers : aucun document public à partager, seulement l'annonce. */
+  partagerAdmission(): void {
+    const texte = `Je suis admis(e) à l'INPG pour la formation ${this.candidature?.sessionCandidatureLibelle || ''} !`.trim();
+    if (navigator.share) {
+      navigator.share({ text: texte }).catch(() => {});
+      return;
+    }
+    navigator.clipboard?.writeText(texte).then(
+      () => alert('Message copié dans le presse-papiers.'),
+      () => alert('Impossible de partager.'),
+    );
+  }
+
+  /** Fichier .ics généré côté client : aucune intégration calendrier tierce nécessaire. */
   ajouterAgenda(): void {
-    alert('L\'ajout automatique à l\'agenda sera bientôt disponible.');
+    const ent = this.entretien;
+    if (!ent?.dateHeure) return;
+    const debut = new Date(ent.dateHeure);
+    const fin = new Date(debut.getTime() + 30 * 60 * 1000);
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'BEGIN:VEVENT',
+      `DTSTART:${fmt(debut)}`,
+      `DTEND:${fmt(fin)}`,
+      'SUMMARY:Entretien d\'admission INPG',
+      `LOCATION:${(ent.lieuOuLien || '').replace(/\r?\n/g, ' ')}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+    downloadBlob(new Blob([ics], { type: 'text/calendar' }), 'entretien-inpg.ics');
+  }
+
+  private rafraichirParcours(): void {
+    if (!this.candidature?.id) return;
+    this.recrutementService.getParcoursCandidature(this.candidature.id).subscribe({
+      next: (parcours) => (this.parcours = parcours),
+      error: () => {},
+    });
   }
 }
