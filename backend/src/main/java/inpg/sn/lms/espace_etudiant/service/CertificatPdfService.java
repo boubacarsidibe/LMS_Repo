@@ -16,6 +16,7 @@ import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.util.Matrix;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.google.zxing.BarcodeFormat;
@@ -32,6 +33,12 @@ import inpg.sn.lms.espace_etudiant.entity.Certificat;
  */
 @Service
 public class CertificatPdfService {
+
+    private final String frontendBaseUrl;
+
+    public CertificatPdfService(@Value("${app.frontend.base-url}") String frontendBaseUrl) {
+        this.frontendBaseUrl = frontendBaseUrl;
+    }
 
     public byte[] genererPdf(Certificat certificat) {
         try (PDDocument document = new PDDocument()) {
@@ -85,7 +92,7 @@ public class CertificatPdfService {
                 content.stroke();
                 ecrireCentre(content, texteItalique, 9, "Signature du responsable pedagogique", 580, 85);
 
-                byte[] qrPng = genererQrCode("Certificat INPG - " + certificat.getReference());
+                byte[] qrPng = genererQrCode(frontendBaseUrl + "/verification-certificat/" + certificat.getReference());
                 PDImageXObject qrImage = PDImageXObject.createFromByteArray(document, qrPng, "qr");
                 float qrTaille = 90;
                 content.drawImage(qrImage, largeur - qrTaille - 60, 60, qrTaille, qrTaille);

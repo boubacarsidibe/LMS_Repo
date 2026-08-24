@@ -29,6 +29,10 @@ public class CertificatService {
         return certificatRepository.findById(id);
     }
 
+    public Optional<Certificat> findByReference(String reference) {
+        return certificatRepository.findByReference(reference);
+    }
+
     public Certificat save(Certificat certificat) {
         return certificatRepository.save(certificat);
     }

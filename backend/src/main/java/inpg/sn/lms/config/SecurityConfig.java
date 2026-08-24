@@ -73,6 +73,9 @@ public class SecurityConfig {
                         "/api/auth/verify-otp",
                         "/api/auth/reset-password").permitAll()
                 .requestMatchers("/api/recrutement/public/**", "/", "/error", "/login", "/uploads/**").permitAll()
+                // Vérification d'un certificat depuis son QR code : doit rester joignable
+                // sans compte, y compris par un tiers qui contrôle un diplôme (cf. TDR §B).
+                .requestMatchers(HttpMethod.GET, "/api/verification-certificat/**").permitAll()
                 // Administration des comptes : création de formateurs, listings nominatifs,
                 // inscription directe d'un candidat ou d'un étudiant. Ces opérations
                 // attribuent des rôles ou exposent des données personnelles.
