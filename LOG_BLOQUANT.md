@@ -287,3 +287,43 @@ bouton « Marquer alumni » dans le répertoire des étudiants), à l'image de
 l'affectation de promotion qui est elle aussi manuelle. Si un besoin de bascule
 automatique à la date de fin de promotion se confirme, une story dédiée devra d'abord
 définir comment distinguer un diplômé d'un abandon.
+
+## 2026-08-24 — Passage 16:51 UTC (PR #27 fusionnée, epic « forum et documents alumni »)
+
+### 14. Forum alumni : portée à deux valeurs, pas trois, et correction d'une fuite découverte au passage
+
+Le point 8 proposait `ForumSujet.portee` : ÉTUDIANT / ALUMNI / MIXTE, « ou équivalent ».
+Décision : seulement `ETUDIANT` et `ALUMNI`. Rien dans le TDR ne demande de fil partagé
+entre étudiants et alumni, et ajouter une valeur MIXTE sans besoin exprimé aurait été
+concevoir pour un besoin hypothétique — une valeur d'enum supplémentaire reste une
+migration additive si le besoin se confirme réellement, pas une refonte.
+
+En cartographiant le forum avant de coder (comme la méthode l'exige), découverte d'un
+défaut préexistant, sans rapport direct avec l'espace alumni mais touchant le même
+modèle : `EspaceEtudiantController#listSujets` (un second contrôleur qui sert les
+mêmes entités `ForumSujet`/`ForumMessage` sous un préfixe différent, `/api/espace-
+etudiant/sujets` plutôt que `/api/espace-etudiant/forum/sujets`) appelait
+`forumSujetRepository.findAll()` **sans aucun filtre** — un étudiant authentifié
+pouvait lister tous les sujets de tous les cours, y compris ceux hors de son cursus,
+en appelant directement cet endpoint. `ForumController`, lui, filtrait correctement
+via une méthode privée `sujetsVisibles`. Corrigé en extrayant cette logique dans
+`ForumVisibiliteService`, désormais partagée par les deux contrôleurs : la migration
+V5 (« fusionner les deux forums ») avait déjà unifié le modèle de données, mais pas
+les contrôleurs qui le servent — c'est fait maintenant, a minima pour la lecture et
+les actions de modération (`repondre`, `toggle-urgence`, `resoudre`, `supprimer`), qui
+reçoivent toutes un garde-fou de portée. Les actions de modération de ce second
+contrôleur n'ont en revanche toujours aucune vérification d'appartenance à un cours
+(un étudiant peut répondre à un sujet d'un cours qui n'est pas le sien via cet
+endpoint) : défaut préexistant, plus large que cette story, non corrigé ici — à
+instruire séparément si confirmé comme un vrai problème.
+
+### 15. Partage de documents alumni : pas de stratification par promotion
+
+L'esquisse initiale du `.drawio` prévoyait `DocumentPartage.visiblePar` (PROMOTION /
+TOUS_ALUMNI). Non retenu : `AlumniProfil` ne porte aucun champ promotion (un alumni a
+terminé sa scolarité active, cf. migration V12) — il n'y aurait rien à quoi rattacher
+un filtre par promotion sans ajouter un champ que rien d'autre ne réclame. Le TDR ne
+demande d'ailleurs aucune stratification (« la possibilité de partager des documents »,
+sans plus de précision). Un seul espace de partage, plat, ouvert à tous les alumni —
+migration V14. Réutilise le mécanisme de stockage de la photothèque
+(`PhotoStorageService`/`ValidationFichier`) plutôt qu'un nouveau système de fichiers.
