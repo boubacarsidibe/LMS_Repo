@@ -83,12 +83,16 @@
           <mxGeometry x="360" y="460" width="400" height="30" as="geometry" />
         </mxCell>
 
-        <mxCell id="alumni-profil" value="&lt;b&gt;AlumniProfil&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;etudiant : Etudiant (@MapsId)&lt;br&gt;posteActuel : String&lt;br&gt;entreprise : String&lt;br&gt;secteurActivite : String&lt;br&gt;visible : boolean&lt;hr&gt;Suivre le patron @MapsId de&lt;br&gt;Candidat/Etudiant : un alumni EST&lt;br&gt;un etudiant, pas une nouvelle&lt;br&gt;identite." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="360" y="500" width="280" height="180" as="geometry" />
+        <mxCell id="alumni-profil" value="&lt;b&gt;AlumniProfil&lt;/b&gt; [NOUVEAU, V12]&lt;hr&gt;id : Long&lt;br&gt;user : User (@MapsId)&lt;br&gt;posteActuel : String&lt;br&gt;entreprise : String&lt;br&gt;secteurActivite : String&lt;br&gt;visible : boolean&lt;br&gt;dateCreation : LocalDate&lt;hr&gt;Patron @MapsId de&lt;br&gt;Candidat/Etudiant : un alumni EST&lt;br&gt;un etudiant, pas une nouvelle&lt;br&gt;identite - la ligne Etudiant&lt;br&gt;n'est PAS supprimee a la&lt;br&gt;conversion (garde matricule et&lt;br&gt;acces au releve delivre)." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="360" y="500" width="280" height="200" as="geometry" />
         </mxCell>
 
-        <mxCell id="situation-pro" value="&lt;b&gt;SituationProfessionnelle&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;alumniProfil : AlumniProfil&lt;br&gt;intitulePoste : String&lt;br&gt;dateDebut : LocalDate&lt;br&gt;dateFin : LocalDate (nullable)&lt;hr&gt;Historique : plusieurs lignes par&lt;br&gt;alumni, pas un simple champ.&lt;br&gt;Cf. principe de ReleveLigne :&lt;br&gt;figer une valeur n'est pas la&lt;br&gt;recalculer." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="680" y="500" width="280" height="180" as="geometry" />
+        <mxCell id="situation-pro" value="&lt;b&gt;SituationProfessionnelle&lt;/b&gt; [NOUVEAU, V12]&lt;hr&gt;id : Long&lt;br&gt;alumniProfil : AlumniProfil&lt;br&gt;intitulePoste : String&lt;br&gt;entreprise : String&lt;br&gt;dateDebut : LocalDate&lt;br&gt;dateFin : LocalDate (nullable)&lt;hr&gt;Historique : plusieurs lignes par&lt;br&gt;alumni, pas un simple champ.&lt;br&gt;Cf. principe de ReleveLigne :&lt;br&gt;figer une valeur n'est pas la&lt;br&gt;recalculer." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="680" y="500" width="280" height="200" as="geometry" />
+        </mxCell>
+
+        <mxCell id="alumni-controller" value="&lt;b&gt;AlumniController&lt;/b&gt; [NOUVEAU]&lt;hr&gt;GET/PUT /api/espace-alumni/mon-profil&lt;br&gt;GET/POST/PUT/DELETE&lt;br&gt;/api/espace-alumni/mes-situations&lt;br&gt;GET /api/espace-alumni/mes-releves&lt;hr&gt;hasRole('ALUMNI'), URL + methode.&lt;br&gt;mes-releves delegue a&lt;br&gt;ReleveDelivranceService (meme DTO&lt;br&gt;que ScolariteController)." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="360" y="720" width="600" height="140" as="geometry" />
         </mxCell>
 
         <mxCell id="forum-sujet" value="&lt;b&gt;ForumSujet&lt;/b&gt;&lt;hr&gt;id : Long&lt;br&gt;auteur : User&lt;br&gt;titre : String&lt;br&gt;promotion : Promotion&lt;hr&gt;Deja utilise par l'espace etudiant.&lt;br&gt;Reutiliser plutot que dupliquer :&lt;br&gt;prevoir un sujet visible cote&lt;br&gt;alumni (portee elargie), pas un&lt;br&gt;second systeme de forum." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
@@ -99,7 +103,12 @@
           <mxGeometry x="1300" y="500" width="280" height="160" as="geometry" />
         </mxCell>
 
-        <mxCell id="edge-alumni-etudiant" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;" edge="1" parent="1" source="alumni-profil" target="etudiant">
+        <!-- Dashed : pas une FK reelle, mais le meme id_user partage (@MapsId) - la
+             ligne Etudiant reste en base apres la conversion, voir migration V12. -->
+        <mxCell id="edge-alumni-etudiant" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;" edge="1" parent="1" source="alumni-profil" target="etudiant">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-alumnicontroller-profil" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;" edge="1" parent="1" source="alumni-controller" target="alumni-profil">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="edge-alumni-situation" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=diamond;endFill=1;" edge="1" parent="1" source="alumni-profil" target="situation-pro">
@@ -114,11 +123,15 @@
 
         <!-- ===================== NOTE DE SESSION ===================== -->
         <mxCell id="note-session" value="&lt;b&gt;Session du 2026-08-24 (creation)&lt;/b&gt;&lt;hr&gt;Ce fichier n'existait pas avant cette session (voir LOG_BLOQUANT.md).&lt;br&gt;Cree a partir du modele existant en base (bleu) pour amorcer le modele cible&lt;br&gt;des 3 epics. Seul Epic 3 (certificats) a ete implemente cette session (jaune) ;&lt;br&gt;Epic 4 et Epic 5 restent a l'etat de modele (gris pointille), a affiner avant&lt;br&gt;implementation par une prochaine session." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="40" y="700" width="700" height="110" as="geometry" />
+          <mxGeometry x="40" y="900" width="620" height="110" as="geometry" />
         </mxCell>
 
         <mxCell id="note-session-2" value="&lt;b&gt;Session du 2026-08-24 (passage 09:53 UTC)&lt;/b&gt;&lt;hr&gt;RoadMap_LMS_V1.pdf verifie absent du depot (jamais commite - LOG_BLOQUANT.md&lt;br&gt;point 5). Avant de construire Conversation/MessagePrive, decouverte que&lt;br&gt;ForumMessage revendique deja couvrir le §3.5 du TDR : la « messagerie&lt;br&gt;apprenant-formateur » planifiee n'a donc pas ete construite en double (voir la&lt;br&gt;case grisee ci-dessus). Story livree a la place : rendre Seance.lieuOuLien&lt;br&gt;(deja existant) utilisable de bout en bout pour les « reunions virtuelles »&lt;br&gt;du §E du TDR - champ editable cote formateur, lien cliquable cote etudiant." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="780" y="700" width="700" height="130" as="geometry" />
+          <mxGeometry x="700" y="900" width="620" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note-session-3" value="&lt;b&gt;Session du 2026-08-24 (Epic 5, Espace Alumni)&lt;/b&gt;&lt;hr&gt;AlumniProfil et SituationProfessionnelle passent en jaune : conversion&lt;br&gt;Etudiant -&gt; Alumni (PedagogieScolariteController#promouvoirAlumni, meme&lt;br&gt;patron que inscrireCommeEtudiant - bascule de ROLE_ETUDIANT vers&lt;br&gt;ROLE_ALUMNI, ligne Etudiant conservee), fiche alumni + parcours&lt;br&gt;professionnel + acces aux releves delivres (AlumniController, hasRole&lt;br&gt;'ALUMNI'). ForumSujet et DocumentPartage restent « a construire » :&lt;br&gt;etendre le forum aux alumni demande une decision de modele a part&lt;br&gt;entiere (portee d'un sujet au-dela du rattachement a un cours -&lt;br&gt;actuellement soit un cours, soit « tout l'espace etudiant »), documentee&lt;br&gt;dans LOG_BLOQUANT.md plutot que tranchee ici." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1020" width="900" height="170" as="geometry" />
         </mxCell>
 
       </root>
