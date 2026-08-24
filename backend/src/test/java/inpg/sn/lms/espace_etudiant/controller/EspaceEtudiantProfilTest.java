@@ -39,6 +39,7 @@ import inpg.sn.lms.espace_etudiant.service.RetourEvaluationService;
 import inpg.sn.lms.espace_etudiant.service.SeanceService;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
+import inpg.sn.lms.espace_etudiant.service.ForumVisibiliteService;
 import inpg.sn.lms.espace_etudiant.service.SupportCoursStorageService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
 import inpg.sn.lms.recrutement.service.NotificationService;
@@ -89,6 +90,8 @@ class EspaceEtudiantProfilTest {
     private SeanceService seanceService;
     @Mock
     private SupportCoursStorageService supportCoursStorageService;
+    @Mock
+    private ForumVisibiliteService forumVisibilite;
 
     @Mock private ReleveNotesService releveNotesService;
 
@@ -108,7 +111,7 @@ class EspaceEtudiantProfilTest {
                 notificationService,
                 retourEvaluationService, perimetreFormateurService, noteModuleService,
                 releveNotesService, presenceService,
-                seanceService, supportCoursStorageService, "uploads");
+                seanceService, supportCoursStorageService, forumVisibilite, "uploads");
 
         user = new User();
         user.setId(12L);

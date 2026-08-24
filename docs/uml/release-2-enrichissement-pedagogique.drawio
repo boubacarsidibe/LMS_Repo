@@ -95,12 +95,24 @@
           <mxGeometry x="360" y="720" width="600" height="140" as="geometry" />
         </mxCell>
 
-        <mxCell id="forum-sujet" value="&lt;b&gt;ForumSujet&lt;/b&gt;&lt;hr&gt;id : Long&lt;br&gt;auteur : User&lt;br&gt;titre : String&lt;br&gt;promotion : Promotion&lt;hr&gt;Deja utilise par l'espace etudiant.&lt;br&gt;Reutiliser plutot que dupliquer :&lt;br&gt;prevoir un sujet visible cote&lt;br&gt;alumni (portee elargie), pas un&lt;br&gt;second systeme de forum." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="1000" y="500" width="280" height="150" as="geometry" />
+        <mxCell id="forum-sujet" value="&lt;b&gt;ForumSujet&lt;/b&gt; [MODIFIE, V13]&lt;hr&gt;id : Long&lt;br&gt;auteur : User&lt;br&gt;titre : String&lt;br&gt;cours : Cours (nullable)&lt;br&gt;&lt;b&gt;portee : ETUDIANT | ALUMNI [NOUVEAU]&lt;/b&gt;&lt;hr&gt;Deja utilise par l'espace etudiant.&lt;br&gt;Reutilise, pas duplique : la portee&lt;br&gt;ne compte que pour un sujet general&lt;br&gt;(cours == null) ; un sujet de cours&lt;br&gt;garde toujours portee = ETUDIANT." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="500" width="280" height="170" as="geometry" />
         </mxCell>
 
-        <mxCell id="document-partage" value="&lt;b&gt;DocumentPartage&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;auteur : User&lt;br&gt;fichier : String (chemin upload)&lt;br&gt;visiblePar : enum (PROMOTION, TOUS_ALUMNI)&lt;hr&gt;Reutiliser le stockage de&lt;br&gt;Phototheque (upload existant),&lt;br&gt;pas un nouveau mecanisme de&lt;br&gt;fichiers." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="1300" y="500" width="280" height="160" as="geometry" />
+        <mxCell id="forum-visibilite-service" value="&lt;b&gt;ForumVisibiliteService&lt;/b&gt; [NOUVEAU]&lt;hr&gt;sujetsVisibles(auth) : List&amp;lt;ForumSujet&amp;gt;&lt;br&gt;estVisible(sujet, auth) : boolean&lt;hr&gt;Extrait de ForumController, desormais&lt;br&gt;partage avec EspaceEtudiantController&lt;br&gt;(qui appelait findAll() sans filtre -&lt;br&gt;bug corrige au passage, voir&lt;br&gt;LOG_BLOQUANT.md)." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="680" width="280" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="alumni-forum-controller" value="&lt;b&gt;AlumniForumController&lt;/b&gt; [NOUVEAU]&lt;hr&gt;GET/POST /api/espace-alumni/forum/sujets&lt;br&gt;GET /sujets/{id}, POST /sujets/{id}/messages&lt;br&gt;GET /sujets/{id}/citables&lt;br&gt;DELETE /messages/{id}&lt;hr&gt;hasRole('ALUMNI'). Reutilise ForumSujet/&lt;br&gt;ForumMessage/ForumMention et leurs DTO -&lt;br&gt;un seul salon plat (portee = ALUMNI),&lt;br&gt;jamais de cours." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="680" width="300" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="document-partage" value="&lt;b&gt;DocumentPartage&lt;/b&gt; [NOUVEAU, V14]&lt;hr&gt;id : Long&lt;br&gt;auteur : User&lt;br&gt;titre, description : String&lt;br&gt;nomFichierOriginal, nomFichierStocke : String&lt;br&gt;typeContenu : String&lt;hr&gt;Reutilise le stockage de Phototheque/&lt;br&gt;ValidationFichier. Pas de visiblePar :&lt;br&gt;AlumniProfil ne porte pas de promotion,&lt;br&gt;rien a stratifier - un seul espace plat." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="500" width="300" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="alumni-document-controller" value="&lt;b&gt;AlumniDocumentController&lt;/b&gt; [NOUVEAU]&lt;hr&gt;GET/POST /api/espace-alumni/documents&lt;br&gt;GET /documents/{id}/fichier&lt;br&gt;DELETE /documents/{id}&lt;hr&gt;hasRole('ALUMNI'). Telechargement&lt;br&gt;toujours en piece jointe ; suppression&lt;br&gt;reservee a l'auteur (meme patron que&lt;br&gt;les messages du forum)." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1650" y="500" width="280" height="150" as="geometry" />
         </mxCell>
 
         <!-- Dashed : pas une FK reelle, mais le meme id_user partage (@MapsId) - la
@@ -120,6 +132,15 @@
         <mxCell id="edge-forum-doc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;dashed=1;" edge="1" parent="1" source="forum-sujet" target="document-partage">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
+        <mxCell id="edge-alumniforum-sujet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;" edge="1" parent="1" source="alumni-forum-controller" target="forum-sujet">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-visibilite-sujet" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;" edge="1" parent="1" source="forum-visibilite-service" target="forum-sujet">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-alumnidoc-document" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;" edge="1" parent="1" source="alumni-document-controller" target="document-partage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
 
         <!-- ===================== NOTE DE SESSION ===================== -->
         <mxCell id="note-session" value="&lt;b&gt;Session du 2026-08-24 (creation)&lt;/b&gt;&lt;hr&gt;Ce fichier n'existait pas avant cette session (voir LOG_BLOQUANT.md).&lt;br&gt;Cree a partir du modele existant en base (bleu) pour amorcer le modele cible&lt;br&gt;des 3 epics. Seul Epic 3 (certificats) a ete implemente cette session (jaune) ;&lt;br&gt;Epic 4 et Epic 5 restent a l'etat de modele (gris pointille), a affiner avant&lt;br&gt;implementation par une prochaine session." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
@@ -132,6 +153,10 @@
 
         <mxCell id="note-session-3" value="&lt;b&gt;Session du 2026-08-24 (Epic 5, Espace Alumni)&lt;/b&gt;&lt;hr&gt;AlumniProfil et SituationProfessionnelle passent en jaune : conversion&lt;br&gt;Etudiant -&gt; Alumni (PedagogieScolariteController#promouvoirAlumni, meme&lt;br&gt;patron que inscrireCommeEtudiant - bascule de ROLE_ETUDIANT vers&lt;br&gt;ROLE_ALUMNI, ligne Etudiant conservee), fiche alumni + parcours&lt;br&gt;professionnel + acces aux releves delivres (AlumniController, hasRole&lt;br&gt;'ALUMNI'). ForumSujet et DocumentPartage restent « a construire » :&lt;br&gt;etendre le forum aux alumni demande une decision de modele a part&lt;br&gt;entiere (portee d'un sujet au-dela du rattachement a un cours -&lt;br&gt;actuellement soit un cours, soit « tout l'espace etudiant »), documentee&lt;br&gt;dans LOG_BLOQUANT.md plutot que tranchee ici." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
           <mxGeometry x="40" y="1020" width="900" height="170" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note-session-4" value="&lt;b&gt;Session du 2026-08-24 (Epic 5 suite, apres fusion de la PR Espace Alumni)&lt;/b&gt;&lt;hr&gt;ForumSujet et DocumentPartage passent en jaune : forum alumni (AlumniForumController,&lt;br&gt;portee ETUDIANT/ALUMNI sur ForumSujet, migration V13) et partage de documents&lt;br&gt;(AlumniDocumentController, DocumentPartage, migration V14) - la suite explicitement&lt;br&gt;laissee de cote a la livraison precedente. Au passage, correction d'une fuite&lt;br&gt;preexistante : EspaceEtudiantController#listSujets listait tous les sujets sans&lt;br&gt;filtre (findAll() brut) - centralisee dans ForumVisibiliteService, desormais&lt;br&gt;partagee avec ForumController plutot que dupliquee une troisieme fois. Simplification&lt;br&gt;actee par rapport a l'esquisse initiale : pas de champ visiblePar sur&lt;br&gt;DocumentPartage (AlumniProfil ne porte pas de promotion, rien a stratifier)." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1210" width="900" height="170" as="geometry" />
         </mxCell>
 
       </root>

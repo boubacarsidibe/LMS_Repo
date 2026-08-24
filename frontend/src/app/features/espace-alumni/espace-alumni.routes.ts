@@ -20,6 +20,18 @@ export const routes: Routes = [
             {
                 path: 'mes-releves',
                 loadComponent: () => import('./pages/mes-releves/mes-releves').then(m => m.MesReleves)
+            },
+            {
+                path: 'forum',
+                loadComponent: () => import('./pages/forum-alumni/forum-alumni').then(m => m.ForumAlumni)
+            },
+            {
+                path: 'forum/:id',
+                loadComponent: () => import('./pages/fil-alumni/fil-alumni').then(m => m.FilAlumni)
+            },
+            {
+                path: 'documents',
+                loadComponent: () => import('./pages/documents-alumni/documents-alumni').then(m => m.DocumentsAlumni)
             }
         ]
     }
