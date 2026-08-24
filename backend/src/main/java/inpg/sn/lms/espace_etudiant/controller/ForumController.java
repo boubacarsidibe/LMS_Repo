@@ -28,6 +28,7 @@ import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
+import inpg.sn.lms.espace_etudiant.service.ForumVisibiliteService;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
 import inpg.sn.lms.espace_etudiant.service.MentionForumService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
@@ -57,23 +58,25 @@ public class ForumController {
     private final UtilisateurCourantService utilisateurCourant;
     private final HabilitationCoursService habilitation;
     private final MentionForumService mentions;
+    private final ForumVisibiliteService visibilite;
 
     public ForumController(ForumSujetRepository sujetRepository, ForumMessageRepository messageRepository,
             CoursRepository coursRepository, UtilisateurCourantService utilisateurCourant,
-            HabilitationCoursService habilitation, MentionForumService mentions) {
+            HabilitationCoursService habilitation, MentionForumService mentions, ForumVisibiliteService visibilite) {
         this.sujetRepository = sujetRepository;
         this.messageRepository = messageRepository;
         this.coursRepository = coursRepository;
         this.utilisateurCourant = utilisateurCourant;
         this.habilitation = habilitation;
         this.mentions = mentions;
+        this.visibilite = visibilite;
     }
 
     /** Sujets accessibles au connecté, épinglés en tête. */
     @GetMapping("/sujets")
     @Transactional(readOnly = true)
     public ResponseEntity<?> sujets(Authentication authentication) {
-        return ResponseEntity.ok(sujetsVisibles(authentication).stream().map(this::toSujetDto).toList());
+        return ResponseEntity.ok(visibilite.sujetsVisibles(authentication).stream().map(this::toSujetDto).toList());
     }
 
     /** Ouvre un sujet, avec un premier message facultatif. */
@@ -115,7 +118,7 @@ public class ForumController {
         if (sujet == null) {
             return ResponseEntity.notFound().build();
         }
-        if (!estVisible(sujet, authentication)) {
+        if (!visibilite.estVisible(sujet, authentication)) {
             return sujetNonAccessible();
         }
         User lecteur = utilisateurCourant.utilisateur(authentication);
@@ -138,7 +141,7 @@ public class ForumController {
         if (sujet == null) {
             return ResponseEntity.notFound().build();
         }
-        if (!estVisible(sujet, authentication)) {
+        if (!visibilite.estVisible(sujet, authentication)) {
             return sujetNonAccessible();
         }
         if (sujet.isClos()) {
@@ -172,7 +175,7 @@ public class ForumController {
         if (sujet == null) {
             return ResponseEntity.notFound().build();
         }
-        if (!estVisible(sujet, authentication)) {
+        if (!visibilite.estVisible(sujet, authentication)) {
             return sujetNonAccessible();
         }
         return ResponseEntity.ok(mentions.citablesDans(sujet, demandeur));
@@ -194,29 +197,6 @@ public class ForumController {
         }
         messageRepository.delete(message);
         return ResponseEntity.noContent().build();
-    }
-
-    // ===================== Visibilité =====================
-
-    private List<ForumSujet> sujetsVisibles(Authentication authentication) {
-        Etudiant etudiant = utilisateurCourant.etudiant(authentication);
-        if (etudiant == null) {
-            // Formateur ou personnel : accès à l'ensemble des salons.
-            return sujetRepository.findAll();
-        }
-        List<Long> coursIds = habilitation.idsCoursAutorises(etudiant);
-        return coursIds.isEmpty() ? sujetRepository.findGeneraux() : sujetRepository.findVisiblesPour(coursIds);
-    }
-
-    private boolean estVisible(ForumSujet sujet, Authentication authentication) {
-        if (sujet.getCours() == null) {
-            return true;
-        }
-        Etudiant etudiant = utilisateurCourant.etudiant(authentication);
-        if (etudiant == null) {
-            return true;
-        }
-        return habilitation.estAutorise(sujet.getCours().getId(), etudiant);
     }
 
     // ===================== Correspondances =====================

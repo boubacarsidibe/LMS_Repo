@@ -10,6 +10,8 @@ import inpg.sn.lms.auth.entity.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,7 +30,8 @@ import lombok.Setter;
  *
  * <p>Un sujet peut être rattaché à un {@link Cours} — il n'est alors visible que
  * des étudiants dont la promotion suit ce cours — ou rester général
- * ({@code cours == null}), auquel cas il est ouvert à tout l'espace étudiant.
+ * ({@code cours == null}), auquel cas sa {@link #portee} décide qui le voit :
+ * tout l'espace étudiant, ou l'espace alumni (TDR §C, migration V13).
  */
 @Entity
 @Table(name = "forum_sujets")
@@ -64,6 +67,11 @@ public class ForumSujet {
     @Column(nullable = false)
     private boolean clos = false;
 
+    /** N'a de sens que pour un sujet général ({@code cours == null}), voir la classe. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PorteeForumSujet portee = PorteeForumSujet.ETUDIANT;
+
     @OneToMany(mappedBy = "sujet", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<ForumMessage> messages = new ArrayList<>();
@@ -73,5 +81,14 @@ public class ForumSujet {
         this.cours = cours;
         this.auteur = auteur;
         this.dateCreation = LocalDateTime.now();
+        this.portee = PorteeForumSujet.ETUDIANT;
+    }
+
+    public ForumSujet(String titre, User auteur, PorteeForumSujet portee) {
+        this.titre = titre;
+        this.cours = null;
+        this.auteur = auteur;
+        this.dateCreation = LocalDateTime.now();
+        this.portee = portee;
     }
 }

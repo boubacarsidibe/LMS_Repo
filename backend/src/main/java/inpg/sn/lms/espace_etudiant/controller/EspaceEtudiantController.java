@@ -97,6 +97,7 @@ import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
 import inpg.sn.lms.espace_etudiant.service.EvenementService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
+import inpg.sn.lms.espace_etudiant.service.ForumVisibiliteService;
 import inpg.sn.lms.espace_etudiant.service.PerimetreFormateurService;
 import inpg.sn.lms.espace_etudiant.service.RetourEvaluationService;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
@@ -136,6 +137,7 @@ public class EspaceEtudiantController {
     private final PresenceService presenceService;
     private final SeanceService seanceService;
     private final SupportCoursStorageService supportCoursStorageService;
+    private final ForumVisibiliteService forumVisibilite;
     private final Path uploadDirectory;
 
     public EspaceEtudiantController(
@@ -159,6 +161,7 @@ public class EspaceEtudiantController {
             PresenceService presenceService,
             SeanceService seanceService,
             SupportCoursStorageService supportCoursStorageService,
+            ForumVisibiliteService forumVisibilite,
             @Value("${app.upload.dir:uploads}") String uploadDirectory) {
         this.userRepository = userRepository;
         this.etudiantRepository = etudiantRepository;
@@ -180,6 +183,7 @@ public class EspaceEtudiantController {
         this.presenceService = presenceService;
         this.seanceService = seanceService;
         this.supportCoursStorageService = supportCoursStorageService;
+        this.forumVisibilite = forumVisibilite;
         this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize();
     }
 
@@ -383,11 +387,19 @@ public class EspaceEtudiantController {
         return ResponseEntity.ok(evenementService.getAll().stream().map(this::toEvenementDto).toList());
     }
 
+    /**
+     * Répondait auparavant {@code forumSujetRepository.findAll()} : un étudiant
+     * pouvait lister tous les sujets de tous les cours, y compris ceux hors de son
+     * cursus, en appelant directement cet endpoint (le second des deux contrôleurs
+     * qui servent {@code ForumSujet}, cf. {@code ForumVisibiliteService}). Utilise
+     * désormais la même visibilité que {@code ForumController}.
+     */
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
     @Transactional(readOnly = true)
     @GetMapping("/sujets")
-    public ResponseEntity<List<SujetDto>> listSujets() {
-        return ResponseEntity.ok(forumSujetRepository.findAll().stream().map(this::toSujetDto).toList());
+    public ResponseEntity<List<SujetDto>> listSujets(Authentication authentication) {
+        return ResponseEntity.ok(
+                forumVisibilite.sujetsVisibles(authentication).stream().map(this::toSujetDto).toList());
     }
 
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
@@ -407,7 +419,7 @@ public class EspaceEtudiantController {
             return ResponseEntity.badRequest().body(Map.of("message", "Le message ne peut pas être vide."));
         }
         ForumSujet sujet = forumSujetRepository.findById(id).orElse(null);
-        if (sujet == null) {
+        if (sujet == null || !estSujetEtudiantOuFormateur(sujet)) {
             return ResponseEntity.notFound().build();
         }
         if (sujet.isClos() && !marquerCommeResolu) {
@@ -490,7 +502,7 @@ public class EspaceEtudiantController {
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
         ForumSujet sujet = forumSujetRepository.findById(id).orElse(null);
-        if (sujet == null) {
+        if (sujet == null || !estSujetEtudiantOuFormateur(sujet)) {
             return ResponseEntity.notFound().build();
         }
         // « Urgent » se materialise par l'epinglage : le sujet remonte en tete de liste,
@@ -508,7 +520,7 @@ public class EspaceEtudiantController {
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
         ForumSujet sujet = forumSujetRepository.findById(id).orElse(null);
-        if (sujet == null) {
+        if (sujet == null || !estSujetEtudiantOuFormateur(sujet)) {
             return ResponseEntity.notFound().build();
         }
         // Un sujet resolu est clos : il reste consultable mais n'accepte plus de reponse.
@@ -525,11 +537,23 @@ public class EspaceEtudiantController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
-        if (forumSujetRepository.findById(id).isEmpty()) {
+        ForumSujet sujet = forumSujetRepository.findById(id).orElse(null);
+        if (sujet == null || !estSujetEtudiantOuFormateur(sujet)) {
             return ResponseEntity.notFound().build();
         }
         forumSujetRepository.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Un sujet de l'espace alumni ({@code portee = ALUMNI}) n'est jamais accessible
+     * par ce contrôleur, réservé à l'espace étudiant — même patron que
+     * {@code ForumVisibiliteService.estVisible} pour {@code ForumController}. 404
+     * plutôt que 403 : ne pas confirmer qu'un identifiant correspond à un sujet
+     * existant, seulement inaccessible d'ici.
+     */
+    private boolean estSujetEtudiantOuFormateur(ForumSujet sujet) {
+        return sujet.getPortee() != inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet.ALUMNI;
     }
 
     /**

@@ -21,6 +21,7 @@ import inpg.sn.lms.espace_etudiant.entity.ForumMention;
 import inpg.sn.lms.espace_etudiant.entity.ForumMessage;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.Notification;
+import inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.repository.ForumMentionRepository;
 import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
@@ -76,8 +77,20 @@ public class MentionForumService {
      * personne citée, puis retombait sur les formateurs quand la recherche échouait —
      * un formateur n'ayant pas de fiche étudiant. Deux chemins pour une même question,
      * et une requête par citation : la personne est ici retenue dès sa découverte.
+     *
+     * <p>Un fil de l'espace alumni ({@code portee = ALUMNI}) est traité à part : la
+     * branche « salon général » ci-dessous retomberait sur la promotion de
+     * l'auteur — or l'auteur est un alumni dont la ligne {@code Etudiant} existe
+     * toujours (conversion sans suppression, cf. migration V12), ce qui proposerait
+     * à tort ses anciens camarades encore étudiants comme citables. Ceux-ci n'ont
+     * pourtant pas accès au fil : la citation ouvrirait un accès qu'elle ne fait que
+     * suivre en principe (voir le javadoc de classe). Les citables y sont donc les
+     * seuls participants déjà présents dans le fil, comme le principe l'exige.
      */
     private Map<Long, Citable> citablesParId(ForumSujet sujet, User demandeur) {
+        if (sujet != null && sujet.getPortee() == PorteeForumSujet.ALUMNI) {
+            return participantsDuFil(sujet, demandeur);
+        }
         Map<Long, Citable> parId = new LinkedHashMap<>();
         Cours cours = sujet == null ? null : sujet.getCours();
 
@@ -103,6 +116,32 @@ public class MentionForumService {
             }
         }
 
+        if (demandeur != null) {
+            parId.remove(demandeur.getId());
+        }
+        return parId;
+    }
+
+    /**
+     * Citables d'un fil alumni : les auteurs des messages déjà postés, à
+     * l'exclusion du demandeur. Pas d'annuaire alumni consulté ici — seulement
+     * ceux qui participent déjà, exactement le principe de cette classe.
+     */
+    private Map<Long, Citable> participantsDuFil(ForumSujet sujet, User demandeur) {
+        Map<Long, Citable> parId = new LinkedHashMap<>();
+        for (ForumMessage message : sujet.getMessages()) {
+            User auteur = message.getAuteur();
+            if (auteur == null) {
+                continue;
+            }
+            // La ligne Etudiant d'un alumni n'est pas supprimée à la conversion
+            // (migration V12) : elle reste la source du nom affiché, comme pour un
+            // étudiant actif.
+            String nom = etudiantRepository.findByUserId(auteur.getId())
+                    .map(etudiant -> (etudiant.getPrenom() + " " + etudiant.getNom()).trim())
+                    .orElseGet(() -> nomDe(auteur));
+            ajouter(parId, auteur, nom, "Alumni");
+        }
         if (demandeur != null) {
             parId.remove(demandeur.getId());
         }

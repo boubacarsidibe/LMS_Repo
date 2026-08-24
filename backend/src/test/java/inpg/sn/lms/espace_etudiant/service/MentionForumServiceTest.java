@@ -214,4 +214,33 @@ class MentionForumServiceTest {
         assertThat(posees).hasSize(1);
         assertThat(posees.get(0).getCite().getId()).isEqualTo(201L);
     }
+
+    /**
+     * Un fil de l'espace alumni ne doit jamais retomber sur la branche « salon
+     * général », qui proposerait la promotion de l'auteur — or l'auteur est un
+     * alumni dont la ligne {@code Etudiant} existe toujours (migration V12) : ses
+     * anciens camarades, encore étudiants, seraient à tort proposés comme
+     * citables alors qu'ils n'ont pas accès au fil alumni.
+     */
+    @Test
+    @DisplayName("Un fil alumni ne propose que ses participants, jamais la promotion de l'auteur")
+    void fil_alumni_ne_propose_que_ses_participants() {
+        User userAutreAlumni = user(301L, "awa_ndoye");
+        inpg.sn.lms.espace_etudiant.entity.ForumSujet sujetAlumni = new inpg.sn.lms.espace_etudiant.entity.ForumSujet(
+                "Retrouvailles promo 2020", userAuteur, inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet.ALUMNI);
+        sujetAlumni.getMessages().add(new ForumMessage(sujetAlumni, userAuteur, "Salut !"));
+        sujetAlumni.getMessages().add(new ForumMessage(sujetAlumni, userAutreAlumni, "Salut, ça fait plaisir !"));
+        // L'auteur a toujours une fiche étudiant (conversion sans suppression) : si la
+        // branche « salon général » était prise par erreur, ce mock la ferait apparaître.
+        lenient().when(etudiantRepository.findByUserId(301L))
+                .thenReturn(java.util.Optional.of(etudiant(userAutreAlumni, "Awa", "Ndoye")));
+
+        List<MentionnableDto> citables = service.citablesDans(sujetAlumni, userAuteur);
+
+        assertThat(citables).extracting(MentionnableDto::id).containsExactly(301L);
+        assertThat(citables).extracting(MentionnableDto::role).containsExactly("Alumni");
+        // Le camarade encore étudiant (102L) et le formateur (201L) du décor
+        // partagé n'ont pas posté dans ce fil : ils ne doivent pas apparaître.
+        assertThat(citables).extracting(MentionnableDto::id).doesNotContain(102L, 201L);
+    }
 }
