@@ -73,6 +73,10 @@ export const routes: Routes = [
     path: 'espace-etudiant',
     loadChildren: () => import('./features/espace-etudiants/espace-etudiant.routes').then(m => m.routes)
   },
+  {
+    path: 'espace-alumni',
+    loadChildren: () => import('./features/espace-alumni/espace-alumni.routes').then(m => m.routes)
+  },
 
   // Dashboard Responsable Admission (layout partagé : sidebar + navbar)
   {

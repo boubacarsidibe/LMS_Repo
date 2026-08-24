@@ -1,0 +1,51 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header>
+    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Espace Alumni</span>
+    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Mes relevés</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+      Les relevés officiels délivrés par la direction pédagogique durant votre scolarité. Leurs
+      chiffres sont figés à leur date d'émission.
+    </p>
+  </header>
+
+  <app-ui-spinner *ngIf="chargement" message="Chargement de vos relevés…"></app-ui-spinner>
+
+  <ng-container *ngIf="!chargement">
+    <app-ui-empty-state
+      *ngIf="releves.length === 0"
+      icone="description"
+      titre="Aucun relevé délivré"
+      description="Vos relevés officiels apparaîtront ici dès qu'ils vous auront été délivrés."
+    ></app-ui-empty-state>
+
+    <article *ngFor="let r of releves"
+             class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div class="min-w-0">
+          <p class="font-label-md text-label-md text-on-surface">{{ r.periode }}</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">
+            {{ r.reference }} · délivré le {{ r.dateEmission | date: 'dd/MM/yyyy' }}
+          </p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">{{ r.delivrePar }}</p>
+        </div>
+        <p class="font-headline-sm text-headline-sm text-secondary tabular-nums shrink-0">
+          {{ r.moyenneGenerale !== null ? (r.moyenneGenerale | number: '1.1-1') : '—' }}<span
+            class="font-body-sm text-body-sm text-on-surface-variant">/20</span>
+        </p>
+      </div>
+
+      <ul class="mt-4 border-t border-outline-variant/50 pt-3 space-y-1">
+        <li *ngFor="let l of r.lignes"
+            class="flex items-center justify-between gap-4 font-body-sm text-body-sm">
+          <span class="text-on-surface min-w-0 truncate">
+            {{ l.coursCode }} — {{ l.coursTitre }}
+            <span class="text-on-surface-variant">(coef. {{ l.coefficient }})</span>
+          </span>
+          <span class="text-on-surface tabular-nums shrink-0">
+            {{ l.moyenne !== null ? (l.moyenne | number: '1.1-1') : '—' }}
+          </span>
+        </li>
+      </ul>
+    </article>
+  </ng-container>
+</div>

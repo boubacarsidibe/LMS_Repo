@@ -1,0 +1,94 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header class="flex items-start justify-between gap-stack-md flex-wrap">
+    <div>
+      <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Espace Alumni</span>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Parcours professionnel</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+        L'historique des postes que vous avez occupés depuis votre sortie de l'INPG.
+      </p>
+    </div>
+    <button type="button" (click)="ouvrirAjout()"
+            class="flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors shrink-0">
+      <span class="material-symbols-outlined">add</span>Ajouter un poste
+    </button>
+  </header>
+
+  <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
+
+  <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+
+  <ng-container *ngIf="!chargement">
+    <div *ngIf="situations.length === 0" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg text-center">
+      <p class="font-body-md text-body-md text-on-surface-variant">Aucun poste renseigné pour l'instant.</p>
+    </div>
+
+    <ol class="space-y-stack-md">
+      <li *ngFor="let s of situations"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg flex items-start justify-between gap-stack-md flex-wrap">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <p class="font-label-md text-label-md text-on-surface">{{ s.intitulePoste }}</p>
+            <span *ngIf="!s.dateFin" class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-label-sm">
+              Poste actuel
+            </span>
+          </div>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ s.entreprise }}</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">
+            {{ s.dateDebut | date: 'MM/yyyy' }} — {{ s.dateFin ? (s.dateFin | date: 'MM/yyyy') : 'aujourd\'hui' }}
+          </p>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button type="button" (click)="ouvrirEdition(s)" aria-label="Modifier"
+                  class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+            <span class="material-symbols-outlined text-[20px]">edit</span>
+          </button>
+          <button type="button" (click)="supprimer(s)" aria-label="Supprimer"
+                  class="p-2 text-on-surface-variant hover:bg-error-container hover:text-on-error-container rounded-full transition-colors">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+          </button>
+        </div>
+      </li>
+    </ol>
+  </ng-container>
+</div>
+
+<!-- Ajout / édition d'un poste -->
+<div *ngIf="formulaireOuvert" class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="formulaireOuvert = false">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm w-full max-w-lg max-h-[85vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">work_history</span>
+        {{ idEnEdition ? 'Modifier le poste' : 'Ajouter un poste' }}
+      </h2>
+      <button type="button" (click)="formulaireOuvert = false" aria-label="Fermer" class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+    <div class="p-stack-lg space-y-stack-md">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Intitulé du poste</span>
+        <input type="text" [(ngModel)]="saisie.intitulePoste" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Entreprise</span>
+        <input type="text" [(ngModel)]="saisie.entreprise" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+      </label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Date de début</span>
+          <input type="date" [(ngModel)]="saisie.dateDebut" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Date de fin (facultatif)</span>
+          <input type="date" [(ngModel)]="saisie.dateFin" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+      </div>
+      <div class="flex gap-stack-md pt-2">
+        <button type="button" (click)="formulaireOuvert = false" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Annuler</button>
+        <button type="button" [disabled]="!saisieValide || enregistrement" (click)="enregistrer()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+          {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
