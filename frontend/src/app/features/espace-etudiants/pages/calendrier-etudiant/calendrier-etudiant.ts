@@ -119,9 +119,19 @@ interface CaseCalendrier {
               <p class="font-label-md text-label-md text-on-surface">{{ s.titre }}</p>
               <p class="font-body-sm text-body-sm text-on-surface-variant">
                 {{ s.dateHeure | date: 'EEEE d MMMM, HH:mm' }} · {{ s.dureeMinutes }} min ·
-                {{ s.lieuOuLien || 'Lieu à préciser' }}
+                <ng-container *ngIf="!estLienVisio(s.lieuOuLien)">{{ s.lieuOuLien || 'Lieu à préciser' }}</ng-container>
               </p>
             </div>
+            <a
+              *ngIf="estLienVisio(s.lieuOuLien)"
+              [href]="s.lieuOuLien"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity shrink-0"
+            >
+              <span class="material-symbols-outlined text-[18px]">videocam</span>
+              Rejoindre
+            </a>
           </li>
         </ul>
       </section>
@@ -193,6 +203,11 @@ export class CalendrierEtudiant implements OnInit {
       date.getMonth() === now.getMonth() &&
       date.getFullYear() === now.getFullYear()
     );
+  }
+
+  /** Vrai si le lieu de la séance est en réalité un lien de visioconférence cliquable. */
+  estLienVisio(lieuOuLien: string | null): boolean {
+    return !!lieuOuLien && /^https?:\/\//i.test(lieuOuLien.trim());
   }
 
   couleur(type: string): string {

@@ -154,13 +154,23 @@ import { ScolariteService } from '../../services/scolarite.service';
                   <p class="text-label-sm uppercase">{{ s.dateHeure | date: 'MMM' }}</p>
                   <p class="font-label-md text-label-md tabular-nums">{{ s.dateHeure | date: 'dd' }}</p>
                 </div>
-                <div class="min-w-0">
+                <div class="min-w-0 flex-1">
                   <p class="font-label-md text-label-md text-on-surface truncate">{{ s.titre }}</p>
                   <p class="font-body-sm text-body-sm text-on-surface-variant">
                     {{ s.dateHeure | date: 'HH:mm' }} · {{ s.dureeMinutes }} min ·
-                    {{ s.lieuOuLien || 'Lieu à préciser' }}
+                    <ng-container *ngIf="!estLienVisio(s.lieuOuLien)">{{ s.lieuOuLien || 'Lieu à préciser' }}</ng-container>
                   </p>
                 </div>
+                <a
+                  *ngIf="estLienVisio(s.lieuOuLien)"
+                  [href]="s.lieuOuLien"
+                  target="_blank"
+                  rel="noopener"
+                  class="self-center inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity shrink-0"
+                >
+                  <span class="material-symbols-outlined text-[18px]">videocam</span>
+                  Rejoindre
+                </a>
               </li>
             </ul>
           </section>
@@ -263,6 +273,11 @@ export class TableauBord implements OnInit {
       { libelle: 'Supports lus', valeur: `${consultes} / ${totalSupports}`, icone: 'description' },
       { libelle: 'Non lues', valeur: this.nbNonLues, icone: 'campaign' },
     ];
+  }
+
+  /** Vrai si le lieu de la séance est en réalité un lien de visioconférence cliquable. */
+  estLienVisio(lieuOuLien: string | null): boolean {
+    return !!lieuOuLien && /^https?:\/\//i.test(lieuOuLien.trim());
   }
 
   /** Pictogramme d'une ressource, selon son type declare. */

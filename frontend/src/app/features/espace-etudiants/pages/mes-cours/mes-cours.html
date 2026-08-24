@@ -316,11 +316,32 @@
         <h3 class="font-headline-sm text-headline-sm text-on-surface">Séances de {{ coursEnPresence.code }}</h3>
 
         <div class="flex flex-col gap-stack-sm max-h-56 overflow-y-auto">
-          <button *ngFor="let s of seancesDuCours" (click)="selectionnerSeance(s)"
-                  class="flex items-center justify-between p-3 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors text-left">
-            <span class="font-body-sm text-body-sm text-on-surface">{{ s.titre }}</span>
-            <span class="text-label-sm text-outline">{{ s.dateHeure | date:'dd/MM/yyyy' }}</span>
-          </button>
+          <div *ngFor="let s of seancesDuCours" class="bg-surface-container-low rounded-xl overflow-hidden">
+            <button (click)="selectionnerSeance(s)"
+                    class="w-full flex items-center justify-between p-3 hover:bg-surface-container-high transition-colors text-left">
+              <span class="font-body-sm text-body-sm text-on-surface">{{ s.titre }}</span>
+              <span class="flex items-center gap-2">
+                <span class="text-label-sm text-outline">{{ s.dateHeure | date:'dd/MM/yyyy' }}</span>
+                <span class="material-symbols-outlined text-[16px]" [class.text-secondary]="s.lieuOuLien" [class.text-outline]="!s.lieuOuLien" title="Lien de visioconférence">videocam</span>
+                <span (click)="ouvrirEditionLien(s, $event)" class="material-symbols-outlined text-[16px] text-on-surface-variant hover:text-secondary" title="Modifier le lien de la séance">edit</span>
+              </span>
+            </button>
+            <div *ngIf="seanceEnEditionLienId === s.id" class="p-3 pt-0 flex flex-col gap-2" (click)="$event.stopPropagation()">
+              <input [(ngModel)]="lienSaisie" type="url" placeholder="https://meet.google.com/…"
+                     class="p-2 bg-surface rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface focus:border-secondary">
+              <div class="flex gap-2">
+                <button (click)="enregistrerLien(s, $event)" [disabled]="isSavingLien"
+                        class="flex-1 py-2 bg-secondary text-on-secondary rounded-lg font-label-sm text-label-sm hover:opacity-90 disabled:opacity-60">
+                  {{ isSavingLien ? 'Enregistrement…' : 'Enregistrer' }}
+                </button>
+                <button (click)="annulerEditionLien($event)"
+                        class="px-3 py-2 bg-surface-container text-on-surface rounded-lg font-label-sm text-label-sm hover:bg-outline-variant">
+                  Annuler
+                </button>
+              </div>
+              <p *ngIf="lienError" class="text-label-sm text-error">{{ lienError }}</p>
+            </div>
+          </div>
           <p *ngIf="!seancesDuCours.length" class="text-body-sm text-on-surface-variant py-2">Aucune séance pour l'instant.</p>
         </div>
 

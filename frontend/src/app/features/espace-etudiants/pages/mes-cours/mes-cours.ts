@@ -51,6 +51,12 @@ export class MesCours implements OnInit {
   isSavingPresences = false;
   presenceError = '';
 
+  /** Séance dont le lien de visioconférence est en cours d'édition dans la liste (État 1). */
+  seanceEnEditionLienId: number | null = null;
+  lienSaisie = '';
+  isSavingLien = false;
+  lienError = '';
+
   depotForm: FormGroup;
   fichierSelectionne: File | null = null;
   isUploading = false;
@@ -271,6 +277,7 @@ export class MesCours implements OnInit {
     this.presenceError = '';
     this.nouvelleSeanceTitre = '';
     this.nouvelleSeanceDate = this.aujourdhuiIso();
+    this.seanceEnEditionLienId = null;
     this.seanceService.getByCours(cours.id).subscribe({
       next: (list) => (this.seancesDuCours = list),
       error: () => (this.seancesDuCours = []),
@@ -297,6 +304,35 @@ export class MesCours implements OnInit {
       error: (error) => {
         this.isSavingSeance = false;
         this.presenceError = error.error?.message || "La création de la séance a échoué.";
+      },
+    });
+  }
+
+  ouvrirEditionLien(seance: Seance, event: Event) {
+    event.stopPropagation();
+    this.seanceEnEditionLienId = seance.id;
+    this.lienSaisie = seance.lieuOuLien || '';
+    this.lienError = '';
+  }
+
+  annulerEditionLien(event: Event) {
+    event.stopPropagation();
+    this.seanceEnEditionLienId = null;
+  }
+
+  enregistrerLien(seance: Seance, event: Event) {
+    event.stopPropagation();
+    this.isSavingLien = true;
+    this.lienError = '';
+    this.seanceService.mettreAJourLien(seance, this.lienSaisie).subscribe({
+      next: (miseAJour) => {
+        this.isSavingLien = false;
+        this.seancesDuCours = this.seancesDuCours.map((s) => (s.id === miseAJour.id ? miseAJour : s));
+        this.seanceEnEditionLienId = null;
+      },
+      error: (error) => {
+        this.isSavingLien = false;
+        this.lienError = error.error?.message || "La mise à jour du lien a échoué.";
       },
     });
   }
