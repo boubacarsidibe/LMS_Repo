@@ -327,3 +327,34 @@ demande d'ailleurs aucune stratification (« la possibilité de partager des doc
 sans plus de précision). Un seul espace de partage, plat, ouvert à tous les alumni —
 migration V14. Réutilise le mécanisme de stockage de la photothèque
 (`PhotoStorageService`/`ValidationFichier`) plutôt qu'un nouveau système de fichiers.
+
+## 2026-08-24 — Passage 21:37 UTC (PR #28 fusionnée, epic suivant)
+
+### 16. TDR section D (compatibilité SIGB) : bloquée, le système cible n'existe pas encore
+
+Dans l'ordre du TDR, la partie suivante après l'Espace Alumni est la section D,
+« Compatibilité avec le SIGB interne ». Relecture attentive du texte avant de
+choisir cette partie : « L'Institut **ambitionne de disposer** d'un SIGB (Système
+Intégré de Gestion de Bibliothèque), et par conséquent, la solution LMS devrait
+pouvoir permettre l'accès fluide au SIGB **qui sera en place**. » Le temps du verbe
+et la formulation sont sans ambiguïté : ce SIGB n'existe pas encore à l'INPG. Aucun
+système, aucune API, aucun format d'échange, aucun protocole n'est nommé nulle part
+dans le TDR ni ailleurs dans le dépôt.
+
+**Décision** : ne pas deviner d'intégration technique avec un système qui n'existe
+pas — construire quoi que ce soit ici (un connecteur, une API, un modèle
+d'ouvrages) serait fabriquer une spécification que personne n'a écrite, avec un
+risque élevé de devoir tout refaire une fois le vrai SIGB choisi (produit,
+protocole d'échange — Z39.50, SIP2, API REST propriétaire — dépendent entièrement
+du logiciel retenu). Conformément à la consigne « ne pas deviner, consigner le
+blocage », cette partie est documentée ici comme bloquée et **non traitée** cette
+session. Elle redeviendra actionnable dès qu'un humain communiquera : le nom du
+logiciel de SIGB retenu (ou envisagé), et son protocole/API d'intégration.
+
+**Choix pour continuer** : plutôt que d'immobiliser toute la routine sur une partie
+qui restera bloquée tant que cette information n'existe pas, passage à la partie
+suivante réellement actionnable dans l'ordre du TDR — section F, « Accréditation
+des écoles de formation » — entièrement spécifiée (formulaire de soumission,
+critères, suivi d'état, espace évaluateurs, notifications, base des écoles
+accréditées). Section D reste en tête de la prochaine liste « suite prévue » tant
+qu'elle n'est pas débloquée par l'utilisateur.
