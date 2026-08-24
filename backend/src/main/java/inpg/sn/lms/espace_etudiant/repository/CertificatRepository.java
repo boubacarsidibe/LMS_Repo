@@ -20,4 +20,7 @@ public interface CertificatRepository extends JpaRepository<Certificat, Long> {
 
     @EntityGraph(attributePaths = { "etudiant", "promotion" })
     List<Certificat> findByEtudiant_IdOrderByDateEmissionDesc(Long etudiantId);
+
+    @EntityGraph(attributePaths = { "etudiant", "promotion" })
+    Optional<Certificat> findByReference(String reference);
 }

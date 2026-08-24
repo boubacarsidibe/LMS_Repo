@@ -1,0 +1,130 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Release 2 - Enrichissement pedagogique" id="release-2-epp">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===================== LEGENDE ===================== -->
+        <mxCell id="legende" value="Legende" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fontStyle=1;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="260" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="legende-existant" value="Classe existante (deja en base)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="70" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legende-modifiee" value="Classe modifiee dans cette story" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="105" width="260" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legende-afaire" value="A construire (story future)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="140" width="260" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== EPIC 3 - CERTIFICATS SECURISES ===================== -->
+        <mxCell id="titre-epic3" value="Epic 3 - Certificats securises" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
+          <mxGeometry x="360" y="40" width="400" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="certificat" value="&lt;b&gt;Certificat&lt;/b&gt;&lt;hr&gt;id : Long&lt;br&gt;etudiant : Etudiant&lt;br&gt;promotion : Promotion&lt;br&gt;intituleFormation : String&lt;br&gt;reference : String (unique)&lt;br&gt;dateEmission : LocalDate&lt;br&gt;formateurNom : String&lt;br&gt;&lt;b&gt;signature : String (64) [NOUVEAU, V11]&lt;/b&gt;&lt;hr&gt;assurerReferenceEtDate()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="360" y="80" width="260" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="signature-service" value="&lt;b&gt;CertificatSignatureService&lt;/b&gt; [NOUVEAU]&lt;hr&gt;signer(certificat) : String&lt;br&gt;estAlteree(certificat) : boolean&lt;hr&gt;HMAC-SHA256, cle serveur&lt;br&gt;(certificat.signature.secret)." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="660" y="80" width="260" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="certificat-public-controller" value="&lt;b&gt;CertificatPublicController&lt;/b&gt; [NOUVEAU]&lt;hr&gt;GET /api/certificats/public/verifier/{reference}&lt;hr&gt;Sans authentification. Renvoie&lt;br&gt;CertificatVerificationDto (jamais&lt;br&gt;l'entite ni le matricule)." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="660" y="230" width="260" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="certificat-pdf-service" value="&lt;b&gt;CertificatPdfService&lt;/b&gt; [MODIFIE]&lt;hr&gt;genererPdf(certificat) : byte[]&lt;hr&gt;QR code encode desormais l'URL de&lt;br&gt;verification publique (avant : texte&lt;br&gt;non exploitable). Filigrane inchange." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="360" y="290" width="260" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="etudiant" value="&lt;b&gt;Etudiant&lt;/b&gt;&lt;hr&gt;id : Long&lt;br&gt;nom, prenom : String&lt;br&gt;matricule : String&lt;br&gt;promotion : Promotion&lt;br&gt;user : User" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="290" width="260" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-cert-etudiant" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;" edge="1" parent="1" source="certificat" target="etudiant">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-cert-signature" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;" edge="1" parent="1" source="certificat" target="signature-service">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-controller-service" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;" edge="1" parent="1" source="certificat-public-controller" target="signature-service">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-pdf-signature" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;" edge="1" parent="1" source="certificat-pdf-service" target="certificat-public-controller">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== EPIC 4 - E-LEARNING COMPLET ===================== -->
+        <mxCell id="titre-epic4" value="Epic 4 - E-learning complet" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="40" width="400" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="progression-support" value="&lt;b&gt;ProgressionSupport&lt;/b&gt;&lt;hr&gt;id : Long&lt;br&gt;etudiant : Etudiant&lt;br&gt;support : SupportCours&lt;br&gt;dateConsultation : LocalDateTime&lt;hr&gt;Suivi reel deja en place : la&lt;br&gt;progression se calcule a la volee&lt;br&gt;(consultes / total), jamais stockee." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="80" width="280" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="conversation" value="&lt;b&gt;Conversation&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;cours : Cours&lt;br&gt;etudiant : Etudiant&lt;br&gt;formateur : Formateur&lt;hr&gt;Messagerie apprenant-formateur.&lt;br&gt;Perimetre : memes gardes-fous que&lt;br&gt;le forum (MentionForumService) -&lt;br&gt;pas d'annuaire libre." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="80" width="280" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="message-prive" value="&lt;b&gt;MessagePrive&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;conversation : Conversation&lt;br&gt;auteur : User&lt;br&gt;contenu : String&lt;br&gt;dateEnvoi : LocalDateTime&lt;br&gt;lu : boolean" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="250" width="280" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="reunion-virtuelle" value="&lt;b&gt;ReunionVirtuelle&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;seance : Seance&lt;br&gt;lienVisio : String&lt;br&gt;fournisseur : enum (JITSI, MEET...)&lt;hr&gt;Reunion integree - a rattacher a&lt;br&gt;Seance (deja existante), pas a&lt;br&gt;Cours directement." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="250" width="280" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-conversation-message" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;" edge="1" parent="1" source="conversation" target="message-prive">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-progression-reunion" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;dashed=1;" edge="1" parent="1" source="progression-support" target="reunion-virtuelle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== EPIC 5 - ESPACE ALUMNI ===================== -->
+        <mxCell id="titre-epic5" value="Epic 5 - Espace Alumni" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
+          <mxGeometry x="360" y="460" width="400" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="alumni-profil" value="&lt;b&gt;AlumniProfil&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;etudiant : Etudiant (@MapsId)&lt;br&gt;posteActuel : String&lt;br&gt;entreprise : String&lt;br&gt;secteurActivite : String&lt;br&gt;visible : boolean&lt;hr&gt;Suivre le patron @MapsId de&lt;br&gt;Candidat/Etudiant : un alumni EST&lt;br&gt;un etudiant, pas une nouvelle&lt;br&gt;identite." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="500" width="280" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="situation-pro" value="&lt;b&gt;SituationProfessionnelle&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;alumniProfil : AlumniProfil&lt;br&gt;intitulePoste : String&lt;br&gt;dateDebut : LocalDate&lt;br&gt;dateFin : LocalDate (nullable)&lt;hr&gt;Historique : plusieurs lignes par&lt;br&gt;alumni, pas un simple champ.&lt;br&gt;Cf. principe de ReleveLigne :&lt;br&gt;figer une valeur n'est pas la&lt;br&gt;recalculer." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="500" width="280" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="forum-sujet" value="&lt;b&gt;ForumSujet&lt;/b&gt;&lt;hr&gt;id : Long&lt;br&gt;auteur : User&lt;br&gt;titre : String&lt;br&gt;promotion : Promotion&lt;hr&gt;Deja utilise par l'espace etudiant.&lt;br&gt;Reutiliser plutot que dupliquer :&lt;br&gt;prevoir un sujet visible cote&lt;br&gt;alumni (portee elargie), pas un&lt;br&gt;second systeme de forum." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="500" width="280" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="document-partage" value="&lt;b&gt;DocumentPartage&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;auteur : User&lt;br&gt;fichier : String (chemin upload)&lt;br&gt;visiblePar : enum (PROMOTION, TOUS_ALUMNI)&lt;hr&gt;Reutiliser le stockage de&lt;br&gt;Phototheque (upload existant),&lt;br&gt;pas un nouveau mecanisme de&lt;br&gt;fichiers." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="500" width="280" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge-alumni-etudiant" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;" edge="1" parent="1" source="alumni-profil" target="etudiant">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-alumni-situation" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=diamond;endFill=1;" edge="1" parent="1" source="alumni-profil" target="situation-pro">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-alumni-forum" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;dashed=1;" edge="1" parent="1" source="alumni-profil" target="forum-sujet">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-forum-doc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;dashed=1;" edge="1" parent="1" source="forum-sujet" target="document-partage">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== NOTE DE SESSION ===================== -->
+        <mxCell id="note-session" value="&lt;b&gt;Session du 2026-08-24&lt;/b&gt;&lt;hr&gt;Ce fichier n'existait pas avant cette session (voir LOG_BLOQUANT.md).&lt;br&gt;Cree a partir du modele existant en base (bleu) pour amorcer le modele cible&lt;br&gt;des 3 epics. Seul Epic 3 (certificats) a ete implemente cette session (jaune) ;&lt;br&gt;Epic 4 et Epic 5 restent a l'etat de modele (gris pointille), a affiner avant&lt;br&gt;implementation par une prochaine session." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="40" y="700" width="700" height="110" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

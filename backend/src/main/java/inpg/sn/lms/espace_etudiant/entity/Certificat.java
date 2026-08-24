@@ -40,6 +40,14 @@ public class Certificat {
     @Column(nullable = false)
     private String formateurNom;
 
+    /**
+     * Signature electronique (HMAC-SHA256 hexadecimal) du contenu du certificat,
+     * calculee a la delivrance par {@code CertificatSignatureService}. Permet a la
+     * verification publique de detecter une donnee modifiee apres coup.
+     */
+    @Column(length = 64)
+    private String signature;
+
     public Long getId() {
         return id;
     }
@@ -68,6 +76,14 @@ public class Certificat {
         return formateurNom;
     }
 
+    public String getSignature() {
+        return signature;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
+    }
+
     public void setEtudiant(Etudiant etudiant) {
         this.etudiant = etudiant;
     }
@@ -90,6 +106,15 @@ public class Certificat {
 
     @PrePersist
     private void genererReferenceSiAbsente() {
+        assurerReferenceEtDate();
+    }
+
+    /**
+     * Genere la reference et la date d'emission si elles sont absentes. Expose en
+     * public pour que {@code CertificatService} puisse les fixer AVANT de calculer
+     * la signature electronique, qui doit porter sur leur valeur definitive.
+     */
+    public void assurerReferenceEtDate() {
         if (reference == null || reference.isBlank()) {
             String suffixe = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
             reference = "INPG-CERT-" + Year.now().getValue() + "-" + suffixe;

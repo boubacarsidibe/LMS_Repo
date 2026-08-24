@@ -27,7 +27,6 @@ import inpg.sn.lms.espace_etudiant.enums.EnumTypeAnnonce;
 import inpg.sn.lms.espace_etudiant.enums.EnumTypeEvenement;
 import inpg.sn.lms.espace_etudiant.repository.AlbumPhotoRepository;
 import inpg.sn.lms.espace_etudiant.repository.AnnonceRepository;
-import inpg.sn.lms.espace_etudiant.repository.CertificatRepository;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
 import inpg.sn.lms.espace_etudiant.repository.EvenementRepository;
@@ -37,6 +36,7 @@ import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.repository.SupportCoursRepository;
+import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.recrutement.entity.Program;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
 import inpg.sn.lms.recrutement.repository.ProgramRepository;
@@ -84,7 +84,7 @@ public class DataInitializer {
             SupportCoursRepository supportCoursRepository,
             PhotoRepository photoRepository,
             AlbumPhotoRepository albumPhotoRepository,
-            CertificatRepository certificatRepository,
+            CertificatService certificatService,
             PasswordEncoder passwordEncoder,
             @Value("${app.upload.dir:uploads}") String uploadDir) {
         return args -> {
@@ -329,8 +329,10 @@ public class DataInitializer {
                         "Visite technique - Procedes Industriels", "demo-photo-proc.png", promotionProcedes);
 
                 // ----- Certificats (le PDF est genere a la volee au telechargement, pas besoin de fichier) -----
-                certificatRepository.save(creerCertificatDemo(aissatou, "Introduction au Machine Learning", promotionDS, "Moussa Ndiaye"));
-                certificatRepository.save(creerCertificatDemo(fatou, "Analyse Financiere Avancee", promotionFinance, "Moussa Ndiaye"));
+                // Passe par le service, et non le repository, pour que les certificats de
+                // demo portent une vraie signature electronique verifiable.
+                certificatService.save(creerCertificatDemo(aissatou, "Introduction au Machine Learning", promotionDS, "Moussa Ndiaye"));
+                certificatService.save(creerCertificatDemo(fatou, "Analyse Financiere Avancee", promotionFinance, "Moussa Ndiaye"));
 
                 Annonce annonce1 = new Annonce("Bienvenue a la rentree 2026",
                         "L'ensemble des cours demarre la semaine du 1er septembre. Consultez votre planning pour les horaires de vos classes virtuelles.",

@@ -34,6 +34,16 @@ export const routes: Routes = [
       ),
   },
 
+  // Vérification publique d'un certificat (page vers laquelle pointe le QR code
+  // imprimé sur le document) : accessible sans compte, donc sans guard.
+  {
+    path: 'verification-certificat/:reference',
+    loadComponent: () =>
+      import('./features/certificats/verification/verification-certificat.component').then(
+        (m) => m.VerificationCertificatComponent
+      ),
+  },
+
   // Groupe des pages d'authentification partageant la même mise en page
   // guestGuard : un utilisateur déjà connecté est redirigé vers son espace
   // plutôt que de revoir le formulaire de connexion.

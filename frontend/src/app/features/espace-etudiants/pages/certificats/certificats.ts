@@ -1,56 +1,28 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
 import { Certificat } from '../../models/certificat';
 import { CertificatService } from '../../services/certificat.service';
-import { Etudiant } from '../../models/etudiant';
-import { EtudiantService } from '../../services/etudiant.service';
-import { Cohorte } from '../../models/cohorte';
-import { CohorteService } from '../../services/cohorte.service';
 import { Auth } from '../../../../core/auth/services/authService';
 
 @Component({
   selector: 'app-certificats',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule],
   templateUrl: './certificats.html',
   styleUrl: './certificats.css',
 })
 export class Certificats implements OnInit {
   private auth = inject(Auth);
-  private router = inject(Router);
 
   // Voir Annonces pour le detail de ce mecanisme.
 
   certificats: Certificat[] = [];
-  etudiants: Etudiant[] = [];
-  cohortes: Cohorte[] = [];
-  afficherFormulaire = false;
-  certificatForm: FormGroup;
-  isSubmitting = false;
-  errorMessage = '';
   telechargementEnCoursId: number | null = null;
 
-  constructor(
-    private certificatService: CertificatService,
-    private etudiantService: EtudiantService,
-    private cohorteService: CohorteService,
-    private fb: FormBuilder
-  ) {
-    this.certificatForm = this.fb.group({
-      etudiantId: [null, Validators.required],
-      intituleFormation: ['', Validators.required],
-      cohorteId: [null],
-    });
-  }
+  constructor(private certificatService: CertificatService) {}
 
   ngOnInit(): void {
     this.chargerCertificats();
-    if (this.isFormateurRole) {
-      this.etudiantService.getAll().subscribe({ next: list => this.etudiants = list, error: () => this.etudiants = [] });
-      this.cohorteService.getAll().subscribe({ next: list => this.cohortes = list, error: () => this.cohortes = [] });
-    }
   }
 
   private chargerCertificats(): void {
@@ -62,37 +34,6 @@ export class Certificats implements OnInit {
 
   get isFormateurRole(): boolean {
     return this.auth.isFormateur();
-  }
-
-  ouvrirFormulaire(): void {
-    this.errorMessage = '';
-    this.certificatForm.reset({ etudiantId: null, intituleFormation: '', cohorteId: null });
-    this.afficherFormulaire = true;
-  }
-
-  fermerFormulaire(): void {
-    this.afficherFormulaire = false;
-  }
-
-  onSubmit(): void {
-    if (this.certificatForm.invalid) {
-      this.certificatForm.markAllAsTouched();
-      return;
-    }
-
-    this.isSubmitting = true;
-    this.errorMessage = '';
-    this.certificatService.create(this.certificatForm.getRawValue()).subscribe({
-      next: () => {
-        this.isSubmitting = false;
-        this.afficherFormulaire = false;
-        this.chargerCertificats();
-      },
-      error: (error) => {
-        this.isSubmitting = false;
-        this.errorMessage = error.error?.message || "L'émission du certificat a échoué.";
-      },
-    });
   }
 
   telecharger(certificat: Certificat): void {
