@@ -358,3 +358,31 @@ des écoles de formation » — entièrement spécifiée (formulaire de soumissi
 critères, suivi d'état, espace évaluateurs, notifications, base des écoles
 accréditées). Section D reste en tête de la prochaine liste « suite prévue » tant
 qu'elle n'est pas débloquée par l'utilisateur.
+
+### 17. Accréditation des écoles : trois choix de modèle volontairement minimalistes
+
+En construisant l'epic F (`EcoleFormation`/`DemandeAccreditation`/
+`PieceAccreditation`/`CritereAccreditation`, migration V15), trois décisions
+prises pour ne pas construire au-delà de ce que le TDR demande :
+
+- **Pas de `numeroDossier`** : contrairement à `Candidature` (`numeroDossier`
+  généré, affiché à l'école), une demande d'accréditation s'identifie par son id
+  technique. Le TDR ne demande aucune référence humainement lisible pour ce
+  parcours plus simple (une seule demande active à la fois par école, cf. index
+  partiel), et en fabriquer une aurait été une convention inventée sans usage
+  identifié.
+- **`CritereAccreditation` sans grille de notation structurée** : le TDR demande
+  de « définir et gérer les critères d'accréditation », pas de barème ou de
+  système de notation par critère. `CritereAccreditation` reste un référentiel
+  admin-géré (libellé, description, actif) que l'évaluateur consulte en
+  rédigeant son `commentaireEvaluation`/`motifRejet` en texte libre — construire
+  une table de scores par critère aurait été une spécification inventée.
+- **Rôle `ROLE_EVALUATEUR_ACCREDITATION` assigné via l'écran générique existant**
+  (`AdminController#changeUserRoles`, `responsable-users.component.html`) plutôt
+  qu'un nouvel écran dédié : ce rôle n'ouvre pas d'espace où l'utilisateur
+  s'auto-inscrit (contrairement à `ROLE_ECOLE_FORMATION`, accordé à la première
+  soumission) — c'est un rôle de staff, assigné par un responsable admission,
+  exactement le patron déjà en place pour tous les autres rôles internes. Le
+  dropdown de ce fichier n'avait pas non plus d'entrée pour `ROLE_ALUMNI` (rôle
+  auto-attribué, cohérent avec cette distinction) — seule `ROLE_EVALUATEUR_
+  ACCREDITATION` a été ajoutée ici.
