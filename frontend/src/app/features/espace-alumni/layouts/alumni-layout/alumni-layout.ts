@@ -14,8 +14,7 @@ interface EntreeNavigation {
 /**
  * Cadre de l'espace Alumni : mêmes conventions visuelles que
  * {@code EtudiantLayout} (charte graphique CLAUDE.md §1), en plus simple —
- * trois rubriques, pas de cloche d'annonces (aucune n'est adressée aux alumni
- * aujourd'hui).
+ * pas de cloche d'annonces (aucune n'est adressée aux alumni aujourd'hui).
  */
 @Component({
   selector: 'app-alumni-layout',
@@ -31,6 +30,8 @@ export class AlumniLayout implements OnInit {
     { libelle: 'Mon profil', lien: 'mon-profil', icone: 'account_circle' },
     { libelle: 'Parcours professionnel', lien: 'mon-parcours', icone: 'work_history' },
     { libelle: 'Mes relevés', lien: 'mes-releves', icone: 'description' },
+    { libelle: 'Forum', lien: 'forum', icone: 'forum' },
+    { libelle: 'Documents partagés', lien: 'documents', icone: 'folder_shared' },
   ];
 
   constructor(
