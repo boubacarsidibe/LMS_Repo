@@ -258,6 +258,8 @@ Mot de passe commun aux comptes de recette : `Test@2026`.
 | Responsable admission | `test.admission@inpg.sn` |
 | Responsable pédagogique | `test.pedago@inpg.sn` |
 | Alumni | `test.alumni@inpg.sn` |
+| École de formation *(candidate à l'accréditation)* | `test.ecole@inpg.sn` |
+| Évaluateur accréditation | `test.evaluateur@inpg.sn` |
 
 Pour une démonstration, préférer **`prof.demo@inpg.sn` / `Demo@2026`** : trois cours,
 six supports, seize notes. Les étudiants de démonstration utilisent `Etudiant@2026`.

@@ -1,0 +1,20 @@
+import { Routes } from '@angular/router';
+
+export const routes: Routes = [
+  {
+    path: '',
+    loadComponent: () =>
+      import('./layouts/evaluateur-layout/evaluateur-layout').then((m) => m.EvaluateurLayout),
+    children: [
+      { path: '', redirectTo: 'demandes', pathMatch: 'full' },
+      {
+        path: 'demandes',
+        loadComponent: () => import('./pages/demandes/demandes').then((m) => m.EvaluateurDemandesComponent),
+      },
+      {
+        path: 'criteres',
+        loadComponent: () => import('./pages/criteres/criteres').then((m) => m.EvaluateurCriteresComponent),
+      },
+    ],
+  },
+];

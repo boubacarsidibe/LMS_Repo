@@ -124,6 +124,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return roles.includes('ROLE_CANDIDAT');
   }
 
+  get isEcoleFormationRole(): boolean {
+    const roles = this.auth.getUserRoles();
+    return roles.includes('ROLE_ECOLE_FORMATION');
+  }
+
+  get isEvaluateurAccreditationRole(): boolean {
+    const roles = this.auth.getUserRoles();
+    return roles.includes('ROLE_EVALUATEUR_ACCREDITATION');
+  }
+
   get userInitials(): string {
     const user = this.auth.currentUser();
     if (!user) return '';
@@ -152,6 +162,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
       case 'ROLE_CANDIDAT': return 'CANDIDAT';
       case 'ROLE_ETUDIANT': return 'ETUDIANT';
       case 'ROLE_FORMATEUR': return 'FORMATEUR';
+      case 'ROLE_ECOLE_FORMATION': return 'ÉCOLE DE FORMATION';
+      case 'ROLE_EVALUATEUR_ACCREDITATION': return 'ÉVALUATEUR ACCRÉDITATION';
       default: return r.replace('ROLE_', '');
     }
   }

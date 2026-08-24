@@ -78,6 +78,36 @@ export const routes: Routes = [
     loadChildren: () => import('./features/espace-alumni/espace-alumni.routes').then(m => m.routes)
   },
 
+  // Liste publique des écoles accréditées (TDR §F) : accessible sans compte.
+  {
+    path: 'ecoles-accreditees',
+    loadComponent: () =>
+      import('./features/accreditation/pages/ecoles-accreditees/ecoles-accreditees').then(
+        (m) => m.EcolesAccrediteesComponent
+      ),
+  },
+
+  // Espace École de formation : tout utilisateur connecté peut déposer une demande
+  // d'accréditation (le rôle ROLE_ECOLE_FORMATION n'est accordé qu'à la première
+  // soumission réussie, cf. EcoleAccreditationController) — même patron que la
+  // candidature de recrutement, authGuard seul, pas de roleGuard.
+  {
+    path: 'accreditation',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/accreditation/pages/demande-accreditation/demande-accreditation').then(
+        (m) => m.DemandeAccreditationComponent
+      ),
+  },
+
+  // Espace Évaluateur Accréditation
+  {
+    path: 'evaluateur-accreditation',
+    canActivate: [authGuard, roleGuard('ROLE_EVALUATEUR_ACCREDITATION')],
+    loadChildren: () =>
+      import('./features/evaluateur-accreditation/evaluateur-accreditation.routes').then((m) => m.routes),
+  },
+
   // Dashboard Responsable Admission (layout partagé : sidebar + navbar)
   {
     path: 'responsable-admission',

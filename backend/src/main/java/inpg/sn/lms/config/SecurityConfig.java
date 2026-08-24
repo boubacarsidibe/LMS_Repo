@@ -77,6 +77,10 @@ public class SecurityConfig {
                 // pointe le QR code imprimé) : destinée à un tiers sans compte, qui n'obtient
                 // qu'une DTO restreinte (voir CertificatPublicController), jamais l'entité.
                 .requestMatchers("/api/certificats/public/**").permitAll()
+                // Liste publique des écoles accréditées (TDR §F : « processus transparent ») —
+                // même patron que la vérification de certificat, aucune donnée que le nom et
+                // la date d'accréditation n'y est exposée (voir AccreditationPublicController).
+                .requestMatchers("/api/accreditation/public/**").permitAll()
                 // Administration des comptes : création de formateurs, listings nominatifs,
                 // inscription directe d'un candidat ou d'un étudiant. Ces opérations
                 // attribuent des rôles ou exposent des données personnelles.
@@ -86,6 +90,11 @@ public class SecurityConfig {
                         "/api/auth/getAllCandidats",
                         "/api/auth/user",
                         "/api/auth/registerCandidat").hasRole("RESPONSABLE_ADMISSION")
+                // Évaluation des demandes d'accréditation : réservée à ce rôle dédié, distinct
+                // de RESPONSABLE_ADMISSION — un évaluateur n'a pas à gérer les candidatures
+                // étudiantes, ni l'inverse. Déclarée AVANT le joker /api/admin/** ci-dessous,
+                // qui sinon l'intercepterait en exigeant RESPONSABLE_ADMISSION à la place.
+                .requestMatchers("/api/admin/accreditation/**").hasRole("EVALUATEUR_ACCREDITATION")
                 // Gestion des utilisateurs et des rôles : filet de sécurité pour que tout
                 // futur endpoint ajouté sous /api/admin ne soit pas exposé par omission.
                 .requestMatchers("/api/admin/**").hasRole("RESPONSABLE_ADMISSION")
@@ -96,6 +105,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/recrutement/candidat/**").authenticated()
                 // Admin : gestion recrutement
                 .requestMatchers("/api/admin/recrutement/**").hasRole("RESPONSABLE_ADMISSION")
+                // Tout utilisateur connecté peut soumettre une demande d'accréditation : le
+                // rôle ROLE_EVALUATEUR_ACCREDITATION n'a rien à voir avec ce chemin (c'est le
+                // rôle de qui évalue, pas de qui dépose) — même patron que candidat ci-dessus,
+                // aucun rôle métier n'est requis pour déposer un dossier.
+                .requestMatchers("/api/accreditation/ecole/**").authenticated()
                 // Pilotage de l'offre pédagogique : cours et supports, tous formateurs confondus.
                 .requestMatchers("/api/pedagogie/**").hasRole("RESPONSABLE_PEDAGOGIQUE")
                 // La cloche est commune aux trois espaces : elle est adossée à l'utilisateur,

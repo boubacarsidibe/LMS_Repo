@@ -142,6 +142,10 @@ public class DataInitializer {
                     "Staff pédagogique — pilote l'offre de formation et le suivi des enseignements");
             ensureRole(roleRepository, "ROLE_ALUMNI", "Alumni",
                     "Ancien étudiant — accès à son profil, son suivi professionnel et ses relevés délivrés");
+            ensureRole(roleRepository, "ROLE_EVALUATEUR_ACCREDITATION", "Évaluateur Accréditation",
+                    "Staff — évalue les demandes d'accréditation des écoles de formation");
+            ensureRole(roleRepository, "ROLE_ECOLE_FORMATION", "École de Formation",
+                    "École externe — soumet et suit sa demande d'accréditation");
 
             // ===================== SESSIONS =====================
             // Garde-fou : plutôt qu'un IndexOutOfBoundsException opaque au démarrage,
