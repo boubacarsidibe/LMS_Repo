@@ -126,7 +126,6 @@ export interface ConvocationTestGroupeeRequest {
   nomEpreuve: string;
   coefficient: number;
   dateEpreuve: string;
-  lieu: string;
 }
 
 export interface ConvocationEntretienGroupeeRequest {
@@ -527,6 +526,10 @@ export class RecrutementService {
 
   appliquerFiltreAutomatique(id: number): Observable<CandidatureResponse> {
     return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/filtrer`, {});
+  }
+
+  validerPreselection(id: number): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/valider-preselection`, {});
   }
 
   mettreEnListeAttente(id: number): Observable<CandidatureResponse> {

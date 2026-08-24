@@ -601,7 +601,9 @@ public class CandidatController {
                     ligne.put("coefficient", test.getCoefficient());
                     ligne.put("noteObtenue", test.getNoteObtenue());
                     ligne.put("dateEpreuve", test.getDateEpreuve());
-                    ligne.put("lieu", test.getLieu());
+                    // Pas de champ "lieu" sur TestAcademique (ni entite ni colonne) : retire
+                    // plutot que d'inventer une colonne sans decision produit sur son usage.
+                    // Voir LOG_BLOQUANT.md (session du 2026-08-24).
                     return ligne;
                 })
                 .toList();
