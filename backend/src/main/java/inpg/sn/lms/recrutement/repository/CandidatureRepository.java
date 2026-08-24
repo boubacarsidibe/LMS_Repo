@@ -16,6 +16,8 @@ public interface CandidatureRepository extends JpaRepository<Candidature, Long> 
 
     Optional<Candidature> findByNumeroDossier(String numeroDossier);
 
+    boolean existsByNumeroDossier(String numeroDossier);
+
     List<Candidature> findByCandidatId(Long candidatId);
 
     List<Candidature> findByStatut(EnumStatutCandidature statut);

@@ -601,7 +601,6 @@ public class CandidatController {
                     ligne.put("coefficient", test.getCoefficient());
                     ligne.put("noteObtenue", test.getNoteObtenue());
                     ligne.put("dateEpreuve", test.getDateEpreuve());
-                    ligne.put("lieu", test.getLieu());
                     return ligne;
                 })
                 .toList();
