@@ -117,6 +117,41 @@ certificats. Si un `RoadMap_LMS_V1.pdf` existe réellement côté client et donn
 il faudra le déposer dans le dépôt pour qu'une session future puisse le lire et corriger la
 priorisation en conséquence.
 
+## 2026-08-24 — Échange direct avec l'utilisateur, 13:51–14:09 UTC : changement de périmètre et confirmation sur la Roadmap
+
+### 11. `RoadMap_LMS_V1.pdf` : confirmation directe de l'utilisateur, ne plus attendre ce fichier
+
+Interrogé directement (hors du cycle horaire automatique) sur l'absence répétée de
+`RoadMap_LMS_V1.pdf` (déjà constatée aux points 5 et suivants), l'utilisateur a choisi
+explicitement : dériver l'ordre des epics du TDR seul, sans plus attendre ce fichier. Ce n'est donc
+plus une hypothèse de session isolée mais une décision actée — la routine (prompt de
+`trig_018TJeHoZWdiPfF3aF6jiGrT`) a été mise à jour en conséquence. Si ce fichier apparaît un jour
+réellement dans le dépôt, il redevient prioritaire sur le TDR pour l'ORDRE (le TDR reste la source
+du CONTENU).
+
+### 12. Changement de périmètre : l'unité de travail devient l'EPIC, pas la story
+
+L'utilisateur a demandé qu'à chaque activation de la routine horaire, un epic **entier** (toutes
+ses stories) soit livré dans la même session, sans s'arrêter avant la fin, avec une seule PR à la
+fin de l'epic — au lieu d'une story à la fois avec une PR par story comme jusqu'ici. La porte
+d'approbation humaine (ÉTAPE 0) reste en place mais à l'échelle de l'epic : elle bloque le démarrage
+d'un nouvel epic tant que la PR de l'epic précédent n'est pas fusionnée, mais ne s'applique plus
+entre deux stories d'un même epic en cours. Prompt de la routine mis à jour en conséquence
+(section « CHANGEMENT DE PÉRIMÈTRE » ajoutée en tête du prompt).
+
+### 13. Doublon de routine détecté et partiellement nettoyé
+
+Deux triggers identiques (« Dev autonome LMS INPG », cron `51 * * * *`) existaient et se
+déclenchaient à la même minute, causant du travail en double (constaté à 13:51 UTC ce jour, deux
+sessions ayant consigné la même attente de fusion de la PR #27 à une minute d'écart : commits
+`c59d745` — perdu lors du nettoyage local, jamais poussé — et `b6d9b23`). L'ancien trigger
+(`trig_01NNagahY1JTirjvMdsxaWCu`, créé le 2026-08-24 à 00:14 UTC via l'API HTTP, donc hors du
+contrôle d'un agent) n'a **pas** pu être supprimé ni désactivé par l'agent — permission refusée
+(« this routine was created via "http_api", not by an agent »). Seul l'utilisateur peut le
+supprimer via le tableau de bord. Tant que ce n'est pas fait, deux exécutions peuvent continuer à
+se déclencher à la même minute chaque heure ; seule celle liée à `trig_018TJeHoZWdiPfF3aF6jiGrT`
+porte désormais le nouveau prompt « epic complet ».
+
 ### 6. Story choisie dans Epic 4 : messagerie apprenant-formateur (pas les réunions virtuelles)
 
 La section E du TDR regroupe deux besoins sous « outil de communication » : une messagerie
