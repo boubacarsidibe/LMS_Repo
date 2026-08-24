@@ -73,6 +73,10 @@ public class SecurityConfig {
                         "/api/auth/verify-otp",
                         "/api/auth/reset-password").permitAll()
                 .requestMatchers("/api/recrutement/public/**", "/", "/error", "/login", "/uploads/**").permitAll()
+                // Vérification publique d'un certificat par sa référence (page vers laquelle
+                // pointe le QR code imprimé) : destinée à un tiers sans compte, qui n'obtient
+                // qu'une DTO restreinte (voir CertificatPublicController), jamais l'entité.
+                .requestMatchers("/api/certificats/public/**").permitAll()
                 // Administration des comptes : création de formateurs, listings nominatifs,
                 // inscription directe d'un candidat ou d'un étudiant. Ces opérations
                 // attribuent des rôles ou exposent des données personnelles.

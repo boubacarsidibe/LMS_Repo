@@ -16,6 +16,7 @@ import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.util.Matrix;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.google.zxing.BarcodeFormat;
@@ -27,11 +28,21 @@ import inpg.sn.lms.espace_etudiant.entity.Certificat;
 
 /**
  * Génère le PDF du certificat à la volée (pas de fichier stocké) : cadre,
- * QR code de vérification, cachet/signature dessinés vectoriellement (aucun
- * visuel réel fourni) et filigrane répété pour limiter la contrefaçon.
+ * QR code de vérification, cachet/signature dessinés vectoriellement et
+ * filigrane répété pour limiter la contrefaçon.
+ *
+ * <p>Le cachet dessiné reste cosmétique — la garantie d'authenticité réelle
+ * est la signature électronique (HMAC, {@code CertificatSignatureService})
+ * que le QR code permet de vérifier publiquement.
  */
 @Service
 public class CertificatPdfService {
+
+    private final String frontendUrl;
+
+    public CertificatPdfService(@Value("${app.frontend-url}") String frontendUrl) {
+        this.frontendUrl = frontendUrl;
+    }
 
     public byte[] genererPdf(Certificat certificat) {
         try (PDDocument document = new PDDocument()) {
@@ -85,7 +96,7 @@ public class CertificatPdfService {
                 content.stroke();
                 ecrireCentre(content, texteItalique, 9, "Signature du responsable pedagogique", 580, 85);
 
-                byte[] qrPng = genererQrCode("Certificat INPG - " + certificat.getReference());
+                byte[] qrPng = genererQrCode(frontendUrl + "/verification-certificat/" + certificat.getReference());
                 PDImageXObject qrImage = PDImageXObject.createFromByteArray(document, qrPng, "qr");
                 float qrTaille = 90;
                 content.drawImage(qrImage, largeur - qrTaille - 60, 60, qrTaille, qrTaille);
