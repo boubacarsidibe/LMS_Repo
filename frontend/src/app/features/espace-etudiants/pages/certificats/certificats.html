@@ -9,13 +9,9 @@
       </div>
       <h1 class="font-display text-display text-on-surface leading-tight">Certificats</h1>
       <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
-        {{ isFormateurRole ? 'Émettez et consultez les certificats de formation des étudiants.' : 'Retrouvez et téléchargez vos certificats de formation.' }}
+        {{ isFormateurRole ? 'Consultez les certificats délivrés par l’institut aux étudiants.' : 'Retrouvez et téléchargez vos certificats de formation.' }}
       </p>
     </div>
-    <button *ngIf="isFormateurRole" (click)="ouvrirFormulaire()" class="flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md transition-all shrink-0">
-      <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
-      Émettre un certificat
-    </button>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
@@ -44,54 +40,4 @@
   <p *ngIf="certificats.length === 0" class="text-center text-body-md text-on-surface-variant py-8">
     Aucun certificat pour le moment.
   </p>
-</div>
-
-<!-- Modal : émettre un certificat -->
-<div *ngIf="afficherFormulaire" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerFormulaire()">
-  <div class="bg-surface rounded-xl shadow-lg w-full max-w-md border border-outline-variant" (click)="$event.stopPropagation()">
-    <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-      <h3 class="font-headline-sm text-headline-sm text-primary">Émettre un certificat</h3>
-      <button type="button" aria-label="Fermer le formulaire" (click)="fermerFormulaire()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors"><span class="material-symbols-outlined">close</span></button>
-    </div>
-
-    <form [formGroup]="certificatForm" (ngSubmit)="onSubmit()" class="p-6 space-y-base">
-      <div class="space-y-1">
-        <label class="font-label-md text-label-md text-on-surface-variant">Étudiant</label>
-        <select formControlName="etudiantId" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
-          <option [ngValue]="null">Sélectionnez un étudiant...</option>
-          <option *ngFor="let e of etudiants" [ngValue]="e.id">{{ e.nom }}</option>
-        </select>
-        <p *ngIf="certificatForm.get('etudiantId')?.invalid && certificatForm.get('etudiantId')?.touched" class="text-body-sm text-error">
-          L'étudiant est requis.
-        </p>
-      </div>
-
-      <div class="space-y-1">
-        <label class="font-label-md text-label-md text-on-surface-variant">Intitulé de la formation</label>
-        <input formControlName="intituleFormation" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Master 2 Data Science & AI" type="text">
-        <p *ngIf="certificatForm.get('intituleFormation')?.invalid && certificatForm.get('intituleFormation')?.touched" class="text-body-sm text-error">
-          L'intitulé est requis.
-        </p>
-      </div>
-
-      <div class="space-y-1">
-        <label class="font-label-md text-label-md text-on-surface-variant">Cohorte (optionnel)</label>
-        <select formControlName="cohorteId" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
-          <option [ngValue]="null">Aucune</option>
-          <option *ngFor="let co of cohortes" [ngValue]="co.id">{{ co.libelle }}{{ co.annee ? ' (' + co.annee + ')' : '' }}</option>
-        </select>
-      </div>
-
-      <p *ngIf="errorMessage" class="text-body-sm text-error">{{ errorMessage }}</p>
-
-      <div class="flex gap-stack-md pt-2">
-        <button type="button" (click)="fermerFormulaire()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
-          Annuler
-        </button>
-        <button [disabled]="isSubmitting" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
-          {{ isSubmitting ? 'Émission…' : 'Émettre' }}
-        </button>
-      </div>
-    </form>
-  </div>
 </div>
