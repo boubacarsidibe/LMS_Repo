@@ -30,5 +30,13 @@ public record EtudiantSuiviDto(
          * « sans promotion ». Le premier appelle une inscription, le second une
          * correction — ce ne sont pas les mêmes gestes.
          */
-        String origine) {
+        String origine,
+        /**
+         * Vrai si ce compte est déjà passé côté alumni. La ligne {@code Etudiant} n'est
+         * pas supprimée à la conversion (voir migration V12), elle continue donc
+         * d'apparaître dans ce répertoire — sans ce marqueur, rien ne distinguerait un
+         * étudiant actif d'un ancien étudiant, et l'action de promotion resterait
+         * proposée indéfiniment sur un compte déjà converti.
+         */
+        boolean estAlumni) {
 }

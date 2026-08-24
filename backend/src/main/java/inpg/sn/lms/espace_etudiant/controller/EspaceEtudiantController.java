@@ -1806,7 +1806,8 @@ public class EspaceEtudiantController {
                 "bg-primary-container",
                 etudiant.getMatricule(),
                 // Sans objet cote formateur : il enseigne a ses etudiants, il ne les inscrit pas.
-                null);
+                null,
+                false);
     }
 
 

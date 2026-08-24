@@ -117,6 +117,41 @@ certificats. Si un `RoadMap_LMS_V1.pdf` existe réellement côté client et donn
 il faudra le déposer dans le dépôt pour qu'une session future puisse le lire et corriger la
 priorisation en conséquence.
 
+## 2026-08-24 — Échange direct avec l'utilisateur, 13:51–14:09 UTC : changement de périmètre et confirmation sur la Roadmap
+
+### 11. `RoadMap_LMS_V1.pdf` : confirmation directe de l'utilisateur, ne plus attendre ce fichier
+
+Interrogé directement (hors du cycle horaire automatique) sur l'absence répétée de
+`RoadMap_LMS_V1.pdf` (déjà constatée aux points 5 et suivants), l'utilisateur a choisi
+explicitement : dériver l'ordre des epics du TDR seul, sans plus attendre ce fichier. Ce n'est donc
+plus une hypothèse de session isolée mais une décision actée — la routine (prompt de
+`trig_018TJeHoZWdiPfF3aF6jiGrT`) a été mise à jour en conséquence. Si ce fichier apparaît un jour
+réellement dans le dépôt, il redevient prioritaire sur le TDR pour l'ORDRE (le TDR reste la source
+du CONTENU).
+
+### 12. Changement de périmètre : l'unité de travail devient l'EPIC, pas la story
+
+L'utilisateur a demandé qu'à chaque activation de la routine horaire, un epic **entier** (toutes
+ses stories) soit livré dans la même session, sans s'arrêter avant la fin, avec une seule PR à la
+fin de l'epic — au lieu d'une story à la fois avec une PR par story comme jusqu'ici. La porte
+d'approbation humaine (ÉTAPE 0) reste en place mais à l'échelle de l'epic : elle bloque le démarrage
+d'un nouvel epic tant que la PR de l'epic précédent n'est pas fusionnée, mais ne s'applique plus
+entre deux stories d'un même epic en cours. Prompt de la routine mis à jour en conséquence
+(section « CHANGEMENT DE PÉRIMÈTRE » ajoutée en tête du prompt).
+
+### 13. Doublon de routine détecté et partiellement nettoyé
+
+Deux triggers identiques (« Dev autonome LMS INPG », cron `51 * * * *`) existaient et se
+déclenchaient à la même minute, causant du travail en double (constaté à 13:51 UTC ce jour, deux
+sessions ayant consigné la même attente de fusion de la PR #27 à une minute d'écart : commits
+`c59d745` — perdu lors du nettoyage local, jamais poussé — et `b6d9b23`). L'ancien trigger
+(`trig_01NNagahY1JTirjvMdsxaWCu`, créé le 2026-08-24 à 00:14 UTC via l'API HTTP, donc hors du
+contrôle d'un agent) n'a **pas** pu être supprimé ni désactivé par l'agent — permission refusée
+(« this routine was created via "http_api", not by an agent »). Seul l'utilisateur peut le
+supprimer via le tableau de bord. Tant que ce n'est pas fait, deux exécutions peuvent continuer à
+se déclencher à la même minute chaque heure ; seule celle liée à `trig_018TJeHoZWdiPfF3aF6jiGrT`
+porte désormais le nouveau prompt « epic complet ».
+
 ### 6. Story choisie dans Epic 4 : messagerie apprenant-formateur (pas les réunions virtuelles)
 
 La section E du TDR regroupe deux besoins sous « outil de communication » : une messagerie
@@ -179,3 +214,76 @@ le nécessaire backend existait déjà et est resté inchangé) :
 `docs/uml/release-2-enrichissement-pedagogique.drawio` mis à jour en conséquence : la case
 `Seance.lieuOuLien` passe en « modifié » (jaune), la case `Conversation`/`MessagePrivé` est
 requalifiée « remis en question » avec ce raisonnement, jamais implémentée cette session.
+
+## 2026-08-24 — Passage suivant (PR #26 fusionnée, Epic 5 — Espace Alumni)
+
+### 8. Story choisie : fondations de l'Espace Alumni, forum et partage de documents exclus
+
+TDR section C : « La plateforme doit comprendre une section dédiée aux Alumni afin de
+regrouper les anciens étudiants de l'INPG avec la possibilité d'avoir un suivi de leur
+situation professionnelle. Ces utilisateurs devront avoir accès à leurs relevés et
+autres informations qui seront définies par l'INPG. Un forum de discussion et
+d'échange leur sera ouvert, de même que la possibilité de partager des documents. »
+
+Vérification faite avant de coder (audit du modèle existant) : ni rôle `ROLE_ALUMNI`,
+ni notion de « diplômé »/« ancien étudiant », ni conversion Étudiant → Alumni
+n'existaient. Construits cette session en suivant exactement le patron déjà en place
+pour Candidat → Étudiant (`AdminRecrutementController#inscrireCommeEtudiant`) : un
+compte ne détient qu'un seul rôle à la fois, la ligne `Etudiant` d'origine n'est pas
+supprimée à la conversion (elle garde le matricule et l'accès au relevé délivré,
+exactement comme la ligne `Candidat` reste après le passage à étudiant).
+
+**Décision de périmètre** : seules les parties « suivi de la situation
+professionnelle » et « accès aux relevés » sont livrées cette session (`AlumniProfil`,
+`SituationProfessionnelle`, migration V12, `AlumniController`). Le forum et le
+partage de documents demandés par la même phrase du TDR ne le sont pas :
+
+- **Forum** : `ForumSujet.cours` est aujourd'hui soit rattaché à un cours (visible des
+  étudiants/formateurs de ce cours), soit général (`cours == null`, visible de « tout
+  l'espace étudiant »). Rien ne distingue aujourd'hui *quelle catégorie* d'utilisateurs
+  voit un sujet général. Ouvrir le forum aux alumni sans introduire cette distinction
+  exposerait par erreur les fils étudiants aux alumni (ou l'inverse) — la même famille
+  de bug que `cours_promotion` documentée en §3 de `CLAUDE.md` : une question métier
+  répondue par un modèle qui ne la représente pas encore. Ajouter une portée
+  (`ForumSujet.portee` : ÉTUDIANT / ALUMNI / MIXTE, ou équivalent) est une décision de
+  modèle à instruire à part, pas une extension mécanique.
+- **Partage de documents** : le mécanisme de `Phototheque`/`PhotoStorageService`
+  (upload, `ValidationFichier`, stockage) est directement réutilisable pour un futur
+  `DocumentPartage` alumni — mais sans forum alumni fonctionnel, il n'y a pas encore
+  d'écran naturel où l'accrocher (à qui un document est-il visible : à quels alumni,
+  sur quelle portée ?). Cette story reste donc **la plus petite et la plus
+  indépendante** en s'y limitant, conformément à la consigne « une story incrémentale
+  bien vérifiée vaut mieux qu'une partie entière à moitié faite ».
+
+### 9. `ROLE_ALUMNI` : un vrai rôle Spring Security, pas un flag sur `Etudiant`
+
+Deux options étaient possibles pour marquer un compte comme alumni : un booléen sur
+`Etudiant`, ou un rôle au sens plein (table `roles`, `SecurityConfig`,
+`@PreAuthorize`). Choix du second : tout le système d'autorisation de ce dépôt (filtre
+d'URL **et** `hasRole`/`hasAnyRole` en double protection, cf. commentaire de
+`PhotothequeController`) est bâti autour des rôles Spring Security, et
+`EspaceEtudiantGardeFousTest` (cf. `CLAUDE.md` §3) attend ce modèle sur les contrôleurs
+qu'il couvre. Un flag isolé aurait fonctionné pour la question métier (« cet étudiant
+est-il diplômé ? ») mais pas pour l'accès HTTP, qui doit rester un rôle pour bénéficier
+des mêmes protections que les autres espaces.
+
+Corollaire du modèle « un seul rôle à la fois » déjà en vigueur : passer un compte en
+`ROLE_ALUMNI` lui retire `ROLE_ETUDIANT`, donc l'accès à l'espace étudiant. C'est le
+comportement voulu — un alumni a *terminé* sa scolarité active — et conforme à la
+manière dont `ROLE_CANDIDAT` est déjà retiré au profit de `ROLE_ETUDIANT` lors de
+l'admission. Si un besoin réel de cumul apparaissait (ex. un alumni qui reprend une
+formation), ce serait une story à part : le modèle actuel de rôle unique par compte
+est une décision d'architecture antérieure à cette session, non remise en cause ici.
+
+### 10. Pas de déclenchement automatique à la fin de promotion
+
+`Promotion.estEnCours()` existe déjà (dérivé de `dateDebut`/`dateFin`) mais n'est PAS
+utilisé pour promouvoir automatiquement un étudiant en alumni à la fin de sa
+promotion : une promotion peut se terminer sans que tous ses étudiants aient
+effectivement validé leur formation (échec, abandon, redoublement), et rien dans le
+modèle actuel ne distingue ces cas. La conversion reste donc un geste explicite du
+responsable pédagogique (`PUT /api/pedagogie/etudiants/{id}/promouvoir-alumni`,
+bouton « Marquer alumni » dans le répertoire des étudiants), à l'image de
+l'affectation de promotion qui est elle aussi manuelle. Si un besoin de bascule
+automatique à la date de fin de promotion se confirme, une story dédiée devra d'abord
+définir comment distinguer un diplômé d'un abandon.

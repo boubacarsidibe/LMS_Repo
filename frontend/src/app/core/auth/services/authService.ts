@@ -49,6 +49,8 @@ export class Auth {
       router.navigate(['/espace-etudiant/dashboard']);
     } else if (roles.includes('ROLE_FORMATEUR')) {
       router.navigate(['/espace-etudiant/formateur/dashboard-formateur']);
+    } else if (roles.includes('ROLE_ALUMNI')) {
+      router.navigate(['/espace-alumni/mon-profil']);
     } else {
       router.navigate(['/accueil']);
     }

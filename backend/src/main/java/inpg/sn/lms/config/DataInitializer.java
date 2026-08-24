@@ -1,15 +1,19 @@
 package inpg.sn.lms.config;
 
+import inpg.sn.lms.auth.entity.AlumniProfil;
 import inpg.sn.lms.auth.entity.Etudiant;
 import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.entity.ResponsableAdmission;
 import inpg.sn.lms.auth.entity.Role;
 import inpg.sn.lms.auth.entity.User;
+import inpg.sn.lms.auth.repository.AlumniProfilRepository;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.auth.repository.ResponsableAdmissionRepository;
 import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
+import inpg.sn.lms.espace_alumni.entity.SituationProfessionnelle;
+import inpg.sn.lms.espace_alumni.repository.SituationProfessionnelleRepository;
 import inpg.sn.lms.espace_etudiant.entity.AlbumPhoto;
 import inpg.sn.lms.espace_etudiant.entity.Annonce;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
@@ -85,6 +89,8 @@ public class DataInitializer {
             PhotoRepository photoRepository,
             AlbumPhotoRepository albumPhotoRepository,
             CertificatService certificatService,
+            AlumniProfilRepository alumniProfilRepository,
+            SituationProfessionnelleRepository situationProfessionnelleRepository,
             PasswordEncoder passwordEncoder,
             @Value("${app.upload.dir:uploads}") String uploadDir) {
         return args -> {
@@ -134,6 +140,8 @@ public class DataInitializer {
                     "Enseignant — gère ses cours et ses supports pédagogiques");
             ensureRole(roleRepository, "ROLE_RESPONSABLE_PEDAGOGIQUE", "Responsable Pédagogique",
                     "Staff pédagogique — pilote l'offre de formation et le suivi des enseignements");
+            ensureRole(roleRepository, "ROLE_ALUMNI", "Alumni",
+                    "Ancien étudiant — accès à son profil, son suivi professionnel et ses relevés délivrés");
 
             // ===================== SESSIONS =====================
             // Garde-fou : plutôt qu'un IndexOutOfBoundsException opaque au démarrage,
@@ -267,8 +275,29 @@ public class DataInitializer {
                         "ibrahima_sow", "ibrahima.sow@inpg-demo.sn", "Sow", "Ibrahima", "+221770000004", promotionFinance);
                 creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
                         "mamadou_diallo", "mamadou.diallo@inpg-demo.sn", "Diallo", "Mamadou", "+221770000005", promotionProcedes);
-                creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
+                Etudiant awa = creerEtudiantDemo(userRepository, etudiantRepository, passwordEncoder, roleEtudiant,
                         "awa_ndoye", "awa.ndoye@inpg-demo.sn", "Ndoye", "Awa", "+221770000006", promotionProcedes);
+
+                // ----- Alumni (Espace Alumni, TDR C) : un ancien etudiant de demonstration -----
+                // Passe cote alumni exactement comme le ferait PedagogieScolariteController
+                // #promouvoirAlumni : le role ETUDIANT est retire au profit d'ALUMNI, la ligne
+                // Etudiant reste en base (c'est elle qui garde le matricule et le releve).
+                Role roleAlumni = roleRepository.findByCode("ROLE_ALUMNI");
+                if (roleAlumni != null) {
+                    User userAwa = awa.getUser();
+                    userAwa.getRoles().clear();
+                    userAwa.addRole(roleAlumni);
+                    userRepository.save(userAwa);
+
+                    AlumniProfil alumniAwa = new AlumniProfil(userAwa);
+                    alumniAwa.setPosteActuel("Ingenieure Procedes");
+                    alumniAwa.setEntreprise("Petrosen");
+                    alumniAwa.setSecteurActivite("Petrole & Gaz");
+                    alumniAwa = alumniProfilRepository.save(alumniAwa);
+
+                    situationProfessionnelleRepository.save(new SituationProfessionnelle(alumniAwa,
+                            "Ingenieure Procedes", "Petrosen", LocalDate.of(2026, 10, 1), null));
+                }
 
                 Cours coursDS = new Cours();
                 coursDS.setNom("DS-101");
@@ -398,7 +427,7 @@ public class DataInitializer {
                 retourEvaluationRepository.save(creerRetourDemo(coursFinance, fatou, 2,
                         "Le volume de lecture pour le module 2 est tres dense, difficile a suivre avant le test."));
 
-                System.out.println("Donnees de demo creees (3 cohortes, 1 formateur, 6 etudiants, 3 cours, 6 supports, 3 photos, 2 certificats, 2 annonces, 4 evenements, 3 retours)");
+                System.out.println("Donnees de demo creees (3 cohortes, 1 formateur, 6 etudiants dont 1 alumni, 3 cours, 6 supports, 3 photos, 2 certificats, 2 annonces, 4 evenements, 3 retours)");
             }
         };
     }

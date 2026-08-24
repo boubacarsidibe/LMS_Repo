@@ -1,0 +1,71 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header>
+    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Espace Alumni</span>
+    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Mon profil</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+      Votre identité, héritée de votre scolarité, et votre situation professionnelle actuelle.
+    </p>
+  </header>
+
+  <p *ngIf="messageSucces" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">{{ messageSucces }}</p>
+  <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
+
+  <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+
+  <ng-container *ngIf="!chargement && profil">
+    <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">badge</span>Identité
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-md mt-4">
+        <div>
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Nom complet</span>
+          <p class="font-label-md text-label-md text-on-surface mt-1">{{ profil.prenom }} {{ profil.nom }}</p>
+        </div>
+        <div>
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Matricule</span>
+          <p class="font-label-md text-label-md text-on-surface mt-1 tabular-nums">{{ profil.matricule || '—' }}</p>
+        </div>
+        <div>
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Promotion</span>
+          <p class="font-label-md text-label-md text-on-surface mt-1">{{ profil.promotionLibelle || '—' }}</p>
+        </div>
+        <div>
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Alumni depuis</span>
+          <p class="font-label-md text-label-md text-on-surface mt-1">{{ profil.dateCreation | date: 'dd/MM/yyyy' }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">work</span>Situation professionnelle actuelle
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-md mt-4">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Poste actuel</span>
+          <input type="text" [(ngModel)]="saisie.posteActuel" placeholder="Ex. Ingénieur Procédés"
+                 class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Entreprise</span>
+          <input type="text" [(ngModel)]="saisie.entreprise"
+                 class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+        <label class="flex flex-col gap-1 sm:col-span-2">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Secteur d'activité</span>
+          <input type="text" [(ngModel)]="saisie.secteurActivite"
+                 class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+      </div>
+      <label class="flex items-center gap-2 mt-4">
+        <input type="checkbox" [(ngModel)]="saisie.visible" class="w-4 h-4 accent-secondary" />
+        <span class="font-body-sm text-body-sm text-on-surface-variant">Rendre mon profil visible dans un futur annuaire alumni</span>
+      </label>
+      <button type="button" [disabled]="enregistrement" (click)="enregistrer()"
+              class="mt-4 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+        {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
+      </button>
+    </section>
+  </ng-container>
+</div>

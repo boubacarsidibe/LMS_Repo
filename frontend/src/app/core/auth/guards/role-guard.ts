@@ -34,6 +34,8 @@ export function roleGuard(...requiredRoles: string[]): CanActivateFn {
         router.navigate(['/espace-etudiant/dashboard']);
       } else if (userRoles.includes('ROLE_FORMATEUR')) {
         router.navigate(['/espace-etudiant/formateur/dashboard-formateur']);
+      } else if (userRoles.includes('ROLE_ALUMNI')) {
+        router.navigate(['/espace-alumni/mon-profil']);
       } else {
         router.navigate(['/accueil']);
       }

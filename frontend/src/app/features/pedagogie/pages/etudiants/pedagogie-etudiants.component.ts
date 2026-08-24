@@ -153,6 +153,22 @@ export class PedagogieEtudiantsComponent implements OnInit {
     });
   }
 
+  // ===================== Alumni =====================
+
+  promouvoirAlumni(etudiant: EtudiantScolarite): void {
+    if (etudiant.estAlumni) {
+      return;
+    }
+    this.reinitialiserMessages();
+    this.pedagogie.promouvoirAlumni(etudiant.id).subscribe({
+      next: (misAJour) => {
+        this.messageSucces = `${misAJour.nom} a rejoint l’espace Alumni.`;
+        this.charger();
+      },
+      error: (erreur) => (this.messageErreur = erreur.error?.message || 'Le passage en alumni a échoué.'),
+    });
+  }
+
   // ===================== Import =====================
 
   ouvrirImport(): void {

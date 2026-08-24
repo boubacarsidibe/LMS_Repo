@@ -67,6 +67,7 @@
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Promotion</th>
             <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Moyenne</th>
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Suivi</th>
+            <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Alumni</th>
           </tr>
         </thead>
         <tbody>
@@ -112,9 +113,20 @@
                 [class.text-on-surface-variant]="e.statut !== 'À risque'">
               {{ e.statut }}
             </td>
+            <td class="px-stack-lg py-stack-md text-right">
+              <span *ngIf="e.estAlumni"
+                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+                <span class="material-symbols-outlined text-[16px]">workspace_premium</span>Alumni
+              </span>
+              <button *ngIf="!e.estAlumni" type="button" (click)="promouvoirAlumni(e)"
+                      title="Faire passer cet étudiant côté alumni"
+                      class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-sm text-label-sm hover:border-secondary hover:text-secondary transition-colors">
+                <span class="material-symbols-outlined text-[16px]">school</span>Marquer alumni
+              </button>
+            </td>
           </tr>
           <tr *ngIf="etudiants.length === 0">
-            <td colspan="5" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+            <td colspan="6" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
               Aucun étudiant.
             </td>
           </tr>
