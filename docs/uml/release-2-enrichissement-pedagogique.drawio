@@ -66,21 +66,14 @@
           <mxGeometry x="1000" y="80" width="280" height="140" as="geometry" />
         </mxCell>
 
-        <mxCell id="conversation" value="&lt;b&gt;Conversation&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;cours : Cours&lt;br&gt;etudiant : Etudiant&lt;br&gt;formateur : Formateur&lt;hr&gt;Messagerie apprenant-formateur.&lt;br&gt;Perimetre : memes gardes-fous que&lt;br&gt;le forum (MentionForumService) -&lt;br&gt;pas d'annuaire libre." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="1300" y="80" width="280" height="150" as="geometry" />
+        <mxCell id="conversation" value="&lt;b&gt;Conversation / MessagePrive&lt;/b&gt; [REMIS EN QUESTION]&lt;hr&gt;Doute leve cette session (voir LOG_BLOQUANT.md) :&lt;br&gt;le javadoc de ForumMessage revendique deja&lt;br&gt;remplir le §3.5 du TDR (« canal de&lt;br&gt;communication apprenant / formateur »)&lt;br&gt;via un sujet de forum rattache a un Cours.&lt;br&gt;Construire Conversation/MessagePrive en plus&lt;br&gt;creerait la meme duplication que&lt;br&gt;cours_promotion/evaluations_cours (CLAUDE.md&lt;br&gt;§3) - a ne faire que si un vrai canal 1-a-1&lt;br&gt;prive (non partage avec le reste du cours)&lt;br&gt;est confirme necessaire par un humain." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="80" width="280" height="230" as="geometry" />
         </mxCell>
 
-        <mxCell id="message-prive" value="&lt;b&gt;MessagePrive&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;conversation : Conversation&lt;br&gt;auteur : User&lt;br&gt;contenu : String&lt;br&gt;dateEnvoi : LocalDateTime&lt;br&gt;lu : boolean" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="1300" y="250" width="280" height="130" as="geometry" />
+        <mxCell id="reunion-virtuelle" value="&lt;b&gt;Seance.lieuOuLien&lt;/b&gt; [MODIFIE]&lt;hr&gt;Champ deja present (pas une nouvelle&lt;br&gt;entite) : URL libre saisie par le formateur.&lt;br&gt;Cette session l'a rendu utilisable de bout&lt;br&gt;en bout - avant : jamais editable cote&lt;br&gt;formateur, affiche en texte brut (non&lt;br&gt;cliquable) cote etudiant.&lt;br&gt;Pas de fournisseur/enum : un lien Meet,&lt;br&gt;Zoom ou Teams colle par le formateur&lt;br&gt;suffit, sans integration API tierce." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="250" width="280" height="150" as="geometry" />
         </mxCell>
 
-        <mxCell id="reunion-virtuelle" value="&lt;b&gt;ReunionVirtuelle&lt;/b&gt; [A CONSTRUIRE]&lt;hr&gt;id : Long&lt;br&gt;seance : Seance&lt;br&gt;lienVisio : String&lt;br&gt;fournisseur : enum (JITSI, MEET...)&lt;hr&gt;Reunion integree - a rattacher a&lt;br&gt;Seance (deja existante), pas a&lt;br&gt;Cours directement." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
-          <mxGeometry x="1000" y="250" width="280" height="140" as="geometry" />
-        </mxCell>
-
-        <mxCell id="edge-conversation-message" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;" edge="1" parent="1" source="conversation" target="message-prive">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
         <mxCell id="edge-progression-reunion" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;dashed=1;" edge="1" parent="1" source="progression-support" target="reunion-virtuelle">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -120,8 +113,12 @@
         </mxCell>
 
         <!-- ===================== NOTE DE SESSION ===================== -->
-        <mxCell id="note-session" value="&lt;b&gt;Session du 2026-08-24&lt;/b&gt;&lt;hr&gt;Ce fichier n'existait pas avant cette session (voir LOG_BLOQUANT.md).&lt;br&gt;Cree a partir du modele existant en base (bleu) pour amorcer le modele cible&lt;br&gt;des 3 epics. Seul Epic 3 (certificats) a ete implemente cette session (jaune) ;&lt;br&gt;Epic 4 et Epic 5 restent a l'etat de modele (gris pointille), a affiner avant&lt;br&gt;implementation par une prochaine session." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+        <mxCell id="note-session" value="&lt;b&gt;Session du 2026-08-24 (creation)&lt;/b&gt;&lt;hr&gt;Ce fichier n'existait pas avant cette session (voir LOG_BLOQUANT.md).&lt;br&gt;Cree a partir du modele existant en base (bleu) pour amorcer le modele cible&lt;br&gt;des 3 epics. Seul Epic 3 (certificats) a ete implemente cette session (jaune) ;&lt;br&gt;Epic 4 et Epic 5 restent a l'etat de modele (gris pointille), a affiner avant&lt;br&gt;implementation par une prochaine session." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
           <mxGeometry x="40" y="700" width="700" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note-session-2" value="&lt;b&gt;Session du 2026-08-24 (passage 09:53 UTC)&lt;/b&gt;&lt;hr&gt;RoadMap_LMS_V1.pdf verifie absent du depot (jamais commite - LOG_BLOQUANT.md&lt;br&gt;point 5). Avant de construire Conversation/MessagePrive, decouverte que&lt;br&gt;ForumMessage revendique deja couvrir le §3.5 du TDR : la « messagerie&lt;br&gt;apprenant-formateur » planifiee n'a donc pas ete construite en double (voir la&lt;br&gt;case grisee ci-dessus). Story livree a la place : rendre Seance.lieuOuLien&lt;br&gt;(deja existant) utilisable de bout en bout pour les « reunions virtuelles »&lt;br&gt;du §E du TDR - champ editable cote formateur, lien cliquable cote etudiant." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="780" y="700" width="700" height="130" as="geometry" />
         </mxCell>
 
       </root>
