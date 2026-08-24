@@ -34,6 +34,16 @@ export const routes: Routes = [
       ),
   },
 
+  // Vérification publique d'un certificat (lien encodé dans son QR code) : aucun
+  // compte requis, cf. VerificationCertificatController côté back-end.
+  {
+    path: 'verification-certificat/:reference',
+    loadComponent: () =>
+      import('./features/verification-certificat/pages/verification-certificat/verification-certificat').then(
+        (m) => m.VerificationCertificat
+      ),
+  },
+
   // Groupe des pages d'authentification partageant la même mise en page
   // guestGuard : un utilisateur déjà connecté est redirigé vers son espace
   // plutôt que de revoir le formulaire de connexion.

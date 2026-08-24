@@ -1,0 +1,79 @@
+<div class="min-h-screen bg-surface flex flex-col">
+
+  <header class="w-full p-margin-desktop">
+    <a routerLink="/accueil" class="text-2xl font-extrabold tracking-tight text-primary no-underline">
+      INPG<span class="text-brand"> LMS</span>
+    </a>
+  </header>
+
+  <main class="flex-1 flex items-center justify-center px-4 pb-16">
+    <div class="w-full max-w-xl space-y-stack-lg">
+
+      <div class="flex flex-col items-center text-center space-y-base">
+        <div class="flex items-center gap-2 text-secondary font-label-sm text-label-sm uppercase tracking-widest">
+          <span class="w-8 h-[1px] bg-secondary"></span>
+          Vérification
+          <span class="w-8 h-[1px] bg-secondary"></span>
+        </div>
+        <h1 class="font-display text-display text-on-surface leading-none">Authenticité d'un certificat</h1>
+      </div>
+
+      <!-- Chargement -->
+      <div *ngIf="etat === 'chargement'" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg text-center">
+        <p class="font-body-md text-body-md text-on-surface-variant">Vérification en cours…</p>
+      </div>
+
+      <!-- Certificat authentique -->
+      <div *ngIf="etat === 'authentique' && certificat" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center text-success shrink-0">
+            <span class="material-symbols-outlined">verified</span>
+          </div>
+          <div>
+            <p class="font-label-md text-label-md text-success">Certificat authentique</p>
+            <p class="font-label-sm text-label-sm text-on-surface-variant">Délivré par l'Institut National du Pétrole et du Gaz</p>
+          </div>
+        </div>
+
+        <dl class="space-y-3 border-t border-outline-variant pt-4">
+          <div class="flex justify-between gap-4">
+            <dt class="font-label-md text-label-md text-on-surface-variant">Titulaire</dt>
+            <dd class="font-body-md text-body-md text-on-surface text-right">{{ certificat.etudiantNom }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="font-label-md text-label-md text-on-surface-variant">Formation</dt>
+            <dd class="font-body-md text-body-md text-on-surface text-right">{{ certificat.intituleFormation }}</dd>
+          </div>
+          <div *ngIf="certificat.promotionLibelle" class="flex justify-between gap-4">
+            <dt class="font-label-md text-label-md text-on-surface-variant">Promotion</dt>
+            <dd class="font-body-md text-body-md text-on-surface text-right">{{ certificat.promotionLibelle }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="font-label-md text-label-md text-on-surface-variant">Délivré le</dt>
+            <dd class="font-body-md text-body-md text-on-surface text-right">{{ certificat.dateEmission | date:'dd/MM/yyyy' }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="font-label-md text-label-md text-on-surface-variant">Responsable pédagogique</dt>
+            <dd class="font-body-md text-body-md text-on-surface text-right">{{ certificat.formateurNom }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="font-label-md text-label-md text-on-surface-variant">Référence</dt>
+            <dd class="font-body-sm text-body-sm text-outline font-mono text-right">{{ certificat.reference }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <!-- Introuvable -->
+      <div *ngIf="etat === 'introuvable'" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg text-center">
+        <div class="w-12 h-12 rounded-full bg-error-container flex items-center justify-center text-on-error-container mx-auto mb-4">
+          <span class="material-symbols-outlined">gpp_maybe</span>
+        </div>
+        <p class="font-label-md text-label-md text-on-error-container mb-2">Certificat introuvable</p>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">
+          Aucun certificat ne correspond à la référence transmise. Vérifiez le lien ou le QR code, ou contactez l'INPG si vous pensez qu'il s'agit d'une erreur.
+        </p>
+      </div>
+
+    </div>
+  </main>
+</div>
