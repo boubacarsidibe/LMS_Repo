@@ -113,6 +113,11 @@ export class PedagogieService {
     return this.http.put<EtudiantScolarite>(`${this.api}/etudiants/${etudiantId}/promotion`, { promotionId });
   }
 
+  /** Fait passer un étudiant côté alumni (Espace Alumni, TDR §C). Idempotent. */
+  promouvoirAlumni(etudiantId: number): Observable<EtudiantScolarite> {
+    return this.http.put<EtudiantScolarite>(`${this.api}/etudiants/${etudiantId}/promouvoir-alumni`, {});
+  }
+
   /** Import CSV tolérant : les lignes invalides sont rejetées une à une, pas en bloc. */
   importerEtudiants(csv: string, promotionId: number | null): Observable<ResultatImport> {
     return this.http.post<ResultatImport>(`${this.api}/etudiants/import`, { csv, promotionId });
@@ -251,6 +256,8 @@ export interface EtudiantScolarite {
   matricule: string | null;
   /** « Admission » si le compte vient d'un candidat admis, null s'il a été créé à la main. */
   origine: string | null;
+  /** Vrai si ce compte est déjà passé côté alumni (voir promouvoirAlumni). */
+  estAlumni: boolean;
 }
 
 export interface EtudiantSaisie {
