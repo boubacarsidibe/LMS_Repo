@@ -26,10 +26,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import inpg.sn.lms.auth.dto.EtudiantDto;
+import inpg.sn.lms.auth.entity.AlumniProfil;
 import inpg.sn.lms.auth.entity.Etudiant;
+import inpg.sn.lms.auth.repository.AlumniProfilRepository;
 import inpg.sn.lms.auth.repository.CandidatRepository;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.auth.service.EtudiantService;
+import inpg.sn.lms.espace_alumni.service.AlumniProfilService;
 import inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.CertificatDto;
 import inpg.sn.lms.espace_etudiant.dto.EtudiantSuiviDto;
@@ -91,6 +94,8 @@ public class PedagogieScolariteController {
     private final ReleveNotesService releveNotesService;
     private final ReleveDelivranceService releveDelivranceService;
     private final CandidatRepository candidatRepository;
+    private final AlumniProfilRepository alumniProfilRepository;
+    private final AlumniProfilService alumniProfilService;
 
     public PedagogieScolariteController(PromotionRepository promotionRepository,
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
@@ -98,7 +103,8 @@ public class PedagogieScolariteController {
             CertificatService certificatService, CoursRepository coursRepository,
             NotificationService notificationService, RetourEvaluationRepository retourRepository,
             ReleveNotesService releveNotesService, ReleveDelivranceService releveDelivranceService,
-            CandidatRepository candidatRepository) {
+            CandidatRepository candidatRepository, AlumniProfilRepository alumniProfilRepository,
+            AlumniProfilService alumniProfilService) {
         this.promotionRepository = promotionRepository;
         this.formationRepository = formationRepository;
         this.etudiantRepository = etudiantRepository;
@@ -111,6 +117,8 @@ public class PedagogieScolariteController {
         this.releveNotesService = releveNotesService;
         this.releveDelivranceService = releveDelivranceService;
         this.candidatRepository = candidatRepository;
+        this.alumniProfilRepository = alumniProfilRepository;
+        this.alumniProfilService = alumniProfilService;
     }
 
     // ===================== PROMOTIONS =====================
@@ -286,6 +294,28 @@ public class PedagogieScolariteController {
         }
         matriculeService.attribuerSiAbsent(etudiant);
         return ResponseEntity.ok(toEtudiantDto(etudiantRepository.save(etudiant)));
+    }
+
+    /**
+     * Fait passer un étudiant côté alumni (TDR §C, « Espace Alumni »).
+     *
+     * <p>Suit le même patron que la conversion Candidat → Étudiant
+     * ({@code AdminRecrutementController#inscrireCommeEtudiant}) : un compte ne
+     * détient qu'un seul rôle à la fois, {@code ROLE_ETUDIANT} est donc retiré au
+     * profit de {@code ROLE_ALUMNI}. La ligne {@code Etudiant} n'est pas supprimée —
+     * c'est elle qui garde le matricule et l'accès aux relevés délivrés.
+     */
+    @PutMapping("/etudiants/{id}/promouvoir-alumni")
+    @Transactional
+    public ResponseEntity<?> promouvoirAlumni(@PathVariable Long id) {
+        if (!etudiantRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        AlumniProfil profil = alumniProfilService.promouvoir(id);
+        if (profil == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Le rôle ALUMNI n'est pas configuré."));
+        }
+        return ResponseEntity.ok(toEtudiantDto(etudiantRepository.findById(id).orElseThrow()));
     }
 
     /**
@@ -657,7 +687,8 @@ public class PedagogieScolariteController {
                 "bg-primary-container",
                 etudiant.getMatricule(),
                 // Un dossier de candidature derriere le compte = il vient de l'admission.
-                candidatRepository.findByUserId(etudiant.getId()).isPresent() ? "Admission" : null);
+                candidatRepository.findByUserId(etudiant.getId()).isPresent() ? "Admission" : null,
+                alumniProfilRepository.findByUserId(etudiant.getId()).isPresent());
     }
 
     private CertificatDto toCertificatDto(Certificat certificat) {
