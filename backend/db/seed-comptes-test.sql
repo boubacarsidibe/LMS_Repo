@@ -45,7 +45,8 @@ FROM (VALUES
     ('test_etudiant',  'test.etudiant@inpg.sn'),
     ('test_formateur', 'test.formateur@inpg.sn'),
     ('test_admission', 'test.admission@inpg.sn'),
-    ('test_pedago',    'test.pedago@inpg.sn')
+    ('test_pedago',    'test.pedago@inpg.sn'),
+    ('test_alumni',    'test.alumni@inpg.sn')
 ) AS v(username, email)
 WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.username = v.username OR u.email = v.email);
 
@@ -64,7 +65,8 @@ FROM (VALUES
     ('test_etudiant',  'ROLE_ETUDIANT'),
     ('test_formateur', 'ROLE_FORMATEUR'),
     ('test_admission', 'ROLE_RESPONSABLE_ADMISSION'),
-    ('test_pedago',    'ROLE_RESPONSABLE_PEDAGOGIQUE')
+    ('test_pedago',    'ROLE_RESPONSABLE_PEDAGOGIQUE'),
+    ('test_alumni',    'ROLE_ALUMNI')
 ) AS v(username, code)
 JOIN users u ON u.username = v.username
 JOIN roles r ON r.code = v.code
@@ -100,6 +102,20 @@ SELECT u.id, 'Ndour', 'Bineta', '+221770000103', 'ETU-TEST-001',
 FROM users u
 WHERE u.username = 'test_etudiant'
   AND NOT EXISTS (SELECT 1 FROM etudiants e WHERE e.id_user = u.id);
+
+-- Alumni : un alumni EST un etudiant (@MapsId), sa ligne etudiants reste donc
+-- necessaire (matricule, releve). Voir migration V12.
+INSERT INTO etudiants (id_user, nom, prenom, telephone, matricule)
+SELECT u.id, 'Gueye', 'Rokhaya', '+221770000106', 'ETU-TEST-002'
+FROM users u
+WHERE u.username = 'test_alumni'
+  AND NOT EXISTS (SELECT 1 FROM etudiants e WHERE e.id_user = u.id);
+
+INSERT INTO alumni_profils (id_user, poste_actuel, entreprise, secteur_activite)
+SELECT u.id, 'Consultante Energie', 'Cabinet ENR Conseil', 'Energies renouvelables'
+FROM users u
+WHERE u.username = 'test_alumni'
+  AND NOT EXISTS (SELECT 1 FROM alumni_profils a WHERE a.id_user = u.id);
 
 INSERT INTO formateurs (id_user, nom, prenom, telephone)
 SELECT u.id, 'Camara', 'Ousmane', '+221770000104'
@@ -137,7 +153,7 @@ WHERE NOT EXISTS (SELECT 1 FROM candidatures k WHERE k.numero_dossier = 'INPG-TE
 COMMIT;
 
 -- ---------------------------------------------------------------------
--- Contrôle : doit afficher 6 lignes, chacune avec exactement un rôle.
+-- Contrôle : doit afficher 7 lignes, chacune avec exactement un rôle.
 -- ---------------------------------------------------------------------
 SELECT u.username, u.email, r.code AS role
 FROM users u

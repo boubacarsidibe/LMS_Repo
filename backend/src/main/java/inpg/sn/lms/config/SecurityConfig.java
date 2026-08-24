@@ -107,6 +107,8 @@ public class SecurityConfig {
                 // Espace pédagogique : les opérations d'enseignant restent réservées aux formateurs.
                 .requestMatchers("/api/espace-etudiant/formateur/**").hasRole("FORMATEUR")
                 .requestMatchers("/api/espace-etudiant/**").hasAnyRole("ETUDIANT", "FORMATEUR")
+                // Espace Alumni (TDR §C) : profil, situation professionnelle, relevés délivrés.
+                .requestMatchers("/api/espace-alumni/**").hasRole("ALUMNI")
                 .anyRequest().authenticated()
                 )
                 
