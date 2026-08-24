@@ -89,3 +89,93 @@ diplôme, au même titre que ce qui est déjà imprimé en clair sur le document
 en revanche le matricule, l'identifiant technique de l'étudiant et tout ce qui permettrait de
 rebondir vers d'autres données (promotion complète, email, téléphone). Choix documenté dans le
 Javadoc de `CertificatVerificationDto` et vérifié par test (`CertificatPublicControllerTest`).
+
+## 2026-08-24 — Passage 09:53 UTC (PR #25 fusionnée, amorçage de l'Epic 4)
+
+### 5. `RoadMap_LMS_V1.pdf` absent du dépôt (jamais commité, pas seulement illisible)
+
+Avant de choisir la story suivante, vérification faite à la racine et dans tout l'historique git
+(`git ls-tree -r origin/develop`, `git log --all --diff-filter=A --name-only`) : aucun fichier
+nommé `RoadMap_LMS_V1.pdf`, ni aucun `.pdf` de feuille de route, n'a jamais existé dans ce dépôt.
+Ce n'est pas un problème de lecture (le TDR, lui, a été décompressé et lu sans peine) : le fichier
+n'a simplement jamais été fourni. La session précédente (celle de la PR #25) ne l'a pas non plus
+constaté explicitement dans son journal — elle a travaillé uniquement à partir du TDR.
+
+**Décision** : conformément à la consigne « si le PDF est illisible, note-le et utilise
+uniquement les autres sources », je détermine l'ORDRE des parties à partir de : (a) le TDR, qui ne
+contient d'ailleurs aucune notion d'« epic » ou de « release » — cette structuration est une
+organisation interne introduite par la session précédente pour regrouper les besoins du TDR
+(section C « Espace Alumni », section B sur les certificats, section E « E-learning ») ; (b)
+`docs/daily_logs/` et les PR déjà fusionnées, qui montrent qu'Epic 3 (Certificats) vient d'être
+livré et que la session précédente avait explicitement prévu Epic 4 (messagerie
+apprenant-formateur + réunions virtuelles, TDR section E) ensuite, avant Epic 5 (Alumni, TDR
+section C) ; (c) `docs/uml/release-2-enrichissement-pedagogique.drawio`, qui porte déjà le
+squelette « à construire » d'Epic 4 et Epic 5. Je poursuis donc cet ordre plutôt que d'en inventer
+un autre : TDR section E (E-learning : « outil de communication entre les apprenants et le
+formateur » + « réunions virtuelles ») est la partie non commencée qui suit directement les
+certificats. Si un `RoadMap_LMS_V1.pdf` existe réellement côté client et donne un ordre différent,
+il faudra le déposer dans le dépôt pour qu'une session future puisse le lire et corriger la
+priorisation en conséquence.
+
+### 6. Story choisie dans Epic 4 : messagerie apprenant-formateur (pas les réunions virtuelles)
+
+La section E du TDR regroupe deux besoins sous « outil de communication » : une messagerie
+apprenant-formateur, et des réunions virtuelles. Les réunions virtuelles supposent une intégration
+avec un service tiers de visioconférence (Zoom, Jitsi, Meet…) — décision de fournisseur hors de
+portée d'une session autonome, et rien dans le dépôt ne l'amorce. La messagerie, elle, peut
+réutiliser des patrons déjà éprouvés dans ce dépôt (garde-fous de `MentionForumService`, cloche
+`notification` adossée à l'utilisateur, cloisonnement `PerimetreFormateurService` /
+`cours_formateur`) sans dépendance externe. Choisie comme la plus petite et la plus indépendante
+des deux, conformément à la consigne de préférer une story incrémentale bien vérifiée.
+
+### 7. Correction du point 6, avant tout code écrit : la messagerie existe déjà (le forum)
+
+En préparant l'implémentation (lecture du code existant du forum avant d'écrire la moindre ligne),
+javadoc de `ForumMessage.java` (`backend/src/main/java/inpg/sn/lms/espace_etudiant/entity/`) :
+« C'est aussi le canal de communication apprenant ↔ formateur demandé au §3.5 du cahier des
+charges : l'auteur est un `User`, ce qui couvre indifféremment un étudiant ou un formateur. » —
+c'est-à-dire qu'un développeur (humain ou session précédente) a déjà tranché explicitement que le
+forum, dès lors qu'un sujet est rattaché à un `Cours`, remplit le besoin TDR §3.5 « outil de
+communication entre les apprenants et le formateur ».
+
+Construire malgré tout `Conversation`/`MessagePrivé` (comme le squelette du `.drawio` le
+suggérait) aurait recréé exactement le défaut que la section 3 de `CLAUDE.md` documente à
+plusieurs reprises comme la cause de bugs déjà survenus trois fois dans ce dépôt : deux chaînes
+concurrentes répondant à la même question métier, qui finissent par diverger (`cours_promotion` vs
+la dérivation promotion→formation→cours, `evaluations_cours`/`POST /retours` vs
+`retour_evaluation`). Le point 6 ci-dessus est donc **corrigé, pas effacé** (conformément à la
+consigne de ne jamais réécrire une entrée précédente) : je n'implémente pas la messagerie.
+
+**Nouvelle story retenue** : l'autre moitié du besoin de communication de la section E du TDR,
+« la possibilité de réunions virtuelles afin de faciliter l'apprentissage des étudiants », qui
+elle n'est *pas* déjà couverte. Vérification faite avant de coder (pas seulement en lecture, en
+suivant la chaîne bout en bout) : `Seance` (entité `espace_etudiant/entity/Seance.java`) a déjà un
+champ `lieuOuLien`, déjà exposé par `SeanceRequest`/`SeanceDto`/`SeanceEtudiantDto` et déjà
+correctement cloisonné côté lecture étudiante (`ScolariteController.monCalendrier` ne renvoie que
+les séances des cours autorisés via `HabilitationCoursService`) — mais :
+- côté formateur, aucune page ne permet de le renseigner : le seul point de création rapide
+  (`SeanceService.creer()` dans `mes-cours.ts`, utilisé par la prise de présence) envoie
+  systématiquement `lieuOuLien: null` ;
+- côté étudiant, `calendrier-etudiant.ts` et `tableau-bord.ts` affichent `lieuOuLien` en texte
+  brut (`{{ s.lieuOuLien || 'Lieu à préciser' }}`), jamais comme un lien cliquable — même si sa
+  valeur est une URL de visioconférence, l'étudiant ne pouvait pas la rejoindre en un clic.
+
+C'est exactement le même type de défaut « champ présent en base mais chaîne rompue avant l'écran »
+que celui déjà documenté dans `CLAUDE.md` (le piège du champ `lieu` retiré au point 2 de ce
+journal, dans l'autre sens : ici le champ existe et doit être raccordé, pas retiré). Corrigé cette
+session, en frontend uniquement (aucune migration, aucune entité, aucun endpoint nouveaux — tout
+le nécessaire backend existait déjà et est resté inchangé) :
+- `mes-cours.ts`/`mes-cours.html` : un bouton d'édition par séance dans la liste du modal de
+  présence, qui appelle `PUT /formateur/seances/{id}` (endpoint déjà existant et déjà cloisonné
+  par `findOwnedSession`/`findOwnedCourse`) pour ne changer que `lieuOuLien`.
+- `calendrier-etudiant.ts` et `tableau-bord.ts` : un lien « Rejoindre » (`target="_blank"`,
+  `rel="noopener"`) affiché uniquement quand `lieuOuLien` commence par `http://`/`https://`
+  (`estLienVisio()`), sinon le texte brut est conservé (cas d'un lieu physique).
+- Aucun fournisseur/API tierce (Zoom, Meet…) intégré : le formateur colle un lien déjà créé par
+  ses propres moyens, exactement comme le fait déjà `Evenement.lienVisio` (calendrier
+  administratif) ailleurs dans ce même dépôt — cohérent avec l'existant plutôt qu'une nouvelle
+  approche.
+
+`docs/uml/release-2-enrichissement-pedagogique.drawio` mis à jour en conséquence : la case
+`Seance.lieuOuLien` passe en « modifié » (jaune), la case `Conversation`/`MessagePrivé` est
+requalifiée « remis en question » avec ce raisonnement, jamais implémentée cette session.

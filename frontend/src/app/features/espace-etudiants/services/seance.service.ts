@@ -29,4 +29,20 @@ export class SeanceService {
       lieuOuLien: null,
     });
   }
+
+  /**
+   * Met à jour uniquement le lieu / lien de visioconférence d'une séance
+   * existante : l'API attend le reste des champs, on les renvoie donc
+   * inchangés plutôt que d'exposer un PATCH partiel côté backend.
+   */
+  mettreAJourLien(seance: Seance, lieuOuLien: string): Observable<Seance> {
+    return this.http.put<Seance>(`${this.api}/formateur/seances/${seance.id}`, {
+      coursId: seance.coursId,
+      titre: seance.titre,
+      type: seance.type,
+      dateHeure: seance.dateHeure,
+      dureeMinutes: seance.dureeMinutes,
+      lieuOuLien: lieuOuLien.trim(),
+    });
+  }
 }
