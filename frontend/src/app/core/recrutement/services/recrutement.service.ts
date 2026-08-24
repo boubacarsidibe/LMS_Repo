@@ -126,7 +126,6 @@ export interface ConvocationTestGroupeeRequest {
   nomEpreuve: string;
   coefficient: number;
   dateEpreuve: string;
-  lieu: string;
 }
 
 export interface ConvocationEntretienGroupeeRequest {
@@ -535,6 +534,10 @@ export class RecrutementService {
 
   rejeterDossier(id: number, motif: string): Observable<CandidatureResponse> {
     return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/rejeter`, { motif });
+  }
+
+  validerPreselection(id: number): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/valider-preselection`, {});
   }
 
   admettreTestAcademique(id: number): Observable<CandidatureResponse> {
