@@ -3,9 +3,11 @@ package inpg.sn.lms.espace_etudiant.service;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import inpg.sn.lms.auth.entity.AlumniProfil;
 import inpg.sn.lms.auth.entity.Etudiant;
 import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.entity.User;
+import inpg.sn.lms.auth.repository.AlumniProfilRepository;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
@@ -24,12 +26,14 @@ public class UtilisateurCourantService {
     private final UserRepository userRepository;
     private final EtudiantRepository etudiantRepository;
     private final FormateurRepository formateurRepository;
+    private final AlumniProfilRepository alumniProfilRepository;
 
     public UtilisateurCourantService(UserRepository userRepository, EtudiantRepository etudiantRepository,
-            FormateurRepository formateurRepository) {
+            FormateurRepository formateurRepository, AlumniProfilRepository alumniProfilRepository) {
         this.userRepository = userRepository;
         this.etudiantRepository = etudiantRepository;
         this.formateurRepository = formateurRepository;
+        this.alumniProfilRepository = alumniProfilRepository;
     }
 
     /** Utilisateur connecté, ou {@code null} si la requête est anonyme. */
@@ -52,6 +56,12 @@ public class UtilisateurCourantService {
     public Formateur formateur(Authentication authentication) {
         User user = utilisateur(authentication);
         return user == null ? null : formateurRepository.findByUserId(user.getId()).orElse(null);
+    }
+
+    /** Profil alumni du connecté, ou {@code null} s'il n'en a pas. */
+    public AlumniProfil alumniProfil(Authentication authentication) {
+        User user = utilisateur(authentication);
+        return user == null ? null : alumniProfilRepository.findByUserId(user.getId()).orElse(null);
     }
 
     /** Libellé « Prénom Nom » d'un utilisateur, avec repli sur son identifiant. */
