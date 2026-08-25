@@ -1,7 +1,5 @@
 package inpg.sn.lms.entreprise.dto;
 
-import inpg.sn.lms.entreprise.dto.EntrepriseProfilRequest;
-
 /**
  * Soumission d'une demande (besoin de formation ou devis/session sur mesure).
  * {@code formationId}, {@code effectifConcerne} et {@code datesSouhaitees} ne
