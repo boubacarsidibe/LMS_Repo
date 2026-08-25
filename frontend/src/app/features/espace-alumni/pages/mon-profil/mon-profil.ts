@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AlumniProfil, AlumniProfilUpdate } from '../../models/alumni.models';
 import { AlumniService } from '../../services/alumni.service';
 
@@ -11,7 +12,7 @@ import { AlumniService } from '../../services/alumni.service';
 @Component({
   selector: 'app-alumni-mon-profil',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './mon-profil.html',
 })
 export class MonProfil implements OnInit {

@@ -13,6 +13,26 @@
   <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
 
   <ng-container *ngIf="!chargement && profil">
+    <!-- Accès rapide : première page vue après connexion, elle sert de point de départ vers le reste de l'espace. -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-gutter">
+      <a routerLink="../mon-parcours" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors flex flex-col items-center text-center gap-2">
+        <span class="material-symbols-outlined text-secondary text-[28px]">work_history</span>
+        <span class="font-label-md text-label-md text-on-surface">Parcours professionnel</span>
+      </a>
+      <a routerLink="../mes-releves" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors flex flex-col items-center text-center gap-2">
+        <span class="material-symbols-outlined text-secondary text-[28px]">description</span>
+        <span class="font-label-md text-label-md text-on-surface">Mes relevés</span>
+      </a>
+      <a routerLink="../forum" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors flex flex-col items-center text-center gap-2">
+        <span class="material-symbols-outlined text-secondary text-[28px]">forum</span>
+        <span class="font-label-md text-label-md text-on-surface">Forum</span>
+      </a>
+      <a routerLink="../documents" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors flex flex-col items-center text-center gap-2">
+        <span class="material-symbols-outlined text-secondary text-[28px]">folder_shared</span>
+        <span class="font-label-md text-label-md text-on-surface">Documents partagés</span>
+      </a>
+    </section>
+
     <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
       <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary">badge</span>Identité

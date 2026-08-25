@@ -100,6 +100,27 @@ import { AccreditationService } from '../../services/accreditation.service';
 
       <!-- Demande existante : suivi + pièces -->
       <ng-container *ngIf="!chargement && demande">
+        <!-- Progression du dossier -->
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg" *ngIf="demande.statut !== 'REJETE'">
+          <ol class="flex items-center w-full">
+            <li *ngFor="let etape of etapes; let i = index" class="flex items-center" [class.flex-1]="i < etapes.length - 1">
+              <div class="flex flex-col items-center gap-1 shrink-0">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                     [class.bg-secondary]="i <= etapeActuelle" [class.text-on-secondary]="i <= etapeActuelle"
+                     [class.bg-surface-container]="i > etapeActuelle" [class.text-on-surface-variant]="i > etapeActuelle">
+                  <span class="material-symbols-outlined text-[20px]">{{ i < etapeActuelle ? 'check' : etape.icone }}</span>
+                </div>
+                <span class="font-label-sm text-label-sm text-center max-w-[7rem]"
+                      [class.text-primary]="i <= etapeActuelle" [class.text-on-surface-variant]="i > etapeActuelle">
+                  {{ etape.libelle }}
+                </span>
+              </div>
+              <div *ngIf="i < etapes.length - 1" class="flex-1 h-0.5 mx-2 mb-5"
+                   [class.bg-secondary]="i < etapeActuelle" [class.bg-outline-variant]="i >= etapeActuelle"></div>
+            </li>
+          </ol>
+        </div>
+
         <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -206,6 +227,19 @@ export class DemandeAccreditationComponent implements OnInit {
   fichierSelectionne: File | null = null;
   televersementEnCours = false;
   erreurPiece = '';
+
+  /** Étapes du parcours d'accréditation, dans l'ordre du workflow (REJETE n'y figure pas : il interrompt le parcours). */
+  readonly etapes = [
+    { statut: 'SOUMISE', libelle: 'Déposée', icone: 'upload_file' },
+    { statut: 'EN_COURS_EVALUATION', libelle: "En cours d'évaluation", icone: 'fact_check' },
+    { statut: 'ACCREDITE', libelle: 'Accréditée', icone: 'verified' },
+  ];
+
+  get etapeActuelle(): number {
+    if (!this.demande) return 0;
+    const index = this.etapes.findIndex((e) => e.statut === this.demande!.statut);
+    return index === -1 ? 0 : index;
+  }
 
   ngOnInit(): void {
     this.accreditationService.getMesDemandes().subscribe({
