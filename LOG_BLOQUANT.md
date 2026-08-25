@@ -576,3 +576,48 @@ ancien (chemin d'exécution Maven à la racine au lieu de `backend/`, déjà
 corrigé depuis dans `ci.yml` via `defaults.run.working-directory`) — sans
 rapport avec le fantôme `BuildFailed` découvert ici. Laissée telle quelle,
 hors du périmètre de cette investigation.
+
+**Vérification faite dans la foulée (même passage), hypothèse du chemin corrompu invalidée.**
+Après fusion de la PR de renommage, `list_workflows` confirme l'enregistrement
+d'une troisième identité fraîche (`workflow_id` **342182978**, chemin
+`.github/workflows/build.yml`, `state: active`) — le renommage a bien eu
+l'effet attendu sur l'enregistrement. Mais :
+
+- Le push de fusion (`2fd8231`) a quand même généré un nouveau run sur le
+  fantôme `331865476` (run #137, `conclusion: startup_failure`) — le fantôme
+  n'est pas lié au chemin `ci.yml` spécifiquement, il intercepte les push sur
+  `develop` en général.
+- Plus décisif : `list_workflow_runs` sur le nouvel identifiant **342182978**
+  reste à `total_count: 0` plusieurs dizaines de secondes après le push — le
+  vrai workflow, sur un chemin propre, ne se déclenche pas non plus sur
+  `push`.
+- Déclenché manuellement via `workflow_dispatch` (désormais disponible sur
+  `build.yml`) : la requête est acceptée (`204 Workflow run has been
+  queued`), un run apparaît bien (`id 32862597408`, `event:
+  workflow_dispatch`) — mais avec `conclusion: startup_failure` **et 0 job
+  créé** (`list_workflow_jobs` : `total_count: 0`, aucun log disponible).
+
+Un run sans le moindre job créé, y compris pour un déclenchement manuel
+explicite sur un workflow tout juste enregistré et parfaitement valide,
+exclut définitivement un problème de contenu, de chemin, ou d'association
+fantôme : GitHub accepte la demande d'exécution mais ne parvient jamais à
+provisionner le moindre runner. C'est la signature typique d'un blocage au
+niveau du compte/dépôt lui-même — le plus probable étant une limite de
+dépenses (« spending limit ») atteinte ou nulle sur les minutes Actions, ou
+un blocage explicite des Actions au niveau du dépôt/organisation
+(`Settings → Actions → General`, ou `Settings → Billing → Plans and usage`)
+— aucun des deux n'est vérifiable ni corrigible par les outils
+`mcp__github__*` disponibles ici (pas d'endpoint exposant
+`GET /repos/{owner}/{repo}/actions/permissions` ni la facturation du compte).
+
+**Décision finale de cette investigation** : le renommage reste en place
+(changement neutre à légèrement positif — chemin propre, `workflow_dispatch`
+disponible pour un nouveau test dès que la cause réelle sera levée), mais
+n'est **pas** le correctif. La cause racine est confirmée hors de portée de
+l'API : **vérification humaine indispensable** sur `Settings → Actions →
+General` (Actions activées ? autorisées pour ce dépôt ?) et sur
+`Settings → Billing → Plans and usage` (minutes Actions épuisées, limite de
+dépenses à 0). Ne pas retenter de nouveau correctif automatique sur ce point
+tant que cette vérification n'a pas eu lieu — le prochain passage de la
+routine peut se contenter d'un nouveau `workflow_dispatch` ponctuel pour
+sonder si la situation a changé, sans reproduire l'investigation complète.
