@@ -42,3 +42,5 @@ Thumbs.db
 # Rapports hebdomadaires et exports bureautiques : livrables de suivi, pas du code.
 ~$*.xlsx
 ~$*.docx
+
+.vercel
