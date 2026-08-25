@@ -111,7 +111,12 @@ public class SecurityConfig {
                 // rôle de qui évalue, pas de qui dépose) — même patron que candidat ci-dessus,
                 // aucun rôle métier n'est requis pour déposer un dossier.
                 .requestMatchers("/api/accreditation/ecole/**").authenticated()
+                // Tout utilisateur connecté peut soumettre une demande entreprise : le rôle
+                // ROLE_ENTREPRISE n'est accordé qu'à la première soumission réussie — même
+                // patron que candidat et école de formation ci-dessus.
+                .requestMatchers("/api/entreprise/**").authenticated()
                 // Pilotage de l'offre pédagogique : cours et supports, tous formateurs confondus.
+                // Couvre aussi /api/pedagogie/entreprises/** (PedagogieEntrepriseController).
                 .requestMatchers("/api/pedagogie/**").hasRole("RESPONSABLE_PEDAGOGIQUE")
                 // La cloche est commune aux trois espaces : elle est adossée à l'utilisateur,
                 // et chaque endpoint ne lit que les notifications du connecté. Déclarée AVANT

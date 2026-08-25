@@ -49,6 +49,8 @@ export class Auth {
       return '/pedagogie';
     } else if (roles.includes('ROLE_ECOLE_FORMATION')) {
       return '/accreditation';
+    } else if (roles.includes('ROLE_ENTREPRISE')) {
+      return '/espace-entreprise';
     } else if (roles.includes('ROLE_EVALUATEUR_ACCREDITATION')) {
       return '/evaluateur-accreditation';
     } else if (roles.includes('ROLE_CANDIDAT')) {
@@ -98,7 +100,7 @@ export class Auth {
     }
   }
 
-  register(username: string, email: string, password: string, typeInscription: 'CANDIDAT' | 'ECOLE' = 'CANDIDAT'): Observable<AuthResponse> {
+  register(username: string, email: string, password: string, typeInscription: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' = 'CANDIDAT'): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, { username, email, password, typeInscription })
       .pipe(
         tap((resp) => this.setSession(resp))

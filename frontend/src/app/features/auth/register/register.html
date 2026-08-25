@@ -30,7 +30,7 @@
          n'est encore attribué à ce stade, il ne l'est qu'à la soumission réelle). -->
     <div>
       <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5">Je m'inscris en tant que</label>
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-3 gap-3">
         <button
           type="button"
           (click)="choisirTypeInscription('CANDIDAT')"
@@ -48,6 +48,15 @@
           class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-colors cursor-pointer">
           <span class="font-label-md text-label-md text-on-surface block">École de formation</span>
           <span class="font-body-sm text-body-sm text-on-surface-variant">Demander une accréditation</span>
+        </button>
+        <button
+          type="button"
+          (click)="choisirTypeInscription('ENTREPRISE')"
+          [class.border-secondary]="typeInscription === 'ENTREPRISE'"
+          [class.bg-secondary-container/20]="typeInscription === 'ENTREPRISE'"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-colors cursor-pointer">
+          <span class="font-label-md text-label-md text-on-surface block">Entreprise</span>
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Soumettre un besoin de formation</span>
         </button>
       </div>
     </div>
