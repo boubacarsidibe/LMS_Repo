@@ -1247,7 +1247,13 @@ public class EspaceEtudiantController {
         if (etudiant == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(noteModuleService.getByEtudiantId(id).stream().map(this::toNoteModuleDto).toList());
+        // L'étudiant peut être dans une cohorte du formateur sans que celui-ci
+        // enseigne tous ses modules : ne renvoyer que les notes des cours que ce
+        // formateur enseigne réellement, jamais celles d'un collègue.
+        return ResponseEntity.ok(noteModuleService.getByEtudiantId(id).stream()
+                .filter(note -> perimetreFormateurService.estFormateurDuCours(formateur, note.getCours()))
+                .map(this::toNoteModuleDto)
+                .toList());
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")

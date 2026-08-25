@@ -456,3 +456,44 @@ risqué une régression visuelle non vérifiable : `mon-parcours.html:31`,
 dix échelles de `tailwind.config.js` partagent toutes la même famille
 (`Inter`), donc `font-display` et `font-headline-lg` produisent exactement le
 même rendu de police ; seule la classe `text-*` détermine la taille réelle.
+
+## 2026-08-25 — Epic « affichage global et parcours par rôle » (demande directe, échéance 10h)
+
+### 21. Écoles accréditées : décision produit qui va à l'encontre du TDR §F
+
+Le TDR §F demande explicitement une liste des écoles accréditées en accès
+public (« processus transparent »), implémentée comme telle lors de l'epic
+Accréditation (migration V15, `AccreditationPublicController`,
+`permitAll()` dans `SecurityConfig`). L'utilisateur, interrogé directement
+sur le périmètre de ce nouvel epic (« que ne doit-on pas voir »), a demandé
+que cette liste soit réservée aux comptes connectés.
+
+**Décision** : suivre l'instruction directe de l'utilisateur, qui prime sur
+le TDR pour une décision produit explicite. `SecurityConfig` ne classe plus
+`/api/accreditation/public/**` en `permitAll()` — la requête tombe
+désormais sur le `.anyRequest().authenticated()` final (tout rôle confondu,
+aucune restriction par rôle spécifique). Route frontend `/ecoles-accreditees`
+protégée par `authGuard`. Le préfixe d'URL (`.../public/...`) et le nom de
+la classe (`AccreditationPublicController`) restent inchangés pour ne pas
+casser l'appel frontend existant ni élargir le diff — seule l'autorisation
+change ; les commentaires du contrôleur et de la route sont mis à jour pour
+refléter l'état réel plutôt que le nom.
+
+### 22. Nettoyage navigation : rien à retirer, un orphelin repéré mais non supprimé
+
+Audit systématique de tous les layouts/barres latérales de l'application
+(étudiant, formateur, responsable admission, pédagogie, alumni, évaluateur,
+école) : chaque entrée de navigation pointe vers une route réelle et
+fonctionnelle (service HTTP réel, pas de données figées). Aucun lien mort à
+retirer.
+
+Un seul reliquat, déjà identifié lors d'un epic précédent : le composant
+`responsable-admission/settings/responsable-admission-settings.component.*`
+(onglets Général/Équipe/Modèles) n'est déclaré dans aucune route et n'est
+référencé nulle part — c'est un prototype orphelin, distinct du vrai composant
+`.../parametres/...` qui, lui, est routé et fonctionnel. Confirmé inoffensif
+(aucun lien n'y mène, donc rien à masquer côté navigation) mais sa suppression
+a été bloquée par le classeur de permissions de la session autonome sur des
+commandes de suppression de fichiers ; laissé en l'état, à supprimer à la
+prochaine intervention humaine ou lors d'un epic dédié au nettoyage du code
+mort.

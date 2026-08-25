@@ -39,6 +39,37 @@ import { EvaluateurAccreditationService } from '../../services/evaluateur-accred
         </select>
       </header>
 
+      <section *ngIf="!chargement" class="grid grid-cols-2 lg:grid-cols-4 gap-gutter">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+          <div class="flex items-center gap-2 text-on-surface-variant">
+            <span class="material-symbols-outlined">pending_actions</span>
+            <span class="font-label-sm text-label-sm uppercase tracking-wider">À traiter</span>
+          </div>
+          <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ compte('SOUMISE') }}</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+          <div class="flex items-center gap-2 text-on-surface-variant">
+            <span class="material-symbols-outlined">fact_check</span>
+            <span class="font-label-sm text-label-sm uppercase tracking-wider">En évaluation</span>
+          </div>
+          <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ compte('EN_COURS_EVALUATION') }}</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+          <div class="flex items-center gap-2 text-on-surface-variant">
+            <span class="material-symbols-outlined text-success">verified</span>
+            <span class="font-label-sm text-label-sm uppercase tracking-wider">Accréditées</span>
+          </div>
+          <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ compte('ACCREDITE') }}</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+          <div class="flex items-center gap-2 text-on-surface-variant">
+            <span class="material-symbols-outlined text-error">cancel</span>
+            <span class="font-label-sm text-label-sm uppercase tracking-wider">Rejetées</span>
+          </div>
+          <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ compte('REJETE') }}</p>
+        </div>
+      </section>
+
       <app-ui-spinner *ngIf="chargement" message="Chargement des demandes…"></app-ui-spinner>
 
       <app-ui-empty-state
@@ -145,6 +176,8 @@ export class EvaluateurDemandesComponent implements OnInit {
   private evaluateurService = inject(EvaluateurAccreditationService);
 
   demandes: DemandeAccreditation[] = [];
+  /** Copie non filtrée, uniquement pour les indicateurs : `demandes` varie avec `filtreStatut`. */
+  toutesDemandes: DemandeAccreditation[] = [];
   selection: DemandeAccreditation | null = null;
   chargement = true;
   filtreStatut: StatutDemandeAccreditation | undefined;
@@ -158,6 +191,10 @@ export class EvaluateurDemandesComponent implements OnInit {
 
   ngOnInit(): void {
     this.charger();
+    this.evaluateurService.getDemandes(undefined).subscribe({
+      next: (demandes) => (this.toutesDemandes = demandes),
+      error: () => (this.toutesDemandes = []),
+    });
   }
 
   charger(): void {
@@ -169,6 +206,16 @@ export class EvaluateurDemandesComponent implements OnInit {
       },
       error: () => (this.chargement = false),
     });
+  }
+
+  /** Nombre de demandes dans ce statut, indépendamment du filtre appliqué à la liste. */
+  compte(statut: StatutDemandeAccreditation): number {
+    return this.toutesDemandes.filter((d) => d.statut === statut).length;
+  }
+
+  /** Une décision (accréditer/rejeter) change le statut d'une demande : la resynchroniser côté indicateurs aussi. */
+  private synchroniserCompteurs(demande: DemandeAccreditation): void {
+    this.toutesDemandes = this.toutesDemandes.map((d) => (d.id === demande.id ? demande : d));
   }
 
   selectionner(demande: DemandeAccreditation): void {
@@ -229,6 +276,7 @@ export class EvaluateurDemandesComponent implements OnInit {
 
   private remplacer(demande: DemandeAccreditation): void {
     this.demandes = this.demandes.map((d) => (d.id === demande.id ? demande : d));
+    this.synchroniserCompteurs(demande);
     this.selection = demande;
     this.commentaire = '';
   }

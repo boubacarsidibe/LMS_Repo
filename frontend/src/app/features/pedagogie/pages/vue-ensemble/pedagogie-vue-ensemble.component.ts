@@ -66,6 +66,18 @@ export class PedagogieVueEnsembleComponent implements OnInit {
     return this.cours.filter((c) => !c.promotions || c.promotions.length === 0);
   }
 
+  /**
+   * Cours sans formateur affecté : `cours_formateur` commande tout le cloisonnement
+   * enseignant, sans corrélation vérifiée par la base (`ddl-auto=validate` ne compare
+   * jamais deux relations entre elles). Un cours absent de cette table n'apparaît
+   * dans aucun espace formateur — ni support, ni séance, ni note n'y sont possibles —
+   * sans qu'aucune erreur ni journal ne le signale. C'est le point d'attention le
+   * plus coûteux après les cours hors programme.
+   */
+  get coursSansFormateur(): Cours[] {
+    return this.cours.filter((c) => !c.formateurs || c.formateurs.length === 0);
+  }
+
   /** Cours sans aucune ressource déposée. */
   get coursSansRessource(): Cours[] {
     return this.cours.filter((c) => !c.nbRessources);

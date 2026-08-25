@@ -78,9 +78,12 @@ export const routes: Routes = [
     loadChildren: () => import('./features/espace-alumni/espace-alumni.routes').then(m => m.routes)
   },
 
-  // Liste publique des écoles accréditées (TDR §F) : accessible sans compte.
+  // Liste des écoles accréditées (TDR §F) : réservée aux comptes connectés,
+  // tout rôle confondu — décision produit du 2026-08-25 (LOG_BLOQUANT.md),
+  // le TDR demandait initialement une liste réellement publique.
   {
     path: 'ecoles-accreditees',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/accreditation/pages/ecoles-accreditees/ecoles-accreditees').then(
         (m) => m.EcolesAccrediteesComponent
@@ -90,14 +93,30 @@ export const routes: Routes = [
   // Espace École de formation : tout utilisateur connecté peut déposer une demande
   // d'accréditation (le rôle ROLE_ECOLE_FORMATION n'est accordé qu'à la première
   // soumission réussie, cf. EcoleAccreditationController) — même patron que la
-  // candidature de recrutement, authGuard seul, pas de roleGuard.
+  // candidature de recrutement, authGuard seul, pas de roleGuard. Cadre commun
+  // (EcoleLayout) ajouté le 2026-08-25 : la page de dépôt s'affichait seule, sans
+  // en-tête ni cercle de profil (LOG_BLOQUANT.md).
   {
     path: 'accreditation',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/accreditation/pages/demande-accreditation/demande-accreditation').then(
-        (m) => m.DemandeAccreditationComponent
-      ),
+      import('./features/accreditation/layouts/ecole-layout/ecole-layout').then((m) => m.EcoleLayout),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/accreditation/pages/demande-accreditation/demande-accreditation').then(
+            (m) => m.DemandeAccreditationComponent
+          ),
+      },
+      {
+        path: 'mon-profil',
+        loadComponent: () =>
+          import('./features/accreditation/pages/mon-profil/ecole-mon-profil.component').then(
+            (m) => m.EcoleMonProfilComponent
+          ),
+      },
+    ],
   },
 
   // Espace Évaluateur Accréditation

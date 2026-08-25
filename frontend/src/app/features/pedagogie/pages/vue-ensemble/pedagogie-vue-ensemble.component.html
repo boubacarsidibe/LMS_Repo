@@ -33,8 +33,42 @@
         <span class="material-symbols-outlined text-secondary">priority_high</span>Points d’attention
       </h2>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
-        <!-- Cours hors programme : le plus couteux -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-gutter">
+        <!-- Cours sans formateur : invisible dans tout espace formateur -->
+        <article
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg"
+          [class.border-error]="coursSansFormateur.length > 0">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined" [class.text-error]="coursSansFormateur.length > 0"
+              [class.text-on-surface-variant]="coursSansFormateur.length === 0">person_off</span>
+            <span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
+              Cours sans formateur
+            </span>
+          </div>
+          <p class="font-headline-lg text-headline-lg mt-2 tabular-nums"
+             [class.text-error]="coursSansFormateur.length > 0"
+             [class.text-on-surface]="coursSansFormateur.length === 0">
+            {{ coursSansFormateur.length }}
+          </p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+            <ng-container *ngIf="coursSansFormateur.length > 0">
+              N’apparaissent dans aucun espace formateur : ni support, ni séance, ni note n’y sont possibles.
+            </ng-container>
+            <ng-container *ngIf="coursSansFormateur.length === 0">
+              Tous les cours ont au moins un formateur affecté.
+            </ng-container>
+          </p>
+          <ul *ngIf="coursSansFormateur.length > 0" class="mt-3 space-y-1">
+            <li *ngFor="let c of coursSansFormateur.slice(0, 4)" class="font-body-sm text-body-sm text-on-surface">
+              {{ c.code }} — {{ c.titre }}
+            </li>
+          </ul>
+          <a routerLink="../cours" class="inline-block mt-3 font-label-md text-label-md text-secondary hover:underline">
+            Affecter un formateur
+          </a>
+        </article>
+
+        <!-- Cours hors programme -->
         <article
           class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg"
           [class.border-error]="coursHorsProgramme.length > 0">

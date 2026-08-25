@@ -18,6 +18,38 @@
 <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des données…</div>
 
 <ng-container *ngIf="!loading">
+  <!-- Indicateurs -->
+  <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter mb-stack-lg">
+    <a routerLink="/responsable-admission/candidatures" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined">folder_shared</span>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider">Candidatures</span>
+      </div>
+      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ totalCandidats }}</p>
+    </a>
+    <a routerLink="/responsable-admission/sessions" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined">calendar_today</span>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider">Sessions actives</span>
+      </div>
+      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ sessionsActives.length }}</p>
+    </a>
+    <a routerLink="/responsable-admission/candidatures" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined">hourglass_top</span>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider">À traiter</span>
+      </div>
+      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ validationEnCours + preselectionnes }}</p>
+    </a>
+    <a routerLink="/responsable-admission/statistiques" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined">check_circle</span>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider">Taux d'admission</span>
+      </div>
+      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ tauxAdmission }}%</p>
+    </a>
+  </section>
+
   <div *ngIf="prefs.showSessionsActives" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
     <div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
       <h3 class="font-headline-sm text-headline-sm text-primary">Sessions Actives</h3>
@@ -62,4 +94,44 @@
     <span class="material-symbols-outlined text-4xl text-outline mb-2 block">visibility_off</span>
     <p class="font-body-md text-body-md text-on-surface-variant">Le tableau des sessions actives est masqué. <a routerLink="/responsable-admission/parametres" class="text-secondary hover:underline">Modifier dans Paramètres</a>.</p>
   </div>
+
+  <!-- Candidatures récentes -->
+  <section class="mt-stack-lg space-y-stack-md">
+    <div class="flex items-center justify-between">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">history</span>Candidatures récentes
+      </h2>
+      <a routerLink="/responsable-admission/candidatures" class="font-label-md text-label-md text-secondary hover:underline">Tout voir</a>
+    </div>
+
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div *ngIf="candidaturesRecentes.length === 0" class="p-10 text-center font-body-md text-body-md text-on-surface-variant">
+        Aucune candidature soumise pour l'instant.
+      </div>
+      <div class="overflow-x-auto" *ngIf="candidaturesRecentes.length > 0">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-outline-variant bg-surface-container-lowest">
+              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Candidat</th>
+              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Session</th>
+              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Soumise le</th>
+              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium text-right">Statut</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant">
+            <tr *ngFor="let c of candidaturesRecentes" class="hover:bg-surface-container-low transition-colors">
+              <td class="px-6 py-4 font-label-md text-label-md text-primary font-semibold">{{ c.candidatPrenom }} {{ c.candidatNom }}</td>
+              <td class="px-6 py-4 font-body-md text-body-md text-on-surface-variant">{{ c.sessionCandidatureLibelle }}</td>
+              <td class="px-6 py-4 font-body-md text-body-md text-on-surface-variant">{{ c.dateSoumission | date:'dd MMM yyyy' }}</td>
+              <td class="px-6 py-4 text-right">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-label-sm" [ngClass]="classeStatut(c.statut)">
+                  {{ libelleStatut(c.statut) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 </ng-container>
