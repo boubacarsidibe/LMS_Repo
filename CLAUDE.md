@@ -71,16 +71,32 @@ d'avatar et de l'icône du logo.
 
 L'avatar de profil est plein : `bg-primary`, initiales `text-white`, `shadow-sm`.
 
-### Limite connue
+### Chantier des icônes — résolu le 2026-08-25, deux causes superposées
 
-La règle `.material-symbols-outlined` de `frontend/src/styles.css` est déclarée
+La règle `.material-symbols-outlined` de `frontend/src/styles.css` était déclarée
 **hors de toute couche CSS**. Les styles hors couche l'emportent toujours sur ceux
-d'une couche, et Tailwind range ses utilitaires dans `utilities` : **les 216 classes
-de taille posées sur des icônes sont donc inertes**, toutes rendues en 24 px.
+d'une couche, et Tailwind range ses utilitaires dans `utilities` : les 216 classes
+de taille posées sur des icônes étaient donc inertes, toutes rendues en 24 px.
+Corrigé en entourant la règle d'un `@layer base`.
 
-La corriger demande d'entourer la règle d'un `@layer base` — ce qui changerait la
-taille de 216 icônes d'un coup. À traiter comme un chantier à part, pas comme une
-retouche.
+**Ce correctif seul ne suffisait pas.** `angular.json` active par défaut
+l'optimisation `fonts.inline` en production : Angular re-télécharge la feuille
+Google Fonts au moment du build et l'injecte en `<style>` littéral dans
+`index.html`, **hors de toute couche** — une seconde copie de la même règle,
+indépendante de `styles.css` et de son `@layer base`. Un `@import … layer(base)`
+sur l'import Google ne change rien : ce n'est pas un `@import` classique qui
+charge cette copie, c'est l'optimiseur de build qui la génère séparément.
+Vérifié en inspectant `dist/frontend/browser/index.html` après build : la classe
+y apparaissait avant même que Tailwind ne déclare ses couches.
+
+**Décision** : `angular.json` → `architect.build.configurations.production.optimization`
+règle désormais `"fonts": false` (scripts et styles restent optimisés). Les
+polices se chargent alors via de vrais `<link rel="stylesheet">`, servis par
+Google avec la réponse moderne (`@font-face` seul, sans classe de secours) — la
+seule règle `.material-symbols-outlined` restante dans le bundle est la nôtre,
+correctement dans `@layer base`. Vérifié par inspection du CSS compilé (une
+seule occurrence de la règle, dans `@layer base`, avant la couche `utilities`) —
+non vérifié par rendu visuel réel, cet environnement n'ayant pas de navigateur.
 
 ---
 

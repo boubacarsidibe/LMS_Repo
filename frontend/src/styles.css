@@ -1,6 +1,14 @@
 /* 1. Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+/*
+ * layer(base) : la feuille de Google pour Material Symbols embarque elle-même
+ * une règle .material-symbols-outlined{font-size:24px…} hors de toute couche
+ * — sans ce qualificatif, cette règle importée l'emporterait toujours sur les
+ * utilitaires Tailwind (couche `utilities`), quelle que soit notre propre
+ * règle plus bas (déjà mise en `@layer base`) : une couche perd toujours
+ * face à une déclaration hors couche, indépendamment de la spécificité.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap') layer(base);
 
 /* 2. Tailwind CSS v4 */
 @import "tailwindcss";
@@ -13,16 +21,25 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  display: inline-block;
-  white-space: nowrap;
-  -webkit-font-smoothing: antialiased;
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+/*
+ * Dans une @layer, comme le reste des styles ci-dessous : hors de toute
+ * couche, cette règle l'emportait toujours sur les utilitaires Tailwind
+ * (rangés dans la couche `utilities`), rendant les 216 classes de taille
+ * posées sur des icônes (text-[Npx], text-lg…) inertes — toutes rendues en
+ * 24px quelle que soit la classe demandée (CLAUDE.md §1, « Limite connue »).
+ */
+@layer base {
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    display: inline-block;
+    white-space: nowrap;
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
 }
 
 .form-input:focus {
