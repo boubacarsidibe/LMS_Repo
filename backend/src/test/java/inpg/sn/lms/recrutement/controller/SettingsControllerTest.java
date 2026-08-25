@@ -78,6 +78,19 @@ class SettingsControllerTest {
     }
 
     @Test
+    @DisplayName("Mise à jour avec une valeur non numérique : 400, rien enregistré")
+    void updateRules_avec_valeur_non_numerique_est_refusee() {
+        SessionCandidature session = new SessionCandidature();
+        session.setId(3L);
+        when(sessionRepo.findTopByEstOuverteTrueOrderByIdDesc()).thenReturn(session);
+
+        ResponseEntity<?> reponse = controller.updateRules(Map.of("seuilTests", "douze"));
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(sessionRepo, never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
     @DisplayName("Mise à jour valide : le seuil de la session ouverte est réellement persisté")
     void updateRules_persiste_reellement_le_seuil() {
         SessionCandidature session = new SessionCandidature();

@@ -94,6 +94,9 @@ public class SettingsController {
         }
         Object seuilBrut = body.get("seuilTests");
         if (seuilBrut != null) {
+            if (!(seuilBrut instanceof Number)) {
+                return ResponseEntity.badRequest().body(Map.of("message", "seuilTests doit être un nombre."));
+            }
             session.setSeuilReussiteTest(((Number) seuilBrut).floatValue());
             sessionRepo.save(session);
         }
