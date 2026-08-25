@@ -27,11 +27,12 @@ public class CorsConfig {
 
     /**
      * Origines autorisées, séparées par des virgules. La valeur de repli couvre le
-     * développement local ; en production, renseigner APP_CORS_ORIGINS avec le
-     * domaine réel — le caractère générique est impossible ici, puisque les requêtes
-     * portent des identifiants (allowCredentials).
+     * développement local et le domaine Vercel de production, pour que la connexion
+     * fonctionne même sans réglage APP_CORS_ORIGINS côté Railway (le caractère
+     * générique est impossible ici, puisque les requêtes portent des identifiants
+     * avec allowCredentials) ; APP_CORS_ORIGINS reste prioritaire si défini.
      */
-    @Value("${app.cors.origins:http://localhost:4200}")
+    @Value("${app.cors.origins:http://localhost:4200,https://frontend-one-smoky-33.vercel.app}")
     private String origines;
 
     @Bean
