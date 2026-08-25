@@ -3,12 +3,12 @@
   <p class="font-body-md text-body-md text-on-surface-variant mt-2">Suivi des frais de dossier réglés par les candidats, toutes sessions confondues.</p>
 </div>
 
-<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
+<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
 
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-gutter mb-stack-lg">
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
     <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Total encaissé</span><span class="material-symbols-outlined text-secondary">payments</span></div>
-    <div class="font-headline-lg text-headline-lg text-primary">{{ montantTotal | number:'1.0-0' }} <span class="font-body-md text-on-surface-variant font-normal">XOF</span></div>
+    <div class="font-headline-lg text-headline-lg text-primary">{{ montantTotal | number:'1.0-0' }} <span class="font-body-md text-body-md text-on-surface-variant font-normal">XOF</span></div>
   </div>
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
     <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Paiements réussis</span><span class="material-symbols-outlined text-secondary">check_circle</span></div>
@@ -33,8 +33,8 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement…</div>
-  <div *ngIf="!loading && paiementsFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md">Aucun paiement ne correspond à ces critères.</div>
+  <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement…</div>
+  <div *ngIf="!loading && paiementsFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Aucun paiement ne correspond à ces critères.</div>
 
   <div class="overflow-x-auto" *ngIf="!loading && paiementsFiltres.length > 0">
     <table class="w-full text-left border-collapse">

@@ -8,7 +8,7 @@
   <!-- Profil -->
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm h-fit">
     <h2 class="font-headline-sm text-headline-sm text-primary mb-4">Mon profil</h2>
-    <div *ngIf="chargementProfil" class="text-on-surface-variant font-body-sm">Chargement…</div>
+    <div *ngIf="chargementProfil" class="text-on-surface-variant font-body-sm text-body-sm">Chargement…</div>
     <div *ngIf="!chargementProfil" class="space-y-4">
       <div>
         <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Nom d'utilisateur</div>
@@ -29,8 +29,8 @@
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
     <h2 class="font-headline-sm text-headline-sm text-primary mb-4">Changer mon mot de passe</h2>
 
-    <div *ngIf="errorMessage" class="mb-4 p-3 bg-error-container/20 text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
-    <div *ngIf="successMessage" class="mb-4 p-3 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm">{{ successMessage }}</div>
+    <div *ngIf="errorMessage" class="mb-4 p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
+    <div *ngIf="successMessage" class="mb-4 p-3 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm text-body-sm">{{ successMessage }}</div>
 
     <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()" class="space-y-4">
       <div>
@@ -57,12 +57,12 @@
     <h2 class="font-headline-sm text-headline-sm text-primary mb-1">Personnaliser mon dashboard</h2>
     <p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Choisissez les widgets affichés sur la Vue d'ensemble et les Statistiques. Enregistré sur ce navigateur.</p>
 
-    <div *ngIf="dashboardPrefsSaved" class="mb-4 p-3 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm">Préférences enregistrées.</div>
+    <div *ngIf="dashboardPrefsSaved" class="mb-4 p-3 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm text-body-sm">Préférences enregistrées.</div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
       <div>
         <h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-3">Vue d'ensemble</h3>
-        <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+        <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
           <input type="checkbox" [(ngModel)]="dashboardPrefs.showSessionsActives" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
           Tableau des sessions actives
         </label>
@@ -70,31 +70,31 @@
       <div>
         <h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-3">Statistiques</h3>
         <div class="space-y-3">
-          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+          <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
             <input type="checkbox" [(ngModel)]="dashboardPrefs.showTotalCandidats" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
             Total Candidats
           </label>
-          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+          <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
             <input type="checkbox" [(ngModel)]="dashboardPrefs.showValidationEnCours" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
             Validation en cours
           </label>
-          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+          <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
             <input type="checkbox" [(ngModel)]="dashboardPrefs.showPreselectionnes" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
             Présélectionnés
           </label>
-          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+          <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
             <input type="checkbox" [(ngModel)]="dashboardPrefs.showRejetes" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
             Rejetés
           </label>
-          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+          <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
             <input type="checkbox" [(ngModel)]="dashboardPrefs.showRepartitionStatuts" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
             Graphique — Répartition par étape
           </label>
-          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+          <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
             <input type="checkbox" [(ngModel)]="dashboardPrefs.showTauxAdmission" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
             Graphique — Taux d'admission
           </label>
-          <label class="flex items-center gap-2 font-body-sm text-on-surface cursor-pointer">
+          <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
             <input type="checkbox" [(ngModel)]="dashboardPrefs.showDemographie" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
             Graphiques — Profil démographique (genre, âge, profession)
           </label>

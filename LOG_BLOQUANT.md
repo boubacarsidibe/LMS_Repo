@@ -386,3 +386,73 @@ prises pour ne pas construire au-delà de ce que le TDR demande :
   dropdown de ce fichier n'avait pas non plus d'entrée pour `ROLE_ALUMNI` (rôle
   auto-attribué, cohérent avec cette distinction) — seule `ROLE_EVALUATEUR_
   ACCREDITATION` a été ajoutée ici.
+
+## 2026-08-25 — Epic « nettoyage de l'existant » (à la demande directe de l'utilisateur)
+
+### 18. `AcademicTestController` et une partie d'`InterviewController` : modules orphelins, non touchés
+
+En cherchant où était réellement consommé `SettingsController.rules` (seuils de
+décision), découverte que `AcademicTestController` (`/api/academic-tests/**`,
+6 endpoints) n'est appelé par **aucun** composant frontend : les méthodes de
+`RecrutementService` qui lui correspondent (`getAcademicTestKpis`,
+`listAcademicExams`, `getExamScores`, `saveExamScores`…) sont bien définies
+mais jamais invoquées nulle part. L'écran réel « Tests académiques »
+(`responsable-admission-tests.component.ts`) implémente sa propre logique
+côté client, avec son propre calcul de seuil (`seuilPour`, qui lit le vrai
+`SessionCandidature.seuilReussiteTest`) — sans jamais appeler ce contrôleur.
+`InterviewController#saveEvaluation` calcule de son côté une décision à partir
+d'un seuil 60/40 codé en dur, sur une échelle /100, déconnecté à la fois du
+seuil réel de la session (/20) et de `SettingsController`.
+
+**Décision** : ne pas toucher à ces deux points. Corriger `AcademicTestController`
+reviendrait à retaper du code mort ; lui donner un vrai seuil configurable, ou en
+donner un à `InterviewController`, est une décision de modèle (quelle échelle,
+portée par session ou globale, qui la définit) qui n'appartient pas à une story
+de nettoyage — à instruire séparément si un besoin réel est confirmé. Seul
+`SettingsController.getRules/updateRules` a été reconnecté, sur la seule donnée
+qui a un vrai support en base (`SessionCandidature.seuilReussiteTest`).
+
+### 19. Page « Paramètres » (responsable admission) : seul l'onglet « Règles » a été reconnecté
+
+La page entière (`responsable-admission-settings.component`) était un
+prototype non branché : onglets Général, Règles, Équipe et Modèles éditaient
+tous des champs purement locaux, avec un bouton « Enregistrer » qui ne faisait
+qu'afficher un toast de succès sans jamais appeler le backend — y compris
+l'onglet Équipe, qui gérait une liste `users` fictive en mémoire. Seul
+l'onglet Règles a été reconnecté (seul son besoin — le seuil de réussite —
+avait un backend réel à joindre, voir point 18). Les onglets Général, Équipe
+et Modèles restent des prototypes non fonctionnels : les reconnecter
+suppose de construire les endpoints/tables qui leur correspondent (gestion des
+comptes staff, paramètres d'établissement, modèles d'email persistés — ces
+derniers existent déjà côté backend via `AdminRecrutementController`, mais
+cette page ne les appelle pas) — hors du périmètre « corriger l'existant sans
+changer le cœur » fixé pour cette session.
+
+### 20. Audit font-`<échelle>`/text-`<échelle>` : 52 occurrences corrigées, 5 laissées de côté
+
+Script de vérification exhaustif (grep structuré sur tous les `class="…"` du
+frontend, `.html` et gabarits inline `.ts`) : 52 occurrences d'une classe
+`font-<échelle>` sans aucune classe `text-<échelle>` correspondante — le même
+piège que les 252 déjà corrigés (CLAUDE.md §1), retombant en 16 px/400 au lieu
+de la taille prévue. Concentrées presque entièrement dans le module
+`responsable-admission` (recrutement), le plus ancien et le moins repassé par
+les sessions précédentes. Toutes corrigées en insérant la classe `text-<même
+échelle>` juste après, à l'identique du patron déjà en place partout ailleurs.
+Une occurrence responsive (`md:font-headline-md`) avait été mal corrigée par
+le script (texte inséré sans le préfixe `md:`) — repérée en relisant le diff
+et corrigée à la main.
+
+**5 occurrences volontairement non touchées** : `font-label-sm`/`font-label-md`
+combinées à une taille Tailwind brute (`text-sm`, `text-[11px]`, `text-[10px]`)
+déjà choisie explicitement, différente de la taille canonique de l'échelle
+(12px/14px). Les corriger aurait changé la taille visible d'un badge ou d'un
+onglet déjà réglé à une valeur précise, sans pouvoir le vérifier à l'écran
+dans cet environnement (pas de navigateur) — laissées en l'état plutôt que
+risqué une régression visuelle non vérifiable : `mon-parcours.html:31`,
+`retours-evaluations.html:103-105`, `forum.html:69`.
+
+**Non touché, à part** : les 8 occurrences `font-display` associées à
+`text-headline-lg/md/sm` (une échelle différente) ne sont pas un défaut — les
+dix échelles de `tailwind.config.js` partagent toutes la même famille
+(`Inter`), donc `font-display` et `font-headline-lg` produisent exactement le
+même rendu de police ; seule la classe `text-*` détermine la taille réelle.

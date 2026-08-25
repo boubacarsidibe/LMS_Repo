@@ -3,7 +3,7 @@
 <!-- Page Header -->
 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
   <div>
-    <div class="flex items-center gap-2 text-on-surface-variant font-body-sm mb-2">
+    <div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm mb-2">
       <span>Admissions</span>
       <span class="material-symbols-outlined text-[16px]">chevron_right</span>
       <span class="font-medium text-on-surface">Sessions</span>
@@ -31,7 +31,7 @@
 </div>
 
 <!-- Erreur de chargement -->
-<div *ngIf="errorMessage" class="mt-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm">
+<div *ngIf="errorMessage" class="mt-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">
   {{ errorMessage }}
 </div>
 
@@ -42,7 +42,7 @@
       <p class="font-label-md text-label-md text-on-surface-variant">Total Sessions</p>
       <span class="material-symbols-outlined text-on-surface-variant opacity-70">event</span>
     </div>
-    <h3 class="font-headline-lg text-headline-lg text-primary">{{ totalSessions }} <span class="font-body-md text-on-surface-variant font-normal">sessions</span></h3>
+    <h3 class="font-headline-lg text-headline-lg text-primary">{{ totalSessions }} <span class="font-body-md text-body-md text-on-surface-variant font-normal">sessions</span></h3>
   </div>
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
     <div class="flex items-center justify-between mb-4">
@@ -67,7 +67,7 @@
       <span class="material-symbols-outlined text-on-surface-variant opacity-70">timer</span>
     </div>
     <div *ngIf="prochaineFermeture; else aucuneCloture">
-      <p class="font-headline-sm md:font-headline-md text-primary">{{ prochaineFermeture.dateFermeture | date:'dd MMM yyyy' }}</p>
+      <p class="font-headline-sm text-headline-sm md:font-headline-md md:text-headline-md text-primary">{{ prochaineFermeture.dateFermeture | date:'dd MMM yyyy' }}</p>
       <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ prochaineFermeture.libelle }}</p>
     </div>
     <ng-template #aucuneCloture>
@@ -83,7 +83,7 @@
     <input [(ngModel)]="recherche" class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none text-body-md" placeholder="Rechercher une session..." type="text"/>
   </div>
   <div class="flex flex-wrap md:flex-nowrap gap-3">
-    <select [(ngModel)]="filtreStatut" class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface-variant font-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
+    <select [(ngModel)]="filtreStatut" class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface-variant font-body-sm text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
       <option value="TOUTES">Toutes les sessions</option>
       <option value="OUVERTES">Ouvertes</option>
       <option value="FERMEES">Fermées</option>
@@ -93,19 +93,19 @@
 </div>
 
 <!-- Loading -->
-<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement des sessions…</div>
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des sessions…</div>
 
 <!-- Empty state -->
 <div *ngIf="!loading && sessionsFiltrees.length === 0" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant">
   <span class="material-symbols-outlined text-4xl text-outline mb-2 block">event_busy</span>
-  <p class="font-body-md text-on-surface-variant">Aucune session ne correspond à votre recherche.</p>
+  <p class="font-body-md text-body-md text-on-surface-variant">Aucune session ne correspond à votre recherche.</p>
 </div>
 
 <!-- Data Table -->
 <div *ngIf="!loading && sessionsFiltrees.length > 0" class="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
   <table class="w-full text-left border-collapse">
     <thead>
-      <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant font-label-sm uppercase tracking-wider">
+      <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
         <th class="px-6 py-4 font-semibold cursor-pointer select-none hover:text-primary" (click)="trierPar('libelle')">
           Session <span class="material-symbols-outlined text-[16px] align-middle" *ngIf="triColonne === 'libelle'">{{ triDesc ? 'arrow_downward' : 'arrow_upward' }}</span>
         </th>
@@ -122,7 +122,7 @@
         <th class="px-6 py-4 font-semibold text-right">Actions</th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-outline-variant text-on-surface font-body-sm">
+    <tbody class="divide-y divide-outline-variant text-on-surface font-body-sm text-body-sm">
       <tr *ngFor="let s of sessionsFiltrees" class="hover:bg-surface-container-low transition-colors">
         <td class="px-6 py-4 font-medium">{{ s.libelle }}</td>
         <td class="px-6 py-4 text-on-surface-variant">{{ s.dateOuverture | date:'dd MMM yyyy' }}</td>
@@ -168,7 +168,7 @@
   </div>
   <form [formGroup]="sessionForm" (ngSubmit)="enregistrer()" class="flex-1 flex flex-col overflow-y-auto">
     <div class="flex-1 overflow-y-auto p-6 space-y-6">
-      <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm">{{ formError }}</div>
+      <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ formError }}</div>
       <div class="space-y-4">
         <div>
           <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Intitulé de la formation</label>

@@ -11,7 +11,7 @@
   </div>
 </div>
 
-<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
+<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
 
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-stack-lg">
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">En attente de décision</span><span class="material-symbols-outlined text-outline">hourglass_empty</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbEnAttente }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Après entretien</div></div>
@@ -33,8 +33,8 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement…</div>
-  <div *ngIf="!loading && lignesFiltrees.length === 0" class="p-10 text-center text-on-surface-variant font-body-md">Aucun candidat à ce stade pour le moment.</div>
+  <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement…</div>
+  <div *ngIf="!loading && lignesFiltrees.length === 0" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Aucun candidat à ce stade pour le moment.</div>
 
   <ng-container *ngIf="!loading && lignesFiltrees.length > 0">
     <div class="grid grid-cols-12 gap-4 p-4 border-b border-outline-variant bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
