@@ -41,6 +41,51 @@ import { ScolariteService } from '../../services/scolarite.service';
       <app-ui-spinner *ngIf="chargement" message="Chargement de votre scolarité…"></app-ui-spinner>
 
       <ng-container *ngIf="!chargement">
+        <!--
+          Prochaines séances en premier : c'est l'information la plus utile à
+          l'ouverture de session (« qu'est-ce qui m'attend maintenant/bientôt »),
+          avant même les indicateurs de progression.
+        -->
+        <section class="space-y-stack-md">
+          <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2"><span class="material-symbols-outlined text-secondary">event_upcoming</span>Prochaines séances</h2>
+          <app-ui-empty-state
+            *ngIf="prochainesSeances.length === 0"
+            icone="event_busy"
+            titre="Aucune séance à venir"
+            description="Votre calendrier académique ne comporte pas de séance planifiée."
+          ></app-ui-empty-state>
+          <ul *ngIf="prochainesSeances.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+            <li
+              *ngFor="let s of prochainesSeances"
+              class="bg-surface-container-lowest rounded-xl p-stack-md border border-outline-variant shadow-sm flex gap-4"
+            >
+              <div
+                class="w-12 shrink-0 text-center rounded-lg bg-primary-container text-on-primary-container py-1"
+              >
+                <p class="text-label-sm uppercase">{{ s.dateHeure | date: 'MMM' }}</p>
+                <p class="font-label-md text-label-md tabular-nums">{{ s.dateHeure | date: 'dd' }}</p>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="font-label-md text-label-md text-on-surface truncate">{{ s.titre }}</p>
+                <p class="font-body-sm text-body-sm text-on-surface-variant">
+                  {{ s.dateHeure | date: 'HH:mm' }} · {{ s.dureeMinutes }} min ·
+                  <ng-container *ngIf="!estLienVisio(s.lieuOuLien)">{{ s.lieuOuLien || 'Lieu à préciser' }}</ng-container>
+                </p>
+              </div>
+              <a
+                *ngIf="estLienVisio(s.lieuOuLien)"
+                [href]="s.lieuOuLien"
+                target="_blank"
+                rel="noopener"
+                class="self-center inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity shrink-0"
+              >
+                <span class="material-symbols-outlined text-[18px]">videocam</span>
+                Rejoindre
+              </a>
+            </li>
+          </ul>
+        </section>
+
         <!-- Indicateurs, tous calculés -->
         <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter">
           <article
@@ -133,88 +178,45 @@ import { ScolariteService } from '../../services/scolarite.service';
           </div>
         </section>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
-          <!-- Prochaines séances -->
-          <section class="space-y-stack-md">
-            <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2"><span class="material-symbols-outlined text-secondary">event_upcoming</span>Prochaines séances</h2>
-            <app-ui-empty-state
-              *ngIf="prochainesSeances.length === 0"
-              icone="event_busy"
-              titre="Aucune séance à venir"
-              description="Votre calendrier académique ne comporte pas de séance planifiée."
-            ></app-ui-empty-state>
-            <ul *ngIf="prochainesSeances.length > 0" class="space-y-base">
-              <li
-                *ngFor="let s of prochainesSeances"
-                class="bg-surface-container-lowest rounded-xl p-stack-md border border-outline-variant shadow-sm flex gap-4"
-              >
-                <div
-                  class="w-12 shrink-0 text-center rounded-lg bg-primary-container text-on-primary-container py-1"
-                >
-                  <p class="text-label-sm uppercase">{{ s.dateHeure | date: 'MMM' }}</p>
-                  <p class="font-label-md text-label-md tabular-nums">{{ s.dateHeure | date: 'dd' }}</p>
-                </div>
-                <div class="min-w-0 flex-1">
-                  <p class="font-label-md text-label-md text-on-surface truncate">{{ s.titre }}</p>
-                  <p class="font-body-sm text-body-sm text-on-surface-variant">
-                    {{ s.dateHeure | date: 'HH:mm' }} · {{ s.dureeMinutes }} min ·
-                    <ng-container *ngIf="!estLienVisio(s.lieuOuLien)">{{ s.lieuOuLien || 'Lieu à préciser' }}</ng-container>
-                  </p>
-                </div>
-                <a
-                  *ngIf="estLienVisio(s.lieuOuLien)"
-                  [href]="s.lieuOuLien"
-                  target="_blank"
-                  rel="noopener"
-                  class="self-center inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity shrink-0"
-                >
-                  <span class="material-symbols-outlined text-[18px]">videocam</span>
-                  Rejoindre
-                </a>
-              </li>
-            </ul>
-          </section>
-
-          <!-- Dernières communications -->
-          <section class="space-y-stack-md">
-            <div class="flex items-center justify-between">
-              <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2"><span class="material-symbols-outlined text-secondary">campaign</span>Communications</h2>
-              <a
-                routerLink="/espace-etudiant/annonces"
-                class="font-label-md text-label-md text-secondary hover:underline"
-                >Tout voir</a
-              >
-            </div>
-            <app-ui-empty-state
-              *ngIf="dernieresAnnonces.length === 0"
-              icone="campaign"
-              titre="Aucune communication"
-              description="Les annonces, messages et mémos de l’INPG s’afficheront ici."
-            ></app-ui-empty-state>
-            <ul *ngIf="dernieresAnnonces.length > 0" class="space-y-base">
-              <li
-                *ngFor="let a of dernieresAnnonces"
-                class="bg-surface-container-lowest rounded-xl p-stack-md border border-outline-variant shadow-sm"
-                [class.border-secondary]="!a.lue"
-              >
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined text-[18px] text-on-surface-variant">{{
-                    icone(a)
-                  }}</span>
-                  <p class="font-label-md text-label-md text-on-surface truncate">{{ a.titre }}</p>
-                  <span
-                    *ngIf="!a.lue"
-                    class="ml-auto w-2 h-2 rounded-full bg-secondary shrink-0"
-                    aria-label="Non lue"
-                  ></span>
-                </div>
-                <p class="font-body-sm text-body-sm text-on-surface-variant mt-1 line-clamp-2">
-                  {{ a.contenu }}
-                </p>
-              </li>
-            </ul>
-          </section>
-        </div>
+        <!-- Dernières communications -->
+        <section class="space-y-stack-md">
+          <div class="flex items-center justify-between">
+            <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2"><span class="material-symbols-outlined text-secondary">campaign</span>Communications</h2>
+            <a
+              routerLink="/espace-etudiant/annonces"
+              class="font-label-md text-label-md text-secondary hover:underline"
+              >Tout voir</a
+            >
+          </div>
+          <app-ui-empty-state
+            *ngIf="dernieresAnnonces.length === 0"
+            icone="campaign"
+            titre="Aucune communication"
+            description="Les annonces, messages et mémos de l’INPG s’afficheront ici."
+          ></app-ui-empty-state>
+          <ul *ngIf="dernieresAnnonces.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+            <li
+              *ngFor="let a of dernieresAnnonces"
+              class="bg-surface-container-lowest rounded-xl p-stack-md border border-outline-variant shadow-sm"
+              [class.border-secondary]="!a.lue"
+            >
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px] text-on-surface-variant">{{
+                  icone(a)
+                }}</span>
+                <p class="font-label-md text-label-md text-on-surface truncate">{{ a.titre }}</p>
+                <span
+                  *ngIf="!a.lue"
+                  class="ml-auto w-2 h-2 rounded-full bg-secondary shrink-0"
+                  aria-label="Non lue"
+                ></span>
+              </div>
+              <p class="font-body-sm text-body-sm text-on-surface-variant mt-1 line-clamp-2">
+                {{ a.contenu }}
+              </p>
+            </li>
+          </ul>
+        </section>
       </ng-container>
     </div>
   `,
