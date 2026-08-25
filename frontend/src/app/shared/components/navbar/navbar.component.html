@@ -16,10 +16,12 @@
       <a *ngIf="isResponsableAdmissionRole" routerLink="/responsable-admission" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Admission</a>
       <a *ngIf="isEcoleFormationRole" routerLink="/accreditation" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Ma demande d'accréditation</a>
       <a *ngIf="isEvaluateurAccreditationRole" routerLink="/evaluateur-accreditation" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Accréditation</a>
+      <!-- Réservée aux comptes connectés (CLAUDE.md §3) : absente du menu tant qu'aucune session n'est ouverte,
+           plutôt que visible pour finir sur un écran de connexion imprévu. -->
+      <a *ngIf="isLoggedIn" routerLink="/ecoles-accreditees" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Écoles accréditées</a>
       <a routerLink="/accueil" routerLinkActive="text-primary border-b-2 border-primary" [routerLinkActiveOptions]="{ exact: true }" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Accueil</a>
       <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
       <a routerLink="/recrutement/sessions" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Sessions ouvertes</a>
-      <a routerLink="/ecoles-accreditees" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Écoles accréditées</a>
       <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
       <a routerLink="/contact" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Contact</a>
     </nav>
