@@ -66,8 +66,25 @@ public class UserService implements UserDetailsService {
         newUser.setUsername(username);
         newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        newUser.setTypeInscription(parseTypeInscription(userDto.getTypeInscription()));
 
         return userRepository.save(newUser);
+    }
+
+    /**
+     * Valeur libre venue du frontend : une entrée absente ou invalide retombe
+     * sur CANDIDAT plutôt que de faire échouer toute l'inscription pour un
+     * champ qui n'est qu'indicatif.
+     */
+    private inpg.sn.lms.auth.enums.EnumTypeInscription parseTypeInscription(String valeur) {
+        if (valeur == null) {
+            return inpg.sn.lms.auth.enums.EnumTypeInscription.CANDIDAT;
+        }
+        try {
+            return inpg.sn.lms.auth.enums.EnumTypeInscription.valueOf(valeur.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return inpg.sn.lms.auth.enums.EnumTypeInscription.CANDIDAT;
+        }
     }
 
     /**

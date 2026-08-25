@@ -54,7 +54,8 @@ public class CrudControlleur {
                     "id", newUser.getId(),
                     "username", newUser.getUsername(),
                     "email", newUser.getEmail(),
-                    "roles", newUser.getRoles().stream().map(role -> role.getCode()).toList());
+                    "roles", newUser.getRoles().stream().map(role -> role.getCode()).toList(),
+                    "typeInscription", newUser.getTypeInscription().name());
             return ResponseEntity.ok(Map.of("token", token, "user", user));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

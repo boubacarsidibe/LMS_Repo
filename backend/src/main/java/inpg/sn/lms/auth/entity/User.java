@@ -8,6 +8,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+
+import inpg.sn.lms.auth.enums.EnumTypeInscription;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -52,6 +56,13 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String email;
+
+    // Intention declaree a l'inscription (candidat / ecole) - voir EnumTypeInscription.
+    // N'attribue aucun role : ROLE_CANDIDAT/ROLE_ECOLE_FORMATION restent accordes
+    // uniquement a la soumission reelle.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_inscription", nullable = false, length = 20)
+    private EnumTypeInscription typeInscription = EnumTypeInscription.CANDIDAT;
 
     // @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     // private Candidat candidat;

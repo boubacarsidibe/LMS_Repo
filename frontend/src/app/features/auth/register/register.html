@@ -26,6 +26,32 @@
 
   <!-- Formulaire Inscription -->
   <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-6">
+    <!-- Type de compte : oriente la redirection après inscription (aucun rôle métier
+         n'est encore attribué à ce stade, il ne l'est qu'à la soumission réelle). -->
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5">Je m'inscris en tant que</label>
+      <div class="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          (click)="choisirTypeInscription('CANDIDAT')"
+          [class.border-secondary]="typeInscription === 'CANDIDAT'"
+          [class.bg-secondary-container/20]="typeInscription === 'CANDIDAT'"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-colors cursor-pointer">
+          <span class="font-label-md text-label-md text-on-surface block">Candidat(e)</span>
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Postuler à une formation</span>
+        </button>
+        <button
+          type="button"
+          (click)="choisirTypeInscription('ECOLE')"
+          [class.border-secondary]="typeInscription === 'ECOLE'"
+          [class.bg-secondary-container/20]="typeInscription === 'ECOLE'"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-colors cursor-pointer">
+          <span class="font-label-md text-label-md text-on-surface block">École de formation</span>
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Demander une accréditation</span>
+        </button>
+      </div>
+    </div>
+
     <div class="grid grid-cols-2 gap-4">
       <div>
         <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-prenom">Prénom</label>
