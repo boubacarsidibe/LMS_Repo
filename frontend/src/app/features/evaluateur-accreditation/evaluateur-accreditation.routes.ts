@@ -15,6 +15,13 @@ export const routes: Routes = [
         path: 'criteres',
         loadComponent: () => import('./pages/criteres/criteres').then((m) => m.EvaluateurCriteresComponent),
       },
+      {
+        path: 'mon-profil',
+        loadComponent: () =>
+          import('./pages/mon-profil/evaluateur-mon-profil.component').then(
+            (m) => m.EvaluateurMonProfilComponent
+          ),
+      },
     ],
   },
 ];

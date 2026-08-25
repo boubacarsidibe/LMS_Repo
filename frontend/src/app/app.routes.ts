@@ -93,14 +93,30 @@ export const routes: Routes = [
   // Espace École de formation : tout utilisateur connecté peut déposer une demande
   // d'accréditation (le rôle ROLE_ECOLE_FORMATION n'est accordé qu'à la première
   // soumission réussie, cf. EcoleAccreditationController) — même patron que la
-  // candidature de recrutement, authGuard seul, pas de roleGuard.
+  // candidature de recrutement, authGuard seul, pas de roleGuard. Cadre commun
+  // (EcoleLayout) ajouté le 2026-08-25 : la page de dépôt s'affichait seule, sans
+  // en-tête ni cercle de profil (LOG_BLOQUANT.md).
   {
     path: 'accreditation',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/accreditation/pages/demande-accreditation/demande-accreditation').then(
-        (m) => m.DemandeAccreditationComponent
-      ),
+      import('./features/accreditation/layouts/ecole-layout/ecole-layout').then((m) => m.EcoleLayout),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/accreditation/pages/demande-accreditation/demande-accreditation').then(
+            (m) => m.DemandeAccreditationComponent
+          ),
+      },
+      {
+        path: 'mon-profil',
+        loadComponent: () =>
+          import('./features/accreditation/pages/mon-profil/ecole-mon-profil.component').then(
+            (m) => m.EcoleMonProfilComponent
+          ),
+      },
+    ],
   },
 
   // Espace Évaluateur Accréditation
