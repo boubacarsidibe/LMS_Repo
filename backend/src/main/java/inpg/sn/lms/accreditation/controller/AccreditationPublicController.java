@@ -13,13 +13,15 @@ import inpg.sn.lms.accreditation.enums.EnumStatutDemandeAccreditation;
 import inpg.sn.lms.accreditation.repository.DemandeAccreditationRepository;
 
 /**
- * Liste publique des écoles accréditées (TDR §F : « base de données des
- * écoles accréditées », processus « transparent »).
+ * Liste des écoles accréditées (TDR §F : « base de données des écoles
+ * accréditées », processus « transparent »).
  *
- * <p>Sans authentification — {@code permitAll()} dans {@code SecurityConfig},
- * même patron que {@code CertificatPublicController} : réponse restreinte
- * (voir {@link EcoleAccrediteeDto}), jamais l'entité ni les coordonnées de
- * l'école.
+ * <p>Réservée aux comptes connectés — tout rôle confondu, aucune restriction
+ * par rôle — depuis la décision produit du 2026-08-25 (voir
+ * {@code LOG_BLOQUANT.md}) : le TDR demandait une liste réellement publique,
+ * mais l'accès a été resserré à la demande de l'utilisateur. Réponse toujours
+ * restreinte (voir {@link EcoleAccrediteeDto}), jamais l'entité ni les
+ * coordonnées de l'école.
  */
 @RestController
 @RequestMapping("/api/accreditation/public")

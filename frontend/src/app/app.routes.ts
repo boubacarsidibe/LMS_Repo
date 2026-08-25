@@ -78,9 +78,12 @@ export const routes: Routes = [
     loadChildren: () => import('./features/espace-alumni/espace-alumni.routes').then(m => m.routes)
   },
 
-  // Liste publique des écoles accréditées (TDR §F) : accessible sans compte.
+  // Liste des écoles accréditées (TDR §F) : réservée aux comptes connectés,
+  // tout rôle confondu — décision produit du 2026-08-25 (LOG_BLOQUANT.md),
+  // le TDR demandait initialement une liste réellement publique.
   {
     path: 'ecoles-accreditees',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/accreditation/pages/ecoles-accreditees/ecoles-accreditees').then(
         (m) => m.EcolesAccrediteesComponent

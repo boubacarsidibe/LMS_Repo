@@ -7,8 +7,9 @@ import { EcoleAccreditee } from '../../models/accreditation.models';
 import { AccreditationService } from '../../services/accreditation.service';
 
 /**
- * Liste publique des écoles accréditées (TDR §F : « processus transparent »).
- * Accessible sans compte — endpoint {@code /api/accreditation/public/**}.
+ * Liste des écoles accréditées (TDR §F : « processus transparent »).
+ * Réservée aux comptes connectés (`authGuard`) — décision produit du
+ * 2026-08-25, voir `LOG_BLOQUANT.md`.
  */
 @Component({
   selector: 'app-ecoles-accreditees',
