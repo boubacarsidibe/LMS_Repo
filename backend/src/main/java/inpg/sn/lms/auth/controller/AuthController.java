@@ -264,8 +264,19 @@ public class AuthController {
         }
     }
 
+    /**
+     * Réservé à RESPONSABLE_ADMISSION, comme la création juste au-dessus : c'est
+     * {@code SecurityConfig} qui décide en dernier ressort (le filtre d'URL
+     * rejette une requête RESPONSABLE_PEDAGOGIQUE avant même d'atteindre cette
+     * annotation), donc l'autoriser ici sans l'autoriser là serait une autorité
+     * inatteignable, jamais vérifiée par aucun test. Le responsable pédagogique
+     * dispose déjà de son propre endpoint dédié pour ce besoin :
+     * {@code GET /api/pedagogie/formateurs} (PedagogieController), non utilisé
+     * par aucun écran frontend à ce jour — l'écart a été repéré lors d'un audit
+     * de tous les endpoints, sans caller réel affecté par ce resserrement.
+     */
     @GetMapping("/formateurs")
-    @PreAuthorize("hasAnyAuthority('ROLE_RESPONSABLE_ADMISSION', 'ROLE_RESPONSABLE_PEDAGOGIQUE')")
+    @PreAuthorize("hasAuthority('ROLE_RESPONSABLE_ADMISSION')")
     public ResponseEntity<?> getAllFormateurs() {
         return ResponseEntity.ok(formateurService.getAllFormateurs());
     }
