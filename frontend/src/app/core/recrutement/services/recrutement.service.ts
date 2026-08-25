@@ -259,6 +259,16 @@ export class RecrutementService {
     return this.http.post<any>(`${this.baseUrl}/academic-tests/exams/${encodeURIComponent(nom)}/scores/batch`, scores);
   }
 
+  /** Seuil de réussite (note/20) de la session de candidature actuellement ouverte. */
+  getRules(): Observable<{ seuilTests: number | null; sessionId: number | null }> {
+    return this.http.get<{ seuilTests: number | null; sessionId: number | null }>(`${this.baseUrl}/settings/rules`);
+  }
+
+  updateRules(seuilTests: number): Observable<{ seuilTests: number | null; sessionId: number | null }> {
+    return this.http.put<{ seuilTests: number | null; sessionId: number | null }>(
+      `${this.baseUrl}/settings/rules`, { seuilTests });
+  }
+
   // ===================== ANALYTICS =====================
 
   getAnalyticsKpis(): Observable<any> {
