@@ -6,24 +6,16 @@
       INPG<span class="text-brand"> LMS</span>
     </a>
 
-    <!-- Navigation Links (Desktop) - centered -->
+    <!-- Navigation Links (Desktop) - centered. Volontairement limitée à 4-5 entrées
+         (demande du 2026-08-25) : le logo mène déjà à /accueil (pas besoin d'un lien
+         "Accueil" redondant), et un compte connecté n'a besoin que d'UN lien de
+         retour vers son espace, pas d'un lien par sous-page de ce dernier. -->
     <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
-      <a *ngIf="isLoggedIn && (isEtudiantRole || isFormateurRole)" routerLink="/espace-etudiant/dashboard" routerLinkActive="text-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Dashboard</a>
-      <a *ngIf="isEtudiantRole" routerLink="/espace-etudiant/mes-formations" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Mes formations</a>
-      <a *ngIf="isFormateurRole" routerLink="/espace-etudiant/formateur/mes-cours" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Mes cours</a>
-      <a *ngIf="isFormateurRole" routerLink="/espace-etudiant/formateur/planning-calendrier" routerLinkActive="text-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Planning</a>
-      <a *ngIf="isPedagogiqueRole" routerLink="/pedagogie" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Offre pédagogique</a>
-      <a *ngIf="isResponsableAdmissionRole" routerLink="/responsable-admission" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Admission</a>
-      <a *ngIf="isEcoleFormationRole" routerLink="/accreditation" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Ma demande d'accréditation</a>
-      <a *ngIf="isEvaluateurAccreditationRole" routerLink="/evaluateur-accreditation" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Accréditation</a>
-      <!-- Réservée aux comptes connectés (CLAUDE.md §3) : absente du menu tant qu'aucune session n'est ouverte,
-           plutôt que visible pour finir sur un écran de connexion imprévu. -->
-      <a *ngIf="isLoggedIn" routerLink="/ecoles-accreditees" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Écoles accréditées</a>
-      <a routerLink="/accueil" routerLinkActive="text-primary border-b-2 border-primary" [routerLinkActiveOptions]="{ exact: true }" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Accueil</a>
       <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
       <a routerLink="/recrutement/sessions" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Sessions ouvertes</a>
       <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
       <a routerLink="/contact" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Contact</a>
+      <a *ngIf="monEspaceUrl" [routerLink]="monEspaceUrl" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Mon espace</a>
     </nav>
 
     <!-- Actions (Desktop) -->
