@@ -419,7 +419,7 @@ public class EspaceEtudiantController {
             return ResponseEntity.badRequest().body(Map.of("message", "Le message ne peut pas être vide."));
         }
         ForumSujet sujet = forumSujetRepository.findById(id).orElse(null);
-        if (sujet == null || !estSujetEtudiantOuFormateur(sujet)) {
+        if (sujet == null || !forumVisibilite.estVisible(sujet, authentication)) {
             return ResponseEntity.notFound().build();
         }
         if (sujet.isClos() && !marquerCommeResolu) {
@@ -502,7 +502,7 @@ public class EspaceEtudiantController {
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
         ForumSujet sujet = forumSujetRepository.findById(id).orElse(null);
-        if (sujet == null || !estSujetEtudiantOuFormateur(sujet)) {
+        if (sujet == null || !forumVisibilite.estVisible(sujet, authentication)) {
             return ResponseEntity.notFound().build();
         }
         // « Urgent » se materialise par l'epinglage : le sujet remonte en tete de liste,
@@ -520,7 +520,7 @@ public class EspaceEtudiantController {
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
         ForumSujet sujet = forumSujetRepository.findById(id).orElse(null);
-        if (sujet == null || !estSujetEtudiantOuFormateur(sujet)) {
+        if (sujet == null || !forumVisibilite.estVisible(sujet, authentication)) {
             return ResponseEntity.notFound().build();
         }
         // Un sujet resolu est clos : il reste consultable mais n'accepte plus de reponse.
@@ -538,22 +538,11 @@ public class EspaceEtudiantController {
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
         ForumSujet sujet = forumSujetRepository.findById(id).orElse(null);
-        if (sujet == null || !estSujetEtudiantOuFormateur(sujet)) {
+        if (sujet == null || !forumVisibilite.estVisible(sujet, authentication)) {
             return ResponseEntity.notFound().build();
         }
         forumSujetRepository.deleteById(id);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Un sujet de l'espace alumni ({@code portee = ALUMNI}) n'est jamais accessible
-     * par ce contrôleur, réservé à l'espace étudiant — même patron que
-     * {@code ForumVisibiliteService.estVisible} pour {@code ForumController}. 404
-     * plutôt que 403 : ne pas confirmer qu'un identifiant correspond à un sujet
-     * existant, seulement inaccessible d'ici.
-     */
-    private boolean estSujetEtudiantOuFormateur(ForumSujet sujet) {
-        return sujet.getPortee() != inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet.ALUMNI;
     }
 
     /**
