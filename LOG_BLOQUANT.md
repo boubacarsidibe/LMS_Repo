@@ -497,3 +497,29 @@ a été bloquée par le classeur de permissions de la session autonome sur des
 commandes de suppression de fichiers ; laissé en l'état, à supprimer à la
 prochaine intervention humaine ou lors d'un epic dédié au nettoyage du code
 mort.
+
+### 23. Pipeline GitHub Actions à l'arrêt depuis le 10 août — cause hors de portée de l'API
+
+`.github/workflows/ci.yml` ne s'est plus exécuté sur aucun push depuis le run
+#43 du 2026-08-10 (en échec), malgré des dizaines de fusions sur `develop` et
+`main` depuis (dont toutes celles du 2026-08-25). Aucun outil `mcp__github__*`
+disponible dans cette session n'expose les réglages « Actions permissions » du
+dépôt (`GET/PUT /repos/{owner}/{repo}/actions/permissions`) pour vérifier ou
+corriger un éventuel blocage à ce niveau.
+
+Tentative de diagnostic : déclenchement manuel via `actions_run_trigger`
+(`run_workflow`) sur `develop`. Résultat : erreur **« Workflow does not have
+'workflow_dispatch' trigger »** — une erreur de configuration du workflow
+(`ci.yml` ne déclare que `push`/`pull_request`, pas `workflow_dispatch`), pas
+une erreur d'accès ou de quota. Ça exclut un blocage total (« Actions
+désactivées sur le dépôt » aurait probablement échoué autrement, avant même
+d'atteindre la validation du déclencheur) mais ne dit pas pourquoi les
+événements `push` eux-mêmes ne déclenchent plus rien.
+
+**Décision** : hors de portée des outils disponibles ici — nécessite une
+vérification humaine directe sur `Settings → Actions → General` du dépôt
+(état « Actions permissions », historique de facturation/minutes consommées),
+et éventuellement d'ajouter un déclencheur `workflow_dispatch` à `ci.yml` pour
+permettre un test manuel propre à l'avenir. Ne bloque pas le reste de cette
+session ni des suivantes — la propagation vers `main` (ÉTAPE 0) et le travail
+sur `develop` continuent sans dépendre de la CI.
