@@ -1,0 +1,19 @@
+# ==========================================
+# Dockerfile DEV — Hot Reload Angular
+# ==========================================
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Installer Angular CLI globalement (nécessaire pour ng serve)
+RUN npm install -g @angular/cli
+
+# Copier les fichiers de dépendances et installer
+COPY package*.json ./
+RUN npm ci
+
+# Exposer le port du dev server Angular
+EXPOSE 4200
+
+# Lancer avec polling forcé pour Docker sur Windows (les volumes ne propagent pas inotify)
+CMD ["sh", "-c", "CHOKIDAR_USEPOLLING=true npx ng serve --host 0.0.0.0 --poll 1000 --proxy-config proxy.conf.mjs"]

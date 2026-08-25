@@ -1,0 +1,396 @@
+<div class="min-h-screen flex flex-col bg-[#F8FAFC]">
+  <app-candidat-navbar></app-candidat-navbar>
+
+  <!-- Loader de vérification initiale -->
+  <main *ngIf="verifierCandidatureExistante" class="flex-grow flex items-center justify-center py-20">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 border-2 border-[#30609a] border-t-transparent rounded-full animate-spin"></div>
+      <span class="text-sm text-[#46464e]">Vérification de vos candidatures...</span>
+    </div>
+  </main>
+
+  <main *ngIf="!verifierCandidatureExistante" class="flex-grow flex items-start justify-center py-10 px-4 md:px-10">
+    <div class="w-full max-w-3xl bg-white rounded-xl border border-[#c7c5d0] shadow-sm">
+
+      <!-- ========== STEPPER HEADER ========== -->
+      <div class="p-6 border-b border-[#c7c5d0]/40 bg-[#f7f9fb] rounded-t-xl">
+        <h1 class="text-2xl leading-8 font-semibold text-[#000002] mb-6 text-center">Candidature INPG</h1>
+        <div class="flex items-center justify-between relative px-2">
+          <!-- Progress Line Background -->
+          <div class="absolute top-5 left-0 w-full h-[2px] bg-[#e0e3e5] z-0"></div>
+          <!-- Active Progress Line (z-index supérieur pour être visible) -->
+          <div class="absolute top-5 left-0 h-[3px] bg-[#30609a] z-[1] transition-all duration-500"
+               [style.width]="(etape / totalEtapes) * 100 + '%'">
+          </div>
+          <!-- Steps -->
+          <div *ngFor="let label of etapeLabels; let i = index"
+               class="flex flex-col items-center gap-2 bg-[#f7f9fb] px-2 relative z-10">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-[0_0_0_4px_#f7f9fb] transition-all duration-300"
+                 [class.bg-[#30609a]]="i + 1 <= etape"
+                 [class.text-white]="i + 1 <= etape"
+                 [class.bg-[#e0e3e5]]="i + 1 > etape"
+                 [class.text-[#46464e]]="i + 1 > etape">
+              <ng-container *ngIf="i + 1 < etape; else stepNumber">
+                <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">check</span>
+              </ng-container>
+              <ng-template #stepNumber>{{ i + 1 }}</ng-template>
+            </div>
+            <span class="text-xs tracking-[0.05em] font-semibold hidden md:block"
+                  [class.text-[#30609a]]="i + 1 <= etape"
+                  [class.text-[#46464e]]="i + 1 > etape">
+              {{ label }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== SUCCESS MESSAGE ========== -->
+      <div *ngIf="successMessage" class="mx-6 mt-6 p-4 rounded-lg bg-[#d4e3ff]/40 text-[#0e4781] text-sm font-medium text-center">
+        <span class="material-symbols-outlined text-[18px] align-middle mr-1" style="font-variation-settings: 'FILL' 0;">check_circle</span>
+        {{ successMessage }}
+      </div>
+
+      <!-- ========== FORM CONTENT ========== -->
+      <div class="p-6">
+
+        <!-- === ÉTAPE 1 : PROFIL === -->
+        <ng-container *ngIf="etape === 1">
+          <h2 class="text-xl leading-7 font-semibold text-[#000002] mb-6 border-l-4 border-[#30609a] pl-3">
+            Informations Personnelles
+          </h2>
+          <div class="space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Nom <span class="text-[#ba1a1a]">*</span></label>
+                <input [(ngModel)]="data.nom" (ngModelChange)="saveDraft()" type="text" placeholder="Nom"
+                       [class.border-[#ba1a1a]]="showErrors && nomInvalide"
+                       class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                <p *ngIf="showErrors && nomInvalide" class="text-xs text-[#ba1a1a]">{{ data.nom.trim() ? 'Nom invalide (lettres uniquement, 2 caractères minimum).' : 'Le nom est obligatoire.' }}</p>
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Prénom <span class="text-[#ba1a1a]">*</span></label>
+                <input [(ngModel)]="data.prenom" (ngModelChange)="saveDraft()" type="text" placeholder="Prénom"
+                       [class.border-[#ba1a1a]]="showErrors && prenomInvalide"
+                       class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                <p *ngIf="showErrors && prenomInvalide" class="text-xs text-[#ba1a1a]">{{ data.prenom.trim() ? 'Prénom invalide (lettres uniquement, 2 caractères minimum).' : 'Le prénom est obligatoire.' }}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Adresse Email <span class="text-[#ba1a1a]">*</span></label>
+                <div class="relative">
+                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#77767f] text-[20px]" style="font-variation-settings: 'FILL' 0;">mail</span>
+                  <input [(ngModel)]="data.email" (ngModelChange)="saveDraft()" type="email" placeholder="Mail"
+                         [class.border-[#ba1a1a]]="showErrors && emailInvalide"
+                         class="w-full pl-10 pr-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                </div>
+                <p *ngIf="showErrors && emailInvalide" class="text-xs text-[#ba1a1a]">{{ data.email.trim() ? 'Adresse email invalide.' : "L'email est obligatoire." }}</p>
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Téléphone <span class="text-[#ba1a1a]">*</span></label>
+                <div class="flex gap-2">
+                  <select [(ngModel)]="data.phonePrefix" (ngModelChange)="saveDraft()" class="w-24 px-2 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                    <option>+221</option>
+                    <option>+33</option>
+                    <option>+1</option>
+                    <option>+32</option>
+                    <option>+41</option>
+                    <option>+225</option>
+                    <option>+226</option>
+                    <option>+227</option>
+                    <option>+229</option>
+                  </select>
+                  <input [(ngModel)]="data.telephone" (ngModelChange)="saveDraft()" type="tel" placeholder="77 123 45 67"
+                         [class.border-[#ba1a1a]]="showErrors && telephoneInvalide"
+                         class="flex-1 px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                </div>
+                <p *ngIf="showErrors && telephoneInvalide" class="text-xs text-[#ba1a1a]">{{ data.telephone.trim() ? 'Numéro invalide (7 à 12 chiffres).' : 'Le téléphone est obligatoire.' }}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Date de naissance</label>
+                <input [(ngModel)]="data.dateNaissance" (ngModelChange)="saveDraft()" type="date"
+                       class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Nationalité</label>
+                <select [(ngModel)]="data.nationalite" (ngModelChange)="saveDraft()" class="w-full px-3 py-2.5 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                  <option value="">-- Sélectionner --</option>
+                  <option value="Sénégalaise">Sénégalaise</option>
+                  <option value="Ivoirienne">Ivoirienne</option>
+                  <option value="Malienne">Malienne</option>
+                  <option value="Burkinabé">Burkinabé</option>
+                  <option value="Nigérienne">Nigérienne</option>
+                  <option value="Mauritanienne">Mauritanienne</option>
+                  <option value="Béninoise">Béninoise</option>
+                  <option value="Togolaise">Togolaise</option>
+                  <option value="Guinéenne">Guinéenne</option>
+                  <option value="Française">Française</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Genre <span class="text-[#ba1a1a]">*</span></label>
+                <select [(ngModel)]="data.genre" (ngModelChange)="saveDraft()"
+                        [class.border-[#ba1a1a]]="showErrors && genreInvalide"
+                        class="w-full px-3 py-2.5 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                  <option value="">-- Sélectionner --</option>
+                  <option value="Homme">Homme</option>
+                  <option value="Femme">Femme</option>
+                  <option value="Autre">Autre</option>
+                </select>
+                <p *ngIf="showErrors && genreInvalide" class="text-xs text-[#ba1a1a]">Le genre est obligatoire.</p>
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Profession actuelle</label>
+                <input [(ngModel)]="data.profession" (ngModelChange)="saveDraft()" type="text" placeholder="Ex: Ingénieur, Étudiant..."
+                       class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Années d'expérience</label>
+                <input [(ngModel)]="data.anneesExperience" (ngModelChange)="saveDraft()" type="number" min="0" max="60" placeholder="Ex: 3"
+                       [class.border-[#ba1a1a]]="showErrors && anneesExperienceInvalide"
+                       class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                <p *ngIf="showErrors && anneesExperienceInvalide" class="text-xs text-[#ba1a1a]">Valeur invalide (0 à 60).</p>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Adresse postale <span class="text-[#ba1a1a]">*</span></label>
+              <textarea [(ngModel)]="data.adresse" (ngModelChange)="saveDraft()" rows="3" placeholder="Adresse postale"
+                        [class.border-[#ba1a1a]]="showErrors && adresseInvalide"
+                        class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all resize-none text-sm"></textarea>
+              <p *ngIf="showErrors && adresseInvalide" class="text-xs text-[#ba1a1a]">{{ data.adresse.trim() ? 'Adresse trop courte (5 caractères minimum).' : "L'adresse est obligatoire." }}</p>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- === ÉTAPE 2 : FORMATION === -->
+        <ng-container *ngIf="etape === 2">
+          <h2 class="text-xl leading-7 font-semibold text-[#000002] mb-6 border-l-4 border-[#30609a] pl-3">
+            Choix de la Formation
+          </h2>
+          <div class="space-y-5">
+            <div *ngIf="sessions.length === 0" class="p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm">
+              Aucune session de candidature n'est ouverte pour le moment. Merci de réessayer plus tard ou de <a routerLink="/contact" class="underline font-medium">contacter l'admission</a>.
+            </div>
+            <div *ngIf="sessions.length > 0" class="flex flex-col gap-1.5">
+              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Session de candidature <span class="text-[#ba1a1a]">*</span></label>
+              <select [(ngModel)]="data.sessionCandidatureId" (ngModelChange)="saveDraft()"
+                      [class.border-[#ba1a1a]]="showErrors && sessionInvalide"
+                      class="w-full px-3 py-2.5 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                <option [ngValue]="null">-- Sélectionner une session --</option>
+                <option *ngFor="let s of sessions" [ngValue]="s.id">{{ s.libelle }} (clôture le {{ s.dateFermeture | date:'dd/MM/yyyy' }})</option>
+              </select>
+              <p *ngIf="showErrors && sessionInvalide" class="text-xs text-[#ba1a1a]">Veuillez choisir une session de candidature.</p>
+              <div *ngIf="avertissementsCriteres.length > 0" class="p-3 rounded-lg bg-[#fff3cd] text-[#664d03] text-xs space-y-1">
+                <p class="font-semibold flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-[16px]">warning</span>
+                  D'après vos informations, vous pourriez ne pas remplir les critères de cette session :
+                </p>
+                <ul class="list-disc list-inside">
+                  <li *ngFor="let a of avertissementsCriteres">{{ a }}</li>
+                </ul>
+                <p>Vous pouvez tout de même soumettre votre dossier ; la décision finale revient à l'INPG.</p>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Type de Formation</label>
+              <select [(ngModel)]="data.typeFormation" (ngModelChange)="saveDraft()" class="w-full px-3 py-2.5 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                <option value="">-- Sélectionner --</option>
+                <option value="emba">Executive MBA en Management du Pétrole et du Gaz</option>
+                <option value="m2_ing">Master 2 Ingénierie Pétrolière</option>
+                <option value="m2_eco">Master 2 Économie et Gestion de l'Énergie</option>
+                <option value="hse">Certification en HSE</option>
+                <option value="initiale">Formation Initiale</option>
+                <option value="continue">Formation Continue</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Niveau d'études visé</label>
+              <div class="flex flex-wrap gap-2">
+                <label *ngFor="let n of ['Baccalauréat','Licence (L3)','Master 1 (M1)','Master 2 (M2)']" class="cursor-pointer">
+                  <input type="radio" name="niveauVise" [value]="n" [(ngModel)]="data.niveauVise" (ngModelChange)="saveDraft()" class="sr-only peer">
+                  <span class="peer-checked:bg-[#30609a] peer-checked:text-white px-4 py-2 rounded border border-[#c7c5d0] text-sm font-medium text-[#46464e] hover:bg-[#f2f4f6] transition-colors inline-block">
+                    {{ n }}
+                  </span>
+                </label>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Programme souhaité <span class="text-[#ba1a1a]">*</span></label>
+              <input [(ngModel)]="data.programme" (ngModelChange)="saveDraft()" type="text" placeholder="Ex: MBA Économie et Management"
+                     [class.border-[#ba1a1a]]="showErrors && !data.programme.trim()"
+                     class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+              <p *ngIf="showErrors && !data.programme.trim()" class="text-xs text-[#ba1a1a]">Le programme souhaité est obligatoire.</p>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Campus de préférence</label>
+              <select [(ngModel)]="data.campus" (ngModelChange)="saveDraft()" class="w-full px-3 py-2.5 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                <option value="">-- Sélectionner --</option>
+                <option value="dakar">Dakar - Point E</option>
+                <option value="thies">Thiès</option>
+                <option value="stlouis">Saint-Louis</option>
+              </select>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- === ÉTAPE 3 : PARCOURS === -->
+        <ng-container *ngIf="etape === 3">
+          <h2 class="text-xl leading-7 font-semibold text-[#000002] mb-6 border-l-4 border-[#30609a] pl-3">
+            Votre Parcours Académique
+          </h2>
+          <div class="space-y-5">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Niveau d'études actuel</label>
+              <div class="flex flex-wrap gap-2">
+                <label *ngFor="let n of ['Baccalauréat','Licence (L3)','Master 1 (M1)','Master 2 (M2)','Autre']" class="cursor-pointer">
+                  <input type="radio" name="niveauActuel" [value]="n" [(ngModel)]="data.niveauActuel" (ngModelChange)="saveDraft()" class="sr-only peer">
+                  <span class="peer-checked:bg-[#30609a] peer-checked:text-white px-4 py-2 rounded border border-[#c7c5d0] text-sm font-medium text-[#46464e] hover:bg-[#f2f4f6] transition-colors inline-block">
+                    {{ n }}
+                  </span>
+                </label>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Dernier établissement fréquenté</label>
+              <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#77767f] text-[20px]" style="font-variation-settings: 'FILL' 0;">school</span>
+                <input [(ngModel)]="data.etablissement" (ngModelChange)="saveDraft()" type="text" placeholder="Ex: Université de Technologie de Paris" class="w-full pl-10 pr-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Diplôme obtenu</label>
+                <input [(ngModel)]="data.diplome" (ngModelChange)="saveDraft()" type="text" placeholder="Ex: Licence de Gestion" class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Année d'obtention</label>
+                <select [(ngModel)]="data.anneeObtention" (ngModelChange)="saveDraft()" class="w-full px-3 py-2.5 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                  <option value="">Sélectionner</option>
+                  <option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- === ÉTAPE 4 : DOCUMENTS === -->
+        <ng-container *ngIf="etape === 4">
+          <div class="mb-6">
+            <h2 class="text-xl leading-7 font-semibold text-[#000002] mb-2 border-l-4 border-[#30609a] pl-3">
+              Documents justificatifs
+            </h2>
+            <p class="text-sm text-[#46464e]">Veuillez joindre les documents requis pour finaliser votre dossier.</p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- Pièce d'identité -->
+            <div class="bg-[#f2f4f6] border border-[#c7c5d0] p-4 rounded-lg flex flex-col gap-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">badge</span>
+                <h3 class="text-sm font-semibold text-[#000002]">Pièce d'identité</h3>
+                <span class="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-xs tracking-[0.05em] font-semibold ml-auto">Requis</span>
+              </div>
+              <label class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#c7c5d0] rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors">
+                <span class="material-symbols-outlined text-[#77767f] text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">cloud_upload</span>
+                <span class="text-xs text-[#77767f]">PDF, JPG, PNG (Max 2 Mo)</span>
+                <input type="file" accept=".pdf,.jpg,.png" class="hidden" multiple (change)="onFileSelected($event, 'identite')">
+              </label>
+              <p *ngIf="data.fichierIdentite" class="text-xs text-[#30609a] truncate">{{ data.fichierIdentite }}</p>
+            </div>
+            <!-- CV -->
+            <div class="bg-[#f2f4f6] border border-[#c7c5d0] p-4 rounded-lg flex flex-col gap-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">description</span>
+                <h3 class="text-sm font-semibold text-[#000002]">Curriculum Vitae</h3>
+                <span class="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-xs tracking-[0.05em] font-semibold ml-auto">Requis</span>
+              </div>
+              <label class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#c7c5d0] rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors">
+                <span class="material-symbols-outlined text-[#77767f] text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">cloud_upload</span>
+                <span class="text-xs text-[#77767f]">PDF uniquement (Max 3 Mo)</span>
+                <input type="file" accept=".pdf" class="hidden" multiple (change)="onFileSelected($event, 'cv')">
+              </label>
+              <p *ngIf="data.fichierCV" class="text-xs text-[#30609a] truncate">{{ data.fichierCV }}</p>
+            </div>
+            <!-- Lettre de motivation -->
+            <div class="bg-[#f2f4f6] border border-[#c7c5d0] p-4 rounded-lg flex flex-col gap-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">edit_note</span>
+                <h3 class="text-sm font-semibold text-[#000002]">Lettre de motivation</h3>
+                <span class="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-xs tracking-[0.05em] font-semibold ml-auto">Requis</span>
+              </div>
+              <label class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#c7c5d0] rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors">
+                <span class="material-symbols-outlined text-[#77767f] text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">cloud_upload</span>
+                <span class="text-xs text-[#77767f]">PDF uniquement (Max 2 Mo)</span>
+                <input type="file" accept=".pdf" class="hidden" multiple (change)="onFileSelected($event, 'motivation')">
+              </label>
+              <p *ngIf="data.fichierMotivation" class="text-xs text-[#30609a] truncate">{{ data.fichierMotivation }}</p>
+            </div>
+            <!-- Relevés de notes -->
+            <div class="bg-[#f2f4f6] border border-[#c7c5d0] p-4 rounded-lg flex flex-col gap-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">school</span>
+                <h3 class="text-sm font-semibold text-[#000002]">Relevés de notes</h3>
+                <span class="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-xs tracking-[0.05em] font-semibold ml-auto">Requis</span>
+              </div>
+              <label class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#c7c5d0] rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors">
+                <span class="material-symbols-outlined text-[#77767f] text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">cloud_upload</span>
+                <span class="text-xs text-[#77767f]">PDF uniquement (Max 5 Mo)</span>
+                <input type="file" accept=".pdf" class="hidden" multiple (change)="onFileSelected($event, 'releves')">
+              </label>
+              <p *ngIf="data.fichierReleves" class="text-xs text-[#30609a] truncate">{{ data.fichierReleves }}</p>
+            </div>
+          </div>
+
+          <!-- Rappel des critères, avec toutes les informations désormais connues -->
+          <div *ngIf="avertissementsCriteres.length > 0" class="p-4 rounded-lg bg-[#fff3cd] text-[#664d03] text-sm space-y-1 mb-4">
+            <p class="font-semibold flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[18px]">warning</span>
+              Vérifiez avant d'envoyer : vous pourriez ne pas remplir les critères de cette session
+            </p>
+            <ul class="list-disc list-inside">
+              <li *ngFor="let a of avertissementsCriteres">{{ a }}</li>
+            </ul>
+          </div>
+
+          <!-- Consentement -->
+          <div class="bg-[#f2f4f6] p-4 rounded-lg border border-[#c7c5d0] mb-4">
+            <label class="flex gap-3 cursor-pointer">
+              <input type="checkbox" [(ngModel)]="data.consentement" (ngModelChange)="saveDraft()" class="w-5 h-5 mt-0.5 text-[#30609a] border-[#c7c5d0] rounded focus:ring-[#30609a]">
+              <span class="text-sm text-[#46464e]">
+                Je certifie sur l'honneur que toutes les informations fournies dans ce formulaire et les documents joints sont exactes et sincères. Je comprends que toute fausse déclaration pourra entraîner l'annulation de ma candidature.
+              </span>
+            </label>
+          </div>
+
+          <!-- Bouton de soumission finale -->
+          <button (click)="soumettre()" [disabled]="loading"
+                  class="w-full bg-[#15803d] text-white px-6 py-3 rounded text-sm font-medium hover:bg-[#166534] transition-colors disabled:opacity-50 border-t border-white/20 cursor-pointer">
+            {{ loading ? 'Soumission...' : 'Soumettre la candidature' }}
+          </button>
+        </ng-container>
+      </div>
+
+      <!-- ========== FOOTER NAVIGATION ========== -->
+      <div class="p-6 border-t border-[#c7c5d0]/40 bg-[#f7f9fb] rounded-b-xl flex justify-between items-center">
+        <button (click)="precedent()"
+                [disabled]="etape === 1"
+                class="px-4 py-2 rounded bg-white border border-[#c7c5d0] text-[#000002] text-sm font-medium hover:bg-[#f2f4f6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+          Précédent
+        </button>
+
+        <div class="flex gap-3">
+          <button *ngIf="etape < totalEtapes" (click)="suivant()"
+                  class="px-6 py-2 rounded bg-[#30609a] text-white text-sm font-medium hover:bg-[#254d7d] transition-colors flex items-center gap-2 cursor-pointer">
+            Suivant
+            <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <app-footer></app-footer>
+</div>

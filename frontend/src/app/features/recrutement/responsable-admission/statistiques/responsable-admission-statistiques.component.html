@@ -1,0 +1,172 @@
+<!-- ==================== CONTENU SEUL ==================== -->
+<div class="mb-stack-lg flex flex-col md:flex-row md:items-end justify-between gap-4">
+  <div>
+    <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1">Statistiques</h2>
+    <p class="font-body-md text-body-md text-on-surface-variant">Indicateurs et répartition des candidatures, toutes sessions confondues.</p>
+  </div>
+  <div class="flex gap-3">
+    <button type="button" routerLink="/responsable-admission/parametres" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm" title="Choisir les widgets affichés">
+      <span class="material-symbols-outlined text-[18px]">tune</span> Personnaliser
+    </button>
+    <button type="button" [disabled]="exporting" (click)="exporter()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
+      <span class="material-symbols-outlined text-[18px]">download</span> {{ exporting ? 'Export en cours…' : 'Exporter les candidatures' }}
+    </button>
+  </div>
+</div>
+
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des données…</div>
+
+<ng-container *ngIf="!loading">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
+    <div *ngIf="prefs.showTotalCandidats" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+      <div class="flex justify-between items-start mb-4">
+        <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">groups</span></div>
+      </div>
+      <p class="font-label-md text-label-md text-on-surface-variant mb-1">Total Candidats</p>
+      <h3 class="font-headline-lg text-headline-lg text-primary">{{ totalCandidats }}</h3>
+    </div>
+    <div *ngIf="prefs.showValidationEnCours" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+      <div class="flex justify-between items-start mb-4">
+        <div class="w-10 h-10 rounded-lg bg-secondary-fixed/50 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">hourglass_empty</span></div>
+      </div>
+      <p class="font-label-md text-label-md text-on-surface-variant mb-1">Validation en cours</p>
+      <h3 class="font-headline-lg text-headline-lg text-primary">{{ validationEnCours }}</h3>
+    </div>
+    <div *ngIf="prefs.showPreselectionnes" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group relative overflow-hidden">
+      <div class="flex justify-between items-start mb-4 relative z-10">
+        <div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center text-on-surface-variant group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">how_to_reg</span></div>
+      </div>
+      <p class="font-label-md text-label-md text-on-surface-variant mb-1 relative z-10">Présélectionnés</p>
+      <h3 class="font-headline-lg text-headline-lg text-primary relative z-10">{{ preselectionnes }}</h3>
+    </div>
+    <div *ngIf="prefs.showRejetes" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+      <div class="flex justify-between items-start mb-4">
+        <div class="w-10 h-10 rounded-lg bg-error-container flex items-center justify-center text-error group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">cancel</span></div>
+      </div>
+      <p class="font-label-md text-label-md text-on-surface-variant mb-1">Rejetés</p>
+      <h3 class="font-headline-lg text-headline-lg text-primary">{{ rejetes }}</h3>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter" *ngIf="prefs.showRepartitionStatuts || prefs.showTauxAdmission">
+    <!-- Répartition par statut (barres) -->
+    <div *ngIf="prefs.showRepartitionStatuts" class="lg:col-span-2 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-primary mb-4">Répartition des candidatures par étape</h3>
+      <div class="space-y-3" *ngIf="totalCandidats > 0; else aucuneCandidature">
+        <div *ngFor="let seg of repartitionStatuts">
+          <div class="flex justify-between items-baseline mb-1">
+            <span class="font-label-sm text-label-sm text-on-surface-variant">{{ seg.label }}</span>
+            <span class="font-label-sm text-label-sm text-on-surface">{{ seg.count }} <span class="text-on-surface-variant">({{ seg.pourcentage }}%)</span></span>
+          </div>
+          <div class="w-full bg-surface-container h-2.5 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-500" [ngClass]="seg.couleur" [style.width.%]="seg.pourcentage"></div>
+          </div>
+        </div>
+      </div>
+      <ng-template #aucuneCandidature>
+        <p class="text-body-sm text-on-surface-variant py-6 text-center">Aucune candidature pour le moment.</p>
+      </ng-template>
+    </div>
+
+    <!-- Taux d'admission (anneau) -->
+    <div *ngIf="prefs.showTauxAdmission" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col items-center justify-center">
+      <h3 class="font-headline-sm text-headline-sm text-primary mb-4 self-start">Taux d'admission</h3>
+      <div class="relative w-36 h-36">
+        <svg class="w-36 h-36 transform -rotate-90" viewBox="0 0 128 128">
+          <circle class="text-outline-variant/20" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-width="10"></circle>
+          <circle class="text-secondary" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor"
+                  [attr.stroke-dasharray]="anneauCirconference" [attr.stroke-dashoffset]="anneauDashOffset"
+                  stroke-width="10" stroke-linecap="round"></circle>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span class="font-display text-headline-lg text-primary leading-none">{{ tauxAdmission }}%</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant mt-1">admis</span>
+        </div>
+      </div>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-4 text-center">
+        {{ candidaturesDecidees > 0 ? (candidaturesDecidees + ' dossier(s) tranché(s)') : 'Aucune décision finale pour le moment' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Statistiques démographiques -->
+  <div *ngIf="prefs.showDemographie" class="mt-stack-lg">
+    <h3 class="font-headline-sm text-headline-sm text-primary mb-4">Profil démographique des candidats</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-gutter">
+      <!-- Genre -->
+      <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+        <h4 class="font-label-lg text-label-lg text-on-surface mb-4">Genre</h4>
+        <div class="space-y-3" *ngIf="totalCandidats > 0; else aucuneDonneeGenre">
+          <div *ngFor="let seg of repartitionGenre">
+            <div class="flex justify-between items-baseline mb-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">{{ seg.label }}</span>
+              <span class="font-label-sm text-label-sm text-on-surface">{{ seg.count }} <span class="text-on-surface-variant">({{ seg.pourcentage }}%)</span></span>
+            </div>
+            <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" [ngClass]="seg.couleur" [style.width.%]="seg.pourcentage"></div>
+            </div>
+          </div>
+        </div>
+        <ng-template #aucuneDonneeGenre><p class="text-body-sm text-on-surface-variant py-6 text-center">Aucune donnée.</p></ng-template>
+      </div>
+
+      <!-- Âge -->
+      <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+        <h4 class="font-label-lg text-label-lg text-on-surface mb-4">Tranche d'âge</h4>
+        <div class="space-y-3" *ngIf="totalCandidats > 0; else aucuneDonneeAge">
+          <div *ngFor="let seg of repartitionAge">
+            <div class="flex justify-between items-baseline mb-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">{{ seg.label }}</span>
+              <span class="font-label-sm text-label-sm text-on-surface">{{ seg.count }} <span class="text-on-surface-variant">({{ seg.pourcentage }}%)</span></span>
+            </div>
+            <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" [ngClass]="seg.couleur" [style.width.%]="seg.pourcentage"></div>
+            </div>
+          </div>
+        </div>
+        <ng-template #aucuneDonneeAge><p class="text-body-sm text-on-surface-variant py-6 text-center">Aucune donnée.</p></ng-template>
+      </div>
+
+      <!-- Professions -->
+      <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+        <h4 class="font-label-lg text-label-lg text-on-surface mb-4">Professions les plus déclarées</h4>
+        <div class="space-y-3" *ngIf="topProfessions.length > 0; else aucuneDonneeProfession">
+          <div *ngFor="let seg of topProfessions">
+            <div class="flex justify-between items-baseline mb-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant capitalize">{{ seg.label }}</span>
+              <span class="font-label-sm text-label-sm text-on-surface">{{ seg.count }} <span class="text-on-surface-variant">({{ seg.pourcentage }}%)</span></span>
+            </div>
+            <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" [ngClass]="seg.couleur" [style.width.%]="seg.pourcentage"></div>
+            </div>
+          </div>
+          <p *ngIf="nbSansProfessionDeclaree > 0" class="font-body-sm text-body-sm text-on-surface-variant pt-1">{{ nbSansProfessionDeclaree }} candidat(s) sans profession déclarée.</p>
+        </div>
+        <ng-template #aucuneDonneeProfession><p class="text-body-sm text-on-surface-variant py-6 text-center">Aucune donnée.</p></ng-template>
+      </div>
+
+      <!-- Nationalités -->
+      <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+        <h4 class="font-label-lg text-label-lg text-on-surface mb-4">Nationalités</h4>
+        <div class="space-y-3" *ngIf="topNationalites.length > 0; else aucuneDonneeNationalite">
+          <div *ngFor="let seg of topNationalites">
+            <div class="flex justify-between items-baseline mb-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">{{ seg.label }}</span>
+              <span class="font-label-sm text-label-sm text-on-surface">{{ seg.count }} <span class="text-on-surface-variant">({{ seg.pourcentage }}%)</span></span>
+            </div>
+            <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" [ngClass]="seg.couleur" [style.width.%]="seg.pourcentage"></div>
+            </div>
+          </div>
+        </div>
+        <ng-template #aucuneDonneeNationalite><p class="text-body-sm text-on-surface-variant py-6 text-center">Aucune donnée.</p></ng-template>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!prefs.showTotalCandidats && !prefs.showValidationEnCours && !prefs.showPreselectionnes && !prefs.showRejetes && !prefs.showRepartitionStatuts && !prefs.showTauxAdmission && !prefs.showDemographie"
+       class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant">
+    <span class="material-symbols-outlined text-4xl text-outline mb-2 block">visibility_off</span>
+    <p class="font-body-md text-body-md text-on-surface-variant">Tous les widgets sont masqués. <a routerLink="/responsable-admission/parametres" class="text-secondary hover:underline">Modifier dans Paramètres</a>.</p>
+  </div>
+</ng-container>

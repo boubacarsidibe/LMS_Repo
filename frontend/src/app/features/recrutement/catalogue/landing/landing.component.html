@@ -1,0 +1,82 @@
+<div class="min-h-screen flex flex-col bg-surface">
+  <app-navbar></app-navbar>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="relative w-full min-h-[700px] flex flex-col justify-center items-center px-4 md:px-10 py-8 bg-surface-container-low overflow-hidden">
+      <div class="absolute inset-0 w-full h-full">
+        <div class="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-multiply" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCTqdOmcERF18V2G3R0zq_lavOIAzmND2aXlsBC8Jyhn_7OqTvWsLP-iTCOWugnE7JZryROdfidSicaZYgHB11Y36bbdbOjk0jfVRp4E4GJNAKQmYaIgKDVEtZi25SXYtx5fiysiPXG9ETHRrwK-PfYfHCBV0556vGZabB5dTY8A7MBZmLmNYEsVl94sY7c0thWgKj2OzkQuzj2c06d48kdokViqxxeLyxnjaD6fKPFEiS8TlbGFcZXsA')"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-surface-container-low/80 to-surface"></div>
+      </div>
+      <div class="relative z-10 max-w-3xl mx-auto text-center flex flex-col items-center gap-8">
+        <h1 class="text-4xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-on-surface">
+          Excellence Académique & Innovation Professionnelle
+        </h1>
+        <p class="text-base md:text-lg leading-6 md:leading-7 text-on-surface-variant max-w-2xl">
+          Formez-vous aux métiers de demain avec l'expertise de l'INPG. Une approche rigoureuse et structurée pour propulser votre carrière.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 mt-4">
+          <a (click)="goToCatalogue()" class="cursor-pointer px-6 py-3 bg-primary text-on-primary text-sm leading-4 tracking-[0.01em] font-medium rounded-lg shadow-sm border-t border-primary-fixed-dim hover:brightness-90 transition-all no-underline">
+            Découvrir les formations
+          </a>
+          <a routerLink="/recrutement/sessions" class="px-6 py-3 bg-white text-on-surface text-sm leading-4 tracking-[0.01em] font-medium rounded-lg border border-outline-variant shadow-sm hover:bg-surface-container-low transition-all no-underline">
+            Postuler
+          </a>
+          <!-- Sortie du menu (2026-08-25, demande directe) : un lien "Écoles accréditées"
+               en permanence dans la navbar public poussait son nombre d'entrées trop haut,
+               et ce contenu est réservé aux comptes connectés (authGuard) - un bouton
+               explicite, au même endroit que les autres appels à l'action, évite qu'un
+               visiteur non connecté tombe dessus par surprise dans le menu. -->
+          <a routerLink="/ecoles-accreditees" class="px-6 py-3 bg-transparent text-primary text-sm leading-4 tracking-[0.01em] font-medium rounded-lg border border-outline-variant hover:bg-surface-container-low transition-all no-underline">
+            Voir les écoles accréditées
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chiffres Clés Section -->
+    <section class="py-16 md:py-24 px-4 md:px-10 max-w-container-max mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="flex flex-col items-center text-center p-8 bg-white rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+          <span class="text-4xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-primary mb-2">95%</span>
+          <h3 class="text-xl leading-7 font-semibold text-on-surface mb-2">Taux d'insertion</h3>
+          <p class="text-sm text-on-surface-variant">Des diplômés en poste dans les 6 mois suivant leur sortie.</p>
+        </div>
+        <div class="flex flex-col items-center text-center p-8 bg-white rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+          <span class="text-4xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-primary mb-2">15 000</span>
+          <h3 class="text-xl leading-7 font-semibold text-on-surface mb-2">Techniciens</h3>
+          <p class="text-sm text-on-surface-variant">Une ambition majeure de former jusqu'à 15 000 techniciens qualifiés pour répondre aux besoins du secteur.</p>
+        </div>
+        <div class="flex flex-col items-center text-center p-8 bg-white rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+          <span class="text-4xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-primary mb-2">50%</span>
+          <h3 class="text-xl leading-7 font-semibold text-on-surface mb-2">En contenu local</h3>
+          <p class="text-sm text-on-surface-variant">Vise à atteindre 50 % de contenu local dans les projets pétroliers et gaziers d'ici 2030.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Programmes Phares Section -->
+    <section class="py-16 md:py-24 px-4 md:px-10 bg-surface-container-low border-t border-outline-variant">
+      <div class="max-w-container-max mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
+          <div>
+            <h2 class="text-2xl md:text-[32px] leading-8 md:leading-10 tracking-[-0.01em] font-semibold text-on-surface mb-2">Programmes Phares</h2>
+            <p class="text-base leading-6 text-on-surface-variant max-w-2xl">L'INPG couvre l'ensemble de la chaîne de valeur pétrolière et gazière à travers 6 domaines d'intervention, de l'exploration à la gestion, pour spécialiser les ingénieurs et certifier les techniciens.</p>
+          </div>
+          <a (click)="goToCatalogue()" class="cursor-pointer text-primary text-sm leading-4 tracking-[0.01em] font-medium flex items-center gap-2 hover:underline">
+            Voir tout le catalogue
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_forward</span>
+          </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (program of programmesPhares; track program.id) {
+            <app-program-card [prog]="program"></app-program-card>
+          }
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <app-footer></app-footer>
+</div>

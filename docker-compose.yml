@@ -1,0 +1,92 @@
+services:
+  
+  # ========== BASE DE DONNÉES ==========
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: demo-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-myappdb}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secretpassword}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-myappdb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ========== BACKEND SPRING BOOT ==========
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: demo-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    # JWT_SECRET / MAIL_* proviennent de backend/.env (voir backend/.env.example).
+    # Les interpoler ici via ${...} les résoudrait à la chaîne vide, car Compose
+    # n'interpole qu'à partir du .env situé à la racine du projet.
+    env_file:
+      - ./backend/.env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${POSTGRES_DB:-myappdb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-secretpassword}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      # Le schéma est créé et fait évoluer par Flyway. Hibernate se contente de
+      # vérifier la correspondance entités/tables au démarrage.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_DEVTOOLS_RESTART_ENABLED: "true"
+      # Origines autorisées en CORS. Le tunnel Cloudflare change de domaine a
+      # chaque redemarrage : mettre a jour APP_CORS_ORIGINS dans le .env a la
+      # racine (garder http://localhost:4200 dans la liste) puis recreer ce
+      # conteneur (pas besoin de rebuild, la valeur est lue au demarrage).
+      APP_CORS_ORIGINS: ${APP_CORS_ORIGINS:-http://localhost:4200}
+    # Sans ce volume, /app/uploads vit uniquement dans le conteneur : chaque
+    # reconstruction de l'image effacait TOUS les supports de cours et photos
+    # deposes, alors que leurs lignes restaient en base (references mortes).
+    volumes:
+      - backend_uploads:/app/uploads
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # ========== FRONTEND ANGULAR — DEV avec HOT RELOAD ==========
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: demo-frontend
+    restart: always
+    ports:
+      - "4200:4200"
+    volumes:
+      # Monte le code source local dans le conteneur (hot reload)
+      - ./frontend:/app
+      # Volume anonyme pour préserver node_modules du conteneur
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - BACKEND_URL=http://backend:8080
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+
+volumes:
+  postgres_data:
+  backend_uploads:
+
+networks:
+  app-network:
+    driver: bridge

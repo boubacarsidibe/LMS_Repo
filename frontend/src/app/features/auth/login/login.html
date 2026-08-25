@@ -1,0 +1,93 @@
+<div class="w-full">
+  <h2 class="font-headline-md text-headline-md text-primary mb-2">Bienvenue</h2>
+  <p class="font-body-sm text-body-sm text-on-surface-variant mb-8">Veuillez entrer vos identifiants pour continuer</p>
+
+  <!-- Onglets de Navigation -->
+  <div class="flex border-b border-outline-variant mb-8">
+    <a 
+      routerLink="/auth/login" 
+      routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="flex-1 pb-3 text-center font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors">
+      Se connecter
+    </a>
+    <a 
+      routerLink="/auth/register" 
+      routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
+      class="flex-1 pb-3 text-center font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors">
+      S'inscrire
+    </a>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div *ngIf="errorMessage" class="mb-6 p-3 rounded-lg bg-error-container text-error text-body-sm">
+    {{ errorMessage }}
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+
+    <!-- Email -->
+    <div>
+      <label for="email" class="block font-label-md text-label-md text-on-surface-variant mb-1.5">
+        Adresse e-mail
+      </label>
+      <input
+        id="email"
+        type="email"
+        formControlName="email"
+        placeholder="alex.dupont@example.com"
+        class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
+        [class.border-error]="form.get('email')?.invalid && form.get('email')?.touched"
+      />
+      <p *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="mt-1 text-xs text-error">
+        Veuillez entrer une adresse e-mail valide.
+      </p>
+    </div>
+
+    <!-- Mot de passe -->
+    <div>
+      <div class="flex items-center justify-between mb-1.5">
+        <label for="password" class="font-label-md text-label-md text-on-surface-variant">
+          Mot de passe
+        </label>
+        <a routerLink="/auth/forgot-password" class="font-label-sm text-label-sm text-secondary hover:underline">
+          Mot de passe oublié ?
+        </a>
+      </div>
+      <input
+        id="password"
+        type="password"
+        formControlName="password"
+        placeholder="••••••••"
+        class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
+        [class.border-error]="form.get('password')?.invalid && form.get('password')?.touched"
+      />
+      <p *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="mt-1 text-xs text-error">
+        Le mot de passe est obligatoire.
+      </p>
+    </div>
+
+    <!-- Bouton Connexion -->
+    <button
+      type="submit"
+      [disabled]="form.get('email')?.invalid || form.get('password')?.invalid || loginLoading"
+      class="flex w-full items-center justify-center gap-3 rounded-lg bg-secondary text-on-secondary py-3 font-label-md text-label-md hover:bg-opacity-90 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
+      <svg *ngIf="loginLoading" class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-20"></circle>
+        <path fill="currentColor" class="opacity-80" d="M12 2a10 10 0 0 1 10 10h-4a6 6 0 0 0-6-6V2z"></path>
+      </svg>
+      <span>{{ loginLoading ? 'Connexion en cours...' : 'Se connecter' }}</span>
+    </button>
+
+  </form>
+
+  <!-- Pied -->
+  <div class="mt-8 border-t border-outline-variant pt-6">
+    <p class="text-center font-body-sm text-body-sm text-on-surface-variant">
+      Pas encore de compte ?
+      <a routerLink="/auth/register" class="font-semibold text-secondary hover:underline">
+        S'inscrire
+      </a>
+    </p>
+  </div>
+</div>

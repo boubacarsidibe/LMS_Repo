@@ -1,0 +1,233 @@
+<div class="flex flex-col w-full max-w-container-max mx-auto p-margin-desktop gap-stack-lg">
+
+  <!-- Chiffres clés -->
+  <div class="flex flex-wrap justify-between items-end gap-stack-md">
+    <div>
+      <span class="text-label-sm text-on-surface-variant uppercase tracking-widest block mb-2">Offre d'enseignement</span>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Cours</h1>
+    </div>
+    <div class="flex gap-stack-md">
+      <div class="bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-3 rounded-xl min-w-[120px]">
+        <span class="text-label-sm text-on-surface-variant block">Cours</span>
+        <span class="text-headline-md text-primary">{{ cours.length }}</span>
+      </div>
+      <div class="bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-3 rounded-xl min-w-[120px]">
+        <span class="text-label-sm text-on-surface-variant block">Supports</span>
+        <span class="text-headline-md text-primary">{{ totalSupports }}</span>
+      </div>
+      <div class="bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-3 rounded-xl min-w-[120px]">
+        <span class="text-label-sm text-on-surface-variant block">Formations</span>
+        <span class="text-headline-md text-primary">{{ formations.length }}</span>
+      </div>
+      <div class="bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-3 rounded-xl min-w-[120px]">
+        <span class="text-label-sm text-on-surface-variant block">Promotions</span>
+        <span class="text-headline-md text-primary">{{ promotions.length }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerte : un cours hors programme n'atteint aucun étudiant -->
+  <div *ngIf="!chargement && coursSansFormation.length > 0"
+       class="bg-surface-container-lowest rounded-xl border border-error shadow-sm p-stack-lg">
+    <div class="flex items-center gap-2 text-error">
+      <span class="material-symbols-outlined">warning</span>
+      <span class="font-label-md text-label-md">
+        {{ coursSansFormation.length }} cours hors programme
+      </span>
+    </div>
+    <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+      Ces cours n’appartiennent au cursus d’aucune formation : aucune promotion ne les
+      reçoit, donc aucun étudiant ne les voit. Rattachez-les à un programme.
+    </p>
+    <ul class="mt-4 flex flex-wrap gap-stack-sm">
+      <li *ngFor="let c of coursSansFormation">
+        <button type="button" (click)="ouvrirEdition(c)"
+                class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors">
+          <span class="material-symbols-outlined">link</span>
+          {{ c.code }}
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Alerte : un cours sans formateur n'existe dans aucun espace enseignant -->
+  <div *ngIf="!chargement && coursSansFormateur.length > 0"
+       class="bg-surface-container-lowest rounded-xl border border-error shadow-sm p-stack-lg">
+    <div class="flex items-center gap-2 text-error">
+      <span class="material-symbols-outlined">warning</span>
+      <span class="font-label-md text-label-md">
+        {{ coursSansFormateur.length }} cours sans formateur
+      </span>
+    </div>
+    <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+      Ces cours n’apparaissent dans l’espace d’aucun enseignant : ni support, ni séance,
+      ni note n’y sont possibles. Ouvrez la fiche pour y affecter un formateur.
+    </p>
+    <ul class="mt-4 flex flex-wrap gap-stack-sm">
+      <li *ngFor="let c of coursSansFormateur">
+        <a [routerLink]="['/pedagogie/cours', c.id]"
+           class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors no-underline">
+          <span class="material-symbols-outlined">person_add</span>
+          {{ c.code }}
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Formulaire création / modification -->
+  <section #formulaire *ngIf="formulaireOuvert" class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm">
+    <h2 class="text-headline-sm text-primary flex items-center gap-2 mb-6">
+      <span class="material-symbols-outlined text-secondary">edit_note</span>
+      {{ coursEnEdition ? 'Modifier le cours' : 'Nouveau cours' }}
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+      <div class="flex flex-col gap-base">
+        <label for="code" class="text-label-md text-on-surface-variant">Code</label>
+        <input id="code" type="text" name="code" [(ngModel)]="saisie.code" placeholder="INF-301"
+               class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+      </div>
+      <div class="flex flex-col gap-base">
+        <label for="titre" class="text-label-md text-on-surface-variant">Titre</label>
+        <input id="titre" type="text" name="titre" [(ngModel)]="saisie.titre" placeholder="Algorithmique avancée"
+               class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+      </div>
+      <div class="flex flex-col gap-base">
+        <label for="semestre" class="text-label-md text-on-surface-variant">Semestre</label>
+        <input id="semestre" type="text" name="semestre" [(ngModel)]="saisie.semestre" placeholder="S1"
+               class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+      </div>
+      <div class="flex flex-col gap-base">
+        <label for="volume" class="text-label-md text-on-surface-variant">Volume horaire</label>
+        <input id="volume" type="number" min="0" name="volumeHoraire" [(ngModel)]="saisie.volumeHoraire"
+               class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+      </div>
+      <div class="flex flex-col gap-base">
+        <label for="coefficient" class="text-label-md text-on-surface-variant">Coefficient</label>
+        <input id="coefficient" type="number" min="0.5" step="0.5" name="coefficient" [(ngModel)]="saisie.coefficient"
+               class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none">
+        <span class="font-body-sm text-body-sm text-on-surface-variant">
+          Poids du cours dans la moyenne generale. Fixe par la maquette pedagogique : il ne
+          se deduit ni du volume horaire, ni du nombre de devoirs.
+        </span>
+      </div>
+      <div class="flex flex-col gap-base md:col-span-2">
+        <label for="description" class="text-label-md text-on-surface-variant">Description</label>
+        <textarea id="description" name="description" rows="3" [(ngModel)]="saisie.description"
+                  class="form-input bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface focus:border-secondary focus:outline-none"></textarea>
+      </div>
+
+      <div class="flex flex-col gap-base md:col-span-2">
+        <span class="text-label-md font-label-md text-on-surface-variant">Programmes</span>
+        <p class="font-body-sm text-body-sm text-on-surface-variant">
+          Le cours prend place dans le cursus de ces formations. Toutes leurs promotions
+          le reçoivent, y compris celles des rentrées suivantes.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-sm mt-2 max-h-64 overflow-y-auto">
+          <label *ngFor="let f of formations"
+                 class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                 [class.border-secondary]="formationChoisie(f.id)"
+                 [class.bg-secondary-container]="formationChoisie(f.id)"
+                 [class.border-outline-variant]="!formationChoisie(f.id)"
+                 [class.hover:bg-surface-container-low]="!formationChoisie(f.id)">
+            <input type="checkbox" [checked]="formationChoisie(f.id)" (change)="basculerFormation(f.id)"
+                   class="w-4 h-4 accent-secondary shrink-0" />
+            <span class="font-body-sm text-body-sm min-w-0 truncate" [title]="f.intitule"
+                  [class.text-on-secondary-container]="formationChoisie(f.id)"
+                  [class.text-on-surface]="!formationChoisie(f.id)">{{ f.intitule }}</span>
+          </label>
+        </div>
+        <p *ngIf="formationsChoisies.size === 0" class="font-body-sm text-body-sm text-error mt-2">
+          Sans programme, ce cours ne sera visible d’aucun étudiant.
+        </p>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-stack-sm mt-6">
+      <button type="button" (click)="enregistrer()" [disabled]="!saisieValide || enregistrement"
+              class="px-6 py-3 bg-secondary text-on-secondary text-label-md rounded-lg hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-default">
+        {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
+      </button>
+      <button type="button" (click)="fermerFormulaire()"
+              class="px-6 py-3 bg-surface-container-low text-on-surface-variant text-label-md rounded-lg border border-outline-variant hover:bg-surface-container transition-colors cursor-pointer">
+        Annuler
+      </button>
+    </div>
+  </section>
+
+  <!-- Liste des cours -->
+  <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-stack-lg shadow-sm">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">menu_book</span>
+        Catalogue des cours
+      </h2>
+      <button *ngIf="!formulaireOuvert" type="button" (click)="ouvrirCreation()"
+              class="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary text-on-secondary text-label-md rounded-lg hover:opacity-90 transition-opacity cursor-pointer border-0">
+        <span class="material-symbols-outlined text-[20px]">add</span>
+        Nouveau cours
+      </button>
+    </div>
+
+    <div *ngIf="chargement" class="text-center py-stack-lg text-body-md text-on-surface-variant">Chargement…</div>
+    <div *ngIf="erreur && !chargement" class="text-body-md text-error">{{ erreur }}</div>
+
+    <div *ngIf="!chargement && cours.length === 0 && !erreur" class="text-center py-stack-lg">
+      <span class="material-symbols-outlined text-4xl text-outline mb-2">menu_book</span>
+      <p class="text-body-md text-on-surface-variant">Aucun cours enregistré. Créez le premier.</p>
+    </div>
+
+    <div *ngIf="!chargement && cours.length > 0" class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-outline-variant">
+            <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Code</th>
+            <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Titre</th>
+            <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Programme</th>
+            <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Semestre</th>
+            <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Volume</th>
+            <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Coef.</th>
+            <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Formateurs</th>
+            <th class="py-3 pr-4 text-label-sm text-on-surface-variant uppercase tracking-widest">Supports</th>
+            <th class="py-3 text-label-sm text-on-surface-variant uppercase tracking-widest text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of cours" class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors">
+            <td class="py-3 pr-4 text-body-md text-on-surface">{{ c.code }}</td>
+            <td class="py-3 pr-4 text-body-md text-on-surface">{{ c.titre }}</td>
+            <td class="py-3 pr-4 text-body-md max-w-[16rem]">
+              <span *ngIf="c.formations?.length" class="text-on-surface-variant block truncate" [title]="nomsFormations(c)">
+                {{ nomsFormations(c) }}
+              </span>
+              <span *ngIf="!c.formations?.length" class="text-error">Hors programme</span>
+            </td>
+            <td class="py-3 pr-4 text-body-md text-on-surface-variant">{{ c.semestre || '—' }}</td>
+            <td class="py-3 pr-4 text-body-md text-on-surface-variant">{{ c.volumeHoraire || 0 }} h</td>
+            <td class="py-3 pr-4 text-body-md text-on-surface-variant tabular-nums">{{ c.coefficient ?? 1 }}</td>
+            <td class="py-3 pr-4 text-body-md">
+              <span *ngIf="c.formateurs?.length" class="text-on-surface-variant">
+                {{ nomsFormateurs(c) }}
+              </span>
+              <span *ngIf="!c.formateurs?.length" class="text-error">Aucun</span>
+            </td>
+            <td class="py-3 pr-4 text-body-md text-on-surface-variant">{{ c.nbRessources }}</td>
+            <td class="py-3 text-right whitespace-nowrap">
+              <a [routerLink]="['/pedagogie/cours', c.id]" title="Gérer les supports"
+                 class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-secondary hover:bg-surface-container transition-colors no-underline">
+                <span class="material-symbols-outlined text-[20px]">folder_open</span>
+              </a>
+              <button type="button" (click)="ouvrirEdition(c)" title="Modifier"
+                      class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors border-0 bg-transparent cursor-pointer">
+                <span class="material-symbols-outlined text-[20px]">edit</span>
+              </button>
+              <button type="button" (click)="supprimer(c)" title="Supprimer"
+                      class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-error hover:bg-error-container transition-colors border-0 bg-transparent cursor-pointer">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>

@@ -1,0 +1,107 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+    content: [
+      "./src/**/*.{html,ts}",
+    ],
+    theme: {
+      extend: {
+        colors: {
+          "surface-bright": "#f7f9fb",
+          "on-error": "#ffffff",
+          "secondary-fixed": "#d4e3ff",
+          "on-primary-fixed-variant": "#3f436f",
+          "error": "#ba1a1a",
+          "primary-container": "#d4e3ff",
+          "on-secondary-fixed-variant": "#0e4781",
+          "on-primary-container": "#001b3d",
+          "primary-fixed": "#d4e3ff",
+          "on-error-container": "#93000a",
+          "on-surface-variant": "#46464e",
+          "on-primary-fixed": "#001c3a",
+          "on-tertiary": "#ffffff",
+          "on-secondary-fixed": "#001c3a",
+          "on-surface": "#191c1e",
+          "inverse-surface": "#2d3133",
+          "inverse-primary": "#a5c8ff",
+          "surface-container": "#eceef0",
+          "tertiary": "#1E3A5F",
+          "primary": "#30609a",
+          "primary-fixed-dim": "#a5c8ff",
+          "on-background": "#191c1e",
+          "tertiary-fixed-dim": "#bec9c7",
+          "on-secondary-container": "#164c85",
+          "tertiary-fixed": "#dae5e3",
+          "secondary-container": "#91befe",
+          "outline-variant": "#c7c5d0",
+          "on-primary": "#ffffff",
+          "surface-container-highest": "#e0e3e5",
+          "background": "#f7f9fb",
+          "secondary-fixed-dim": "#a5c8ff",
+          "outline": "#77767f",
+          "on-tertiary-container": "#7b8685",
+          "surface-tint": "#575b88",
+          "secondary": "#1E3A5F",
+          "surface-container-high": "#e6e8ea",
+          "on-secondary": "#ffffff",
+          "inverse-on-surface": "#eff1f3",
+          "on-tertiary-fixed": "#141d1d",
+          "surface-dim": "#d8dadc",
+          "error-container": "#ffdad6",
+          "tertiary-container": "#141d1d",
+          "surface-container-lowest": "#ffffff",
+          "surface": "#f7f9fb",
+          "surface-container-low": "#f2f4f6",
+          "on-tertiary-fixed-variant": "#3f4948",
+          "surface-variant": "#e0e3e5",
+          // Bleu nuit de la marque : le « LMS » du logotype. Utilise en dur dans
+          // six fichiers (navbar, footer, espace candidat, authentification)
+          // sans exister comme jeton, ce qui empechait les autres espaces de
+          // reprendre la meme charte.
+          "brand": "#131741",
+          "success": "#16a34a",
+          "warning": "#eab308"
+        },
+        spacing: {
+          "stack-sm": "8px",
+          "margin-desktop": "40px",
+          "gutter": "24px",
+          "container-max": "1280px",
+          "base": "4px",
+          "stack-md": "16px",
+          "stack-lg": "32px",
+          "margin-mobile": "16px"
+        },
+        fontSize: {
+          "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+          "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+          "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+          "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+          "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+          "label-md": ["14px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+          "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+          "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+          "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+          "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+        },
+        borderRadius: {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        fontFamily: {
+          "body-sm": ["Inter"],
+          "headline-md": ["Inter"],
+          "label-sm": ["Inter"],
+          "headline-sm": ["Inter"],
+          "display": ["Inter"],
+          "headline-lg": ["Inter"],
+          "body-md": ["Inter"],
+          "label-md": ["Inter"],
+          "headline-lg-mobile": ["Inter"],
+          "body-lg": ["Inter"]
+        }
+      }
+    },
+    plugins: [],
+}

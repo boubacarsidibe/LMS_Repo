@@ -1,0 +1,226 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header class="flex items-start justify-between gap-stack-md flex-wrap">
+    <div>
+      <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Scolarité</span>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Relevés de notes</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+        Délivrer un relevé fige les moyennes à cette date. Le document remis ne changera
+        plus, même si un formateur corrige une note ensuite.
+      </p>
+    </div>
+    <button type="button" (click)="ouvrirFormulaire()"
+            class="shrink-0 flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors">
+      <span class="material-symbols-outlined">post_add</span>Délivrer des relevés
+    </button>
+  </header>
+
+  <p *ngIf="messageSucces" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">{{ messageSucces }}</p>
+  <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
+
+  <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+
+  <ng-container *ngIf="!chargement">
+    <!-- Consultation du relevé courant -->
+    <section class="space-y-stack-md">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">visibility</span>Consulter avant de délivrer
+      </h2>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">
+        Le relevé courant, recalculé à l’instant — à distinguer d’un relevé délivré, qui est figé.
+      </p>
+
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+        <div class="flex flex-wrap gap-stack-sm">
+          <button *ngFor="let e of etudiants" type="button" (click)="consulter(e)"
+                  class="flex items-center gap-2 px-4 py-2 rounded-lg border font-label-md text-label-md transition-colors"
+                  [class.border-secondary]="etudiantConsulte?.id === e.id"
+                  [class.bg-secondary-container]="etudiantConsulte?.id === e.id"
+                  [class.text-on-secondary-container]="etudiantConsulte?.id === e.id"
+                  [class.border-outline-variant]="etudiantConsulte?.id !== e.id"
+                  [class.text-on-surface]="etudiantConsulte?.id !== e.id">
+            {{ e.nom }}
+          </button>
+        </div>
+
+        <div *ngIf="etudiantConsulte" class="mt-stack-lg border-t border-outline-variant pt-stack-lg">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <p class="font-label-md text-label-md text-on-surface">{{ etudiantConsulte.nom }}</p>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">{{ etudiantConsulte.cohorte || 'Sans promotion' }}</p>
+            </div>
+            <button type="button" (click)="fermerConsultation()" aria-label="Fermer"
+                    class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <p *ngIf="consultation" class="font-body-md text-body-md text-on-surface-variant mt-4">Chargement…</p>
+
+          <ng-container *ngIf="!consultation && releveCourant">
+            <p *ngIf="releveCourant.nombreNotes === 0" class="font-body-md text-body-md text-on-surface-variant mt-4">
+              Aucune note saisie. Un relevé délivré maintenant n’attesterait de rien.
+            </p>
+
+            <div *ngIf="releveCourant.nombreNotes > 0" class="mt-4">
+              <p class="font-headline-sm text-headline-sm text-secondary tabular-nums">
+                {{ releveCourant.moyenneGenerale !== null ? (releveCourant.moyenneGenerale | number: '1.1-1') + ' / 20' : '—' }}
+                <span class="font-body-sm text-body-sm text-on-surface-variant">
+                  · {{ releveCourant.nombreNotes }} note(s)
+                </span>
+              </p>
+              <ul class="mt-3 space-y-1">
+                <li *ngFor="let c of releveCourant.parCours"
+                    class="flex items-center justify-between gap-4 font-body-sm text-body-sm">
+                  <span class="text-on-surface min-w-0 truncate">
+                    {{ c.coursCode }} — {{ c.coursTitre }}
+                    <span class="text-on-surface-variant">(coef. {{ c.coefficient }})</span>
+                  </span>
+                  <span class="text-on-surface tabular-nums shrink-0">
+                    {{ c.moyenne !== null ? (c.moyenne | number: '1.1-1') : '—' }}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </section>
+
+    <!-- Registre des relevés délivrés -->
+    <section class="space-y-stack-md">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">inventory_2</span>Relevés délivrés
+      </h2>
+
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-outline-variant">
+                <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Référence</th>
+                <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Étudiant</th>
+                <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Période</th>
+                <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Moyenne</th>
+                <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Délivré le</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of releves" class="border-b border-outline-variant/50 last:border-0">
+                <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ r.reference }}</td>
+                <td class="px-stack-lg py-stack-md">
+                  <p class="font-label-md text-label-md text-on-surface">{{ r.etudiantNom }}</p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant">{{ r.promotionLibelle || '—' }}</p>
+                </td>
+                <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface">{{ r.periode }}</td>
+                <td class="px-stack-lg py-stack-md text-right font-label-md text-label-md text-secondary tabular-nums">
+                  {{ r.moyenneGenerale !== null ? (r.moyenneGenerale | number: '1.1-1') : '—' }}
+                </td>
+                <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">
+                  {{ r.dateEmission | date: 'dd/MM/yyyy' }}
+                </td>
+              </tr>
+              <tr *ngIf="releves.length === 0">
+                <td colspan="5" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+                  Aucun relevé délivré.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>
+
+<!-- Formulaire de délivrance -->
+<div *ngIf="formulaireOuvert"
+     class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+     (click)="fermerFormulaire()">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm w-full max-w-2xl max-h-[85vh] overflow-y-auto"
+       (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">post_add</span>Délivrer des relevés
+      </h2>
+      <button type="button" (click)="fermerFormulaire()" aria-label="Fermer"
+              class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+
+    <div class="p-stack-lg space-y-stack-md">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Période couverte</span>
+        <input type="text" [(ngModel)]="periode" placeholder="Semestre 1 — 2025/2026"
+               class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        <span class="font-body-sm text-body-sm text-on-surface-variant">
+          Portée sur le document. Gardez la même formulation d’un relevé à l’autre.
+        </span>
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Promotion</span>
+        <select [(ngModel)]="promotionCiblee"
+                class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+          <option [ngValue]="null">Toutes — choisissez les étudiants ci-dessous</option>
+          <option *ngFor="let p of promotions" [ngValue]="p.id">{{ p.libelle }} ({{ p.effectif }})</option>
+        </select>
+        <span class="font-body-sm text-body-sm text-on-surface-variant">
+          Une promotion visée sans aucun étudiant coché délivre à toute la promotion.
+        </span>
+      </label>
+
+      <div class="flex flex-col gap-2">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Étudiants</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-sm max-h-56 overflow-y-auto">
+          <label *ngFor="let e of etudiantsProposes"
+                 class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
+                 [class.border-secondary]="estSelectionne(e.id)"
+                 [class.bg-secondary-container]="estSelectionne(e.id)"
+                 [class.border-outline-variant]="!estSelectionne(e.id)">
+            <input type="checkbox" [checked]="estSelectionne(e.id)" (change)="basculer(e.id)"
+                   class="w-4 h-4 accent-secondary shrink-0" />
+            <span class="font-body-sm text-body-sm min-w-0 truncate"
+                  [class.text-on-secondary-container]="estSelectionne(e.id)"
+                  [class.text-on-surface]="!estSelectionne(e.id)">{{ e.nom }}</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Avertissement de réémission : signalé, jamais bloquant -->
+      <div *ngIf="dejaDelivres.length > 0"
+           class="rounded-lg border border-error p-stack-md">
+        <div class="flex items-center gap-2 text-error">
+          <span class="material-symbols-outlined">history</span>
+          <span class="font-label-md text-label-md">
+            {{ dejaDelivres.length }} relevé(s) déjà délivré(s) pour cette période
+          </span>
+        </div>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+          {{ dejaDelivres.join(', ') }}.
+        </p>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+          Délivrer à nouveau crée un <strong>second document</strong>, avec sa propre
+          référence. C’est ce qu’il faut pour un duplicata ou un relevé corrigé — mais un
+          double clic donne le même résultat. Le précédent n’est jamais supprimé.
+        </p>
+      </div>
+
+      <p class="font-body-sm text-body-sm text-on-surface-variant">
+        Le relevé est délivré au nom de l’institut : il porte « INPG — Direction pédagogique »,
+        et non votre nom. Les étudiants sans aucune note sont écartés et vous seront signalés.
+      </p>
+
+      <div class="flex gap-stack-md pt-2">
+        <button type="button" (click)="fermerFormulaire()"
+                class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">
+          Annuler
+        </button>
+        <button type="button" [disabled]="!saisieValide || delivrance" (click)="delivrer()"
+                class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+          {{ delivrance ? 'Délivrance…' : (dejaDelivres.length > 0 ? 'Délivrer quand même' : 'Délivrer') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

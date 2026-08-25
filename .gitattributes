@@ -1,0 +1,37 @@
+# =====================================================================
+# Fins de ligne — règle unique pour toute l'équipe
+# =====================================================================
+#
+# Sans ce fichier, chaque poste applique son propre core.autocrlf. Cinq
+# fichiers du dépôt ont fini avec des séquences CR CR LF, séquelle d'une
+# double conversion : AdminRecrutementController.java comptait 685 lignes
+# pour 686 retours chariot.
+#
+# Conséquence pratique : le moindre outil qui reformate un de ces fichiers
+# le fait apparaître comme entièrement réécrit. Une suppression de 24
+# lignes a ainsi produit un diff de 1 845 lignes, noyant le vrai
+# changement et rendant la revue impossible.
+#
+# « text=auto eol=lf » : Git détecte lui-même les fichiers texte, les
+# stocke en LF dans le dépôt, et n'altère jamais les binaires. C'est la
+# configuration qui rend le dépôt identique quel que soit le système.
+# =====================================================================
+
+* text=auto eol=lf
+
+# Scripts Windows : doivent rester en CRLF pour s'exécuter correctement.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binaires : jamais de conversion, elle les corromprait.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
+*.docx binary
+*.xlsx binary
+*.zip  binary
+*.jar  binary

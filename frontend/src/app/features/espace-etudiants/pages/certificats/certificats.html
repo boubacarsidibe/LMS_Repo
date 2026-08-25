@@ -1,0 +1,43 @@
+
+<div class="flex flex-col w-full p-margin-desktop space-y-stack-lg">
+
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-gutter">
+    <div class="flex flex-col space-y-base">
+      <div class="flex items-center gap-2 text-secondary font-label-sm text-label-sm uppercase tracking-widest">
+        <span class="w-8 h-[1px] bg-secondary"></span>
+        Certification
+      </div>
+      <h1 class="font-display text-display text-on-surface leading-tight">Certificats</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+        {{ isFormateurRole ? 'Consultez les certificats délivrés par l’institut aux étudiants.' : 'Retrouvez et téléchargez vos certificats de formation.' }}
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+    <div *ngFor="let c of certificats" class="bg-surface-container-lowest p-stack-lg rounded-xl border border-outline-variant/30 shadow-sm flex flex-col justify-between">
+      <div>
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-full bg-secondary-container/30 flex items-center justify-center text-secondary">
+            <span class="material-symbols-outlined">workspace_premium</span>
+          </div>
+          <div class="min-w-0">
+            <h2 class="font-headline-sm text-headline-sm text-primary truncate">{{ c.intituleFormation }}</h2>
+            <p class="text-label-sm text-on-surface-variant truncate" *ngIf="isFormateurRole">{{ c.etudiantNom }}</p>
+          </div>
+        </div>
+        <p *ngIf="c.cohorteLibelle" class="text-body-sm text-on-surface-variant mb-1">Cohorte : {{ c.cohorteLibelle }}</p>
+        <p class="text-body-sm text-on-surface-variant mb-1">Délivré le {{ c.dateEmission | date:'dd/MM/yyyy' }}</p>
+        <p class="text-label-sm text-outline font-mono">{{ c.reference }}</p>
+      </div>
+      <button [disabled]="telechargementEnCoursId === c.id" (click)="telecharger(c)" class="mt-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+        <span class="material-symbols-outlined text-[18px]">download</span>
+        {{ telechargementEnCoursId === c.id ? 'Génération…' : 'Télécharger le PDF' }}
+      </button>
+    </div>
+  </div>
+
+  <p *ngIf="certificats.length === 0" class="text-center text-body-md text-on-surface-variant py-8">
+    Aucun certificat pour le moment.
+  </p>
+</div>

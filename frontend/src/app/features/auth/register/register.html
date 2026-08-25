@@ -1,0 +1,120 @@
+<div class="w-full">
+  <h2 class="font-headline-md text-headline-md text-primary mb-2">Créer un compte</h2>
+  <p class="font-body-sm text-body-sm text-on-surface-variant mb-8">Rejoignez la plateforme d'apprentissage.</p>
+
+  <!-- Onglets de Navigation -->
+  <div class="flex border-b border-outline-variant mb-8">
+    <a 
+      routerLink="/auth/login" 
+      routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
+      class="flex-1 pb-3 text-center font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors">
+      Se connecter
+    </a>
+    <a 
+      routerLink="/auth/register" 
+      routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="flex-1 pb-3 text-center font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors">
+      S'inscrire
+    </a>
+  </div>
+
+  <!-- Message d'erreur éventuel -->
+  <div *ngIf="errorMessage" class="mb-6 p-3 rounded-lg bg-error-container text-error text-body-sm">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Formulaire Inscription -->
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-6">
+    <!-- Type de compte : oriente la redirection après inscription (aucun rôle métier
+         n'est encore attribué à ce stade, il ne l'est qu'à la soumission réelle). -->
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5">Je m'inscris en tant que</label>
+      <div class="grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          (click)="choisirTypeInscription('CANDIDAT')"
+          [class.border-secondary]="typeInscription === 'CANDIDAT'"
+          [class.bg-secondary-container/20]="typeInscription === 'CANDIDAT'"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-colors cursor-pointer">
+          <span class="font-label-md text-label-md text-on-surface block">Candidat(e)</span>
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Postuler à une formation</span>
+        </button>
+        <button
+          type="button"
+          (click)="choisirTypeInscription('ECOLE')"
+          [class.border-secondary]="typeInscription === 'ECOLE'"
+          [class.bg-secondary-container/20]="typeInscription === 'ECOLE'"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-colors cursor-pointer">
+          <span class="font-label-md text-label-md text-on-surface block">École de formation</span>
+          <span class="font-body-sm text-body-sm text-on-surface-variant">Demander une accréditation</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-prenom">Prénom</label>
+        <input 
+          id="reg-prenom"
+          type="text" 
+          formControlName="prenom"
+          class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
+          required />
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-nom">Nom</label>
+        <input 
+          id="reg-nom"
+          type="text" 
+          formControlName="nom"
+          class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
+          required />
+      </div>
+    </div>
+
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-email">Email institutionnel</label>
+      <input 
+        id="reg-email"
+        type="email" 
+        formControlName="email"
+        placeholder="nom@institution.edu"
+        class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
+        required />
+    </div>
+
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-password">Mot de passe</label>
+      <input 
+        id="reg-password"
+        type="password" 
+        formControlName="password"
+        placeholder="••••••••"
+        class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
+        required />
+    </div>
+
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-confirm">Confirmation du mot de passe</label>
+      <input 
+        id="reg-confirm"
+        type="password" 
+        formControlName="confirmPassword"
+        placeholder="••••••••"
+        class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
+        required />
+    </div>
+
+    <button 
+      type="submit" 
+      [disabled]="isLoading"
+      class="w-full bg-secondary text-on-secondary font-label-md text-label-md py-3 px-4 rounded-lg hover:bg-opacity-90 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] disabled:opacity-50 cursor-pointer">
+      {{ isLoading ? 'Création en cours...' : 'Créer un compte' }}
+    </button>
+
+    <p class="text-center font-body-sm text-body-sm text-on-surface-variant mt-4">
+      En vous inscrivant, vous acceptez nos <a routerLink="/terms-and-conditions" class="text-secondary hover:underline">Conditions d'utilisation</a>.
+    </p>
+  </form>
+</div>

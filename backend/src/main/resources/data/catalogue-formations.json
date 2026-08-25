@@ -1,0 +1,1249 @@
+[
+  {
+    "code": "MBA-ECO-MAN-01",
+    "intitule": "MBA en Économie et Management du Pétrole et du Gaz",
+    "description": "Formez-vous à la gestion stratégique et économique de toute la chaîne de valeur des hydrocarbures.",
+    "niveau": "Executive MBA",
+    "domaine": "Management",
+    "duree": "18-24 Mois",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuC8Z3B_KvgaZWOxVKKog0RKAC4l3EpnRWXYgf5EH4H_rs3d1weyL1QT9pVZaox4BZYGdWo2zzTTzbBT-l-_4lLPgd2ahXF3YCCIKH4gEjMN8GQOZDdNlo7d7wzkIkeBwsSVz34Cr-EPFcsAIH-xUh0JVBNNN-JXfQSSNlm2K2BeAEwU3XmQq3N5cJpgSa-dPLRra9PN-i-cjKzFBdWvz0ypzdgtQ_Ol6iM5QIvvy-eINlt0BGVki-KuCQ",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Notre programme « Petroleum Economics and Management » vous apportera une expertise aux multiples facettes… Dynamisez votre potentiel !",
+      "badgeLabel": "MBA Level Program",
+      "badgeIcon": "school",
+      "modules": [
+        {
+          "titre": "Techniques Pétrolières & Gazières",
+          "icon": "oil_barrel",
+          "items": [
+            "Exploration & Production",
+            "Transport & Raffinage",
+            "Energies Alternatives",
+            "QHSE"
+          ]
+        },
+        {
+          "titre": "Analyse Economique et Environnement",
+          "icon": "eco",
+          "items": [
+            "Fondements",
+            "Macroéconomie",
+            "Microéconomie"
+          ]
+        },
+        {
+          "titre": "Gestion Financière et Management",
+          "icon": "account_balance",
+          "items": [
+            "Comptabilité & Analyse financière",
+            "Gestion budgétaire & Projets",
+            "Droit, Marketing, RH"
+          ]
+        },
+        {
+          "titre": "Techniques Quantitatives & Outils de Décision",
+          "icon": "query_stats",
+          "items": [
+            "Excel Avancé",
+            "Statistiques",
+            "Prévision & Rentabilité Oil & Gas",
+            "Optimisation"
+          ],
+          "colSpan": 2
+        },
+        {
+          "titre": "Économie des Hydrocarbures",
+          "icon": "public",
+          "items": [
+            "Géopolitique",
+            "Cadre Juridique Sénégalais",
+            "Amont, Aval, GNL",
+            "Stage SONATRACH"
+          ]
+        }
+      ],
+      "methodePedagogique": {
+        "description": "Une approche d'apprentissage hybride et immersive, combinant théorie académique rigoureuse et pratique professionnelle.",
+        "items": [
+          "Cours théoriques",
+          "Exercices",
+          "Études de cas",
+          "Travaux de recherche",
+          "E-learning",
+          "Présentations",
+          "Visites d’entreprises",
+          "Conférences",
+          "Mémoire",
+          "Voyage d’études"
+        ]
+      }
+    }
+  },
+  {
+    "code": "ING-PET-GAZ-02",
+    "intitule": "Ingénierie du Pétrole et du Gaz",
+    "description": "Spécialisation de haut niveau pour ingénieurs couvrant l'exploration, la production et le raffinage.",
+    "niveau": "Master 2",
+    "domaine": "Ingénierie",
+    "duree": "12 mois",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDrfUkHIoEEVDLPeGSLuk5TdJ01_NW-pys3UYPAlbCVINhzZJbtEfPjtbgcxpBmMcg8USGuYuIsogdAxHg-JHLhA__h8VLmTGzQmSWC7Hns3mUNU-gEKj67qXoPw1D5_cetLzfwJCZxvIRUfJAvKCqATAwPcZ7ZNlHcmda__UadZhoZLt_IBr8hMJ8_x_simo7IoXnyu06F5FcPMg6r2VxlOSE_Uf6FhfJoRh4wGkx3o167n_mPgzgXIg",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Un programme technique de pointe couvrant l'exploration, la production et le raffinage. Conçu pour former les futurs leaders techniques de l'industrie énergétique mondiale.",
+      "badgeLabel": "Spécialisation de haut niveau pour ingénieurs",
+      "badgeIcon": "school",
+      "heroMeta": [
+        {
+          "icon": "calendar_month",
+          "label": "Durée",
+          "value": "12 mois (cours) + 6 mois (stage)"
+        },
+        {
+          "icon": "translate",
+          "label": "Langue",
+          "value": "Français (supports en anglais)"
+        }
+      ],
+      "pointsCles": [
+        {
+          "icon": "landscape",
+          "titre": "Géologie pétrolière",
+          "description": "Analyse structurale, évaluation des réservoirs et modélisation des bassins sédimentaires."
+        },
+        {
+          "icon": "precision_manufacturing",
+          "titre": "Forage",
+          "description": "Ingénierie des fluides, mécanique des roches, complétion des puits et sécurité des opérations."
+        },
+        {
+          "icon": "factory",
+          "titre": "Installations de surface",
+          "description": "Conception des plateformes, séparation des fluides, traitement du gaz et transport par pipeline."
+        },
+        {
+          "icon": "science",
+          "titre": "Raffinage et pétrochimie",
+          "description": "Procédés de distillation, craquage catalytique et valorisation des hydrocarbures."
+        }
+      ],
+      "methodePedagogique": {
+        "description": "Une pédagogie active et concrète délivrée à temps plein, axée sur l'application pratique.",
+        "items": [],
+        "sousSections": [
+          {
+            "titre": "Partenariats d'excellence",
+            "items": [
+              "Formateurs IFP Training & IFP School",
+              "Interventions d'experts de l'industrie"
+            ]
+          },
+          {
+            "titre": "Approche pratique (50/50)",
+            "items": [
+              "Études de cas sur données réelles",
+              "Pratique sur logiciels professionnels",
+              "Documentation de haute qualité"
+            ]
+          }
+        ]
+      },
+      "debouches": [
+        {
+          "icon": "engineering",
+          "titre": "Ingénieur de production",
+          "description": "Optimisation des flux d'extraction et gestion opérationnelle des champs."
+        },
+        {
+          "icon": "construction",
+          "titre": "Ingénieur forage",
+          "description": "Conception des trajectoires de puits et supervision technique sur site."
+        },
+        {
+          "icon": "manage_accounts",
+          "titre": "Responsable technique",
+          "description": "Direction de projets d'ingénierie et coordination des équipes."
+        }
+      ],
+      "ctaText": "Prêt à développer votre expertise ?"
+    }
+  },
+  {
+    "code": "REN-CAP-03",
+    "intitule": "Renforcement de Capacités",
+    "description": "Programmes courts et intensifs pour actualiser les compétences des professionnels du secteur.",
+    "niveau": "Certificat",
+    "domaine": "Management",
+    "duree": "Courte durée",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuAkQkRSzD_KKRPwNeHlGDrY9wBwrDkpt2yLZNORckLWnX9sgSMJUmLwgnUmF_WpuTSwg5gs0r1Cc9Tfn973iexdNQVxDNXqm7h_yne4l4tJMi2Dl9hjWl-E9OPWKu4sEvpiGyQyrP3zG6k36GgsEzXJu-PjcFVC54hSZSKfCl5eK-31TMrBFLSDaShjCM-zYhHt2PiEuhTP3F8PYYV7picL-zU7W9n0W4qnnkIJfCmKqVZaKWIkbQ6ScA",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Programmes courts et intensifs pour actualiser les compétences des professionnels du secteur pétrolier et gazier.",
+      "badgeLabel": "Formation Professionnelle Continue",
+      "badgeIcon": "auto_stories"
+    }
+  },
+  {
+    "code": "CER-HSE-04",
+    "intitule": "Certifications HSE",
+    "description": "Certifications internationales : Survival, Fire fighting, H2S, et sécurité opérationnelle.",
+    "niveau": "Certificat",
+    "domaine": "Sécurité",
+    "duree": "Certificat",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBObmr2ldoCiTTmAfZeOilPQ9uPxCSycTKtEgWiWSLdrf64dk2NAks8F1iZdj3wamLvH_18zZUz_SYP6SNlTQJOrvNiOH-VopUFAPhGLE0cqqJMtutquZLKsRENtCSxk40BxG3U_RKdio0RJiwOsxsOK-BMFrqgiOQ1kBVLYMlaWCicvMQUwXP4yjlmzG_HQ2fOl7KIgzGYQDVENkgho-T6OxKDYdcea3rDFmnhsv3zifuwM9pe8pn_JQ",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Certifications internationales : Survie, Lutte incendie, H₂S, et sécurité opérationnelle.",
+      "badgeLabel": "Certifications HSE",
+      "badgeIcon": "shield",
+      "modules": [
+        {
+          "titre": "Survie (Survival)",
+          "icon": "water",
+          "items": [
+            "BOSIET",
+            "FOET",
+            "HUET",
+            "TBOSIT",
+            "TFOET",
+            "THUET"
+          ],
+          "badge": "Offshore"
+        },
+        {
+          "titre": "Sécurité Chimique",
+          "icon": "science",
+          "items": [
+            "Manipulation",
+            "Stockage",
+            "Transport",
+            "Prévention"
+          ],
+          "badge": "Chimique"
+        },
+        {
+          "titre": "Hygiène et Sécurité au Travail",
+          "icon": "health_and_safety",
+          "items": [
+            "Superviseur HSE",
+            "Permis de travail",
+            "Identification dangers",
+            "Enquête accidents"
+          ],
+          "badge": "Général"
+        },
+        {
+          "titre": "Espaces Confinés & Travail en Hauteur",
+          "icon": "height",
+          "items": [
+            "Planification",
+            "Équipements",
+            "Sauvetage",
+            "Réglementation"
+          ],
+          "badge": "Hauteur"
+        },
+        {
+          "titre": "Conduite Défensive",
+          "icon": "directions_car",
+          "items": [
+            "Conduite urbaine",
+            "Off-road",
+            "Gestion de trajet",
+            "Gestion de flotte"
+          ],
+          "badge": "Véhicule"
+        },
+        {
+          "titre": "Lutte Incendie",
+          "icon": "local_fire_department",
+          "items": [
+            "Basic Fire Fighting",
+            "Fire Warden",
+            "Évacuation",
+            "Extincteurs"
+          ],
+          "badge": "Feu"
+        },
+        {
+          "titre": "Détection H₂S et Gaz",
+          "icon": "co2",
+          "items": [
+            "Équipement",
+            "Interprétation alarmes",
+            "Urgence",
+            "Milieu hostile"
+          ],
+          "badge": "Gaz"
+        },
+        {
+          "titre": "Levage et Gréage",
+          "icon": "forklift",
+          "items": [
+            "Inspection matériel",
+            "Calcul charges",
+            "Élinguage",
+            "Communication"
+          ],
+          "badge": "Manutention"
+        },
+        {
+          "titre": "Rôles Spécifiques HSE",
+          "icon": "supervisor_account",
+          "items": [
+            "HLO - HDA",
+            "Fire Watcher",
+            "Surveillant espace clos",
+            "Superviseur"
+          ],
+          "badge": "Rôle",
+          "colSpan": 2
+        }
+      ]
+    }
+  },
+  {
+    "code": "CER-TEC-OPE-05",
+    "intitule": "Certifications Techniciens et Opérations",
+    "description": "Certifications techniques pour les opérateurs de la chaîne de valeur pétrolière.",
+    "niveau": "Certificat",
+    "domaine": "Technique",
+    "duree": "Certificat",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuC-x1KiJHk5v4SFWRvwg9NCVbHXM4F-kQJLSA822TwE0IeXajhPVP69U-AZFaXitxo3Y26R7QPzUKQ_dKg_8Z1IZ6yp--Ax7zMtdlN-HHWGlMyXj3LwAAGpnnzX8loGQKj6UxAt4Zw1vIqwUUgXUGw7mHOdieIHbbWi09z4JlNYYZz3uVfBjpZvLd4xOdsiW5olqiRAqZndtuHDYvERwJWmAx6iRK9mziMtdRquN9sZbf_wPON1NJmFOA",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Programmes de certification technique intensifs conçus pour former l'élite opérationnelle de l'industrie pétrolière et gazière. Une approche alliant rigueur académique et excellence pratique.",
+      "badgeLabel": "Formation Continue",
+      "badgeIcon": "build",
+      "modules": [
+        {
+          "titre": "Maintenance Industrielle",
+          "icon": "build",
+          "items": [
+            "Maintenance mécanique et électrique",
+            "Diagnostic approfondi",
+            "Stratégies de maintenance préventive"
+          ],
+          "description": "Maintenance mécanique et électrique des installations pétrolières."
+        },
+        {
+          "titre": "Opérations de Production",
+          "icon": "factory",
+          "items": [
+            "Surveillance et contrôle",
+            "Optimisation des flux",
+            "Gestion de la pression",
+            "Contrôle qualité en continu"
+          ],
+          "description": "Supervision et contrôle des processus de production."
+        },
+        {
+          "titre": "Instrumentation & Régulation",
+          "icon": "tune",
+          "items": [
+            "Systèmes de contrôle industriels",
+            "Boucles de régulation",
+            "Capteurs de pointe",
+            "Automatisation avancée"
+          ],
+          "description": "Gestion des systèmes de contrôle industriels."
+        },
+        {
+          "titre": "Logistique Pétrolière",
+          "icon": "local_shipping",
+          "items": [
+            "Chaîne d'approvisionnement",
+            "Stockage sécurisé",
+            "Transfert de fluides",
+            "Gestion des terminaux"
+          ],
+          "description": "Chaîne logistique et gestion des produits pétroliers."
+        },
+        {
+          "titre": "Tuyauterie & Chaudronnerie",
+          "icon": "plumbing",
+          "items": [
+            "Conception",
+            "Assemblage",
+            "Intégrité structurelle",
+            "Réseaux sous pression"
+          ],
+          "description": "Compétences techniques en tuyauterie industrielle."
+        },
+        {
+          "titre": "Électricité Industrielle",
+          "icon": "bolt",
+          "items": [
+            "Systèmes électriques",
+            "Sécurité en atmosphères explosives",
+            "Architecture haute tension",
+            "Normes ATEX"
+          ],
+          "description": "Systèmes électriques et sécurité en zones explosives."
+        }
+      ],
+      "methodePedagogique": {
+        "description": "Notre approche privilégie l'immersion totale et l'acquisition de compétences tangibles pour répondre immédiatement aux exigences du terrain.",
+        "items": [],
+        "sousSections": [
+          {
+            "titre": "80% Pratique et Immersion",
+            "items": [
+              "L'essentiel du programme se déroule en conditions réelles ou simulées",
+              "Manipulation d'équipements industriels standards",
+              "Développement de réflexes opérationnels immédiats"
+            ]
+          },
+          {
+            "titre": "Ateliers Techniques Spécialisés",
+            "items": [
+              "Sessions intensives en petits groupes",
+              "Laboratoires équipés des dernières technologies",
+              "Résolution de pannes complexes et étalonnage de précision"
+            ]
+          },
+          {
+            "titre": "Stages Industriels Intégrés",
+            "items": [
+              "Immersion directe au sein d'entreprises partenaires",
+              "Secteur pétrolier et gazier",
+              "Transition fluide vers le marché du travail"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "code": "GEO-ING-RES-06",
+    "intitule": "Géosciences et Ingénierie de Réservoir",
+    "description": "Spécialisation avancée dans l'exploration et la gestion des réservoirs.",
+    "niveau": "Master 2",
+    "domaine": "Géosciences",
+    "duree": "12 mois",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuC2Ep5heUDsvYKrgF4aMlsSuMHJ2rcIlWnT2L9BHXsSnCKnTP1dIWqqImwKw1HVFtMQ2uWqnG7Sqdv3_t47SFnpIA2_pZeqNc7CVEXhU5DiCeNKfVcIWstCYLeuaoz2vlH2gUMdVvgjzbNs276zU67FCtHHkCWbVLUf8gGU8nDPWkzl_ao4kV-2CJt10O57G5dE8WCRmBa5HQ68sfPC9Ftr1-ygBwfSg1gidShdQul8oXbQeAUu1QMFpQ",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Une formation d'excellence pour maîtriser l'exploration et la caractérisation des réservoirs d'hydrocarbures, alliant géologie de pointe et ingénierie de précision.",
+      "badgeLabel": "Spécialisation Géosciences",
+      "badgeIcon": "terrain",
+      "modules": [
+        {
+          "titre": "Géologie Pétrolière",
+          "icon": "landscape",
+          "items": [
+            "Analyse des bassins sédimentaires",
+            "Systèmes pétroliers"
+          ],
+          "description": "Analyse des bassins sédimentaires et systèmes pétroliers."
+        },
+        {
+          "titre": "Géophysique & Sismique",
+          "icon": "graphic_eq",
+          "items": [
+            "Interprétation des données sismiques",
+            "Imagerie du sous-sol"
+          ],
+          "description": "Interprétation des données sismiques et imagerie."
+        },
+        {
+          "titre": "Pétrophysique",
+          "icon": "science",
+          "items": [
+            "Mesure des propriétés des roches",
+            "Saturation des fluides"
+          ],
+          "description": "Mesure des propriétés des roches et saturation en fluides."
+        },
+        {
+          "titre": "Ingénierie de Réservoir",
+          "icon": "account_tree",
+          "items": [
+            "Simulation des flux de fluides",
+            "Optimisation de la récupération"
+          ],
+          "description": "Simulation des flux de fluides et optimisation de la récupération."
+        },
+        {
+          "titre": "Forage d'Exploration",
+          "icon": "precision_manufacturing",
+          "items": [
+            "Techniques de forage exploratoire",
+            "Diagraphies"
+          ],
+          "description": "Techniques de forage exploratoire et diagraphies."
+        },
+        {
+          "titre": "Évaluation Économique",
+          "icon": "insights",
+          "items": [
+            "Analyse de rentabilité des projets",
+            "Gestion des risques"
+          ],
+          "description": "Analyse de la rentabilité des projets et gestion des risques."
+        }
+      ],
+      "methodePedagogique": {
+        "description": "Formation intensive alliant théorie et pratique sur les plateformes standards de l'industrie.",
+        "items": [],
+        "sousSections": [
+          {
+            "titre": "Logiciels de Simulation Industriels",
+            "items": [
+              "Apprentissage intensif sur Petrel et Eclipse",
+              "Modélisation 3D et simulation des fluides"
+            ]
+          },
+          {
+            "titre": "Travaux Pratiques en Laboratoire",
+            "items": [
+              "Analyses pétrophysiques sur carottes réelles",
+              "Mesures de porosité, perméabilité et saturation"
+            ]
+          },
+          {
+            "titre": "Sorties Géologiques sur le Terrain",
+            "items": [
+              "Observations in situ des analogues de réservoirs",
+              "Consolidation de la compréhension spatiale"
+            ]
+          }
+        ]
+      },
+      "sidebar": {
+        "duree": "2 Ans (4 Semestres)",
+        "langue": "Français / Anglais Technique",
+        "certificat": "Master en Ingénierie",
+        "prochaineRentree": "Octobre 2024"
+      }
+    }
+  },
+  {
+    "code": "SUR-SUR-07",
+    "intitule": "Survie (Survival)",
+    "description": "Techniques et protocoles essentiels pour réagir efficacement en situation d'urgence extrême. Formation pratique axée sur la survie en milieu hostile et les premiers secours avancés.",
+    "niveau": "Certificat",
+    "domaine": "Sécurité",
+    "duree": "Courte durée",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuCL6u8cL7fbnRCzbRUdcKOSAXZB4npLaQ7rkJGUeRZ4Rnk6UlMBSPrgt3lZALg5TiIVt1OV23hwb0qUujICapCKFYZhik4g87Y2gnVjapBOc7wgW3bCbbLo1PpXeB9n9J-hxyhf0qGWdQtJmug5v0_Rvzvt3L0QaruEZ9lwE-Wstvt0z2YYJX4cECYKTNS88_uJaOWuOWkaxXIqOjrow_oaBRbnpzc8Vh6sn3wOy1i2u7w42rwndv71AA",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Programmes de formation essentiels pour les environnements offshore, garantissant la sécurité et la préparation aux urgences selon les standards internationaux de l'industrie pétrolière et gazière.",
+      "badgeLabel": "Certifications HSE",
+      "badgeIcon": "school",
+      "modules": [
+        {
+          "titre": "BOSIET",
+          "icon": "water",
+          "items": [
+            "Formation initiale de sécurité offshore de base"
+          ],
+          "badge": "Offshore",
+          "description": "Formation initiale de sécurité offshore de base (Basic Offshore Safety Induction and Emergency Training)."
+        },
+        {
+          "titre": "FOET",
+          "icon": "safety_check",
+          "items": [
+            "Formation complémentaire d'urgence offshore"
+          ],
+          "badge": "Offshore",
+          "description": "Formation complémentaire d'urgence offshore (Further Offshore Emergency Training)."
+        },
+        {
+          "titre": "HUET",
+          "icon": "flight",
+          "items": [
+            "Évacuation sous-marine d'hélicoptère"
+          ],
+          "badge": "Hélicoptère",
+          "description": "Formation à l'évacuation sous-marine d'hélicoptère (Helicopter Underwater Escape Training)."
+        },
+        {
+          "titre": "TBOSIT",
+          "icon": "sunny",
+          "items": [
+            "Formation de base adaptée aux environnements tropicaux"
+          ],
+          "badge": "Tropical",
+          "description": "Formation de base de sécurité offshore adaptée aux environnements tropicaux."
+        },
+        {
+          "titre": "TFOET",
+          "icon": "tsunami",
+          "items": [
+            "Formation avancée pour les zones tropicales"
+          ],
+          "badge": "Tropical",
+          "description": "Formation complémentaire d'urgence offshore pour les zones tropicales."
+        },
+        {
+          "titre": "THUET",
+          "icon": "air",
+          "items": [
+            "Évacuation sous-marine en milieu tropical"
+          ],
+          "badge": "Tropical / Helo",
+          "description": "Formation à l'évacuation sous-marine d'hélicoptère en milieu tropical."
+        }
+      ]
+    }
+  },
+  {
+    "code": "SEC-CHI-CHE-08",
+    "intitule": "Sécurité chimique (Chemical Safety)",
+    "description": "Maîtrisez la manipulation, le stockage et l'élimination des produits chimiques dangereux. Apprenez à évaluer les risques et à mettre en œuvre les mesures de prévention adéquates.",
+    "niveau": "Certificat",
+    "domaine": "Sécurité",
+    "duree": "Courte durée",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuB8xymg_jdpe0rAUREnGnJJIVDKJoqStJxgR7fdmO6zPz9l0tGQ3D0yNql7WptxQ6TqlXiui2HzpZ-S7VXBllq9fBoWoluQf1FHGwEAmZafoYP3PCaTw9aAly9OiOqwqmxFLKjhMgeuLOKnbSWVG228K-fSNbBL9i5AgEbgxqJRbhMfvpL3fQqa4NhzBZ3QScA4_CmT5IFQjuQ7aS_pwnf--VLemHtuQmMxaR8ynm7icTLL-l-ec1EvHg",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Maîtrisez les protocoles critiques de manipulation, stockage et transport des matières dangereuses en environnement industriel. Cette certification complète est alignée sur les standards HSE internationaux du secteur énergétique.",
+      "badgeLabel": "Certifications HSE",
+      "badgeIcon": "verified",
+      "modules": [
+        {
+          "titre": "Manipulation des Matières Dangereuses",
+          "icon": "science",
+          "items": [
+            "Protocoles de stockage",
+            "Transfert sécurisé",
+            "Agents réactifs",
+            "Utilisation industrielle"
+          ]
+        },
+        {
+          "titre": "Prévention des Déversements",
+          "icon": "water_drop",
+          "items": [
+            "Confinement",
+            "Réponse rapide",
+            "Protection environnementale",
+            "Rejets accidentels"
+          ]
+        },
+        {
+          "titre": "Programme de Communication des Dangers",
+          "icon": "campaign",
+          "items": [
+            "Fiches SDS",
+            "Étiquetage GHS",
+            "Briefing équipe",
+            "Communication des risques"
+          ]
+        },
+        {
+          "titre": "Transport des Marchandises Dangereuses",
+          "icon": "local_shipping",
+          "items": [
+            "ADR (Route)",
+            "IMDG (Mer)",
+            "IATA (Air)",
+            "Conformité réglementaire"
+          ],
+          "colSpan": 2
+        }
+      ]
+    }
+  },
+  {
+    "code": "HYG-SEC-TRA-09",
+    "intitule": "Hygiène et sécurité au travail",
+    "description": "Fondamentaux de la réglementation HSE (Hygiène, Sécurité, Environnement). Développez une culture de la prévention pour garantir un environnement de travail sain et sûr.",
+    "niveau": "Certificat",
+    "domaine": "Sécurité",
+    "duree": "Courte durée",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBlYh5YAttneehy2p2yXGN9e6xrV19GaWy4V9Hrr92Iux4C0xcH0N6o9-QfDBPXHrWzM6rsdUMh6ROwgKz20JsF0W_U2BnpwcIFJPISovB7Plljw6nWsAQFRACtkrhzuh1IcMjcxtSE57g5cUItOcACQe3yhbFWkKxW0HFspblZkjKqomza6fysPnFIfwDmGagKcUJKAtK9xtly3kIbf9ReXTWB7s-ckcB95QlemkpKntMvTq6N2L9tzA",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Programme complet de certification HSE (Hygiène, Sécurité, Environnement) conçu pour doter les professionnels des compétences essentielles en identification des dangers, évaluation des risques et gestion de la sécurité.",
+      "badgeLabel": "Certification",
+      "badgeIcon": "school",
+      "heroMeta": [
+        {
+          "icon": "schedule",
+          "label": "Durée",
+          "value": "12 Semaines"
+        },
+        {
+          "icon": "translate",
+          "label": "Langue",
+          "value": "Français / Anglais Technique"
+        }
+      ],
+      "modules": [
+        {
+          "titre": "Superviseur HSE",
+          "icon": "supervisor_account",
+          "items": [
+            "Leadership et supervision",
+            "Responsabilités HSE",
+            "Culture sécurité"
+          ],
+          "badge": "Module 01"
+        },
+        {
+          "titre": "Permis de Travail",
+          "icon": "assignment_turned_in",
+          "items": [
+            "Autorisations formelles",
+            "Activités à haut risque",
+            "Tâches isolées"
+          ],
+          "badge": "Module 02"
+        },
+        {
+          "titre": "Identification des Dangers",
+          "icon": "warning",
+          "items": [
+            "Méthodologies HIRA",
+            "Évaluation des risques",
+            "Atténuation proactive"
+          ],
+          "badge": "Module 03"
+        },
+        {
+          "titre": "Enquête Accidents",
+          "icon": "analytics",
+          "items": [
+            "Analyse des causes racines",
+            "Protocoles de reporting",
+            "Plans d'actions préventives"
+          ],
+          "badge": "Module 04"
+        }
+      ],
+      "sections": [
+        {
+          "titre": "Thèmes Spécialisés",
+          "icon": "science",
+          "type": "list",
+          "items": [
+            {
+              "titre": "COSHH (Contrôle des Substances Dangereuses pour la Santé)",
+              "icon": "coronavirus"
+            },
+            {
+              "titre": "NORM (Matières Radioactives Naturelles)",
+              "icon": "swipe_vertical"
+            },
+            {
+              "titre": "Sécurité Basée sur le Comportement",
+              "icon": "psychology"
+            },
+            {
+              "titre": "Sécurité de la Manipulation des Produits Chimiques",
+              "icon": "sanitizer"
+            }
+          ]
+        },
+        {
+          "titre": "Directives Fondamentales",
+          "icon": "health_and_safety",
+          "type": "cards",
+          "items": [
+            {
+              "titre": "Règles Vitales (Life Saving Rules)",
+              "icon": "policy",
+              "description": "Protocoles non-négociables conçus pour prévenir les blessures mortelles lors d'opérations à haut risque."
+            },
+            {
+              "titre": "Règles d'Or (Golden Rules)",
+              "icon": "stars",
+              "description": "Principes fondamentaux pour maintenir une culture omniprésente de sécurité et de conformité."
+            }
+          ]
+        }
+      ],
+      "sidebar": {
+        "duree": "12 Semaines",
+        "langue": "Français / Anglais Technique",
+        "lieu": "Hybride (Campus Dakar & En ligne)",
+        "certificat": "Professionnel HSE INPG",
+        "tarif": "500 000 XOF",
+        "prochaineRentree": "15 Octobre 2024",
+        "boutonTexte": "S'inscrire à la cohorte"
+      }
+    }
+  },
+  {
+    "code": "ESP-CON-TRA-10",
+    "intitule": "Espaces confinés et travail en hauteur",
+    "description": "Procédures critiques pour les interventions en milieux périlleux. Utilisation des EPI, détection de gaz, sauvetage et techniques d'accès sur corde.",
+    "niveau": "Certificat",
+    "domaine": "Sécurité",
+    "duree": "Courte durée",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBPQHjYus84uLbV7qhxgDcPEXjwb0blZ021CjNMUNxXjN-8U3C8mVhTBP8GAsrkxwopSz1v6EsOmTKLVnor461I-YU_l26Mu499s5OshwI60dzaIIRDhhwAxiuTf9fjGO14UEp0srJChtUYhc_qG3BAzfqYyeC86869ZoR_I6QLcMCWMC_D76YC6qjS-c5CzcUpFgDJRucoG0-s1TLGGg7B2HjoWPJJ5qOyeWSOF4_FxUKBUKl8Fqaa2A",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Certification HSE avancée conçue pour les protocoles de sécurité rigoureux dans les environnements industriels à haut risque. Maîtrisez la planification, l'exécution et les opérations de sauvetage pour les espaces confinés et les travaux en hauteur.",
+      "badgeLabel": "Certification HSE Fondamentale",
+      "badgeIcon": "verified",
+      "heroMeta": [
+        {
+          "icon": "schedule",
+          "label": "Durée",
+          "value": "4 Jours Intensifs (32 Heures)"
+        },
+        {
+          "icon": "translate",
+          "label": "Langue",
+          "value": "Bilingue (Fr / En)"
+        },
+        {
+          "icon": "group",
+          "label": "Capacité",
+          "value": "Max 12 Participants / Session"
+        },
+        {
+          "icon": "location_on",
+          "label": "Lieu",
+          "value": "Centre de Formation INPG, Dakar"
+        }
+      ],
+      "pointsCles": [
+        {
+          "icon": "architecture",
+          "titre": "Planification Espaces Confinés",
+          "description": "Évaluation stratégique des risques, protocoles de tests atmosphériques et permis d'entrée."
+        },
+        {
+          "icon": "height",
+          "titre": "Sécurité en Hauteur",
+          "description": "Systèmes anti-chute, techniques d'ancrage et inspection des équipements."
+        },
+        {
+          "icon": "medical_services",
+          "titre": "Opérations de Sauvetage d'Urgence",
+          "description": "Méthodes d'extraction, premiers secours en environnements contraints."
+        },
+        {
+          "icon": "gavel",
+          "titre": "Conformité Réglementaire",
+          "description": "Navigation dans les cadres légaux et les directives institutionnelles strictes de l'INPG."
+        }
+      ],
+      "sidebar": {
+        "tarif": "450 000 FCFA",
+        "duree": "4 Jours Intensifs (32 Heures)",
+        "lieu": "Centre de Formation INPG, Dakar",
+        "langue": "Bilingue (Fr / En)",
+        "boutonTexte": "S'inscrire",
+        "brochure": true
+      }
+    }
+  },
+  {
+    "code": "CON-DEF-DEF-11",
+    "intitule": "Conduite défensive (Defensive Driving)",
+    "description": "Anticipation des risques routiers et maîtrise du véhicule en situations d'urgence. Formation théorique et pratique pour réduire la sinistralité de la flotte automobile.",
+    "niveau": "Certificat",
+    "domaine": "Sécurité",
+    "duree": "Courte durée",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuCrlFaDmfl-QESD3P06Qz9y84vmsmgWeuyl4Qe3gNQX52gP_P51cGDtdHEYFp5P29mD332ZCmS8z2TSgF7Ec2Rzksg5EOeq5a4_sIvPmqGi2a9TRsecjj9lllSlwqtOrWRs4CH7O9QZAcf89Rg9hH08ed-FJCC0AJQBhmnmtq1VoDXkxHs9YXobsnGuGEf3e5pP6N9l1iCGWNxFgh4cZ2D0ZvouqGGHSqh75pn8JpJf3n4SLKBUefLagQ",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Maîtrisez les techniques de conduite avancées pour prévenir les accidents et assurer la sécurité dans divers environnements, des zones urbaines aux conditions tout-terrain difficiles.",
+      "badgeLabel": "Certifications HSE",
+      "badgeIcon": "verified",
+      "modules": [
+        {
+          "titre": "Conduite Défensive Urbaine",
+          "icon": "directions_car",
+          "items": [
+            "Trafic urbain",
+            "Anticipation des dangers",
+            "Intersections complexes"
+          ],
+          "description": "Naviguer en toute sécurité dans le trafic urbain, en anticipant les dangers et en gérant les intersections complexes."
+        },
+        {
+          "titre": "Conduite Défensive Tout-Terrain",
+          "icon": "terrain",
+          "items": [
+            "Contrôle du véhicule",
+            "Surfaces irrégulières",
+            "Faible adhérence"
+          ],
+          "description": "Maîtriser le contrôle du véhicule sur des surfaces irrégulières à faible adhérence."
+        },
+        {
+          "titre": "Gestion des Trajets",
+          "icon": "route",
+          "items": [
+            "Planification d'itinéraires",
+            "Évaluation des risques",
+            "Protocoles de voyage"
+          ],
+          "description": "Planifier des itinéraires sûrs, évaluer les risques et mettre en œuvre des protocoles robustes."
+        },
+        {
+          "titre": "Gestion de Flotte",
+          "icon": "local_shipping",
+          "items": [
+            "Maintenance des véhicules",
+            "Suivi des conducteurs",
+            "Conformité"
+          ],
+          "description": "Optimiser la maintenance des véhicules, surveiller le comportement des conducteurs et assurer la conformité."
+        }
+      ]
+    }
+  },
+  {
+    "code": "LUT-CON-INC-12",
+    "intitule": "Lutte contre l'incendie (Firefighting)",
+    "description": "Formation complète sur la prévention incendie, l'évacuation et l'utilisation des moyens de première intervention. Exercices sur feux réels en centre d'entraînement sécurisé.",
+    "niveau": "Certificat",
+    "domaine": "Sécurité",
+    "duree": "Courte durée",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuCIT2uuTe9v1Yx8h28xwQWVZuwVeHKI4wnEwL7T5qW-RXUoXzelw-z2F2AxnXakLmbV3tDKhvZWN8QO1CdNBpRJdbUrM5L-U-YLKglFhzIQLIGyYxRYVu7xa9l5cn-Yto89617vK_1dbXHB78rvg5PvAXMZ1N6yNDMXiUPsOWLwBmu1cUzZgCfAwrwvyUxdq1qnIh8TR04pTupbNJr7MMm-OYrxamzy68TVM0g-s5MVnyTnDXBQcQu7OQ",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Programme de formation complet conçu pour doter le personnel des compétences essentielles en prévention, évaluation et réponse efficace aux incendies dans les environnements industriels.",
+      "badgeLabel": "Certification HSE",
+      "badgeIcon": "local_fire_department",
+      "heroMeta": [
+        {
+          "icon": "schedule",
+          "label": "Durée",
+          "value": "3 Jours"
+        },
+        {
+          "icon": "school",
+          "label": "Format",
+          "value": "Présentiel / Hybride"
+        },
+        {
+          "icon": "language",
+          "label": "Langue",
+          "value": "FR / EN"
+        },
+        {
+          "icon": "workspace_premium",
+          "label": "Certificat",
+          "value": "Certifié INPG"
+        }
+      ],
+      "modules": [
+        {
+          "titre": "Lutte Incendie de Base",
+          "icon": "local_fire_department",
+          "items": [
+            "Triangle du feu",
+            "Types d'extincteurs",
+            "Protocoles d'évacuation"
+          ],
+          "badge": "Module 1",
+          "description": "Fondamentaux de la chimie du feu, identification des classes de feu et application pratique des extincteurs portatifs."
+        },
+        {
+          "titre": "Chef d'Équipe Incendie",
+          "icon": "shield",
+          "items": [
+            "Gestion de crise",
+            "Procédures de balayage",
+            "Évaluation des risques"
+          ],
+          "badge": "Module 2",
+          "description": "Responsabilités avancées du personnel désigné : leadership en situation d'urgence, coordination des évacuations et liaison avec les services d'urgence."
+        }
+      ],
+      "sections": [
+        {
+          "titre": "Public Cible",
+          "icon": "group",
+          "type": "grid",
+          "items": [
+            {
+              "titre": "Travailleurs Industriels",
+              "icon": "engineering"
+            },
+            {
+              "titre": "Agents HSE",
+              "icon": "admin_panel_settings"
+            },
+            {
+              "titre": "Gestionnaires d'Installations",
+              "icon": "apartment"
+            },
+            {
+              "titre": "Personnel d'Entreprise",
+              "icon": "group"
+            }
+          ]
+        }
+      ],
+      "sidebar": {
+        "duree": "3 Jours",
+        "format": "Présentiel / Hybride",
+        "langue": "FR / EN",
+        "certificat": "Certifié INPG",
+        "lieu": "Campus INPG, Dakar / Sur site sur demande"
+      }
+    }
+  },
+  {
+    "code": "DET-GAZ-13",
+    "intitule": "Détection H₂S et gaz",
+    "description": "Formation spécialisée sur la détection des gaz dangereux, en particulier le sulfure d'hydrogène (H₂S). Apprenez à utiliser les équipements de détection, à interpréter les alarmes et à réagir efficacement en cas d'urgence dans des environnements à haut risque.",
+    "niveau": "Certificat",
+    "domaine": "Sécurité",
+    "duree": "Courte durée",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuA3OQuNP4tDf-sBiwH97c7DOvXisTDF8oDdmk_sCT02n0rBjCZr9L3ko6UCKCqdJQi0X28FHAj2OyfjESSR3YUSOKNmoACGA9hd21sgVmYMcjPaVKDIbyfSEM8KRyaE_kkOqTbDSRO3SBEYMOAfVwJU97dgmpWhv-pjg8bUp2FOT-xf6szm4GFppgfHMB9U125xj8TWJipibPcKvS9_5AQ_CBIyFm6MA3D_1_mJWou2xNf1yAw3Qv943w",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Maîtrisez les protocoles de sécurité critiques et les compétences techniques requises pour les environnements exposés au sulfure d'hydrogène. Une formation rigoureuse et reconnue internationalement par l'INPG.",
+      "badgeLabel": "Certifications HSE",
+      "badgeIcon": "verified",
+      "modules": [
+        {
+          "titre": "Sensibilisation H₂S",
+          "icon": "visibility",
+          "items": [
+            "Propriétés du sulfure d'hydrogène",
+            "Risques d'exposition",
+            "Protocoles d'intervention d'urgence de base"
+          ],
+          "badge": "Niveau 1",
+          "description": "Compréhension fondamentale des propriétés du H₂S, des risques d'exposition et des protocoles d'intervention d'urgence de base."
+        },
+        {
+          "titre": "Formation H₂S de Base",
+          "icon": "build",
+          "items": [
+            "Équipement de détection",
+            "Protection respiratoire (SCBA)",
+            "Pratiques sécuritaires en environnements dangereux"
+          ],
+          "badge": "Niveau 2",
+          "description": "Application pratique des équipements de détection, protection respiratoire et pratiques de travail sécuritaires."
+        }
+      ],
+      "sidebar": {
+        "duree": "2 Jours (16 Heures)",
+        "langue": "Français / Anglais Technique",
+        "certificat": "Certifié INPG HSE"
+      }
+    }
+  },
+  {
+    "code": "LEV-GRE-14",
+    "intitule": "Levage et gréage",
+    "description": "Maîtrisez les techniques sécuritaires de levage et de gréage. Ce cours couvre l'inspection du matériel de levage, le calcul des charges, la sélection des élingues appropriées et les communications essentielles pour des opérations de manutention complexes et sûres.",
+    "niveau": "Certificat",
+    "domaine": "Sécurité",
+    "duree": "Courte durée",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBTt5XV1wj0V8yBwk80jSwuKpb25VetkKYd1DSVSm0HpULv1raQRDZcdnQwSyNQbsNFza6wbgJ2Hq2Y8JsmrL63JABdBu1KE3iYUe65b1w9E9WILhgyxokGHZ4ISYYy2m7MKlkaPIxLZQKRuU1SlTIfa6C_w3KUCTQzr6GiQic0I49u8D1lbpOFBdNoPBBVauvhQ3c1rTiixodzxRd0ymzjbp3NRkogGzN-Ytw_4EReEqriszMoFkCOIw",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Programmes de formation complets conçus pour assurer la sécurité et la maîtrise des opérations critiques de levage et de gréage. Maîtrisez les normes industrielles avec nos modules dirigés par des experts.",
+      "badgeLabel": "Certifications HSE",
+      "badgeIcon": "verified",
+      "modules": [
+        {
+          "titre": "Banksman Slinger (Élingueur Signaleur)",
+          "icon": "front_loader",
+          "items": [
+            "Communication essentielles",
+            "Techniques d'élingage",
+            "Sécurité des opérations de grue"
+          ],
+          "description": "Apprenez les techniques essentielles de communication et d'élingage pour des opérations de grue sécurisées."
+        },
+        {
+          "titre": "Personne en Charge des Opérations de Levage",
+          "icon": "engineering",
+          "items": [
+            "Planification",
+            "Organisation",
+            "Contrôle des tâches de levage"
+          ],
+          "description": "Développez des compétences en leadership pour planifier, organiser et contrôler les tâches de levage en toute sécurité."
+        },
+        {
+          "titre": "Opérateur de Pont Roulant",
+          "icon": "forklift",
+          "items": [
+            "Opération",
+            "Inspection",
+            "Protocoles de sécurité"
+          ],
+          "description": "Formation pratique sur l'utilisation, l'inspection et les protocoles de sécurité des ponts roulants."
+        },
+        {
+          "titre": "Opérateur de Chariot Élévateur",
+          "icon": "forklift",
+          "items": [
+            "Vérifications pré-utilisation",
+            "Manutention des charges",
+            "Conduite sécuritaire"
+          ],
+          "description": "Certification complète couvrant les vérifications pré-utilisation, la manutention des charges et les pratiques de conduite sécuritaire."
+        },
+        {
+          "titre": "Gestion du Magasin de Gréage",
+          "icon": "inventory",
+          "items": [
+            "Contrôle des stocks",
+            "Procédures d'inspection",
+            "Stockage des équipements"
+          ],
+          "description": "Apprenez le contrôle efficace des stocks, les procédures d'inspection et le stockage du matériel de gréage."
+        },
+        {
+          "titre": "Opérateur de Transpalette / Gerbeur",
+          "icon": "local_shipping",
+          "items": [
+            "Utilisation sécuritaire",
+            "Chargement latéral",
+            "Transpalettes manuels/électriques"
+          ],
+          "description": "Formation spécialisée pour l'utilisation sécuritaire des transpalettes et gerbeurs."
+        }
+      ]
+    }
+  },
+  {
+    "code": "ROL-SPE-15",
+    "intitule": "Rôles spécifiques",
+    "description": "Formation destinée aux rôles critiques en matière de sécurité (superviseurs, surveillants d'espace clos, gardes-feu). Développez les compétences nécessaires pour assumer des responsabilités spécifiques en HSE et garantir la conformité réglementaire sur le terrain.",
+    "niveau": "Certificat",
+    "domaine": "Sécurité",
+    "duree": "Courte durée",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDYWNBRG-HKl1qYdPej1nsb6UfCNR958oOgrqV1oYN3-zJ4uqhPU-TBPDNiJYcKNBG1E0Sp3w7So2yfrcu7zFPV3UUT-BzUt1-JQcTbAzdO54HMfM99yZ06c02--5QEWTpys01Yk4_DbziGEc7gx2oD2Mb0mtmjiLmgwSlpDRRdgQwMAe2cBnY-T4FYRXg7KRivGefI7GBYNxWsL6e-8u4LYBEMYJG6T1LWcGMbVIzbxZoMvDJiM64YmQ",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Un programme de formation spécialisé conçu par l'INPG pour les rôles critiques offshore et industriels. Équipez votre personnel des protocoles de sécurité essentiels et des compétences opérationnelles requises pour les environnements à haut risque.",
+      "badgeLabel": "Certification HSE",
+      "badgeIcon": "verified",
+      "heroMeta": [
+        {
+          "icon": "schedule",
+          "label": "Durée",
+          "value": "3 Semaines"
+        }
+      ],
+      "modules": [
+        {
+          "titre": "HLO – HDA (Agent d'Appontage Hélicoptère)",
+          "icon": "flight_takeoff",
+          "items": [
+            "Préparation zone",
+            "Communication",
+            "Interventions d'urgence"
+          ],
+          "badge": "Sécurité Aérienne",
+          "description": "Formation complète sur les responsabilités quotidiennes et les procédures d'urgence. Durée : 4 Jours."
+        },
+        {
+          "titre": "Fire Watcher / Homme de Garde",
+          "icon": "local_fire_department",
+          "items": [
+            "Surveillance zones de travail à chaud",
+            "Identification risques incendie",
+            "Extinction primaire",
+            "Procédures d'alarme"
+          ],
+          "badge": "Travail à Chaud / Sécurité",
+          "description": "Prépare le personnel à surveiller activement les zones de travail à chaud."
+        },
+        {
+          "titre": "Surveillant Espace Clos",
+          "icon": "door_front",
+          "items": [
+            "Gestion permis de travail",
+            "Surveillance atmosphère",
+            "Contrôle accès",
+            "Extraction sans entrée"
+          ],
+          "badge": "CSE / Surveillance",
+          "description": "Formation critique pour les surveillants d'espaces clos."
+        }
+      ],
+      "sidebar": {
+        "certificat": "Certification INPG (Validité 2 ans)",
+        "duree": "3 Semaines"
+      }
+    }
+  },
+  {
+    "code": "MBA-FIN-STR-16",
+    "intitule": "MBA en Finance et Stratégie",
+    "description": "Programme d'excellence combinant finance avancée et stratégie d'entreprise. Préparez-vous aux postes de direction dans un environnement économique mondialisé.",
+    "niveau": "Executive MBA",
+    "domaine": "Finance",
+    "duree": "18-24 Mois",
+    "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDrfUkHIoEEVDLPeGSLuk5TdJ01_NW-pys3UYPAlbCVINhzZJbtEfPjtbgcxpBmMcg8USGuYuIsogdAxHg-JHLhA__h8VLmTGzQmSWC7Hns3mUNU-gEKj67qXoPw1D5_cetLzfwJCZxvIRUfJAvKCqATAwPcZ7ZNlHcmda__UadZhoZLt_IBr8hMJ8_x_simo7IoXnyu06F5FcPMg6r2VxlOSE_Uf6FhfJoRh4wGkx3o167n_mPgzgXIg",
+    "publiee": true,
+    "ficheDetaillee": {
+      "description": "Un programme d'excellence conçu pour former les futurs leaders de la finance de marché et d'entreprise. Maîtrisez les outils quantitatifs, l'analyse stratégique et les nouvelles technologies financières.",
+      "badgeLabel": "Diplôme d'Établissement - Niveau Master",
+      "badgeIcon": "workspace_premium",
+      "pointsCles": [
+        {
+          "icon": "trending_up",
+          "titre": "Analyse Quantitative",
+          "description": "Maîtriser les modèles de pricing complexes et l'évaluation des produits dérivés."
+        },
+        {
+          "icon": "account_tree",
+          "titre": "Stratégie d'Investissement",
+          "description": "Concevoir et back-tester des stratégies algorithmiques et de gestion de portefeuille."
+        },
+        {
+          "icon": "shield",
+          "titre": "Gestion des Risques",
+          "description": "Implémenter des protocoles de couverture (hedging) et comprendre la régulation (Bâle III/IV)."
+        },
+        {
+          "icon": "terminal",
+          "titre": "Programmation Financière",
+          "description": "Développer des applications en Python, C++ et utiliser les bases de données financières."
+        }
+      ],
+      "sections": [
+        {
+          "titre": "Programme Détaillé",
+          "icon": "menu_book",
+          "type": "accordion",
+          "items": [
+            {
+              "titre": "Fondamentaux et Outils Quantitatifs",
+              "badge": "Semestre 1",
+              "sousItems": [
+                "Calcul Stochastique pour la Finance — 30h",
+                "Analyse des Données et Machine Learning — 45h",
+                "Programmation Orientée Objet (C++) — 30h",
+                "Microéconomie et Théorie des Jeux — 20h"
+              ]
+            },
+            {
+              "titre": "Spécialisation et Marchés",
+              "badge": "Semestre 2",
+              "sousItems": [
+                "Produits Dérivés Avancés — 45h",
+                "Gestion de Portefeuille et Algorithmique — 30h"
+              ]
+            },
+            {
+              "titre": "Stage de Fin d'Études",
+              "badge": "Expérience",
+              "description": "6 mois d'immersion professionnelle obligatoire au sein d'une institution financière, validés par la soutenance d'un mémoire de recherche appliquée."
+            }
+          ]
+        }
+      ],
+      "sidebar": {
+        "duree": "12 mois (Temps plein)",
+        "tarif": "24 500 € / an",
+        "prochaineRentree": "15 Septembre 2024",
+        "lieu": "Paris - La Défense",
+        "dateLimite": "30 Juin",
+        "boutonTexte": "Postuler / Créer un compte",
+        "brochure": true
+      }
+    }
+  }
+]

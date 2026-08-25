@@ -1,0 +1,103 @@
+<aside
+  class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col shadow-sm"
+>
+  <div class="p-margin-desktop mb-4 flex items-center">
+    <span class="text-2xl font-extrabold tracking-tight text-primary">INPG<span class="text-brand"> LMS</span></span>
+  </div>
+
+  <nav class="flex-1 px-4 space-y-base overflow-y-auto" aria-label="Navigation de l'espace étudiant">
+    <a
+      *ngFor="let entree of navigation"
+      [routerLink]="entree.lien"
+      routerLinkActive="bg-primary-container text-on-primary-container shadow-sm"
+      class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+    >
+      <span class="material-symbols-outlined">{{ entree.icone }}</span>
+      <span class="flex-1 text-label-md">{{ entree.libelle }}</span>
+      <span
+        *ngIf="entree.lien === 'annonces' && nbAnnoncesNonLues > 0"
+        class="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-error text-on-error text-[11px] font-bold"
+        [attr.aria-label]="nbAnnoncesNonLues + ' communication(s) non lue(s)'"
+      >
+        {{ nbAnnoncesNonLues }}
+      </span>
+    </a>
+  </nav>
+
+  <div class="p-4 border-t border-outline-variant">
+    <div class="bg-surface-container-low p-4 rounded-xl">
+      <span class="text-label-sm text-on-surface-variant">Matricule</span>
+      <p class="font-label-md text-label-md text-on-surface tracking-tight">{{ matricule || '—' }}</p>
+      <p *ngIf="promotionLibelle" class="text-label-sm text-on-surface-variant mt-1">
+        {{ promotionLibelle }}
+      </p>
+    </div>
+  </div>
+</aside>
+
+<div class="pl-72">
+  <header
+    class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop"
+  >
+    <p class="font-label-md text-label-md text-on-surface-variant">Espace étudiant</p>
+
+    <div class="flex items-center gap-stack-lg">
+      <a
+        routerLink="annonces"
+        class="relative p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors"
+        [attr.aria-label]="
+          nbAnnoncesNonLues > 0
+            ? nbAnnoncesNonLues + ' communication(s) non lue(s)'
+            : 'Aucune communication non lue'
+        "
+      >
+        <span class="material-symbols-outlined">notifications</span>
+        <span
+          *ngIf="nbAnnoncesNonLues > 0"
+          class="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-error text-on-error text-[10px] font-bold rounded-full ring-2 ring-surface"
+        >
+          {{ nbAnnoncesNonLues }}
+        </span>
+      </a>
+
+      <div class="h-8 w-[1px] bg-outline-variant"></div>
+
+      <div class="flex items-center gap-3">
+        <div class="text-right hidden sm:block">
+          <ng-container *ngIf="!chargement">
+            <p class="font-label-md text-label-md text-on-surface leading-tight">{{ nomAffiche }}</p>
+            <p class="text-label-sm text-on-surface-variant">{{ profile?.email }}</p>
+          </ng-container>
+          <div *ngIf="chargement" class="animate-pulse">
+            <div class="h-4 w-24 bg-surface-container rounded mb-1"></div>
+            <div class="h-3 w-16 bg-surface-container rounded"></div>
+          </div>
+        </div>
+        <a
+          routerLink="mon-profil"
+          class="flex items-center gap-1 group cursor-pointer"
+          aria-label="Voir mon profil"
+          title="Mon profil"
+        >
+          <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-sm group-hover:opacity-90 transition-opacity">
+            <span class="text-white font-label-md text-label-md">{{ initiales }}</span>
+          </div>
+          <span class="material-symbols-outlined text-on-surface-variant text-[20px] group-hover:text-primary transition-colors">expand_more</span>
+        </a>
+        <button
+          type="button"
+          (click)="deconnexion()"
+          class="p-2 text-on-surface-variant hover:bg-error-container hover:text-on-error-container rounded-full transition-colors"
+          aria-label="Se déconnecter"
+          title="Se déconnecter"
+        >
+          <span class="material-symbols-outlined">logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="relative pt-16 min-h-screen bg-background">
+    <router-outlet></router-outlet>
+  </main>
+</div>

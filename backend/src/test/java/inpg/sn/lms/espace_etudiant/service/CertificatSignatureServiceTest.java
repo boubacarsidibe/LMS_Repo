@@ -1,0 +1,113 @@
+package inpg.sn.lms.espace_etudiant.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.LocalDate;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import inpg.sn.lms.auth.entity.Etudiant;
+import inpg.sn.lms.espace_etudiant.entity.Certificat;
+
+/**
+ * Signature électronique des certificats.
+ *
+ * <p>Ce qui est vérifié ici tient en deux propriétés : la signature est
+ * <strong>déterministe</strong> (rejouer le même contenu redonne la même
+ * signature — c'est ce qui permet de vérifier un certificat sans le stocker
+ * en clair), et elle est <strong>sensible</strong> à toute modification d'un
+ * champ imprimé sur le document (sans quoi elle ne détecterait rien).
+ *
+ * <p>Sans ce test, une régression rendrait la vérification publique inutile
+ * en silence : soit toute donnée validerait (signature qui ignore son
+ * contenu), soit plus rien ne validerait jamais (clé ou canonicalisation
+ * incohérente entre la délivrance et la vérification).
+ */
+class CertificatSignatureServiceTest {
+
+    private static final String CLE = "cle-de-test-suffisamment-longue";
+
+    private CertificatSignatureService service;
+    private Certificat certificat;
+
+    @BeforeEach
+    void setUp() {
+        service = new CertificatSignatureService(CLE);
+
+        Etudiant etudiant = new Etudiant(null, "Ndiaye", "Aissatou", "770000000");
+
+        certificat = new Certificat();
+        certificat.setEtudiant(etudiant);
+        certificat.setIntituleFormation("Introduction au Machine Learning");
+        certificat.setFormateurNom("INPG — Direction pédagogique");
+        certificat.assurerReferenceEtDate();
+    }
+
+    @Test
+    @DisplayName("Signer deux fois le même certificat produit la même signature")
+    void signatureDeterministe() {
+        String signature1 = service.signer(certificat);
+        String signature2 = service.signer(certificat);
+
+        assertThat(signature1).isNotBlank().hasSize(64);
+        assertThat(signature1).isEqualTo(signature2);
+    }
+
+    @Test
+    @DisplayName("Un certificat fraîchement signé n'est pas altéré")
+    void certificatFraichementSigneEstValide() {
+        certificat.setSignature(service.signer(certificat));
+
+        assertThat(service.estAlteree(certificat)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Modifier le nom de l'étudiant après signature invalide la signature")
+    void modificationApresSignatureEstDetectee() {
+        certificat.setSignature(service.signer(certificat));
+
+        certificat.getEtudiant().setNom("Diallo");
+
+        assertThat(service.estAlteree(certificat)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Modifier l'intitulé de la formation après signature invalide la signature")
+    void modificationIntituleEstDetectee() {
+        certificat.setSignature(service.signer(certificat));
+
+        certificat.setIntituleFormation("Autre formation");
+
+        assertThat(service.estAlteree(certificat)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Un certificat sans signature n'est pas considéré altéré (non vérifiable, pas invalide)")
+    void certificatSansSignatureNestPasAltere() {
+        certificat.setSignature(null);
+
+        assertThat(service.estAlteree(certificat)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Deux clés différentes produisent des signatures différentes pour le même contenu")
+    void clesDifferentesProduisentDesSignaturesDifferentes() {
+        CertificatSignatureService autreService = new CertificatSignatureService("une-autre-cle-tout-a-fait-differente");
+
+        assertThat(service.signer(certificat)).isNotEqualTo(autreService.signer(certificat));
+    }
+
+    @Test
+    @DisplayName("La date d'émission ne change pas une fois fixée par assurerReferenceEtDate")
+    void dateEtReferenceStablesApresGeneration() {
+        LocalDate dateInitiale = certificat.getDateEmission();
+        String referenceInitiale = certificat.getReference();
+
+        certificat.assurerReferenceEtDate();
+
+        assertThat(certificat.getDateEmission()).isEqualTo(dateInitiale);
+        assertThat(certificat.getReference()).isEqualTo(referenceInitiale);
+    }
+}

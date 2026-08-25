@@ -1,0 +1,173 @@
+<!-- ==================== CONTENU SEUL ==================== -->
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-stack-lg">
+  <div>
+    <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Gestion des Entretiens</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-2">Planification et suivi des entretiens des candidats admis à cette étape.</p>
+  </div>
+  <div class="flex gap-3">
+    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : ''">
+      <span class="material-symbols-outlined text-[20px]">groups</span> Convocation groupée
+    </button>
+    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="openDrawer()" class="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg font-label-md text-label-md transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : ''">
+      <span class="material-symbols-outlined text-[20px]">add</span> Nouvel Entretien
+    </button>
+  </div>
+</div>
+
+<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Total Entretiens</span><span class="material-symbols-outlined text-secondary">event</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ totalEntretiens }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Programmés</div></div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Effectués</span><span class="material-symbols-outlined text-secondary">check_circle</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbEffectues }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Terminés</div></div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Aujourd'hui</span><span class="material-symbols-outlined text-outline">today</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbAujourdhui }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Programmés ce jour</div></div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">À venir</span><span class="material-symbols-outlined text-outline">hourglass_empty</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbAVenir }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Non encore effectués</div></div>
+</div>
+
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+  <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
+      <button type="button" (click)="filtre = 'TOUS'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'TOUS'" [class.text-on-secondary]="filtre === 'TOUS'" [class.text-on-surface-variant]="filtre !== 'TOUS'">Tous ({{ totalEntretiens }})</button>
+      <button type="button" (click)="filtre = 'A_VENIR'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'A_VENIR'" [class.text-on-secondary]="filtre === 'A_VENIR'" [class.text-on-surface-variant]="filtre !== 'A_VENIR'">À venir ({{ nbAVenir }})</button>
+      <button type="button" (click)="filtre = 'PASSES'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'PASSES'" [class.text-on-secondary]="filtre === 'PASSES'" [class.text-on-surface-variant]="filtre !== 'PASSES'">Effectués ({{ nbEffectues }})</button>
+    </div>
+    <div class="relative w-full sm:w-64">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+      <input [(ngModel)]="recherche" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher..." type="text">
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des entretiens…</div>
+  <div *ngIf="!loading && entretiensFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Aucun entretien ne correspond à ces critères.</div>
+
+  <div class="overflow-x-auto" *ngIf="!loading && entretiensFiltres.length > 0">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low border-b border-outline-variant">
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Lieu / Lien</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date &amp; heure</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Note</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant">
+        <tr *ngFor="let e of entretiensFiltres" class="hover:bg-surface-container-low transition-colors group">
+          <td class="p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">{{ e.candidatPrenom | slice:0:1 }}{{ e.candidatNom | slice:0:1 }}</div>
+              <div>
+                <div class="font-label-md text-label-md text-primary">{{ e.candidatPrenom }} {{ e.candidatNom }}</div>
+                <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ e.numeroDossier }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ e.lieuOuLien }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-primary">{{ e.dateHeure | date:'dd MMM yyyy, HH:mm' }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-primary">{{ e.noteEntretien ?? '—' }}</td>
+          <td class="p-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [ngClass]="estPasse(e.dateHeure) ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-primary-fixed text-on-primary-fixed-variant'">
+              {{ estPasse(e.dateHeure) ? 'Effectué' : 'Planifié' }}
+            </span>
+          </td>
+          <td class="p-4 text-right">
+            <div class="flex justify-end gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
+              <button type="button" (click)="openDrawer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+              <button type="button" (click)="supprimer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Annuler"><span class="material-symbols-outlined text-[18px]">cancel</span></button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Drawer -->
+<div class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 transition-opacity duration-300" [class.hidden]="!drawerOpen" (click)="closeDrawer()"></div>
+<aside class="fixed top-0 right-0 h-full w-full max-w-md bg-surface shadow-[0_12px_32px_rgba(19,23,65,0.1)] z-50 transform transition-transform duration-300 ease-in-out flex flex-col border-l border-outline-variant" [class.translate-x-full]="!drawerOpen" [class.translate-x-0]="drawerOpen">
+  <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+    <h2 class="font-headline-sm text-headline-sm text-primary">{{ entretienEnEdition ? 'Modifier l\'entretien' : 'Planifier un entretien' }}</h2>
+    <button type="button" class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" (click)="closeDrawer()"><span class="material-symbols-outlined">close</span></button>
+  </div>
+  <form [formGroup]="entretienForm" (ngSubmit)="enregistrer()" class="flex-1 flex flex-col overflow-y-auto">
+    <div class="flex-1 overflow-y-auto p-6 space-y-4">
+      <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ formError }}</div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Candidat (admis à l'entretien)</label>
+        <select formControlName="candidatId" aria-label="Candidat" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
+          <option value="" disabled>Sélectionner un candidat</option>
+          <option *ngIf="entretienEnEdition" [value]="entretienEnEdition.candidatId">
+            {{ entretienForm.value.candidatId }}
+          </option>
+          <option *ngFor="let c of candidatsEligibles" [value]="c.candidatId">{{ c.candidatPrenom }} {{ c.candidatNom }} — {{ c.numeroDossier }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date et heure</label>
+        <input formControlName="dateHeure" aria-label="Date et heure" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="datetime-local"/>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu ou lien visio</label>
+        <input formControlName="lieuOuLien" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B204 ou lien Teams" type="text"/>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Note (sur 20, une fois l'entretien effectué)</label>
+        <input formControlName="noteEntretien" aria-label="Note sur 20" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0" max="20" step="0.25"/>
+      </div>
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Appréciation globale</label>
+        <textarea formControlName="appreciationGlobale" aria-label="Appréciation globale" rows="3" class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"></textarea>
+      </div>
+    </div>
+    <div class="p-6 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
+      <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="closeDrawer()">Annuler</button>
+      <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+        {{ isSubmitting ? 'Enregistrement…' : (entretienEnEdition ? 'Enregistrer' : 'Planifier') }}
+      </button>
+    </div>
+  </form>
+</aside>
+
+<!-- Modal Convocation groupée -->
+<div *ngIf="convocationGroupeeOpen" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerConvocationGroupee()">
+  <div class="bg-surface rounded-xl shadow-lg w-full max-w-lg border border-outline-variant max-h-[85vh] flex flex-col" (click)="$event.stopPropagation()">
+    <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+      <h3 class="font-headline-sm text-headline-sm text-primary">Convocation groupée à l'entretien</h3>
+      <button type="button" (click)="fermerConvocationGroupee()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <form [formGroup]="convocationForm" (ngSubmit)="envoyerConvocationGroupee()" class="flex-1 overflow-y-auto p-6 space-y-4">
+      <div *ngIf="convocationFormError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ convocationFormError }}</div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date et heure</label>
+          <input formControlName="dateHeure" aria-label="Date et heure" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="datetime-local"/>
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu ou lien visio</label>
+          <input formControlName="lieuOuLien" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B204" type="text"/>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="font-label-md text-label-md text-on-surface-variant">Candidats à convoquer ({{ selectionCandidatIds.size }} sélectionné(s))</label>
+          <button type="button" (click)="toutSelectionner()" class="font-label-sm text-label-sm text-secondary hover:underline">Tout sélectionner</button>
+        </div>
+        <div class="border border-outline-variant rounded-lg max-h-56 overflow-y-auto divide-y divide-outline-variant">
+          <label *ngFor="let c of candidatsEligibles" class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-surface-container-low">
+            <input type="checkbox" [checked]="selectionCandidatIds.has(c.candidatId)" (change)="basculerSelection(c.candidatId)" class="w-4 h-4 accent-secondary">
+            <span class="font-body-sm text-body-sm text-on-surface">{{ c.candidatPrenom }} {{ c.candidatNom }} — {{ c.numeroDossier }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="fermerConvocationGroupee()">Annuler</button>
+        <button type="submit" [disabled]="envoiGroupeEnCours" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+          {{ envoiGroupeEnCours ? 'Envoi…' : 'Envoyer les convocations' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

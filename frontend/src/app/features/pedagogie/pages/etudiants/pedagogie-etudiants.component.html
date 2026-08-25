@@ -1,0 +1,241 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header class="flex items-start justify-between gap-stack-md flex-wrap">
+    <div>
+      <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Scolarité</span>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Étudiants</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+        Le répertoire des inscrits, leur promotion et leur matricule.
+      </p>
+    </div>
+    <div class="flex gap-stack-md shrink-0 flex-wrap">
+      <button type="button" (click)="exporter()"
+              class="flex items-center gap-2 px-4 py-3 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:border-secondary hover:text-secondary transition-colors">
+        <span class="material-symbols-outlined">download</span>Exporter
+      </button>
+      <button type="button" (click)="ouvrirImport()"
+              class="flex items-center gap-2 px-4 py-3 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:border-secondary hover:text-secondary transition-colors">
+        <span class="material-symbols-outlined">upload_file</span>Importer
+      </button>
+      <button type="button" (click)="ouvrirCreation()"
+              class="flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors">
+        <span class="material-symbols-outlined">person_add</span>Nouveau compte
+      </button>
+    </div>
+  </header>
+
+  <p *ngIf="messageSucces" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">{{ messageSucces }}</p>
+  <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
+
+  <!-- Recherche -->
+  <div class="flex gap-stack-md flex-wrap">
+    <input type="text" [(ngModel)]="recherche" (keyup.enter)="rechercher()"
+           placeholder="Nom, matricule ou promotion…"
+           class="flex-1 min-w-[240px] p-3 bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm font-body-sm text-body-sm text-on-surface" />
+    <button type="button" (click)="rechercher()"
+            class="px-6 py-3 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:border-secondary hover:text-secondary transition-colors">
+      Rechercher
+    </button>
+  </div>
+
+  <!-- Alerte : sans promotion, un etudiant n'a acces a rien -->
+  <div *ngIf="!chargement && sansPromotion.length > 0"
+       class="bg-surface-container-lowest rounded-xl border border-error shadow-sm p-stack-lg">
+    <div class="flex items-center gap-2 text-error">
+      <span class="material-symbols-outlined">warning</span>
+      <span class="font-label-md text-label-md">{{ sansPromotion.length }} étudiant(s) sans promotion</span>
+    </div>
+    <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+      Ils n’ont ni cours, ni calendrier, ni relevé de notes — et rien ne le leur indique.
+      Affectez-les depuis la colonne « Promotion » : c’est ce geste qui leur attribue
+      leur matricule.
+    </p>
+    <p *ngIf="admisEnAttente.length > 0" class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+      Dont <strong>{{ admisEnAttente.length }}</strong> venant de l’admission : leur candidature
+      a été définitivement acceptée, leur compte est ouvert, mais leur inscription vous revient.
+    </p>
+  </div>
+
+  <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+
+  <div *ngIf="!chargement" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-outline-variant">
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Étudiant</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Matricule</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Promotion</th>
+            <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Moyenne</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Suivi</th>
+            <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Alumni</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of etudiants" class="border-b border-outline-variant/50 last:border-0">
+            <td class="px-stack-lg py-stack-md">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-sm shrink-0">
+                  <span class="text-white font-label-md text-label-md">{{ e.initiales }}</span>
+                </div>
+                <div class="min-w-0">
+                  <span class="font-label-md text-label-md text-on-surface block">{{ e.nom }}</span>
+                  <span *ngIf="e.origine" class="font-body-sm text-body-sm text-on-surface-variant">
+                    Issu de l’admission
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">
+              {{ e.matricule || '—' }}
+            </td>
+            <td class="px-stack-lg py-stack-md">
+              <select
+                [value]="e.cohorte === 'Sans promotion' ? '' : (promotions.length ? '' : '')"
+                (change)="affecter(e, $any($event.target).value)"
+                class="p-2 bg-surface-container-low rounded-lg border font-body-sm text-body-sm text-on-surface"
+                [class.border-error]="e.cohorte === 'Sans promotion'"
+                [class.border-outline-variant]="e.cohorte !== 'Sans promotion'">
+                <option value="">{{ e.cohorte }}</option>
+                <option *ngFor="let p of promotions" [value]="p.id">{{ p.libelle }}</option>
+              </select>
+            </td>
+            <!-- « Pas encore noté » et non « 0,0 » : sans cette distinction, un étudiant
+                 non évalué et un étudiant ayant tout raté s'affichaient à l'identique,
+                 sur l'écran même où l'on décide qui relancer. -->
+            <td class="px-stack-lg py-stack-md text-right font-label-md text-label-md tabular-nums"
+                [class.text-error]="e.noteMoyenne !== null && e.noteMoyenne < 10"
+                [class.text-secondary]="e.noteMoyenne !== null && e.noteMoyenne >= 10"
+                [class.text-on-surface-variant]="e.noteMoyenne === null">
+              {{ e.noteMoyenne !== null ? (e.noteMoyenne | number: '1.1-1') + ' / 20' : 'Pas encore noté' }}
+            </td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm"
+                [class.text-error]="e.statut === 'À risque'"
+                [class.text-on-surface-variant]="e.statut !== 'À risque'">
+              {{ e.statut }}
+            </td>
+            <td class="px-stack-lg py-stack-md text-right">
+              <span *ngIf="e.estAlumni"
+                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+                <span class="material-symbols-outlined text-[16px]">workspace_premium</span>Alumni
+              </span>
+              <button *ngIf="!e.estAlumni" type="button" (click)="promouvoirAlumni(e)"
+                      title="Faire passer cet étudiant côté alumni"
+                      class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-sm text-label-sm hover:border-secondary hover:text-secondary transition-colors">
+                <span class="material-symbols-outlined text-[16px]">school</span>Marquer alumni
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="etudiants.length === 0">
+            <td colspan="6" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+              Aucun étudiant.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Création d'un compte -->
+<div *ngIf="formulaireOuvert" class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="formulaireOuvert = false">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm w-full max-w-lg max-h-[85vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">person_add</span>Nouveau compte étudiant
+      </h2>
+      <button type="button" (click)="formulaireOuvert = false" aria-label="Fermer" class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+    <div class="p-stack-lg space-y-stack-md">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Nom</span>
+          <input type="text" [(ngModel)]="saisie.nom" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Prénom</span>
+          <input type="text" [(ngModel)]="saisie.prenom" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+      </div>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Email</span>
+        <input type="email" [(ngModel)]="saisie.email" (blur)="surEmailSaisi()" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+      </label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Identifiant</span>
+          <input type="text" [(ngModel)]="saisie.username" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Mot de passe initial</span>
+          <input type="text" [(ngModel)]="saisie.password" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+      </div>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Téléphone (facultatif)</span>
+        <input type="text" [(ngModel)]="saisie.telephone" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+      </label>
+      <div class="flex gap-stack-md pt-2">
+        <button type="button" (click)="formulaireOuvert = false" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Annuler</button>
+        <button type="button" [disabled]="!saisieValide || enregistrement" (click)="creer()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+          {{ enregistrement ? 'Création…' : 'Créer le compte' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import en masse -->
+<div *ngIf="importOuvert" class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="importOuvert = false">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm w-full max-w-xl max-h-[85vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">upload_file</span>Importer une liste
+      </h2>
+      <button type="button" (click)="importOuvert = false" aria-label="Fermer" class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+    <div class="p-stack-lg space-y-stack-md">
+      <p class="font-body-sm text-body-sm text-on-surface-variant">
+        Colonnes attendues : <span class="font-mono">nom;prenom;email;telephone</span>. Une ligne
+        d’en-tête est acceptée. Une ligne invalide n’interrompt pas les autres.
+      </p>
+
+      <input #champCsv type="file" accept=".csv,text/csv" (change)="fichierChoisi($event)" class="hidden" />
+      <button type="button" (click)="choisirFichier()"
+              class="w-full p-3 bg-surface-container-low rounded-lg border border-dashed border-outline-variant font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container transition-colors">
+        Choisir un fichier CSV…
+      </button>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Ou coller le contenu</span>
+        <textarea rows="6" [(ngModel)]="csv" placeholder="Diallo;Awa;awa.diallo@inpg.sn;770000000"
+                  class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-mono text-body-sm text-on-surface"></textarea>
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Rattacher à une promotion</span>
+        <select [(ngModel)]="promotionImport" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+          <option [ngValue]="null">Aucune</option>
+          <option *ngFor="let p of promotions" [ngValue]="p.id">{{ p.libelle }}</option>
+        </select>
+      </label>
+
+      <div *ngIf="rejets.length" class="bg-error-container/20 rounded-lg p-stack-md">
+        <p class="font-label-md text-label-md text-error mb-2">{{ rejets.length }} ligne(s) rejetée(s)</p>
+        <ul class="space-y-1">
+          <li *ngFor="let r of rejets" class="font-body-sm text-body-sm text-on-surface-variant">{{ r }}</li>
+        </ul>
+      </div>
+
+      <div class="flex gap-stack-md pt-2">
+        <button type="button" (click)="importOuvert = false" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Fermer</button>
+        <button type="button" [disabled]="!csv.trim() || importEnCours" (click)="importer()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+          {{ importEnCours ? 'Import…' : 'Importer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

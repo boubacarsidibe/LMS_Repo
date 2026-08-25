@@ -1,0 +1,257 @@
+<!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
+
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+  <div>
+    <div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm mb-2">
+      <span>Admissions</span>
+      <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+      <span class="font-medium text-on-surface">Sessions</span>
+    </div>
+    <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1">Gestion des Sessions de recrutement</h2>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Planification, suivi des quotas et ouverture des appels à candidatures.</p>
+  </div>
+  <div class="flex items-center gap-3">
+    <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
+      <span class="material-symbols-outlined text-[18px]">download</span>
+      {{ exporting ? 'Export en cours…' : 'Exporter la liste' }}
+    </button>
+    <app-export-columns-modal
+      [open]="exportModalOpen"
+      [colonnes]="colonnesExport"
+      [selectionnees]="colonnesExportParDefaut"
+      (openChange)="exportModalOpen = $event"
+      (exporter)="exporter($event)">
+    </app-export-columns-modal>
+    <button type="button" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md" (click)="openDrawer()">
+      <span class="material-symbols-outlined text-[18px]">add</span>
+      Nouvelle Session
+    </button>
+  </div>
+</div>
+
+<!-- Erreur de chargement -->
+<div *ngIf="errorMessage" class="mt-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">
+  {{ errorMessage }}
+</div>
+
+<!-- KPI Bento Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter my-stack-lg">
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+    <div class="flex items-center justify-between mb-4">
+      <p class="font-label-md text-label-md text-on-surface-variant">Total Sessions</p>
+      <span class="material-symbols-outlined text-on-surface-variant opacity-70">event</span>
+    </div>
+    <h3 class="font-headline-lg text-headline-lg text-primary">{{ totalSessions }} <span class="font-body-md text-body-md text-on-surface-variant font-normal">sessions</span></h3>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+    <div class="flex items-center justify-between mb-4">
+      <p class="font-label-md text-label-md text-on-surface-variant">Sessions Ouvertes</p>
+      <span class="material-symbols-outlined text-on-surface-variant opacity-70">check_circle</span>
+    </div>
+    <div class="flex items-end gap-3">
+      <h3 class="font-headline-lg text-headline-lg text-primary">{{ nbOuvertes }}</h3>
+      <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-md mb-2">ouvertes</span>
+    </div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+    <div class="flex items-center justify-between mb-4">
+      <p class="font-label-md text-label-md text-on-surface-variant">Sessions Actives</p>
+      <span class="material-symbols-outlined text-on-surface-variant opacity-70">bolt</span>
+    </div>
+    <h3 class="font-headline-lg text-headline-lg text-primary">{{ nbActives }}</h3>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+    <div class="flex items-center justify-between mb-4">
+      <p class="font-label-md text-label-md text-on-surface-variant">Prochaine Clôture</p>
+      <span class="material-symbols-outlined text-on-surface-variant opacity-70">timer</span>
+    </div>
+    <div *ngIf="prochaineFermeture; else aucuneCloture">
+      <p class="font-headline-sm text-headline-sm md:font-headline-md md:text-headline-md text-primary">{{ prochaineFermeture.dateFermeture | date:'dd MMM yyyy' }}</p>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ prochaineFermeture.libelle }}</p>
+    </div>
+    <ng-template #aucuneCloture>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">Aucune session ouverte</p>
+    </ng-template>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="flex flex-col md:flex-row gap-4 mb-stack-lg">
+  <div class="relative flex-1">
+    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
+    <input [(ngModel)]="recherche" class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none text-body-md" placeholder="Rechercher une session..." type="text"/>
+  </div>
+  <div class="flex flex-wrap md:flex-nowrap gap-3">
+    <select [(ngModel)]="filtreStatut" class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface-variant font-body-sm text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
+      <option value="TOUTES">Toutes les sessions</option>
+      <option value="OUVERTES">Ouvertes</option>
+      <option value="FERMEES">Fermées</option>
+      <option value="ACTIVES">Actives</option>
+    </select>
+  </div>
+</div>
+
+<!-- Loading -->
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des sessions…</div>
+
+<!-- Empty state -->
+<div *ngIf="!loading && sessionsFiltrees.length === 0" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant">
+  <span class="material-symbols-outlined text-4xl text-outline mb-2 block">event_busy</span>
+  <p class="font-body-md text-body-md text-on-surface-variant">Aucune session ne correspond à votre recherche.</p>
+</div>
+
+<!-- Data Table -->
+<div *ngIf="!loading && sessionsFiltrees.length > 0" class="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
+  <table class="w-full text-left border-collapse">
+    <thead>
+      <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+        <th class="px-6 py-4 font-semibold cursor-pointer select-none hover:text-primary" (click)="trierPar('libelle')">
+          Session <span class="material-symbols-outlined text-[16px] align-middle" *ngIf="triColonne === 'libelle'">{{ triDesc ? 'arrow_downward' : 'arrow_upward' }}</span>
+        </th>
+        <th class="px-6 py-4 font-semibold cursor-pointer select-none hover:text-primary" (click)="trierPar('dateOuverture')">
+          Ouverture <span class="material-symbols-outlined text-[16px] align-middle" *ngIf="triColonne === 'dateOuverture'">{{ triDesc ? 'arrow_downward' : 'arrow_upward' }}</span>
+        </th>
+        <th class="px-6 py-4 font-semibold cursor-pointer select-none hover:text-primary" (click)="trierPar('dateFermeture')">
+          Fermeture <span class="material-symbols-outlined text-[16px] align-middle" *ngIf="triColonne === 'dateFermeture'">{{ triDesc ? 'arrow_downward' : 'arrow_upward' }}</span>
+        </th>
+        <th class="px-6 py-4 font-semibold cursor-pointer select-none hover:text-primary" (click)="trierPar('nbCandidatures')">
+          Candidatures <span class="material-symbols-outlined text-[16px] align-middle" *ngIf="triColonne === 'nbCandidatures'">{{ triDesc ? 'arrow_downward' : 'arrow_upward' }}</span>
+        </th>
+        <th class="px-6 py-4 font-semibold">Statut</th>
+        <th class="px-6 py-4 font-semibold text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-outline-variant text-on-surface font-body-sm text-body-sm">
+      <tr *ngFor="let s of sessionsFiltrees" class="hover:bg-surface-container-low transition-colors">
+        <td class="px-6 py-4 font-medium">{{ s.libelle }}</td>
+        <td class="px-6 py-4 text-on-surface-variant">{{ s.dateOuverture | date:'dd MMM yyyy' }}</td>
+        <td class="px-6 py-4 text-on-surface-variant">{{ s.dateFermeture | date:'dd MMM yyyy' }}</td>
+        <td class="px-6 py-4">
+          <a [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ session: s.id }" class="text-secondary hover:underline font-medium">{{ s.nbCandidatures }}</a>
+        </td>
+        <td class="px-6 py-4">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [ngClass]="s.estOuverte ? 'bg-green-100 text-green-800' : 'bg-surface-container text-on-surface-variant'">
+              {{ s.estOuverte ? 'Ouverte' : 'Fermée' }}
+            </span>
+            <span *ngIf="s.estActive" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-fixed text-secondary">
+              Active
+            </span>
+            <span *ngIf="s.criteresActifs" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-container text-on-primary-container" title="Filtre automatique de présélection activé">
+              <span class="material-symbols-outlined text-[14px]">filter_alt</span> Filtre
+            </span>
+          </div>
+        </td>
+        <td class="px-6 py-4 text-right">
+          <button type="button" (click)="openDrawer(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors" title="Modifier">
+            <span class="material-symbols-outlined text-[20px]">edit</span>
+          </button>
+          <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded transition-colors" title="Supprimer">
+            <span class="material-symbols-outlined text-[20px]">delete</span>
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Drawer Overlay -->
+<div class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 transition-opacity duration-300" [class.hidden]="!drawerOpen" (click)="closeDrawer()"></div>
+
+<!-- Side Drawer -->
+<aside class="fixed top-0 right-0 h-full w-full max-w-md bg-surface shadow-[0_12px_32px_rgba(19,23,65,0.1)] z-50 transform transition-transform duration-300 ease-in-out flex flex-col border-l border-outline-variant" [class.translate-x-full]="!drawerOpen" [class.translate-x-0]="drawerOpen">
+  <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+    <h2 class="font-headline-sm text-headline-sm text-primary">{{ sessionEnEdition ? 'Modifier la session' : 'Créer une session' }}</h2>
+    <button type="button" class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" (click)="closeDrawer()"><span class="material-symbols-outlined">close</span></button>
+  </div>
+  <form [formGroup]="sessionForm" (ngSubmit)="enregistrer()" class="flex-1 flex flex-col overflow-y-auto">
+    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+      <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ formError }}</div>
+      <div class="space-y-4">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Intitulé de la formation</label>
+          <input formControlName="libelle" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" placeholder="Ex: Master Data Science 2025" type="text"/>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date d'ouverture</label>
+            <input formControlName="dateOuverture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
+          </div>
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date limite</label>
+            <input formControlName="dateFermeture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
+          </div>
+        </div>
+        <label class="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant">
+          <input formControlName="estOuverte" type="checkbox" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+          Session ouverte aux candidatures
+        </label>
+      </div>
+
+      <div class="border-t border-outline-variant pt-4">
+        <label class="flex items-center justify-between gap-2 cursor-pointer">
+          <span class="font-label-md text-label-md text-on-surface font-bold">Filtre automatique de présélection</span>
+          <button type="button" (click)="sessionForm.get('criteresActifs')!.setValue(!sessionForm.value.criteresActifs)" role="switch" [attr.aria-checked]="sessionForm.value.criteresActifs"
+                  class="relative w-11 h-6 rounded-full transition-colors shrink-0" [class.bg-secondary]="sessionForm.value.criteresActifs" [class.bg-outline-variant]="!sessionForm.value.criteresActifs">
+            <span class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform" [class.translate-x-5]="sessionForm.value.criteresActifs"></span>
+          </button>
+        </label>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Les candidatures qui ne remplissent pas ces critères sont automatiquement rejetées à la soumission ; les autres passent directement en présélection.</p>
+
+        <div class="space-y-4 mt-4" [class.opacity-50]="!sessionForm.value.criteresActifs">
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Niveau d'études minimum requis</label>
+            <select formControlName="criteresNiveauEtudeMinimum" [disabled]="!sessionForm.value.criteresActifs" aria-label="Niveau d'études minimum"
+                    class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
+              <option [ngValue]="null">-- Aucune contrainte --</option>
+              <option *ngFor="let n of niveaux" [value]="n">{{ n }}</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Âge minimum</label>
+              <input formControlName="criteresAgeMinimum" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="100" placeholder="Ex: 18"
+                     class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+            </div>
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Âge maximum</label>
+              <input formControlName="criteresAgeMaximum" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="100" placeholder="Ex: 45"
+                     class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Genre requis</label>
+              <select formControlName="criteresGenre" [disabled]="!sessionForm.value.criteresActifs" aria-label="Genre requis"
+                      class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
+                <option [ngValue]="null">-- Aucune contrainte --</option>
+                <option value="Homme">Homme</option>
+                <option value="Femme">Femme</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Expérience minimale (années)</label>
+              <input formControlName="criteresExperienceMinimale" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="60" placeholder="Ex: 2"
+                     class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-outline-variant pt-4">
+        <label class="block font-label-md text-label-md text-on-surface font-bold mb-1">Seuil de réussite des tests académiques</label>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Note minimale sur 20 pour être considéré « admissible » à cette session (TDR : pass/fail défini par l'INPG).</p>
+        <input formControlName="seuilReussiteTest" type="number" min="0" max="20" step="0.5" placeholder="Ex: 10"
+               class="w-32 h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+      </div>
+    </div>
+    <div class="p-6 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
+      <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="closeDrawer()">Annuler</button>
+      <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+        {{ isSubmitting ? 'Enregistrement…' : (sessionEnEdition ? 'Enregistrer' : 'Créer la session') }}
+      </button>
+    </div>
+  </form>
+</aside>

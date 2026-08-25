@@ -1,0 +1,186 @@
+<div class="flex flex-col w-full">
+
+  <!-- En-tête -->
+  <div class="px-margin-desktop py-stack-lg flex flex-col gap-base">
+    <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Suivi des Étudiants &amp; Progression</h1>
+    <p class="text-body-md text-on-surface-variant max-w-2xl">Analysez la performance de vos cohortes et identifiez les besoins d'accompagnement personnalisés.</p>
+  </div>
+
+  <!-- KPI -->
+  <div class="px-margin-desktop grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">Total Étudiants Suivis</span>
+        <span class="material-symbols-outlined text-secondary">groups</span>
+      </div>
+      <div class="flex items-baseline gap-2">
+        <span class="font-display text-display text-primary tracking-tighter">{{ etudiants.length }}</span>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center items-center text-center gap-1">
+      <span class="material-symbols-outlined text-outline text-[28px]">analytics</span>
+      <span class="text-label-sm text-on-surface-variant">Taux d'achèvement — Bientôt disponible</span>
+    </div>
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center items-center text-center gap-1">
+      <span class="material-symbols-outlined text-outline text-[28px]">priority_high</span>
+      <span class="text-label-sm text-on-surface-variant">Suivi prioritaire — Bientôt disponible</span>
+    </div>
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center items-center text-center gap-1">
+      <span class="material-symbols-outlined text-outline text-[28px]">trending_up</span>
+      <span class="text-label-sm text-on-surface-variant">Engagement — Bientôt disponible</span>
+    </div>
+  </div>
+
+  <!-- Relance collective -->
+  <div class="px-margin-desktop mb-stack-lg">
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md flex flex-col lg:flex-row gap-stack-lg items-center justify-between shadow-sm">
+      <div class="flex items-center gap-stack-md">
+        <div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+          <span class="material-symbols-outlined">mail</span>
+        </div>
+        <div>
+          <h3 class="font-headline-sm text-headline-sm text-primary">Communication avec vos étudiants</h3>
+          <p class="text-body-sm text-on-surface-variant">Envoyez un email aux {{ etudiantsFiltres.length }} étudiant(s) actuellement affiché(s).</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-stack-md shrink-0">
+        <button (click)="ouvrirRelanceCollective()" class="bg-secondary text-on-secondary px-6 py-2.5 rounded-lg font-label-md text-label-md hover:opacity-90 transition-all flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">mail</span>
+          Envoyer une relance collective
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="px-margin-desktop mb-stack-lg">
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+
+      <div class="p-stack-md border-b border-outline-variant flex flex-wrap items-center justify-between gap-stack-md">
+        <div class="flex items-center gap-stack-md flex-1 min-w-[300px]">
+          <div class="relative flex-1 max-w-sm">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline">search</span>
+            <input [(ngModel)]="recherche" class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm focus:outline-none focus:border-secondary transition-all" placeholder="Rechercher un étudiant..." type="text">
+          </div>
+          <select [(ngModel)]="cohorteSelectionnee" class="px-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm text-on-surface-variant focus:outline-none cursor-pointer">
+            <option value="">Toutes les cohortes</option>
+            <option *ngFor="let c of cohortes" [value]="c.libelle">{{ c.libelle }}{{ c.annee ? ' (' + c.annee + ')' : '' }}</option>
+          </select>
+          <select disabled title="Bientôt disponible" class="px-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm text-on-surface-variant/50 cursor-not-allowed">
+            <option>Tous les niveaux (Bientôt disponible)</option>
+          </select>
+        </div>
+        <button disabled title="Bientôt disponible" class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg text-label-md text-on-surface-variant/50 cursor-not-allowed">
+          <span class="material-symbols-outlined text-[18px]">filter_list</span>
+          Plus de filtres
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-container-low/50">
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Étudiant</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Cohorte</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Dernière connexion</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Progression</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Note Moyenne</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Statut</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant">
+            <tr *ngFor="let e of etudiantsFiltres" class="hover:bg-surface-container-low hover:translate-x-1 transition-all group">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs" [ngClass]="e.couleurAvatar">
+                    {{ e.initiales }}
+                  </div>
+                  <div class="flex flex-col">
+                    <span class="font-label-md text-label-md text-primary">{{ e.nom }}</span>
+                    <span *ngIf="e.matricule" class="text-[11px] text-outline font-mono">{{ e.matricule }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-body-sm text-on-surface-variant">{{ e.cohorte }}</td>
+              <td class="px-6 py-4 text-body-sm text-on-surface-variant">{{ e.derniereConnexion }}</td>
+              <td class="px-6 py-4">
+                <div class="flex flex-col gap-1 w-32">
+                  <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+                    <div class="h-full" [ngClass]="classeProgression(e.progression)" [style.width.%]="e.progression"></div>
+                  </div>
+                  <span class="text-[11px] font-bold text-on-surface-variant">{{ e.progression }}%</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-body-sm font-medium text-primary"><ng-container *ngIf="e.noteMoyenne !== null && e.noteMoyenne !== undefined; else pasEncoreNote">{{ e.noteMoyenne | number: '1.1-1' }}/20</ng-container>
+              <ng-template #pasEncoreNote><span class="text-on-surface-variant">Pas encore noté</span></ng-template>
+            </td>
+              <td class="px-6 py-4">
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-tight" [ngClass]="classeStatut(e.statut)">{{ e.statut }}</span>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button (click)="voirProfil(e.id)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Voir le profil">
+                    <span class="material-symbols-outlined text-[20px]">visibility</span>
+                  </button>
+                  <button (click)="ouvrirContact(e)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Contacter">
+                    <span class="material-symbols-outlined text-[20px]">mail</span>
+                  </button>
+                  <button disabled class="p-2 text-outline/50 rounded-full cursor-not-allowed" title="Bientôt disponible">
+                    <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination désactivée (attend l'API) -->
+      <div class="p-4 border-t border-outline-variant flex items-center justify-between">
+        <span class="text-body-sm text-on-surface-variant">Affichage de {{ etudiantsFiltres.length }} sur {{ etudiants.length }} étudiant(s)</span>
+        <div class="flex items-center gap-2 opacity-40 pointer-events-none">
+          <button aria-label="Page precedente" class="p-2 border border-outline-variant rounded-lg" disabled>
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+          </button>
+          <button class="w-8 h-8 rounded-lg bg-secondary text-on-secondary text-label-md">1</button>
+          <button aria-label="Page suivante" class="p-2 border border-outline-variant rounded-lg" disabled>
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal contact / relance -->
+  <div *ngIf="etudiantEnContact || afficherRelanceCollective" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerModalMessage()">
+    <div class="bg-surface rounded-xl shadow-lg w-full max-w-md border border-outline-variant" (click)="$event.stopPropagation()">
+      <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+        <h3 class="font-headline-sm text-headline-sm text-primary">
+          {{ etudiantEnContact ? 'Contacter ' + etudiantEnContact.nom : 'Relance collective (' + etudiantsFiltres.length + ' étudiant(s))' }}
+        </h3>
+        <button type="button" aria-label="Fermer la fenetre" (click)="fermerModalMessage()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="p-6 space-y-base">
+        <div class="space-y-1">
+          <label class="font-label-md text-label-md text-on-surface-variant">Objet</label>
+          <input [(ngModel)]="objetMessage" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Relance suivi de cours" type="text">
+        </div>
+        <div class="space-y-1">
+          <label class="font-label-md text-label-md text-on-surface-variant">Message</label>
+          <textarea [(ngModel)]="contenuMessage" rows="5" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none" placeholder="Votre message..."></textarea>
+        </div>
+        <p *ngIf="messageErreur" class="text-body-sm text-error">{{ messageErreur }}</p>
+        <p *ngIf="messageSucces" class="text-body-sm text-secondary font-medium">{{ messageSucces }}</p>
+        <div class="flex gap-stack-md pt-2">
+          <button type="button" (click)="fermerModalMessage()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
+            Fermer
+          </button>
+          <button [disabled]="isEnvoiEnCours" (click)="envoyerMessage()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+            {{ isEnvoiEnCours ? 'Envoi…' : 'Envoyer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

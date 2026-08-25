@@ -1,0 +1,165 @@
+<div class="flex flex-col w-full p-margin-desktop">
+
+  <!-- État chargement -->
+  <div *ngIf="chargement" class="flex items-center justify-center py-20">
+    <p class="text-body-lg text-on-surface-variant">Chargement du profil…</p>
+  </div>
+
+  <!-- État erreur -->
+  <div *ngIf="erreur && !chargement" class="flex flex-col items-center justify-center py-20 gap-4">
+    <span class="material-symbols-outlined text-[40px] text-outline" aria-hidden="true">error</span>
+    <p class="text-body-lg text-error">{{ erreur }}</p>
+  </div>
+
+  <!-- Contenu -->
+  <div *ngIf="profil && !chargement" class="flex flex-col gap-stack-lg">
+
+    <!-- Carte profil -->
+    <section class="relative overflow-hidden bg-surface-container-lowest rounded-xl shadow-sm">
+      <div class="relative p-8 flex flex-col md:flex-row items-center gap-8">
+        <div class="w-32 h-32 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0 border-4 border-surface-container shadow-md">
+          <span class="font-display text-headline-lg text-on-primary-container">{{ initiales(profil.nom) }}</span>
+        </div>
+        <div class="flex-1 text-center md:text-left">
+          <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
+            <h1 class="font-display text-headline-lg text-on-surface">{{ profil.nom }}</h1>
+            <span class="px-3 py-1 bg-secondary-container/20 text-on-secondary-container text-label-sm rounded-full border border-secondary-container/30">Actif</span>
+          </div>
+          <p class="text-body-lg text-on-surface-variant font-medium mb-4">Formateur</p>
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-on-surface-variant justify-center md:justify-start">
+            <div class="flex items-center gap-2 justify-center md:justify-start">
+              <span class="material-symbols-outlined text-outline" aria-hidden="true">mail</span>
+              <span class="text-label-md">{{ profil.email }}</span>
+            </div>
+            <div class="flex items-center gap-2 justify-center md:justify-start" *ngIf="profil.telephone">
+              <span class="material-symbols-outlined text-outline" aria-hidden="true">call</span>
+              <span class="text-label-md">{{ profil.telephone }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="flex flex-col gap-3">
+          <button
+            *ngIf="!edition"
+            type="button"
+            (click)="ouvrirEdition()"
+            class="px-6 py-2.5 bg-primary text-on-primary font-label-md text-label-md rounded-lg flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+            Modifier le profil
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grille -->
+    <div class="grid grid-cols-12 gap-gutter">
+      <div class="col-span-12 lg:col-span-8 bg-surface-container-lowest p-8 rounded-xl shadow-sm">
+
+        <!-- ---------- Lecture ---------- -->
+        <ng-container *ngIf="!edition">
+          <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Détails de l'identité</h3>
+          <dl class="grid grid-cols-1 md:grid-cols-2 gap-stack-lg">
+            <div class="flex flex-col gap-base">
+              <dt class="text-label-md font-bold text-on-surface-variant">Prénom</dt>
+              <dd class="text-body-md text-on-surface">{{ profil.prenom || '—' }}</dd>
+            </div>
+            <div class="flex flex-col gap-base">
+              <dt class="text-label-md font-bold text-on-surface-variant">Nom</dt>
+              <dd class="text-body-md text-on-surface">{{ profil.nomFamille || '—' }}</dd>
+            </div>
+            <div class="flex flex-col gap-base">
+              <dt class="text-label-md font-bold text-on-surface-variant">Téléphone</dt>
+              <dd class="text-body-md text-on-surface">{{ profil.telephone || '—' }}</dd>
+            </div>
+            <div class="flex flex-col gap-base">
+              <dt class="text-label-md font-bold text-on-surface-variant">E-mail institutionnel</dt>
+              <dd class="text-body-md text-on-surface flex items-center gap-2">
+                {{ profil.email }}
+                <span class="material-symbols-outlined text-outline text-[18px]"
+                      title="L'e-mail sert d'identifiant de connexion et n'est pas modifiable ici"
+                      aria-label="Non modifiable : sert d'identifiant de connexion">lock</span>
+              </dd>
+            </div>
+          </dl>
+        </ng-container>
+
+        <!-- ---------- Édition ---------- -->
+        <form *ngIf="edition" [formGroup]="form" (ngSubmit)="enregistrer()" novalidate>
+          <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Modifier mon identité</h3>
+
+          <div *ngIf="erreurFormulaire"
+               role="alert"
+               class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg text-body-sm">
+            {{ erreurFormulaire }}
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-stack-lg">
+            <div class="flex flex-col gap-base">
+              <label for="prenom" class="text-label-md font-bold text-on-surface-variant">Prénom</label>
+              <input id="prenom" type="text" formControlName="prenom" autocomplete="given-name"
+                     [attr.aria-invalid]="messageErreur('prenom') ? 'true' : null"
+                     class="bg-surface-container border rounded-lg px-4 py-3 text-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary/30"
+                     [class.border-error]="messageErreur('prenom')"
+                     [class.border-outline-variant]="!messageErreur('prenom')">
+              <p *ngIf="messageErreur('prenom')" class="text-label-sm text-error">{{ messageErreur('prenom') }}</p>
+            </div>
+
+            <div class="flex flex-col gap-base">
+              <label for="nom" class="text-label-md font-bold text-on-surface-variant">Nom</label>
+              <input id="nom" type="text" formControlName="nom" autocomplete="family-name"
+                     [attr.aria-invalid]="messageErreur('nom') ? 'true' : null"
+                     class="bg-surface-container border rounded-lg px-4 py-3 text-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary/30"
+                     [class.border-error]="messageErreur('nom')"
+                     [class.border-outline-variant]="!messageErreur('nom')">
+              <p *ngIf="messageErreur('nom')" class="text-label-sm text-error">{{ messageErreur('nom') }}</p>
+            </div>
+
+            <div class="flex flex-col gap-base">
+              <label for="telephone" class="text-label-md font-bold text-on-surface-variant">Téléphone</label>
+              <input id="telephone" type="tel" formControlName="telephone" autocomplete="tel"
+                     [attr.aria-invalid]="messageErreur('telephone') ? 'true' : null"
+                     class="bg-surface-container border rounded-lg px-4 py-3 text-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary/30"
+                     [class.border-error]="messageErreur('telephone')"
+                     [class.border-outline-variant]="!messageErreur('telephone')">
+              <p *ngIf="messageErreur('telephone')" class="text-label-sm text-error">{{ messageErreur('telephone') }}</p>
+            </div>
+
+            <div class="flex flex-col gap-base">
+              <label for="email-lecture" class="text-label-md font-bold text-on-surface-variant">E-mail institutionnel</label>
+              <div class="relative">
+                <input id="email-lecture" type="email" [value]="profil.email" readonly disabled
+                       class="w-full bg-surface-container border border-outline-variant rounded-lg px-4 py-3 text-body-md text-on-surface-variant cursor-not-allowed">
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline text-[20px]" aria-hidden="true">lock</span>
+              </div>
+              <p class="text-label-sm text-outline">Sert d'identifiant de connexion : sa modification n'est pas possible ici.</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-3 mt-stack-lg">
+            <button type="submit" [disabled]="enregistrement"
+                    class="px-6 py-2.5 bg-primary text-on-primary font-label-md text-label-md rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+              <span class="material-symbols-outlined" aria-hidden="true">save</span>
+              {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+            <button type="button" (click)="annulerEdition()" [disabled]="enregistrement"
+                    class="px-6 py-2.5 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container transition-colors disabled:opacity-60">
+              Annuler
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="col-span-12 lg:col-span-4">
+        <div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-xl shadow-sm relative overflow-hidden">
+          <div class="relative z-10">
+            <h4 class="text-label-sm font-bold text-secondary uppercase tracking-widest mb-6">Aperçu académique</h4>
+            <div class="flex items-center justify-between">
+              <span class="text-body-md text-on-surface-variant">Cours actifs</span>
+              <span class="text-headline-sm font-display text-on-surface">{{ profil.nbCours }}</span>
+            </div>
+          </div>
+          <span class="material-symbols-outlined absolute -bottom-8 -right-8 text-[120px] text-outline-variant/30 pointer-events-none" aria-hidden="true">school</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
