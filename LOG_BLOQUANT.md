@@ -478,3 +478,22 @@ la classe (`AccreditationPublicController`) restent inchangés pour ne pas
 casser l'appel frontend existant ni élargir le diff — seule l'autorisation
 change ; les commentaires du contrôleur et de la route sont mis à jour pour
 refléter l'état réel plutôt que le nom.
+
+### 22. Nettoyage navigation : rien à retirer, un orphelin repéré mais non supprimé
+
+Audit systématique de tous les layouts/barres latérales de l'application
+(étudiant, formateur, responsable admission, pédagogie, alumni, évaluateur,
+école) : chaque entrée de navigation pointe vers une route réelle et
+fonctionnelle (service HTTP réel, pas de données figées). Aucun lien mort à
+retirer.
+
+Un seul reliquat, déjà identifié lors d'un epic précédent : le composant
+`responsable-admission/settings/responsable-admission-settings.component.*`
+(onglets Général/Équipe/Modèles) n'est déclaré dans aucune route et n'est
+référencé nulle part — c'est un prototype orphelin, distinct du vrai composant
+`.../parametres/...` qui, lui, est routé et fonctionnel. Confirmé inoffensif
+(aucun lien n'y mène, donc rien à masquer côté navigation) mais sa suppression
+a été bloquée par le classeur de permissions de la session autonome sur des
+commandes de suppression de fichiers ; laissé en l'état, à supprimer à la
+prochaine intervention humaine ou lors d'un epic dédié au nettoyage du code
+mort.
