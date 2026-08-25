@@ -35,25 +35,37 @@ export class Auth {
     }
   }
 
+  /**
+   * URL de l'espace propre au rôle de l'utilisateur connecté, ou null s'il n'a
+   * encore aucun rôle métier (compte tout juste créé). Centralise la même
+   * correspondance que redirectByRole pour que le lien « Mon espace » de la
+   * navbar publique et la redirection post-connexion ne divergent jamais.
+   */
+  getHomeUrl(): string | null {
+    const roles = this.getUserRoles();
+    if (roles.includes('ROLE_RESPONSABLE_ADMISSION')) {
+      return '/responsable-admission';
+    } else if (roles.includes('ROLE_RESPONSABLE_PEDAGOGIQUE')) {
+      return '/pedagogie';
+    } else if (roles.includes('ROLE_ECOLE_FORMATION')) {
+      return '/accreditation';
+    } else if (roles.includes('ROLE_EVALUATEUR_ACCREDITATION')) {
+      return '/evaluateur-accreditation';
+    } else if (roles.includes('ROLE_CANDIDAT')) {
+      return '/recrutement/suivi';
+    } else if (roles.includes('ROLE_ETUDIANT')) {
+      return '/espace-etudiant/dashboard';
+    } else if (roles.includes('ROLE_FORMATEUR')) {
+      return '/espace-etudiant/formateur/dashboard-formateur';
+    } else if (roles.includes('ROLE_ALUMNI')) {
+      return '/espace-alumni/mon-profil';
+    }
+    return null;
+  }
+
   /** Redirige l'utilisateur vers sa page d'accueil selon son rôle */
   redirectByRole(router: any): void {
-    const user = this.currentUser();
-    const roles: string[] = (user as any)?.roles || [];
-    if (roles.includes('ROLE_RESPONSABLE_ADMISSION')) {
-      router.navigate(['/responsable-admission']);
-    } else if (roles.includes('ROLE_RESPONSABLE_PEDAGOGIQUE')) {
-      router.navigate(['/pedagogie']);
-    } else if (roles.includes('ROLE_CANDIDAT')) {
-      router.navigate(['/recrutement/suivi']);
-    } else if (roles.includes('ROLE_ETUDIANT')) {
-      router.navigate(['/espace-etudiant/dashboard']);
-    } else if (roles.includes('ROLE_FORMATEUR')) {
-      router.navigate(['/espace-etudiant/formateur/dashboard-formateur']);
-    } else if (roles.includes('ROLE_ALUMNI')) {
-      router.navigate(['/espace-alumni/mon-profil']);
-    } else {
-      router.navigate(['/accueil']);
-    }
+    router.navigate([this.getHomeUrl() ?? '/accueil']);
   }
 
   getUserRoles(): string[] {

@@ -96,42 +96,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return this.auth.isLoggedIn() && this.auth.currentUser() != null;
   }
 
-  get isResponsableAdmissionRole(): boolean {
-    return this.auth.isResponsableAdmission();
-  }
-
-  get isEtudiantRole(): boolean {
-    const roles = this.auth.getUserRoles();
-    return roles.includes('ROLE_ETUDIANT');
-  }
-
-  get isFormateurRole(): boolean {
-    const roles = this.auth.getUserRoles();
-    return roles.includes('ROLE_FORMATEUR');
-  }
-
-  /**
-   * Sans ce lien, l'espace pédagogique était inatteignable : aucune barre n'y
-   * menait et la redirection après connexion l'ignorait.
-   */
-  get isPedagogiqueRole(): boolean {
-    const roles = this.auth.getUserRoles();
-    return roles.includes('ROLE_RESPONSABLE_PEDAGOGIQUE');
-  }
-
   get isCandidatRole(): boolean {
     const roles = this.auth.getUserRoles();
     return roles.includes('ROLE_CANDIDAT');
   }
 
-  get isEcoleFormationRole(): boolean {
-    const roles = this.auth.getUserRoles();
-    return roles.includes('ROLE_ECOLE_FORMATION');
-  }
-
-  get isEvaluateurAccreditationRole(): boolean {
-    const roles = this.auth.getUserRoles();
-    return roles.includes('ROLE_EVALUATEUR_ACCREDITATION');
+  /** Unique lien de retour vers l'espace du rôle connecté (null tant qu'aucun rôle n'est acquis). */
+  get monEspaceUrl(): string | null {
+    return this.isLoggedIn ? this.auth.getHomeUrl() : null;
   }
 
   get userInitials(): string {
