@@ -7,6 +7,7 @@ public class UserDto {
     private String nom;
     private String prenom;
     private String telephone;
+    private String typeInscription;
 
     public UserDto() {
     }
@@ -56,6 +57,8 @@ public class UserDto {
     public void setPrenom(String prenom) { this.prenom = prenom; }
     public String getTelephone() { return telephone; }
     public void setTelephone(String telephone) { this.telephone = telephone; }
+    public String getTypeInscription() { return typeInscription; }
+    public void setTypeInscription(String typeInscription) { this.typeInscription = typeInscription; }
 
     public inpg.sn.lms.auth.entity.User toUser() {
         inpg.sn.lms.auth.entity.User user = new inpg.sn.lms.auth.entity.User();

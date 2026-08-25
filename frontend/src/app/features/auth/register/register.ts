@@ -24,6 +24,15 @@ export class Register {
   errorMessage: string = '';
   isLoading: boolean = false;
 
+  /**
+   * Un compte tout juste créé n'a encore aucun rôle métier (attribué
+   * uniquement à la soumission réelle d'une candidature ou d'une demande
+   * d'accréditation) : sans ce choix, redirectByRole renvoyait aussi bien un
+   * futur candidat qu'un représentant d'école vers l'accueil générique, sans
+   * aucune indication sur la suite à donner.
+   */
+  typeInscription: 'CANDIDAT' | 'ECOLE' = 'CANDIDAT';
+
   // Déclaration de tous les contrôles liés au HTML
   registerForm: FormGroup = this.fb.group({
     prenom: ['', Validators.required],
@@ -32,6 +41,10 @@ export class Register {
     password: ['', [Validators.required, Validators.minLength(6)]],
     confirmPassword: ['', Validators.required]
   });
+
+  choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE'): void {
+    this.typeInscription = type;
+  }
 
   onSubmit(): void {
     if (this.registerForm.invalid) {
@@ -43,15 +56,18 @@ export class Register {
     this.errorMessage = '';
 
     const { prenom, nom, email, password } = this.registerForm.value;
-    
+
     // Génération automatique d'un username à partir du prénom/nom si ton backend en a besoin
     const username = `${prenom.trim()}_${nom.trim()}`.toLowerCase();
 
-    this.authService.register(username, email, password).subscribe({
+    this.authService.register(username, email, password, this.typeInscription).subscribe({
       next: () => {
         this.isLoading = false;
-        // rediriger selon le rôle comme pour la connexion
-        this.authService.redirectByRole(this.router);
+        if (this.typeInscription === 'ECOLE') {
+          this.router.navigate(['/accreditation']);
+        } else {
+          this.router.navigate(['/recrutement/sessions']);
+        }
       },
       error: (err) => {
         this.isLoading = false;
