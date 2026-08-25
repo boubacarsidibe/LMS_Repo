@@ -134,11 +134,8 @@ FROM users u
 WHERE u.username = 'test_admission'
   AND NOT EXISTS (SELECT 1 FROM responsables_admission ra WHERE ra.id_user = u.id);
 
-INSERT INTO resposable_peda_entity (id_user)
-SELECT u.id
-FROM users u
-WHERE u.username = 'test_pedago'
-  AND NOT EXISTS (SELECT 1 FROM resposable_peda_entity rp WHERE rp.id_user = u.id);
+-- Responsable pédagogique : pas de table de profil dédiée (V4__supprimer_vestiges_cohorte.sql
+-- l'a supprimée) — le rôle seul, déjà assigné ci-dessus, suffit à donner l'accès.
 
 -- École de formation : profil créé normalement à la première soumission
 -- (EcoleAccreditationController#soumettreDemande), reproduit ici pour un
