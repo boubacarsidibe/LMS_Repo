@@ -5,8 +5,8 @@
   </p>
 </div>
 
-<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
-<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement des modèles…</div>
+<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des modèles…</div>
 
 <div *ngIf="!loading" class="space-y-4">
   <div *ngFor="let t of templates" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6">

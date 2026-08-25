@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
 
 interface EquipeUser {
   initials: string;
@@ -23,7 +24,9 @@ interface EmailTemplate {
   imports: [CommonModule, FormsModule],
   templateUrl: './responsable-admission-settings.component.html',
 })
-export class ResponsableAdmissionSettingsComponent {
+export class ResponsableAdmissionSettingsComponent implements OnInit {
+  private recrutementService = inject(RecrutementService);
+
   activeTab: 'general' | 'rules' | 'users' | 'templates' = 'general';
   modalAddUserOpen = false;
   toastMessage = '';
@@ -35,9 +38,14 @@ export class ResponsableAdmissionSettingsComponent {
   candidaturesSpontanees = true;
   paiementEnLigne = true;
 
-  // Rules
-  seuilTests = 60;
-  seuilEntretien = 70;
+  // Rules — seuil de réussite (note/20) de la session de candidature ouverte,
+  // seule donnée réelle de cette page (le reste reste éditée en mémoire, cf.
+  // commentaire sur `templates` plus bas). `null` tant qu'aucune session n'est
+  // ouverte ou que le chargement n'est pas terminé.
+  seuilTests: number | null = null;
+  sessionOuverteId: number | null = null;
+  chargementRegles = true;
+  erreurRegles = '';
 
   // Users
   users: EquipeUser[] = [
@@ -92,6 +100,41 @@ L'équipe Admissions INPG`,
 
   switchTab(tab: 'general' | 'rules' | 'users' | 'templates'): void {
     this.activeTab = tab;
+  }
+
+  ngOnInit(): void {
+    this.chargerRegles();
+  }
+
+  private chargerRegles(): void {
+    this.chargementRegles = true;
+    this.recrutementService.getRules().subscribe({
+      next: (regles) => {
+        this.seuilTests = regles.seuilTests;
+        this.sessionOuverteId = regles.sessionId;
+        this.chargementRegles = false;
+      },
+      error: () => {
+        this.erreurRegles = "Impossible de charger le seuil de réussite.";
+        this.chargementRegles = false;
+      },
+    });
+  }
+
+  enregistrerSeuilTests(): void {
+    if (this.seuilTests == null) {
+      return;
+    }
+    this.erreurRegles = '';
+    this.recrutementService.updateRules(this.seuilTests).subscribe({
+      next: (regles) => {
+        this.seuilTests = regles.seuilTests;
+        this.saveSettings('Seuil de réussite enregistré.');
+      },
+      error: (e) => {
+        this.erreurRegles = e?.error?.message || "L'enregistrement du seuil a échoué.";
+      },
+    });
   }
 
   saveSettings(message: string): void {

@@ -15,7 +15,7 @@
   </div>
 </div>
 
-<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement des données…</div>
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des données…</div>
 
 <ng-container *ngIf="!loading">
   <div *ngIf="prefs.showSessionsActives" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
@@ -23,7 +23,7 @@
       <h3 class="font-headline-sm text-headline-sm text-primary">Sessions Actives</h3>
       <button type="button" class="text-secondary font-label-md text-label-md hover:underline" routerLink="/responsable-admission/sessions">Voir tout</button>
     </div>
-    <div *ngIf="sessionsActives.length === 0" class="p-10 text-center text-on-surface-variant font-body-md">
+    <div *ngIf="sessionsActives.length === 0" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">
       Aucune session active pour le moment.
     </div>
     <div class="overflow-x-auto" *ngIf="sessionsActives.length > 0">
@@ -60,6 +60,6 @@
 
   <div *ngIf="!prefs.showSessionsActives" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant">
     <span class="material-symbols-outlined text-4xl text-outline mb-2 block">visibility_off</span>
-    <p class="font-body-md text-on-surface-variant">Le tableau des sessions actives est masqué. <a routerLink="/responsable-admission/parametres" class="text-secondary hover:underline">Modifier dans Paramètres</a>.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant">Le tableau des sessions actives est masqué. <a routerLink="/responsable-admission/parametres" class="text-secondary hover:underline">Modifier dans Paramètres</a>.</p>
   </div>
 </ng-container>

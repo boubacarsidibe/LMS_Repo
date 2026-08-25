@@ -14,7 +14,7 @@
   </div>
 </div>
 
-<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md">Chargement des données…</div>
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des données…</div>
 
 <ng-container *ngIf="!loading">
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
@@ -80,7 +80,7 @@
         </svg>
         <div class="absolute inset-0 flex flex-col items-center justify-center">
           <span class="font-display text-headline-lg text-primary leading-none">{{ tauxAdmission }}%</span>
-          <span class="font-label-sm text-on-surface-variant mt-1">admis</span>
+          <span class="font-label-sm text-label-sm text-on-surface-variant mt-1">admis</span>
         </div>
       </div>
       <p class="font-body-sm text-body-sm text-on-surface-variant mt-4 text-center">
@@ -167,6 +167,6 @@
   <div *ngIf="!prefs.showTotalCandidats && !prefs.showValidationEnCours && !prefs.showPreselectionnes && !prefs.showRejetes && !prefs.showRepartitionStatuts && !prefs.showTauxAdmission && !prefs.showDemographie"
        class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant">
     <span class="material-symbols-outlined text-4xl text-outline mb-2 block">visibility_off</span>
-    <p class="font-body-md text-on-surface-variant">Tous les widgets sont masqués. <a routerLink="/responsable-admission/parametres" class="text-secondary hover:underline">Modifier dans Paramètres</a>.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant">Tous les widgets sont masqués. <a routerLink="/responsable-admission/parametres" class="text-secondary hover:underline">Modifier dans Paramètres</a>.</p>
   </div>
 </ng-container>
