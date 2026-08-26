@@ -91,6 +91,13 @@ export const PEDAGOGIE_ROUTES: Routes = [
             (m) => m.PedagogieCoursSupportsComponent
           ),
       },
+      {
+        path: 'activites-personnel',
+        loadComponent: () =>
+          import('../personnel/pages/activites-personnel/activites-personnel.component').then(
+            (m) => m.ActivitesPersonnelComponent
+          ),
+      },
     ],
   },
 ];

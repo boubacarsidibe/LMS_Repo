@@ -1,0 +1,195 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header class="flex items-start justify-between gap-stack-md flex-wrap">
+    <div>
+      <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Personnel INPG</span>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Activités du personnel</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+        Saisie mensuelle des activités par département — formations, projets, recherches.
+      </p>
+    </div>
+    <button type="button" (click)="ouvrirFormulaire()"
+            class="flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors shrink-0">
+      <span class="material-symbols-outlined">add</span>Nouvelle activité
+    </button>
+  </header>
+
+  <p *ngIf="messageSucces" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">{{ messageSucces }}</p>
+  <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
+
+  <!-- Filtres et rapports -->
+  <div class="flex gap-stack-md flex-wrap items-center">
+    <div class="relative">
+      <select [(ngModel)]="filtreDepartementId" (ngModelChange)="charger()"
+              class="appearance-none bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-2.5 pr-9 rounded-lg font-body-sm text-body-sm text-on-surface-variant outline-none cursor-pointer">
+        <option [ngValue]="null">Tous les départements</option>
+        <option *ngFor="let d of departements" [ngValue]="d.id">{{ d.libelle }}</option>
+      </select>
+      <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-outline text-[18px]">expand_more</span>
+    </div>
+    <div class="relative">
+      <select [(ngModel)]="filtreMois" (ngModelChange)="charger()"
+              class="appearance-none bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-2.5 pr-9 rounded-lg font-body-sm text-body-sm text-on-surface-variant outline-none cursor-pointer">
+        <option *ngFor="let m of moisLibelles; let i = index" [ngValue]="i + 1">{{ m }}</option>
+      </select>
+      <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-outline text-[18px]">expand_more</span>
+    </div>
+    <div class="relative">
+      <select [(ngModel)]="filtreAnnee" (ngModelChange)="charger()"
+              class="appearance-none bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-2.5 pr-9 rounded-lg font-body-sm text-body-sm text-on-surface-variant outline-none cursor-pointer">
+        <option *ngFor="let a of anneesDisponibles" [ngValue]="a">{{ a }}</option>
+      </select>
+      <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-outline text-[18px]">expand_more</span>
+    </div>
+
+    <div class="flex-1"></div>
+
+    <button type="button" (click)="ouvrirRapportDepartement()" [disabled]="!filtreDepartementId"
+            title="Rapport PDF du département sélectionné pour cette période"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-sm text-label-sm hover:border-secondary hover:text-secondary transition-colors disabled:opacity-40 disabled:pointer-events-none">
+      <span class="material-symbols-outlined text-[18px]">description</span>Rapport du département
+    </button>
+    <button type="button" (click)="ouvrirRapportGlobal()"
+            title="Rapport PDF consolidé de tous les départements pour cette période"
+            class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-sm text-label-sm hover:border-secondary hover:text-secondary transition-colors">
+      <span class="material-symbols-outlined text-[18px]">summarize</span>Rapport global INPG
+    </button>
+  </div>
+
+  <!-- Gestion des départements (pédagogie uniquement) -->
+  <details *ngIf="peutGererDepartements" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
+    <summary class="cursor-pointer px-stack-lg py-stack-md font-label-md text-label-md text-on-surface flex items-center gap-2">
+      <span class="material-symbols-outlined text-secondary">apartment</span>Gérer les départements
+    </summary>
+    <div class="px-stack-lg pb-stack-lg space-y-stack-md">
+      <ul class="flex flex-wrap gap-2">
+        <li *ngFor="let d of departements"
+            class="px-3 py-1.5 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface">
+          {{ d.code }} — {{ d.libelle }}
+        </li>
+      </ul>
+      <div class="flex gap-stack-md flex-wrap items-end">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Code</span>
+          <input type="text" [(ngModel)]="nouveauCode" placeholder="DSI"
+                 class="p-2.5 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+        <label class="flex flex-col gap-1 flex-1 min-w-[200px]">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Libellé</span>
+          <input type="text" [(ngModel)]="nouveauLibelle" placeholder="Direction du système d'information"
+                 class="p-2.5 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+        <button type="button" (click)="creerDepartement()" [disabled]="!nouveauCode.trim() || !nouveauLibelle.trim()"
+                class="px-4 py-2.5 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+          Ajouter
+        </button>
+      </div>
+    </div>
+  </details>
+
+  <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+
+  <div *ngIf="!chargement" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-outline-variant">
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Département</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Type</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Activité</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Saisie par</th>
+            <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of activites" class="border-b border-outline-variant/50 last:border-0">
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface">{{ a.departementLibelle }}</td>
+            <td class="px-stack-lg py-stack-md">
+              <span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+                {{ libellesType[a.typeActivite] }}
+              </span>
+            </td>
+            <td class="px-stack-lg py-stack-md">
+              <span class="font-label-md text-label-md text-on-surface block">{{ a.titre }}</span>
+              <span *ngIf="a.description" class="font-body-sm text-body-sm text-on-surface-variant">{{ a.description }}</span>
+            </td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant">{{ a.auteurNom }}</td>
+            <td class="px-stack-lg py-stack-md text-right">
+              <button type="button" (click)="supprimer(a)" title="Retirer cette activité"
+                      class="text-outline hover:text-error transition-colors">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="activites.length === 0">
+            <td colspan="5" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+              Aucune activité saisie pour cette période.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Nouvelle activité -->
+<div *ngIf="formulaireOuvert" class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="formulaireOuvert = false">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm w-full max-w-lg max-h-[85vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">add_task</span>Nouvelle activité
+      </h2>
+      <button type="button" (click)="formulaireOuvert = false" aria-label="Fermer" class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+    <div class="p-stack-lg space-y-stack-md">
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Département</span>
+        <select [(ngModel)]="saisie.departementId"
+                class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+          <option [ngValue]="null" disabled>Choisir un département…</option>
+          <option *ngFor="let d of departements" [ngValue]="d.id">{{ d.libelle }}</option>
+        </select>
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Type</span>
+        <select [(ngModel)]="saisie.typeActivite"
+                class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+          <option *ngFor="let t of types" [ngValue]="t">{{ libellesType[t] }}</option>
+        </select>
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Titre</span>
+        <input type="text" [(ngModel)]="saisie.titre" placeholder="Formation Excel avancé"
+               class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Description (facultatif)</span>
+        <textarea rows="3" [(ngModel)]="saisie.description"
+                  class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface resize-y"></textarea>
+      </label>
+      <div class="grid grid-cols-2 gap-stack-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Mois</span>
+          <select [(ngModel)]="saisie.mois"
+                  class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+            <option *ngFor="let m of moisLibelles; let i = index" [ngValue]="i + 1">{{ m }}</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Année</span>
+          <select [(ngModel)]="saisie.annee"
+                  class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+            <option *ngFor="let a of anneesDisponibles" [ngValue]="a">{{ a }}</option>
+          </select>
+        </label>
+      </div>
+      <div class="flex gap-stack-md pt-2">
+        <button type="button" (click)="formulaireOuvert = false" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Annuler</button>
+        <button type="button" [disabled]="!saisieValide || enregistrement" (click)="enregistrer()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+          {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
