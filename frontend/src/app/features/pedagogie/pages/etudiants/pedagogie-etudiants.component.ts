@@ -32,6 +32,12 @@ export class PedagogieEtudiantsComponent implements OnInit {
   promotions: PromotionDetail[] = [];
   recherche = '';
 
+  // Filtres (appliqués côté client sur la liste déjà chargée/recherchée)
+  filtrePromotion = '';
+  filtreStatut = '';
+  filtreSansPromotion = false;
+  filtreAlumni = false;
+
   // Création
   formulaireOuvert = false;
   saisie: EtudiantSaisie = this.saisieVierge();
@@ -79,7 +85,7 @@ export class PedagogieEtudiantsComponent implements OnInit {
 
   /** Étudiants sans promotion : ils n'ont ni cours, ni calendrier, ni relevé. */
   get sansPromotion(): EtudiantScolarite[] {
-    return this.etudiants.filter((e) => !e.cohorte || e.cohorte === 'Sans promotion');
+    return this.etudiants.filter((e) => !e.promotion || e.promotion === 'Sans promotion');
   }
 
   /**
@@ -93,6 +99,29 @@ export class PedagogieEtudiantsComponent implements OnInit {
    */
   get admisEnAttente(): EtudiantScolarite[] {
     return this.sansPromotion.filter((e) => !!e.origine);
+  }
+
+  /** Statuts réellement présents dans la liste chargée (pas de liste figée). */
+  get statutsDisponibles(): string[] {
+    return [...new Set(this.etudiants.map((e) => e.statut).filter((s): s is string => !!s))].sort();
+  }
+
+  /** Répertoire affiché une fois les filtres appliqués sur la liste chargée. */
+  get etudiantsFiltres(): EtudiantScolarite[] {
+    return this.etudiants.filter((e) => {
+      const correspondPromotion = !this.filtrePromotion || e.promotion === this.filtrePromotion;
+      const correspondStatut = !this.filtreStatut || e.statut === this.filtreStatut;
+      const correspondSansPromotion = !this.filtreSansPromotion || !e.promotion || e.promotion === 'Sans promotion';
+      const correspondAlumni = !this.filtreAlumni || e.estAlumni;
+      return correspondPromotion && correspondStatut && correspondSansPromotion && correspondAlumni;
+    });
+  }
+
+  reinitialiserFiltres(): void {
+    this.filtrePromotion = '';
+    this.filtreStatut = '';
+    this.filtreSansPromotion = false;
+    this.filtreAlumni = false;
   }
 
   // ===================== Création =====================
@@ -147,7 +176,7 @@ export class PedagogieEtudiantsComponent implements OnInit {
     this.reinitialiserMessages();
     this.pedagogie.affecterPromotion(etudiant.id, promotionId).subscribe({
       next: (misAJour) => {
-        this.messageSucces = `${misAJour.nom} → ${misAJour.cohorte}.`;
+        this.messageSucces = `${misAJour.nom} → ${misAJour.promotion}.`;
         this.charger();
       },
       error: (erreur) => (this.messageErreur = erreur.error?.message || 'L’affectation a échoué.'),
@@ -221,11 +250,11 @@ export class PedagogieEtudiantsComponent implements OnInit {
 
   // ===================== Export =====================
 
-  /** Export du répertoire tel qu'affiché, filtre de recherche compris. */
+  /** Export du répertoire tel qu'affiché, recherche et filtres compris. */
   exporter(): void {
     const entete = 'Matricule;Nom;Promotion;Statut';
-    const lignes = this.etudiants.map((e) =>
-      [e.matricule || '', e.nom, e.cohorte, e.statut].map((c) => this.cellule(c)).join(';')
+    const lignes = this.etudiantsFiltres.map((e) =>
+      [e.matricule || '', e.nom, e.promotion, e.statut].map((c) => this.cellule(c)).join(';')
     );
     const contenu = '﻿' + [entete, ...lignes].join('\r\n');
     const lien = document.createElement('a');

@@ -35,7 +35,7 @@
             <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ c.reference }}</td>
             <td class="px-stack-lg py-stack-md font-label-md text-label-md text-on-surface">{{ c.etudiantNom }}</td>
             <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface">{{ c.intituleFormation }}</td>
-            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant">{{ c.cohorteLibelle || '—' }}</td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant">{{ c.promotionLibelle || '—' }}</td>
             <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ c.dateEmission || '—' }}</td>
           </tr>
           <tr *ngIf="certificats.length === 0">
@@ -64,7 +64,7 @@
         <span class="font-label-sm text-label-sm text-on-surface-variant">Étudiant</span>
         <select [(ngModel)]="etudiantId" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
           <option [ngValue]="null">Choisissez un étudiant…</option>
-          <option *ngFor="let e of etudiants" [ngValue]="e.id">{{ e.nom }} — {{ e.cohorte }}</option>
+          <option *ngFor="let e of etudiants" [ngValue]="e.id">{{ e.nom }} — {{ e.promotion }}</option>
         </select>
       </label>
 

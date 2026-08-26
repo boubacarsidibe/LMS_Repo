@@ -10,7 +10,7 @@
           Espace Enseignant
         </div>
         <h1 class="font-display text-headline-lg text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
-        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos cohortes en temps réel.</p>
+        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos promotions en temps réel.</p>
       </div>
       <button routerLink="/espace-etudiant/formateur/creer-cours" class="group flex items-center gap-3 bg-secondary text-on-secondary px-6 py-4 rounded-xl font-label-md text-label-md hover:bg-on-secondary-container transition-all">
         <span class="material-symbols-outlined">add_circle</span>
@@ -35,9 +35,9 @@
           <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
         </div>
         <div class="relative">
-          <select [(ngModel)]="cohorteSelectionnee" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
-            <option value="">Toutes les cohortes</option>
-            <option *ngFor="let coh of cohortesDisponibles" [value]="coh.id">{{ coh.libelle }}{{ coh.annee ? ' (' + coh.annee + ')' : '' }}</option>
+          <select [(ngModel)]="promotionSelectionnee" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+            <option value="">Toutes les promotions</option>
+            <option *ngFor="let p of promotionsDisponibles" [value]="p.id">{{ p.libelle }}{{ p.annee ? ' (' + p.annee + ')' : '' }}</option>
           </select>
           <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
         </div>
@@ -63,7 +63,7 @@
             <span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full font-label-sm text-label-sm uppercase tracking-tighter">{{ c.code }}</span>
             <div class="flex items-center gap-1">
               <button (click)="preRemplirDepot(c)" title="Déposer une ressource" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">upload_file</span></button>
-              <button (click)="ouvrirGestionCohortes(c)" title="Gérer les cohortes" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">groups</span></button>
+              <button (click)="ouvrirGestionPromotions(c)" title="Gérer les promotions" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">groups</span></button>
               <button (click)="ouvrirEditionCours(c)" title="Modifier le cours" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">edit</span></button>
               <button (click)="supprimerCours(c)" [disabled]="suppressionCoursEnCoursId === c.id" title="Supprimer le cours" class="text-outline hover:text-error disabled:opacity-40"><span class="material-symbols-outlined">delete</span></button>
             </div>
@@ -246,29 +246,29 @@
     </aside>
   </section>
 
-  <!-- Modal gestion des cohortes d'un cours -->
-  <div *ngIf="coursEnGestion" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerGestionCohortes()">
+  <!-- Modal gestion des promotions d'un cours -->
+  <div *ngIf="coursEnGestion" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerGestionPromotions()">
     <div class="bg-surface-container-lowest rounded-2xl p-stack-lg max-w-md w-full space-y-stack-md" (click)="$event.stopPropagation()">
-      <h3 class="font-headline-sm text-headline-sm text-on-surface">Cohortes du cours {{ coursEnGestion.code }}</h3>
-      <p class="text-body-sm text-on-surface-variant">Sélectionnez les cohortes dont les étudiants doivent apparaître dans votre suivi.</p>
+      <h3 class="font-headline-sm text-headline-sm text-on-surface">Promotions du cours {{ coursEnGestion.code }}</h3>
+      <p class="text-body-sm text-on-surface-variant">Sélectionnez les promotions dont les étudiants doivent apparaître dans votre suivi.</p>
       <div class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-        <label *ngFor="let coh of toutesCohortes" class="flex items-center gap-2 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+        <label *ngFor="let p of toutesPromotions" class="flex items-center gap-2 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
           <input
             class="w-4 h-4 accent-secondary"
             type="checkbox"
-            [checked]="cohorteIdsGestion.has($any(coh.id))"
-            (change)="toggleCohorteGestion($any(coh.id), $any($event.target).checked)">
-          <span class="font-body-sm text-body-sm text-on-surface">{{ coh.libelle }}{{ coh.annee ? ' (' + coh.annee + ')' : '' }}</span>
+            [checked]="promotionIdsGestion.has($any(p.id))"
+            (change)="togglePromotionGestion($any(p.id), $any($event.target).checked)">
+          <span class="font-body-sm text-body-sm text-on-surface">{{ p.libelle }}{{ p.annee ? ' (' + p.annee + ')' : '' }}</span>
         </label>
       </div>
-      <p *ngIf="!toutesCohortes.length" class="text-body-sm text-on-surface-variant">Aucune cohorte disponible pour le moment.</p>
+      <p *ngIf="!toutesPromotions.length" class="text-body-sm text-on-surface-variant">Aucune promotion disponible pour le moment.</p>
       <p *ngIf="gestionError" class="text-body-sm text-error">{{ gestionError }}</p>
       <div class="flex gap-stack-md pt-2">
-        <button (click)="fermerGestionCohortes()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
+        <button (click)="fermerGestionPromotions()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
           Annuler
         </button>
-        <button [disabled]="isSavingCohortes" (click)="enregistrerCohortes()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
-          {{ isSavingCohortes ? 'Enregistrement…' : 'Enregistrer' }}
+        <button [disabled]="isSavingPromotions" (click)="enregistrerPromotions()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+          {{ isSavingPromotions ? 'Enregistrement…' : 'Enregistrer' }}
         </button>
       </div>
     </div>

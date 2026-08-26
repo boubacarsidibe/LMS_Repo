@@ -272,7 +272,7 @@ export interface FormateurBref {
 export interface EtudiantScolarite {
   id: number;
   nom: string;
-  cohorte: string;
+  promotion: string;
   derniereConnexion: string;
   progression: number;
   /** null tant qu'aucune note n'est saisie — a ne pas confondre avec un zero. */
@@ -325,7 +325,7 @@ export interface Certificat {
   etudiantNom: string | null;
   etudiantMatricule: string | null;
   intituleFormation: string;
-  cohorteLibelle: string | null;
+  promotionLibelle: string | null;
   dateEmission: string | null;
   formateurNom: string | null;
 }

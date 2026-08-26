@@ -37,6 +37,39 @@
     </button>
   </div>
 
+  <!-- Filtres -->
+  <div class="flex gap-stack-md flex-wrap items-center">
+    <div class="relative">
+      <select [(ngModel)]="filtrePromotion"
+              class="appearance-none bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-2.5 pr-9 rounded-lg font-body-sm text-body-sm text-on-surface-variant outline-none cursor-pointer">
+        <option value="">Toutes les promotions</option>
+        <option *ngFor="let p of promotions" [value]="p.libelle">{{ p.libelle }}</option>
+      </select>
+      <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-outline text-[18px]">expand_more</span>
+    </div>
+    <div class="relative">
+      <select [(ngModel)]="filtreStatut"
+              class="appearance-none bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-2.5 pr-9 rounded-lg font-body-sm text-body-sm text-on-surface-variant outline-none cursor-pointer">
+        <option value="">Tous les statuts</option>
+        <option *ngFor="let s of statutsDisponibles" [value]="s">{{ s }}</option>
+      </select>
+      <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-outline text-[18px]">expand_more</span>
+    </div>
+    <label class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest shadow-sm cursor-pointer font-body-sm text-body-sm text-on-surface-variant">
+      <input type="checkbox" [(ngModel)]="filtreSansPromotion" class="w-4 h-4 accent-secondary" />
+      Sans promotion
+    </label>
+    <label class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant bg-surface-container-lowest shadow-sm cursor-pointer font-body-sm text-body-sm text-on-surface-variant">
+      <input type="checkbox" [(ngModel)]="filtreAlumni" class="w-4 h-4 accent-secondary" />
+      Alumni
+    </label>
+    <button *ngIf="filtrePromotion || filtreStatut || filtreSansPromotion || filtreAlumni"
+            type="button" (click)="reinitialiserFiltres()"
+            class="flex items-center gap-1 px-3 py-2.5 rounded-lg text-on-surface-variant font-label-sm text-label-sm hover:text-secondary transition-colors">
+      <span class="material-symbols-outlined text-[18px]">close</span>Réinitialiser
+    </button>
+  </div>
+
   <!-- Alerte : sans promotion, un etudiant n'a acces a rien -->
   <div *ngIf="!chargement && sansPromotion.length > 0"
        class="bg-surface-container-lowest rounded-xl border border-error shadow-sm p-stack-lg">
@@ -71,7 +104,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let e of etudiants" class="border-b border-outline-variant/50 last:border-0">
+          <tr *ngFor="let e of etudiantsFiltres" class="border-b border-outline-variant/50 last:border-0">
             <td class="px-stack-lg py-stack-md">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-sm shrink-0">
@@ -90,12 +123,12 @@
             </td>
             <td class="px-stack-lg py-stack-md">
               <select
-                [value]="e.cohorte === 'Sans promotion' ? '' : (promotions.length ? '' : '')"
+                [value]="e.promotion === 'Sans promotion' ? '' : (promotions.length ? '' : '')"
                 (change)="affecter(e, $any($event.target).value)"
                 class="p-2 bg-surface-container-low rounded-lg border font-body-sm text-body-sm text-on-surface"
-                [class.border-error]="e.cohorte === 'Sans promotion'"
-                [class.border-outline-variant]="e.cohorte !== 'Sans promotion'">
-                <option value="">{{ e.cohorte }}</option>
+                [class.border-error]="e.promotion === 'Sans promotion'"
+                [class.border-outline-variant]="e.promotion !== 'Sans promotion'">
+                <option value="">{{ e.promotion }}</option>
                 <option *ngFor="let p of promotions" [value]="p.id">{{ p.libelle }}</option>
               </select>
             </td>
@@ -125,9 +158,9 @@
               </button>
             </td>
           </tr>
-          <tr *ngIf="etudiants.length === 0">
+          <tr *ngIf="etudiantsFiltres.length === 0">
             <td colspan="6" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
-              Aucun étudiant.
+              {{ etudiants.length === 0 ? 'Aucun étudiant.' : 'Aucun étudiant ne correspond à ces filtres.' }}
             </td>
           </tr>
         </tbody>

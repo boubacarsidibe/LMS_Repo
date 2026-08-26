@@ -83,14 +83,14 @@
 
       <div class="space-y-1">
         <label class="font-label-md text-label-md text-on-surface-variant">Destinataires</label>
-        <p class="text-body-sm text-on-surface-variant">Ne rien cocher pour publier à toutes les cohortes (annonce institutionnelle).</p>
-        <div class="grid grid-cols-2 gap-2" *ngIf="mesCohortes.length">
-          <label *ngFor="let c of mesCohortes" class="flex items-center gap-2 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-            <input class="w-4 h-4 accent-secondary" type="checkbox" (change)="toggleCohorte($any(c.id), $any($event.target).checked)">
-            <span class="font-body-sm text-body-sm text-on-surface">{{ c.libelle }}{{ c.annee ? ' (' + c.annee + ')' : '' }}</span>
+        <p class="text-body-sm text-on-surface-variant">Ne rien cocher pour publier à toutes les promotions (annonce institutionnelle).</p>
+        <div class="grid grid-cols-2 gap-2" *ngIf="mesPromotions.length">
+          <label *ngFor="let p of mesPromotions" class="flex items-center gap-2 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+            <input class="w-4 h-4 accent-secondary" type="checkbox" (change)="togglePromotion($any(p.id), $any($event.target).checked)">
+            <span class="font-body-sm text-body-sm text-on-surface">{{ p.libelle }}{{ p.annee ? ' (' + p.annee + ')' : '' }}</span>
           </label>
         </div>
-        <p *ngIf="!mesCohortes.length" class="text-body-sm text-on-surface-variant italic">Vous n'avez pas encore de cohorte rattachée à un cours.</p>
+        <p *ngIf="!mesPromotions.length" class="text-body-sm text-on-surface-variant italic">Vous n'avez pas encore de promotion rattachée à un cours.</p>
       </div>
 
       <p *ngIf="errorMessage" class="text-body-sm text-error">{{ errorMessage }}</p>

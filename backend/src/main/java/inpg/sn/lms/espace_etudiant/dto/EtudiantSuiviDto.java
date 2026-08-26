@@ -13,7 +13,7 @@ package inpg.sn.lms.espace_etudiant.dto;
 public record EtudiantSuiviDto(
         Long id,
         String nom,
-        String cohorte,
+        String promotion,
         String derniereConnexion,
         int progression,
         Double noteMoyenne,
