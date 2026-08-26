@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Etudiant } from '../../models/etudiant';
 import { EtudiantService } from '../../services/etudiant.service';
-import { Cohorte } from '../../models/cohorte';
-import { CohorteService } from '../../services/cohorte.service';
+import { Promotion } from '../../models/promotion';
+import { PromotionService } from '../../services/promotion.service';
 
 @Component({
   selector: 'app-suivi-etudiants',
@@ -16,9 +16,9 @@ import { CohorteService } from '../../services/cohorte.service';
 })
 export class SuiviEtudiants implements OnInit {
   etudiants: Etudiant[] = [];
-  cohortes: Cohorte[] = [];
+  promotions: Promotion[] = [];
   recherche: string = '';
-  cohorteSelectionnee: string = '';
+  promotionSelectionnee: string = '';
 
   etudiantEnContact: Etudiant | null = null;
   afficherRelanceCollective = false;
@@ -31,19 +31,19 @@ export class SuiviEtudiants implements OnInit {
   constructor(
     private router: Router,
     private etudiantService: EtudiantService,
-    private cohorteService: CohorteService
+    private promotionService: PromotionService
   ) {}
 
   ngOnInit(): void {
     this.etudiantService.getAll().subscribe({ next: list => this.etudiants = list, error: () => this.etudiants = [] });
-    this.cohorteService.getAll().subscribe({ next: list => this.cohortes = list, error: () => this.cohortes = [] });
+    this.promotionService.getAll().subscribe({ next: list => this.promotions = list, error: () => this.promotions = [] });
   }
 
   get etudiantsFiltres(): Etudiant[] {
     return this.etudiants.filter(e => {
       const correspondRecherche = e.nom.toLowerCase().includes(this.recherche.toLowerCase());
-      const correspondCohorte = !this.cohorteSelectionnee || e.cohorte === this.cohorteSelectionnee;
-      return correspondRecherche && correspondCohorte;
+      const correspondPromotion = !this.promotionSelectionnee || e.promotion === this.promotionSelectionnee;
+      return correspondRecherche && correspondPromotion;
     });
   }
 

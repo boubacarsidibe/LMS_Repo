@@ -46,7 +46,7 @@
           <div class="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <p class="font-label-md text-label-md text-on-surface">{{ etudiantConsulte.nom }}</p>
-              <p class="font-body-sm text-body-sm text-on-surface-variant">{{ etudiantConsulte.cohorte || 'Sans promotion' }}</p>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">{{ etudiantConsulte.promotion || 'Sans promotion' }}</p>
             </div>
             <button type="button" (click)="fermerConsultation()" aria-label="Fermer"
                     class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">

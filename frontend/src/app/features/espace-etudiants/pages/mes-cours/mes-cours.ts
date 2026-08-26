@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Cours } from '../../models/cours';
-import { Cohorte } from '../../models/cohorte';
+import { Promotion } from '../../models/promotion';
 import { Support } from '../../models/support';
 import { Seance } from '../../models/seance';
 import { PresenceEtudiant } from '../../models/presence';
 import { CoursService } from '../../services/cours.service';
-import { CohorteService } from '../../services/cohorte.service';
+import { PromotionService } from '../../services/promotion.service';
 import { SupportService } from '../../services/support.service';
 import { SeanceService } from '../../services/seance.service';
 import { PresenceService } from '../../services/presence.service';
@@ -28,11 +28,11 @@ export class MesCours implements OnInit {
   @ViewChild('depotRapide') depotRapide!: ElementRef<HTMLElement>;
 
   cours: Cours[] = [];
-  toutesCohortes: Cohorte[] = [];
+  toutesPromotions: Promotion[] = [];
 
   coursEnGestion: Cours | null = null;
-  cohorteIdsGestion = new Set<number>();
-  isSavingCohortes = false;
+  promotionIdsGestion = new Set<number>();
+  isSavingPromotions = false;
   gestionError = '';
 
   coursEnEdition: Cours | null = null;
@@ -75,7 +75,7 @@ export class MesCours implements OnInit {
   constructor(
     private fb: FormBuilder,
     private coursService: CoursService,
-    private cohorteService: CohorteService,
+    private promotionService: PromotionService,
     private supportService: SupportService,
     private seanceService: SeanceService,
     private presenceService: PresenceService,
@@ -151,9 +151,9 @@ export class MesCours implements OnInit {
 
     this.loadCours();
     this.chargerSupports();
-    this.cohorteService.getAll().subscribe({
-      next: (data) => (this.toutesCohortes = data || []),
-      error: () => (this.toutesCohortes = [])
+    this.promotionService.getAll().subscribe({
+      next: (data) => (this.toutesPromotions = data || []),
+      error: () => (this.toutesPromotions = [])
     });
   }
 
@@ -169,39 +169,39 @@ export class MesCours implements OnInit {
     }, 100);
   }
 
-  ouvrirGestionCohortes(cours: Cours) {
+  ouvrirGestionPromotions(cours: Cours) {
     this.coursEnGestion = cours;
     this.gestionError = '';
-    this.cohorteIdsGestion = new Set((cours.promotions || []).map(c => Number(c.id)));
+    this.promotionIdsGestion = new Set((cours.promotions || []).map(c => Number(c.id)));
   }
 
-  fermerGestionCohortes() {
+  fermerGestionPromotions() {
     this.coursEnGestion = null;
   }
 
-  toggleCohorteGestion(id: number, checked: boolean) {
+  togglePromotionGestion(id: number, checked: boolean) {
     if (checked) {
-      this.cohorteIdsGestion.add(id);
+      this.promotionIdsGestion.add(id);
     } else {
-      this.cohorteIdsGestion.delete(id);
+      this.promotionIdsGestion.delete(id);
     }
   }
 
-  enregistrerCohortes() {
+  enregistrerPromotions() {
     if (!this.coursEnGestion) {
       return;
     }
-    this.isSavingCohortes = true;
+    this.isSavingPromotions = true;
     this.gestionError = '';
-    this.coursService.updateCohortes(this.coursEnGestion.id, Array.from(this.cohorteIdsGestion)).subscribe({
+    this.coursService.updatePromotions(this.coursEnGestion.id, Array.from(this.promotionIdsGestion)).subscribe({
       next: () => {
-        this.isSavingCohortes = false;
+        this.isSavingPromotions = false;
         this.coursEnGestion = null;
         this.loadCours();
       },
       error: (error) => {
-        this.isSavingCohortes = false;
-        this.gestionError = error.error?.message || "L'enregistrement des cohortes a échoué.";
+        this.isSavingPromotions = false;
+        this.gestionError = error.error?.message || "L'enregistrement des promotions a échoué.";
       }
     });
   }
@@ -451,7 +451,7 @@ export class MesCours implements OnInit {
 
   recherche: string = '';
   semestreSelectionne: string = ''; // '' = tous les semestres
-  cohorteSelectionnee: string = ''; // '' = toutes les cohortes
+  promotionSelectionnee: string = ''; // '' = toutes les promotions
 
   /** Semestres reellement presents dans les cours du formateur (pas de liste figee). */
   get semestresDisponibles(): string[] {
@@ -461,10 +461,10 @@ export class MesCours implements OnInit {
     return [...new Set(semestres)].sort();
   }
 
-  /** Idem pour les cohortes : seules celles rattachees a au moins un cours sont proposees. */
-  get cohortesDisponibles(): Cohorte[] {
-    const parId = new Map<string, Cohorte>();
-    this.cours.forEach(c => (c.promotions || []).forEach(coh => parId.set(String(coh.id), coh)));
+  /** Idem pour les promotions : seules celles rattachees a au moins un cours sont proposees. */
+  get promotionsDisponibles(): Promotion[] {
+    const parId = new Map<string, Promotion>();
+    this.cours.forEach(c => (c.promotions || []).forEach(p => parId.set(String(p.id), p)));
     return [...parId.values()];
   }
 
@@ -475,9 +475,9 @@ export class MesCours implements OnInit {
         || c.titre.toLowerCase().includes(recherche)
         || c.code.toLowerCase().includes(recherche);
       const correspondSemestre = !this.semestreSelectionne || c.semestre === this.semestreSelectionne;
-      const correspondCohorte = !this.cohorteSelectionnee
-        || (c.promotions || []).some(coh => String(coh.id) === this.cohorteSelectionnee);
-      return correspondRecherche && correspondSemestre && correspondCohorte;
+      const correspondPromotion = !this.promotionSelectionnee
+        || (c.promotions || []).some(p => String(p.id) === this.promotionSelectionnee);
+      return correspondRecherche && correspondSemestre && correspondPromotion;
     });
   }
 

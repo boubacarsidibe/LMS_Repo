@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CoursService } from '../../services/cours.service';
-import { CohorteService } from '../../services/cohorte.service';
-import { Cohorte } from '../../models/cohorte';
+import { PromotionService } from '../../services/promotion.service';
+import { Promotion } from '../../models/promotion';
 
 @Component({
   selector: 'app-creer-cours',
@@ -17,8 +17,8 @@ export class CreerCours implements OnInit {
   creerCoursForm: FormGroup;
   isSubmitting = false;
   errorMessage = '';
-  cohortes: Cohorte[] = [];
-  cohorteIdsSelectionnees = new Set<number>();
+  promotions: Promotion[] = [];
+  promotionIdsSelectionnees = new Set<number>();
   imageSelectionnee: File | null = null;
   imageApercu: string | null = null;
 
@@ -26,7 +26,7 @@ export class CreerCours implements OnInit {
     private fb: FormBuilder,
     private router: Router,
     private coursService: CoursService,
-    private cohorteService: CohorteService
+    private promotionService: PromotionService
   ) {
     this.creerCoursForm = this.fb.group({
       code: ['', Validators.required],
@@ -38,17 +38,17 @@ export class CreerCours implements OnInit {
   }
 
   ngOnInit(): void {
-    this.cohorteService.getAll().subscribe({
-      next: (data) => (this.cohortes = data || []),
-      error: () => (this.cohortes = [])
+    this.promotionService.getAll().subscribe({
+      next: (data) => (this.promotions = data || []),
+      error: () => (this.promotions = [])
     });
   }
 
-  toggleCohorte(id: number, checked: boolean) {
+  togglePromotion(id: number, checked: boolean) {
     if (checked) {
-      this.cohorteIdsSelectionnees.add(id);
+      this.promotionIdsSelectionnees.add(id);
     } else {
-      this.cohorteIdsSelectionnees.delete(id);
+      this.promotionIdsSelectionnees.delete(id);
     }
   }
 
@@ -71,7 +71,8 @@ export class CreerCours implements OnInit {
     this.errorMessage = '';
     const payload = {
       ...this.creerCoursForm.getRawValue(),
-      cohorteIds: Array.from(this.cohorteIdsSelectionnees)
+      // Clé de la requête inchangée (contrat avec CoursCreateRequest côté serveur).
+      cohorteIds: Array.from(this.promotionIdsSelectionnees)
     };
     this.coursService.create(payload).subscribe({
       next: (coursCree) => {

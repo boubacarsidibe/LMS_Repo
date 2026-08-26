@@ -151,7 +151,7 @@ export class PedagogieRelevesComponent implements OnInit {
       return this.etudiants;
     }
     const libelle = this.promotions.find((p) => p.id === this.promotionCiblee)?.libelle;
-    return this.etudiants.filter((e) => e.cohorte === libelle);
+    return this.etudiants.filter((e) => e.promotion === libelle);
   }
 
   get saisieValide(): boolean {

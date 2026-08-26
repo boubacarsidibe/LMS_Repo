@@ -3,7 +3,7 @@
   <!-- En-tête -->
   <div class="px-margin-desktop py-stack-lg flex flex-col gap-base">
     <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Suivi des Étudiants &amp; Progression</h1>
-    <p class="text-body-md text-on-surface-variant max-w-2xl">Analysez la performance de vos cohortes et identifiez les besoins d'accompagnement personnalisés.</p>
+    <p class="text-body-md text-on-surface-variant max-w-2xl">Analysez la performance de vos promotions et identifiez les besoins d'accompagnement personnalisés.</p>
   </div>
 
   <!-- KPI -->
@@ -62,9 +62,9 @@
             <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline">search</span>
             <input [(ngModel)]="recherche" class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm focus:outline-none focus:border-secondary transition-all" placeholder="Rechercher un étudiant..." type="text">
           </div>
-          <select [(ngModel)]="cohorteSelectionnee" class="px-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm text-on-surface-variant focus:outline-none cursor-pointer">
-            <option value="">Toutes les cohortes</option>
-            <option *ngFor="let c of cohortes" [value]="c.libelle">{{ c.libelle }}{{ c.annee ? ' (' + c.annee + ')' : '' }}</option>
+          <select [(ngModel)]="promotionSelectionnee" class="px-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm text-on-surface-variant focus:outline-none cursor-pointer">
+            <option value="">Toutes les promotions</option>
+            <option *ngFor="let p of promotions" [value]="p.libelle">{{ p.libelle }}{{ p.annee ? ' (' + p.annee + ')' : '' }}</option>
           </select>
           <select disabled title="Bientôt disponible" class="px-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm text-on-surface-variant/50 cursor-not-allowed">
             <option>Tous les niveaux (Bientôt disponible)</option>
@@ -81,7 +81,7 @@
           <thead>
             <tr class="bg-surface-container-low/50">
               <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Étudiant</th>
-              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Cohorte</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Promotion</th>
               <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Dernière connexion</th>
               <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Progression</th>
               <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Note Moyenne</th>
@@ -102,7 +102,7 @@
                   </div>
                 </div>
               </td>
-              <td class="px-6 py-4 text-body-sm text-on-surface-variant">{{ e.cohorte }}</td>
+              <td class="px-6 py-4 text-body-sm text-on-surface-variant">{{ e.promotion }}</td>
               <td class="px-6 py-4 text-body-sm text-on-surface-variant">{{ e.derniereConnexion }}</td>
               <td class="px-6 py-4">
                 <div class="flex flex-col gap-1 w-32">
