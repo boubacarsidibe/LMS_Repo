@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
-import { PromotionDetail } from '../../models/scolarite.models';
+import { Camarade, PromotionDetail } from '../../models/scolarite.models';
 import { ScolariteService } from '../../services/scolarite.service';
 
 /**
@@ -12,14 +13,23 @@ import { ScolariteService } from '../../services/scolarite.service';
 @Component({
   selector: 'app-ma-promotion',
   standalone: true,
-  imports: [CommonModule, UiSpinnerComponent, UiEmptyStateComponent],
+  imports: [CommonModule, RouterLink, UiSpinnerComponent, UiEmptyStateComponent],
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-4xl mx-auto">
-      <header>
-        <h1 class="font-display text-display text-on-surface leading-tight">Ma promotion</h1>
-        <p class="font-body-md text-body-md text-on-surface-variant mt-1">
-          Votre cursus et les informations archivées par l’INPG.
-        </p>
+      <header class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 class="font-display text-display text-on-surface leading-tight">Ma promotion</h1>
+          <p class="font-body-md text-body-md text-on-surface-variant mt-1">
+            Votre cursus et les informations archivées par l’INPG.
+          </p>
+        </div>
+        <a
+          *ngIf="!chargement && promotion"
+          [routerLink]="['/espace-etudiant/forum']"
+          class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:border-secondary hover:text-secondary transition-colors flex items-center gap-2"
+        >
+          <span class="material-symbols-outlined text-[18px]">forum</span>Forum de la promotion
+        </a>
       </header>
 
       <app-ui-spinner *ngIf="chargement" message="Chargement de votre promotion…"></app-ui-spinner>
@@ -122,6 +132,35 @@ import { ScolariteService } from '../../services/scolarite.service';
             {{ promotion.activitesParascolaires }}
           </p>
         </section>
+
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+          <button
+            type="button"
+            (click)="camaradesOuvert = !camaradesOuvert; chargerCamaradesSiBesoin()"
+            class="w-full flex items-center justify-between p-stack-lg text-left"
+          >
+            <h2 class="font-headline-sm text-headline-sm text-on-surface">
+              Camarades de promotion
+              <span *ngIf="camarades.length > 0" class="text-on-surface-variant font-body-md text-body-md">({{ camarades.length }})</span>
+            </h2>
+            <span class="material-symbols-outlined text-on-surface-variant">{{ camaradesOuvert ? 'expand_less' : 'expand_more' }}</span>
+          </button>
+          <div *ngIf="camaradesOuvert" class="px-stack-lg pb-stack-lg">
+            <p *ngIf="chargementCamarades" class="font-body-sm text-body-sm text-on-surface-variant">Chargement…</p>
+            <ul *ngIf="!chargementCamarades && camarades.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <li
+                *ngFor="let c of camarades"
+                class="flex items-center justify-between gap-2 px-4 py-2 rounded-lg bg-surface-container-low"
+              >
+                <span class="font-body-sm text-body-sm text-on-surface">{{ c.nom }}</span>
+                <span class="font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ c.matricule || '—' }}</span>
+              </li>
+            </ul>
+            <p *ngIf="!chargementCamarades && camarades.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
+              Aucun autre étudiant dans cette promotion pour l’instant.
+            </p>
+          </div>
+        </section>
       </ng-container>
     </div>
   `,
@@ -131,6 +170,13 @@ export class MaPromotionPage implements OnInit {
   matricule = '';
   message = '';
   chargement = true;
+
+  // Divulgation progressive : le répertoire ne se charge qu'à l'ouverture,
+  // pour ne pas alourdir un écran déjà chargé d'informations.
+  camaradesOuvert = false;
+  camarades: Camarade[] = [];
+  chargementCamarades = false;
+  private camaradesCharges = false;
 
   constructor(private scolarite: ScolariteService) {}
 
@@ -144,6 +190,21 @@ export class MaPromotionPage implements OnInit {
         this.chargement = false;
       },
       error: () => (this.chargement = false),
+    });
+  }
+
+  chargerCamaradesSiBesoin(): void {
+    if (this.camaradesCharges || !this.camaradesOuvert) {
+      return;
+    }
+    this.camaradesCharges = true;
+    this.chargementCamarades = true;
+    this.scolarite.getCamarades().subscribe({
+      next: (camarades) => {
+        this.camarades = camarades || [];
+        this.chargementCamarades = false;
+      },
+      error: () => (this.chargementCamarades = false),
     });
   }
 }

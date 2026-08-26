@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
+  Camarade,
   CoursEtudiant,
   MaPromotion,
   SeanceEtudiant,
@@ -28,6 +29,11 @@ export class ScolariteService {
   /** Promotion de l'étudiant et son matricule. */
   getMaPromotion(): Observable<MaPromotion> {
     return this.http.get<MaPromotion>(`${this.api}/ma-promotion`);
+  }
+
+  /** Camarades de la promotion de l'étudiant — nom et matricule seulement. */
+  getCamarades(): Observable<Camarade[]> {
+    return this.http.get<Camarade[]>(`${this.api}/ma-promotion/etudiants`);
   }
 
   /** Derniers supports ouverts, pour reprendre son travail. */

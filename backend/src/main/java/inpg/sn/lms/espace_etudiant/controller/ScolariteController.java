@@ -20,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import inpg.sn.lms.auth.entity.Etudiant;
 import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
+import inpg.sn.lms.espace_etudiant.dto.CamaradeDto;
 import inpg.sn.lms.espace_etudiant.dto.CoursEtudiantDto;
 import inpg.sn.lms.espace_etudiant.dto.NoteModuleDto;
 import inpg.sn.lms.espace_etudiant.dto.ReleveNotesDto;
@@ -232,6 +233,32 @@ public class ScolariteController {
                 "promotion", toPromotionDto(promotion)));
     }
 
+    /**
+     * Camarades de la promotion de l'étudiant connecté — nom et matricule
+     * seulement, jamais l'email ni le téléphone (principe de minimisation déjà
+     * appliqué à la vérification de certificat).
+     *
+     * <p>La promotion n'est jamais reçue du client : elle est toujours dérivée de
+     * {@code Etudiant.getPromotion()} côté serveur, comme {@link #maPromotion} —
+     * sans quoi un identifiant glissé à la main révélerait la composition de
+     * n'importe quelle promotion.
+     */
+    @GetMapping("/ma-promotion/etudiants")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> camaradesDePromotion(Authentication authentication) {
+        Etudiant etudiant = utilisateurCourant.etudiant(authentication);
+        if (etudiant == null) {
+            return profilIntrouvable();
+        }
+        Promotion promotion = etudiant.getPromotion();
+        if (promotion == null) {
+            return ResponseEntity.ok(List.of());
+        }
+        return ResponseEntity.ok(etudiantRepository.findByPromotionId(promotion.getId()).stream()
+                .map(this::toCamaradeDto)
+                .toList());
+    }
+
     /** Les cours autorisés de l'étudiant, avec sa progression sur chacun. */
     @GetMapping("/mes-cours")
     @Transactional(readOnly = true)
@@ -400,6 +427,12 @@ public class ScolariteController {
                 seance.getLieuOuLien(),
                 cours == null ? null : cours.getId(),
                 cours == null ? null : cours.getTitre());
+    }
+
+    private CamaradeDto toCamaradeDto(Etudiant camarade) {
+        String nom = ((camarade.getPrenom() == null ? "" : camarade.getPrenom()) + " "
+                + (camarade.getNom() == null ? "" : camarade.getNom())).trim();
+        return new CamaradeDto(camarade.getId(), nom, camarade.getMatricule());
     }
 
     private String nomFormateur(Formateur formateur) {
