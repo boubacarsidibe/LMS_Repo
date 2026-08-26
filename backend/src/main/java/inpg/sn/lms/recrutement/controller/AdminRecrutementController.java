@@ -518,6 +518,23 @@ public class AdminRecrutementController {
     // ===================== PAIEMENT =====================
 
     /**
+     * Enregistre un paiement effectué hors ligne (espèces au guichet, virement) et le
+     * valide directement.
+     *
+     * <p>C'est le seul moyen de confirmer le règlement d'un candidat qui n'a jamais
+     * initié de tentative en ligne (aucun {@code Paiement} n'existe encore) : le
+     * couple {@link #simulerSuccesPaiement}/{@link #marquerPaiementEnEchec} n'agit
+     * que sur une tentative déjà créée. Fonctionne aussi pour solder une tentative
+     * {@code EN_ATTENTE} ou {@code ECHEC} existante sans repasser par le candidat.
+     */
+    @PostMapping("/candidatures/{candidatureId}/paiement/enregistrer")
+    public ResponseEntity<PaiementResponse> enregistrerPaiementHorsLigne(@PathVariable Long candidatureId,
+            @RequestBody(required = false) Map<String, String> corps) {
+        String methodePaiement = corps != null ? corps.get("methodePaiement") : null;
+        return ResponseEntity.ok(paiementService.enregistrerPaiementHorsLigne(candidatureId, methodePaiement));
+    }
+
+    /**
      * Confirme manuellement l'encaissement des frais de dossier.
      *
      * <p>Répond à l'exigence du TDR « à l'INPG de confirmer le statut payé le cas

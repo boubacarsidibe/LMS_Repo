@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MediaProtegeService } from '../../../espace-etudiants/services/media-protege.service';
 import { PedagogieService, Qualite, SyntheseEnqueteSuivi } from '../../services/pedagogie.service';
 
@@ -16,7 +17,7 @@ import { PedagogieService, Qualite, SyntheseEnqueteSuivi } from '../../services/
 @Component({
   selector: 'app-pedagogie-qualite',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './pedagogie-qualite.component.html',
 })
 export class PedagogieQualiteComponent implements OnInit {

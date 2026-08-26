@@ -43,16 +43,28 @@
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut du dossier</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Paiement</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-outline-variant">
-        <tr *ngFor="let c of candidaturesImpayees" class="hover:bg-surface-container-low transition-colors">
+        <tr *ngFor="let c of candidaturesImpayees" [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ dossier: c.numeroDossier }" class="cursor-pointer hover:bg-surface-container-low transition-colors">
           <td class="p-4">
             <div class="font-label-md text-label-md text-primary">{{ c.candidatPrenom }} {{ c.candidatNom }}</div>
             <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ c.numeroDossier }}</div>
           </td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.statut }}</td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</td>
+          <td class="p-4 text-right" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              (click)="confirmerDossier(c)"
+              [disabled]="idEnCours === c.id"
+              title="Confirmer un règlement effectué hors ligne (espèces, virement)"
+              class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {{ idEnCours === c.id ? 'Confirmation…' : 'Confirmer le paiement' }}
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -84,10 +96,11 @@
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Montant</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Action</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-outline-variant">
-        <tr *ngFor="let p of paiementsFiltres" class="hover:bg-surface-container-low transition-colors">
+        <tr *ngFor="let p of paiementsFiltres" [routerLink]="p.numeroDossier ? ['/responsable-admission/candidatures'] : null" [queryParams]="p.numeroDossier ? { dossier: p.numeroDossier } : null" [class.cursor-pointer]="p.numeroDossier" class="hover:bg-surface-container-low transition-colors">
           <td class="p-4">
             <div class="font-label-md text-label-md text-primary">{{ p.candidatPrenom }} {{ p.candidatNom }}</div>
             <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ p.numeroDossier }}</div>
@@ -100,6 +113,19 @@
                   [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-surface-container text-on-surface-variant'">
               {{ p.statut === 'SUCCES' ? 'Réussi' : 'En attente' }}
             </span>
+          </td>
+          <td class="p-4" (click)="$event.stopPropagation()">
+            <div class="flex items-center gap-2" *ngIf="p.statut === 'EN_ATTENTE'; else aucuneAction">
+              <button type="button" (click)="valider(p)" [disabled]="idEnCours === p.id"
+                      class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm disabled:opacity-50">
+                Valider
+              </button>
+              <button type="button" (click)="rejeter(p)" [disabled]="idEnCours === p.id"
+                      class="px-3 py-1.5 rounded-lg border border-outline-variant text-error font-label-sm text-label-sm disabled:opacity-50">
+                Rejeter
+              </button>
+            </div>
+            <ng-template #aucuneAction><span class="text-on-surface-variant text-body-sm font-body-sm">—</span></ng-template>
           </td>
         </tr>
       </tbody>

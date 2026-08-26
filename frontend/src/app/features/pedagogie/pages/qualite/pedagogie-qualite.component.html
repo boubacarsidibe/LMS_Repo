@@ -75,8 +75,8 @@
         rubrique « Mes évaluations ».
       </p>
 
-      <article *ngFor="let l of qualite.parCours"
-               class="bg-surface-container-lowest rounded-xl border shadow-sm p-stack-lg"
+      <article *ngFor="let l of qualite.parCours" [routerLink]="['/pedagogie/cours', l.coursId]"
+               class="bg-surface-container-lowest rounded-xl border shadow-sm p-stack-lg cursor-pointer hover:border-secondary transition-colors"
                [class.border-error]="aSurveiller(l.moyenne)"
                [class.border-outline-variant]="!aSurveiller(l.moyenne)">
         <div class="flex items-start justify-between gap-4 flex-wrap">

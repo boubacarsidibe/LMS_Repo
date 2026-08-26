@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { CandidatureResponse, PaiementResponse, RecrutementService, ResultatRelance } from '../../../../core/recrutement/services/recrutement.service';
 
@@ -10,7 +11,7 @@ const STATUTS_DOSSIER_VALIDE = ['EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 
 @Component({
   selector: 'app-responsable-admission-paiements',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './responsable-admission-paiements.component.html',
 })
 export class ResponsableAdmissionPaiementsComponent implements OnInit {
@@ -20,6 +21,7 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
   errorMessage = '';
   recherche = '';
   filtreStatut: 'TOUS' | 'EN_ATTENTE' | 'SUCCES' = 'TOUS';
+  idEnCours: number | null = null;
 
   relanceEnCours = false;
   relanceMessage = '';
@@ -104,5 +106,59 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
 
   get nbEnAttente(): number {
     return this.paiements.filter((p) => p.statut === 'EN_ATTENTE').length;
+  }
+
+  /**
+   * Confirme le règlement d'un dossier impayé, quel que soit son état actuel (jamais
+   * initié, tentative en attente ou en échec) — c'est la seule action qui couvre les
+   * trois cas, le candidat ayant réglé hors ligne (espèces, virement).
+   */
+  confirmerDossier(c: CandidatureResponse): void {
+    if (this.idEnCours) return;
+    if (!confirm(`Confirmer le paiement des frais de dossier de ${c.candidatPrenom} ${c.candidatNom} (${c.numeroDossier}) ?`)) return;
+    this.idEnCours = c.id;
+    this.errorMessage = '';
+    this.recrutementService.enregistrerPaiementHorsLigne(c.id).subscribe({
+      next: () => {
+        this.idEnCours = null;
+        this.charger();
+      },
+      error: (e) => {
+        this.idEnCours = null;
+        this.errorMessage = e?.error?.message || 'Échec de la confirmation du paiement.';
+      },
+    });
+  }
+
+  valider(p: PaiementResponse): void {
+    if (this.idEnCours) return;
+    this.idEnCours = p.id;
+    this.recrutementService.simulerSuccesPaiement(p.id).subscribe({
+      next: (maj) => {
+        p.statut = maj.statut;
+        p.datePaiement = maj.datePaiement;
+        this.idEnCours = null;
+      },
+      error: () => {
+        this.idEnCours = null;
+        this.errorMessage = 'Échec de la validation du paiement.';
+      },
+    });
+  }
+
+  rejeter(p: PaiementResponse): void {
+    if (this.idEnCours) return;
+    const motif = prompt('Motif du rejet (optionnel) :') || undefined;
+    this.idEnCours = p.id;
+    this.recrutementService.marquerPaiementEnEchec(p.id, motif).subscribe({
+      next: (maj) => {
+        p.statut = maj.statut;
+        this.idEnCours = null;
+      },
+      error: () => {
+        this.idEnCours = null;
+        this.errorMessage = 'Échec du rejet du paiement.';
+      },
+    });
   }
 }

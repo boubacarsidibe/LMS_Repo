@@ -9,6 +9,7 @@ import {
 } from '../../../accreditation/models/accreditation.models';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
+import { MediaProtegeService } from '../../../espace-etudiants/services/media-protege.service';
 import { EvaluateurAccreditationService } from '../../services/evaluateur-accreditation.service';
 
 /**
@@ -113,7 +114,15 @@ import { EvaluateurAccreditationService } from '../../services/evaluateur-accred
           <ul class="space-y-2">
             <li *ngFor="let p of selection.pieces" class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface">
               <span class="material-symbols-outlined text-[18px] text-on-surface-variant">draft</span>
-              {{ libellesType[p.typeDocument] }} — {{ p.nomFichierOriginal }}
+              <span class="flex-1 min-w-0 truncate">{{ libellesType[p.typeDocument] }} — {{ p.nomFichierOriginal }}</span>
+              <button
+                type="button"
+                (click)="consulterPiece(p.id)"
+                title="Consulter la pièce"
+                class="shrink-0 text-outline hover:text-secondary"
+              >
+                <span class="material-symbols-outlined text-[18px]">visibility</span>
+              </button>
             </li>
           </ul>
           <p *ngIf="selection.pieces.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
@@ -174,6 +183,7 @@ import { EvaluateurAccreditationService } from '../../services/evaluateur-accred
 })
 export class EvaluateurDemandesComponent implements OnInit {
   private evaluateurService = inject(EvaluateurAccreditationService);
+  private mediaProtege = inject(MediaProtegeService);
 
   demandes: DemandeAccreditation[] = [];
   /** Copie non filtrée, uniquement pour les indicateurs : `demandes` varie avec `filtreStatut`. */
@@ -216,6 +226,13 @@ export class EvaluateurDemandesComponent implements OnInit {
   /** Une décision (accréditer/rejeter) change le statut d'une demande : la resynchroniser côté indicateurs aussi. */
   private synchroniserCompteurs(demande: DemandeAccreditation): void {
     this.toutesDemandes = this.toutesDemandes.map((d) => (d.id === demande.id ? demande : d));
+  }
+
+  consulterPiece(pieceId: number): void {
+    if (!this.selection) {
+      return;
+    }
+    this.mediaProtege.ouvrir(this.evaluateurService.urlFichierPiece(this.selection.id, pieceId));
   }
 
   selectionner(demande: DemandeAccreditation): void {

@@ -90,7 +90,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-outline-variant">
-            <tr *ngFor="let e of etudiantsFiltres" class="hover:bg-surface-container-low hover:translate-x-1 transition-all group">
+            <tr *ngFor="let e of etudiantsFiltres" (click)="voirProfil(e.id)" class="cursor-pointer hover:bg-surface-container-low hover:translate-x-1 transition-all group">
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs" [ngClass]="e.couleurAvatar">
@@ -118,7 +118,7 @@
               <td class="px-6 py-4">
                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-tight" [ngClass]="classeStatut(e.statut)">{{ e.statut }}</span>
               </td>
-              <td class="px-6 py-4 text-right">
+              <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
                 <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button (click)="voirProfil(e.id)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Voir le profil">
                     <span class="material-symbols-outlined text-[20px]">visibility</span>
