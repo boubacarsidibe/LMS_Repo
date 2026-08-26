@@ -769,16 +769,30 @@ au guichet.
 le `Paiement` s'il n'en existe encore aucun, ou solde directement une tentative
 `EN_ATTENTE`/`ECHEC` existante, sans passer par `Paiement.effectuerPaiement()` (qui
 n'autorise que `EN_ATTENTE → SUCCES` : ici c'est un constat humain, pas la confirmation
-d'une tentative en ligne). Endpoint ajouté au chemin déjà attendu par le frontend —
-aucun changement du côté client au-delà du câblage UI. Boutons ajoutés sur
-`responsable-admission-paiements.component` : « Confirmer le paiement » sur chaque
-dossier impayé (couvre les trois cas : jamais initié, en attente, en échec), et
-« Confirmer »/« Échec » sur les tentatives `EN_ATTENTE` de l'historique (ces deux
-derniers utilisaient déjà des endpoints backend fonctionnels, simplement jamais
-affichés à l'écran).
+d'une tentative en ligne). Endpoint ajouté au chemin déjà attendu par le frontend.
+Bouton « Confirmer le paiement » ajouté sur `responsable-admission-paiements.component`,
+sur chaque dossier de la table « Dossiers validés en attente de paiement » — couvre les
+trois cas (jamais initié, en attente, en échec) avec une seule action.
 
 Rien de similaire n'a été retrouvé ailleurs par grep (`enregistrerPaiementHorsLigne`
 était le seul appel de service frontend sans méthode de contrôleur correspondante),
 mais aucun audit systématique de toutes les paires service-frontend / endpoint-backend
 n'a été fait à cette occasion — un futur passage pourrait le faire si un doute
 similaire se présente ailleurs.
+
+**Correctif concurrent découvert au moment d'ouvrir la PR** : pendant cette
+investigation, un commit humain direct sur `develop` (`8e862b7`, `63ea0be`) a
+câblé indépendamment la partie « valider/rejeter une tentative `EN_ATTENTE` »
+de ce même signalement (boutons « Valider »/« Rejeter », méthodes
+`valider()`/`rejeter()`, endpoints `simuler-succes`/`echec` déjà fonctionnels)
+— avec une protection utile non anticipée ici : l'email de confirmation au
+candidat, envoyé dans une méthode `@Transactional`, faisait échouer **et
+annuler** la confirmation elle-même en cas de panne SMTP (Brevo injoignable
+depuis Railway, constatée en production). Les deux travaux touchaient le même
+fichier en parallèle ; fusion de `develop` dans la branche de ce correctif,
+conflit résolu en gardant le câblage humain déjà en production pour
+`EN_ATTENTE` (`idEnCours`, `valider`/`rejeter`) et en n'ajoutant que la pièce
+manquante (`enregistrerPaiementHorsLigne`, bouton « Confirmer le paiement »
+sur les dossiers sans aucune tentative). La protection SMTP a été reportée
+dans `notifierCandidatPaiementConfirme()` (méthode partagée extraite pendant
+ce correctif), pour couvrir aussi le nouveau chemin hors ligne.
