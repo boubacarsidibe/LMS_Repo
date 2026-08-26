@@ -44,6 +44,7 @@ import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.EtudiantImportService;
+import inpg.sn.lms.espace_etudiant.service.EtudiantSuppressionService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
 import inpg.sn.lms.espace_etudiant.service.RapportQualitePdfService;
 import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
@@ -72,6 +73,8 @@ class PedagogieScolariteEnquetesTest {
     private MatriculeService matriculeService;
     @Mock
     private EtudiantImportService etudiantImportService;
+    @Mock
+    private EtudiantSuppressionService etudiantSuppressionService;
     @Mock
     private CertificatService certificatService;
     @Mock
@@ -110,7 +113,8 @@ class PedagogieScolariteEnquetesTest {
     @BeforeEach
     void setUp() {
         controller = new PedagogieScolariteController(promotionRepository, formationRepository, etudiantRepository,
-                etudiantService, matriculeService, etudiantImportService, certificatService, coursRepository,
+                etudiantService, matriculeService, etudiantImportService, etudiantSuppressionService,
+                certificatService, coursRepository,
                 forumSujetRepository, forumMessageRepository, forumMentionRepository, notificationService,
                 retourRepository, releveNotesService, releveDelivranceService, candidatRepository,
                 alumniProfilRepository, alumniProfilService, enqueteSuiviRepository, reponseEnqueteSuiviRepository,

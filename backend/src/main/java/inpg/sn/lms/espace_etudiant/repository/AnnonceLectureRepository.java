@@ -20,4 +20,6 @@ public interface AnnonceLectureRepository extends JpaRepository<AnnonceLecture, 
      */
     @Query("SELECT l.annonce.id FROM AnnonceLecture l WHERE l.etudiant.id = :etudiantId")
     List<Long> findAnnonceIdsLues(@Param("etudiantId") Long etudiantId);
+
+    void deleteByEtudiantId(Long etudiantId);
 }

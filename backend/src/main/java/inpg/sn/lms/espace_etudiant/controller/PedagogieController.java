@@ -28,6 +28,7 @@ import inpg.sn.lms.espace_etudiant.dto.AffectationFormateursRequest;
 import inpg.sn.lms.espace_etudiant.dto.CoursCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.CoursDto;
 import inpg.sn.lms.espace_etudiant.dto.FormateurBrefDto;
+import inpg.sn.lms.espace_etudiant.dto.FormateurDetailDto;
 import inpg.sn.lms.espace_etudiant.dto.FormationDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportDetailDto;
@@ -42,6 +43,7 @@ import inpg.sn.lms.espace_etudiant.repository.PresenceRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.repository.SeanceRepository;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
+import inpg.sn.lms.espace_etudiant.service.FormateurSuppressionService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
@@ -74,6 +76,7 @@ public class PedagogieController {
     private final SupportService supportService;
     private final FormateurRepository formateurRepository;
     private final FormateurService formateurService;
+    private final FormateurSuppressionService formateurSuppressionService;
     private final NotificationService notificationService;
     private final PresenceRepository presenceRepository;
     private final SeanceRepository seanceRepository;
@@ -90,6 +93,7 @@ public class PedagogieController {
             SupportService supportService,
             FormateurRepository formateurRepository,
             FormateurService formateurService,
+            FormateurSuppressionService formateurSuppressionService,
             NotificationService notificationService,
             PresenceRepository presenceRepository,
             SeanceRepository seanceRepository,
@@ -104,6 +108,7 @@ public class PedagogieController {
         this.supportService = supportService;
         this.formateurRepository = formateurRepository;
         this.formateurService = formateurService;
+        this.formateurSuppressionService = formateurSuppressionService;
         this.notificationService = notificationService;
         this.presenceRepository = presenceRepository;
         this.seanceRepository = seanceRepository;
@@ -137,6 +142,37 @@ public class PedagogieController {
                 .map(PedagogieController::toFormateurDto)
                 .sorted(Comparator.comparing(FormateurBrefDto::nomComplet))
                 .toList());
+    }
+
+    /**
+     * Fiche complète d'un formateur : coordonnées et cours enseignés, à la
+     * différence de {@link #listFormateurs} qui n'expose que l'identité.
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/formateurs/{id}")
+    public ResponseEntity<?> detailFormateur(@PathVariable Long id) {
+        return formateurRepository.findById(id)
+                .<ResponseEntity<?>>map(f -> ResponseEntity.ok(toFormateurDetailDto(f)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Supprime un compte formateur. Refusée s'il est seul titulaire d'un cours, s'il
+     * a un dossier de candidature ou un historique alumni, ou s'il a publié dans le
+     * forum — voir {@link FormateurSuppressionService}.
+     */
+    @Transactional
+    @DeleteMapping("/formateurs/{id}")
+    public ResponseEntity<?> supprimerFormateur(@PathVariable Long id) {
+        if (!formateurRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        try {
+            formateurSuppressionService.supprimer(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException erreur) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", erreur.getMessage()));
+        }
     }
 
     /**
@@ -344,6 +380,20 @@ public class PedagogieController {
     private static FormateurBrefDto toFormateurDto(Formateur formateur) {
         return new FormateurBrefDto(formateur.getId(),
                 (formateur.getPrenom() + " " + formateur.getNom()).trim());
+    }
+
+    private FormateurDetailDto toFormateurDetailDto(Formateur formateur) {
+        return new FormateurDetailDto(
+                formateur.getId(),
+                formateur.getNom(),
+                formateur.getPrenom(),
+                formateur.getUser() == null ? null : formateur.getUser().getEmail(),
+                formateur.getTelephone(),
+                formateur.getUser() == null ? null : formateur.getUser().getUsername(),
+                coursService.getAll().stream()
+                        .filter(c -> c.getFormateurs().stream().anyMatch(f -> f.getId().equals(formateur.getId())))
+                        .map(Cours::getTitre)
+                        .toList());
     }
 
     private String validerCours(CoursCreateRequest request) {

@@ -27,6 +27,7 @@ import inpg.sn.lms.espace_etudiant.repository.PresenceRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.repository.SeanceRepository;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
+import inpg.sn.lms.espace_etudiant.service.FormateurSuppressionService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
@@ -54,6 +55,8 @@ class PedagogieFormateursTest {
     @Mock
     private FormateurService formateurService;
     @Mock
+    private FormateurSuppressionService formateurSuppressionService;
+    @Mock
     private NotificationService notificationService;
     @Mock
     private PresenceRepository presenceRepository;
@@ -75,7 +78,8 @@ class PedagogieFormateursTest {
     @BeforeEach
     void setUp() {
         controller = new PedagogieController(formationService, promotionService, coursService, supportService,
-                formateurRepository, formateurService, notificationService, presenceRepository, seanceRepository,
+                formateurRepository, formateurService, formateurSuppressionService, notificationService,
+                presenceRepository, seanceRepository,
                 forumMentionRepository, forumMessageRepository, forumSujetRepository, noteModuleRepository,
                 retourEvaluationRepository);
     }
