@@ -104,4 +104,14 @@ public class NotificationService {
         envoyerNotification(EnumTypeNotification.DOCUMENT_NON_CONFORME, emailCandidat,
                 Map.of("numeroDossier", numeroDossier, "typeDocument", typeDocument));
     }
+
+    public void notifierRappelDossierIncomplet(String emailCandidat, String numeroDossier, String piecesManquantes) {
+        envoyerNotification(EnumTypeNotification.RAPPEL_DOSSIER_INCOMPLET, emailCandidat,
+                Map.of("numeroDossier", numeroDossier, "piecesManquantes", piecesManquantes));
+    }
+
+    public void notifierRappelPaiement(String emailCandidat, String numeroDossier) {
+        envoyerNotification(EnumTypeNotification.RAPPEL_PAIEMENT, emailCandidat,
+                Map.of("numeroDossier", numeroDossier));
+    }
 }

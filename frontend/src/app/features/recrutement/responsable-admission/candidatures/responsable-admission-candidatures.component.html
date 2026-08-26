@@ -5,6 +5,10 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-1">Gérez et évaluez les candidatures soumises, toutes sessions confondues.</p>
   </div>
   <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+    <button type="button" [disabled]="relanceEnCours || nombreDossiersIncomplets === 0" (click)="relancerDossiersIncomplets()" title="Envoie un email et une notification aux candidats dont le dossier est incomplet" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md disabled:opacity-60">
+      <span class="material-symbols-outlined text-sm">mark_email_unread</span>
+      {{ relanceEnCours ? 'Relance en cours…' : 'Relancer les dossiers incomplets (' + nombreDossiersIncomplets + ')' }}
+    </button>
     <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface disabled:opacity-60">
       <span class="material-symbols-outlined text-sm">download</span> {{ exporting ? 'Export en cours…' : 'Exporter la liste' }}
     </button>
@@ -12,6 +16,10 @@
       <span class="material-symbols-outlined text-sm">folder_zip</span> {{ exportingDocuments ? 'Archive en cours…' : 'Exporter les documents' }}
     </button>
   </div>
+</div>
+
+<div *ngIf="relanceMessage" class="mb-stack-md p-4 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm text-body-sm">
+  {{ relanceMessage }}
 </div>
 
 <app-export-columns-modal

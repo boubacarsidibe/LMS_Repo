@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
-import { CandidatureResponse, PieceJustificativeResponse, RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
+import { CandidatureResponse, PieceJustificativeResponse, RecrutementService, ResultatRelance } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 
@@ -29,6 +29,8 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   exporting = false;
   exportingDocuments = false;
   exportModalOpen = false;
+  relanceEnCours = false;
+  relanceMessage = '';
 
   readonly colonnesExport: ColonneExport[] = [
     { key: 'numeroDossier', label: 'N° Dossier' },
@@ -104,6 +106,15 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   compter(statut: StatutFiltre): number {
     if (statut === 'TOUS') return this.candidatures.length;
     return this.candidatures.filter((c) => c.statut === statut).length;
+  }
+
+  /** Même définition qu'ApplicationController#isDossierIncomplet côté serveur. */
+  private dossierIncomplet(c: CandidatureResponse): boolean {
+    return c.piecesJustificatives.length === 0 || c.piecesJustificatives.some((p) => !p.estConforme);
+  }
+
+  get nombreDossiersIncomplets(): number {
+    return this.candidatures.filter((c) => this.dossierIncomplet(c)).length;
   }
 
   libelleStatut(statut: string): string {
@@ -239,6 +250,24 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       error: () => {
         this.exporting = false;
         alert("Échec de l'export Excel.");
+      },
+    });
+  }
+
+  relancerDossiersIncomplets(): void {
+    if (this.nombreDossiersIncomplets === 0) return;
+    this.relanceEnCours = true;
+    this.relanceMessage = '';
+    this.recrutementService.sendReminder().subscribe({
+      next: (resultat: ResultatRelance) => {
+        this.relanceEnCours = false;
+        this.relanceMessage = resultat.echecs.length === 0
+          ? `${resultat.envoyes} relance(s) envoyée(s) avec succès.`
+          : `${resultat.envoyes} relance(s) envoyée(s), ${resultat.echecs.length} échec(s) : ${resultat.echecs.join(', ')}.`;
+      },
+      error: () => {
+        this.relanceEnCours = false;
+        this.relanceMessage = 'Échec de la relance des dossiers incomplets.';
       },
     });
   }

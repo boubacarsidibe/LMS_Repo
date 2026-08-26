@@ -106,6 +106,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/recrutement/candidat/**").authenticated()
                 // Admin : gestion recrutement
                 .requestMatchers("/api/admin/recrutement/**").hasRole("RESPONSABLE_ADMISSION")
+                // ApplicationController (vue candidatures/relances) ne portait que la protection
+                // de méthode @PreAuthorize, sans règle d'URL de secours — contrairement à son
+                // voisin /api/admin/recrutement/** ci-dessus. Alignée sur le même rôle.
+                .requestMatchers("/api/applications/**").hasRole("RESPONSABLE_ADMISSION")
                 // Tout utilisateur connecté peut soumettre une demande d'accréditation : le
                 // rôle ROLE_EVALUATEUR_ACCREDITATION n'a rien à voir avec ce chemin (c'est le
                 // rôle de qui évalue, pas de qui dépose) — même patron que candidat ci-dessus,
