@@ -2,6 +2,7 @@ package inpg.sn.lms.accreditation.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,11 +20,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
+import inpg.sn.lms.accreditation.dto.AvisAccreditationRequest;
 import inpg.sn.lms.accreditation.dto.CritereAccreditationRequest;
 import inpg.sn.lms.accreditation.dto.DecisionAccreditationRequest;
+import inpg.sn.lms.accreditation.entity.AvisAccreditation;
 import inpg.sn.lms.accreditation.entity.CritereAccreditation;
 import inpg.sn.lms.accreditation.entity.DemandeAccreditation;
+import inpg.sn.lms.accreditation.enums.EnumAvisAccreditation;
 import inpg.sn.lms.accreditation.enums.EnumStatutDemandeAccreditation;
+import inpg.sn.lms.accreditation.repository.AvisAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.CritereAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.DemandeAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.PieceAccreditationRepository;
@@ -50,6 +55,8 @@ class EvaluateurAccreditationControllerTest {
     @Mock
     private CritereAccreditationRepository critereRepository;
     @Mock
+    private AvisAccreditationRepository avisRepository;
+    @Mock
     private UtilisateurCourantService utilisateurCourant;
     @Mock
     private PieceAccreditationStorageService storage;
@@ -66,7 +73,7 @@ class EvaluateurAccreditationControllerTest {
     @BeforeEach
     void setUp() {
         controller = new EvaluateurAccreditationController(demandeRepository, pieceRepository, critereRepository,
-                utilisateurCourant, storage, notificationService);
+                avisRepository, utilisateurCourant, storage, notificationService);
         evaluateur = new User();
         evaluateur.setId(1L);
         ecoleUser = new User();
@@ -111,6 +118,8 @@ class EvaluateurAccreditationControllerTest {
         when(utilisateurCourant.utilisateur(authentication)).thenReturn(evaluateur);
         when(demandeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(pieceRepository.findByDemandeId(5L)).thenReturn(List.of());
+        when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L))
+                .thenReturn(List.of(new AvisAccreditation(demande, evaluateur, EnumAvisAccreditation.DEFAVORABLE, "Trop juste")));
 
         ResponseEntity<?> reponse = controller.rejeter(5L, new DecisionAccreditationRequest("Dossier incomplet"),
                 authentication);
@@ -119,6 +128,23 @@ class EvaluateurAccreditationControllerTest {
         assertThat(demande.getStatut()).isEqualTo(EnumStatutDemandeAccreditation.REJETE);
         assertThat(demande.getMotifRejet()).isEqualTo("Dossier incomplet");
         verify(notificationService).notifierRejet("ecole@example.sn", "École X", "Dossier incomplet");
+    }
+
+    @Test
+    @DisplayName("Rejet sans aucun avis déposé : 400, la demande n'est pas modifiée")
+    void rejeter_sans_avis_est_refuse() {
+        DemandeAccreditation demande = new DemandeAccreditation(ecole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+        when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L)).thenReturn(List.of());
+
+        ResponseEntity<?> reponse = controller.rejeter(5L, new DecisionAccreditationRequest("Dossier incomplet"),
+                authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(demandeRepository, never()).save(any());
+        verify(notificationService, never()).notifierRejet(any(), any(), any());
     }
 
     @Test
@@ -145,12 +171,90 @@ class EvaluateurAccreditationControllerTest {
         when(utilisateurCourant.utilisateur(authentication)).thenReturn(evaluateur);
         when(demandeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(pieceRepository.findByDemandeId(5L)).thenReturn(List.of());
+        when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L))
+                .thenReturn(List.of(new AvisAccreditation(demande, evaluateur, EnumAvisAccreditation.FAVORABLE, null)));
 
         ResponseEntity<?> reponse = controller.accrediter(5L, null, authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(demande.getStatut()).isEqualTo(EnumStatutDemandeAccreditation.ACCREDITE);
         verify(notificationService).notifierAccreditation("ecole@example.sn", "École X");
+    }
+
+    @Test
+    @DisplayName("Accréditation sans aucun avis déposé : 400, la demande n'est pas modifiée")
+    void accrediter_sans_avis_est_refuse() {
+        DemandeAccreditation demande = new DemandeAccreditation(ecole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+        when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L)).thenReturn(List.of());
+
+        ResponseEntity<?> reponse = controller.accrediter(5L, null, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(demandeRepository, never()).save(any());
+        verify(notificationService, never()).notifierAccreditation(any(), any());
+    }
+
+    @Test
+    @DisplayName("Dépôt d'un avis valide : créé, école non notifiée (avis ≠ décision)")
+    void deposer_avis_valide_est_enregistre() {
+        DemandeAccreditation demande = new DemandeAccreditation(ecole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+        when(utilisateurCourant.utilisateur(authentication)).thenReturn(evaluateur);
+        when(avisRepository.findByDemandeIdAndEvaluateurId(5L, 1L)).thenReturn(Optional.empty());
+        when(pieceRepository.findByDemandeId(5L)).thenReturn(List.of());
+        when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L)).thenReturn(List.of());
+
+        ResponseEntity<?> reponse = controller.deposerAvis(5L,
+                new AvisAccreditationRequest("FAVORABLE", "Dossier solide"), authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(avisRepository).save(any(AvisAccreditation.class));
+        verify(notificationService, never()).notifierAccreditation(any(), any());
+        verify(notificationService, never()).notifierRejet(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Dépôt d'un avis déjà déposé par le même évaluateur : mis à jour, pas dupliqué")
+    void deposer_avis_existant_est_mis_a_jour() {
+        DemandeAccreditation demande = new DemandeAccreditation(ecole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        AvisAccreditation existant = new AvisAccreditation(demande, evaluateur, EnumAvisAccreditation.DEFAVORABLE, "Initial");
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+        when(utilisateurCourant.utilisateur(authentication)).thenReturn(evaluateur);
+        when(utilisateurCourant.nomAffiche(any())).thenReturn("eval1");
+        when(avisRepository.findByDemandeIdAndEvaluateurId(5L, 1L)).thenReturn(Optional.of(existant));
+        when(pieceRepository.findByDemandeId(5L)).thenReturn(List.of());
+        when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L)).thenReturn(List.of(existant));
+
+        ResponseEntity<?> reponse = controller.deposerAvis(5L,
+                new AvisAccreditationRequest("FAVORABLE", "Changement d'avis"), authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(existant.getAvis()).isEqualTo(EnumAvisAccreditation.FAVORABLE);
+        assertThat(existant.getCommentaire()).isEqualTo("Changement d'avis");
+        verify(avisRepository).save(existant);
+        verify(avisRepository, never()).save(argThat(a -> a != existant));
+    }
+
+    @Test
+    @DisplayName("Dépôt d'un avis avec une valeur invalide : 400")
+    void deposer_avis_invalide_est_refuse() {
+        DemandeAccreditation demande = new DemandeAccreditation(ecole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+
+        ResponseEntity<?> reponse = controller.deposerAvis(5L,
+                new AvisAccreditationRequest("PEUT_ETRE", null), authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(avisRepository, never()).save(any());
     }
 
     @Test
