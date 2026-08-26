@@ -1017,3 +1017,86 @@ uniquement par `EvaluateurAccreditationController` ; le DTO partagé et l'écran
 restent strictement inchangés. Même principe côté frontend : `DemandeAccreditation`
 (modèle partagé) n'est pas modifié, un nouveau type `DemandeAccreditationEvaluateur`
 l'étend avec `avis`, utilisé uniquement par `EvaluateurAccreditationService`.
+
+## 2026-08-26 — Epic « Suivi des activités du personnel INPG » (TDR §I)
+
+### 41. Choix de l'epic : gap analysis complète du TDR pour la suite après l'accréditation
+
+Après la fusion de la PR #77 (accréditation multi-évaluateurs), une nouvelle analyse
+de gap a relu le TDR phrase par phrase et confronté chaque exigence encore
+susceptible d'être ouverte au code réel, plutôt que de repartir sur la liste dictée
+le 2026-08-25 sans la revérifier :
+
+- **« Message groupé »** (liste dictée) : déjà satisfait. `POST /api/pedagogie/rappels`
+  (`PedagogieScolariteController.envoyerRappel`, `RelanceCollectiveRequest`) envoie
+  un vrai courriel groupé, piloté depuis `suivi-etudiants.ts` (sélection multiple
+  filtrée par recherche/promotion). Aucune phrase du TDR ne réclame ce besoin
+  d'ailleurs — les seules mentions de « mail groupé » du texte concernent les
+  convocations aux tests/entretiens (§A), déjà construites séparément.
+- **« Écrans de paramétrage par rôle »** (liste dictée) : en grande partie déjà fait.
+  La page réellement routée (`responsable-admission-parametres.component`) fait un
+  vrai travail (mot de passe, indicateurs de tableau de bord via
+  `DashboardPreferencesService`). Le composant orphelin
+  `responsable-admission-settings.component` (onglets Général/Équipe/Modèles) n'est
+  référencé par aucune route (`app.routes.ts` vérifié) — un vestige déjà signalé au
+  point 22, pas une lacune fonctionnelle. Aucune exigence directe du TDR non plus.
+- **« Profil alumni enrichi »** (liste dictée) : réel mais un souhait de
+  l'utilisateur, pas une phrase du TDR — priorité plus basse que les écarts trouvés
+  ci-dessous, laissé de côté cette session.
+- **TDR §D (SIGB)** : reste bloqué (point 16 de ce journal, aucun système cible
+  nommé).
+- **TDR §I (Suivi des activités du personnel INPG)** et **§J (Gestion des
+  rendez-vous)** : confirmés totalement absents (aucune entité, contrôleur ou route
+  frontend — recherche exhaustive de `Departement`/`RendezVous`/toute notion de
+  calendrier individuel du personnel).
+
+**Choix** : §I retenue plutôt que §J — plus petite et plus autonome (ne suppose pas
+d'inventer un modèle de calendrier/disponibilités individuelles, contrairement à
+§J qui demande explicitement une connexion aux « calendriers individuels de chaque
+membre du personnel »). §J reste la suite naturelle si un besoin de calendrier se
+confirme, mais elle suppose d'abord une décision de modèle bien plus large.
+
+### 42. Aucun organigramme dans ce dépôt : la saisie porte sur un catalogue de départements, pas sur une hiérarchie
+
+Le TDR (§I) dit : « chaque département de l'INPG [peut] saisir ses activités
+mensuelles ». Rien nulle part dans ce dépôt ne représente une organisation en
+départements, ni un rattachement d'un compte à l'un d'eux — contrairement à
+`Promotion`/`Formation` (scolarité) ou `cours_formateur` (cloisonnement
+enseignant), aucun équivalent n'existe pour le personnel administratif.
+
+**Décision** : un catalogue simple `Departement` (code, libellé), géré par la
+pédagogie — qui gère déjà d'autres référentiels de ce type (formations,
+promotions) — plutôt que d'inventer un organigramme. La saisie d'une activité
+choisit un département dans ce catalogue ; elle n'est **pas** liée à un
+rattachement fixe du compte à un département, qu'aucune donnée existante ne
+permettrait de dériver sans le fabriquer. Si un besoin réel d'affectation
+personnel↔département se confirme (ex. pour restreindre qui peut saisir pour quel
+département), c'est une décision de modèle à instruire à part — elle toucherait
+aussi la question de qui administre cet organigramme.
+
+### 43. Rôles autorisés à saisir : les trois rôles internes déjà établis, pas un nouveau rôle « personnel »
+
+Le TDR ne précise pas quels comptes sont « le personnel de l'INPG ». Inventer un
+nouveau rôle générique (`ROLE_PERSONNEL`) aurait dupliqué les rôles existants sans
+rien apporter : ce dépôt distingue déjà clairement les rôles internes (formateur,
+responsable pédagogique, responsable admission) des rôles candidats/étudiants/
+externes (candidat, étudiant, alumni, école de formation, évaluateur accréditation,
+entreprise). Choix : les trois rôles internes déjà établis peuvent saisir des
+activités et consulter tous les rapports (aucune notion de confidentialité par
+département n'est demandée par le TDR) ; la création/désactivation du catalogue de
+départements reste réservée à la pédagogie. Suppression d'une activité : son auteur
+peut toujours retirer sa propre saisie, la pédagogie et l'admission peuvent modérer
+celle d'un tiers — même patron de double droit (auteur ou rôle de supervision) que
+la modération du forum ailleurs dans ce dépôt.
+
+### 44. Écarts non traités
+
+- Aucune notification quand une activité est saisie ou qu'un rapport est généré :
+  le canal existant (`Notification`, cloche in-app) sert d'autres besoins ; le TDR
+  ne demande d'ailleurs aucune notification pour ce module. Extension possible,
+  non implémentée ici pour ne pas élargir la story.
+- Pas de verrouillage de période passée : une activité de janvier reste modifiable/
+  supprimable indéfiniment, aucune notion de clôture mensuelle n'étant demandée par
+  le TDR (contrairement, par exemple, au relevé de notes délivré qui, lui, fige ses
+  valeurs). Si une clôture s'avère nécessaire, ce serait une story à part.
+- TDR §J (Gestion des rendez-vous) reste entièrement à construire — voir point 41.
