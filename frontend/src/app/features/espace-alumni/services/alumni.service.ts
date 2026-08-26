@@ -6,11 +6,13 @@ import {
   AlumniProfil,
   AlumniProfilUpdate,
   DocumentPartage,
+  EnqueteSuivi,
   FilForum,
   ForumMessage,
   ForumSujet,
   Mentionnable,
   ReleveDelivre,
+  ReponseEnqueteSuiviSaisie,
   SituationProfessionnelle,
   SituationProfessionnelleSaisie,
 } from '../models/alumni.models';
@@ -51,6 +53,16 @@ export class AlumniService {
 
   getMesReleves(): Observable<ReleveDelivre[]> {
     return this.http.get<ReleveDelivre[]>(`${this.api}/mes-releves`);
+  }
+
+  // ---------- Enquêtes de suivi ----------
+
+  getEnquetes(): Observable<EnqueteSuivi[]> {
+    return this.http.get<EnqueteSuivi[]>(`${this.api}/enquetes`);
+  }
+
+  repondreEnquete(id: number, donnees: ReponseEnqueteSuiviSaisie): Observable<unknown> {
+    return this.http.post(`${this.api}/enquetes/${id}/reponse`, donnees);
   }
 
   // ---------- Forum ----------

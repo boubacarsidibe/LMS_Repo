@@ -78,6 +78,22 @@ export interface DocumentPartage {
   estAuteur: boolean;
 }
 
+/** Campagne d'enquête de suivi (TDR §G) : mesure l'impact de la formation sur la carrière. */
+export interface EnqueteSuivi {
+  id: number;
+  titre: string;
+  description: string | null;
+  dateCreation: string;
+  active: boolean;
+  dejaRepondu: boolean;
+}
+
+export interface ReponseEnqueteSuiviSaisie {
+  noteApplicationCompetences: number;
+  noteImpactCarriere: number;
+  commentaire: string | null;
+}
+
 /** Identique au relevé délivré de l'espace étudiant : même document, même DTO. */
 export interface ReleveDelivre {
   id: number;

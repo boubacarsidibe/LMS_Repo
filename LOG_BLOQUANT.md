@@ -621,3 +621,47 @@ dépenses à 0). Ne pas retenter de nouveau correctif automatique sur ce point
 tant que cette vérification n'a pas eu lieu — le prochain passage de la
 routine peut se contenter d'un nouveau `workflow_dispatch` ponctuel pour
 sonder si la situation a changé, sans reproduire l'investigation complète.
+
+## 2026-08-26 — Epic « Processus qualité » (TDR §G)
+
+### 25. Gap analysis phrase par phrase avant tout code : trois manques réels, pas un chantier vide
+
+Le squelette `.drawio` marquait encore la section G « à construire », mais
+une revue informelle antérieure (pendant la dérivation de l'epic H) avait
+suggéré qu'elle était en grande partie déjà couverte. Plutôt que de trancher
+sur ce doute, la section a été relue phrase par phrase et confrontée au code
+existant :
+
+- **Déjà fait** : le tableau de bord qualité par cours (`GET /pedagogie/qualite`,
+  `PedagogieQualiteComponent`) existait déjà — avis étudiants agrégés par
+  cours, cours à surveiller signalés en tête.
+- **Manque 1 (S3/B2, TDR)** : « recueillir des retours sur l'application des
+  compétences » et « mesurer l'impact à long terme de la formation sur la
+  carrière des diplômés » — rien n'existait pour ça, ni modèle ni écran.
+  `maNote`/`retour_evaluation` mesurent la satisfaction envers un cours, pas
+  l'impact carrière après le diplôme.
+- **Manque 2 (B4)** : « notifications automatiques pour rappeler aux
+  étudiants de remplir leurs évaluations » — aucun rappel n'existait, ni
+  manuel ni automatique.
+- **Manque 3 (B5)** : « rapport qualité global consolidé » exportable —
+  l'écran existait, mais rien à imprimer ou à archiver hors de l'application.
+
+Ces trois manques ont défini le périmètre exact de l'epic : modèle
+`EnqueteSuivi`/`ReponseEnqueteSuivi` (migration V18), dépôt de réponse côté
+alumni avec upsert `(enquête, alumni)` (même patron que `retour_evaluation`,
+V7), synthèse et lancement/clôture de campagne côté pédagogie, rappel
+planifié (`EvaluationRappelService`, première tâche `@Scheduled` de ce
+backend — précédent documenté dans `CLAUDE.md` §3), et rapport PDF
+consolidant les deux écrans qualité sans rien recalculer
+(`RapportQualitePdfService`, PDFBox, même patron que `CertificatPdfService`).
+
+### 26. Gap non traité : S2, verrouillage de fin de session
+
+Le TDR (S2) mentionne aussi le verrouillage d'une évaluation à la fin d'une
+session de cours — hors périmètre de cette story, pour la même raison que le
+rappel « à la fin de chaque session » (voir doc de `EvaluationRappelService`) :
+`Cours` n'a aucune notion de session/édition datée. Une évaluation reste donc
+modifiable indéfiniment aujourd'hui (upsert par `(étudiant, cours)`, sans
+date de clôture). Introduire une session datée est une décision de modèle à
+part entière, qui toucherait aussi le rappel automatique et l'affichage des
+cours — à instruire séparément, pas une extension mécanique de cette story.
