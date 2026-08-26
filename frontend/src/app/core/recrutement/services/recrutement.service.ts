@@ -29,6 +29,12 @@ export interface SessionCandidatureResponse {
   nbCandidatures: number;
 }
 
+/** Compte rendu d'un envoi groupé (relance dossiers incomplets ou paiements impayés). */
+export interface ResultatRelance {
+  envoyes: number;
+  echecs: string[];
+}
+
 export interface CandidatureRequest {
   sessionCandidatureId: number;
   informationsPersonnelles: string;
@@ -341,8 +347,8 @@ export class RecrutementService {
     return this.http.get<any[]>(`${this.baseUrl}/applications${qs ? '?' + qs : ''}`);
   }
 
-  sendReminder(): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/applications/reminder-incomplets`, {});
+  sendReminder(): Observable<ResultatRelance> {
+    return this.http.post<ResultatRelance>(`${this.baseUrl}/applications/reminder-incomplets`, {});
   }
 
   exportApplications(): Observable<Blob> {
@@ -578,6 +584,11 @@ export class RecrutementService {
 
   getAllPaiements(): Observable<PaiementResponse[]> {
     return this.http.get<PaiementResponse[]>(`${this.baseUrl}/admin/recrutement/paiements`);
+  }
+
+  /** Relance (email + notification) les candidats dont le dossier est validé mais impayé. */
+  relancerPaiementsImpayes(): Observable<ResultatRelance> {
+    return this.http.post<ResultatRelance>(`${this.baseUrl}/admin/recrutement/paiements/relance`, {});
   }
 
   // Tests Académiques

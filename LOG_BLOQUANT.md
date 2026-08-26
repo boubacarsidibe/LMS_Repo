@@ -665,3 +665,87 @@ modifiable indéfiniment aujourd'hui (upsert par `(étudiant, cours)`, sans
 date de clôture). Introduire une session datée est une décision de modèle à
 part entière, qui toucherait aussi le rappel automatique et l'affichage des
 cours — à instruire séparément, pas une extension mécanique de cette story.
+
+## 2026-08-26 — Epic « Processus de recrutement » (TDR §A)
+
+### 27. Gap analysis complet du TDR pour choisir l'epic suivant, et écarts trouvés dans §A
+
+Après la fusion de la PR #48 (epic « Processus qualité »), une analyse de gap a relu le
+TDR paragraphe par paragraphe (pas seulement les titres de section) pour situer, dans
+l'ordre réel du document, une liste de sept chantiers dictés le 2026-08-25 (parcours
+d'admission détaillé, création de comptes par la pédagogie, forum/roster par promotion,
+message groupé, accréditation à plusieurs évaluateurs, écrans de paramétrage par rôle,
+profil alumni enrichi) plus deux sections du TDR jamais touchées (I « Suivi du personnel
+INPG », J « Gestion des rendez-vous », confirmé par recherche exhaustive dans le
+backend — aucune entité, contrôleur ni route frontend pour l'un ou l'autre).
+
+**Résultat** : la section A (« Processus de recrutement »), déjà largement construite
+lors de sessions précédentes, contient encore le chantier le plus en amont dans l'ordre
+du document parmi tous les écarts identifiés — les sept chantiers dictés se répartissent
+en réalité sur plusieurs sections (B, C, F), toutes postérieures à A. Deux manques réels
+dans A, tous deux à propos du suivi du parcours candidat après soumission :
+
+- `ApplicationController.sendReminder()` ne faisait que compter les dossiers incomplets
+  ("Simulation d'envoi", aucun email ni notification réellement expédié) — endpoint
+  d'ailleurs jamais appelé par le frontend (wrapper Angular présent, jamais invoqué par
+  un composant).
+- Aucune relance de paiement n'existait. `PaiementService.getAllPaiements()` ne liste que
+  les `Paiement` déjà créés : un candidat n'ayant jamais initié de paiement (aucune ligne)
+  restait invisible de tout suivi, alors que c'est justement le cas le plus fréquent d'un
+  dossier impayé.
+
+**Corrigés** : relance réelle des dossiers incomplets (email + notification, nommant les
+pièces manquantes/non conformes — même patron que
+`AdminRecrutementController.modifierConformitePiece`), et nouvelle relance des paiements
+impayés (`PaiementService.relancerImpayes()`, recalculée côté serveur à partir du statut
+du dossier et non d'une liste transmise par le client) — les deux branchées sur l'écran
+du responsable admission (`responsable-admission-candidatures` et
+`responsable-admission-paiements`).
+
+**Décisions de périmètre, pour ne pas dupliquer ce qui existe déjà** :
+- L'export CSV de `ApplicationController.exportApplications()` reste **non branché** : un
+  export Excel complet et déjà fonctionnel existe (`AdminRecrutementController
+  .exporterCandidatures`, appelé par `responsable-admission-candidatures.component`) —
+  le brancher aurait créé un second export parallèle du même besoin, contraire au principe
+  « réutiliser plutôt qu'inventer une modélisation parallèle ». L'endpoint CSV reste en
+  place, inutilisé, sans risque : il n'écrit rien.
+- « Nombre de tests configurable (par défaut 2) », dicté le 2026-08-25, n'a aucun ancrage
+  dans le texte du TDR (seul un concept singulier de « test académique » y figure) et le
+  modèle actuel (`TestAcademiqueService.creerTest`) permet déjà de créer autant de tests
+  qu'on veut par candidat, sans plafond artificiel — le besoin semble déjà satisfait par
+  construction. Non implémenté : ajouter un champ non exploité aurait été une extension
+  spéculative, pas une correction d'un écart réel.
+- Le rôle propriétaire du paiement (dicté comme potentiellement « pédagogie ») est confirmé
+  par le TDR lui-même comme relevant de l'admission : les paragraphes sur le paiement
+  vivent dans la section A (« Processus de recrutement »), pas dans une section pédagogie.
+  `SecurityConfig` (`/api/admin/recrutement/**` → `RESPONSABLE_ADMISSION`) n'a pas été
+  changé.
+- Unifier les deux calculs de KPI candidatures existants (un côté serveur dans
+  `ApplicationController.getKpis`, jamais appelé ; un côté client dans
+  `responsable-admission.component.ts`, à partir de la liste brute) n'a pas été fait : le
+  tableau de bord actuel fonctionne et est déjà exercé par les écrans ; le refaire sans
+  besoin fonctionnel nouveau aurait été un risque de régression pour un gain cosmétique
+  seulement (un seul point de calcul plutôt que deux qui, aujourd'hui, s'accordent).
+
+### 28. Faille de configuration trouvée au passage : `/api/applications/**` sans règle d'URL
+
+`SecurityConfig` protège son voisin direct `/api/admin/recrutement/**` par une règle
+d'URL (`hasRole("RESPONSABLE_ADMISSION")`), en plus de l'annotation de méthode sur
+chaque endpoint — la double protection déjà documentée pour `PhotothequeController`
+("le filtrage d'URL seul est trop implicite"). `/api/applications/**`
+(`ApplicationController`) n'avait **aucune** règle d'URL : chaque méthode porte bien
+`@PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")`, mais rien ne la secourrait en cas
+d'oubli sur un futur endpoint, et la requête tombait sur le filet générique
+`.anyRequest().authenticated()` — accessible à n'importe quel rôle connecté si
+l'annotation de méthode venait à manquer. Le risque réel était resté faible tant que
+`sendReminder()` était un stub sans effet ; il cesse de l'être maintenant qu'il envoie de
+vrais emails. Corrigé en ajoutant `/api/applications/**` → `RESPONSABLE_ADMISSION` dans
+`SecurityConfig`, au même endroit que `/api/admin/recrutement/**`.
+
+### 29. Pas de nouvelle entité : aucun diagramme UML mis à jour
+
+Cette story n'ajoute aucune entité ni migration — seulement deux valeurs
+d'`EnumTypeNotification`, deux méthodes de service, et deux endpoints réutilisant le
+modèle `Candidature`/`Paiement`/`NotificationTemplate` déjà en place. Rien à documenter
+dans `docs/uml/` : la charte du dépôt n'y consigne que les classes nouvelles ou
+significativement modifiées, pas les ajouts de comportement sur un modèle inchangé.

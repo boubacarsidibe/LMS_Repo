@@ -2,11 +2,14 @@ package inpg.sn.lms.recrutement.controller;
 
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,15 +30,24 @@ import inpg.sn.lms.recrutement.entity.Paiement;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
+import inpg.sn.lms.recrutement.service.NotificationCandidatService;
+import inpg.sn.lms.recrutement.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/applications")
 public class ApplicationController {
 
-    private final CandidatureRepository candidatureRepo;
+    private static final Logger log = LoggerFactory.getLogger(ApplicationController.class);
 
-    public ApplicationController(CandidatureRepository candidatureRepo) {
+    private final CandidatureRepository candidatureRepo;
+    private final NotificationService notificationService;
+    private final NotificationCandidatService notificationCandidatService;
+
+    public ApplicationController(CandidatureRepository candidatureRepo, NotificationService notificationService,
+            NotificationCandidatService notificationCandidatService) {
         this.candidatureRepo = candidatureRepo;
+        this.notificationService = notificationService;
+        this.notificationCandidatService = notificationCandidatService;
     }
 
     // ==============================================
@@ -75,16 +87,56 @@ public class ApplicationController {
     // ==============================================
     // POST /api/applications/reminder-incomplets
     // ==============================================
+    /**
+     * Relance réellement les candidats dont le dossier est incomplet (email + notification
+     * in-app), en nommant les pièces manquantes ou non conformes — jusqu'ici l'endpoint ne
+     * faisait que compter les dossiers concernés sans jamais rien envoyer ("Simulation
+     * d'envoi"). Un dossier sans piece du tout ("aucune pièce déposée") est traité comme les
+     * autres, pas ignoré.
+     */
     @PostMapping("/reminder-incomplets")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> sendReminder() {
-        List<Candidature> all = candidatureRepo.findAll();
-        long count = all.stream().filter(this::isDossierIncomplet).count();
-        // Simulation d'envoi
-        Map<String, Object> result = new HashMap<>();
-        result.put("message", count + " relances envoyées avec succès");
-        result.put("count", count);
-        return ResponseEntity.ok(result);
+        List<Candidature> incomplets = candidatureRepo.findAll().stream()
+                .filter(this::isDossierIncomplet)
+                .toList();
+
+        int envoyes = 0;
+        List<String> echecs = new ArrayList<>();
+        for (Candidature c : incomplets) {
+            String email = c.getCandidat() != null && c.getCandidat().getUser() != null
+                    ? c.getCandidat().getUser().getEmail()
+                    : null;
+            if (email == null) {
+                echecs.add(c.getNumeroDossier() + " (aucune adresse)");
+                continue;
+            }
+            String piecesManquantes = piecesManquantes(c);
+            try {
+                notificationService.notifierRappelDossierIncomplet(email, c.getNumeroDossier(), piecesManquantes);
+                notificationCandidatService.creerNotification(c.getCandidat().getId(),
+                        "Votre dossier n°" + c.getNumeroDossier() + " est incomplet : " + piecesManquantes + ".",
+                        "DOSSIER", "/recrutement/suivi");
+                envoyes++;
+            } catch (Exception e) {
+                log.error("Échec de la relance de dossier incomplet à {} : {}", email, e.getMessage(), e);
+                echecs.add(email);
+            }
+        }
+        return ResponseEntity.ok(Map.of("envoyes", envoyes, "echecs", echecs));
+    }
+
+    /** Pièces manquantes ou non conformes d'un dossier, listées en français pour l'email de relance. */
+    private String piecesManquantes(Candidature c) {
+        if (c.getPiecesJustificatives().isEmpty()) {
+            return "aucune pièce déposée";
+        }
+        String libelles = c.getPiecesJustificatives().stream()
+                .filter(p -> !p.isEstConforme())
+                .map(p -> p.getTypeDocument() != null ? p.getTypeDocument().libelle() : "Document")
+                .collect(Collectors.joining(", "));
+        return libelles.isEmpty() ? "aucune pièce déposée" : libelles;
     }
 
     // ==============================================

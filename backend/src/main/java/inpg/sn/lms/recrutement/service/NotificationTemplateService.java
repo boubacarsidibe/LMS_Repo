@@ -108,6 +108,18 @@ public class NotificationTemplateService {
                         + "pas été jugé conforme. Merci de vous connecter à votre espace candidat pour le remplacer "
                         + "au plus vite.\n\nCordialement,\nL'équipe INPG");
             }
+            case RAPPEL_DOSSIER_INCOMPLET -> {
+                t.setSujet("Votre dossier de candidature est incomplet");
+                t.setCorps("Bonjour,\n\nVotre dossier de candidature n°{{numeroDossier}} est encore incomplet : "
+                        + "{{piecesManquantes}}. Merci de vous connecter à votre espace candidat pour compléter ou "
+                        + "remplacer les pièces concernées dès que possible.\n\nCordialement,\nL'équipe INPG");
+            }
+            case RAPPEL_PAIEMENT -> {
+                t.setSujet("Frais de dossier en attente de règlement");
+                t.setCorps("Bonjour,\n\nVotre dossier de candidature n°{{numeroDossier}} est retenu, mais les frais "
+                        + "de dossier n'ont pas encore été réglés. Merci de procéder au paiement depuis votre espace "
+                        + "candidat pour poursuivre votre parcours d'admission.\n\nCordialement,\nL'équipe INPG");
+            }
         }
         return t;
     }

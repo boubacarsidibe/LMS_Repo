@@ -552,6 +552,15 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(paiementService.getAllPaiements());
     }
 
+    /**
+     * Relance par email + notification les candidats dont le dossier est validé mais dont
+     * les frais de dossier restent impayés (TDR : suivi des paiements).
+     */
+    @PostMapping("/paiements/relance")
+    public ResponseEntity<Map<String, Object>> relancerPaiementsImpayes() {
+        return ResponseEntity.ok(paiementService.relancerImpayes());
+    }
+
     // ===================== TESTS ACADÉMIQUES =====================
 
     @GetMapping("/tests")
@@ -658,7 +667,7 @@ public class AdminRecrutementController {
 
         Candidature candidature = piece.getCandidature();
         if (candidature != null && candidature.getCandidat() != null) {
-            String libelleType = libelleTypeDocument(piece.getTypeDocument());
+            String libelleType = piece.getTypeDocument() != null ? piece.getTypeDocument().libelle() : "Document";
             String numeroDossier = candidature.getNumeroDossier();
             String emailCandidat = candidature.getCandidat().getUser() != null
                     ? candidature.getCandidat().getUser().getEmail()
@@ -683,18 +692,6 @@ public class AdminRecrutementController {
         }
 
         return ResponseEntity.ok(Map.of("id", piece.getId(), "estConforme", piece.isEstConforme()));
-    }
-
-    /** Libellé français d'un type de document, réutilisé pour les emails et l'export Excel. */
-    private String libelleTypeDocument(EnumTypeDocument type) {
-        if (type == null) return "Document";
-        return switch (type) {
-            case CV -> "CV";
-            case DIPLOME -> "Diplôme";
-            case RELEVE_NOTES -> "Relevé de notes";
-            case PIECE_IDENTITE -> "Pièce d'identité";
-            case LETTRE_MOTIVATION -> "Lettre de motivation";
-        };
     }
 
     @GetMapping("/pieces/{id}/telecharger")
