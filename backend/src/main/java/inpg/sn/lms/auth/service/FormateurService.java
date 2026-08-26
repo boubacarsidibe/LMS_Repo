@@ -18,13 +18,16 @@ public class FormateurService {
     private final RoleRepository roleService;
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
+    private final PasswordGeneratorService passwordGeneratorService;
 
     public FormateurService(FormateurRepository formateurRepository, RoleRepository roleService,
-            PasswordEncoder passwordEncoder, UserService userService) {
+            PasswordEncoder passwordEncoder, UserService userService,
+            PasswordGeneratorService passwordGeneratorService) {
         this.formateurRepository = formateurRepository;
         this.roleService = roleService;
         this.passwordEncoder = passwordEncoder;
         this.userService = userService;
+        this.passwordGeneratorService = passwordGeneratorService;
     }
 
     public Iterable<Formateur> getAllFormateurs() {
@@ -39,8 +42,15 @@ public class FormateurService {
      * le compte d'un tiers, sans que celui-ci en sache rien et sans connaître son mot
      * de passe. Pour promouvoir un compte existant, passer par la gestion des rôles
      * ({@code PUT /api/admin/users/{id}/roles}).
+     *
+     * <p>Si {@code formateurDto} n'apporte aucun mot de passe, un mot de passe est
+     * généré et réécrit dans le DTO, pour que l'appelant puisse le transmettre au
+     * titulaire du compte.
      */
     public Formateur createFormateur(FormateurDto formateurDto) {
+        if (formateurDto.getPassword() == null || formateurDto.getPassword().isBlank()) {
+            formateurDto.setPassword(passwordGeneratorService.generer());
+        }
         if (userService.findByUsername(formateurDto.getUsername()) != null) {
             throw new IllegalStateException(
                     "Ce nom d'utilisateur est déjà pris. Pour donner le rôle formateur à un compte existant, utilisez la gestion des rôles.");
