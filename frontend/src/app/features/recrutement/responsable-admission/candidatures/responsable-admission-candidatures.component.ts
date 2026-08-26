@@ -58,8 +58,16 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   ngOnInit(): void {
     const sessionParam = this.route.snapshot.queryParamMap.get('session');
     if (sessionParam) this.filtreSessionId = Number(sessionParam);
+    const statutParam = this.route.snapshot.queryParamMap.get('statut') as StatutFiltre | null;
+    if (statutParam && this.STATUTS_VALIDES.includes(statutParam)) this.filtreStatut = statutParam;
+    const dossierParam = this.route.snapshot.queryParamMap.get('dossier');
+    if (dossierParam) this.recherche = dossierParam;
     this.chargerCandidatures();
   }
+
+  private readonly STATUTS_VALIDES: StatutFiltre[] = [
+    'TOUS', 'SOUMIS', 'EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 'ADMIS3', 'REJETE', 'BROUILLON',
+  ];
 
   /** Sessions distinctes présentes dans les candidatures chargées, pour le filtre. */
   get sessionsDisponibles(): { id: number; libelle: string }[] {

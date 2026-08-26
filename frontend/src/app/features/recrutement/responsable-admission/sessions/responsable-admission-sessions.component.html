@@ -37,14 +37,14 @@
 
 <!-- KPI Bento Grid -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter my-stack-lg">
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+  <button type="button" (click)="filtreStatut = 'TOUTES'" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group">
     <div class="flex items-center justify-between mb-4">
       <p class="font-label-md text-label-md text-on-surface-variant">Total Sessions</p>
       <span class="material-symbols-outlined text-on-surface-variant opacity-70">event</span>
     </div>
     <h3 class="font-headline-lg text-headline-lg text-primary">{{ totalSessions }} <span class="font-body-md text-body-md text-on-surface-variant font-normal">sessions</span></h3>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+  </button>
+  <button type="button" (click)="filtreStatut = 'OUVERTES'" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group">
     <div class="flex items-center justify-between mb-4">
       <p class="font-label-md text-label-md text-on-surface-variant">Sessions Ouvertes</p>
       <span class="material-symbols-outlined text-on-surface-variant opacity-70">check_circle</span>
@@ -53,15 +53,15 @@
       <h3 class="font-headline-lg text-headline-lg text-primary">{{ nbOuvertes }}</h3>
       <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-md mb-2">ouvertes</span>
     </div>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+  </button>
+  <button type="button" (click)="filtreStatut = 'ACTIVES'" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group">
     <div class="flex items-center justify-between mb-4">
       <p class="font-label-md text-label-md text-on-surface-variant">Sessions Actives</p>
       <span class="material-symbols-outlined text-on-surface-variant opacity-70">bolt</span>
     </div>
     <h3 class="font-headline-lg text-headline-lg text-primary">{{ nbActives }}</h3>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+  </button>
+  <button type="button" [disabled]="!prochaineFermeture" (click)="prochaineFermeture && openDrawer(prochaineFermeture)" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group disabled:hover:border-outline-variant disabled:cursor-default">
     <div class="flex items-center justify-between mb-4">
       <p class="font-label-md text-label-md text-on-surface-variant">Prochaine Clôture</p>
       <span class="material-symbols-outlined text-on-surface-variant opacity-70">timer</span>
@@ -73,7 +73,7 @@
     <ng-template #aucuneCloture>
       <p class="font-body-sm text-body-sm text-on-surface-variant">Aucune session ouverte</p>
     </ng-template>
-  </div>
+  </button>
 </div>
 
 <!-- Filters -->
@@ -123,11 +123,11 @@
       </tr>
     </thead>
     <tbody class="divide-y divide-outline-variant text-on-surface font-body-sm text-body-sm">
-      <tr *ngFor="let s of sessionsFiltrees" class="hover:bg-surface-container-low transition-colors">
+      <tr *ngFor="let s of sessionsFiltrees" (click)="openDrawer(s)" class="cursor-pointer hover:bg-surface-container-low transition-colors">
         <td class="px-6 py-4 font-medium">{{ s.libelle }}</td>
         <td class="px-6 py-4 text-on-surface-variant">{{ s.dateOuverture | date:'dd MMM yyyy' }}</td>
         <td class="px-6 py-4 text-on-surface-variant">{{ s.dateFermeture | date:'dd MMM yyyy' }}</td>
-        <td class="px-6 py-4">
+        <td class="px-6 py-4" (click)="$event.stopPropagation()">
           <a [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ session: s.id }" class="text-secondary hover:underline font-medium">{{ s.nbCandidatures }}</a>
         </td>
         <td class="px-6 py-4">
@@ -144,7 +144,7 @@
             </span>
           </div>
         </td>
-        <td class="px-6 py-4 text-right">
+        <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
           <button type="button" (click)="openDrawer(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors" title="Modifier">
             <span class="material-symbols-outlined text-[20px]">edit</span>
           </button>

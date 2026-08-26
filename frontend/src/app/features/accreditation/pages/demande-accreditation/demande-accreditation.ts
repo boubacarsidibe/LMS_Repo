@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
+import { MediaProtegeService } from '../../../espace-etudiants/services/media-protege.service';
 import {
   DemandeAccreditation,
   LIBELLES_STATUT_DEMANDE,
@@ -168,6 +169,14 @@ import { AccreditationService } from '../../services/accreditation.service';
                 <p class="font-label-md text-label-md text-on-surface">{{ libellesType[p.typeDocument] }}</p>
                 <p class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ p.nomFichierOriginal }}</p>
               </div>
+              <button
+                type="button"
+                (click)="consulterPiece(p.id)"
+                title="Consulter la pièce"
+                class="shrink-0 text-outline hover:text-secondary"
+              >
+                <span class="material-symbols-outlined">visibility</span>
+              </button>
             </li>
           </ul>
           <p *ngIf="demande.pieces.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
@@ -207,6 +216,7 @@ import { AccreditationService } from '../../services/accreditation.service';
 })
 export class DemandeAccreditationComponent implements OnInit {
   private accreditationService = inject(AccreditationService);
+  private mediaProtege = inject(MediaProtegeService);
 
   chargement = true;
   demande: DemandeAccreditation | null = null;
@@ -280,6 +290,13 @@ export class DemandeAccreditationComponent implements OnInit {
           this.erreur = e?.error?.message || "La soumission de la demande a échoué.";
         },
       });
+  }
+
+  consulterPiece(pieceId: number): void {
+    if (!this.demande) {
+      return;
+    }
+    this.mediaProtege.ouvrir(this.accreditationService.urlFichierPiece(this.demande.id, pieceId));
   }
 
   fichierChoisi(evenement: Event): void {

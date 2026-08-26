@@ -46,7 +46,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-outline-variant">
-        <tr *ngFor="let c of candidaturesImpayees" class="hover:bg-surface-container-low transition-colors">
+        <tr *ngFor="let c of candidaturesImpayees" [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ dossier: c.numeroDossier }" class="cursor-pointer hover:bg-surface-container-low transition-colors">
           <td class="p-4">
             <div class="font-label-md text-label-md text-primary">{{ c.candidatPrenom }} {{ c.candidatNom }}</div>
             <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ c.numeroDossier }}</div>
@@ -87,7 +87,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-outline-variant">
-        <tr *ngFor="let p of paiementsFiltres" class="hover:bg-surface-container-low transition-colors">
+        <tr *ngFor="let p of paiementsFiltres" [routerLink]="p.numeroDossier ? ['/responsable-admission/candidatures'] : null" [queryParams]="p.numeroDossier ? { dossier: p.numeroDossier } : null" [class.cursor-pointer]="p.numeroDossier" class="hover:bg-surface-container-low transition-colors">
           <td class="p-4">
             <div class="font-label-md text-label-md text-primary">{{ p.candidatPrenom }} {{ p.candidatNom }}</div>
             <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ p.numeroDossier }}</div>

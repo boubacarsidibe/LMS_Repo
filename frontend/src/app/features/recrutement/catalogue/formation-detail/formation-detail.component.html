@@ -97,12 +97,11 @@
               <!-- TYPE: list -->
               <div *ngIf="section.type === 'list'" class="bg-white border border-[#c7c5d0] rounded-lg overflow-hidden">
                 <ul class="divide-y divide-[#c7c5d0]/40">
-                  <li *ngFor="let it of section.items" class="p-4 hover:bg-[#f2f4f6] transition-colors flex items-center justify-between">
+                  <li *ngFor="let it of section.items" class="p-4 flex items-center justify-between">
                     <div class="flex items-center gap-3">
                       <span *ngIf="it.icon" class="material-symbols-outlined text-[#77767f]" style="font-variation-settings: 'FILL' 0;">{{ it.icon }}</span>
                       <span class="text-base text-[#191c1e]">{{ it.titre }}</span>
                     </div>
-                    <span class="material-symbols-outlined text-[#c7c5d0]" style="font-variation-settings: 'FILL' 0;">chevron_right</span>
                   </li>
                 </ul>
               </div>

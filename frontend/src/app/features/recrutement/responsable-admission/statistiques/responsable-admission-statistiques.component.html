@@ -18,34 +18,34 @@
 
 <ng-container *ngIf="!loading">
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
-    <div *ngIf="prefs.showTotalCandidats" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+    <a *ngIf="prefs.showTotalCandidats" routerLink="/responsable-admission/candidatures" class="block bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group no-underline">
       <div class="flex justify-between items-start mb-4">
         <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">groups</span></div>
       </div>
       <p class="font-label-md text-label-md text-on-surface-variant mb-1">Total Candidats</p>
       <h3 class="font-headline-lg text-headline-lg text-primary">{{ totalCandidats }}</h3>
-    </div>
-    <div *ngIf="prefs.showValidationEnCours" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+    </a>
+    <a *ngIf="prefs.showValidationEnCours" routerLink="/responsable-admission/candidatures" [queryParams]="{ statut: 'SOUMIS' }" class="block bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group no-underline">
       <div class="flex justify-between items-start mb-4">
         <div class="w-10 h-10 rounded-lg bg-secondary-fixed/50 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">hourglass_empty</span></div>
       </div>
       <p class="font-label-md text-label-md text-on-surface-variant mb-1">Validation en cours</p>
       <h3 class="font-headline-lg text-headline-lg text-primary">{{ validationEnCours }}</h3>
-    </div>
-    <div *ngIf="prefs.showPreselectionnes" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group relative overflow-hidden">
+    </a>
+    <a *ngIf="prefs.showPreselectionnes" routerLink="/responsable-admission/candidatures" [queryParams]="{ statut: 'EN_COURS_DE_PRESELECTION' }" class="block bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group relative overflow-hidden no-underline">
       <div class="flex justify-between items-start mb-4 relative z-10">
         <div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center text-on-surface-variant group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">how_to_reg</span></div>
       </div>
       <p class="font-label-md text-label-md text-on-surface-variant mb-1 relative z-10">Présélectionnés</p>
       <h3 class="font-headline-lg text-headline-lg text-primary relative z-10">{{ preselectionnes }}</h3>
-    </div>
-    <div *ngIf="prefs.showRejetes" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:bg-surface-container-low transition-colors group">
+    </a>
+    <a *ngIf="prefs.showRejetes" routerLink="/responsable-admission/candidatures" [queryParams]="{ statut: 'REJETE' }" class="block bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group no-underline">
       <div class="flex justify-between items-start mb-4">
         <div class="w-10 h-10 rounded-lg bg-error-container flex items-center justify-center text-error group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">cancel</span></div>
       </div>
       <p class="font-label-md text-label-md text-on-surface-variant mb-1">Rejetés</p>
       <h3 class="font-headline-lg text-headline-lg text-primary">{{ rejetes }}</h3>
-    </div>
+    </a>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter" *ngIf="prefs.showRepartitionStatuts || prefs.showTauxAdmission">
