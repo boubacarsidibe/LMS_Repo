@@ -98,6 +98,13 @@ export const PEDAGOGIE_ROUTES: Routes = [
             (m) => m.ActivitesPersonnelComponent
           ),
       },
+      {
+        path: 'rendez-vous',
+        loadComponent: () =>
+          import('../rendez-vous/pages/rendez-vous/rendez-vous.component').then(
+            (m) => m.RendezVousComponent
+          ),
+      },
     ],
   },
 ];
