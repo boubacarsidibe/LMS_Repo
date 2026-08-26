@@ -55,6 +55,14 @@ export class PedagogieService {
     return this.http.get<FormateurBref[]>(`${this.api}/formateurs`);
   }
 
+  /**
+   * Ouvre un compte formateur. Le mot de passe est optionnel : laissé vide, le
+   * serveur en génère un et l'envoie par courriel au titulaire.
+   */
+  creerFormateur(données: FormateurSaisie): Observable<{ id: number; message: string }> {
+    return this.http.post<{ id: number; message: string }>(`${this.api}/formateurs`, données);
+  }
+
   /** Remplace l'équipe pédagogique du cours. Une liste vide est refusée (400). */
   affecterFormateurs(coursId: number, formateurIds: number[]): Observable<Cours> {
     return this.http.put<Cours>(`${this.api}/cours/${coursId}/formateurs`, { formateurIds });
@@ -280,6 +288,16 @@ export interface EtudiantScolarite {
 }
 
 export interface EtudiantSaisie {
+  username: string;
+  password: string;
+  email: string;
+  nom: string;
+  prenom: string;
+  telephone?: string | null;
+}
+
+/** `password` vide : le serveur en génère un et l'envoie par courriel. */
+export interface FormateurSaisie {
   username: string;
   password: string;
   email: string;

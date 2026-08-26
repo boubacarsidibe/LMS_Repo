@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,8 +20,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import inpg.sn.lms.auth.dto.FormateurDto;
 import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.repository.FormateurRepository;
+import inpg.sn.lms.auth.service.FormateurService;
 import inpg.sn.lms.espace_etudiant.dto.AffectationFormateursRequest;
 import inpg.sn.lms.espace_etudiant.dto.CoursCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.CoursDto;
@@ -41,6 +45,7 @@ import inpg.sn.lms.espace_etudiant.service.CoursService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
+import inpg.sn.lms.recrutement.service.NotificationService;
 
 /**
  * Espace du responsable pédagogique : pilotage de l'offre d'enseignement.
@@ -60,6 +65,7 @@ import inpg.sn.lms.espace_etudiant.service.SupportService;
 @PreAuthorize("hasRole('RESPONSABLE_PEDAGOGIQUE')")
 public class PedagogieController {
 
+    private static final Logger log = LoggerFactory.getLogger(PedagogieController.class);
     private static final String COULEUR_BANDEAU_PAR_DEFAUT = "bg-secondary-container";
 
     private final FormationService formationService;
@@ -67,6 +73,8 @@ public class PedagogieController {
     private final CoursService coursService;
     private final SupportService supportService;
     private final FormateurRepository formateurRepository;
+    private final FormateurService formateurService;
+    private final NotificationService notificationService;
     private final PresenceRepository presenceRepository;
     private final SeanceRepository seanceRepository;
     private final ForumMentionRepository forumMentionRepository;
@@ -81,6 +89,8 @@ public class PedagogieController {
             CoursService coursService,
             SupportService supportService,
             FormateurRepository formateurRepository,
+            FormateurService formateurService,
+            NotificationService notificationService,
             PresenceRepository presenceRepository,
             SeanceRepository seanceRepository,
             ForumMentionRepository forumMentionRepository,
@@ -93,6 +103,8 @@ public class PedagogieController {
         this.coursService = coursService;
         this.supportService = supportService;
         this.formateurRepository = formateurRepository;
+        this.formateurService = formateurService;
+        this.notificationService = notificationService;
         this.presenceRepository = presenceRepository;
         this.seanceRepository = seanceRepository;
         this.forumMentionRepository = forumMentionRepository;
@@ -125,6 +137,57 @@ public class PedagogieController {
                 .map(PedagogieController::toFormateurDto)
                 .sorted(Comparator.comparing(FormateurBrefDto::nomComplet))
                 .toList());
+    }
+
+    /**
+     * Ouvre un compte formateur. Jusqu'ici, seul {@code POST /api/auth/formateurs}
+     * existait, réservé à RESPONSABLE_ADMISSION — la pédagogie, qui affecte les
+     * formateurs aux cours, ne pouvait pas ouvrir leur compte elle-même.
+     *
+     * <p>Le mot de passe est optionnel : laissé vide, {@link FormateurService} en
+     * génère un et le réécrit dans {@code requete}, envoyé par courriel ci-dessous.
+     * Le compte créé n'apparaît dans aucun espace formateur tant qu'il n'est pas
+     * rattaché à au moins un cours ({@code PUT /cours/{id}/formateurs}) — le message
+     * de succès le rappelle.
+     */
+    @Transactional
+    @PostMapping("/formateurs")
+    public ResponseEntity<?> creerFormateur(@RequestBody FormateurDto requete) {
+        if (estVide(requete.getUsername()) || estVide(requete.getEmail())
+                || estVide(requete.getNom()) || estVide(requete.getPrenom())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Le nom, le prénom, l'identifiant et l'email sont requis."));
+        }
+        boolean motDePasseGenere = estVide(requete.getPassword());
+        try {
+            Formateur formateur = formateurService.createFormateur(requete);
+            if (motDePasseGenere) {
+                envoyerIdentifiants(requete.getEmail(), requete.getUsername(), requete.getPassword());
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "id", formateur.getId(),
+                    "message",
+                    "Formateur créé avec succès. Rattachez-le à au moins un cours pour qu'il apparaisse dans son espace."));
+        } catch (IllegalStateException erreur) {
+            return ResponseEntity.badRequest().body(Map.of("message", erreur.getMessage()));
+        }
+    }
+
+    /**
+     * Transmet les identifiants d'un compte formateur nouvellement créé. Une panne
+     * SMTP ne doit pas faire échouer la création elle-même — le compte reste
+     * utilisable, seul l'envoi manque.
+     */
+    private void envoyerIdentifiants(String email, String identifiant, String motDePasse) {
+        try {
+            notificationService.envoyerEmail(email, "Votre compte INPG LMS",
+                    "Un compte vient de vous être créé sur la plateforme INPG LMS.\n\n"
+                            + "Identifiant : " + identifiant + "\n"
+                            + "Mot de passe provisoire : " + motDePasse + "\n\n"
+                            + "Merci de le modifier dès votre première connexion.");
+        } catch (Exception exception) {
+            log.error("Échec de l'envoi des identifiants à {} : {}", email, exception.getMessage());
+        }
     }
 
     // ===================== COURS =====================
