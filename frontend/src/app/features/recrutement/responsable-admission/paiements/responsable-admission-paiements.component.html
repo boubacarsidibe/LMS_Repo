@@ -102,7 +102,7 @@
               {{ p.statut === 'SUCCES' ? 'Réussi' : 'En attente' }}
             </span>
           </td>
-          <td class="p-4">
+          <td class="p-4" (click)="$event.stopPropagation()">
             <div class="flex items-center gap-2" *ngIf="p.statut === 'EN_ATTENTE'; else aucuneAction">
               <button type="button" (click)="valider(p)" [disabled]="idEnCours === p.id"
                       class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm disabled:opacity-50">
