@@ -36,6 +36,9 @@ import inpg.sn.lms.espace_etudiant.entity.Notification;
 import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumMentionRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
@@ -71,6 +74,12 @@ class PedagogieScolariteEnquetesTest {
     @Mock
     private CoursRepository coursRepository;
     @Mock
+    private ForumSujetRepository forumSujetRepository;
+    @Mock
+    private ForumMessageRepository forumMessageRepository;
+    @Mock
+    private ForumMentionRepository forumMentionRepository;
+    @Mock
     private NotificationService notificationService;
     @Mock
     private RetourEvaluationRepository retourRepository;
@@ -98,7 +107,8 @@ class PedagogieScolariteEnquetesTest {
     @BeforeEach
     void setUp() {
         controller = new PedagogieScolariteController(promotionRepository, formationRepository, etudiantRepository,
-                etudiantService, matriculeService, certificatService, coursRepository, notificationService,
+                etudiantService, matriculeService, certificatService, coursRepository, forumSujetRepository,
+                forumMessageRepository, forumMentionRepository, notificationService,
                 retourRepository, releveNotesService, releveDelivranceService, candidatRepository,
                 alumniProfilRepository, alumniProfilService, enqueteSuiviRepository, reponseEnqueteSuiviRepository,
                 notificationRepository, rapportQualitePdfService);

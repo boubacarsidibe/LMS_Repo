@@ -796,3 +796,125 @@ manquante (`enregistrerPaiementHorsLigne`, bouton « Confirmer le paiement »
 sur les dossiers sans aucune tentative). La protection SMTP a été reportée
 dans `notifierCandidatPaiementConfirme()` (méthode partagée extraite pendant
 ce correctif), pour couvrir aussi le nouveau chemin hors ligne.
+
+## 2026-08-26 — Epic : comptes pédagogie (mot de passe généré) + forum/roster de promotion
+
+Cadrage avant tout code : les deux points traités ici viennent d'une liste dictée
+par l'utilisateur le 2026-08-25 (voir le rapport du même jour dans
+`docs/daily_logs/2026-08-25.md`), pas d'une lecture littérale d'une phrase du TDR.
+Un passage d'analyse d'écart dédié (méthode renforcée de l'ÉTAPE 3) a confirmé
+qu'il s'agit d'un vrai manque du code, pas d'un doublon d'une fonctionnalité déjà
+livrée — présenté ici honnêtement comme un souhait utilisateur adjacent au TDR §B,
+et non comme un défaut du TDR lui-même.
+
+### 31. Aucun compte (étudiant ou formateur) ne pouvait recevoir un mot de passe généré
+
+`EtudiantService.createEtudiant` et `FormateurService.createFormateur` exigeaient
+tous deux un `password` non vide, sans jamais en générer un — `send-otp`/
+`verify-otp` (`OtpService`) est un mécanisme de vérification d'email pour
+l'inscription et la réinitialisation, entièrement distinct, à ne pas réutiliser ici
+(il produit un code à 6 chiffres en mémoire, pas un mot de passe). Pire : l'import
+CSV en masse (`PedagogieScolariteController.importerEtudiants`) attribuait à
+**tous** les étudiants importés le même mot de passe codé en dur
+(`"INPG@" + annee`), partagé entre toute une promotion importée le même jour —
+un étudiant connaissant ce format pouvait se connecter au compte d'un camarade.
+
+**Corrigé** : `PasswordGeneratorService` (12 caractères, quatre classes de
+caractères mélangées, `SecureRandom`). Les deux services de création génèrent
+désormais un mot de passe si celui reçu est vide, et le réécrivent dans le DTO —
+c'est ce qui permet à l'appelant (qui connaît l'email) de le transmettre ensuite.
+La saisie manuelle existante n'est pas touchée : un mot de passe fourni n'est
+jamais écrasé ni envoyé par courriel (seul un mot de passe généré l'est). L'import
+CSV route désormais chaque ligne par ce même chemin, un mot de passe par étudiant.
+
+### 32. Création de formateur totalement injoignable depuis la pédagogie
+
+`POST /api/auth/formateurs` existe mais est réservé à `RESPONSABLE_ADMISSION`
+(décision documentée dans le javadoc du contrôleur, point 18 de ce journal) — et
+confirmé par `grep` **inutilisé par aucun écran frontend**, ni pour l'admission ni
+pour la pédagogie. Un responsable pédagogique n'avait donc aucun moyen d'ouvrir un
+compte formateur, alors que c'est lui qui les affecte ensuite aux cours.
+
+**Corrigé** : `POST /api/pedagogie/formateurs` (nouveau, dans `PedagogieController`,
+sous la règle `RESPONSABLE_PEDAGOGIQUE` déjà en place), qui réutilise
+`FormateurService.createFormateur` sans dupliquer la logique d'unicité déjà
+présente. Écran de création ajouté (`pedagogie-formateurs`), sur le même patron que
+la page Étudiants existante. Le compte créé n'apparaît toujours dans **aucun**
+espace formateur tant qu'il n'est pas rattaché à un cours (`cours_formateur`,
+CLAUDE.md §3) — non automatisé ici (rattacher un formateur neuf à un cours est une
+décision pédagogique, pas mécanique), mais explicitement rappelé par le message de
+succès de l'écran de création.
+
+### 33. Un mot de passe généré n'était jamais communiqué à son titulaire
+
+Une fois généré, encore fallait-il le transmettre. `NotificationService.envoyerEmail`
+(déjà utilisé côté recrutement) est réutilisé tel quel, sans étendre le système de
+templates `NotificationTemplate`/`EnumTypeNotification` — ce système répond à « quel
+modèle activable pour quel événement de candidature », une question différente
+d'un envoi ponctuel d'identifiants. Le mot de passe en clair n'apparaît **que**
+dans le corps de l'email : jamais dans la réponse HTTP de création (vérifié sur les
+trois endpoints : `EtudiantSuiviDto`, la réponse `{id, message}` de la création
+formateur, et le compte-rendu d'import CSV), ni dans les journaux applicatifs (le
+`catch` autour de l'envoi ne logue que `exception.getMessage()`). Une panne SMTP
+n'annule jamais la création du compte : elle est seulement journalisée, le compte
+reste utilisable — c'est la même protection que celle apportée au point 30
+ci-dessus pour la confirmation de paiement.
+
+### 34. Forum et roster scopés à la promotion : absents, jamais construits sur `cours_promotion`
+
+Le forum ne connaissait que deux granularités : par cours (`ForumSujet.cours`) et
+par portée globale (`ForumSujet.portee`, ETUDIANT/ALUMNI, migration V13). Aucune
+notion de promotion. Migration `V19` ajoute une FK `promotion_id` **additive**, à
+côté de `cours_id` et `portee` — jamais en remplacement, et les deux rattachements
+restent mutuellement exclusifs sur un même sujet (appliqué côté serveur dans
+`ForumController#ouvrirSujet`, qui refuse un `coursId` et `pourMaPromotion` en même
+temps). Choix déterminant : la promotion utilisée est **toujours** celle de
+l'auteur, lue côté serveur depuis `Etudiant.getPromotion()` — jamais un identifiant
+envoyé par le client (le DTO ne porte d'ailleurs qu'un booléen `pourMaPromotion`,
+pas un `promotionId`), pour ne pas reproduire le précédent `cours_promotion`
+(CLAUDE.md §3, deux chaînes concurrentes ayant fini par diverger).
+
+`ForumVisibiliteService` (déjà le point de passage unique après le correctif du
+point 14 de ce journal) a été étendu plutôt que contourné : la résolution reste
+`cours != null` (inchangé) → sinon `promotion != null` (nouveau : membre de la
+promotion) → sinon `portee` décide (inchangé). Le même correctif s'applique aux
+deux contrôleurs qui servent `ForumSujet` (`ForumController` et
+`EspaceEtudiantController`), reproduisant le principe déjà posé au point 14 : ne
+jamais laisser un second contrôleur relire `ForumSujet` sans passer par ce service.
+
+Suppression d'une promotion : `forum_sujets.promotion_id` n'a **aucun**
+`ON DELETE CASCADE` (choix identique à `cours_id`) — sans nettoyage, supprimer une
+promotion vidée de ses étudiants mais ayant encore un fil de forum aurait échoué
+sur une violation de clé étrangère brute, une erreur SQL non traduite en message
+utilisateur. `PedagogieScolariteController#supprimerPromotion` détache désormais
+messages, mentions puis sujets avant de supprimer la promotion — même geste que
+`PedagogieController#supprimerCours` fait déjà pour un cours.
+
+### 35. Roster de promotion : nouvel endpoint, minimisation des données appliquée
+
+`GET /api/espace-etudiant/scolarite/ma-promotion/etudiants`, adossé à
+`EtudiantRepository.findByPromotionId` déjà existant (utilisé par la délivrance de
+relevés en masse). Ne renvoie que nom et matricule (`CamaradeDto`) — jamais l'email
+ni le téléphone, même précédent que la vérification de certificat (point 4 de ce
+journal). Aucun paramètre d'entrée : la promotion vient uniquement de
+`Etudiant.getPromotion()` de l'appelant, comme `GET /ma-promotion` déjà en place —
+il n'existe donc aucune façon de demander le roster d'une autre promotion que la
+sienne.
+
+### 36. Écarts relevés mais non traités dans ce passage
+
+- Le rattachement d'un formateur nouvellement créé à un ou plusieurs cours n'est
+  pas chaîné dans l'écran de création (`PUT /cours/{id}/formateurs` reste une
+  étape séparée, sur l'écran Cours). Un enchaînement guidé (« créer puis affecter
+  en une seule visite ») améliorerait l'ergonomie mais élargirait la story
+  au-delà de ce qui a été demandé.
+- Le badge `SujetDto.cours` renvoyé par `EspaceEtudiantController` (vue
+  formateur/personnel) affiche désormais « Promotion <libellé> » au lieu de
+  « Général » pour un sujet scopé promotion, mais le champ `module` reste vide
+  dans ce cas (il ne porte que le code d'un cours) — cohérent avec le comportement
+  déjà en place pour un sujet général, non traité comme une lacune propre à ce
+  correctif.
+- Aucun diagramme n'existait déjà pour `ForumSujet` dans `docs/uml/` ; la
+  documentation de la nouvelle FK `promotion_id` a été ajoutée directement dans
+  le javadoc de l'entité plutôt que dans un nouveau diagramme, ce module n'ayant
+  pas jusqu'ici de représentation UML dédiée à créer par cette seule story.

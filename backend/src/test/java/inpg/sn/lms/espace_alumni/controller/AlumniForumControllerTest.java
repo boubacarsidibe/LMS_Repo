@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.espace_etudiant.dto.ForumMessageCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.ForumSujetCreateRequest;
+import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.ForumMessage;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet;
@@ -66,7 +67,7 @@ class AlumniForumControllerTest {
     private ForumSujet sujetDe(Long id, PorteeForumSujet portee) {
         ForumSujet sujet = portee == PorteeForumSujet.ALUMNI
                 ? new ForumSujet("Titre", alumni, PorteeForumSujet.ALUMNI)
-                : new ForumSujet("Titre", null, alumni);
+                : new ForumSujet("Titre", (Cours) null, alumni);
         setId(sujet, id);
         return sujet;
     }
@@ -86,7 +87,7 @@ class AlumniForumControllerTest {
     void ouvrirSujet_toujours_general_et_alumni() {
         when(utilisateurCourant.utilisateur(authentication)).thenReturn(alumni);
         when(sujetRepository.save(any(ForumSujet.class))).thenAnswer(a -> a.getArgument(0));
-        ForumSujetCreateRequest requete = new ForumSujetCreateRequest("Retrouvailles", 999L, "On se retrouve ?");
+        ForumSujetCreateRequest requete = new ForumSujetCreateRequest("Retrouvailles", 999L, false, "On se retrouve ?");
 
         ResponseEntity<?> reponse = controller.ouvrirSujet(requete, authentication);
 

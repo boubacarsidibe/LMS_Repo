@@ -18,6 +18,7 @@ import inpg.sn.lms.auth.entity.Etudiant;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet;
+import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 
 /**
@@ -84,13 +85,43 @@ class ForumVisibiliteServiceTest {
     }
 
     @Test
-    @DisplayName("Un étudiant sans cours autorisé se replie sur les sujets généraux de l'espace étudiant")
+    @DisplayName("Un étudiant sans cours autorisé ni promotion se replie sur les sujets généraux")
     void etudiant_sans_cours_voit_les_generaux() {
         Etudiant etudiant = etudiant();
         when(utilisateurCourant.etudiant(authentication)).thenReturn(etudiant);
         when(habilitation.idsCoursAutorises(etudiant)).thenReturn(List.of());
         List<ForumSujet> attendus = List.of(new ForumSujet());
-        when(sujetRepository.findGeneraux()).thenReturn(attendus);
+        when(sujetRepository.findGeneraux(null)).thenReturn(attendus);
+
+        assertThat(service.sujetsVisibles(authentication)).isSameAs(attendus);
+    }
+
+    @Test
+    @DisplayName("Un étudiant sans cours mais avec une promotion voit aussi les sujets de sa promotion")
+    void etudiant_sans_cours_mais_avec_promotion() {
+        Etudiant etudiant = etudiant();
+        Promotion promotion = new Promotion();
+        setId(promotion, 3L);
+        etudiant.setPromotion(promotion);
+        when(utilisateurCourant.etudiant(authentication)).thenReturn(etudiant);
+        when(habilitation.idsCoursAutorises(etudiant)).thenReturn(List.of());
+        List<ForumSujet> attendus = List.of(new ForumSujet());
+        when(sujetRepository.findGeneraux(3L)).thenReturn(attendus);
+
+        assertThat(service.sujetsVisibles(authentication)).isSameAs(attendus);
+    }
+
+    @Test
+    @DisplayName("Un étudiant avec des cours transmet aussi sa promotion à la requête de visibilité")
+    void etudiant_avec_cours_transmet_sa_promotion() {
+        Etudiant etudiant = etudiant();
+        Promotion promotion = new Promotion();
+        setId(promotion, 3L);
+        etudiant.setPromotion(promotion);
+        when(utilisateurCourant.etudiant(authentication)).thenReturn(etudiant);
+        when(habilitation.idsCoursAutorises(etudiant)).thenReturn(List.of(1L, 2L));
+        List<ForumSujet> attendus = List.of(new ForumSujet());
+        when(sujetRepository.findVisiblesPour(List.of(1L, 2L), 3L)).thenReturn(attendus);
 
         assertThat(service.sujetsVisibles(authentication)).isSameAs(attendus);
     }
@@ -121,6 +152,36 @@ class ForumVisibiliteServiceTest {
 
         lenient().when(utilisateurCourant.etudiant(authentication)).thenReturn(etudiant);
         when(habilitation.estAutorise(9L, etudiant)).thenReturn(false);
+
+        assertThat(service.estVisible(sujet, authentication)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Un sujet de promotion est visible d'un étudiant de cette promotion")
+    void sujet_de_promotion_visible_pour_un_membre() {
+        Etudiant etudiant = etudiant();
+        Promotion promotion = new Promotion();
+        setId(promotion, 3L);
+        etudiant.setPromotion(promotion);
+        ForumSujet sujet = new ForumSujet("Sortie de promotion", promotion, null);
+
+        when(utilisateurCourant.etudiant(authentication)).thenReturn(etudiant);
+
+        assertThat(service.estVisible(sujet, authentication)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Un sujet de promotion n'est jamais visible d'un étudiant d'une autre promotion")
+    void sujet_de_promotion_invisible_pour_un_tiers() {
+        Etudiant etudiant = etudiant();
+        Promotion maPromotion = new Promotion();
+        setId(maPromotion, 5L);
+        etudiant.setPromotion(maPromotion);
+        Promotion autrePromotion = new Promotion();
+        setId(autrePromotion, 3L);
+        ForumSujet sujet = new ForumSujet("Sortie de promotion", autrePromotion, null);
+
+        when(utilisateurCourant.etudiant(authentication)).thenReturn(etudiant);
 
         assertThat(service.estVisible(sujet, authentication)).isFalse();
     }

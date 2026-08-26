@@ -28,6 +28,13 @@ export interface MaPromotion {
   message?: string;
 }
 
+/** Camarade de promotion — nom et matricule seulement, jamais l'email ni le téléphone. */
+export interface Camarade {
+  id: number;
+  nom: string;
+  matricule: string | null;
+}
+
 export interface CoursEtudiant {
   id: number;
   code: string;
@@ -81,6 +88,8 @@ export interface ForumSujet {
   titre: string;
   coursId: number | null;
   coursTitre: string | null;
+  promotionId: number | null;
+  promotionLibelle: string | null;
   auteur: string;
   dateCreation: string;
   epingle: boolean;

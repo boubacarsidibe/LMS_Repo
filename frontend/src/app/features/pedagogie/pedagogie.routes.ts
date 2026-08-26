@@ -50,6 +50,13 @@ export const PEDAGOGIE_ROUTES: Routes = [
           ),
       },
       {
+        path: 'formateurs',
+        loadComponent: () =>
+          import('./pages/formateurs/pedagogie-formateurs.component').then(
+            (m) => m.PedagogieFormateursComponent
+          ),
+      },
+      {
         path: 'releves',
         loadComponent: () =>
           import('./pages/releves/pedagogie-releves.component').then(

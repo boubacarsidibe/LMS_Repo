@@ -52,7 +52,10 @@ public class ForumVisibiliteService {
             return sujetRepository.findVisiblesEtudiantFormateur();
         }
         List<Long> coursIds = habilitation.idsCoursAutorises(etudiant);
-        return coursIds.isEmpty() ? sujetRepository.findGeneraux() : sujetRepository.findVisiblesPour(coursIds);
+        Long promotionId = etudiant.getPromotion() == null ? null : etudiant.getPromotion().getId();
+        return coursIds.isEmpty()
+                ? sujetRepository.findGeneraux(promotionId)
+                : sujetRepository.findVisiblesPour(coursIds, promotionId);
     }
 
     /** Un sujet donné est-il accessible au connecté ? */
@@ -64,13 +67,22 @@ public class ForumVisibiliteService {
             // son identifiant.
             return false;
         }
-        if (sujet.getCours() == null) {
-            return true;
+        if (sujet.getCours() != null) {
+            Etudiant etudiant = utilisateurCourant.etudiant(authentication);
+            if (etudiant == null) {
+                return true;
+            }
+            return habilitation.estAutorise(sujet.getCours().getId(), etudiant);
         }
-        Etudiant etudiant = utilisateurCourant.etudiant(authentication);
-        if (etudiant == null) {
-            return true;
+        if (sujet.getPromotion() != null) {
+            Etudiant etudiant = utilisateurCourant.etudiant(authentication);
+            if (etudiant == null) {
+                // Formateur ou personnel : même règle que pour un sujet de cours.
+                return true;
+            }
+            return etudiant.getPromotion() != null
+                    && etudiant.getPromotion().getId().equals(sujet.getPromotion().getId());
         }
-        return habilitation.estAutorise(sujet.getCours().getId(), etudiant);
+        return true;
     }
 }

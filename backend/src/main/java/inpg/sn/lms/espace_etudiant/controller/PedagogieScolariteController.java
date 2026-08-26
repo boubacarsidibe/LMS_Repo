@@ -1,6 +1,5 @@
 package inpg.sn.lms.espace_etudiant.controller;
 
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +60,9 @@ import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumMentionRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
@@ -101,6 +103,9 @@ public class PedagogieScolariteController {
     private final MatriculeService matriculeService;
     private final CertificatService certificatService;
     private final CoursRepository coursRepository;
+    private final ForumSujetRepository forumSujetRepository;
+    private final ForumMessageRepository forumMessageRepository;
+    private final ForumMentionRepository forumMentionRepository;
     private final NotificationService notificationService;
     private final RetourEvaluationRepository retourRepository;
     private final ReleveNotesService releveNotesService;
@@ -117,6 +122,8 @@ public class PedagogieScolariteController {
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
             EtudiantService etudiantService, MatriculeService matriculeService,
             CertificatService certificatService, CoursRepository coursRepository,
+            ForumSujetRepository forumSujetRepository, ForumMessageRepository forumMessageRepository,
+            ForumMentionRepository forumMentionRepository,
             NotificationService notificationService, RetourEvaluationRepository retourRepository,
             ReleveNotesService releveNotesService, ReleveDelivranceService releveDelivranceService,
             CandidatRepository candidatRepository, AlumniProfilRepository alumniProfilRepository,
@@ -130,6 +137,9 @@ public class PedagogieScolariteController {
         this.matriculeService = matriculeService;
         this.certificatService = certificatService;
         this.coursRepository = coursRepository;
+        this.forumSujetRepository = forumSujetRepository;
+        this.forumMessageRepository = forumMessageRepository;
+        this.forumMentionRepository = forumMentionRepository;
         this.notificationService = notificationService;
         this.retourRepository = retourRepository;
         this.releveNotesService = releveNotesService;
@@ -208,6 +218,11 @@ public class PedagogieScolariteController {
      * <p>Refusée si des étudiants y sont rattachés : la suppression les laisserait
      * sans promotion, donc sans aucun cours ni calendrier, sans que rien ne le
      * signale.
+     *
+     * <p>Les fils de forum scopés à cette promotion sont détachés avant : sans cela,
+     * la contrainte de clé étrangère {@code forum_sujets.promotion_id} ferait
+     * échouer la suppression avec une erreur SQL brute, comme c'était déjà le cas
+     * pour un cours avant que {@code supprimerCours} ne fasse ce même nettoyage.
      */
     @DeleteMapping("/promotions/{id}")
     @Transactional
@@ -221,6 +236,9 @@ public class PedagogieScolariteController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message",
                     inscrits + " étudiant(s) sont rattachés à cette promotion. Réaffectez-les avant de la supprimer."));
         }
+        forumMentionRepository.deleteByMessage_Sujet_PromotionId(id);
+        forumMessageRepository.deleteBySujet_PromotionId(id);
+        forumSujetRepository.deleteByPromotionId(id);
         promotionRepository.delete(promotion);
         return ResponseEntity.noContent().build();
     }
@@ -273,7 +291,14 @@ public class PedagogieScolariteController {
         return ResponseEntity.ok(etudiants.stream().map(this::toEtudiantDto).toList());
     }
 
-    /** Ouvre un compte étudiant et lui attribue son matricule. */
+    /**
+     * Ouvre un compte étudiant et lui attribue son matricule.
+     *
+     * <p>Le mot de passe est optionnel : laissé vide, {@link EtudiantService} en
+     * génère un et le réécrit dans {@code requete}, qui sert alors à l'envoyer par
+     * courriel au titulaire du compte. Un mot de passe saisi à la main n'est jamais
+     * envoyé par courriel — la personne qui l'a choisi le connaît déjà.
+     */
     @PostMapping("/etudiants")
     @Transactional
     public ResponseEntity<?> creerEtudiant(@RequestBody EtudiantDto requete) {
@@ -282,17 +307,34 @@ public class PedagogieScolariteController {
             return ResponseEntity.badRequest()
                     .body(Map.of("message", "Le nom, le prénom, l'identifiant et l'email sont requis."));
         }
-        if (estVide(requete.getPassword())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Un mot de passe initial est requis."));
-        }
+        boolean motDePasseGenere = estVide(requete.getPassword());
         try {
             Etudiant etudiant = etudiantService.createEtudiant(requete);
             matriculeService.attribuerSiAbsent(etudiant);
+            if (motDePasseGenere) {
+                envoyerIdentifiants(requete.getEmail(), requete.getUsername(), requete.getPassword());
+            }
             return ResponseEntity.status(HttpStatus.CREATED).body(toEtudiantDto(etudiantRepository.save(etudiant)));
         } catch (IllegalStateException erreur) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", erreur.getMessage()));
+        }
+    }
+
+    /**
+     * Transmet les identifiants d'un compte nouvellement créé. Une panne SMTP ne
+     * doit pas faire échouer la création elle-même — le compte reste utilisable,
+     * seul l'envoi manque, d'où le rattrapage plutôt qu'une exception propagée.
+     */
+    private void envoyerIdentifiants(String email, String identifiant, String motDePasse) {
+        try {
+            notificationService.envoyerEmail(email, "Votre compte INPG LMS",
+                    "Un compte vient de vous être créé sur la plateforme INPG LMS.\n\n"
+                            + "Identifiant : " + identifiant + "\n"
+                            + "Mot de passe provisoire : " + motDePasse + "\n\n"
+                            + "Merci de le modifier dès votre première connexion.");
+        } catch (Exception exception) {
+            log.error("Échec de l'envoi des identifiants à {} : {}", email, exception.getMessage());
         }
     }
 
@@ -400,8 +442,9 @@ public class PedagogieScolariteController {
             dto.setEmail(email);
             dto.setTelephone(telephone);
             dto.setUsername(email.split("@")[0]);
-            // Mot de passe provisoire : l'etudiant le changera a sa premiere connexion.
-            dto.setPassword("INPG@" + LocalDate.now().getYear());
+            // Mot de passe laisse vide : EtudiantService en genere un propre a chaque
+            // compte plutot qu'un mot de passe partage entre tous les importes, envoye
+            // par courriel ci-dessous.
             try {
                 Etudiant etudiant = etudiantService.createEtudiant(dto);
                 if (promotion != null) {
@@ -409,6 +452,7 @@ public class PedagogieScolariteController {
                 }
                 matriculeService.attribuerSiAbsent(etudiant);
                 etudiantRepository.save(etudiant);
+                envoyerIdentifiants(dto.getEmail(), dto.getUsername(), dto.getPassword());
                 crees++;
             } catch (Exception exception) {
                 log.warn("Import etudiant refuse ligne {} : {}", i + 1, exception.getMessage());

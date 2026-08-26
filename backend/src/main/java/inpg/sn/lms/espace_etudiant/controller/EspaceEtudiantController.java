@@ -1712,13 +1712,24 @@ public class EspaceEtudiantController {
                 initialsFromFullName(auteurNom),
                 AVATAR_BACKGROUNDS[paletteIndex],
                 AVATAR_TEXTS[paletteIndex],
-                sujet.getCours() != null ? sujet.getCours().getTitre() : "Général",
+                libelleRattachement(sujet),
                 sujet.getCours() != null ? sujet.getCours().getNom() : "",
                 sujet.getTitre(),
                 apercu,
                 sujet.getDateCreation().format(DATE_HEURE_FORUM),
                 statutLisible(sujet),
                 messages);
+    }
+
+    /** Rattachement affiché en tête de sujet : cours, promotion, ou salon général. */
+    private String libelleRattachement(ForumSujet sujet) {
+        if (sujet.getCours() != null) {
+            return sujet.getCours().getTitre();
+        }
+        if (sujet.getPromotion() != null) {
+            return "Promotion " + sujet.getPromotion().getLibelle();
+        }
+        return "Général";
     }
 
     /**

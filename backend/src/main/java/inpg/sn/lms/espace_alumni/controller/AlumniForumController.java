@@ -177,6 +177,8 @@ public class AlumniForumController {
                 sujet.getTitre(),
                 null,
                 null,
+                null,
+                null,
                 utilisateurCourant.nomAffiche(sujet.getAuteur()),
                 sujet.getDateCreation(),
                 sujet.isEpingle(),
