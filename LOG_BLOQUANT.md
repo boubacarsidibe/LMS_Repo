@@ -976,3 +976,44 @@ vers des écrans qui n'en ont pas besoin. Deux nouveaux DTO (`EtudiantDetailDto`
 `FormateurDetailDto`) et deux nouveaux endpoints (`GET /pedagogie/etudiants/{id}`,
 `GET /pedagogie/formateurs/{id}`) portent ces informations, réservés à la fiche
 ouverte au clic sur une ligne du répertoire.
+
+## 2026-08-26 — Reprise de l'epic « accréditation multi-évaluateurs » (TDR §F)
+
+### 39. Décision collégiale à plusieurs évaluateurs : consolidation minimale, pas de vote
+
+Le TDR §F demande que « le processus d'accréditation reste cohérent quand plusieurs
+évaluateurs interviennent sur une même demande », sans préciser de règle de
+consolidation (majorité, unanimité, veto…). Plutôt qu'inventer une règle de vote non
+demandée, choix du patron déjà standard pour ce type de processus d'évaluation
+collégiale (relecture par les pairs d'un article, comité d'admission) : chaque
+évaluateur dépose un avis indépendant (`FAVORABLE`/`DEFAVORABLE`, upsertable — un
+second dépôt du même évaluateur met à jour le premier, jamais n'en crée un second,
+même contrainte d'unicité `(demande, evaluateur)` que `retour_evaluation`
+`(étudiant, cours)`, V7), mais la décision finale (`accrediter`/`rejeter`) reste un
+acte explicite d'un seul évaluateur — désormais **subordonné** à l'existence d'au
+moins un avis déposé (`avisRepository.findByDemandeIdOrderByDateAvisAsc(id)` non
+vide, sinon 400).
+
+Délibérément **pas** de majorité automatique ni de blocage tant que tous les
+évaluateurs assignés n'ont pas répondu : rien dans le modèle actuel ne définit
+« l'ensemble des évaluateurs assignés » à une demande (n'importe quel compte
+`ROLE_EVALUATEUR_ACCREDITATION` peut prendre en charge n'importe quelle demande,
+patron déjà en place avant cette story) — une règle de quorum aurait donc dû
+inventer aussi cette notion d'assignation, hors du périmètre demandé. Si un besoin
+réel de consolidation automatique (majorité, quorum, veto d'un rôle senior) se
+confirme, c'est une décision de modèle à instruire à part, qui suppose d'abord de
+définir qui est « les » évaluateurs d'une demande donnée.
+
+### 40. DTO évaluateur séparé du DTO partagé avec l'école : avis jamais divulgués avant décision
+
+`EcoleAccreditationController` et `EvaluateurAccreditationController` construisaient
+jusqu'ici le même DTO partagé (`DemandeAccreditationDto`). Y ajouter la liste des
+avis aurait fait fuiter les délibérations individuelles des évaluateurs vers l'école
+candidate, avant même la décision finale — un évaluateur pourrait ainsi voir son
+nom et son avis défavorable exposés à l'établissement qu'il évalue, avant que
+quiconque n'ait tranché. Nouveau DTO dédié `DemandeAccreditationEvaluateurDto`
+(mêmes champs que le DTO partagé, plus `List<AvisAccreditationDto> avis`), retourné
+uniquement par `EvaluateurAccreditationController` ; le DTO partagé et l'écran école
+restent strictement inchangés. Même principe côté frontend : `DemandeAccreditation`
+(modèle partagé) n'est pas modifié, un nouveau type `DemandeAccreditationEvaluateur`
+l'étend avec `avis`, utilisé uniquement par `EvaluateurAccreditationService`.

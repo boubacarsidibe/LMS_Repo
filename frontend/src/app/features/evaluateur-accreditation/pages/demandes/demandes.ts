@@ -2,7 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  DemandeAccreditation,
+  AvisValeur,
+  DemandeAccreditationEvaluateur,
+  LIBELLES_AVIS,
   LIBELLES_STATUT_DEMANDE,
   LIBELLES_TYPE_DOCUMENT,
   StatutDemandeAccreditation,
@@ -10,6 +12,7 @@ import {
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { MediaProtegeService } from '../../../espace-etudiants/services/media-protege.service';
+import { Auth } from '../../../../core/auth/services/authService';
 import { EvaluateurAccreditationService } from '../../services/evaluateur-accreditation.service';
 
 /**
@@ -139,36 +142,99 @@ import { EvaluateurAccreditationService } from '../../services/evaluateur-accred
             </button>
           </div>
 
-          <div *ngIf="selection.statut === 'EN_COURS_EVALUATION'" class="pt-3 border-t border-outline-variant space-y-3">
+          <div *ngIf="selection.statut === 'EN_COURS_EVALUATION'" class="pt-3 border-t border-outline-variant space-y-4">
             <div>
-              <label for="commentaire" class="font-label-md text-label-md text-on-surface">Commentaire / motif</label>
-              <textarea
-                id="commentaire"
-                [(ngModel)]="commentaire"
-                name="commentaire"
-                rows="3"
-                placeholder="Obligatoire pour un rejet, facultatif pour une accréditation"
-                class="mt-1 w-full p-3 rounded-lg bg-surface-container-low border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors resize-y"
-              ></textarea>
+              <h3 class="font-label-md text-label-md text-on-surface">Avis des évaluateurs</h3>
+              <p *ngIf="selection.avis.length === 0" class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                Aucun avis déposé pour l'instant.
+              </p>
+              <ul *ngIf="selection.avis.length > 0" class="space-y-2 mt-2">
+                <li
+                  *ngFor="let a of selection.avis"
+                  class="p-3 rounded-lg border font-body-sm text-body-sm"
+                  [ngClass]="a.avis === 'FAVORABLE' ? 'bg-success/10 border-success/30' : 'bg-error-container/40 border-error/30'"
+                >
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="font-label-sm text-label-sm text-on-surface">
+                      {{ a.evaluateurNom }}
+                      <span *ngIf="estMonAvis(a)" class="text-on-surface-variant">(vous)</span>
+                    </span>
+                    <span class="font-label-sm text-label-sm" [ngClass]="a.avis === 'FAVORABLE' ? 'text-success' : 'text-error'">
+                      {{ libellesAvis[a.avis] }}
+                    </span>
+                  </div>
+                  <p *ngIf="a.commentaire" class="text-on-surface-variant mt-1">{{ a.commentaire }}</p>
+                  <p class="text-on-surface-variant mt-1">{{ a.dateAvis | date: 'd MMM y, HH:mm' }}</p>
+                </li>
+              </ul>
             </div>
-            <p *ngIf="erreurDecision" class="font-body-sm text-body-sm text-error">{{ erreurDecision }}</p>
-            <div class="flex gap-3">
+
+            <div class="p-3 rounded-lg bg-surface-container-low space-y-2">
+              <label class="font-label-md text-label-md text-on-surface">
+                {{ monAvis ? 'Mettre à jour mon avis' : 'Déposer mon avis' }}
+              </label>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
+                  <input type="radio" name="avisValeur" [(ngModel)]="avisSaisi" value="FAVORABLE" class="accent-secondary" />
+                  Favorable
+                </label>
+                <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
+                  <input type="radio" name="avisValeur" [(ngModel)]="avisSaisi" value="DEFAVORABLE" class="accent-secondary" />
+                  Défavorable
+                </label>
+              </div>
+              <textarea
+                [(ngModel)]="avisCommentaire"
+                name="avisCommentaire"
+                rows="2"
+                placeholder="Commentaire (facultatif)"
+                class="w-full p-3 rounded-lg bg-surface-container-lowest border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors resize-y"
+              ></textarea>
+              <p *ngIf="erreurAvis" class="font-body-sm text-body-sm text-error">{{ erreurAvis }}</p>
               <button
                 type="button"
-                (click)="accrediter()"
-                [disabled]="decisionEnCours"
-                class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                (click)="deposerAvis()"
+                [disabled]="!avisSaisi || avisEnCours"
+                class="px-4 py-2 rounded-lg border border-secondary text-secondary font-label-md text-label-md hover:bg-secondary-container/30 transition-colors disabled:opacity-50"
               >
-                Accréditer
+                {{ avisEnCours ? 'Envoi…' : monAvis ? 'Mettre à jour mon avis' : 'Envoyer mon avis' }}
               </button>
-              <button
-                type="button"
-                (click)="rejeter()"
-                [disabled]="decisionEnCours"
-                class="px-4 py-2 rounded-lg bg-error text-on-error font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                Rejeter
-              </button>
+            </div>
+
+            <div class="pt-3 border-t border-outline-variant">
+              <div>
+                <label for="commentaire" class="font-label-md text-label-md text-on-surface">Commentaire / motif de la décision</label>
+                <textarea
+                  id="commentaire"
+                  [(ngModel)]="commentaire"
+                  name="commentaire"
+                  rows="3"
+                  placeholder="Obligatoire pour un rejet, facultatif pour une accréditation"
+                  class="mt-1 w-full p-3 rounded-lg bg-surface-container-low border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors resize-y"
+                ></textarea>
+              </div>
+              <p *ngIf="selection.avis.length === 0" class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+                Au moins un avis d'évaluateur est requis avant de statuer.
+              </p>
+              <p *ngIf="erreurDecision" class="font-body-sm text-body-sm text-error mt-2">{{ erreurDecision }}</p>
+              <div class="flex gap-3 mt-3">
+                <button
+                  type="button"
+                  (click)="accrediter()"
+                  [disabled]="decisionEnCours || selection.avis.length === 0"
+                  class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  Accréditer
+                </button>
+                <button
+                  type="button"
+                  (click)="rejeter()"
+                  [disabled]="decisionEnCours || selection.avis.length === 0"
+                  class="px-4 py-2 rounded-lg bg-error text-on-error font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  Rejeter
+                </button>
+              </div>
             </div>
           </div>
 
@@ -184,20 +250,27 @@ import { EvaluateurAccreditationService } from '../../services/evaluateur-accred
 export class EvaluateurDemandesComponent implements OnInit {
   private evaluateurService = inject(EvaluateurAccreditationService);
   private mediaProtege = inject(MediaProtegeService);
+  private auth = inject(Auth);
 
-  demandes: DemandeAccreditation[] = [];
+  demandes: DemandeAccreditationEvaluateur[] = [];
   /** Copie non filtrée, uniquement pour les indicateurs : `demandes` varie avec `filtreStatut`. */
-  toutesDemandes: DemandeAccreditation[] = [];
-  selection: DemandeAccreditation | null = null;
+  toutesDemandes: DemandeAccreditationEvaluateur[] = [];
+  selection: DemandeAccreditationEvaluateur | null = null;
   chargement = true;
   filtreStatut: StatutDemandeAccreditation | undefined;
   libellesStatut = LIBELLES_STATUT_DEMANDE;
   libellesType = LIBELLES_TYPE_DOCUMENT;
+  libellesAvis = LIBELLES_AVIS;
   statuts: StatutDemandeAccreditation[] = ['SOUMISE', 'EN_COURS_EVALUATION', 'ACCREDITE', 'REJETE'];
 
   commentaire = '';
   decisionEnCours = false;
   erreurDecision = '';
+
+  avisSaisi: AvisValeur | null = null;
+  avisCommentaire = '';
+  avisEnCours = false;
+  erreurAvis = '';
 
   ngOnInit(): void {
     this.charger();
@@ -224,7 +297,7 @@ export class EvaluateurDemandesComponent implements OnInit {
   }
 
   /** Une décision (accréditer/rejeter) change le statut d'une demande : la resynchroniser côté indicateurs aussi. */
-  private synchroniserCompteurs(demande: DemandeAccreditation): void {
+  private synchroniserCompteurs(demande: DemandeAccreditationEvaluateur): void {
     this.toutesDemandes = this.toutesDemandes.map((d) => (d.id === demande.id ? demande : d));
   }
 
@@ -235,10 +308,47 @@ export class EvaluateurDemandesComponent implements OnInit {
     this.mediaProtege.ouvrir(this.evaluateurService.urlFichierPiece(this.selection.id, pieceId));
   }
 
-  selectionner(demande: DemandeAccreditation): void {
+  selectionner(demande: DemandeAccreditationEvaluateur): void {
     this.selection = demande;
     this.commentaire = '';
     this.erreurDecision = '';
+    this.reinitialiserFormulaireAvis();
+  }
+
+  /** L'avis déjà déposé par l'évaluateur connecté sur la demande sélectionnée, s'il existe. */
+  get monAvis() {
+    const monId = this.auth.currentUser()?.id;
+    return this.selection?.avis.find((a) => a.evaluateurId === monId) ?? null;
+  }
+
+  estMonAvis(avis: { evaluateurId: number }): boolean {
+    return avis.evaluateurId === this.auth.currentUser()?.id;
+  }
+
+  private reinitialiserFormulaireAvis(): void {
+    const mien = this.monAvis;
+    this.avisSaisi = mien?.avis ?? null;
+    this.avisCommentaire = mien?.commentaire ?? '';
+    this.erreurAvis = '';
+  }
+
+  deposerAvis(): void {
+    if (!this.selection || !this.avisSaisi || this.avisEnCours) {
+      return;
+    }
+    this.avisEnCours = true;
+    this.erreurAvis = '';
+    this.evaluateurService.deposerAvis(this.selection.id, this.avisSaisi, this.avisCommentaire.trim() || null).subscribe({
+      next: (demande) => {
+        this.avisEnCours = false;
+        this.remplacer(demande);
+        this.reinitialiserFormulaireAvis();
+      },
+      error: (e) => {
+        this.avisEnCours = false;
+        this.erreurAvis = e?.error?.message || "L'avis n'a pas pu être enregistré.";
+      },
+    });
   }
 
   prendreEnCharge(): void {
@@ -291,7 +401,7 @@ export class EvaluateurDemandesComponent implements OnInit {
     });
   }
 
-  private remplacer(demande: DemandeAccreditation): void {
+  private remplacer(demande: DemandeAccreditationEvaluateur): void {
     this.demandes = this.demandes.map((d) => (d.id === demande.id ? demande : d));
     this.synchroniserCompteurs(demande);
     this.selection = demande;
