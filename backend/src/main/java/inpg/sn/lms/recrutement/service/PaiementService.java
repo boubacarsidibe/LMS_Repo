@@ -180,7 +180,15 @@ public class PaiementService {
                     ? candidature.getCandidat().getUser().getEmail()
                     : null;
             if (emailCandidat != null) {
-                notificationService.notifierPaiementSucces(emailCandidat, numeroDossier);
+                // Protege comme l'email a l'admission juste apres : une panne SMTP ne doit
+                // pas faire echouer (et annuler, la methode etant @Transactional) la
+                // confirmation du paiement elle-meme.
+                try {
+                    notificationService.notifierPaiementSucces(emailCandidat, numeroDossier);
+                } catch (Exception e) {
+                    log.error("Échec de l'envoi de l'email de confirmation de paiement au candidat {} : {}",
+                            emailCandidat, e.getMessage(), e);
+                }
             }
             notificationCandidatService.creerNotification(candidature.getCandidat().getId(),
                     "Le paiement des frais de dossier pour la candidature n°" + numeroDossier + " est confirmé.",

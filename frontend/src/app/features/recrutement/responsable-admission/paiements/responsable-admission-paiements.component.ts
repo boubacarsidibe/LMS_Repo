@@ -21,6 +21,7 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
   errorMessage = '';
   recherche = '';
   filtreStatut: 'TOUS' | 'EN_ATTENTE' | 'SUCCES' = 'TOUS';
+  idEnCours: number | null = null;
 
   relanceEnCours = false;
   relanceMessage = '';
@@ -105,5 +106,37 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
 
   get nbEnAttente(): number {
     return this.paiements.filter((p) => p.statut === 'EN_ATTENTE').length;
+  }
+
+  valider(p: PaiementResponse): void {
+    if (this.idEnCours) return;
+    this.idEnCours = p.id;
+    this.recrutementService.simulerSuccesPaiement(p.id).subscribe({
+      next: (maj) => {
+        p.statut = maj.statut;
+        p.datePaiement = maj.datePaiement;
+        this.idEnCours = null;
+      },
+      error: () => {
+        this.idEnCours = null;
+        this.errorMessage = 'Échec de la validation du paiement.';
+      },
+    });
+  }
+
+  rejeter(p: PaiementResponse): void {
+    if (this.idEnCours) return;
+    const motif = prompt('Motif du rejet (optionnel) :') || undefined;
+    this.idEnCours = p.id;
+    this.recrutementService.marquerPaiementEnEchec(p.id, motif).subscribe({
+      next: (maj) => {
+        p.statut = maj.statut;
+        this.idEnCours = null;
+      },
+      error: () => {
+        this.idEnCours = null;
+        this.errorMessage = 'Échec du rejet du paiement.';
+      },
+    });
   }
 }

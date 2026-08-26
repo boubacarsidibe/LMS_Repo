@@ -84,6 +84,7 @@
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Montant</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Action</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-outline-variant">
@@ -100,6 +101,19 @@
                   [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-surface-container text-on-surface-variant'">
               {{ p.statut === 'SUCCES' ? 'Réussi' : 'En attente' }}
             </span>
+          </td>
+          <td class="p-4">
+            <div class="flex items-center gap-2" *ngIf="p.statut === 'EN_ATTENTE'; else aucuneAction">
+              <button type="button" (click)="valider(p)" [disabled]="idEnCours === p.id"
+                      class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm disabled:opacity-50">
+                Valider
+              </button>
+              <button type="button" (click)="rejeter(p)" [disabled]="idEnCours === p.id"
+                      class="px-3 py-1.5 rounded-lg border border-outline-variant text-error font-label-sm text-label-sm disabled:opacity-50">
+                Rejeter
+              </button>
+            </div>
+            <ng-template #aucuneAction><span class="text-on-surface-variant text-body-sm font-body-sm">—</span></ng-template>
           </td>
         </tr>
       </tbody>
