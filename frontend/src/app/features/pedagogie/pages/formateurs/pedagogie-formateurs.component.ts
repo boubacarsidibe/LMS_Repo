@@ -67,7 +67,12 @@ export class PedagogieFormateursComponent implements OnInit {
   }
 
   get saisieValide(): boolean {
-    return !!this.saisie.nom.trim() && !!this.saisie.prenom.trim() && !!this.saisie.email.trim();
+    return (
+      !!this.saisie.nom.trim() &&
+      !!this.saisie.prenom.trim() &&
+      !!this.saisie.email.trim() &&
+      !!this.saisie.telephone?.trim()
+    );
   }
 
   creer(): void {

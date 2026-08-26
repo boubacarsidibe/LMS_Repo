@@ -115,7 +115,8 @@ export class PedagogieEtudiantsComponent implements OnInit {
       !!this.saisie.nom.trim() &&
       !!this.saisie.prenom.trim() &&
       !!this.saisie.email.trim() &&
-      !!this.saisie.password.trim()
+      !!this.saisie.password.trim() &&
+      !!this.saisie.telephone?.trim()
     );
   }
 

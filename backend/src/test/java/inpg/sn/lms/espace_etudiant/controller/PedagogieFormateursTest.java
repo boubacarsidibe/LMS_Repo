@@ -87,6 +87,7 @@ class PedagogieFormateursTest {
         dto.setEmail("fatou.ndiaye@inpg.sn");
         dto.setUsername("fndiaye");
         dto.setPassword(password);
+        dto.setTelephone("770000000");
         return dto;
     }
 
@@ -95,7 +96,18 @@ class PedagogieFormateursTest {
     void champs_requis_manquants_est_refuse() {
         FormateurDto dto = new FormateurDto();
         dto.setNom("Ndiaye");
-        // prenom, email, username manquants
+        // prenom, email, username, telephone manquants
+
+        ResponseEntity<?> reponse = controller.creerFormateur(dto);
+
+        assertThat(reponse.getStatusCode().value()).isEqualTo(400);
+    }
+
+    @Test
+    @DisplayName("Téléphone manquant : 400, aucune création tentée (Formateur.telephone est NOT NULL en base)")
+    void telephone_manquant_est_refuse() {
+        FormateurDto dto = requeteValide("motdepasse");
+        dto.setTelephone(null);
 
         ResponseEntity<?> reponse = controller.creerFormateur(dto);
 

@@ -67,6 +67,7 @@ import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
+import inpg.sn.lms.espace_etudiant.service.EtudiantImportService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
 import inpg.sn.lms.espace_etudiant.service.RapportQualitePdfService;
 import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
@@ -101,6 +102,7 @@ public class PedagogieScolariteController {
     private final EtudiantRepository etudiantRepository;
     private final EtudiantService etudiantService;
     private final MatriculeService matriculeService;
+    private final EtudiantImportService etudiantImportService;
     private final CertificatService certificatService;
     private final CoursRepository coursRepository;
     private final ForumSujetRepository forumSujetRepository;
@@ -121,6 +123,7 @@ public class PedagogieScolariteController {
     public PedagogieScolariteController(PromotionRepository promotionRepository,
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
             EtudiantService etudiantService, MatriculeService matriculeService,
+            EtudiantImportService etudiantImportService,
             CertificatService certificatService, CoursRepository coursRepository,
             ForumSujetRepository forumSujetRepository, ForumMessageRepository forumMessageRepository,
             ForumMentionRepository forumMentionRepository,
@@ -135,6 +138,7 @@ public class PedagogieScolariteController {
         this.etudiantRepository = etudiantRepository;
         this.etudiantService = etudiantService;
         this.matriculeService = matriculeService;
+        this.etudiantImportService = etudiantImportService;
         this.certificatService = certificatService;
         this.coursRepository = coursRepository;
         this.forumSujetRepository = forumSujetRepository;
@@ -303,9 +307,12 @@ public class PedagogieScolariteController {
     @Transactional
     public ResponseEntity<?> creerEtudiant(@RequestBody EtudiantDto requete) {
         if (estVide(requete.getUsername()) || estVide(requete.getEmail())
-                || estVide(requete.getNom()) || estVide(requete.getPrenom())) {
+                || estVide(requete.getNom()) || estVide(requete.getPrenom()) || estVide(requete.getTelephone())) {
+            // Le telephone n'est pas facultatif : Etudiant.telephone est NOT NULL UNIQUE en
+            // base (voir EtudiantImportService). Sans ce garde-fou, une omission se solde
+            // par une violation de contrainte non rattrapee, remontee en 500 sans message.
             return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Le nom, le prénom, l'identifiant et l'email sont requis."));
+                    .body(Map.of("message", "Le nom, le prénom, l'identifiant, l'email et le téléphone sont requis."));
         }
         boolean motDePasseGenere = estVide(requete.getPassword());
         try {
@@ -388,14 +395,22 @@ public class PedagogieScolariteController {
      * <p>Une rentree se compte en dizaines d'inscriptions : les saisir une a une est
      * le poste de travail le plus couteux de la scolarite. Colonnes attendues, dans
      * cet ordre : {@code nom;prenom;email;telephone}. La premiere ligne peut etre un
-     * en-tete, elle est ignoree si elle commence par « nom ».
+     * en-tete, elle est ignoree si elle commence par « nom ». Le telephone est
+     * requis comme les trois autres colonnes : la colonne {@code Etudiant.telephone}
+     * est {@code NOT NULL UNIQUE} en base, une ligne qui l'omet ferait donc echouer
+     * l'insertion.
      *
      * <p>L'import est TOLERANT : une ligne invalide n'interrompt pas les autres, et le
      * compte rendu enumere les rejets avec leur motif. Un import de trente etudiants
-     * ne doit pas echouer en bloc parce qu'une adresse est mal formee.
+     * ne doit pas echouer en bloc parce qu'une adresse est mal formee. Chaque ligne
+     * est creee dans sa propre transaction ({@link EtudiantImportService}) : sans
+     * cela, PostgreSQL abandonne toute la transaction de la requete des la premiere
+     * erreur SQL, et chaque ligne suivante echoue a son tour avec « current
+     * transaction is aborted » jusqu'a ce que Spring, trouvant la transaction
+     * marquee pour retour arriere, fasse echouer toute la requete en 500 — alors que
+     * ce controleur avait construit une reponse 200 normale.
      */
     @PostMapping("/etudiants/import")
-    @Transactional
     public ResponseEntity<?> importerEtudiants(@RequestBody Map<String, Object> corps) {
         String contenu = corps.get("csv") == null ? null : corps.get("csv").toString();
         if (estVide(contenu)) {
@@ -422,17 +437,17 @@ public class PedagogieScolariteController {
             if (i == 0 && ligne.toLowerCase().startsWith("nom")) {
                 continue;   // en-tete
             }
-            String[] cellules = ligne.split("[;,]");
-            if (cellules.length < 3) {
-                rejets.add("Ligne " + (i + 1) + " : nom, prenom et email sont requis.");
+            String[] cellules = ligne.split("[;,]", -1);
+            if (cellules.length < 4) {
+                rejets.add("Ligne " + (i + 1) + " : nom, prenom, email et telephone sont requis.");
                 continue;
             }
             String nom = cellules[0].trim();
             String prenom = cellules[1].trim();
             String email = cellules[2].trim();
-            String telephone = cellules.length > 3 ? cellules[3].trim() : null;
-            if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty()) {
-                rejets.add("Ligne " + (i + 1) + " : nom, prenom et email sont requis.");
+            String telephone = cellules[3].trim();
+            if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || telephone.isEmpty()) {
+                rejets.add("Ligne " + (i + 1) + " : nom, prenom, email et telephone sont requis.");
                 continue;
             }
 
@@ -446,12 +461,7 @@ public class PedagogieScolariteController {
             // compte plutot qu'un mot de passe partage entre tous les importes, envoye
             // par courriel ci-dessous.
             try {
-                Etudiant etudiant = etudiantService.createEtudiant(dto);
-                if (promotion != null) {
-                    etudiant.setPromotion(promotion);
-                }
-                matriculeService.attribuerSiAbsent(etudiant);
-                etudiantRepository.save(etudiant);
+                etudiantImportService.creerPourImport(dto, promotion);
                 envoyerIdentifiants(dto.getEmail(), dto.getUsername(), dto.getPassword());
                 crees++;
             } catch (Exception exception) {

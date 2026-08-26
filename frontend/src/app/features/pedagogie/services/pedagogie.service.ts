@@ -293,7 +293,8 @@ export interface EtudiantSaisie {
   email: string;
   nom: string;
   prenom: string;
-  telephone?: string | null;
+  /** Requis : Etudiant.telephone est NOT NULL UNIQUE en base. */
+  telephone: string;
 }
 
 /** `password` vide : le serveur en génère un et l'envoie par courriel. */
@@ -303,7 +304,8 @@ export interface FormateurSaisie {
   email: string;
   nom: string;
   prenom: string;
-  telephone?: string | null;
+  /** Requis : Formateur.telephone est NOT NULL UNIQUE en base. */
+  telephone: string;
 }
 
 export interface ResultatImport {

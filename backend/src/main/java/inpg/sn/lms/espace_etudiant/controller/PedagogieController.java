@@ -154,9 +154,13 @@ public class PedagogieController {
     @PostMapping("/formateurs")
     public ResponseEntity<?> creerFormateur(@RequestBody FormateurDto requete) {
         if (estVide(requete.getUsername()) || estVide(requete.getEmail())
-                || estVide(requete.getNom()) || estVide(requete.getPrenom())) {
+                || estVide(requete.getNom()) || estVide(requete.getPrenom()) || estVide(requete.getTelephone())) {
+            // Le telephone n'est pas facultatif : Formateur.telephone est NOT NULL UNIQUE
+            // en base. Sans ce garde-fou, une omission se solde par une violation de
+            // contrainte non rattrapee, remontee en 500 sans message (meme defaut que
+            // PedagogieScolariteController.creerEtudiant, voir EtudiantImportService).
             return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Le nom, le prénom, l'identifiant et l'email sont requis."));
+                    .body(Map.of("message", "Le nom, le prénom, l'identifiant, l'email et le téléphone sont requis."));
         }
         boolean motDePasseGenere = estVide(requete.getPassword());
         try {
