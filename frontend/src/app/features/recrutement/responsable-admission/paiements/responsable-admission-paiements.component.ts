@@ -108,6 +108,28 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
     return this.paiements.filter((p) => p.statut === 'EN_ATTENTE').length;
   }
 
+  /**
+   * Confirme le règlement d'un dossier impayé, quel que soit son état actuel (jamais
+   * initié, tentative en attente ou en échec) — c'est la seule action qui couvre les
+   * trois cas, le candidat ayant réglé hors ligne (espèces, virement).
+   */
+  confirmerDossier(c: CandidatureResponse): void {
+    if (this.idEnCours) return;
+    if (!confirm(`Confirmer le paiement des frais de dossier de ${c.candidatPrenom} ${c.candidatNom} (${c.numeroDossier}) ?`)) return;
+    this.idEnCours = c.id;
+    this.errorMessage = '';
+    this.recrutementService.enregistrerPaiementHorsLigne(c.id).subscribe({
+      next: () => {
+        this.idEnCours = null;
+        this.charger();
+      },
+      error: (e) => {
+        this.idEnCours = null;
+        this.errorMessage = e?.error?.message || 'Échec de la confirmation du paiement.';
+      },
+    });
+  }
+
   valider(p: PaiementResponse): void {
     if (this.idEnCours) return;
     this.idEnCours = p.id;

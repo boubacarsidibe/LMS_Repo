@@ -43,6 +43,7 @@
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut du dossier</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Paiement</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-outline-variant">
@@ -53,6 +54,17 @@
           </td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.statut }}</td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</td>
+          <td class="p-4 text-right" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              (click)="confirmerDossier(c)"
+              [disabled]="idEnCours === c.id"
+              title="Confirmer un règlement effectué hors ligne (espèces, virement)"
+              class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {{ idEnCours === c.id ? 'Confirmation…' : 'Confirmer le paiement' }}
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
