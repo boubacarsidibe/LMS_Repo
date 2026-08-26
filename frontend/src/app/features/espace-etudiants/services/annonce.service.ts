@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Annonce, AnnonceCreation } from '../models/annonce';
-import { Cohorte } from '../models/cohorte';
+import { Promotion } from '../models/promotion';
 
 @Injectable({ providedIn: 'root' })
 export class AnnonceService {
@@ -19,7 +19,7 @@ export class AnnonceService {
     return this.http.post<Annonce>(`${this.api}/formateur/annonces`, data);
   }
 
-  getMesCohortes(): Observable<Cohorte[]> {
-    return this.http.get<Cohorte[]>(`${this.api}/formateur/cohortes`);
+  getMesPromotions(): Observable<Promotion[]> {
+    return this.http.get<Promotion[]>(`${this.api}/formateur/cohortes`);
   }
 }

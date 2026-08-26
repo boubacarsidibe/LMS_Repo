@@ -5,8 +5,8 @@ import { MediaProtegeService } from '../../services/media-protege.service';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { AlbumPhoto, Photo } from '../../models/scolarite.models';
-import { Cohorte } from '../../models/cohorte';
-import { CohorteService } from '../../services/cohorte.service';
+import { Promotion } from '../../models/promotion';
+import { PromotionService } from '../../services/promotion.service';
 import { PhotoService } from '../../services/photo.service';
 
 /**
@@ -27,12 +27,12 @@ import { PhotoService } from '../../services/photo.service';
 })
 export class Phototheque implements OnInit, OnDestroy {
   private photoService = inject(PhotoService);
-  private cohorteService = inject(CohorteService);
+  private promotionService = inject(PromotionService);
 
   @ViewChild('champFichier') champFichier?: ElementRef<HTMLInputElement>;
 
   albums: AlbumPhoto[] = [];
-  cohortes: Cohorte[] = [];
+  promotions: Promotion[] = [];
   chargement = true;
 
   /** Album ouvert dans la visionneuse, avec ses clichés. */
@@ -58,9 +58,9 @@ export class Phototheque implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.charger();
-    this.cohorteService.getAll().subscribe({
-      next: (liste) => (this.cohortes = liste || []),
-      error: () => (this.cohortes = []),
+    this.promotionService.getAll().subscribe({
+      next: (liste) => (this.promotions = liste || []),
+      error: () => (this.promotions = []),
     });
   }
 

@@ -8,6 +8,8 @@ public record ForumSujetDto(
         String titre,
         Long coursId,
         String coursTitre,
+        Long promotionId,
+        String promotionLibelle,
         String auteur,
         LocalDateTime dateCreation,
         boolean epingle,

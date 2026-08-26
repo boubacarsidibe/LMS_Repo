@@ -223,7 +223,7 @@
           [(ngModel)]="nouvellePromotionId"
           class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
           <option [ngValue]="null">Tout l’institut</option>
-          <option *ngFor="let c of cohortes" [ngValue]="c.id">{{ c.libelle }}</option>
+          <option *ngFor="let p of promotions" [ngValue]="p.id">{{ p.libelle }}</option>
         </select>
       </label>
 

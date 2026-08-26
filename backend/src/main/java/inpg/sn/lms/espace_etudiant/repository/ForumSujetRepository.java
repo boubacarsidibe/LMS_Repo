@@ -14,25 +14,30 @@ import inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet;
 public interface ForumSujetRepository extends JpaRepository<ForumSujet, Long> {
 
     /**
-     * Sujets accessibles à un étudiant : les salons généraux de l'espace étudiant
-     * et ceux rattachés à un cours de son cursus. Les sujets généraux de l'espace
-     * alumni ({@code portee = ALUMNI}) sont exclus (voir migration V13).
+     * Sujets accessibles à un étudiant : les salons généraux de l'espace étudiant,
+     * ceux rattachés à un cours de son cursus, et ceux rattachés à sa promotion.
+     * Les sujets généraux de l'espace alumni ({@code portee = ALUMNI}) sont exclus
+     * (voir migration V13).
      */
     @Query("""
             SELECT s FROM ForumSujet s
-            WHERE (s.cours IS NULL AND s.portee = inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet.ETUDIANT)
+            WHERE (s.cours IS NULL AND s.promotion IS NULL
+                   AND s.portee = inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet.ETUDIANT)
                OR s.cours.id IN :coursIds
+               OR (:promotionId IS NOT NULL AND s.promotion.id = :promotionId)
             ORDER BY s.epingle DESC, s.dateCreation DESC
             """)
-    List<ForumSujet> findVisiblesPour(@Param("coursIds") List<Long> coursIds);
+    List<ForumSujet> findVisiblesPour(@Param("coursIds") List<Long> coursIds, @Param("promotionId") Long promotionId);
 
     /** Repli lorsque l'étudiant n'a encore aucun cours autorisé. */
     @Query("""
             SELECT s FROM ForumSujet s
-            WHERE s.cours IS NULL AND s.portee = inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet.ETUDIANT
+            WHERE (s.cours IS NULL AND s.promotion IS NULL
+                   AND s.portee = inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet.ETUDIANT)
+               OR (:promotionId IS NOT NULL AND s.cours IS NULL AND s.promotion.id = :promotionId)
             ORDER BY s.epingle DESC, s.dateCreation DESC
             """)
-    List<ForumSujet> findGeneraux();
+    List<ForumSujet> findGeneraux(@Param("promotionId") Long promotionId);
 
     /**
      * Vue « formateur/personnel » : tous les sujets de l'espace étudiant (généraux
@@ -52,5 +57,9 @@ public interface ForumSujetRepository extends JpaRepository<ForumSujet, Long> {
 
     List<ForumSujet> findByCoursIdOrderByEpingleDescDateCreationDesc(Long coursId);
 
+    List<ForumSujet> findByPromotionIdOrderByEpingleDescDateCreationDesc(Long promotionId);
+
     void deleteByCoursId(Long coursId);
+
+    void deleteByPromotionId(Long promotionId);
 }

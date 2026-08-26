@@ -28,8 +28,9 @@ export class CoursService {
     return this.http.put<Cours>(`${this.api}/formateur/cours/${id}`, data);
   }
 
-  updateCohortes(coursId: number, cohorteIds: number[]): Observable<Cours> {
-    return this.http.patch<Cours>(`${this.api}/formateur/cours/${coursId}/cohortes`, { cohorteIds });
+  /** Clé de la requête inchangée (contrat avec le corps attendu côté serveur). */
+  updatePromotions(coursId: number, promotionIds: number[]): Observable<Cours> {
+    return this.http.patch<Cours>(`${this.api}/formateur/cours/${coursId}/cohortes`, { cohorteIds: promotionIds });
   }
 
   delete(id: number): Observable<void> {

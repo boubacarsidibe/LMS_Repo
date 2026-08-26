@@ -5,7 +5,7 @@ export interface Certificat {
   etudiantNom: string;
   etudiantMatricule: string | null;
   intituleFormation: string;
-  cohorteLibelle: string | null;
+  promotionLibelle: string | null;
   dateEmission: string;
   formateurNom: string;
 }

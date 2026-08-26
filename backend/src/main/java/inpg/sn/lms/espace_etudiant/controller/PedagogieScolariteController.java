@@ -1,6 +1,5 @@
 package inpg.sn.lms.espace_etudiant.controller;
 
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,10 +60,14 @@ import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumMentionRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
+import inpg.sn.lms.espace_etudiant.service.EtudiantImportService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
 import inpg.sn.lms.espace_etudiant.service.RapportQualitePdfService;
 import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
@@ -99,8 +102,12 @@ public class PedagogieScolariteController {
     private final EtudiantRepository etudiantRepository;
     private final EtudiantService etudiantService;
     private final MatriculeService matriculeService;
+    private final EtudiantImportService etudiantImportService;
     private final CertificatService certificatService;
     private final CoursRepository coursRepository;
+    private final ForumSujetRepository forumSujetRepository;
+    private final ForumMessageRepository forumMessageRepository;
+    private final ForumMentionRepository forumMentionRepository;
     private final NotificationService notificationService;
     private final RetourEvaluationRepository retourRepository;
     private final ReleveNotesService releveNotesService;
@@ -116,7 +123,10 @@ public class PedagogieScolariteController {
     public PedagogieScolariteController(PromotionRepository promotionRepository,
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
             EtudiantService etudiantService, MatriculeService matriculeService,
+            EtudiantImportService etudiantImportService,
             CertificatService certificatService, CoursRepository coursRepository,
+            ForumSujetRepository forumSujetRepository, ForumMessageRepository forumMessageRepository,
+            ForumMentionRepository forumMentionRepository,
             NotificationService notificationService, RetourEvaluationRepository retourRepository,
             ReleveNotesService releveNotesService, ReleveDelivranceService releveDelivranceService,
             CandidatRepository candidatRepository, AlumniProfilRepository alumniProfilRepository,
@@ -128,8 +138,12 @@ public class PedagogieScolariteController {
         this.etudiantRepository = etudiantRepository;
         this.etudiantService = etudiantService;
         this.matriculeService = matriculeService;
+        this.etudiantImportService = etudiantImportService;
         this.certificatService = certificatService;
         this.coursRepository = coursRepository;
+        this.forumSujetRepository = forumSujetRepository;
+        this.forumMessageRepository = forumMessageRepository;
+        this.forumMentionRepository = forumMentionRepository;
         this.notificationService = notificationService;
         this.retourRepository = retourRepository;
         this.releveNotesService = releveNotesService;
@@ -208,6 +222,11 @@ public class PedagogieScolariteController {
      * <p>Refusée si des étudiants y sont rattachés : la suppression les laisserait
      * sans promotion, donc sans aucun cours ni calendrier, sans que rien ne le
      * signale.
+     *
+     * <p>Les fils de forum scopés à cette promotion sont détachés avant : sans cela,
+     * la contrainte de clé étrangère {@code forum_sujets.promotion_id} ferait
+     * échouer la suppression avec une erreur SQL brute, comme c'était déjà le cas
+     * pour un cours avant que {@code supprimerCours} ne fasse ce même nettoyage.
      */
     @DeleteMapping("/promotions/{id}")
     @Transactional
@@ -221,6 +240,9 @@ public class PedagogieScolariteController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message",
                     inscrits + " étudiant(s) sont rattachés à cette promotion. Réaffectez-les avant de la supprimer."));
         }
+        forumMentionRepository.deleteByMessage_Sujet_PromotionId(id);
+        forumMessageRepository.deleteBySujet_PromotionId(id);
+        forumSujetRepository.deleteByPromotionId(id);
         promotionRepository.delete(promotion);
         return ResponseEntity.noContent().build();
     }
@@ -273,26 +295,53 @@ public class PedagogieScolariteController {
         return ResponseEntity.ok(etudiants.stream().map(this::toEtudiantDto).toList());
     }
 
-    /** Ouvre un compte étudiant et lui attribue son matricule. */
+    /**
+     * Ouvre un compte étudiant et lui attribue son matricule.
+     *
+     * <p>Le mot de passe est optionnel : laissé vide, {@link EtudiantService} en
+     * génère un et le réécrit dans {@code requete}, qui sert alors à l'envoyer par
+     * courriel au titulaire du compte. Un mot de passe saisi à la main n'est jamais
+     * envoyé par courriel — la personne qui l'a choisi le connaît déjà.
+     */
     @PostMapping("/etudiants")
     @Transactional
     public ResponseEntity<?> creerEtudiant(@RequestBody EtudiantDto requete) {
         if (estVide(requete.getUsername()) || estVide(requete.getEmail())
-                || estVide(requete.getNom()) || estVide(requete.getPrenom())) {
+                || estVide(requete.getNom()) || estVide(requete.getPrenom()) || estVide(requete.getTelephone())) {
+            // Le telephone n'est pas facultatif : Etudiant.telephone est NOT NULL UNIQUE en
+            // base (voir EtudiantImportService). Sans ce garde-fou, une omission se solde
+            // par une violation de contrainte non rattrapee, remontee en 500 sans message.
             return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Le nom, le prénom, l'identifiant et l'email sont requis."));
+                    .body(Map.of("message", "Le nom, le prénom, l'identifiant, l'email et le téléphone sont requis."));
         }
-        if (estVide(requete.getPassword())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Un mot de passe initial est requis."));
-        }
+        boolean motDePasseGenere = estVide(requete.getPassword());
         try {
             Etudiant etudiant = etudiantService.createEtudiant(requete);
             matriculeService.attribuerSiAbsent(etudiant);
+            if (motDePasseGenere) {
+                envoyerIdentifiants(requete.getEmail(), requete.getUsername(), requete.getPassword());
+            }
             return ResponseEntity.status(HttpStatus.CREATED).body(toEtudiantDto(etudiantRepository.save(etudiant)));
         } catch (IllegalStateException erreur) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", erreur.getMessage()));
+        }
+    }
+
+    /**
+     * Transmet les identifiants d'un compte nouvellement créé. Une panne SMTP ne
+     * doit pas faire échouer la création elle-même — le compte reste utilisable,
+     * seul l'envoi manque, d'où le rattrapage plutôt qu'une exception propagée.
+     */
+    private void envoyerIdentifiants(String email, String identifiant, String motDePasse) {
+        try {
+            notificationService.envoyerEmail(email, "Votre compte INPG LMS",
+                    "Un compte vient de vous être créé sur la plateforme INPG LMS.\n\n"
+                            + "Identifiant : " + identifiant + "\n"
+                            + "Mot de passe provisoire : " + motDePasse + "\n\n"
+                            + "Merci de le modifier dès votre première connexion.");
+        } catch (Exception exception) {
+            log.error("Échec de l'envoi des identifiants à {} : {}", email, exception.getMessage());
         }
     }
 
@@ -346,14 +395,22 @@ public class PedagogieScolariteController {
      * <p>Une rentree se compte en dizaines d'inscriptions : les saisir une a une est
      * le poste de travail le plus couteux de la scolarite. Colonnes attendues, dans
      * cet ordre : {@code nom;prenom;email;telephone}. La premiere ligne peut etre un
-     * en-tete, elle est ignoree si elle commence par « nom ».
+     * en-tete, elle est ignoree si elle commence par « nom ». Le telephone est
+     * requis comme les trois autres colonnes : la colonne {@code Etudiant.telephone}
+     * est {@code NOT NULL UNIQUE} en base, une ligne qui l'omet ferait donc echouer
+     * l'insertion.
      *
      * <p>L'import est TOLERANT : une ligne invalide n'interrompt pas les autres, et le
      * compte rendu enumere les rejets avec leur motif. Un import de trente etudiants
-     * ne doit pas echouer en bloc parce qu'une adresse est mal formee.
+     * ne doit pas echouer en bloc parce qu'une adresse est mal formee. Chaque ligne
+     * est creee dans sa propre transaction ({@link EtudiantImportService}) : sans
+     * cela, PostgreSQL abandonne toute la transaction de la requete des la premiere
+     * erreur SQL, et chaque ligne suivante echoue a son tour avec « current
+     * transaction is aborted » jusqu'a ce que Spring, trouvant la transaction
+     * marquee pour retour arriere, fasse echouer toute la requete en 500 — alors que
+     * ce controleur avait construit une reponse 200 normale.
      */
     @PostMapping("/etudiants/import")
-    @Transactional
     public ResponseEntity<?> importerEtudiants(@RequestBody Map<String, Object> corps) {
         String contenu = corps.get("csv") == null ? null : corps.get("csv").toString();
         if (estVide(contenu)) {
@@ -380,17 +437,17 @@ public class PedagogieScolariteController {
             if (i == 0 && ligne.toLowerCase().startsWith("nom")) {
                 continue;   // en-tete
             }
-            String[] cellules = ligne.split("[;,]");
-            if (cellules.length < 3) {
-                rejets.add("Ligne " + (i + 1) + " : nom, prenom et email sont requis.");
+            String[] cellules = ligne.split("[;,]", -1);
+            if (cellules.length < 4) {
+                rejets.add("Ligne " + (i + 1) + " : nom, prenom, email et telephone sont requis.");
                 continue;
             }
             String nom = cellules[0].trim();
             String prenom = cellules[1].trim();
             String email = cellules[2].trim();
-            String telephone = cellules.length > 3 ? cellules[3].trim() : null;
-            if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty()) {
-                rejets.add("Ligne " + (i + 1) + " : nom, prenom et email sont requis.");
+            String telephone = cellules[3].trim();
+            if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || telephone.isEmpty()) {
+                rejets.add("Ligne " + (i + 1) + " : nom, prenom, email et telephone sont requis.");
                 continue;
             }
 
@@ -400,15 +457,12 @@ public class PedagogieScolariteController {
             dto.setEmail(email);
             dto.setTelephone(telephone);
             dto.setUsername(email.split("@")[0]);
-            // Mot de passe provisoire : l'etudiant le changera a sa premiere connexion.
-            dto.setPassword("INPG@" + LocalDate.now().getYear());
+            // Mot de passe laisse vide : EtudiantService en genere un propre a chaque
+            // compte plutot qu'un mot de passe partage entre tous les importes, envoye
+            // par courriel ci-dessous.
             try {
-                Etudiant etudiant = etudiantService.createEtudiant(dto);
-                if (promotion != null) {
-                    etudiant.setPromotion(promotion);
-                }
-                matriculeService.attribuerSiAbsent(etudiant);
-                etudiantRepository.save(etudiant);
+                etudiantImportService.creerPourImport(dto, promotion);
+                envoyerIdentifiants(dto.getEmail(), dto.getUsername(), dto.getPassword());
                 crees++;
             } catch (Exception exception) {
                 log.warn("Import etudiant refuse ligne {} : {}", i + 1, exception.getMessage());

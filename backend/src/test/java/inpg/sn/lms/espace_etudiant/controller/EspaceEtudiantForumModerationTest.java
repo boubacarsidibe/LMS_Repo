@@ -26,6 +26,7 @@ import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
+import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
@@ -120,7 +121,7 @@ class EspaceEtudiantForumModerationTest {
         authentication = new UsernamePasswordAuthenticationToken("awa_diallo", "n/a", List.of());
         when(userRepository.findByUsername("awa_diallo")).thenReturn(user);
 
-        sujet = new ForumSujet("Titre", null, user);
+        sujet = new ForumSujet("Titre", (Cours) null, user);
         sujet.setId(7L);
         when(forumSujetRepository.findById(7L)).thenReturn(Optional.of(sujet));
     }

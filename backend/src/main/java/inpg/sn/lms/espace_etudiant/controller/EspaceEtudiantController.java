@@ -331,7 +331,7 @@ public class EspaceEtudiantController {
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
     @Transactional(readOnly = true)
     @GetMapping("/cohortes")
-    public ResponseEntity<List<PromotionDto>> listCohortes() {
+    public ResponseEntity<List<PromotionDto>> listPromotions() {
         List<PromotionDto> list = promotionService.getAll().stream()
                 .map(this::toPromotionDto)
                 .collect(Collectors.toList());
@@ -341,15 +341,15 @@ public class EspaceEtudiantController {
     @PreAuthorize("hasRole('FORMATEUR')")
     @Transactional(readOnly = true)
     @GetMapping("/formateur/cohortes")
-    public ResponseEntity<?> listCohortesDuFormateur(Authentication authentication) {
+    public ResponseEntity<?> listPromotionsDuFormateur(Authentication authentication) {
         Formateur formateur = findAuthenticatedFormateur(authentication);
         if (formateur == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Profil formateur introuvable."));
         }
-        List<Long> mesCohorteIds = cohorteIdsDuFormateur(formateur);
+        List<Long> mesPromotionIds = cohorteIdsDuFormateur(formateur);
         return ResponseEntity.ok(promotionService.getAll().stream()
-                .filter(c -> mesCohorteIds.contains(c.getId()))
+                .filter(p -> mesPromotionIds.contains(p.getId()))
                 .map(this::toPromotionDto)
                 .toList());
     }
@@ -1712,13 +1712,24 @@ public class EspaceEtudiantController {
                 initialsFromFullName(auteurNom),
                 AVATAR_BACKGROUNDS[paletteIndex],
                 AVATAR_TEXTS[paletteIndex],
-                sujet.getCours() != null ? sujet.getCours().getTitre() : "Général",
+                libelleRattachement(sujet),
                 sujet.getCours() != null ? sujet.getCours().getNom() : "",
                 sujet.getTitre(),
                 apercu,
                 sujet.getDateCreation().format(DATE_HEURE_FORUM),
                 statutLisible(sujet),
                 messages);
+    }
+
+    /** Rattachement affiché en tête de sujet : cours, promotion, ou salon général. */
+    private String libelleRattachement(ForumSujet sujet) {
+        if (sujet.getCours() != null) {
+            return sujet.getCours().getTitre();
+        }
+        if (sujet.getPromotion() != null) {
+            return "Promotion " + sujet.getPromotion().getLibelle();
+        }
+        return "Général";
     }
 
     /**
@@ -1808,7 +1819,7 @@ public class EspaceEtudiantController {
 
     private EtudiantSuiviDto toEtudiantSuiviDto(Etudiant etudiant) {
         String nomComplet = String.join(" ", etudiant.getPrenom(), etudiant.getNom()).trim();
-        String cohorte = etudiant.getPromotion() != null ? etudiant.getPromotion().getLibelle() : "Non affectée";
+        String promotion = etudiant.getPromotion() != null ? etudiant.getPromotion().getLibelle() : "Non affectée";
         // Passe par le service : la moyenne a plat qui vivait ici comptait un cours
         // autant de fois qu'il avait de devoirs, et ne correspondait donc pas au releve
         // que l'etudiant voit de son cote.
@@ -1816,7 +1827,7 @@ public class EspaceEtudiantController {
         return new EtudiantSuiviDto(
                 etudiant.getId(),
                 nomComplet,
-                cohorte,
+                promotion,
                 "Non renseignée",
                 0,
                 noteMoyenne,

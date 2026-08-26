@@ -12,4 +12,6 @@ public interface ForumMentionRepository extends JpaRepository<ForumMention, Long
     List<ForumMention> findByMessage_Sujet_Id(Long sujetId);
 
     void deleteByMessage_Sujet_CoursId(Long coursId);
+
+    void deleteByMessage_Sujet_PromotionId(Long promotionId);
 }

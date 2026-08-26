@@ -17,21 +17,32 @@ public class EtudiantService {
     private final UserService userService;
 
     private final PasswordEncoder passwordEncoder;
+    private final PasswordGeneratorService passwordGeneratorService;
 
     // Utilisation des minuscules pour les paramètres et variables d'instance
     public EtudiantService(EtudiantRepository etudiantRepository, RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder, UserService userService) {
+            PasswordEncoder passwordEncoder, UserService userService,
+            PasswordGeneratorService passwordGeneratorService) {
         this.etudiantRepository = etudiantRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.userService = userService;
+        this.passwordGeneratorService = passwordGeneratorService;
     }
 
     public Iterable<Etudiant> getAllEtudiants() {
         return etudiantRepository.findAll();
     }
 
+    /**
+     * Si {@code etudiantDto} n'apporte aucun mot de passe, un mot de passe est
+     * généré et réécrit dans le DTO — l'appelant (qui connaît l'email) peut ainsi
+     * le transmettre au titulaire du compte après l'appel.
+     */
     public Etudiant createEtudiant(EtudiantDto etudiantDto) {
+        if (etudiantDto.getPassword() == null || etudiantDto.getPassword().isBlank()) {
+            etudiantDto.setPassword(passwordGeneratorService.generer());
+        }
         User user = userService.findByUsername(etudiantDto.getUsername());
         if (user == null) {
             user = new User(etudiantDto.getUsername(), passwordEncoder.encode(etudiantDto.getPassword()),

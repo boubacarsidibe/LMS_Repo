@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { Annonce } from '../../models/annonce';
 import { AnnonceService } from '../../services/annonce.service';
-import { Cohorte } from '../../models/cohorte';
+import { Promotion } from '../../models/promotion';
 import { Auth } from '../../../../core/auth/services/authService';
 
 @Component({
@@ -29,8 +29,8 @@ export class Annonces implements OnInit {
   isSubmitting = false;
   errorMessage = '';
 
-  mesCohortes: Cohorte[] = [];
-  cohorteIdsSelectionnees = new Set<number>();
+  mesPromotions: Promotion[] = [];
+  promotionIdsSelectionnees = new Set<number>();
 
   constructor(private annonceService: AnnonceService, private fb: FormBuilder) {
     this.annonceForm = this.fb.group({
@@ -43,18 +43,18 @@ export class Annonces implements OnInit {
   ngOnInit(): void {
     this.chargerAnnonces();
     if (this.isFormateurRole) {
-      this.annonceService.getMesCohortes().subscribe({
-        next: (list) => (this.mesCohortes = list || []),
-        error: () => (this.mesCohortes = []),
+      this.annonceService.getMesPromotions().subscribe({
+        next: (list) => (this.mesPromotions = list || []),
+        error: () => (this.mesPromotions = []),
       });
     }
   }
 
-  toggleCohorte(id: number, checked: boolean): void {
+  togglePromotion(id: number, checked: boolean): void {
     if (checked) {
-      this.cohorteIdsSelectionnees.add(id);
+      this.promotionIdsSelectionnees.add(id);
     } else {
-      this.cohorteIdsSelectionnees.delete(id);
+      this.promotionIdsSelectionnees.delete(id);
     }
   }
 
@@ -71,7 +71,7 @@ export class Annonces implements OnInit {
 
   ouvrirFormulaire(): void {
     this.errorMessage = '';
-    this.cohorteIdsSelectionnees.clear();
+    this.promotionIdsSelectionnees.clear();
     this.annonceForm.reset({ titre: '', contenu: '', epinglee: false });
     this.afficherFormulaire = true;
   }
@@ -90,7 +90,8 @@ export class Annonces implements OnInit {
     this.errorMessage = '';
     const payload = {
       ...this.annonceForm.getRawValue(),
-      cohorteIds: Array.from(this.cohorteIdsSelectionnees),
+      // Clé de la requête inchangée (contrat avec AnnonceCreateRequest côté serveur).
+      cohorteIds: Array.from(this.promotionIdsSelectionnees),
     };
     this.annonceService.create(payload).subscribe({
       next: () => {

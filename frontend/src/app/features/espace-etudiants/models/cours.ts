@@ -1,4 +1,4 @@
-import { Cohorte } from './cohorte';
+import { Promotion } from './promotion';
 
 export interface Cours {
   id: number;
@@ -15,7 +15,7 @@ export interface Cours {
   couleurBandeau: string;
   /** Promotions rattachées, telles que nommées par CoursDto. Le champ s'appelait
    *  « cohortes » et ne correspondait donc a rien : il valait toujours undefined. */
-  promotions: Cohorte[];
+  promotions: Promotion[];
   /** Programmes du cours. Vide = aucune promotion ne le reçoit, aucun étudiant ne le voit. */
   formations?: { id: number; code: string; intitule: string }[];
   /** Équipe pédagogique. Vide = le cours n'apparaît dans aucun espace formateur. */

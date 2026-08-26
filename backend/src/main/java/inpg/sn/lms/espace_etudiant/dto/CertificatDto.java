@@ -7,7 +7,7 @@ public record CertificatDto(
         String etudiantNom,
         String etudiantMatricule,
         String intituleFormation,
-        String cohorteLibelle,
+        String promotionLibelle,
         String dateEmission,
         String formateurNom) {
 
