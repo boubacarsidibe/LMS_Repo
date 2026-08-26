@@ -19,12 +19,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
+import java.util.Optional;
+
 import inpg.sn.lms.auth.entity.AlumniProfil;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.espace_alumni.dto.AlumniProfilDto;
 import inpg.sn.lms.espace_alumni.dto.AlumniProfilUpdateRequest;
+import inpg.sn.lms.espace_alumni.dto.EnqueteSuiviDto;
+import inpg.sn.lms.espace_alumni.dto.ReponseEnqueteSuiviDto;
+import inpg.sn.lms.espace_alumni.dto.ReponseEnqueteSuiviRequest;
 import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleDto;
 import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleRequest;
+import inpg.sn.lms.espace_alumni.entity.EnqueteSuivi;
+import inpg.sn.lms.espace_alumni.entity.ReponseEnqueteSuivi;
+import inpg.sn.lms.espace_alumni.repository.EnqueteSuiviRepository;
+import inpg.sn.lms.espace_alumni.repository.ReponseEnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.service.AlumniProfilService;
 import inpg.sn.lms.espace_alumni.service.SituationProfessionnelleService;
 import inpg.sn.lms.espace_etudiant.dto.ReleveDelivreDto;
@@ -52,6 +61,10 @@ class AlumniControllerTest {
     @Mock
     private ReleveDelivranceService releveDelivranceService;
     @Mock
+    private EnqueteSuiviRepository enqueteRepository;
+    @Mock
+    private ReponseEnqueteSuiviRepository reponseRepository;
+    @Mock
     private Authentication authentication;
 
     private AlumniController controller;
@@ -59,7 +72,7 @@ class AlumniControllerTest {
     @BeforeEach
     void setUp() {
         controller = new AlumniController(utilisateurCourant, alumniProfilService, situationService,
-                releveDelivranceService);
+                releveDelivranceService, enqueteRepository, reponseRepository);
     }
 
     /**
@@ -176,5 +189,77 @@ class AlumniControllerTest {
         assertThat(corps.get(0).moyenneGenerale()).isEqualTo(15.5);
         assertThat(corps.get(0).nombreNotes()).isEqualTo(3);
         verify(releveDelivranceService).deLEtudiant(42L);
+    }
+
+    @Test
+    @DisplayName("Enquêtes : dejaRepondu reflète uniquement la réponse de l'alumni connecté")
+    void enquetesSignaleLaReponseDuSeulAlumniConnecte() {
+        AlumniProfil profil = profil();
+        when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil);
+        EnqueteSuivi enquete = new EnqueteSuivi("Suivi 2026", "Impact carrière");
+        enquete.setId(9L);
+        when(enqueteRepository.findByActiveTrueOrderByDateCreationDesc()).thenReturn(List.of(enquete));
+        when(reponseRepository.findByEnqueteIdAndAlumniProfilId(9L, 42L))
+                .thenReturn(Optional.of(new ReponseEnqueteSuivi(enquete, profil, 4, 5, null)));
+
+        ResponseEntity<?> reponse = controller.enquetes(authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        @SuppressWarnings("unchecked")
+        List<EnqueteSuiviDto> corps = (List<EnqueteSuiviDto>) reponse.getBody();
+        assertThat(corps).hasSize(1);
+        assertThat(corps.get(0).dejaRepondu()).isTrue();
+        verify(reponseRepository).findByEnqueteIdAndAlumniProfilId(9L, 42L);
+    }
+
+    @Test
+    @DisplayName("Répondre à une enquête inconnue ou clôturée : 404")
+    void repondreEnqueteInconnueOuInactiveEstRefusee() {
+        when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil());
+        when(enqueteRepository.findById(9L)).thenReturn(Optional.empty());
+        ReponseEnqueteSuiviRequest requete = new ReponseEnqueteSuiviRequest(4, 5, null);
+
+        ResponseEntity<?> reponse = controller.repondreEnquete(9L, requete, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        verify(reponseRepository, org.mockito.Mockito.never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Réponse avec une note hors de 1 à 5 : 400, rien n'est enregistré")
+    void repondreEnqueteAvecNoteHorsBornesEstRefusee() {
+        when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil());
+        EnqueteSuivi enquete = new EnqueteSuivi("Suivi 2026", null);
+        enquete.setId(9L);
+        when(enqueteRepository.findById(9L)).thenReturn(Optional.of(enquete));
+        ReponseEnqueteSuiviRequest requete = new ReponseEnqueteSuiviRequest(6, 5, null);
+
+        ResponseEntity<?> reponse = controller.repondreEnquete(9L, requete, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(reponseRepository, org.mockito.Mockito.never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Répondre deux fois à la même enquête met à jour la réponse existante, n'en crée pas une seconde")
+    void repondreDeuxFoisMetAJourLaReponseExistante() {
+        AlumniProfil profil = profil();
+        when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil);
+        EnqueteSuivi enquete = new EnqueteSuivi("Suivi 2026", null);
+        enquete.setId(9L);
+        when(enqueteRepository.findById(9L)).thenReturn(Optional.of(enquete));
+        ReponseEnqueteSuivi existante = new ReponseEnqueteSuivi(enquete, profil, 2, 2, "Ancien avis");
+        existante.setId(77L);
+        when(reponseRepository.findByEnqueteIdAndAlumniProfilId(9L, 42L)).thenReturn(Optional.of(existante));
+        when(reponseRepository.save(any(ReponseEnqueteSuivi.class))).thenAnswer(inv -> inv.getArgument(0));
+        ReponseEnqueteSuiviRequest requete = new ReponseEnqueteSuiviRequest(4, 5, "Nouvel avis");
+
+        ResponseEntity<?> reponse = controller.repondreEnquete(9L, requete, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        ReponseEnqueteSuiviDto corps = (ReponseEnqueteSuiviDto) reponse.getBody();
+        assertThat(corps.id()).isEqualTo(77L);
+        assertThat(corps.noteApplicationCompetences()).isEqualTo(4);
+        assertThat(corps.commentaire()).isEqualTo("Nouvel avis");
     }
 }

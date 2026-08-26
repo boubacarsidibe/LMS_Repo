@@ -30,6 +30,7 @@ export class AlumniLayout implements OnInit {
     { libelle: 'Mon profil', lien: 'mon-profil', icone: 'account_circle' },
     { libelle: 'Parcours professionnel', lien: 'mon-parcours', icone: 'work_history' },
     { libelle: 'Mes relevés', lien: 'mes-releves', icone: 'description' },
+    { libelle: 'Enquêtes de suivi', lien: 'enquetes', icone: 'fact_check' },
     { libelle: 'Forum', lien: 'forum', icone: 'forum' },
     { libelle: 'Documents partagés', lien: 'documents', icone: 'folder_shared' },
   ];

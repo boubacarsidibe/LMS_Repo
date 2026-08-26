@@ -11,7 +11,10 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +31,18 @@ import org.springframework.web.bind.annotation.RestController;
 import inpg.sn.lms.auth.dto.EtudiantDto;
 import inpg.sn.lms.auth.entity.AlumniProfil;
 import inpg.sn.lms.auth.entity.Etudiant;
+import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.AlumniProfilRepository;
 import inpg.sn.lms.auth.repository.CandidatRepository;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.auth.service.EtudiantService;
+import inpg.sn.lms.espace_alumni.entity.EnqueteSuivi;
+import inpg.sn.lms.espace_alumni.repository.EnqueteSuiviRepository;
+import inpg.sn.lms.espace_alumni.repository.ReponseEnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.service.AlumniProfilService;
 import inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.CertificatDto;
+import inpg.sn.lms.espace_etudiant.dto.EnqueteSuiviCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.EtudiantSuiviDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDetailDto;
@@ -43,18 +51,22 @@ import inpg.sn.lms.espace_etudiant.dto.ReleveCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.ReleveDelivreDto;
 import inpg.sn.lms.espace_etudiant.dto.ReleveNotesDto;
 import inpg.sn.lms.espace_etudiant.dto.RelanceCollectiveRequest;
+import inpg.sn.lms.espace_etudiant.dto.SyntheseEnqueteSuiviDto;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
+import inpg.sn.lms.espace_etudiant.entity.Notification;
 import inpg.sn.lms.espace_etudiant.entity.ReleveLigne;
 import inpg.sn.lms.espace_etudiant.entity.ReleveNotes;
 import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
+import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
+import inpg.sn.lms.espace_etudiant.service.RapportQualitePdfService;
 import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
 import inpg.sn.lms.espace_etudiant.service.ReleveNotesService;
 import inpg.sn.lms.recrutement.service.NotificationService;
@@ -96,6 +108,10 @@ public class PedagogieScolariteController {
     private final CandidatRepository candidatRepository;
     private final AlumniProfilRepository alumniProfilRepository;
     private final AlumniProfilService alumniProfilService;
+    private final EnqueteSuiviRepository enqueteSuiviRepository;
+    private final ReponseEnqueteSuiviRepository reponseEnqueteSuiviRepository;
+    private final NotificationRepository notificationRepository;
+    private final RapportQualitePdfService rapportQualitePdfService;
 
     public PedagogieScolariteController(PromotionRepository promotionRepository,
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
@@ -104,7 +120,9 @@ public class PedagogieScolariteController {
             NotificationService notificationService, RetourEvaluationRepository retourRepository,
             ReleveNotesService releveNotesService, ReleveDelivranceService releveDelivranceService,
             CandidatRepository candidatRepository, AlumniProfilRepository alumniProfilRepository,
-            AlumniProfilService alumniProfilService) {
+            AlumniProfilService alumniProfilService, EnqueteSuiviRepository enqueteSuiviRepository,
+            ReponseEnqueteSuiviRepository reponseEnqueteSuiviRepository,
+            NotificationRepository notificationRepository, RapportQualitePdfService rapportQualitePdfService) {
         this.promotionRepository = promotionRepository;
         this.formationRepository = formationRepository;
         this.etudiantRepository = etudiantRepository;
@@ -119,6 +137,10 @@ public class PedagogieScolariteController {
         this.candidatRepository = candidatRepository;
         this.alumniProfilRepository = alumniProfilRepository;
         this.alumniProfilService = alumniProfilService;
+        this.enqueteSuiviRepository = enqueteSuiviRepository;
+        this.reponseEnqueteSuiviRepository = reponseEnqueteSuiviRepository;
+        this.notificationRepository = notificationRepository;
+        this.rapportQualitePdfService = rapportQualitePdfService;
     }
 
     // ===================== PROMOTIONS =====================
@@ -622,10 +644,114 @@ public class PedagogieScolariteController {
                 lignes));
     }
 
+    /**
+     * Rapport qualité global en PDF (TDR §G, besoin B5), consolidant le suivi
+     * qualité des cours et les campagnes d'enquête de suivi — sans rien
+     * recalculer, uniquement mis en page à partir de {@link #suiviQualite()}
+     * et {@link #enquetesSuivi()} pour ne jamais diverger de l'écran.
+     */
+    @GetMapping("/qualite/rapport")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> rapportQualite() {
+        QualiteCoursDto qualiteCours = (QualiteCoursDto) suiviQualite().getBody();
+        List<SyntheseEnqueteSuiviDto> enquetes = enqueteSuiviRepository.findAllByOrderByDateCreationDesc().stream()
+                .map(this::toSyntheseDto)
+                .toList();
+        byte[] pdf = rapportQualitePdfService.genererPdf(qualiteCours, enquetes);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.inline().filename("rapport-qualite.pdf").build().toString())
+                .body(pdf);
+    }
+
     /** Moyenne arrondie au dixieme, {@code null} si la liste est vide. */
     private Double moyenne(List<RetourEvaluation> avis) {
         return avis.isEmpty() ? null
                 : Math.round(avis.stream().mapToInt(RetourEvaluation::getNote).average().orElse(0) * 10) / 10.0;
+    }
+
+    // ===================== ENQUETES DE SUIVI =====================
+
+    /**
+     * Toutes les campagnes d'enquête de suivi, les plus récentes en tête
+     * (TDR §G : « mesurer l'impact à long terme de la formation sur la carrière
+     * des diplômés »).
+     */
+    @GetMapping("/enquetes-suivi")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> enquetesSuivi() {
+        List<SyntheseEnqueteSuiviDto> dtos = enqueteSuiviRepository.findAllByOrderByDateCreationDesc().stream()
+                .map(this::toSyntheseDto)
+                .toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    /**
+     * Lance une nouvelle campagne et notifie tous les alumni visibles — même
+     * canal (cloche in-app) que les mentions de forum, cohérent avec le volume
+     * attendu (une poignée de campagnes par an, pas un événement par message).
+     */
+    @PostMapping("/enquetes-suivi")
+    @Transactional
+    public ResponseEntity<?> lancerEnqueteSuivi(@RequestBody EnqueteSuiviCreateRequest requete) {
+        if (requete.titre() == null || requete.titre().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Le titre de l'enquête est obligatoire."));
+        }
+        EnqueteSuivi enquete = enqueteSuiviRepository.save(
+                new EnqueteSuivi(requete.titre().trim(),
+                        requete.description() == null || requete.description().isBlank() ? null
+                                : requete.description().trim()));
+
+        for (AlumniProfil alumni : alumniProfilRepository.findAll()) {
+            User destinataire = alumni.getUser();
+            if (destinataire == null) {
+                continue;
+            }
+            notificationRepository.save(new Notification(
+                    destinataire,
+                    "Une nouvelle enquête de suivi est disponible : « " + enquete.getTitre() + " »",
+                    Notification.ENQUETE_SUIVI,
+                    "/espace-alumni/enquetes"));
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(toSyntheseDto(enquete));
+    }
+
+    /** Clôt une campagne : elle n'accepte plus de nouvelles réponses. */
+    @PutMapping("/enquetes-suivi/{id}/cloturer")
+    @Transactional
+    public ResponseEntity<?> cloturerEnqueteSuivi(@PathVariable Long id) {
+        EnqueteSuivi enquete = enqueteSuiviRepository.findById(id).orElse(null);
+        if (enquete == null) {
+            return ResponseEntity.notFound().build();
+        }
+        enquete.setActive(false);
+        enqueteSuiviRepository.save(enquete);
+        return ResponseEntity.ok(toSyntheseDto(enquete));
+    }
+
+    private SyntheseEnqueteSuiviDto toSyntheseDto(EnqueteSuivi enquete) {
+        List<String> commentaires = reponseEnqueteSuiviRepository.findByEnqueteIdOrderByDateReponseDesc(enquete.getId())
+                .stream()
+                .map(r -> r.getCommentaire())
+                .filter(c -> c != null && !c.isBlank())
+                .limit(3)
+                .toList();
+        return new SyntheseEnqueteSuiviDto(
+                enquete.getId(),
+                enquete.getTitre(),
+                enquete.getDescription(),
+                enquete.getDateCreation(),
+                enquete.isActive(),
+                (int) reponseEnqueteSuiviRepository.countByEnqueteId(enquete.getId()),
+                arrondi(reponseEnqueteSuiviRepository.moyenneApplicationCompetences(enquete.getId())),
+                arrondi(reponseEnqueteSuiviRepository.moyenneImpactCarriere(enquete.getId())),
+                commentaires);
+    }
+
+    /** Moyenne arrondie au dixième, {@code null} si la campagne n'a aucune réponse. */
+    private Double arrondi(Double moyenne) {
+        return moyenne == null ? null : Math.round(moyenne * 10) / 10.0;
     }
 
     // ===================== Correspondances =====================

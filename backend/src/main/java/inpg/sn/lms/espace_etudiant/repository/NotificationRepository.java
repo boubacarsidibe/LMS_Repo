@@ -1,5 +1,6 @@
 package inpg.sn.lms.espace_etudiant.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,13 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     List<Notification> findTop50ByDestinataire_IdOrderByDateCreationDesc(Long userId);
 
     long countByDestinataire_IdAndLuFalse(Long userId);
+
+    /**
+     * Sert au rappel automatique d'évaluation (TDR §G, besoin B4) : évite de
+     * relancer un étudiant qui l'a déjà été récemment, quel que soit le nombre
+     * de cours en attente au moment du rappel précédent.
+     */
+    boolean existsByDestinataire_IdAndTypeAndDateCreationAfter(Long userId, String type, LocalDateTime seuil);
 
     /**
      * Marque tout comme lu en une requête.
