@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { FormationCatalogue } from '../../models/entreprise.models';
 import { EntrepriseService } from '../../services/entreprise.service';
@@ -8,7 +9,7 @@ import { EntrepriseService } from '../../services/entreprise.service';
 @Component({
   selector: 'app-catalogue-entreprise',
   standalone: true,
-  imports: [CommonModule, UiSpinnerComponent],
+  imports: [CommonModule, UiSpinnerComponent, RouterLink],
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header>
@@ -25,9 +26,11 @@ import { EntrepriseService } from '../../services/entreprise.service';
       <app-ui-spinner *ngIf="chargement" message="Chargement du catalogue…"></app-ui-spinner>
 
       <div *ngIf="!chargement" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-stack-md">
-        <div
+        <a
           *ngFor="let f of catalogue"
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg"
+          [routerLink]="['/espace-entreprise/nouvelle-demande']"
+          [queryParams]="{ formationId: f.id }"
+          class="block bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline cursor-pointer hover:border-secondary transition-colors"
         >
           <span
             *ngIf="f.domaine"
@@ -39,7 +42,7 @@ import { EntrepriseService } from '../../services/entreprise.service';
           <p class="font-body-sm text-body-sm text-on-surface-variant mt-2 line-clamp-4">
             {{ f.description || 'Aucune description disponible.' }}
           </p>
-        </div>
+        </a>
       </div>
       <p *ngIf="!chargement && catalogue.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
         Aucune formation publiée pour l'instant.

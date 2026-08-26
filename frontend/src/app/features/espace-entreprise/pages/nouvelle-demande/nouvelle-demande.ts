@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import {
   DemandeEntreprise,
@@ -220,6 +221,7 @@ import { EntrepriseService } from '../../services/entreprise.service';
 })
 export class NouvelleDemande implements OnInit {
   private entrepriseService = inject(EntrepriseService);
+  private route = inject(ActivatedRoute);
 
   chargement = true;
   demandes: DemandeEntreprise[] = [];
@@ -240,6 +242,10 @@ export class NouvelleDemande implements OnInit {
   erreur = '';
 
   ngOnInit(): void {
+    const formationIdParam = this.route.snapshot.queryParamMap.get('formationId');
+    if (formationIdParam) {
+      this.formationId = Number(formationIdParam);
+    }
     this.entrepriseService.getMesDemandes().subscribe({
       next: (demandes) => {
         this.demandes = demandes;

@@ -117,7 +117,8 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <article
           *ngFor="let formation of paginatedFormations"
-          class="bg-white border border-[#c7c5d0] rounded-lg overflow-hidden flex flex-col group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+          (click)="navigateToDetail(formation.id)"
+          class="bg-white border border-[#c7c5d0] rounded-lg overflow-hidden flex flex-col group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] cursor-pointer">
           <!-- Image -->
           <div class="h-40 bg-[#e0e3e5] relative">
             <img
@@ -147,7 +148,7 @@
                 <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">schedule</span>
                 <span class="text-xs tracking-[0.05em] font-semibold">{{ formation.duree }}</span>
               </div>
-              <a (click)="navigateToDetail(formation.id)" class="text-[#30609a] text-sm leading-4 tracking-[0.01em] font-medium flex items-center gap-1 group-hover:gap-2 transition-all cursor-pointer">
+              <a class="text-[#30609a] text-sm leading-4 tracking-[0.01em] font-medium flex items-center gap-1 group-hover:gap-2 transition-all cursor-pointer">
                 En savoir plus
                 <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">arrow_forward</span>
               </a>

@@ -52,7 +52,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-outline-variant">
-        <tr *ngFor="let e of entretiensFiltres" class="hover:bg-surface-container-low transition-colors group">
+        <tr *ngFor="let e of entretiensFiltres" (click)="openDrawer(e)" class="cursor-pointer hover:bg-surface-container-low transition-colors group">
           <td class="p-4">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">{{ e.candidatPrenom | slice:0:1 }}{{ e.candidatNom | slice:0:1 }}</div>
@@ -71,7 +71,7 @@
               {{ estPasse(e.dateHeure) ? 'Effectué' : 'Planifié' }}
             </span>
           </td>
-          <td class="p-4 text-right">
+          <td class="p-4 text-right" (click)="$event.stopPropagation()">
             <div class="flex justify-end gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
               <button type="button" (click)="openDrawer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
               <button type="button" (click)="supprimer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Annuler"><span class="material-symbols-outlined text-[18px]">cancel</span></button>

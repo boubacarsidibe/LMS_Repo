@@ -47,7 +47,7 @@
       <div class="col-span-1 text-right">Actions</div>
     </div>
     <div class="overflow-y-auto flex-1 p-2 space-y-1 max-h-[600px]">
-      <div *ngFor="let l of lignesFiltrees; let i = index" class="grid grid-cols-12 gap-4 p-3 items-center rounded-lg hover:bg-surface-container-low transition-colors">
+      <div *ngFor="let l of lignesFiltrees; let i = index" [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ dossier: l.candidature.numeroDossier }" class="grid grid-cols-12 gap-4 p-3 items-center rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors">
         <div class="col-span-1 font-label-md text-label-md text-primary">{{ i + 1 }}</div>
         <div class="col-span-3 flex items-center gap-3">
           <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">{{ l.candidature.candidatPrenom | slice:0:1 }}{{ l.candidature.candidatNom | slice:0:1 }}</div>
@@ -69,7 +69,7 @@
             {{ l.candidature.statut === 'ADMIS3' ? 'Admis' : (l.candidature.statut === 'REJETE' ? 'Non retenu' : 'En attente') }}
           </span>
         </div>
-        <div class="col-span-1 flex justify-end gap-1" *ngIf="l.candidature.statut === 'ADMIS2'">
+        <div class="col-span-1 flex justify-end gap-1" *ngIf="l.candidature.statut === 'ADMIS2'" (click)="$event.stopPropagation()">
           <button type="button" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Admettre">
             <span class="material-symbols-outlined text-[18px]">check</span>
           </button>

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { CandidatureResponse, PaiementResponse, RecrutementService, ResultatRelance } from '../../../../core/recrutement/services/recrutement.service';
 
@@ -10,7 +11,7 @@ const STATUTS_DOSSIER_VALIDE = ['EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 
 @Component({
   selector: 'app-responsable-admission-paiements',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './responsable-admission-paiements.component.html',
 })
 export class ResponsableAdmissionPaiementsComponent implements OnInit {
