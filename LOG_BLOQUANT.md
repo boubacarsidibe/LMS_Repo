@@ -497,3 +497,127 @@ a été bloquée par le classeur de permissions de la session autonome sur des
 commandes de suppression de fichiers ; laissé en l'état, à supprimer à la
 prochaine intervention humaine ou lors d'un epic dédié au nettoyage du code
 mort.
+
+### 23. Pipeline GitHub Actions à l'arrêt depuis le 10 août — cause hors de portée de l'API
+
+`.github/workflows/ci.yml` ne s'est plus exécuté sur aucun push depuis le run
+#43 du 2026-08-10 (en échec), malgré des dizaines de fusions sur `develop` et
+`main` depuis (dont toutes celles du 2026-08-25). Aucun outil `mcp__github__*`
+disponible dans cette session n'expose les réglages « Actions permissions » du
+dépôt (`GET/PUT /repos/{owner}/{repo}/actions/permissions`) pour vérifier ou
+corriger un éventuel blocage à ce niveau.
+
+Tentative de diagnostic : déclenchement manuel via `actions_run_trigger`
+(`run_workflow`) sur `develop`. Résultat : erreur **« Workflow does not have
+'workflow_dispatch' trigger »** — une erreur de configuration du workflow
+(`ci.yml` ne déclare que `push`/`pull_request`, pas `workflow_dispatch`), pas
+une erreur d'accès ou de quota. Ça exclut un blocage total (« Actions
+désactivées sur le dépôt » aurait probablement échoué autrement, avant même
+d'atteindre la validation du déclencheur) mais ne dit pas pourquoi les
+événements `push` eux-mêmes ne déclenchent plus rien.
+
+**Décision** : hors de portée des outils disponibles ici — nécessite une
+vérification humaine directe sur `Settings → Actions → General` du dépôt
+(état « Actions permissions », historique de facturation/minutes consommées),
+et éventuellement d'ajouter un déclencheur `workflow_dispatch` à `ci.yml` pour
+permettre un test manuel propre à l'avenir. Ne bloque pas le reste de cette
+session ni des suivantes — la propagation vers `main` (ÉTAPE 0) et le travail
+sur `develop` continuent sans dépendre de la CI.
+
+### 24. Pipeline GitHub Actions à l'arrêt — cause réelle identifiée : workflow fantôme sur un chemin corrompu
+
+Suite du point 23. `mcp__github__actions_list` expose deux `workflow_id` bien
+distincts sur ce dépôt :
+
+- **317742837** — le vrai `Spring Boot CI/CD Pipeline`, chemin
+  `.github/workflows/ci.yml`, `state: active`. Son dernier run réel est le
+  run #43 du 2026-08-10 (`conclusion: failure`) — rien depuis, malgré des
+  dizaines de fusions sur `develop`.
+- **331865476** — un workflow nommé `""`, de chemin littéral `BuildFailed`
+  (pas un chemin de fichier valide), `state: deleted`, créé le 2026-08-11.
+  **C'est lui qui reçoit tous les événements `push` sur `develop` depuis** :
+  un nouveau run apparaît à chaque fusion (jusqu'au dernier en date,
+  2026-08-25T14:43:48Z), toujours avec `conclusion: startup_failure` —
+  GitHub tente de déclencher un workflow qu'il considère supprimé, échoue
+  immédiatement avant même d'atteindre `ci.yml`.
+
+Le fichier `.github/workflows/ci.yml` lui-même a été relu intégralement :
+YAML valide, déclencheurs `push`/`pull_request` corrects sur
+`develop`/`preprod`/`main`. Ce n'est donc ni un problème de contenu, ni un
+quota épuisé, ni un réglage « Actions désactivées » — c'est une association
+chemin → workflow corrompue côté GitHub, gelée sur l'ancien chemin
+`.github/workflows/ci.yml` depuis un événement du 2026-08-11 (nature exacte
+inconnue : renommage, ré-écriture d'historique, ou incident de
+synchronisation de la plateforme). Ce que confirme `get_workflow` sur
+l'identifiant fantôme : `path: "BuildFailed"` — littéralement le nom du
+« check » que GitHub affiche pour un run qu'il ne sait plus rattacher à un
+fichier réel.
+
+**Correctif appliqué** (PR issue de cette investigation) : renommage de
+`.github/workflows/ci.yml` en `.github/workflows/build.yml` (contenu
+inchangé, `git mv` pour préserver l'historique), plus ajout d'un déclencheur
+`workflow_dispatch: {}` pour permettre un test manuel à l'avenir sans
+attendre un push. Le changement de chemin force GitHub à enregistrer une
+troisième identité de workflow, fraîche, sans lien avec l'association
+corrompue — hypothèse testable dès le prochain push sur `develop`.
+
+**À vérifier au prochain passage de la routine** : si le premier run après
+la fusion de cette PR porte un nouveau `workflow_id` (ni 317742837 ni
+331865476) avec une vraie exécution (pas `startup_failure` immédiat), le
+correctif est confirmé — mettre à jour ce point plutôt que d'en ouvrir un
+nouveau. Si le fantôme `331865476` continue malgré le renommage, la cause
+est plus profonde (réglage d'organisation ou de dépôt hors de portée de
+l'API `mcp__github__*` disponible ici) et nécessite une vérification humaine
+directe sur `Settings → Actions` du dépôt.
+
+Le PR Copilot ouverte #21 (`copilot/fix-failing-github-actions-job`,
+brouillon depuis le 2026-07-21) traite un problème différent et bien plus
+ancien (chemin d'exécution Maven à la racine au lieu de `backend/`, déjà
+corrigé depuis dans `ci.yml` via `defaults.run.working-directory`) — sans
+rapport avec le fantôme `BuildFailed` découvert ici. Laissée telle quelle,
+hors du périmètre de cette investigation.
+
+**Vérification faite dans la foulée (même passage), hypothèse du chemin corrompu invalidée.**
+Après fusion de la PR de renommage, `list_workflows` confirme l'enregistrement
+d'une troisième identité fraîche (`workflow_id` **342182978**, chemin
+`.github/workflows/build.yml`, `state: active`) — le renommage a bien eu
+l'effet attendu sur l'enregistrement. Mais :
+
+- Le push de fusion (`2fd8231`) a quand même généré un nouveau run sur le
+  fantôme `331865476` (run #137, `conclusion: startup_failure`) — le fantôme
+  n'est pas lié au chemin `ci.yml` spécifiquement, il intercepte les push sur
+  `develop` en général.
+- Plus décisif : `list_workflow_runs` sur le nouvel identifiant **342182978**
+  reste à `total_count: 0` plusieurs dizaines de secondes après le push — le
+  vrai workflow, sur un chemin propre, ne se déclenche pas non plus sur
+  `push`.
+- Déclenché manuellement via `workflow_dispatch` (désormais disponible sur
+  `build.yml`) : la requête est acceptée (`204 Workflow run has been
+  queued`), un run apparaît bien (`id 32862597408`, `event:
+  workflow_dispatch`) — mais avec `conclusion: startup_failure` **et 0 job
+  créé** (`list_workflow_jobs` : `total_count: 0`, aucun log disponible).
+
+Un run sans le moindre job créé, y compris pour un déclenchement manuel
+explicite sur un workflow tout juste enregistré et parfaitement valide,
+exclut définitivement un problème de contenu, de chemin, ou d'association
+fantôme : GitHub accepte la demande d'exécution mais ne parvient jamais à
+provisionner le moindre runner. C'est la signature typique d'un blocage au
+niveau du compte/dépôt lui-même — le plus probable étant une limite de
+dépenses (« spending limit ») atteinte ou nulle sur les minutes Actions, ou
+un blocage explicite des Actions au niveau du dépôt/organisation
+(`Settings → Actions → General`, ou `Settings → Billing → Plans and usage`)
+— aucun des deux n'est vérifiable ni corrigible par les outils
+`mcp__github__*` disponibles ici (pas d'endpoint exposant
+`GET /repos/{owner}/{repo}/actions/permissions` ni la facturation du compte).
+
+**Décision finale de cette investigation** : le renommage reste en place
+(changement neutre à légèrement positif — chemin propre, `workflow_dispatch`
+disponible pour un nouveau test dès que la cause réelle sera levée), mais
+n'est **pas** le correctif. La cause racine est confirmée hors de portée de
+l'API : **vérification humaine indispensable** sur `Settings → Actions →
+General` (Actions activées ? autorisées pour ce dépôt ?) et sur
+`Settings → Billing → Plans and usage` (minutes Actions épuisées, limite de
+dépenses à 0). Ne pas retenter de nouveau correctif automatique sur ce point
+tant que cette vérification n'a pas eu lieu — le prochain passage de la
+routine peut se contenter d'un nouveau `workflow_dispatch` ponctuel pour
+sonder si la situation a changé, sans reproduire l'investigation complète.

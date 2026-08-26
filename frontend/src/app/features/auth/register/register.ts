@@ -31,7 +31,7 @@ export class Register {
    * futur candidat qu'un représentant d'école vers l'accueil générique, sans
    * aucune indication sur la suite à donner.
    */
-  typeInscription: 'CANDIDAT' | 'ECOLE' = 'CANDIDAT';
+  typeInscription: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' = 'CANDIDAT';
 
   // Déclaration de tous les contrôles liés au HTML
   registerForm: FormGroup = this.fb.group({
@@ -42,7 +42,7 @@ export class Register {
     confirmPassword: ['', Validators.required]
   });
 
-  choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE'): void {
+  choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE'): void {
     this.typeInscription = type;
   }
 
@@ -65,6 +65,8 @@ export class Register {
         this.isLoading = false;
         if (this.typeInscription === 'ECOLE') {
           this.router.navigate(['/accreditation']);
+        } else if (this.typeInscription === 'ENTREPRISE') {
+          this.router.navigate(['/espace-entreprise']);
         } else {
           this.router.navigate(['/recrutement/sessions']);
         }

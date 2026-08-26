@@ -146,6 +146,8 @@ public class DataInitializer {
                     "Staff — évalue les demandes d'accréditation des écoles de formation");
             ensureRole(roleRepository, "ROLE_ECOLE_FORMATION", "École de Formation",
                     "École externe — soumet et suit sa demande d'accréditation");
+            ensureRole(roleRepository, "ROLE_ENTREPRISE", "Entreprise",
+                    "Entreprise partenaire — soumet des besoins de formation, des demandes de devis, échange avec la pédagogie");
 
             // ===================== SESSIONS =====================
             // Garde-fou : plutôt qu'un IndexOutOfBoundsException opaque au démarrage,

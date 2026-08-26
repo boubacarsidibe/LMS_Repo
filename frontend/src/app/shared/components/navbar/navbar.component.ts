@@ -135,6 +135,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       case 'ROLE_ETUDIANT': return 'ETUDIANT';
       case 'ROLE_FORMATEUR': return 'FORMATEUR';
       case 'ROLE_ECOLE_FORMATION': return 'ÉCOLE DE FORMATION';
+      case 'ROLE_ENTREPRISE': return 'ENTREPRISE';
       case 'ROLE_EVALUATEUR_ACCREDITATION': return 'ÉVALUATEUR ACCRÉDITATION';
       default: return r.replace('ROLE_', '');
     }

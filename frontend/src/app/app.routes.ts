@@ -78,6 +78,16 @@ export const routes: Routes = [
     loadChildren: () => import('./features/espace-alumni/espace-alumni.routes').then(m => m.routes)
   },
 
+  // Espace Entreprise (TDR §H) : tout utilisateur connecté peut soumettre un
+  // besoin ou une demande de devis (ROLE_ENTREPRISE n'est accordé qu'à la
+  // première soumission réussie, cf. EntrepriseController) — même patron que
+  // /accreditation, authGuard seul, pas de roleGuard.
+  {
+    path: 'espace-entreprise',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/espace-entreprise/espace-entreprise.routes').then(m => m.routes)
+  },
+
   // Liste des écoles accréditées (TDR §F) : réservée aux comptes connectés,
   // tout rôle confondu — décision produit du 2026-08-25 (LOG_BLOQUANT.md),
   // le TDR demandait initialement une liste réellement publique.

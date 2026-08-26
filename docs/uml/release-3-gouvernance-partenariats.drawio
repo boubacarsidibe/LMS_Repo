@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Release 3 - Gouvernance et partenariats" id="release-3-gp">
-    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1700" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -75,24 +75,58 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- ===================== TDR - EPICS RESTANTS (non instruits) ===================== -->
-        <mxCell id="titre-restants" value="TDR - sections restantes (aucun squelette de modele pose)" style="text;html=1;fontStyle=1;fontSize=14;align=left;" vertex="1" parent="1">
+        <!-- ===================== EPIC H - ESPACE ENTREPRISE ===================== -->
+        <mxCell id="titre-epicH" value="TDR section H - Espace entreprise" style="text;html=1;fontStyle=1;fontSize=16;align=left;" vertex="1" parent="1">
           <mxGeometry x="360" y="800" width="500" height="30" as="geometry" />
         </mxCell>
+
+        <mxCell id="entreprise" value="&lt;b&gt;Entreprise&lt;/b&gt; [NOUVEAU]&lt;hr&gt;id (= id_user, @MapsId User)&lt;br&gt;raisonSociale : String&lt;br&gt;secteur : String&lt;br&gt;adresse : String&lt;br&gt;telephone : String&lt;br&gt;dateCreation : LocalDate" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="360" y="840" width="260" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="demande-entreprise" value="&lt;b&gt;DemandeEntreprise&lt;/b&gt; [NOUVEAU]&lt;hr&gt;id : Long&lt;br&gt;entreprise : Entreprise&lt;br&gt;type : BESOIN_FORMATION|DEVIS_SESSION&lt;br&gt;formation : Formation (nullable)&lt;br&gt;description / effectifConcerne / datesSouhaitees&lt;br&gt;statut : SOUMISE|EN_COURS|REPONDUE|CLOTUREE&lt;br&gt;dateSoumission / dateReponse / reponseEquipe&lt;hr&gt;Une seule entite pour besoin ET devis&lt;br&gt;(memes champs de suivi)." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="680" y="840" width="300" height="210" as="geometry" />
+        </mxCell>
+
+        <mxCell id="message-entreprise" value="&lt;b&gt;MessageEntreprise&lt;/b&gt; [NOUVEAU]&lt;hr&gt;id : Long&lt;br&gt;entreprise : Entreprise&lt;br&gt;auteur : User&lt;br&gt;contenu : String&lt;br&gt;dateCreation : LocalDateTime&lt;hr&gt;Canal prive par entreprise, distinct&lt;br&gt;de forum_sujet.portee (partage).&lt;br&gt;auteurEntreprise derive en comparant&lt;br&gt;auteur.id a entreprise.user.id." style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="840" width="280" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="entreprise-controller" value="&lt;b&gt;EntrepriseController&lt;/b&gt; [NOUVEAU]&lt;hr&gt;/api/entreprise/**, authenticated()&lt;hr&gt;catalogue() - formations publiees&lt;br&gt;soumettreDemande() - cree/MAJ le profil + la demande,&lt;br&gt;accorde ROLE_ENTREPRISE a la 1re soumission&lt;br&gt;mesDemandes() / mesMessages() / envoyerMessage()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1020" width="320" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pedagogie-entreprise-controller" value="&lt;b&gt;PedagogieEntrepriseController&lt;/b&gt; [NOUVEAU]&lt;hr&gt;/api/pedagogie/entreprises/**&lt;br&gt;herite hasRole('RESPONSABLE_PEDAGOGIQUE')&lt;hr&gt;demandes() - toutes, tous statuts&lt;br&gt;repondre() - change le statut + reponse&lt;br&gt;messages() / envoyerMessage() - par entreprise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="720" y="1020" width="320" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="entreprise-notification-service" value="&lt;b&gt;EntrepriseNotificationService&lt;/b&gt; [NOUVEAU]&lt;hr&gt;JavaMailSender, sujet [INPG Entreprise]&lt;br&gt;notifierNouvelleDemande / notifierNouveauMessage" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="1020" width="280" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- Relations EPIC H -->
+        <mxCell id="rel-entreprise-demande" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="entreprise" target="demande-entreprise">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-entreprise-message" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="entreprise" target="message-entreprise">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===================== TDR - EPICS RESTANTS (non instruits) ===================== -->
+        <mxCell id="titre-restants" value="TDR - sections restantes (aucun squelette de modele pose)" style="text;html=1;fontStyle=1;fontSize=14;align=left;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1220" width="500" height="30" as="geometry" />
+        </mxCell>
         <mxCell id="afaire-D" value="Section D - Compatibilite SIGB [BLOQUE : aucun SIGB existant a l'INPG, cf. LOG_BLOQUANT.md]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;align=left;spacingLeft=8;" vertex="1" parent="1">
-          <mxGeometry x="360" y="840" width="620" height="30" as="geometry" />
+          <mxGeometry x="360" y="1260" width="620" height="30" as="geometry" />
         </mxCell>
         <mxCell id="afaire-G" value="Section G - Processus qualite (dashboard, enquetes de suivi)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;align=left;spacingLeft=8;" vertex="1" parent="1">
-          <mxGeometry x="360" y="875" width="620" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="afaire-H" value="Section H - Espace entreprise" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;align=left;spacingLeft=8;" vertex="1" parent="1">
-          <mxGeometry x="360" y="910" width="620" height="30" as="geometry" />
+          <mxGeometry x="360" y="1295" width="620" height="30" as="geometry" />
         </mxCell>
         <mxCell id="afaire-I" value="Section I - Suivi du personnel INPG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;align=left;spacingLeft=8;" vertex="1" parent="1">
-          <mxGeometry x="360" y="945" width="620" height="30" as="geometry" />
+          <mxGeometry x="360" y="1330" width="620" height="30" as="geometry" />
         </mxCell>
         <mxCell id="afaire-J" value="Section J - Gestion des rendez-vous" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;align=left;spacingLeft=8;" vertex="1" parent="1">
-          <mxGeometry x="360" y="980" width="620" height="30" as="geometry" />
+          <mxGeometry x="360" y="1365" width="620" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

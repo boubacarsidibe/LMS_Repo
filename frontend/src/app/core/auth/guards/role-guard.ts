@@ -40,6 +40,8 @@ export function roleGuard(...requiredRoles: string[]): CanActivateFn {
         router.navigate(['/evaluateur-accreditation']);
       } else if (userRoles.includes('ROLE_ECOLE_FORMATION')) {
         router.navigate(['/accreditation']);
+      } else if (userRoles.includes('ROLE_ENTREPRISE')) {
+        router.navigate(['/espace-entreprise']);
       } else {
         router.navigate(['/accueil']);
       }
