@@ -3,8 +3,11 @@ package inpg.sn.lms.recrutement.service;
 import inpg.sn.lms.exception.DuplicateResourceException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -21,6 +24,7 @@ import inpg.sn.lms.recrutement.dto.PaiementRequest;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.Paiement;
+import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.enums.EnumStatutPaiement;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
 import inpg.sn.lms.recrutement.repository.PaiementRepository;
@@ -211,6 +215,53 @@ public class PaiementService {
                 .stream()
                 .map(this::toResponseAvecContexte)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Statuts à partir desquels le paiement des frais de dossier est attendu — le dossier
+     * a été validé (cf. {@code VALIDATION_DOSSIER} : « Merci de procéder au paiement »).
+     * Avant ce stade (BROUILLON, SOUMIS) ou après un rejet, aucune relance n'a de sens.
+     */
+    private static final Set<EnumStatutCandidature> STATUTS_ELIGIBLES_RELANCE_PAIEMENT = Set.of(
+            EnumStatutCandidature.EN_COURS_DE_PRESELECTION, EnumStatutCandidature.ADMIS1,
+            EnumStatutCandidature.ADMIS2, EnumStatutCandidature.ADMIS3);
+
+    /**
+     * Relance les candidats dont le dossier est validé mais dont les frais de dossier
+     * restent impayés — {@link #getAllPaiements()} seul ne peut pas servir de base : il ne
+     * liste que les {@link Paiement} déjà créés, jamais les candidatures n'ayant encore fait
+     * aucune tentative. Recalculé côté serveur à chaque appel plutôt que confié à une liste
+     * transmise par le client, pour ne jamais relancer quelqu'un qui n'y est pas éligible.
+     */
+    public Map<String, Object> relancerImpayes() {
+        List<Candidature> impayees = candidatureRepository.findAll().stream()
+                .filter(c -> STATUTS_ELIGIBLES_RELANCE_PAIEMENT.contains(c.getStatut()))
+                .filter(c -> c.getPaiement() == null || c.getPaiement().getStatut() != EnumStatutPaiement.SUCCES)
+                .toList();
+
+        int envoyes = 0;
+        List<String> echecs = new ArrayList<>();
+        for (Candidature c : impayees) {
+            String email = c.getCandidat() != null && c.getCandidat().getUser() != null
+                    ? c.getCandidat().getUser().getEmail()
+                    : null;
+            if (email == null) {
+                echecs.add(c.getNumeroDossier() + " (aucune adresse)");
+                continue;
+            }
+            try {
+                notificationService.notifierRappelPaiement(email, c.getNumeroDossier());
+                notificationCandidatService.creerNotification(c.getCandidat().getId(),
+                        "Les frais de dossier de votre candidature n°" + c.getNumeroDossier()
+                                + " sont en attente de règlement.",
+                        "PAIEMENT", "/recrutement/suivi");
+                envoyes++;
+            } catch (Exception e) {
+                log.error("Échec de la relance de paiement à {} : {}", email, e.getMessage(), e);
+                echecs.add(email);
+            }
+        }
+        return Map.of("envoyes", envoyes, "echecs", echecs);
     }
 
     /** Reçu prêt à être servi : le contenu du PDF et le nom de fichier proposé au téléchargement. */

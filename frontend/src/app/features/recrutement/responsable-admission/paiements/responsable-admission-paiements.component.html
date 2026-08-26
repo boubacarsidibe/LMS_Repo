@@ -1,11 +1,18 @@
-<div class="mb-stack-lg">
-  <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Historique des paiements</h1>
-  <p class="font-body-md text-body-md text-on-surface-variant mt-2">Suivi des frais de dossier réglés par les candidats, toutes sessions confondues.</p>
+<div class="mb-stack-lg flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Historique des paiements</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-2">Suivi des frais de dossier réglés par les candidats, toutes sessions confondues.</p>
+  </div>
+  <button type="button" [disabled]="relanceEnCours || candidaturesImpayees.length === 0" (click)="relancerImpayes()" title="Envoie un email et une notification aux candidats dont le dossier est validé mais les frais impayés" class="shrink-0 flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md disabled:opacity-60">
+    <span class="material-symbols-outlined text-sm">mark_email_unread</span>
+    {{ relanceEnCours ? 'Relance en cours…' : 'Relancer les impayés (' + candidaturesImpayees.length + ')' }}
+  </button>
 </div>
 
 <div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
+<div *ngIf="relanceMessage" class="mb-stack-md p-4 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm text-body-sm">{{ relanceMessage }}</div>
 
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-gutter mb-stack-lg">
+<div class="grid grid-cols-1 sm:grid-cols-4 gap-gutter mb-stack-lg">
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
     <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Total encaissé</span><span class="material-symbols-outlined text-secondary">payments</span></div>
     <div class="font-headline-lg text-headline-lg text-primary">{{ montantTotal | number:'1.0-0' }} <span class="font-body-md text-body-md text-on-surface-variant font-normal">XOF</span></div>
@@ -17,6 +24,38 @@
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
     <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">En attente</span><span class="material-symbols-outlined text-outline">hourglass_empty</span></div>
     <div class="font-headline-lg text-headline-lg text-primary">{{ nbEnAttente }}</div>
+  </div>
+  <div class="bg-surface-container-lowest p-6 rounded-xl border shadow-sm" [class.border-error]="candidaturesImpayees.length > 0" [class.border-outline-variant]="candidaturesImpayees.length === 0">
+    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Dossiers validés impayés</span><span class="material-symbols-outlined" [class.text-error]="candidaturesImpayees.length > 0" [class.text-on-surface-variant]="candidaturesImpayees.length === 0">priority_high</span></div>
+    <div class="font-headline-lg text-headline-lg" [class.text-error]="candidaturesImpayees.length > 0" [class.text-primary]="candidaturesImpayees.length === 0">{{ candidaturesImpayees.length }}</div>
+  </div>
+</div>
+
+<!-- Dossiers validés sans paiement réussi : jamais tentés (invisibles de l'historique ci-dessous) ou tentative en attente/échouée. -->
+<div *ngIf="!loading && candidaturesImpayees.length > 0" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden mb-stack-lg">
+  <div class="p-4 border-b border-outline-variant bg-surface">
+    <span class="font-label-md text-label-md text-on-surface">Dossiers validés en attente de paiement</span>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low border-b border-outline-variant">
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut du dossier</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Paiement</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant">
+        <tr *ngFor="let c of candidaturesImpayees" class="hover:bg-surface-container-low transition-colors">
+          <td class="p-4">
+            <div class="font-label-md text-label-md text-primary">{{ c.candidatPrenom }} {{ c.candidatNom }}</div>
+            <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ c.numeroDossier }}</div>
+          </td>
+          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.statut }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
