@@ -1,0 +1,95 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header>
+    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Espace Alumni</span>
+    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Enquêtes de suivi</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+      L'INPG mesure régulièrement l'impact de la formation sur votre carrière. Vos réponses
+      aident à faire évoluer les programmes.
+    </p>
+  </header>
+
+  <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+
+  <ng-container *ngIf="!chargement">
+    <div *ngIf="enquetes.length === 0" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg text-center">
+      <p class="font-body-md text-body-md text-on-surface-variant">Aucune enquête n'est ouverte pour le moment.</p>
+    </div>
+
+    <ul class="space-y-stack-md">
+      <li *ngFor="let e of enquetes"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg flex items-start justify-between gap-stack-md flex-wrap">
+        <div class="min-w-0">
+          <p class="font-label-md text-label-md text-on-surface">{{ e.titre }}</p>
+          <p *ngIf="e.description" class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ e.description }}</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Ouverte le {{ e.dateCreation | date: 'dd/MM/yyyy' }}
+          </p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <span *ngIf="e.dejaRepondu" class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-label-sm">
+            Réponse envoyée
+          </span>
+          <button type="button" (click)="ouvrirReponse(e)"
+                  class="flex items-center gap-2 px-4 py-2.5 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors">
+            <span class="material-symbols-outlined text-[20px]">edit_note</span>
+            {{ e.dejaRepondu ? 'Modifier ma réponse' : 'Répondre' }}
+          </button>
+        </div>
+      </li>
+    </ul>
+  </ng-container>
+</div>
+
+<!-- Répondre à une enquête -->
+<div *ngIf="formulaireOuvert" class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermer()">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm w-full max-w-lg max-h-[85vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">fact_check</span>
+        {{ enqueteEnCours?.titre }}
+      </h2>
+      <button type="button" (click)="fermer()" aria-label="Fermer" class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+
+    <div class="p-stack-lg space-y-stack-md" *ngIf="!reponseEnvoyee">
+      <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">
+          Dans quelle mesure appliquez-vous les compétences acquises à l'INPG ? ({{ saisie.noteApplicationCompetences }}/5)
+        </span>
+        <input type="range" min="1" max="5" step="1" [(ngModel)]="saisie.noteApplicationCompetences" class="accent-secondary" />
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">
+          Quel a été l'impact de la formation sur votre carrière ? ({{ saisie.noteImpactCarriere }}/5)
+        </span>
+        <input type="range" min="1" max="5" step="1" [(ngModel)]="saisie.noteImpactCarriere" class="accent-secondary" />
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Commentaire (facultatif)</span>
+        <textarea rows="3" [(ngModel)]="saisie.commentaire"
+                  class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+      </label>
+
+      <div class="flex gap-stack-md pt-2">
+        <button type="button" (click)="fermer()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Annuler</button>
+        <button type="button" [disabled]="envoiEnCours" (click)="envoyer()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+          {{ envoiEnCours ? 'Envoi…' : 'Envoyer' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="p-stack-lg text-center space-y-stack-sm" *ngIf="reponseEnvoyee">
+      <span class="material-symbols-outlined text-secondary text-[40px]">check_circle</span>
+      <p class="font-body-md text-body-md text-on-surface">Merci, votre réponse a bien été enregistrée.</p>
+      <button type="button" (click)="fermer()" class="py-3 px-6 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>

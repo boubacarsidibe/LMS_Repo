@@ -1,5 +1,6 @@
 package inpg.sn.lms.espace_alumni.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -20,8 +21,15 @@ import org.springframework.web.bind.annotation.RestController;
 import inpg.sn.lms.auth.entity.AlumniProfil;
 import inpg.sn.lms.espace_alumni.dto.AlumniProfilDto;
 import inpg.sn.lms.espace_alumni.dto.AlumniProfilUpdateRequest;
+import inpg.sn.lms.espace_alumni.dto.EnqueteSuiviDto;
+import inpg.sn.lms.espace_alumni.dto.ReponseEnqueteSuiviDto;
+import inpg.sn.lms.espace_alumni.dto.ReponseEnqueteSuiviRequest;
 import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleDto;
 import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleRequest;
+import inpg.sn.lms.espace_alumni.entity.EnqueteSuivi;
+import inpg.sn.lms.espace_alumni.entity.ReponseEnqueteSuivi;
+import inpg.sn.lms.espace_alumni.repository.EnqueteSuiviRepository;
+import inpg.sn.lms.espace_alumni.repository.ReponseEnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.service.AlumniProfilService;
 import inpg.sn.lms.espace_alumni.service.SituationProfessionnelleService;
 import inpg.sn.lms.espace_etudiant.dto.ReleveDelivreDto;
@@ -52,13 +60,18 @@ public class AlumniController {
     private final AlumniProfilService alumniProfilService;
     private final SituationProfessionnelleService situationService;
     private final ReleveDelivranceService releveDelivranceService;
+    private final EnqueteSuiviRepository enqueteRepository;
+    private final ReponseEnqueteSuiviRepository reponseRepository;
 
     public AlumniController(UtilisateurCourantService utilisateurCourant, AlumniProfilService alumniProfilService,
-            SituationProfessionnelleService situationService, ReleveDelivranceService releveDelivranceService) {
+            SituationProfessionnelleService situationService, ReleveDelivranceService releveDelivranceService,
+            EnqueteSuiviRepository enqueteRepository, ReponseEnqueteSuiviRepository reponseRepository) {
         this.utilisateurCourant = utilisateurCourant;
         this.alumniProfilService = alumniProfilService;
         this.situationService = situationService;
         this.releveDelivranceService = releveDelivranceService;
+        this.enqueteRepository = enqueteRepository;
+        this.reponseRepository = reponseRepository;
     }
 
     @GetMapping("/mon-profil")
@@ -157,6 +170,89 @@ public class AlumniController {
                 .map(this::toReleveDelivreDto)
                 .toList();
         return ResponseEntity.ok(releves);
+    }
+
+    /**
+     * Enquêtes de suivi actives (TDR §G) : « mesurer l'impact à long terme de la
+     * formation sur la carrière des diplômés ». Signale si l'alumni y a déjà
+     * répondu, plutôt que de les masquer — il peut vouloir revoir/corriger sa
+     * réponse.
+     */
+    @GetMapping("/enquetes")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> enquetes(Authentication authentication) {
+        AlumniProfil profil = utilisateurCourant.alumniProfil(authentication);
+        if (profil == null) {
+            return profilIntrouvable();
+        }
+        List<EnqueteSuiviDto> dtos = enqueteRepository.findByActiveTrueOrderByDateCreationDesc().stream()
+                .map(e -> toEnqueteDto(e, profil.getId()))
+                .toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    /** Dépose ou met à jour la réponse de l'alumni connecté à une enquête. */
+    @PostMapping("/enquetes/{id}/reponse")
+    @Transactional
+    public ResponseEntity<?> repondreEnquete(@PathVariable Long id, @RequestBody ReponseEnqueteSuiviRequest requete,
+            Authentication authentication) {
+        AlumniProfil profil = utilisateurCourant.alumniProfil(authentication);
+        if (profil == null) {
+            return profilIntrouvable();
+        }
+        EnqueteSuivi enquete = enqueteRepository.findById(id).orElse(null);
+        if (enquete == null || !enquete.isActive()) {
+            return ResponseEntity.notFound().build();
+        }
+        String erreur = validerReponse(requete);
+        if (erreur != null) {
+            return ResponseEntity.badRequest().body(Map.of("message", erreur));
+        }
+        ReponseEnqueteSuivi reponse = reponseRepository.findByEnqueteIdAndAlumniProfilId(id, profil.getId())
+                .orElseGet(() -> {
+                    ReponseEnqueteSuivi nouvelle = new ReponseEnqueteSuivi();
+                    nouvelle.setEnquete(enquete);
+                    nouvelle.setAlumniProfil(profil);
+                    return nouvelle;
+                });
+        reponse.setNoteApplicationCompetences(requete.noteApplicationCompetences());
+        reponse.setNoteImpactCarriere(requete.noteImpactCarriere());
+        reponse.setCommentaire(requete.commentaire() == null || requete.commentaire().isBlank() ? null
+                : requete.commentaire().trim());
+        reponse.setDateReponse(LocalDateTime.now());
+        ReponseEnqueteSuivi enregistree = reponseRepository.save(reponse);
+        return ResponseEntity.ok(new ReponseEnqueteSuiviDto(
+                enregistree.getId(),
+                id,
+                enregistree.getNoteApplicationCompetences(),
+                enregistree.getNoteImpactCarriere(),
+                enregistree.getCommentaire(),
+                enregistree.getDateReponse()));
+    }
+
+    private EnqueteSuiviDto toEnqueteDto(EnqueteSuivi enquete, Long alumniProfilId) {
+        boolean dejaRepondu = reponseRepository.findByEnqueteIdAndAlumniProfilId(enquete.getId(), alumniProfilId)
+                .isPresent();
+        return new EnqueteSuiviDto(
+                enquete.getId(),
+                enquete.getTitre(),
+                enquete.getDescription(),
+                enquete.getDateCreation(),
+                enquete.isActive(),
+                dejaRepondu);
+    }
+
+    private static final int NOTE_MIN = 1;
+    private static final int NOTE_MAX = 5;
+
+    private String validerReponse(ReponseEnqueteSuiviRequest requete) {
+        if (requete.noteApplicationCompetences() == null
+                || requete.noteApplicationCompetences() < NOTE_MIN || requete.noteApplicationCompetences() > NOTE_MAX
+                || requete.noteImpactCarriere() == null
+                || requete.noteImpactCarriere() < NOTE_MIN || requete.noteImpactCarriere() > NOTE_MAX) {
+            return "Les deux notes doivent être comprises entre " + NOTE_MIN + " et " + NOTE_MAX + ".";
+        }
+        return null;
     }
 
     private ReleveDelivreDto toReleveDelivreDto(ReleveNotes releve) {

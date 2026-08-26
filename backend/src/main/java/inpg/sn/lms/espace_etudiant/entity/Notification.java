@@ -30,8 +30,13 @@ import jakarta.persistence.Table;
 @Table(name = "notification")
 public class Notification {
 
-    /** Seul type émis aujourd'hui ; le champ reste ouvert pour les usages à venir. */
     public static final String MENTION_FORUM = "MENTION_FORUM";
+
+    /** Nouvelle campagne d'enquête de suivi (TDR §G) ouverte aux alumni. */
+    public static final String ENQUETE_SUIVI = "ENQUETE_SUIVI";
+
+    /** Rappel automatique de dépôt d'une évaluation de cours (TDR §G, besoin B4). */
+    public static final String EVALUATION_RAPPEL = "EVALUATION_RAPPEL";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -32,6 +32,10 @@ export const routes: Routes = [
             {
                 path: 'documents',
                 loadComponent: () => import('./pages/documents-alumni/documents-alumni').then(m => m.DocumentsAlumni)
+            },
+            {
+                path: 'enquetes',
+                loadComponent: () => import('./pages/enquetes-alumni/enquetes-alumni').then(m => m.EnquetesAlumni)
             }
         ]
     }

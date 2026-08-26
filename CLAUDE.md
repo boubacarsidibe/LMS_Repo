@@ -259,6 +259,18 @@ pédagogique n'avait même aucune page « Mon profil » ; comme il n'a pas de fi
 `Auth.currentUser()` et au changement de mot de passe via l'endpoint générique
 `POST /api/auth/change-password`, qui sert les trois rôles.
 
+**`@EnableScheduling` existe depuis `EvaluationRappelService`** (TDR §G, rappel
+automatique d'évaluation) — c'était la première tâche planifiée de tout ce backend.
+Posé sur `LmsApplication`, volontairement au seul endroit qui en a besoin plutôt que
+dans une classe de configuration séparée créée par anticipation. Toute nouvelle tâche
+`@Scheduled` peut désormais s'appuyer sur cette annotation déjà présente — ne pas la
+reposer ailleurs ni la dupliquer. `Cours` n'a aucune notion de session/édition datée :
+un rappel « à la fin de chaque session » au sens strict du TDR n'est donc pas
+possible aujourd'hui ; le rappel actuel se déclenche tant qu'un cours autorisé reste
+non évalué, avec un délai de repos (`COOLDOWN_JOURS`) plutôt qu'une vraie date de fin.
+Si le besoin d'une session datée se confirme un jour, c'est une décision de modèle à
+instruire à part (voir `LOG_BLOQUANT.md`), pas une extension mécanique de ce service.
+
 ---
 
 ## 4. Comptes et données

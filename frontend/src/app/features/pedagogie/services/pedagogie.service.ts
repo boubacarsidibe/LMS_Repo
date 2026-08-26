@@ -143,6 +143,25 @@ export class PedagogieService {
     return this.http.post<ResultatRappel>(`${this.api}/rappels`, { objet, message, etudiantIds });
   }
 
+  /** URL relative du rapport qualité PDF, à passer à `MediaProtegeService.ouvrir(...)`. */
+  urlRapportQualite(): string {
+    return '/api/pedagogie/qualite/rapport';
+  }
+
+  // ===================== Enquêtes de suivi =====================
+
+  getEnquetesSuivi(): Observable<SyntheseEnqueteSuivi[]> {
+    return this.http.get<SyntheseEnqueteSuivi[]>(`${this.api}/enquetes-suivi`);
+  }
+
+  lancerEnqueteSuivi(titre: string, description: string | null): Observable<SyntheseEnqueteSuivi> {
+    return this.http.post<SyntheseEnqueteSuivi>(`${this.api}/enquetes-suivi`, { titre, description });
+  }
+
+  cloturerEnqueteSuivi(id: number): Observable<SyntheseEnqueteSuivi> {
+    return this.http.put<SyntheseEnqueteSuivi>(`${this.api}/enquetes-suivi/${id}/cloturer`, {});
+  }
+
   // ===================== Relevés de notes =====================
 
   /** Relevé COURANT d'un étudiant : recalculé, pas figé. Sert à vérifier avant de délivrer. */
@@ -307,4 +326,16 @@ export interface Qualite {
   coursEvalues: number;
   coursASurveiller: number;
   parCours: LigneQualite[];
+}
+
+export interface SyntheseEnqueteSuivi {
+  enqueteId: number;
+  titre: string;
+  description: string | null;
+  dateCreation: string;
+  active: boolean;
+  nombreReponses: number;
+  moyenneApplicationCompetences: number | null;
+  moyenneImpactCarriere: number | null;
+  derniersCommentaires: string[];
 }

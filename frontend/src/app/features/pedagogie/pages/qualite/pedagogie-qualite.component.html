@@ -1,13 +1,24 @@
 <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
-  <header>
-    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
-      Processus qualité
-    </span>
-    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Suivi qualité</h1>
-    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
-      Ce que les étudiants disent des cours. Les moins bien notés apparaissent en premier :
-      c’est là que l’attention est utile.
-    </p>
+  <header class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
+        Processus qualité
+      </span>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Suivi qualité</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+        Ce que les étudiants disent des cours, et l'impact de la formation sur la carrière des
+        diplômés. Les cours les moins bien notés apparaissent en premier : c'est là que
+        l'attention est utile.
+      </p>
+    </div>
+    <button
+      type="button"
+      (click)="telechargerRapport()"
+      class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity"
+    >
+      <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+      Rapport qualité (PDF)
+    </button>
   </header>
 
   <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
@@ -96,4 +107,125 @@
       </article>
     </section>
   </ng-container>
+
+  <section class="space-y-stack-md">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">fact_check</span>Enquêtes de suivi
+      </h2>
+      <button
+        type="button"
+        (click)="afficherFormulaireEnquete = !afficherFormulaireEnquete"
+        class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity"
+      >
+        <span class="material-symbols-outlined text-[20px]">{{ afficherFormulaireEnquete ? 'close' : 'add' }}</span>
+        {{ afficherFormulaireEnquete ? 'Annuler' : 'Lancer une enquête' }}
+      </button>
+    </div>
+
+    <form
+      *ngIf="afficherFormulaireEnquete"
+      (ngSubmit)="lancerEnquete()"
+      class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg space-y-stack-sm"
+    >
+      <div>
+        <label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
+          Titre
+        </label>
+        <input
+          type="text"
+          name="nouveauTitre"
+          [(ngModel)]="nouveauTitre"
+          required
+          class="w-full rounded-lg border border-outline-variant px-3 py-2 font-body-md text-body-md text-on-surface bg-surface"
+          placeholder="Ex. Suivi des diplômés 2026"
+        />
+      </div>
+      <div>
+        <label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
+          Description (facultative)
+        </label>
+        <textarea
+          name="nouvelleDescription"
+          [(ngModel)]="nouvelleDescription"
+          rows="2"
+          class="w-full rounded-lg border border-outline-variant px-3 py-2 font-body-md text-body-md text-on-surface bg-surface"
+          placeholder="Ce que cette enquête cherche à mesurer"
+        ></textarea>
+      </div>
+      <p *ngIf="erreurEnquete" class="font-body-sm text-body-sm text-error">{{ erreurEnquete }}</p>
+      <button
+        type="submit"
+        [disabled]="envoiEnCours || !nouveauTitre.trim()"
+        class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50"
+      >
+        <span class="material-symbols-outlined text-[20px]">send</span>
+        {{ envoiEnCours ? 'Envoi…' : "Lancer l'enquête" }}
+      </button>
+    </form>
+
+    <p *ngIf="chargementEnquetes" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+
+    <p
+      *ngIf="!chargementEnquetes && enquetes.length === 0"
+      class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg font-body-md text-body-md text-on-surface-variant"
+    >
+      Aucune enquête de suivi n'a encore été lancée auprès des alumni.
+    </p>
+
+    <article
+      *ngFor="let e of enquetes"
+      class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg"
+    >
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <p class="font-label-md text-label-md text-on-surface">{{ e.titre }}</p>
+            <span
+              class="font-label-sm text-label-sm uppercase tracking-wider px-2 py-0.5 rounded-full"
+              [class.bg-primary-container]="e.active"
+              [class.text-on-primary-container]="e.active"
+              [class.bg-surface-container-high]="!e.active"
+              [class.text-on-surface-variant]="!e.active"
+            >
+              {{ e.active ? 'Active' : 'Clôturée' }}
+            </span>
+          </div>
+          <p *ngIf="e.description" class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            {{ e.description }}
+          </p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ e.nombreReponses }} réponse(s)</p>
+        </div>
+        <div class="flex items-center gap-4 shrink-0">
+          <div class="text-right">
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Compétences</p>
+            <p class="font-headline-sm text-headline-sm text-secondary tabular-nums">
+              {{ e.moyenneApplicationCompetences !== null ? (e.moyenneApplicationCompetences | number: '1.1-1') : '—' }}<span class="font-body-sm text-body-sm text-on-surface-variant">/5</span>
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Carrière</p>
+            <p class="font-headline-sm text-headline-sm text-secondary tabular-nums">
+              {{ e.moyenneImpactCarriere !== null ? (e.moyenneImpactCarriere | number: '1.1-1') : '—' }}<span class="font-body-sm text-body-sm text-on-surface-variant">/5</span>
+            </p>
+          </div>
+          <button
+            *ngIf="e.active"
+            type="button"
+            (click)="cloturerEnquete(e)"
+            class="flex items-center gap-1 px-3 py-2 rounded-lg border border-outline-variant font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container transition-colors"
+          >
+            <span class="material-symbols-outlined text-[18px]">lock</span>
+            Clôturer
+          </button>
+        </div>
+      </div>
+
+      <ul *ngIf="e.derniersCommentaires.length" class="mt-3 space-y-1 border-t border-outline-variant/50 pt-3">
+        <li *ngFor="let c of e.derniersCommentaires" class="font-body-sm text-body-sm text-on-surface-variant">
+          « {{ c }} »
+        </li>
+      </ul>
+    </article>
+  </section>
 </div>
