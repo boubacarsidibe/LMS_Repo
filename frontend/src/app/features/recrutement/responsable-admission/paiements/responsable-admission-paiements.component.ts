@@ -25,6 +25,9 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
   relanceEnCours = false;
   relanceMessage = '';
 
+  actionEnCoursId: number | null = null;
+  erreurAction = '';
+
   constructor(private recrutementService: RecrutementService) {}
 
   ngOnInit(): void {
@@ -105,5 +108,61 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
 
   get nbEnAttente(): number {
     return this.paiements.filter((p) => p.statut === 'EN_ATTENTE').length;
+  }
+
+  /**
+   * Confirme le règlement d'un dossier impayé, quel que soit son état actuel (jamais
+   * initié, tentative en attente ou en échec) — c'est la seule action qui couvre les
+   * trois cas, le candidat ayant réglé hors ligne (espèces, virement).
+   */
+  confirmerDossier(c: CandidatureResponse): void {
+    if (this.actionEnCoursId !== null) return;
+    if (!confirm(`Confirmer le paiement des frais de dossier de ${c.candidatPrenom} ${c.candidatNom} (${c.numeroDossier}) ?`)) return;
+    this.actionEnCoursId = c.id;
+    this.erreurAction = '';
+    this.recrutementService.enregistrerPaiementHorsLigne(c.id).subscribe({
+      next: () => {
+        this.actionEnCoursId = null;
+        this.charger();
+      },
+      error: (e) => {
+        this.actionEnCoursId = null;
+        this.erreurAction = e?.error?.message || 'Échec de la confirmation du paiement.';
+      },
+    });
+  }
+
+  /** Confirme une tentative en attente déjà initiée par le candidat (paiement en ligne). */
+  confirmerPaiementEnAttente(p: PaiementResponse): void {
+    if (this.actionEnCoursId !== null) return;
+    this.actionEnCoursId = p.id;
+    this.erreurAction = '';
+    this.recrutementService.simulerSuccesPaiement(p.id).subscribe({
+      next: () => {
+        this.actionEnCoursId = null;
+        this.charger();
+      },
+      error: (e) => {
+        this.actionEnCoursId = null;
+        this.erreurAction = e?.error?.message || 'Échec de la confirmation du paiement.';
+      },
+    });
+  }
+
+  marquerPaiementEchoue(p: PaiementResponse): void {
+    if (this.actionEnCoursId !== null) return;
+    if (!confirm('Marquer cette tentative de paiement en échec ?')) return;
+    this.actionEnCoursId = p.id;
+    this.erreurAction = '';
+    this.recrutementService.marquerPaiementEnEchec(p.id).subscribe({
+      next: () => {
+        this.actionEnCoursId = null;
+        this.charger();
+      },
+      error: (e) => {
+        this.actionEnCoursId = null;
+        this.erreurAction = e?.error?.message || "Échec du marquage en échec.";
+      },
+    });
   }
 }

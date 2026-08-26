@@ -172,24 +172,15 @@ public class PaiementService {
         }
 
         Paiement saved = paiementRepository.save(paiement);
-
         Candidature candidature = saved.getCandidature();
+        notifierCandidatPaiementConfirme(candidature);
+
         if (candidature != null && candidature.getCandidat() != null) {
-            String numeroDossier = candidature.getNumeroDossier();
-            String emailCandidat = candidature.getCandidat().getUser() != null
-                    ? candidature.getCandidat().getUser().getEmail()
-                    : null;
-            if (emailCandidat != null) {
-                notificationService.notifierPaiementSucces(emailCandidat, numeroDossier);
-            }
-            notificationCandidatService.creerNotification(candidature.getCandidat().getId(),
-                    "Le paiement des frais de dossier pour la candidature n°" + numeroDossier + " est confirmé.",
-                    "PAIEMENT", "/recrutement/suivi");
             try {
                 notificationService.envoyerEmail(emailAdmission,
                         "Paiement confirmé",
-                        "Le paiement du dossier n°" + numeroDossier + " (" + saved.getMontant() + " "
-                                + saved.getDevise() + ") a été confirmé.");
+                        "Le paiement du dossier n°" + candidature.getNumeroDossier() + " (" + saved.getMontant()
+                                + " " + saved.getDevise() + ") a été confirmé.");
             } catch (Exception e) {
                 log.error("Échec de l'envoi de l'email de confirmation de paiement à {} : {}", emailAdmission,
                         e.getMessage(), e);
@@ -197,6 +188,63 @@ public class PaiementService {
         }
 
         return toResponse(saved);
+    }
+
+    /**
+     * Enregistre un paiement effectué hors ligne (espèces au guichet, virement) et le
+     * valide directement — sans passer par {@link Paiement#effectuerPaiement()}, qui
+     * n'autorise que la transition EN_ATTENTE → SUCCES : ici c'est un constat humain
+     * (l'administration a vérifié l'encaissement), pas la confirmation d'une tentative
+     * en ligne. Fonctionne qu'un {@link Paiement} existe déjà pour cette candidature
+     * (EN_ATTENTE ou ECHEC, soldé directement) ou non (candidat n'ayant jamais initié
+     * de tentative, un {@link Paiement} est créé).
+     */
+    public PaiementResponse enregistrerPaiementHorsLigne(Long candidatureId, String methodePaiement) {
+        Candidature candidature = candidatureRepository.findById(candidatureId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Candidature non trouvée avec l'ID: " + candidatureId));
+
+        Optional<Paiement> existant = paiementRepository.findByCandidatureId(candidatureId);
+        Paiement paiement;
+        if (existant.isPresent()) {
+            paiement = existant.get();
+            if (paiement.getStatut() == EnumStatutPaiement.SUCCES) {
+                throw new DuplicateResourceException(
+                        "Les frais de dossier ont déjà été réglés pour cette candidature.");
+            }
+        } else {
+            paiement = new Paiement();
+            paiement.setReferenceTransaction(genererReference());
+            paiement.setMontant(new BigDecimal(fraisDossier));
+            paiement.setDevise(deviseFraisDossier);
+            paiement.setCandidature(candidature);
+        }
+        paiement.setStatut(EnumStatutPaiement.SUCCES);
+        paiement.setDatePaiement(LocalDateTime.now());
+        paiement.setMethodePaiement(
+                methodePaiement != null && !methodePaiement.isBlank() ? methodePaiement : "Hors ligne");
+
+        Paiement saved = paiementRepository.save(paiement);
+        notifierCandidatPaiementConfirme(candidature);
+
+        return toResponse(saved);
+    }
+
+    /** Notifie le candidat (email + notification in-app) qu'un paiement vient d'être validé. */
+    private void notifierCandidatPaiementConfirme(Candidature candidature) {
+        if (candidature == null || candidature.getCandidat() == null) {
+            return;
+        }
+        String numeroDossier = candidature.getNumeroDossier();
+        String emailCandidat = candidature.getCandidat().getUser() != null
+                ? candidature.getCandidat().getUser().getEmail()
+                : null;
+        if (emailCandidat != null) {
+            notificationService.notifierPaiementSucces(emailCandidat, numeroDossier);
+        }
+        notificationCandidatService.creerNotification(candidature.getCandidat().getId(),
+                "Le paiement des frais de dossier pour la candidature n°" + numeroDossier + " est confirmé.",
+                "PAIEMENT", "/recrutement/suivi");
     }
 
     /**

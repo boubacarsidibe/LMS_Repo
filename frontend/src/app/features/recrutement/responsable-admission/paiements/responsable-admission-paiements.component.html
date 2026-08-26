@@ -11,6 +11,7 @@
 
 <div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
 <div *ngIf="relanceMessage" class="mb-stack-md p-4 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm text-body-sm">{{ relanceMessage }}</div>
+<div *ngIf="erreurAction" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ erreurAction }}</div>
 
 <div class="grid grid-cols-1 sm:grid-cols-4 gap-gutter mb-stack-lg">
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
@@ -43,6 +44,7 @@
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut du dossier</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Paiement</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-outline-variant">
@@ -53,6 +55,17 @@
           </td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.statut }}</td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</td>
+          <td class="p-4 text-right" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              (click)="confirmerDossier(c)"
+              [disabled]="actionEnCoursId === c.id"
+              title="Confirmer un règlement effectué hors ligne (espèces, virement)"
+              class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {{ actionEnCoursId === c.id ? 'Confirmation…' : 'Confirmer le paiement' }}
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -84,6 +97,7 @@
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Montant</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-outline-variant">
@@ -100,6 +114,28 @@
                   [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-surface-container text-on-surface-variant'">
               {{ p.statut === 'SUCCES' ? 'Réussi' : 'En attente' }}
             </span>
+          </td>
+          <td class="p-4 text-right" (click)="$event.stopPropagation()">
+            <div *ngIf="p.statut === 'EN_ATTENTE'" class="flex justify-end gap-2">
+              <button
+                type="button"
+                (click)="confirmerPaiementEnAttente(p)"
+                [disabled]="actionEnCoursId === p.id"
+                title="Confirmer ce paiement"
+                class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {{ actionEnCoursId === p.id ? '…' : 'Confirmer' }}
+              </button>
+              <button
+                type="button"
+                (click)="marquerPaiementEchoue(p)"
+                [disabled]="actionEnCoursId === p.id"
+                title="Marquer en échec"
+                class="px-3 py-1.5 rounded-lg border border-outline-variant text-error font-label-sm text-label-sm hover:bg-error-container/20 transition-colors disabled:opacity-50"
+              >
+                Échec
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>

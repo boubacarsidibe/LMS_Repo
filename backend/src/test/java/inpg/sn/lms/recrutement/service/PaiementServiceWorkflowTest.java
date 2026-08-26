@@ -218,4 +218,62 @@ class PaiementServiceWorkflowTest {
         assertThrows(BusinessException.class,
                 () -> paiementService.echouerPaiement(ID_PAIEMENT, "erreur de saisie"));
     }
+
+    // ===================== Enregistrement hors ligne =====================
+
+    /**
+     * Un candidat n'ayant jamais initié de tentative en ligne n'a aucun {@link Paiement}
+     * à confirmer — {@link PaiementService#confirmerPaiement} ne peut rien pour lui.
+     * C'était le trou : le frontend appelait déjà cet endpoint, jamais implémenté côté
+     * serveur.
+     */
+    @Test
+    void un_dossier_sans_aucune_tentative_peut_etre_confirme_directement() {
+        when(candidatureRepository.findById(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+        when(paiementRepository.findByCandidatureId(ID_CANDIDATURE)).thenReturn(Optional.empty());
+
+        PaiementResponse reponse = paiementService.enregistrerPaiementHorsLigne(ID_CANDIDATURE, "Virement");
+
+        assertEquals(EnumStatutPaiement.SUCCES, reponse.getStatut());
+        assertEquals("Virement", reponse.getMethodePaiement());
+        verify(notificationService).notifierPaiementSucces("candidat@example.sn", "INPG-TEST0002");
+    }
+
+    /** Sans méthode précisée, la saisie manuelle reste identifiable dans l'historique. */
+    @Test
+    void la_methode_hors_ligne_par_defaut_est_utilisee_si_absente() {
+        when(candidatureRepository.findById(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+        when(paiementRepository.findByCandidatureId(ID_CANDIDATURE)).thenReturn(Optional.empty());
+
+        PaiementResponse reponse = paiementService.enregistrerPaiementHorsLigne(ID_CANDIDATURE, null);
+
+        assertEquals("Hors ligne", reponse.getMethodePaiement());
+    }
+
+    /**
+     * Contrairement à {@link PaiementService#confirmerPaiement}, une tentative en échec
+     * doit pouvoir être soldée directement : c'est un constat humain (l'administration a
+     * vérifié l'encaissement), pas la confirmation d'une tentative en ligne soumise à la
+     * règle EN_ATTENTE → SUCCES.
+     */
+    @Test
+    void une_tentative_en_echec_peut_etre_confirmee_directement() {
+        when(candidatureRepository.findById(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+        when(paiementRepository.findByCandidatureId(ID_CANDIDATURE))
+                .thenReturn(Optional.of(paiement(EnumStatutPaiement.ECHEC)));
+
+        PaiementResponse reponse = paiementService.enregistrerPaiementHorsLigne(ID_CANDIDATURE, "Espèces");
+
+        assertEquals(EnumStatutPaiement.SUCCES, reponse.getStatut());
+    }
+
+    @Test
+    void un_dossier_deja_regle_ne_peut_pas_etre_reconfirme_hors_ligne() {
+        when(candidatureRepository.findById(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+        when(paiementRepository.findByCandidatureId(ID_CANDIDATURE))
+                .thenReturn(Optional.of(paiement(EnumStatutPaiement.SUCCES)));
+
+        assertThrows(DuplicateResourceException.class,
+                () -> paiementService.enregistrerPaiementHorsLigne(ID_CANDIDATURE, "Espèces"));
+    }
 }
