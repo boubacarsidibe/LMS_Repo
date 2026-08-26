@@ -25,6 +25,7 @@ import inpg.sn.lms.espace_etudiant.dto.ForumSujetDto;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.ForumMessage;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
+import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
@@ -79,7 +80,15 @@ public class ForumController {
         return ResponseEntity.ok(visibilite.sujetsVisibles(authentication).stream().map(this::toSujetDto).toList());
     }
 
-    /** Ouvre un sujet, avec un premier message facultatif. */
+    /**
+     * Ouvre un sujet, avec un premier message facultatif.
+     *
+     * <p>{@code request.coursId()} et {@code request.pourMaPromotion()} sont
+     * mutuellement exclusifs. Dans le second cas, la promotion utilisée est
+     * toujours celle de l'auteur, lue côté serveur — jamais un identifiant fourni
+     * par le client, qui pourrait sinon rattacher un sujet à la promotion d'un
+     * tiers.
+     */
     @PostMapping("/sujets")
     @Transactional
     public ResponseEntity<?> ouvrirSujet(@RequestBody ForumSujetCreateRequest request, Authentication authentication) {
@@ -90,20 +99,36 @@ public class ForumController {
         if (estVide(request.titre())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le titre du sujet est obligatoire."));
         }
-        Cours cours = null;
-        if (request.coursId() != null) {
-            cours = coursRepository.findById(request.coursId()).orElse(null);
-            if (cours == null) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Cours introuvable."));
-            }
-            // Un étudiant ne peut ouvrir un sujet que dans un cours de son cursus.
-            Etudiant etudiant = utilisateurCourant.etudiant(authentication);
-            if (etudiant != null && !habilitation.estAutorise(cours.getId(), etudiant)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "Ce cours ne fait pas partie de votre formation."));
-            }
+        if (request.coursId() != null && request.pourMaPromotion()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Un sujet ne peut être rattaché à la fois à un cours et à une promotion."));
         }
-        ForumSujet sujet = sujetRepository.save(new ForumSujet(request.titre().trim(), cours, auteur));
+
+        ForumSujet sujet;
+        if (request.pourMaPromotion()) {
+            Etudiant etudiant = utilisateurCourant.etudiant(authentication);
+            Promotion promotion = etudiant == null ? null : etudiant.getPromotion();
+            if (promotion == null) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("message", "Vous n'êtes rattaché à aucune promotion."));
+            }
+            sujet = sujetRepository.save(new ForumSujet(request.titre().trim(), promotion, auteur));
+        } else {
+            Cours cours = null;
+            if (request.coursId() != null) {
+                cours = coursRepository.findById(request.coursId()).orElse(null);
+                if (cours == null) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Cours introuvable."));
+                }
+                // Un étudiant ne peut ouvrir un sujet que dans un cours de son cursus.
+                Etudiant etudiant = utilisateurCourant.etudiant(authentication);
+                if (etudiant != null && !habilitation.estAutorise(cours.getId(), etudiant)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message", "Ce cours ne fait pas partie de votre formation."));
+                }
+            }
+            sujet = sujetRepository.save(new ForumSujet(request.titre().trim(), cours, auteur));
+        }
         if (!estVide(request.premierMessage())) {
             messageRepository.save(new ForumMessage(sujet, auteur, request.premierMessage().trim()));
         }
@@ -204,11 +229,14 @@ public class ForumController {
     private ForumSujetDto toSujetDto(ForumSujet sujet) {
         List<ForumMessage> messages = messageRepository.findBySujetIdOrderByDateCreationAsc(sujet.getId());
         Cours cours = sujet.getCours();
+        Promotion promotion = sujet.getPromotion();
         return new ForumSujetDto(
                 sujet.getId(),
                 sujet.getTitre(),
                 cours == null ? null : cours.getId(),
                 cours == null ? null : cours.getTitre(),
+                promotion == null ? null : promotion.getId(),
+                promotion == null ? null : promotion.getLibelle(),
                 utilisateurCourant.nomAffiche(sujet.getAuteur()),
                 sujet.getDateCreation(),
                 sujet.isEpingle(),

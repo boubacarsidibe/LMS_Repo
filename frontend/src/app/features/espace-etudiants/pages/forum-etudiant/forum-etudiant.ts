@@ -54,15 +54,17 @@ import { ScolariteService } from '../../services/scolarite.service';
           />
         </div>
         <div>
-          <label for="cours" class="font-label-md text-label-md text-on-surface">Cours</label>
+          <label for="cours" class="font-label-md text-label-md text-on-surface">Rattachement</label>
           <select
             id="cours"
-            [(ngModel)]="nouveauCoursId"
+            [ngModel]="rattachementValeur()"
+            (ngModelChange)="surRattachementChange($event)"
             name="cours"
             class="mt-1 w-full p-3 rounded-lg bg-surface-container-low border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors"
           >
-            <option [ngValue]="null">Salon général</option>
-            <option *ngFor="let c of cours" [ngValue]="c.id">{{ c.titre }}</option>
+            <option value="general">Salon général</option>
+            <option value="promotion">Ma promotion</option>
+            <option *ngFor="let c of cours" [value]="'cours:' + c.id">{{ c.titre }}</option>
           </select>
         </div>
         <div>
@@ -121,12 +123,12 @@ import { ScolariteService } from '../../services/scolarite.service';
               <span
                 class="px-2 py-0.5 rounded-full font-label-sm text-label-sm"
                 [ngClass]="
-                  s.coursTitre
+                  s.coursTitre || s.promotionLibelle
                     ? 'bg-secondary-container text-on-secondary-container'
                     : 'bg-surface-container text-on-surface-variant'
                 "
               >
-                {{ s.coursTitre || 'Général' }}
+                {{ s.coursTitre || (s.promotionLibelle ? 'Promotion ' + s.promotionLibelle : 'Général') }}
               </span>
             </div>
             <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
@@ -150,6 +152,7 @@ export class ForumEtudiant implements OnInit {
   formulaireOuvert = false;
   nouveauTitre = '';
   nouveauCoursId: number | null = null;
+  nouveauPourMaPromotion = false;
   nouveauMessage = '';
   creationEnCours = false;
   erreurCreation = '';
@@ -173,6 +176,27 @@ export class ForumEtudiant implements OnInit {
     });
   }
 
+  /** Traduit la sélection du menu en `coursId` / `pourMaPromotion`, mutuellement exclusifs. */
+  surRattachementChange(valeur: string): void {
+    if (valeur === 'promotion') {
+      this.nouveauCoursId = null;
+      this.nouveauPourMaPromotion = true;
+    } else if (valeur.startsWith('cours:')) {
+      this.nouveauCoursId = Number(valeur.slice('cours:'.length));
+      this.nouveauPourMaPromotion = false;
+    } else {
+      this.nouveauCoursId = null;
+      this.nouveauPourMaPromotion = false;
+    }
+  }
+
+  rattachementValeur(): string {
+    if (this.nouveauPourMaPromotion) {
+      return 'promotion';
+    }
+    return this.nouveauCoursId != null ? 'cours:' + this.nouveauCoursId : 'general';
+  }
+
   ouvrirSujet(): void {
     if (!this.nouveauTitre.trim()) {
       return;
@@ -183,6 +207,7 @@ export class ForumEtudiant implements OnInit {
       .ouvrirSujet({
         titre: this.nouveauTitre.trim(),
         coursId: this.nouveauCoursId,
+        pourMaPromotion: this.nouveauPourMaPromotion,
         premierMessage: this.nouveauMessage.trim(),
       })
       .subscribe({
@@ -193,6 +218,7 @@ export class ForumEtudiant implements OnInit {
           this.nouveauTitre = '';
           this.nouveauMessage = '';
           this.nouveauCoursId = null;
+          this.nouveauPourMaPromotion = false;
         },
         error: (e) => {
           this.creationEnCours = false;

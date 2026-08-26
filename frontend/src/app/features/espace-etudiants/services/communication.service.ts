@@ -51,9 +51,11 @@ export class CommunicationService {
     return this.http.get<FilForum>(`${this.api}/forum/sujets/${sujetId}`);
   }
 
+  /** `coursId` et `pourMaPromotion` sont mutuellement exclusifs. */
   ouvrirSujet(payload: {
     titre: string;
     coursId: number | null;
+    pourMaPromotion?: boolean;
     premierMessage: string;
   }): Observable<ForumSujet> {
     return this.http.post<ForumSujet>(`${this.api}/forum/sujets`, payload);

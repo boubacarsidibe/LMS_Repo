@@ -29,9 +29,16 @@ import lombok.Setter;
  * Sujet du forum de discussion (TDR §3.2).
  *
  * <p>Un sujet peut être rattaché à un {@link Cours} — il n'est alors visible que
- * des étudiants dont la promotion suit ce cours — ou rester général
- * ({@code cours == null}), auquel cas sa {@link #portee} décide qui le voit :
- * tout l'espace étudiant, ou l'espace alumni (TDR §C, migration V13).
+ * des étudiants dont la promotion suit ce cours — ou à une {@link Promotion} — il
+ * n'est alors visible que des étudiants de cette promotion, quel que soit leur
+ * cours — ou rester général ({@code cours == null} et {@code promotion == null}),
+ * auquel cas sa {@link #portee} décide qui le voit : tout l'espace étudiant, ou
+ * l'espace alumni (TDR §C, migration V13).
+ *
+ * <p>{@code cours} et {@code promotion} sont mutuellement exclusifs sur un même
+ * sujet — jamais les deux rattachements à la fois, pour ne pas reproduire la
+ * confusion entre deux chaînes concurrentes déjà rencontrée par le passé
+ * (CLAUDE.md §3, {@code cours_promotion}).
  */
 @Entity
 @Table(name = "forum_sujets")
@@ -48,10 +55,15 @@ public class ForumSujet {
     @Column(nullable = false)
     private String titre;
 
-    /** Cours de rattachement, ou {@code null} pour un salon général. */
+    /** Cours de rattachement, ou {@code null} pour un salon général ou de promotion. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cours_id")
     private Cours cours;
+
+    /** Promotion de rattachement, ou {@code null} pour un salon général ou de cours. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promotion_id")
+    private Promotion promotion;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "auteur_id")
@@ -90,5 +102,14 @@ public class ForumSujet {
         this.auteur = auteur;
         this.dateCreation = LocalDateTime.now();
         this.portee = portee;
+    }
+
+    /** Sujet scopé à une promotion : visible des seuls étudiants qui en font partie. */
+    public ForumSujet(String titre, Promotion promotion, User auteur) {
+        this.titre = titre;
+        this.promotion = promotion;
+        this.auteur = auteur;
+        this.dateCreation = LocalDateTime.now();
+        this.portee = PorteeForumSujet.ETUDIANT;
     }
 }

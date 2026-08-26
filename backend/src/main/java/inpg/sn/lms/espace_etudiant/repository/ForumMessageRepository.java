@@ -15,4 +15,6 @@ public interface ForumMessageRepository extends JpaRepository<ForumMessage, Long
     long countBySujetId(Long sujetId);
 
     void deleteBySujet_CoursId(Long coursId);
+
+    void deleteBySujet_PromotionId(Long promotionId);
 }
