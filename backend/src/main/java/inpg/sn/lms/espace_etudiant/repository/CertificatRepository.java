@@ -23,4 +23,6 @@ public interface CertificatRepository extends JpaRepository<Certificat, Long> {
 
     @EntityGraph(attributePaths = { "etudiant", "promotion" })
     Optional<Certificat> findByReference(String reference);
+
+    void deleteByEtudiant_Id(Long etudiantId);
 }

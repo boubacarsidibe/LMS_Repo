@@ -62,4 +62,7 @@ public interface ForumSujetRepository extends JpaRepository<ForumSujet, Long> {
     void deleteByCoursId(Long coursId);
 
     void deleteByPromotionId(Long promotionId);
+
+    /** Sert à bloquer la suppression d'un compte ayant publié dans le forum. */
+    boolean existsByAuteurId(Long auteurId);
 }

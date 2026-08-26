@@ -60,3 +60,30 @@ export interface CritereAccreditation {
   description: string | null;
   actif: boolean;
 }
+
+export type AvisValeur = 'FAVORABLE' | 'DEFAVORABLE';
+
+export const LIBELLES_AVIS: Record<AvisValeur, string> = {
+  FAVORABLE: 'Favorable',
+  DEFAVORABLE: 'Défavorable',
+};
+
+/** Avis d'un évaluateur sur une demande (TDR §F, décision collégiale). */
+export interface AvisAccreditation {
+  id: number;
+  evaluateurId: number;
+  evaluateurNom: string;
+  avis: AvisValeur;
+  commentaire: string | null;
+  dateAvis: string;
+}
+
+/**
+ * Demande telle que vue par l'espace évaluateur : porte en plus les avis déjà
+ * déposés par l'ensemble des évaluateurs. Distincte de {@link DemandeAccreditation},
+ * partagée avec l'espace école — une école ne doit pas voir les avis individuels
+ * avant la décision finale.
+ */
+export interface DemandeAccreditationEvaluateur extends DemandeAccreditation {
+  avis: AvisAccreditation[];
+}

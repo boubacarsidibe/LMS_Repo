@@ -18,15 +18,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import inpg.sn.lms.accreditation.dto.AvisAccreditationDto;
+import inpg.sn.lms.accreditation.dto.AvisAccreditationRequest;
 import inpg.sn.lms.accreditation.dto.CritereAccreditationDto;
 import inpg.sn.lms.accreditation.dto.CritereAccreditationRequest;
 import inpg.sn.lms.accreditation.dto.DecisionAccreditationRequest;
-import inpg.sn.lms.accreditation.dto.DemandeAccreditationDto;
+import inpg.sn.lms.accreditation.dto.DemandeAccreditationEvaluateurDto;
 import inpg.sn.lms.accreditation.dto.PieceAccreditationDto;
+import inpg.sn.lms.accreditation.entity.AvisAccreditation;
 import inpg.sn.lms.accreditation.entity.CritereAccreditation;
 import inpg.sn.lms.accreditation.entity.DemandeAccreditation;
 import inpg.sn.lms.accreditation.entity.PieceAccreditation;
+import inpg.sn.lms.accreditation.enums.EnumAvisAccreditation;
 import inpg.sn.lms.accreditation.enums.EnumStatutDemandeAccreditation;
+import inpg.sn.lms.accreditation.repository.AvisAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.CritereAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.DemandeAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.PieceAccreditationRepository;
@@ -52,17 +57,19 @@ public class EvaluateurAccreditationController {
     private final DemandeAccreditationRepository demandeRepository;
     private final PieceAccreditationRepository pieceRepository;
     private final CritereAccreditationRepository critereRepository;
+    private final AvisAccreditationRepository avisRepository;
     private final UtilisateurCourantService utilisateurCourant;
     private final PieceAccreditationStorageService storage;
     private final AccreditationNotificationService notificationService;
 
     public EvaluateurAccreditationController(DemandeAccreditationRepository demandeRepository,
             PieceAccreditationRepository pieceRepository, CritereAccreditationRepository critereRepository,
-            UtilisateurCourantService utilisateurCourant, PieceAccreditationStorageService storage,
-            AccreditationNotificationService notificationService) {
+            AvisAccreditationRepository avisRepository, UtilisateurCourantService utilisateurCourant,
+            PieceAccreditationStorageService storage, AccreditationNotificationService notificationService) {
         this.demandeRepository = demandeRepository;
         this.pieceRepository = pieceRepository;
         this.critereRepository = critereRepository;
+        this.avisRepository = avisRepository;
         this.utilisateurCourant = utilisateurCourant;
         this.storage = storage;
         this.notificationService = notificationService;
@@ -128,6 +135,47 @@ public class EvaluateurAccreditationController {
         return ResponseEntity.ok(toDto(demande));
     }
 
+    /**
+     * Dépose ou met à jour l'avis de l'évaluateur courant sur une demande en
+     * cours d'évaluation (TDR §F : plusieurs évaluateurs peuvent consulter le
+     * dossier et se prononcer, chacun indépendamment). Un avis par évaluateur —
+     * redéposer met à jour le précédent plutôt que d'en empiler un second.
+     */
+    @PostMapping("/demandes/{id}/avis")
+    @Transactional
+    public ResponseEntity<?> deposerAvis(@PathVariable Long id, @RequestBody AvisAccreditationRequest requete,
+            Authentication authentication) {
+        DemandeAccreditation demande = demandeEnCours(id);
+        if (demande == null) {
+            return ResponseEntity.notFound().build();
+        }
+        EnumAvisAccreditation avis;
+        try {
+            avis = requete == null || requete.avis() == null
+                    ? null
+                    : EnumAvisAccreditation.valueOf(requete.avis());
+        } catch (IllegalArgumentException invalide) {
+            avis = null;
+        }
+        if (avis == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "L'avis doit valoir FAVORABLE ou DEFAVORABLE."));
+        }
+        User evaluateur = utilisateurCourant.utilisateur(authentication);
+        String commentaire = requete.commentaire() == null ? null : requete.commentaire().trim();
+        AvisAccreditation existant = avisRepository.findByDemandeIdAndEvaluateurId(id, evaluateur.getId())
+                .orElse(null);
+        if (existant != null) {
+            existant.setAvis(avis);
+            existant.setCommentaire(commentaire);
+            existant.setDateAvis(java.time.LocalDateTime.now());
+            avisRepository.save(existant);
+        } else {
+            avisRepository.save(new AvisAccreditation(demande, evaluateur, avis, commentaire));
+        }
+        return ResponseEntity.ok(toDto(demande));
+    }
+
     @PutMapping("/demandes/{id}/accrediter")
     @Transactional
     public ResponseEntity<?> accrediter(@PathVariable Long id, @RequestBody(required = false) DecisionAccreditationRequest requete,
@@ -135,6 +183,10 @@ public class EvaluateurAccreditationController {
         DemandeAccreditation demande = demandeEnCours(id);
         if (demande == null) {
             return ResponseEntity.notFound().build();
+        }
+        if (avisRepository.findByDemandeIdOrderByDateAvisAsc(id).isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Au moins un avis d'évaluateur est requis avant de statuer."));
         }
         trancher(demande, EnumStatutDemandeAccreditation.ACCREDITE, authentication,
                 requete != null ? requete.motif() : null);
@@ -156,6 +208,10 @@ public class EvaluateurAccreditationController {
         DemandeAccreditation demande = demandeEnCours(id);
         if (demande == null) {
             return ResponseEntity.notFound().build();
+        }
+        if (avisRepository.findByDemandeIdOrderByDateAvisAsc(id).isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Au moins un avis d'évaluateur est requis avant de statuer."));
         }
         trancher(demande, EnumStatutDemandeAccreditation.REJETE, authentication, requete.motif());
         demandeRepository.save(demande);
@@ -238,12 +294,17 @@ public class EvaluateurAccreditationController {
         }
     }
 
-    private DemandeAccreditationDto toDto(DemandeAccreditation demande) {
+    private DemandeAccreditationEvaluateurDto toDto(DemandeAccreditation demande) {
         List<PieceAccreditationDto> pieces = pieceRepository.findByDemandeId(demande.getId()).stream()
                 .map(piece -> new PieceAccreditationDto(piece.getId(), piece.getTypeDocument().name(),
                         piece.getFichierStocke() != null ? piece.getFichierStocke().getNomOriginal() : null))
                 .toList();
-        return new DemandeAccreditationDto(
+        List<AvisAccreditationDto> avis = avisRepository.findByDemandeIdOrderByDateAvisAsc(demande.getId()).stream()
+                .map(a -> new AvisAccreditationDto(a.getId(), a.getEvaluateur().getId(),
+                        utilisateurCourant.nomAffiche(a.getEvaluateur()), a.getAvis().name(), a.getCommentaire(),
+                        a.getDateAvis()))
+                .toList();
+        return new DemandeAccreditationEvaluateurDto(
                 demande.getId(),
                 demande.getStatut().name(),
                 demande.getDateSoumission(),
@@ -252,7 +313,8 @@ public class EvaluateurAccreditationController {
                 demande.getCommentaireEvaluation(),
                 demande.getEcole().getId(),
                 demande.getEcole().getNomEcole(),
-                pieces);
+                pieces,
+                avis);
     }
 
     private CritereAccreditationDto toCritereDto(CritereAccreditation critere) {

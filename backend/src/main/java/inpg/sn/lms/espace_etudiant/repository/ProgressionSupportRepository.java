@@ -34,4 +34,6 @@ public interface ProgressionSupportRepository extends JpaRepository<ProgressionS
     /** Identifiants des supports consultés, pour cocher la liste côté client. */
     @Query("SELECT p.support.id FROM ProgressionSupport p WHERE p.etudiant.id = :etudiantId")
     List<Long> findSupportIdsConsultes(@Param("etudiantId") Long etudiantId);
+
+    void deleteByEtudiantId(Long etudiantId);
 }

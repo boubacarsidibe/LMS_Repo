@@ -3,8 +3,9 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
+  AvisValeur,
   CritereAccreditation,
-  DemandeAccreditation,
+  DemandeAccreditationEvaluateur,
   StatutDemandeAccreditation,
 } from '../../accreditation/models/accreditation.models';
 
@@ -14,29 +15,36 @@ export class EvaluateurAccreditationService {
   private http = inject(HttpClient);
   private api = `${environment.apiUrl}/admin/accreditation`;
 
-  getDemandes(statut?: StatutDemandeAccreditation): Observable<DemandeAccreditation[]> {
+  getDemandes(statut?: StatutDemandeAccreditation): Observable<DemandeAccreditationEvaluateur[]> {
     const params = statut ? { params: { statut } } : {};
-    return this.http.get<DemandeAccreditation[]>(`${this.api}/demandes`, params);
+    return this.http.get<DemandeAccreditationEvaluateur[]>(`${this.api}/demandes`, params);
   }
 
-  getDemande(id: number): Observable<DemandeAccreditation> {
-    return this.http.get<DemandeAccreditation>(`${this.api}/demandes/${id}`);
+  getDemande(id: number): Observable<DemandeAccreditationEvaluateur> {
+    return this.http.get<DemandeAccreditationEvaluateur>(`${this.api}/demandes/${id}`);
   }
 
   urlFichierPiece(demandeId: number, pieceId: number): string {
     return `/api/admin/accreditation/demandes/${demandeId}/pieces/${pieceId}/fichier`;
   }
 
-  prendreEnCharge(id: number): Observable<DemandeAccreditation> {
-    return this.http.put<DemandeAccreditation>(`${this.api}/demandes/${id}/prendre-en-charge`, {});
+  prendreEnCharge(id: number): Observable<DemandeAccreditationEvaluateur> {
+    return this.http.put<DemandeAccreditationEvaluateur>(`${this.api}/demandes/${id}/prendre-en-charge`, {});
   }
 
-  accrediter(id: number, motif?: string): Observable<DemandeAccreditation> {
-    return this.http.put<DemandeAccreditation>(`${this.api}/demandes/${id}/accrediter`, { motif: motif || null });
+  accrediter(id: number, motif?: string): Observable<DemandeAccreditationEvaluateur> {
+    return this.http.put<DemandeAccreditationEvaluateur>(`${this.api}/demandes/${id}/accrediter`, {
+      motif: motif || null,
+    });
   }
 
-  rejeter(id: number, motif: string): Observable<DemandeAccreditation> {
-    return this.http.put<DemandeAccreditation>(`${this.api}/demandes/${id}/rejeter`, { motif });
+  rejeter(id: number, motif: string): Observable<DemandeAccreditationEvaluateur> {
+    return this.http.put<DemandeAccreditationEvaluateur>(`${this.api}/demandes/${id}/rejeter`, { motif });
+  }
+
+  /** Dépose ou met à jour l'avis de l'évaluateur courant sur cette demande (upsert). */
+  deposerAvis(id: number, avis: AvisValeur, commentaire: string | null): Observable<DemandeAccreditationEvaluateur> {
+    return this.http.post<DemandeAccreditationEvaluateur>(`${this.api}/demandes/${id}/avis`, { avis, commentaire });
   }
 
   getCriteres(): Observable<CritereAccreditation[]> {

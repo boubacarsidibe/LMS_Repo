@@ -918,3 +918,102 @@ sienne.
   documentation de la nouvelle FK `promotion_id` a été ajoutée directement dans
   le javadoc de l'entité plutôt que dans un nouveau diagramme, ce module n'ayant
   pas jusqu'ici de représentation UML dédiée à créer par cette seule story.
+
+## 2026-08-26 — Demande directe de l'utilisateur : fiche détaillée et suppression étudiant/formateur
+
+### 37. Suppression d'un compte : trois cas refusés plutôt que traités par cascade
+
+L'utilisateur a demandé que le responsable pédagogique voie toutes les informations
+sur les étudiants et formateurs (fiche cliquable) et puisse supprimer un compte
+étudiant ou formateur. Aucune des tables qui référencent `etudiants(id_user)` ou
+`formateurs(id_user)` n'a de suppression en cascade côté base (`V1__baseline.sql` ne
+déclare pas `ON DELETE CASCADE` sur ces FK, à l'exception de `notification`/
+`forum_mention` sur `users(id)`, ajoutées par la migration V10) : une suppression
+naïve échouerait avec une violation de clé étrangère brute, exactement le piège déjà
+rencontré deux fois sur ce module (suppression de cours, de promotion — CLAUDE.md §3).
+
+`EtudiantSuppressionService`/`FormateurSuppressionService` (nouveaux, package
+`espace_etudiant.service`, suivant le patron déjà établi par `EtudiantImportService`
+d'un service `espace_etudiant` dépendant librement des entités/repositories `auth`)
+vident donc chaque table dépendante avant de retirer la ligne satellite puis la ligne
+`users`. Mais trois situations sont volontairement **refusées** (409, message clair)
+plutôt que cascadées jusqu'au bout, parce que la suppression y déborderait du mandat
+de cet écran ou effacerait un contenu dont d'autres personnes dépendent :
+
+- **Un dossier de candidature existe encore** (`candidats.id_user`) : son cycle de
+  vie appartient à l'espace admission (« l'admission ouvre l'accès, la pédagogie
+  inscrit », CLAUDE.md §3) — cascader jusqu'aux candidatures, paiements, pièces
+  justificatives, tests académiques et entretiens aurait fait disparaître un
+  historique qui n'appartient pas à cet écran.
+- **Le compte est passé côté alumni** (`alumni_profils.id_user`) : sa fiche, son
+  historique professionnel et ses réponses aux enquêtes de suivi relèvent de
+  l'espace alumni, pas du répertoire de scolarité.
+- **La personne a publié dans le forum** (`forum_sujets.auteur_id` /
+  `forum_messages.auteur_id`) : supprimer ses messages les effacerait aussi pour
+  les autres participants du fil, qui n'ont rien demandé — à la différence des
+  notes, présences ou certificats, qui n'appartiennent qu'à cette seule personne.
+
+En pratique, un compte tout juste créé à la main (le cas le plus fréquent d'un
+nettoyage de test ou d'une erreur de saisie) n'a aucun de ces trois obstacles et se
+supprime sans friction ; un compte avec un vrai parcours (admission, promotion
+alumni, participation au forum) est protégé plutôt que silencieusement vidé de tout
+ce qui n'est pas strictement pédagogique.
+
+Refus propre au formateur, en plus des trois ci-dessus : s'il est l'unique titulaire
+d'au moins un cours, la suppression est refusée — `cours_formateur` commande tout le
+cloisonnement enseignant (CLAUDE.md §3), et un cours sans formateur n'apparaît plus
+dans aucun espace enseignant sans qu'aucune alerte ne le signale. S'il partage un
+cours avec d'autres formateurs, il en est simplement détaché.
+
+### 38. Fiches détaillées : DTO dédiés, jamais une extension des DTO existants
+
+`EtudiantSuiviDto` (répertoire pédagogie) est le même DTO que consomme l'écran de
+suivi du formateur, et `FormateurBrefDto` (`GET /pedagogie/formateurs`) alimente le
+sélecteur d'équipe pédagogique d'un cours — son commentaire précise déjà
+explicitement « le téléphone porté par l'entité n'a pas à circuler pour composer une
+équipe pédagogique ». Y ajouter email/téléphone aurait fait fuiter ces coordonnées
+vers des écrans qui n'en ont pas besoin. Deux nouveaux DTO (`EtudiantDetailDto`,
+`FormateurDetailDto`) et deux nouveaux endpoints (`GET /pedagogie/etudiants/{id}`,
+`GET /pedagogie/formateurs/{id}`) portent ces informations, réservés à la fiche
+ouverte au clic sur une ligne du répertoire.
+
+## 2026-08-26 — Reprise de l'epic « accréditation multi-évaluateurs » (TDR §F)
+
+### 39. Décision collégiale à plusieurs évaluateurs : consolidation minimale, pas de vote
+
+Le TDR §F demande que « le processus d'accréditation reste cohérent quand plusieurs
+évaluateurs interviennent sur une même demande », sans préciser de règle de
+consolidation (majorité, unanimité, veto…). Plutôt qu'inventer une règle de vote non
+demandée, choix du patron déjà standard pour ce type de processus d'évaluation
+collégiale (relecture par les pairs d'un article, comité d'admission) : chaque
+évaluateur dépose un avis indépendant (`FAVORABLE`/`DEFAVORABLE`, upsertable — un
+second dépôt du même évaluateur met à jour le premier, jamais n'en crée un second,
+même contrainte d'unicité `(demande, evaluateur)` que `retour_evaluation`
+`(étudiant, cours)`, V7), mais la décision finale (`accrediter`/`rejeter`) reste un
+acte explicite d'un seul évaluateur — désormais **subordonné** à l'existence d'au
+moins un avis déposé (`avisRepository.findByDemandeIdOrderByDateAvisAsc(id)` non
+vide, sinon 400).
+
+Délibérément **pas** de majorité automatique ni de blocage tant que tous les
+évaluateurs assignés n'ont pas répondu : rien dans le modèle actuel ne définit
+« l'ensemble des évaluateurs assignés » à une demande (n'importe quel compte
+`ROLE_EVALUATEUR_ACCREDITATION` peut prendre en charge n'importe quelle demande,
+patron déjà en place avant cette story) — une règle de quorum aurait donc dû
+inventer aussi cette notion d'assignation, hors du périmètre demandé. Si un besoin
+réel de consolidation automatique (majorité, quorum, veto d'un rôle senior) se
+confirme, c'est une décision de modèle à instruire à part, qui suppose d'abord de
+définir qui est « les » évaluateurs d'une demande donnée.
+
+### 40. DTO évaluateur séparé du DTO partagé avec l'école : avis jamais divulgués avant décision
+
+`EcoleAccreditationController` et `EvaluateurAccreditationController` construisaient
+jusqu'ici le même DTO partagé (`DemandeAccreditationDto`). Y ajouter la liste des
+avis aurait fait fuiter les délibérations individuelles des évaluateurs vers l'école
+candidate, avant même la décision finale — un évaluateur pourrait ainsi voir son
+nom et son avis défavorable exposés à l'établissement qu'il évalue, avant que
+quiconque n'ait tranché. Nouveau DTO dédié `DemandeAccreditationEvaluateurDto`
+(mêmes champs que le DTO partagé, plus `List<AvisAccreditationDto> avis`), retourné
+uniquement par `EvaluateurAccreditationController` ; le DTO partagé et l'écran école
+restent strictement inchangés. Même principe côté frontend : `DemandeAccreditation`
+(modèle partagé) n'est pas modifié, un nouveau type `DemandeAccreditationEvaluateur`
+l'étend avec `avis`, utilisé uniquement par `EvaluateurAccreditationService`.

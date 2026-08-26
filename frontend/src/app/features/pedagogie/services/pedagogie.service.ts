@@ -63,6 +63,19 @@ export class PedagogieService {
     return this.http.post<{ id: number; message: string }>(`${this.api}/formateurs`, données);
   }
 
+  /** Fiche complète : coordonnées et cours enseignés, à la différence du répertoire. */
+  getFormateurDetail(id: number): Observable<FormateurDetail> {
+    return this.http.get<FormateurDetail>(`${this.api}/formateurs/${id}`);
+  }
+
+  /**
+   * Refusée (409) s'il est seul titulaire d'un cours, s'il a un dossier de
+   * candidature ou un historique alumni, ou s'il a publié dans le forum.
+   */
+  supprimerFormateur(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/formateurs/${id}`);
+  }
+
   /** Remplace l'équipe pédagogique du cours. Une liste vide est refusée (400). */
   affecterFormateurs(coursId: number, formateurIds: number[]): Observable<Cours> {
     return this.http.put<Cours>(`${this.api}/cours/${coursId}/formateurs`, { formateurIds });
@@ -129,6 +142,19 @@ export class PedagogieService {
   /** Import CSV tolérant : les lignes invalides sont rejetées une à une, pas en bloc. */
   importerEtudiants(csv: string, promotionId: number | null): Observable<ResultatImport> {
     return this.http.post<ResultatImport>(`${this.api}/etudiants/import`, { csv, promotionId });
+  }
+
+  /** Fiche complète : coordonnées comprises, à la différence du répertoire. */
+  getEtudiantDetail(id: number): Observable<EtudiantDetail> {
+    return this.http.get<EtudiantDetail>(`${this.api}/etudiants/${id}`);
+  }
+
+  /**
+   * Refusée (409) si un dossier de candidature ou un historique alumni existe,
+   * ou si l'étudiant a publié dans le forum.
+   */
+  supprimerEtudiant(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/etudiants/${id}`);
   }
 
   // ===================== Certificats =====================
@@ -285,6 +311,34 @@ export interface EtudiantScolarite {
   origine: string | null;
   /** Vrai si ce compte est déjà passé côté alumni (voir promouvoirAlumni). */
   estAlumni: boolean;
+}
+
+/** Fiche complète d'un étudiant : coordonnées comprises, réservée à la pédagogie. */
+export interface EtudiantDetail {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string | null;
+  telephone: string | null;
+  username: string | null;
+  matricule: string | null;
+  promotionId: number | null;
+  promotion: string;
+  noteMoyenne: number | null;
+  statut: string;
+  origine: string | null;
+  estAlumni: boolean;
+}
+
+/** Fiche complète d'un formateur : coordonnées et cours enseignés. */
+export interface FormateurDetail {
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string | null;
+  telephone: string | null;
+  username: string | null;
+  coursEnseignes: string[];
 }
 
 export interface EtudiantSaisie {
