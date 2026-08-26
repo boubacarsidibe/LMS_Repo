@@ -43,6 +43,7 @@ export class PedagogieLayoutComponent implements OnInit {
     { libelle: 'Relevés', lien: 'releves', icone: 'description' },
     { libelle: 'Certificats', lien: 'certificats', icone: 'workspace_premium' },
     { libelle: 'Suivi qualité', lien: 'qualite', icone: 'analytics' },
+    { libelle: 'Activités du personnel', lien: 'activites-personnel', icone: 'apartment' },
   ];
 
   ngOnInit(): void {

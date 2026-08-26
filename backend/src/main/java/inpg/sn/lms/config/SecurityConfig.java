@@ -133,6 +133,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/espace-etudiant/**").hasAnyRole("ETUDIANT", "FORMATEUR")
                 // Espace Alumni (TDR §C) : profil, situation professionnelle, relevés délivrés.
                 .requestMatchers("/api/espace-alumni/**").hasRole("ALUMNI")
+                // Suivi des activités du personnel INPG (TDR §I) : les trois rôles internes
+                // déjà établis dans ce dépôt comme « personnel », par opposition aux rôles
+                // candidats/étudiants/externes.
+                .requestMatchers("/api/personnel/**")
+                    .hasAnyRole("FORMATEUR", "RESPONSABLE_PEDAGOGIQUE", "RESPONSABLE_ADMISSION")
                 .anyRequest().authenticated()
                 )
                 

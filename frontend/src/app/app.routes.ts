@@ -230,6 +230,13 @@ export const routes: Routes = [
             (m) => m.ResponsableAdmissionAideComponent
           ),
       },
+      {
+        path: 'activites-personnel',
+        loadComponent: () =>
+          import('./features/personnel/pages/activites-personnel/activites-personnel.component').then(
+            (m) => m.ActivitesPersonnelComponent
+          ),
+      },
     ],
   },
   // Espace Responsable Pédagogique (offre d'enseignement : cours et supports)
