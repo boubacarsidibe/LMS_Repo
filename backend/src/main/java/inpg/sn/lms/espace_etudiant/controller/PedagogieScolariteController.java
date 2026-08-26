@@ -42,6 +42,7 @@ import inpg.sn.lms.espace_alumni.service.AlumniProfilService;
 import inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.CertificatDto;
 import inpg.sn.lms.espace_etudiant.dto.EnqueteSuiviCreateRequest;
+import inpg.sn.lms.espace_etudiant.dto.EtudiantDetailDto;
 import inpg.sn.lms.espace_etudiant.dto.EtudiantSuiviDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDetailDto;
@@ -68,6 +69,7 @@ import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.EtudiantImportService;
+import inpg.sn.lms.espace_etudiant.service.EtudiantSuppressionService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
 import inpg.sn.lms.espace_etudiant.service.RapportQualitePdfService;
 import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
@@ -103,6 +105,7 @@ public class PedagogieScolariteController {
     private final EtudiantService etudiantService;
     private final MatriculeService matriculeService;
     private final EtudiantImportService etudiantImportService;
+    private final EtudiantSuppressionService etudiantSuppressionService;
     private final CertificatService certificatService;
     private final CoursRepository coursRepository;
     private final ForumSujetRepository forumSujetRepository;
@@ -123,7 +126,7 @@ public class PedagogieScolariteController {
     public PedagogieScolariteController(PromotionRepository promotionRepository,
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
             EtudiantService etudiantService, MatriculeService matriculeService,
-            EtudiantImportService etudiantImportService,
+            EtudiantImportService etudiantImportService, EtudiantSuppressionService etudiantSuppressionService,
             CertificatService certificatService, CoursRepository coursRepository,
             ForumSujetRepository forumSujetRepository, ForumMessageRepository forumMessageRepository,
             ForumMentionRepository forumMentionRepository,
@@ -139,6 +142,7 @@ public class PedagogieScolariteController {
         this.etudiantService = etudiantService;
         this.matriculeService = matriculeService;
         this.etudiantImportService = etudiantImportService;
+        this.etudiantSuppressionService = etudiantSuppressionService;
         this.certificatService = certificatService;
         this.coursRepository = coursRepository;
         this.forumSujetRepository = forumSujetRepository;
@@ -293,6 +297,37 @@ public class PedagogieScolariteController {
                 ? etudiantRepository.findAll()
                 : etudiantRepository.rechercher(recherche.trim());
         return ResponseEntity.ok(etudiants.stream().map(this::toEtudiantDto).toList());
+    }
+
+    /**
+     * Fiche complète d'un étudiant : coordonnées comprises, à la différence du
+     * répertoire ({@link #listerEtudiants}) qui alimente aussi l'écran du formateur.
+     */
+    @GetMapping("/etudiants/{id}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> detailEtudiant(@PathVariable Long id) {
+        return etudiantRepository.findById(id)
+                .<ResponseEntity<?>>map(e -> ResponseEntity.ok(toEtudiantDetailDto(e)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Supprime un compte étudiant. Refusée si un dossier de candidature ou un
+     * historique alumni existe, ou si l'étudiant a publié dans le forum — voir
+     * {@link EtudiantSuppressionService}.
+     */
+    @DeleteMapping("/etudiants/{id}")
+    @Transactional
+    public ResponseEntity<?> supprimerEtudiant(@PathVariable Long id) {
+        if (!etudiantRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        try {
+            etudiantSuppressionService.supprimer(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalStateException erreur) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", erreur.getMessage()));
+        }
     }
 
     /**
@@ -867,6 +902,25 @@ public class PedagogieScolariteController {
                 "bg-primary-container",
                 etudiant.getMatricule(),
                 // Un dossier de candidature derriere le compte = il vient de l'admission.
+                candidatRepository.findByUserId(etudiant.getId()).isPresent() ? "Admission" : null,
+                alumniProfilRepository.findByUserId(etudiant.getId()).isPresent());
+    }
+
+    private EtudiantDetailDto toEtudiantDetailDto(Etudiant etudiant) {
+        Promotion promotion = etudiant.getPromotion();
+        Double moyenne = releveNotesService.moyenneDeLEtudiant(etudiant.getId());
+        return new EtudiantDetailDto(
+                etudiant.getId(),
+                etudiant.getNom(),
+                etudiant.getPrenom(),
+                etudiant.getUser() == null ? null : etudiant.getUser().getEmail(),
+                etudiant.getTelephone(),
+                etudiant.getUser() == null ? null : etudiant.getUser().getUsername(),
+                etudiant.getMatricule(),
+                promotion == null ? null : promotion.getId(),
+                promotion == null ? "Sans promotion" : promotion.getLibelle(),
+                moyenne,
+                promotion == null ? "Sans promotion" : releveNotesService.statutDeSuivi(moyenne),
                 candidatRepository.findByUserId(etudiant.getId()).isPresent() ? "Admission" : null,
                 alumniProfilRepository.findByUserId(etudiant.getId()).isPresent());
     }

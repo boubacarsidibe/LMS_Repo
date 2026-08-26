@@ -104,7 +104,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let e of etudiantsFiltres" class="border-b border-outline-variant/50 last:border-0">
+          <tr *ngFor="let e of etudiantsFiltres" (click)="ouvrirDetail(e)"
+              class="border-b border-outline-variant/50 last:border-0 cursor-pointer hover:bg-surface-container-low transition-colors">
             <td class="px-stack-lg py-stack-md">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-sm shrink-0">
@@ -124,6 +125,7 @@
             <td class="px-stack-lg py-stack-md">
               <select
                 [value]="e.promotion === 'Sans promotion' ? '' : (promotions.length ? '' : '')"
+                (click)="$event.stopPropagation()"
                 (change)="affecter(e, $any($event.target).value)"
                 class="p-2 bg-surface-container-low rounded-lg border font-body-sm text-body-sm text-on-surface"
                 [class.border-error]="e.promotion === 'Sans promotion'"
@@ -151,7 +153,7 @@
                     class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
                 <span class="material-symbols-outlined text-[16px]">workspace_premium</span>Alumni
               </span>
-              <button *ngIf="!e.estAlumni" type="button" (click)="promouvoirAlumni(e)"
+              <button *ngIf="!e.estAlumni" type="button" (click)="$event.stopPropagation(); promouvoirAlumni(e)"
                       title="Faire passer cet étudiant côté alumni"
                       class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-sm text-label-sm hover:border-secondary hover:text-secondary transition-colors">
                 <span class="material-symbols-outlined text-[16px]">school</span>Marquer alumni
@@ -269,6 +271,76 @@
           {{ importEnCours ? 'Import…' : 'Importer' }}
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Fiche détaillée d'un étudiant -->
+<div *ngIf="detailOuvert" class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerDetail()">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm w-full max-w-lg max-h-[85vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">person</span>Fiche étudiant
+      </h2>
+      <button type="button" (click)="fermerDetail()" aria-label="Fermer" class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+    <div class="p-stack-lg space-y-stack-md">
+      <p *ngIf="chargementDetail" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+      <ng-container *ngIf="!chargementDetail && etudiantDetail as d">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-sm shrink-0">
+            <span class="text-white font-label-lg text-label-lg">{{ (d.prenom[0] || '') + (d.nom[0] || '') }}</span>
+          </div>
+          <div>
+            <span class="font-label-lg text-label-lg text-on-surface block">{{ d.prenom }} {{ d.nom }}</span>
+            <span *ngIf="d.matricule" class="font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ d.matricule }}</span>
+          </div>
+        </div>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-stack-md">
+          <div>
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Email</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface break-all">{{ d.email || '—' }}</dd>
+          </div>
+          <div>
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Téléphone</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface">{{ d.telephone || '—' }}</dd>
+          </div>
+          <div>
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Identifiant</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface">{{ d.username || '—' }}</dd>
+          </div>
+          <div>
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Promotion</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface">{{ d.promotion }}</dd>
+          </div>
+          <div>
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Moyenne</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface">{{ d.noteMoyenne !== null ? (d.noteMoyenne | number: '1.1-1') + ' / 20' : 'Pas encore noté' }}</dd>
+          </div>
+          <div>
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Suivi</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface">{{ d.statut }}</dd>
+          </div>
+          <div *ngIf="d.origine">
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Origine</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface">{{ d.origine }}</dd>
+          </div>
+          <div *ngIf="d.estAlumni">
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface">Alumni</dd>
+          </div>
+        </dl>
+        <div class="flex gap-stack-md pt-2">
+          <button type="button" (click)="fermerDetail()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Fermer</button>
+          <button type="button" [disabled]="suppressionEnCours" (click)="supprimerDepuisDetail()"
+                  class="flex-1 flex items-center justify-center gap-2 py-3 bg-error-container text-on-error-container rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+            {{ suppressionEnCours ? 'Suppression…' : 'Supprimer le compte' }}
+          </button>
+        </div>
+      </ng-container>
     </div>
   </div>
 </div>

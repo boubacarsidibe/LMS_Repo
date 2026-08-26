@@ -3,6 +3,7 @@ import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core'
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import {
+  EtudiantDetail,
   EtudiantSaisie,
   EtudiantScolarite,
   PedagogieService,
@@ -49,6 +50,12 @@ export class PedagogieEtudiantsComponent implements OnInit {
   promotionImport: number | null = null;
   importEnCours = false;
   rejets: string[] = [];
+
+  // Détail / suppression
+  detailOuvert = false;
+  chargementDetail = false;
+  etudiantDetail: EtudiantDetail | null = null;
+  suppressionEnCours = false;
 
   messageErreur = '';
   messageSucces = '';
@@ -196,6 +203,55 @@ export class PedagogieEtudiantsComponent implements OnInit {
         this.charger();
       },
       error: (erreur) => (this.messageErreur = erreur.error?.message || 'Le passage en alumni a échoué.'),
+    });
+  }
+
+  // ===================== Détail / suppression =====================
+
+  ouvrirDetail(etudiant: EtudiantScolarite): void {
+    this.detailOuvert = true;
+    this.chargementDetail = true;
+    this.etudiantDetail = null;
+    this.pedagogie.getEtudiantDetail(etudiant.id).subscribe({
+      next: (detail) => {
+        this.chargementDetail = false;
+        this.etudiantDetail = detail;
+      },
+      error: () => {
+        this.chargementDetail = false;
+        this.detailOuvert = false;
+        this.messageErreur = 'La fiche de cet étudiant n’a pas pu être chargée.';
+      },
+    });
+  }
+
+  fermerDetail(): void {
+    this.detailOuvert = false;
+    this.etudiantDetail = null;
+  }
+
+  supprimerDepuisDetail(): void {
+    const etudiant = this.etudiantDetail;
+    if (!etudiant || this.suppressionEnCours) {
+      return;
+    }
+    if (!confirm(`Supprimer définitivement le compte de ${etudiant.prenom} ${etudiant.nom} ?`)) {
+      return;
+    }
+    this.suppressionEnCours = true;
+    this.reinitialiserMessages();
+    this.pedagogie.supprimerEtudiant(etudiant.id).subscribe({
+      next: () => {
+        this.suppressionEnCours = false;
+        this.detailOuvert = false;
+        this.etudiantDetail = null;
+        this.messageSucces = `Le compte de ${etudiant.prenom} ${etudiant.nom} a été supprimé.`;
+        this.charger();
+      },
+      error: (erreur) => {
+        this.suppressionEnCours = false;
+        this.messageErreur = erreur.error?.message || 'La suppression a échoué.';
+      },
     });
   }
 

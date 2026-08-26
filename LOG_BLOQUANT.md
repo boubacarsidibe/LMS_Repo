@@ -918,3 +918,61 @@ sienne.
   documentation de la nouvelle FK `promotion_id` a été ajoutée directement dans
   le javadoc de l'entité plutôt que dans un nouveau diagramme, ce module n'ayant
   pas jusqu'ici de représentation UML dédiée à créer par cette seule story.
+
+## 2026-08-26 — Demande directe de l'utilisateur : fiche détaillée et suppression étudiant/formateur
+
+### 37. Suppression d'un compte : trois cas refusés plutôt que traités par cascade
+
+L'utilisateur a demandé que le responsable pédagogique voie toutes les informations
+sur les étudiants et formateurs (fiche cliquable) et puisse supprimer un compte
+étudiant ou formateur. Aucune des tables qui référencent `etudiants(id_user)` ou
+`formateurs(id_user)` n'a de suppression en cascade côté base (`V1__baseline.sql` ne
+déclare pas `ON DELETE CASCADE` sur ces FK, à l'exception de `notification`/
+`forum_mention` sur `users(id)`, ajoutées par la migration V10) : une suppression
+naïve échouerait avec une violation de clé étrangère brute, exactement le piège déjà
+rencontré deux fois sur ce module (suppression de cours, de promotion — CLAUDE.md §3).
+
+`EtudiantSuppressionService`/`FormateurSuppressionService` (nouveaux, package
+`espace_etudiant.service`, suivant le patron déjà établi par `EtudiantImportService`
+d'un service `espace_etudiant` dépendant librement des entités/repositories `auth`)
+vident donc chaque table dépendante avant de retirer la ligne satellite puis la ligne
+`users`. Mais trois situations sont volontairement **refusées** (409, message clair)
+plutôt que cascadées jusqu'au bout, parce que la suppression y déborderait du mandat
+de cet écran ou effacerait un contenu dont d'autres personnes dépendent :
+
+- **Un dossier de candidature existe encore** (`candidats.id_user`) : son cycle de
+  vie appartient à l'espace admission (« l'admission ouvre l'accès, la pédagogie
+  inscrit », CLAUDE.md §3) — cascader jusqu'aux candidatures, paiements, pièces
+  justificatives, tests académiques et entretiens aurait fait disparaître un
+  historique qui n'appartient pas à cet écran.
+- **Le compte est passé côté alumni** (`alumni_profils.id_user`) : sa fiche, son
+  historique professionnel et ses réponses aux enquêtes de suivi relèvent de
+  l'espace alumni, pas du répertoire de scolarité.
+- **La personne a publié dans le forum** (`forum_sujets.auteur_id` /
+  `forum_messages.auteur_id`) : supprimer ses messages les effacerait aussi pour
+  les autres participants du fil, qui n'ont rien demandé — à la différence des
+  notes, présences ou certificats, qui n'appartiennent qu'à cette seule personne.
+
+En pratique, un compte tout juste créé à la main (le cas le plus fréquent d'un
+nettoyage de test ou d'une erreur de saisie) n'a aucun de ces trois obstacles et se
+supprime sans friction ; un compte avec un vrai parcours (admission, promotion
+alumni, participation au forum) est protégé plutôt que silencieusement vidé de tout
+ce qui n'est pas strictement pédagogique.
+
+Refus propre au formateur, en plus des trois ci-dessus : s'il est l'unique titulaire
+d'au moins un cours, la suppression est refusée — `cours_formateur` commande tout le
+cloisonnement enseignant (CLAUDE.md §3), et un cours sans formateur n'apparaît plus
+dans aucun espace enseignant sans qu'aucune alerte ne le signale. S'il partage un
+cours avec d'autres formateurs, il en est simplement détaché.
+
+### 38. Fiches détaillées : DTO dédiés, jamais une extension des DTO existants
+
+`EtudiantSuiviDto` (répertoire pédagogie) est le même DTO que consomme l'écran de
+suivi du formateur, et `FormateurBrefDto` (`GET /pedagogie/formateurs`) alimente le
+sélecteur d'équipe pédagogique d'un cours — son commentaire précise déjà
+explicitement « le téléphone porté par l'entité n'a pas à circuler pour composer une
+équipe pédagogique ». Y ajouter email/téléphone aurait fait fuiter ces coordonnées
+vers des écrans qui n'en ont pas besoin. Deux nouveaux DTO (`EtudiantDetailDto`,
+`FormateurDetailDto`) et deux nouveaux endpoints (`GET /pedagogie/etudiants/{id}`,
+`GET /pedagogie/formateurs/{id}`) portent ces informations, réservés à la fiche
+ouverte au clic sur une ligne du répertoire.

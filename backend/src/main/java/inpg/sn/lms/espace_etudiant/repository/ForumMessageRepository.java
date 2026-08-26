@@ -17,4 +17,7 @@ public interface ForumMessageRepository extends JpaRepository<ForumMessage, Long
     void deleteBySujet_CoursId(Long coursId);
 
     void deleteBySujet_PromotionId(Long promotionId);
+
+    /** Sert à bloquer la suppression d'un compte ayant publié dans le forum. */
+    boolean existsByAuteurId(Long auteurId);
 }

@@ -25,4 +25,6 @@ public interface ReleveNotesRepository extends JpaRepository<ReleveNotes, Long> 
      * pour les distinguer — d'où l'avertissement.
      */
     boolean existsByEtudiant_IdAndPeriode(Long etudiantId, String periode);
+
+    void deleteByEtudiant_Id(Long etudiantId);
 }
