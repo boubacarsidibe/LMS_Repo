@@ -21,12 +21,10 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
   errorMessage = '';
   recherche = '';
   filtreStatut: 'TOUS' | 'EN_ATTENTE' | 'SUCCES' = 'TOUS';
+  idEnCours: number | null = null;
 
   relanceEnCours = false;
   relanceMessage = '';
-
-  actionEnCoursId: number | null = null;
-  erreurAction = '';
 
   constructor(private recrutementService: RecrutementService) {}
 
@@ -116,52 +114,50 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
    * trois cas, le candidat ayant réglé hors ligne (espèces, virement).
    */
   confirmerDossier(c: CandidatureResponse): void {
-    if (this.actionEnCoursId !== null) return;
+    if (this.idEnCours) return;
     if (!confirm(`Confirmer le paiement des frais de dossier de ${c.candidatPrenom} ${c.candidatNom} (${c.numeroDossier}) ?`)) return;
-    this.actionEnCoursId = c.id;
-    this.erreurAction = '';
+    this.idEnCours = c.id;
+    this.errorMessage = '';
     this.recrutementService.enregistrerPaiementHorsLigne(c.id).subscribe({
       next: () => {
-        this.actionEnCoursId = null;
+        this.idEnCours = null;
         this.charger();
       },
       error: (e) => {
-        this.actionEnCoursId = null;
-        this.erreurAction = e?.error?.message || 'Échec de la confirmation du paiement.';
+        this.idEnCours = null;
+        this.errorMessage = e?.error?.message || 'Échec de la confirmation du paiement.';
       },
     });
   }
 
-  /** Confirme une tentative en attente déjà initiée par le candidat (paiement en ligne). */
-  confirmerPaiementEnAttente(p: PaiementResponse): void {
-    if (this.actionEnCoursId !== null) return;
-    this.actionEnCoursId = p.id;
-    this.erreurAction = '';
+  valider(p: PaiementResponse): void {
+    if (this.idEnCours) return;
+    this.idEnCours = p.id;
     this.recrutementService.simulerSuccesPaiement(p.id).subscribe({
-      next: () => {
-        this.actionEnCoursId = null;
-        this.charger();
+      next: (maj) => {
+        p.statut = maj.statut;
+        p.datePaiement = maj.datePaiement;
+        this.idEnCours = null;
       },
-      error: (e) => {
-        this.actionEnCoursId = null;
-        this.erreurAction = e?.error?.message || 'Échec de la confirmation du paiement.';
+      error: () => {
+        this.idEnCours = null;
+        this.errorMessage = 'Échec de la validation du paiement.';
       },
     });
   }
 
-  marquerPaiementEchoue(p: PaiementResponse): void {
-    if (this.actionEnCoursId !== null) return;
-    if (!confirm('Marquer cette tentative de paiement en échec ?')) return;
-    this.actionEnCoursId = p.id;
-    this.erreurAction = '';
-    this.recrutementService.marquerPaiementEnEchec(p.id).subscribe({
-      next: () => {
-        this.actionEnCoursId = null;
-        this.charger();
+  rejeter(p: PaiementResponse): void {
+    if (this.idEnCours) return;
+    const motif = prompt('Motif du rejet (optionnel) :') || undefined;
+    this.idEnCours = p.id;
+    this.recrutementService.marquerPaiementEnEchec(p.id, motif).subscribe({
+      next: (maj) => {
+        p.statut = maj.statut;
+        this.idEnCours = null;
       },
-      error: (e) => {
-        this.actionEnCoursId = null;
-        this.erreurAction = e?.error?.message || "Échec du marquage en échec.";
+      error: () => {
+        this.idEnCours = null;
+        this.errorMessage = 'Échec du rejet du paiement.';
       },
     });
   }

@@ -230,7 +230,15 @@ public class PaiementService {
         return toResponse(saved);
     }
 
-    /** Notifie le candidat (email + notification in-app) qu'un paiement vient d'être validé. */
+    /**
+     * Notifie le candidat (email + notification in-app) qu'un paiement vient d'être
+     * validé.
+     *
+     * <p>L'email est protégé comme celui à l'administration dans {@link #confirmerPaiement} :
+     * une panne SMTP (Brevo injoignable depuis Railway, constatée en production) ne doit
+     * pas faire échouer — et donc annuler, la méthode appelante étant {@code @Transactional}
+     * — la confirmation du paiement elle-même.
+     */
     private void notifierCandidatPaiementConfirme(Candidature candidature) {
         if (candidature == null || candidature.getCandidat() == null) {
             return;
@@ -240,7 +248,12 @@ public class PaiementService {
                 ? candidature.getCandidat().getUser().getEmail()
                 : null;
         if (emailCandidat != null) {
-            notificationService.notifierPaiementSucces(emailCandidat, numeroDossier);
+            try {
+                notificationService.notifierPaiementSucces(emailCandidat, numeroDossier);
+            } catch (Exception e) {
+                log.error("Échec de l'envoi de l'email de confirmation de paiement au candidat {} : {}",
+                        emailCandidat, e.getMessage(), e);
+            }
         }
         notificationCandidatService.creerNotification(candidature.getCandidat().getId(),
                 "Le paiement des frais de dossier pour la candidature n°" + numeroDossier + " est confirmé.",
