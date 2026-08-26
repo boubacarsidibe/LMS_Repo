@@ -23,4 +23,6 @@ public interface NoteModuleRepository extends JpaRepository<NoteModule, Long> {
     Optional<NoteModule> findById(Long id);
 
     void deleteByCoursId(Long coursId);
+
+    void deleteByEtudiantId(Long etudiantId);
 }

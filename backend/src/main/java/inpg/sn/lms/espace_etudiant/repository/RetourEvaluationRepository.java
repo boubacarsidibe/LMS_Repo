@@ -52,4 +52,6 @@ public interface RetourEvaluationRepository extends JpaRepository<RetourEvaluati
     Double moyenneParCours(@Param("coursId") Long coursId);
 
     void deleteByCoursId(Long coursId);
+
+    void deleteByEtudiantId(Long etudiantId);
 }
