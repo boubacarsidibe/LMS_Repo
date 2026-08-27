@@ -18,12 +18,16 @@ export interface AlumniProfilUpdate {
   visible: boolean;
 }
 
+/** Nature de la situation, distincte de dateFin === null qui ne dit que « en cours ». */
+export type StatutEmploi = 'EN_EMPLOI' | 'RECHERCHE_EMPLOI' | 'ENTREPRENARIAT' | 'POURSUITE_ETUDES' | 'AUTRE';
+
 export interface SituationProfessionnelle {
   id: number;
   intitulePoste: string;
   entreprise: string;
   dateDebut: string;
   dateFin: string | null;
+  statutEmploi: StatutEmploi;
 }
 
 export interface SituationProfessionnelleSaisie {
@@ -31,6 +35,7 @@ export interface SituationProfessionnelleSaisie {
   entreprise: string;
   dateDebut: string;
   dateFin: string | null;
+  statutEmploi: StatutEmploi;
 }
 
 /** Identique au ForumSujet de l'espace étudiant : même entité, même DTO, portée alumni. */

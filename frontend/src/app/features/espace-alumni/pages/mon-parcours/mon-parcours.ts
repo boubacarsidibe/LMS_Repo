@@ -1,8 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { SituationProfessionnelle, SituationProfessionnelleSaisie } from '../../models/alumni.models';
+import { SituationProfessionnelle, SituationProfessionnelleSaisie, StatutEmploi } from '../../models/alumni.models';
 import { AlumniService } from '../../services/alumni.service';
+
+/** Options du sélecteur de statut, dans l'ordre d'affichage souhaité. */
+const LIBELLES_STATUT_EMPLOI: Record<StatutEmploi, string> = {
+  EN_EMPLOI: 'En emploi',
+  RECHERCHE_EMPLOI: "En recherche d'emploi",
+  ENTREPRENARIAT: 'Entreprenariat',
+  POURSUITE_ETUDES: "Poursuite d'études",
+  AUTRE: 'Autre',
+};
 
 /**
  * Historique professionnel de l'alumni (TDR §C, « suivi de leur situation
@@ -42,8 +51,10 @@ export class MonParcours implements OnInit {
     });
   }
 
+  readonly optionsStatutEmploi = Object.entries(LIBELLES_STATUT_EMPLOI) as [StatutEmploi, string][];
+
   private saisieVierge(): SituationProfessionnelleSaisie {
-    return { intitulePoste: '', entreprise: '', dateDebut: '', dateFin: null };
+    return { intitulePoste: '', entreprise: '', dateDebut: '', dateFin: null, statutEmploi: 'EN_EMPLOI' };
   }
 
   ouvrirAjout(): void {
@@ -60,9 +71,14 @@ export class MonParcours implements OnInit {
       entreprise: situation.entreprise,
       dateDebut: situation.dateDebut,
       dateFin: situation.dateFin,
+      statutEmploi: situation.statutEmploi,
     };
     this.formulaireOuvert = true;
     this.messageErreur = '';
+  }
+
+  libelleStatutEmploi(statut: StatutEmploi): string {
+    return LIBELLES_STATUT_EMPLOI[statut] ?? statut;
   }
 
   get saisieValide(): boolean {

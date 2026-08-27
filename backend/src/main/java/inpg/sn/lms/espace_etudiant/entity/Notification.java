@@ -32,6 +32,12 @@ public class Notification {
 
     public static final String MENTION_FORUM = "MENTION_FORUM";
 
+    /** Réponse à un message précis du forum (citation façon WhatsApp). */
+    public static final String REPONSE_FORUM = "REPONSE_FORUM";
+
+    /** Nouveau message reçu en messagerie privée (apprenant ↔ formateur). */
+    public static final String MESSAGE_PRIVE = "MESSAGE_PRIVE";
+
     /** Nouvelle campagne d'enquête de suivi (TDR §G) ouverte aux alumni. */
     public static final String ENQUETE_SUIVI = "ENQUETE_SUIVI";
 

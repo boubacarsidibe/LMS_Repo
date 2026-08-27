@@ -38,8 +38,12 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 --    partagent le mot de passe Test@2026, ce qui est le but recherché
 --    pour de la recette manuelle.
 -- ---------------------------------------------------------------------
-INSERT INTO users (username, email, password, dtype)
-SELECT v.username, v.email, crypt('Test@2026', gen_salt('bf', 10)), 'User'
+-- date_creation fixee dans le passe : sans cela, ces comptes recoivent NOW()
+-- par defaut et l'isolation temporelle (AnnonceController, ForumVisibiliteService)
+-- leur masquerait tout le contenu de demonstration seme par DataInitializer,
+-- lui-meme parfois horodate dans le passe pour paraitre realiste.
+INSERT INTO users (username, email, password, dtype, date_creation)
+SELECT v.username, v.email, crypt('Test@2026', gen_salt('bf', 10)), 'User', TIMESTAMP '2020-01-01 00:00:00'
 FROM (VALUES
     ('test_candidat',  'test.candidat@inpg.sn'),
     ('test_candidat2', 'test.candidat2@inpg.sn'),

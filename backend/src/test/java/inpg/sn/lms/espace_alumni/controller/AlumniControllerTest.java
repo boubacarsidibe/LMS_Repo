@@ -32,6 +32,7 @@ import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleDto;
 import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleRequest;
 import inpg.sn.lms.espace_alumni.entity.EnqueteSuivi;
 import inpg.sn.lms.espace_alumni.entity.ReponseEnqueteSuivi;
+import inpg.sn.lms.espace_alumni.enums.EnumStatutEmploi;
 import inpg.sn.lms.espace_alumni.repository.EnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.repository.ReponseEnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.service.AlumniProfilService;
@@ -119,7 +120,7 @@ class AlumniControllerTest {
     void ajouterSituationSansIntituleEstRefusee() {
         when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil());
         SituationProfessionnelleRequest requete =
-                new SituationProfessionnelleRequest("  ", "Petrosen", LocalDate.now(), null);
+                new SituationProfessionnelleRequest("  ", "Petrosen", LocalDate.now(), null, EnumStatutEmploi.EN_EMPLOI);
 
         ResponseEntity<?> reponse = controller.ajouterSituation(requete, authentication);
 
@@ -131,7 +132,8 @@ class AlumniControllerTest {
     void ajouterSituationDateFinAvantDebutEstRefusee() {
         when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil());
         SituationProfessionnelleRequest requete = new SituationProfessionnelleRequest(
-                "Ingénieure Procédés", "Petrosen", LocalDate.of(2026, 6, 1), LocalDate.of(2026, 1, 1));
+                "Ingénieure Procédés", "Petrosen", LocalDate.of(2026, 6, 1), LocalDate.of(2026, 1, 1),
+                EnumStatutEmploi.EN_EMPLOI);
 
         ResponseEntity<?> reponse = controller.ajouterSituation(requete, authentication);
 
@@ -144,9 +146,9 @@ class AlumniControllerTest {
         AlumniProfil profil = profil();
         when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil);
         SituationProfessionnelleRequest requete = new SituationProfessionnelleRequest(
-                "Ingénieure Procédés", "Petrosen", LocalDate.of(2026, 1, 1), null);
+                "Ingénieure Procédés", "Petrosen", LocalDate.of(2026, 1, 1), null, EnumStatutEmploi.EN_EMPLOI);
         SituationProfessionnelleDto dto = new SituationProfessionnelleDto(
-                1L, "Ingénieure Procédés", "Petrosen", LocalDate.of(2026, 1, 1), null);
+                1L, "Ingénieure Procédés", "Petrosen", LocalDate.of(2026, 1, 1), null, EnumStatutEmploi.EN_EMPLOI);
         when(situationService.creer(eq(profil), any(SituationProfessionnelleRequest.class))).thenReturn(dto);
 
         ResponseEntity<?> reponse = controller.ajouterSituation(requete, authentication);

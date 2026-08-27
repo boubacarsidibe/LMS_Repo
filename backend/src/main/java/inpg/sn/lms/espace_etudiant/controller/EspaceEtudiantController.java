@@ -59,8 +59,6 @@ import inpg.sn.lms.espace_etudiant.dto.ContactEtudiantRequest;
 import inpg.sn.lms.espace_etudiant.dto.CoursCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.CoursDto;
 import inpg.sn.lms.espace_etudiant.dto.EtudiantSuiviDto;
-import inpg.sn.lms.espace_etudiant.dto.EvenementCreateRequest;
-import inpg.sn.lms.espace_etudiant.dto.EvenementDto;
 import inpg.sn.lms.espace_etudiant.dto.FormateurProfileDto;
 import inpg.sn.lms.espace_etudiant.dto.FormateurBrefDto;
 import inpg.sn.lms.espace_etudiant.dto.FormationDto;
@@ -80,7 +78,6 @@ import inpg.sn.lms.espace_etudiant.dto.RetourEvaluationDto;
 import inpg.sn.lms.espace_etudiant.dto.SujetDto;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
-import inpg.sn.lms.espace_etudiant.entity.Evenement;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
 import inpg.sn.lms.espace_etudiant.entity.ForumMessage;
 import inpg.sn.lms.espace_etudiant.entity.NoteModule;
@@ -91,11 +88,9 @@ import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 import inpg.sn.lms.espace_etudiant.enums.EnumStatutRetour;
-import inpg.sn.lms.espace_etudiant.enums.EnumTypeEvenement;
 import inpg.sn.lms.espace_etudiant.service.CertificatPdfService;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
-import inpg.sn.lms.espace_etudiant.service.EvenementService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.ForumVisibiliteService;
 import inpg.sn.lms.espace_etudiant.service.PerimetreFormateurService;
@@ -124,7 +119,6 @@ public class EspaceEtudiantController {
     private final CoursService coursService;
     private final PromotionService promotionService;
     private final SupportService supportService;
-    private final EvenementService evenementService;
     private final ForumSujetRepository forumSujetRepository;
     private final ForumMessageRepository forumMessageRepository;
     private final CertificatService certificatService;
@@ -148,7 +142,6 @@ public class EspaceEtudiantController {
             CoursService coursService,
             PromotionService promotionService,
             SupportService supportService,
-            EvenementService evenementService,
             ForumSujetRepository forumSujetRepository,
             ForumMessageRepository forumMessageRepository,
             CertificatService certificatService,
@@ -170,7 +163,6 @@ public class EspaceEtudiantController {
         this.coursService = coursService;
         this.promotionService = promotionService;
         this.supportService = supportService;
-        this.evenementService = evenementService;
         this.forumSujetRepository = forumSujetRepository;
         this.forumMessageRepository = forumMessageRepository;
         this.certificatService = certificatService;
@@ -378,13 +370,6 @@ public class EspaceEtudiantController {
             return ResponseEntity.ok(List.of());
         }
         return ResponseEntity.ok(certificatService.getByEtudiant(etudiant.getId()).stream().map(this::toCertificatDto).toList());
-    }
-
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
-    @Transactional(readOnly = true)
-    @GetMapping("/evenements")
-    public ResponseEntity<List<EvenementDto>> listEvenements() {
-        return ResponseEntity.ok(evenementService.getAll().stream().map(this::toEvenementDto).toList());
     }
 
     /**
@@ -961,84 +946,6 @@ public class EspaceEtudiantController {
         return ResponseEntity.ok(supportService.getCourseSupports(cours.getId()).stream()
                 .map(this::toSupportDto)
                 .toList());
-    }
-
-    @PreAuthorize("hasRole('FORMATEUR')")
-    @Transactional
-    @PostMapping("/formateur/evenements")
-    public ResponseEntity<?> createEvenement(
-            @RequestBody EvenementCreateRequest request,
-            Authentication authentication) {
-        if (findAuthenticatedFormateur(authentication) == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Profil formateur introuvable."));
-        }
-        if (isBlank(request.titre()) || isBlank(request.date()) || isBlank(request.heure()) || isBlank(request.type())) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Titre, date, heure et type sont requis."));
-        }
-
-        LocalDate date;
-        EnumTypeEvenement type;
-        try {
-            date = LocalDate.parse(request.date());
-        } catch (java.time.format.DateTimeParseException exception) {
-            return ResponseEntity.badRequest().body(Map.of("message", "La date est invalide."));
-        }
-        try {
-            type = EnumTypeEvenement.valueOf(request.type().toUpperCase());
-        } catch (IllegalArgumentException exception) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Le type d'événement est invalide."));
-        }
-
-        Evenement evenement = new Evenement();
-        evenement.setTitre(request.titre().trim());
-        evenement.setDate(date);
-        evenement.setHeure(request.heure().trim());
-        evenement.setType(type);
-        evenement.setLienVisio(isBlank(request.lienVisio()) ? null : request.lienVisio().trim());
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(toEvenementDto(evenementService.save(evenement)));
-    }
-
-    @PreAuthorize("hasRole('FORMATEUR')")
-    @Transactional
-    @PatchMapping("/formateur/evenements/{id}")
-    public ResponseEntity<?> updateEvenement(
-            @PathVariable Long id,
-            @RequestBody EvenementCreateRequest request,
-            Authentication authentication) {
-        if (findAuthenticatedFormateur(authentication) == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Profil formateur introuvable."));
-        }
-        Evenement evenement = evenementService.findById(id).orElse(null);
-        if (evenement == null) {
-            return ResponseEntity.notFound().build();
-        }
-        if (isBlank(request.titre()) || isBlank(request.date()) || isBlank(request.heure()) || isBlank(request.type())) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Titre, date, heure et type sont requis."));
-        }
-
-        LocalDate date;
-        EnumTypeEvenement type;
-        try {
-            date = LocalDate.parse(request.date());
-        } catch (java.time.format.DateTimeParseException exception) {
-            return ResponseEntity.badRequest().body(Map.of("message", "La date est invalide."));
-        }
-        try {
-            type = EnumTypeEvenement.valueOf(request.type().toUpperCase());
-        } catch (IllegalArgumentException exception) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Le type d'événement est invalide."));
-        }
-
-        evenement.setTitre(request.titre().trim());
-        evenement.setDate(date);
-        evenement.setHeure(request.heure().trim());
-        evenement.setType(type);
-        evenement.setLienVisio(isBlank(request.lienVisio()) ? null : request.lienVisio().trim());
-
-        return ResponseEntity.ok(toEvenementDto(evenementService.save(evenement)));
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")
@@ -1665,16 +1572,6 @@ public class EspaceEtudiantController {
                 certificat.getPromotion() != null ? certificat.getPromotion().getLibelle() : null,
                 certificat.getDateEmission().toString(),
                 certificat.getFormateurNom());
-    }
-
-    private EvenementDto toEvenementDto(Evenement evenement) {
-        return new EvenementDto(
-                evenement.getId(),
-                evenement.getTitre(),
-                evenement.getDate().toString(),
-                evenement.getHeure(),
-                evenement.getType().name().toLowerCase(),
-                evenement.getLienVisio());
     }
 
     private static final DateTimeFormatter DATE_HEURE_FORUM = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");

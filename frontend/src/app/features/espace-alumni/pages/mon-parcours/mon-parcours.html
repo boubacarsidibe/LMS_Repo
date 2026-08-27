@@ -26,10 +26,13 @@
       <li *ngFor="let s of situations"
           class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg flex items-start justify-between gap-stack-md flex-wrap">
         <div class="min-w-0">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
             <p class="font-label-md text-label-md text-on-surface">{{ s.intitulePoste }}</p>
             <span *ngIf="!s.dateFin" class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-label-sm">
               Poste actuel
+            </span>
+            <span class="px-2 py-0.5 rounded-full bg-primary-container text-on-primary-container text-[11px] font-label-sm">
+              {{ libelleStatutEmploi(s.statutEmploi) }}
             </span>
           </div>
           <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ s.entreprise }}</p>
@@ -83,6 +86,12 @@
           <input type="date" [(ngModel)]="saisie.dateFin" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
         </label>
       </div>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Statut</span>
+        <select [(ngModel)]="saisie.statutEmploi" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+          <option *ngFor="let option of optionsStatutEmploi" [value]="option[0]">{{ option[1] }}</option>
+        </select>
+      </label>
       <div class="flex gap-stack-md pt-2">
         <button type="button" (click)="formulaireOuvert = false" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Annuler</button>
         <button type="button" [disabled]="!saisieValide || enregistrement" (click)="enregistrer()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">

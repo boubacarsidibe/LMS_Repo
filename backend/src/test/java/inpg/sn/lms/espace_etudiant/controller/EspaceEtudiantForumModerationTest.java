@@ -33,7 +33,6 @@ import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.service.CertificatPdfService;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
-import inpg.sn.lms.espace_etudiant.service.EvenementService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.ForumVisibiliteService;
 import inpg.sn.lms.espace_etudiant.service.NoteModuleService;
@@ -73,8 +72,6 @@ class EspaceEtudiantForumModerationTest {
     @Mock
     private SupportService supportService;
     @Mock
-    private EvenementService evenementService;
-    @Mock
     private ForumSujetRepository forumSujetRepository;
     @Mock
     private ForumMessageRepository forumMessageRepository;
@@ -109,7 +106,7 @@ class EspaceEtudiantForumModerationTest {
     @BeforeEach
     void preparer() {
         controller = new EspaceEtudiantController(userRepository, etudiantRepository, formateurRepository,
-                formationService, coursService, promotionService, supportService, evenementService,
+                formationService, coursService, promotionService, supportService,
                 forumSujetRepository, forumMessageRepository, certificatService, certificatPdfService,
                 notificationService, retourEvaluationService, perimetreFormateurService, noteModuleService,
                 releveNotesService, presenceService, seanceService, supportCoursStorageService, forumVisibilite,

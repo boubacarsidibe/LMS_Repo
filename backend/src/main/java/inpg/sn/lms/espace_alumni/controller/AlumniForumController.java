@@ -195,7 +195,10 @@ public class AlumniForumController {
                 utilisateurCourant.nomAffiche(message.getAuteur()),
                 message.getContenu(),
                 message.getDateCreation(),
-                estAuteur);
+                estAuteur,
+                null,
+                null,
+                null);
     }
 
     private boolean estVide(String valeur) {

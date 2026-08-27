@@ -39,6 +39,7 @@ import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
+import inpg.sn.lms.espace_etudiant.service.CompletionProgrammeService;
 import inpg.sn.lms.espace_etudiant.service.EtudiantImportService;
 import inpg.sn.lms.espace_etudiant.service.EtudiantSuppressionService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
@@ -116,6 +117,8 @@ class PedagogieScolariteImportTest {
     private NotificationRepository notificationRepository;
     @Mock
     private RapportQualitePdfService rapportQualitePdfService;
+    @Mock
+    private CompletionProgrammeService completionProgrammeService;
 
     private PedagogieScolariteController controller;
 
@@ -127,7 +130,7 @@ class PedagogieScolariteImportTest {
                 forumSujetRepository, forumMessageRepository, forumMentionRepository, notificationService,
                 retourRepository, releveNotesService, releveDelivranceService, candidatRepository,
                 alumniProfilRepository, alumniProfilService, enqueteSuiviRepository, reponseEnqueteSuiviRepository,
-                notificationRepository, rapportQualitePdfService);
+                notificationRepository, rapportQualitePdfService, completionProgrammeService);
     }
 
     private Etudiant etudiantCree(long id) {

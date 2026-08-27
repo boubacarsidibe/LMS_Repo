@@ -232,6 +232,10 @@ public class PedagogieDataInitializer {
         user.setEmail("etudiant@inpg.sn");
         user.setPassword(passwordEncoder.encode("Etudiant@2026"));
         user.addRole(roleEtudiant);
+        // Antérieure à tout contenu semé par cette classe : sans quoi l'isolation
+        // temporelle (AnnonceController, ForumVisibiliteService) masquerait à ce
+        // compte de démonstration le contenu de démonstration lui-même.
+        user.setDateCreation(LocalDateTime.of(2020, 1, 1, 0, 0));
         user = userRepository.save(user);
 
         Etudiant etudiant = new Etudiant(user, "Ndiaye", "Fatou", "+221 77 000 01 00");

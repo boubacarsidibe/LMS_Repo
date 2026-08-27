@@ -25,10 +25,12 @@ import inpg.sn.lms.espace_etudiant.dto.ForumSujetDto;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.ForumMessage;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
+import inpg.sn.lms.espace_etudiant.entity.Notification;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
+import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.service.ForumVisibiliteService;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
 import inpg.sn.lms.espace_etudiant.service.MentionForumService;
@@ -60,10 +62,12 @@ public class ForumController {
     private final HabilitationCoursService habilitation;
     private final MentionForumService mentions;
     private final ForumVisibiliteService visibilite;
+    private final NotificationRepository notificationRepository;
 
     public ForumController(ForumSujetRepository sujetRepository, ForumMessageRepository messageRepository,
             CoursRepository coursRepository, UtilisateurCourantService utilisateurCourant,
-            HabilitationCoursService habilitation, MentionForumService mentions, ForumVisibiliteService visibilite) {
+            HabilitationCoursService habilitation, MentionForumService mentions, ForumVisibiliteService visibilite,
+            NotificationRepository notificationRepository) {
         this.sujetRepository = sujetRepository;
         this.messageRepository = messageRepository;
         this.coursRepository = coursRepository;
@@ -71,6 +75,7 @@ public class ForumController {
         this.habilitation = habilitation;
         this.mentions = mentions;
         this.visibilite = visibilite;
+        this.notificationRepository = notificationRepository;
     }
 
     /** Sujets accessibles au connecté, épinglés en tête. */
@@ -176,9 +181,42 @@ public class ForumController {
         if (estVide(request.contenu())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le message ne peut pas être vide."));
         }
-        ForumMessage message = messageRepository.save(new ForumMessage(sujet, auteur, request.contenu().trim()));
+        ForumMessage reponseA = null;
+        if (request.reponseAId() != null) {
+            // Recoupé avec le sujet courant : un identifiant d'un autre fil ne doit pas
+            // pouvoir être glissé pour citer un message auquel l'auteur n'a pas accès.
+            reponseA = messageRepository.findById(request.reponseAId())
+                    .filter(candidat -> candidat.getSujet().getId().equals(sujet.getId()))
+                    .orElse(null);
+        }
+        ForumMessage message = new ForumMessage(sujet, auteur, request.contenu().trim());
+        message.setReponseA(reponseA);
+        message = messageRepository.save(message);
         mentions.enregistrer(message, request.citeIds(), auteur);
+        notifierReponse(message, reponseA, auteur);
         return ResponseEntity.status(HttpStatus.CREATED).body(toMessageDto(message, auteur));
+    }
+
+    /**
+     * Prévient l'auteur du message cité, comme dans WhatsApp. Aucune notification si
+     * on se répond à soi-même. Indépendante des citations explicites
+     * ({@code citeIds}) : répondre à un message et y citer quelqu'un d'autre sont deux
+     * intentions distinctes, chacune notifiée pour ce qu'elle est.
+     */
+    private void notifierReponse(ForumMessage message, ForumMessage reponseA, User auteur) {
+        if (reponseA == null || reponseA.getAuteur() == null) {
+            return;
+        }
+        User destinataire = reponseA.getAuteur();
+        if (destinataire.getId().equals(auteur.getId())) {
+            return;
+        }
+        notificationRepository.save(new Notification(
+                destinataire,
+                utilisateurCourant.nomAffiche(auteur) + " a répondu à votre message dans « "
+                        + message.getSujet().getTitre() + " »",
+                Notification.REPONSE_FORUM,
+                "/espace-etudiant/forum/" + message.getSujet().getId()));
     }
 
     /**
@@ -248,12 +286,24 @@ public class ForumController {
     private ForumMessageDto toMessageDto(ForumMessage message, User lecteur) {
         boolean estAuteur = lecteur != null && message.getAuteur() != null
                 && message.getAuteur().getId().equals(lecteur.getId());
+        ForumMessage reponseA = message.getReponseA();
         return new ForumMessageDto(
                 message.getId(),
                 utilisateurCourant.nomAffiche(message.getAuteur()),
                 message.getContenu(),
                 message.getDateCreation(),
-                estAuteur);
+                estAuteur,
+                reponseA == null ? null : reponseA.getId(),
+                reponseA == null ? null : utilisateurCourant.nomAffiche(reponseA.getAuteur()),
+                reponseA == null ? null : extrait(reponseA.getContenu()));
+    }
+
+    /** Court résumé du message cité, affiché au-dessus de la réponse (façon WhatsApp). */
+    private String extrait(String contenu) {
+        if (contenu == null) {
+            return "";
+        }
+        return contenu.length() <= 120 ? contenu : contenu.substring(0, 120) + "…";
     }
 
     private ResponseEntity<?> sujetNonAccessible() {
