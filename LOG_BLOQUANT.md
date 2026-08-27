@@ -1100,3 +1100,76 @@ la modération du forum ailleurs dans ce dépôt.
   le TDR (contrairement, par exemple, au relevé de notes délivré qui, lui, fige ses
   valeurs). Si une clôture s'avère nécessaire, ce serait une story à part.
 - TDR §J (Gestion des rendez-vous) reste entièrement à construire — voir point 41.
+
+## 2026-08-26 — Epic « Gestion des rendez-vous » (TDR §J)
+
+### 45. Modèle retenu : créneaux ponctuels publiés par le personnel, pas un moteur de récurrence
+
+Le TDR dit : « L'outil doit être connecté aux calendriers individuels de chaque
+membre du personnel, de sorte que seuls les créneaux libres soient visibles par
+l'utilisateur. » Deux modélisations standard existent pour ce type de besoin :
+(a) des règles de disponibilité récurrentes (ex. « tous les lundis 9h-12h ») dont
+le système déduit les créneaux libres en soustrayant les rendez-vous déjà pris,
+ou (b) des créneaux ponctuels publiés directement par la personne, chacun
+devenant indisponible dès qu'une demande le couvre.
+
+**Choix** : (b), un catalogue de créneaux ponctuels (`CreneauDisponibilite` :
+personnel, début, fin, réservé). Un moteur de récurrence ajoute une complexité
+réelle (règles, exceptions, fuseaux horaires) que le TDR ne demande pas
+explicitement — il ne prescrit pas de mécanisme, seulement le résultat
+observable (« seuls les créneaux libres sont visibles »), que (b) satisfait
+aussi complètement que (a) pour une story raisonnable. Aucune notion de
+calendrier n'existe ailleurs dans ce dépôt (contrairement, par exemple, à
+`cours_formateur` pour le cloisonnement enseignant) : rien à réutiliser, choix
+fait sur le TDR seul.
+
+### 46. Rôles bookables : les trois rôles internes déjà établis comme « personnel » (TDR §I)
+
+Le TDR ne définit nulle part qui sont « les membres du personnel de l'INPG ».
+Réutilisé la même délimitation que le suivi des activités du personnel
+(`LOG_BLOQUANT.md` point 43) : formateur, responsable pédagogique, responsable
+admission — les trois rôles internes déjà distingués des rôles candidats/
+étudiants/externes dans ce dépôt, plutôt que d'inventer une nouvelle
+qualification. `RendezVousService.ROLES_PERSONNEL` centralise la liste pour
+qu'une future story n'ait qu'un seul endroit à changer.
+
+### 47. « Chaque utilisateur » : aucune restriction de rôle sur la demande, contrairement à TDR §I
+
+Contrairement au suivi des activités (réservé aux trois rôles internes), le
+TDR dit explicitement ici « **chaque** utilisateur pourra consulter le profil
+des membres du personnel [...] et envoyer une demande ». `SecurityConfig`
+n'impose donc que `authenticated()` sur `/api/rendez-vous/**` ; seuls les
+endpoints de gestion de créneaux et de réponse à une demande (réservés au
+personnel) portent une restriction de rôle, au niveau méthode
+(`@PreAuthorize` sur `RendezVousController`).
+
+Côté navigation, la rubrique « Rendez-vous » a été ajoutée aux cinq espaces à
+barre latérale déjà établis : étudiant, formateur, pédagogie, responsable
+admission, alumni. Elle n'a **pas** été ajoutée aux espaces candidat,
+entreprise, école de formation et évaluateur accréditation — écart délibéré
+pour borner la story, l'endpoint reste néanmoins accessible à tout compte
+connecté qui y navigue directement (`authenticated()` seul), aucun accès n'est
+techniquement bloqué. Étendre la navigation à ces quatre espaces serait un
+prolongement naturel si le besoin se confirme.
+
+### 48. Double verrou de réponse, même patron que la contre-proposition partout ailleurs
+
+Seul le titulaire du créneau peut répondre à une demande (accepter/refuser/
+proposer une autre date) ; seul le demandeur peut répondre à une
+contre-proposition. Un créneau réservé (`reserve = true`) redevient libre dès
+qu'il est refusé — par le personnel ou, en cascade, par le demandeur qui
+refuse la contre-proposition — pour qu'un rendez-vous non abouti ne bloque pas
+indéfiniment un créneau. `RendezVousControllerTest` fige ces deux verrous.
+
+### 49. Écarts non traités
+
+- Pas de rappel automatique avant un rendez-vous accepté (ex. la veille) : le
+  TDR ne le demande pas explicitement, contrairement au rappel d'évaluation
+  (`EvaluationRappelService`, TDR §G) qui répondait à un besoin nommé.
+  Extension possible via `@EnableScheduling`, déjà posé sur `LmsApplication`.
+- Pas de détection de conflit entre deux créneaux qui se chevauchent pour un
+  même membre du personnel à la création : celui qui publie ses créneaux reste
+  responsable de ne pas se chevaucher lui-même, le TDR ne demandant qu'une
+  vue des créneaux libres pour le demandeur, jamais une validation de
+  cohérence de l'emploi du temps du personnel.
+- Navigation limitée à cinq espaces sur neuf — voir point 47.
