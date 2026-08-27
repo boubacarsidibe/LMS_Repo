@@ -33,10 +33,26 @@ export class Register {
    */
   typeInscription: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' = 'CANDIDAT';
 
+  /**
+   * École et entreprise s'inscrivent au nom d'une organisation, pas d'une
+   * personne : "raisonSociale"/"nomEcole" ne sont recueillis qu'à la
+   * soumission réelle de la demande (EntrepriseController, EcoleAccreditationController),
+   * jamais à l'inscription. Un seul champ "nom de l'organisation" ici évite
+   * de faire deviner un prénom/nom inexistant.
+   */
+  get estOrganisation(): boolean {
+    return this.typeInscription === 'ECOLE' || this.typeInscription === 'ENTREPRISE';
+  }
+
+  get libelleNomOrganisation(): string {
+    return this.typeInscription === 'ECOLE' ? "Nom de l'école" : "Nom de l'entreprise";
+  }
+
   // Déclaration de tous les contrôles liés au HTML
   registerForm: FormGroup = this.fb.group({
     prenom: ['', Validators.required],
     nom: ['', Validators.required],
+    nomOrganisation: [''],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     confirmPassword: ['', Validators.required]
@@ -44,6 +60,22 @@ export class Register {
 
   choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE'): void {
     this.typeInscription = type;
+    const prenom = this.registerForm.get('prenom')!;
+    const nom = this.registerForm.get('nom')!;
+    const nomOrganisation = this.registerForm.get('nomOrganisation')!;
+
+    if (this.estOrganisation) {
+      prenom.clearValidators();
+      nom.clearValidators();
+      nomOrganisation.setValidators(Validators.required);
+    } else {
+      prenom.setValidators(Validators.required);
+      nom.setValidators(Validators.required);
+      nomOrganisation.clearValidators();
+    }
+    prenom.updateValueAndValidity();
+    nom.updateValueAndValidity();
+    nomOrganisation.updateValueAndValidity();
   }
 
   onSubmit(): void {
@@ -55,10 +87,13 @@ export class Register {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const { prenom, nom, email, password } = this.registerForm.value;
+    const { prenom, nom, nomOrganisation, email, password } = this.registerForm.value;
 
-    // Génération automatique d'un username à partir du prénom/nom si ton backend en a besoin
-    const username = `${prenom.trim()}_${nom.trim()}`.toLowerCase();
+    // Génération automatique d'un username : à partir du prénom/nom pour un
+    // candidat, du nom de l'organisation pour une école ou une entreprise.
+    const username = this.estOrganisation
+      ? nomOrganisation.trim().toLowerCase().replace(/\s+/g, '_')
+      : `${prenom.trim()}_${nom.trim()}`.toLowerCase();
 
     this.authService.register(username, email, password, this.typeInscription).subscribe({
       next: () => {
