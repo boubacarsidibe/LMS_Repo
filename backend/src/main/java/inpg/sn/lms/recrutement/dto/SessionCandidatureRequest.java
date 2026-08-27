@@ -24,4 +24,7 @@ public class SessionCandidatureRequest {
     private String criteresGenre;
     private Integer criteresExperienceMinimale;
     private Float seuilReussiteTest;
+    private String infoFraisScolarite;
+    private String infoCarteEtudiante;
+    private String infoRentree;
 }

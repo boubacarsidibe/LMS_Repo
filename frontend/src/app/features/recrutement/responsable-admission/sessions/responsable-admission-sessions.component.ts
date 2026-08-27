@@ -61,6 +61,9 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
       criteresGenre: [null],
       criteresExperienceMinimale: [null],
       seuilReussiteTest: [10],
+      infoFraisScolarite: [null],
+      infoCarteEtudiante: [null],
+      infoRentree: [null],
     });
   }
 
@@ -153,6 +156,9 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
         criteresGenre: session.criteresGenre,
         criteresExperienceMinimale: session.criteresExperienceMinimale,
         seuilReussiteTest: session.seuilReussiteTest ?? 10,
+        infoFraisScolarite: session.infoFraisScolarite,
+        infoCarteEtudiante: session.infoCarteEtudiante,
+        infoRentree: session.infoRentree,
       });
     } else {
       this.sessionEnEdition = null;
@@ -160,6 +166,7 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
         libelle: '', dateOuverture: '', dateFermeture: '', estOuverte: true,
         criteresActifs: false, criteresNiveauEtudeMinimum: null, criteresAgeMinimum: null, criteresAgeMaximum: null,
         criteresGenre: null, criteresExperienceMinimale: null, seuilReussiteTest: 10,
+        infoFraisScolarite: null, infoCarteEtudiante: null, infoRentree: null,
       });
     }
     this.drawerOpen = true;

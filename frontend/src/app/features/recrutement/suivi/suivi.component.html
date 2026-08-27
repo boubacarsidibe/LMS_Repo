@@ -438,17 +438,17 @@
               <div class="p-4 bg-surface-container-low rounded-xl border border-outline-variant text-center">
                 <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-secondary text-2xl">payments</span></div>
                 <p class="text-label-md font-bold text-on-surface">Frais de scolarité</p>
-                <p class="text-xs text-on-surface-variant mt-1">Procédez au règlement avant le 15 décembre.</p>
+                <p class="text-xs text-on-surface-variant mt-1">{{ candidature.sessionInfoFraisScolarite || 'Information à venir, contactez le service des admissions.' }}</p>
               </div>
               <div class="p-4 bg-surface-container-low rounded-xl border border-outline-variant text-center">
                 <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-secondary text-2xl">badge</span></div>
                 <p class="text-label-md font-bold text-on-surface">Carte étudiante</p>
-                <p class="text-xs text-on-surface-variant mt-1">Votre carte sera disponible en janvier.</p>
+                <p class="text-xs text-on-surface-variant mt-1">{{ candidature.sessionInfoCarteEtudiante || 'Information à venir, contactez le service des admissions.' }}</p>
               </div>
               <div class="p-4 bg-surface-container-low rounded-xl border border-outline-variant text-center">
                 <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-secondary text-2xl">calendar_today</span></div>
                 <p class="text-label-md font-bold text-on-surface">Rentrée</p>
-                <p class="text-xs text-on-surface-variant mt-1">Journée d'intégration le 15 janvier.</p>
+                <p class="text-xs text-on-surface-variant mt-1">{{ candidature.sessionInfoRentree || 'Information à venir, contactez le service des admissions.' }}</p>
               </div>
             </div>
           </section>
