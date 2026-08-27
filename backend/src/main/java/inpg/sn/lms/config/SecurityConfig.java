@@ -138,6 +138,11 @@ public class SecurityConfig {
                 // candidats/étudiants/externes.
                 .requestMatchers("/api/personnel/**")
                     .hasAnyRole("FORMATEUR", "RESPONSABLE_PEDAGOGIQUE", "RESPONSABLE_ADMISSION")
+                // Gestion des rendez-vous (TDR §J) : « chaque utilisateur » peut consulter le
+                // personnel et demander un rendez-vous — pas de restriction de rôle au niveau de
+                // l'URL, les endpoints de gestion de créneaux/réponse restent verrouillés par
+                // @PreAuthorize au niveau méthode (RendezVousController).
+                .requestMatchers("/api/rendez-vous/**").authenticated()
                 .anyRequest().authenticated()
                 )
                 

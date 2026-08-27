@@ -38,6 +38,12 @@ public class Notification {
     /** Rappel automatique de dépôt d'une évaluation de cours (TDR §G, besoin B4). */
     public static final String EVALUATION_RAPPEL = "EVALUATION_RAPPEL";
 
+    /** Nouvelle demande de rendez-vous reçue par un membre du personnel (TDR §J). */
+    public static final String RENDEZ_VOUS_DEMANDE = "RENDEZ_VOUS_DEMANDE";
+
+    /** Réponse (acceptation, refus ou contre-proposition) à une demande de rendez-vous (TDR §J). */
+    public static final String RENDEZ_VOUS_REPONSE = "RENDEZ_VOUS_REPONSE";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

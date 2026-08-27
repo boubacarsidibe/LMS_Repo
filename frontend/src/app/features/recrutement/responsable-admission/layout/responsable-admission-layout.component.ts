@@ -44,6 +44,7 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
     { label: 'Paiements', icon: 'payments', route: '/responsable-admission/paiements' },
     { label: 'Notifications', icon: 'mail', route: '/responsable-admission/notifications' },
     { label: 'Activités du personnel', icon: 'apartment', route: '/responsable-admission/activites-personnel' },
+    { label: 'Rendez-vous', icon: 'event', route: '/responsable-admission/rendez-vous' },
   ];
 
   constructor(
