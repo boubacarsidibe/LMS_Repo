@@ -1173,3 +1173,23 @@ indéfiniment un créneau. `RendezVousControllerTest` fige ces deux verrous.
   vue des créneaux libres pour le demandeur, jamais une validation de
   cohérence de l'emploi du temps du personnel.
 - Navigation limitée à cinq espaces sur neuf — voir point 47.
+
+## 2026-08-27 — Quota Vercel épuisé (infrastructure, hors code)
+
+### 50. Déploiements Vercel bloqués 24h : quota gratuit épuisé, aucune action possible côté API
+
+`Vercel – frontend` et `Vercel – lms-repo` échouent sur toutes les PR ouvertes
+depuis ~09:11 UTC : `Resource is limited - try again in 24 hours (more than
+100, code: "api-deployments-free-per-day")`. Sans rapport avec un diff
+particulier — c'est un quota de compte (100 déploiements/jour sur le plan
+gratuit), pas une panne de build. Confirmé par le message d'erreur lui-même,
+qui pointe vers `?upgradeToPro=build-rate-limit`.
+
+Hors de portée de ce qu'une API GitHub/Vercel accessible ici peut corriger :
+ni un réglage de dépôt, ni un problème de code. Seules deux solutions
+existent, toutes deux humaines : attendre le renouvellement du quota (~24h),
+ou passer le compte Vercel boubacarsidibes-projects sur un plan payant.
+Rien à corriger côté code ; les PR concernées (dont #86) restent par ailleurs
+mergeables — seul l'aperçu de déploiement Vercel manque, la CI de test réelle
+(`ci.yml`, séparément indisponible — voir le ghost workflow `331865476`) n'en
+dépend pas.
