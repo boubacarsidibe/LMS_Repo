@@ -79,6 +79,12 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('../personnel/pages/activites-personnel/activites-personnel.component').then(
                         m => m.ActivitesPersonnelComponent)
+            },
+            {
+                path: 'rendez-vous',
+                loadComponent: () =>
+                    import('../rendez-vous/pages/rendez-vous/rendez-vous.component').then(
+                        m => m.RendezVousComponent)
             }
         ]
     },
@@ -144,6 +150,12 @@ export const routes: Routes = [
             {
                 path: 'mon-profil',
                 loadComponent: () => import('./pages/mon-profil-etudiant/mon-profil-etudiant').then(m => m.MonProfilEtudiant)
+            },
+            {
+                path: 'rendez-vous',
+                loadComponent: () =>
+                    import('../rendez-vous/pages/rendez-vous/rendez-vous.component').then(
+                        m => m.RendezVousComponent)
             }
         ]
     }

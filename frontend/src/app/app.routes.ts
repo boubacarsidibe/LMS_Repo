@@ -237,6 +237,13 @@ export const routes: Routes = [
             (m) => m.ActivitesPersonnelComponent
           ),
       },
+      {
+        path: 'rendez-vous',
+        loadComponent: () =>
+          import('./features/rendez-vous/pages/rendez-vous/rendez-vous.component').then(
+            (m) => m.RendezVousComponent
+          ),
+      },
     ],
   },
   // Espace Responsable Pédagogique (offre d'enseignement : cours et supports)
