@@ -1237,3 +1237,43 @@ du paquet `espace_etudiant`. Une prochaine session pourrait envisager une
 règle plus large (scanner tous les contrôleurs du paquet), mais cela dépasse
 la portée immédiate — combler le trou concret plutôt qu'anticiper les
 suivants.
+
+## 2026-08-28 — Demande directe de l'utilisateur : rendez-vous accessibles depuis les neuf espaces
+
+### 52. L'écart de navigation du point 47 est comblé
+
+Relecture du TDR §J demandée par l'utilisateur (« qui a besoin de fixer des
+rendez-vous avec les formateurs ? »). La phrase du TDR est sans ambiguïté :
+« **Chaque utilisateur** pourra consulter le profil des membres du personnel de
+l'INPG et envoyer une demande de rendez-vous en choisissant un créneau
+disponible dans leur emploi du temps. » Aucune restriction de rôle côté
+demandeur — ce n'est pas réservé aux étudiants.
+
+Le backend respectait déjà cette phrase (`SecurityConfig` : `/api/rendez-vous/**`
+en `authenticated()` seul, seuls les endpoints de gestion de créneaux et de
+réponse portent une restriction de rôle). C'est la **navigation** qui ne suivait
+pas : la rubrique n'existait que dans cinq des neuf espaces à barre latérale, et
+les quatre autres — candidat, entreprise, école de formation, évaluateur
+accréditation — n'y accédaient qu'en tapant l'URL à la main. Écart borné
+délibérément à l'époque et consigné au point 47, pas un oubli ; l'utilisateur a
+demandé de le combler.
+
+**Corrigé** : rubrique « Rendez-vous » ajoutée aux quatre espaces restants, avec
+la route correspondante. Trois d'entre eux (entreprise, école, évaluateur)
+enveloppent `RendezVousComponent` par une route enfant de leur cadre existant,
+exactement comme les cinq espaces déjà servis.
+
+**Le quatrième cas n'est pas symétrique** : l'espace candidat n'a pas de cadre à
+barre latérale. Ses pages composent chacune leur barre supérieure
+(`CandidatNavbarComponent`) et leur pied de page — voir `SuiviComponent`.
+Plutôt que d'introduire un cadre à part pour une seule page, un composant
+d'enveloppe minimal (`CandidatRendezVousComponent`) suit le patron déjà en
+place dans cet espace. Sa route porte `authGuard` et **non** `candidatGuard`,
+contrairement à `/recrutement/suivi` : « chaque utilisateur » inclut quelqu'un
+qui n'a pas encore soumis de candidature — c'est même précisément le profil qui
+a des raisons de vouloir rencontrer le personnel avant de déposer un dossier.
+
+Neuf espaces sur neuf donnent désormais accès à l'écran. Vérifié par
+`npx ng build` (compilation AOT réelle des gabarits, y compris les gabarits
+en ligne des cadres école/évaluateur et du nouveau composant d'enveloppe), pas
+seulement par `tsc --noEmit` qui ne lit pas les gabarits.

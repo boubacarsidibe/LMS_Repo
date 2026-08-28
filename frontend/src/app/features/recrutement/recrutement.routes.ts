@@ -40,5 +40,15 @@ export const RECRUTEMENT_ROUTES: Routes = [
     path: 'suivi',
     loadComponent: () => import('./suivi/suivi.component').then(m => m.SuiviComponent),
     canActivate: [candidatGuard]
+  },
+
+  // Rendez-vous (TDR §J) : « chaque utilisateur » peut en demander un — donc
+  // authGuard seul, pas candidatGuard : quelqu'un qui n'a pas encore soumis de
+  // candidature a justement des raisons de vouloir rencontrer le personnel.
+  {
+    path: 'rendez-vous',
+    loadComponent: () =>
+      import('./rendez-vous/candidat-rendez-vous.component').then(m => m.CandidatRendezVousComponent),
+    canActivate: [authGuard]
   }
 ];
