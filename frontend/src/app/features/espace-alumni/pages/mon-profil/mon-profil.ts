@@ -3,15 +3,16 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Auth } from '../../../../core/auth/services/authService';
-import { AlumniProfil, AlumniProfilUpdate } from '../../models/alumni.models';
+import { AlumniMetriques, AlumniProfil, AlumniProfilUpdate } from '../../models/alumni.models';
 import { AlumniService } from '../../services/alumni.service';
 
 /**
- * Fiche personnelle de l'alumni : identité (lecture seule, héritée de sa
- * scolarité), situation professionnelle courante, et mot de passe — cette
- * dernière section manquait alors que la page sert de point d'entrée après
- * connexion (endpoint générique `/api/auth/change-password`, même patron que
- * les autres rôles).
+ * Fiche personnelle de l'alumni : temps forts du parcours (métriques réelles,
+ * pas des réglages), identité (lecture seule, héritée de sa scolarité),
+ * situation professionnelle courante, et mot de passe — cette dernière
+ * section manquait alors que la page sert de point d'entrée après connexion
+ * (endpoint générique `/api/auth/change-password`, même patron que les
+ * autres rôles).
  */
 @Component({
   selector: 'app-alumni-mon-profil',
@@ -22,6 +23,7 @@ import { AlumniService } from '../../services/alumni.service';
 export class MonProfil implements OnInit {
   chargement = true;
   profil: AlumniProfil | null = null;
+  metriques: AlumniMetriques | null = null;
   saisie: AlumniProfilUpdate = { posteActuel: '', entreprise: '', secteurActivite: '', visible: true };
   enregistrement = false;
   messageSucces = '';
@@ -56,6 +58,10 @@ export class MonProfil implements OnInit {
       },
       error: () => (this.chargement = false),
     });
+    this.alumniService.getMesMetriques().subscribe({
+      next: (metriques) => (this.metriques = metriques),
+      error: () => (this.metriques = null),
+    });
   }
 
   enregistrer(): void {
@@ -70,6 +76,10 @@ export class MonProfil implements OnInit {
         this.profil = profil;
         this.enregistrement = false;
         this.messageSucces = 'Profil mis à jour.';
+        this.alumniService.getMesMetriques().subscribe({
+          next: (metriques) => (this.metriques = metriques),
+          error: () => {},
+        });
       },
       error: () => {
         this.enregistrement = false;
