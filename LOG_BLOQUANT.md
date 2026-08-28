@@ -1193,3 +1193,47 @@ Rien à corriger côté code ; les PR concernées (dont #86) restent par ailleur
 mergeables — seul l'aperçu de déploiement Vercel manque, la CI de test réelle
 (`ci.yml`, séparément indisponible — voir le ghost workflow `331865476`) n'en
 dépend pas.
+
+## 2026-08-28 — Revue de sécurité : messagerie privée et réponses au forum (commit d'équipe)
+
+### 51. `MessagerieController` : code sain, mais garde-fou structurel absent — comblé
+
+Le 2026-08-27 au soir, un coéquipier a poussé directement sur `develop` un
+commit substantiel (« Final version1 », `e21fcca`) apportant une messagerie
+privée apprenant ↔ formateur (`MessagerieController`, `Conversation`,
+`MessagePrive`) et les réponses citées dans le forum (`ForumMessage.reponseA`).
+Ce commit a été fusionné dans `main` (PR #89) avant d'avoir traversé le
+protocole de revue habituel de cette session — aucun test, ni de sécurité ni
+fonctionnel, n'existait pour ce code.
+
+**Relecture faite a posteriori** : le code lui-même suit correctement les
+patrons déjà établis dans ce dépôt — `@PreAuthorize` de classe restreint à
+ÉTUDIANT/FORMATEUR (jamais ALUMNI, dont l'espace vit sous son propre préfixe
+verrouillé côté `SecurityConfig`), chaque endpoint est `@Transactional`, la
+liste des personnes contactables est recoupée côté serveur avant tout envoi
+(même principe que les citations du forum, `MentionForumService`), l'accès à
+une conversation est vérifié par appartenance aux deux participants avant
+lecture ou réponse. La réponse à un message du forum recoupe de même
+l'identifiant cité avec le sujet courant, pour qu'on ne puisse pas citer un
+message d'un fil auquel on n'a pas accès. Aucun défaut de sécurité trouvé.
+
+**Trou réel trouvé et comblé** : `EspaceEtudiantGardeFousTest` — le test qui
+fige structurellement « chaque endpoint déclare `@PreAuthorize`, chaque
+endpoint ouvre sa transaction » — ne réfléchit que sur la classe
+`EspaceEtudiantController`, par son nom. Un contrôleur voisin ajouté dans le
+même paquet, comme `MessagerieController`, n'est protégé par aucun garde-fou
+automatique : un futur endpoint qui omettrait `@Transactional` passerait
+inaperçu jusqu'à l'écran 500 en production, exactement le défaut que ce test
+existe pour prévenir. Comblé par `MessagerieControllerTest`, qui ajoute le
+même garde-fou structurel pour cette classe (en tenant compte du contrôle de
+rôle porté une fois pour toutes au niveau de la classe, plutôt que méthode par
+méthode) et des tests de comportement sur les points qui comptent : démarrer
+une conversation avec un destinataire hors périmètre, lire ou répondre à une
+conversation dont on n'est pas participant.
+
+**Écart non traité** : `EspaceEtudiantGardeFousTest` reste spécifique à une
+seule classe ; il ne généralise pas automatiquement à tout nouveau contrôleur
+du paquet `espace_etudiant`. Une prochaine session pourrait envisager une
+règle plus large (scanner tous les contrôleurs du paquet), mais cela dépasse
+la portée immédiate — combler le trou concret plutôt qu'anticiper les
+suivants.
