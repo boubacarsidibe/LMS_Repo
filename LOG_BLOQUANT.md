@@ -1308,3 +1308,48 @@ patron visuel que les quatre déjà en place.
   main plutôt qu'ajouter un garde-fou structurel séparé pour ce seul contrôleur
   — écart déjà signalé plus largement au point 51 (le garde-fou ne généralise à
   aucun contrôleur voisin d'`EspaceEtudiantController`).
+
+## 2026-08-28 — Demande directe de l'utilisateur : combler les écarts non traités de l'epic « profil alumni enrichi »
+
+### 56. Suivi de consultation des documents partagés : nouvelle table, même patron que `progressions_support`
+
+Le point 55 signalait que « Vie du réseau » ne comptait les documents que par
+dépôt, faute de tout suivi de lecture. Comblé sur le même patron que
+`ProgressionSupport` (suivi des apprentissages, §3.5, baseline) : une ligne par
+lecteur et par document, posée à la première ouverture et jamais mise à jour
+ensuite. Migration `V29` (`consultations_document_partage`), entité
+`ConsultationDocumentPartage`, `ON DELETE CASCADE` sur `document_id` — à la
+différence des suppressions de cours/promotion (`CLAUDE.md` §3, aucune cascade
+pour ne pas effacer un contenu partagé entre modules), supprimer un document
+supprime légitimement ses propres traces de lecture, sans effet de bord ailleurs.
+
+Contrairement à `ScolariteController#marquerConsulte` (bouton dédié côté
+client), il n'existe pas de geste séparé « marquer consulté » pour un document
+partagé : `AlumniDocumentController#telecharger` (`GET /documents/{id}/fichier`)
+enregistre lui-même la consultation, idempotente, avant de servir le fichier —
+l'ouverture fait foi. Nouveau champ `AlumniMetriquesDto.nombreDocumentsConsultes`,
+distinct de `nombreDocumentsPartages` (dépôt) : l'un mesure la contribution,
+l'autre l'engagement, aucun ne remplace l'autre.
+
+### 57. Garde-fou structurel pour les trois contrôleurs de l'espace alumni
+
+Le point 55 signalait aussi l'absence de garde-fou structurel pour
+`AlumniController`. Plutôt qu'un test à la seule classe nommée, `EspaceAlumniGardeFousTest`
+couvre les trois contrôleurs du paquet (`AlumniController`, `AlumniForumController`,
+`AlumniDocumentController`) — les trois portent leur `@PreAuthorize` au niveau
+classe, la vérification porte donc sur la présence de cette annotation par
+classe (pas méthode par méthode, à la différence d'`EspaceEtudiantGardeFousTest`)
+et sur `@Transactional` par méthode de route, même principe que
+`MessagerieControllerTest`. Un futur endpoint ajouté dans l'un des trois sans
+transaction fera désormais échouer ce test plutôt que produire un 500 en
+production. Reste un test par paquet concerné, pas une règle générale
+scannant tout le classpath — écart déjà assumé au point 51, hors de portée de
+ce correctif ciblé.
+
+### 58. §D (SIGB) : question reposée directement à l'utilisateur
+
+Seul écart des points 52-55 non actionnable par du code : aucun système cible
+n'est nommé nulle part (TDR ou dépôt), voir point 16. Plutôt que de laisser ce
+blocage dormir dans ce journal, reposé directement à l'utilisateur dans la
+conversation — la seule voie pour le débloquer, le TDR n'apportant rien de
+plus qu'au point 16.
