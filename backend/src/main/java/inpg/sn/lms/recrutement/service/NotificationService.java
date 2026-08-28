@@ -2,6 +2,8 @@ package inpg.sn.lms.recrutement.service;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -12,6 +14,8 @@ import inpg.sn.lms.recrutement.enums.EnumTypeNotification;
 
 @Service
 public class NotificationService {
+
+    private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
     private final JavaMailSender mailSender;
     private final NotificationTemplateService templateService;
@@ -28,13 +32,21 @@ public class NotificationService {
         this.templateService = templateService;
     }
 
+    // Best-effort : cette methode est appelee depuis de tres nombreuses actions
+    // metier (validation/rejet de dossier, convocations, decisions d'admission,
+    // relances...). Une panne SMTP ne doit jamais faire echouer l'action qui
+    // declenche la notification.
     public void envoyerEmail(String destinataire, String sujet, String contenu) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(expediteur);
         message.setTo(destinataire);
         message.setSubject("[INPG Recrutement] " + sujet);
         message.setText(contenu);
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+        } catch (Exception e) {
+            log.error("Échec de l'envoi de l'email de recrutement à {} : {}", destinataire, e.getMessage(), e);
+        }
     }
 
     /**

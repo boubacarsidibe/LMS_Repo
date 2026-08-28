@@ -1,6 +1,7 @@
 package inpg.sn.lms.espace_alumni.controller;
 
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import inpg.sn.lms.auth.entity.AlumniProfil;
+import inpg.sn.lms.espace_alumni.dto.AlumniMetriquesDto;
 import inpg.sn.lms.espace_alumni.dto.AlumniProfilDto;
 import inpg.sn.lms.espace_alumni.dto.AlumniProfilUpdateRequest;
 import inpg.sn.lms.espace_alumni.dto.EnqueteSuiviDto;
@@ -28,12 +30,17 @@ import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleDto;
 import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleRequest;
 import inpg.sn.lms.espace_alumni.entity.EnqueteSuivi;
 import inpg.sn.lms.espace_alumni.entity.ReponseEnqueteSuivi;
+import inpg.sn.lms.espace_alumni.repository.ConsultationDocumentPartageRepository;
+import inpg.sn.lms.espace_alumni.repository.DocumentPartageRepository;
 import inpg.sn.lms.espace_alumni.repository.EnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.repository.ReponseEnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.service.AlumniProfilService;
 import inpg.sn.lms.espace_alumni.service.SituationProfessionnelleService;
 import inpg.sn.lms.espace_etudiant.dto.ReleveDelivreDto;
+import inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.ReleveNotes;
+import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
@@ -62,16 +69,27 @@ public class AlumniController {
     private final ReleveDelivranceService releveDelivranceService;
     private final EnqueteSuiviRepository enqueteRepository;
     private final ReponseEnqueteSuiviRepository reponseRepository;
+    private final ForumSujetRepository forumSujetRepository;
+    private final ForumMessageRepository forumMessageRepository;
+    private final DocumentPartageRepository documentPartageRepository;
+    private final ConsultationDocumentPartageRepository consultationRepository;
 
     public AlumniController(UtilisateurCourantService utilisateurCourant, AlumniProfilService alumniProfilService,
             SituationProfessionnelleService situationService, ReleveDelivranceService releveDelivranceService,
-            EnqueteSuiviRepository enqueteRepository, ReponseEnqueteSuiviRepository reponseRepository) {
+            EnqueteSuiviRepository enqueteRepository, ReponseEnqueteSuiviRepository reponseRepository,
+            ForumSujetRepository forumSujetRepository, ForumMessageRepository forumMessageRepository,
+            DocumentPartageRepository documentPartageRepository,
+            ConsultationDocumentPartageRepository consultationRepository) {
         this.utilisateurCourant = utilisateurCourant;
         this.alumniProfilService = alumniProfilService;
         this.situationService = situationService;
         this.releveDelivranceService = releveDelivranceService;
         this.enqueteRepository = enqueteRepository;
         this.reponseRepository = reponseRepository;
+        this.forumSujetRepository = forumSujetRepository;
+        this.forumMessageRepository = forumMessageRepository;
+        this.documentPartageRepository = documentPartageRepository;
+        this.consultationRepository = consultationRepository;
     }
 
     @GetMapping("/mon-profil")
@@ -170,6 +188,41 @@ public class AlumniController {
                 .map(this::toReleveDelivreDto)
                 .toList();
         return ResponseEntity.ok(releves);
+    }
+
+    /**
+     * Temps forts du parcours de l'alumni connecté — profil enrichi. Agrège des
+     * données déjà servies ailleurs par petits bouts (relevé, parcours pro, forum,
+     * documents, enquêtes) plutôt que de dupliquer un calcul : la seule nouveauté
+     * ici est de les compter ensemble pour un même alumni.
+     */
+    @GetMapping("/mes-metriques")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> mesMetriques(Authentication authentication) {
+        AlumniProfil profil = utilisateurCourant.alumniProfil(authentication);
+        if (profil == null) {
+            return profilIntrouvable();
+        }
+        Long id = profil.getId();
+        List<ReleveNotes> releves = releveDelivranceService.deLEtudiant(id);
+        ReleveNotes dernierReleve = releves.isEmpty() ? null : releves.get(0);
+        AlumniProfilDto identite = alumniProfilService.toDto(profil);
+
+        AlumniMetriquesDto metriques = new AlumniMetriquesDto(
+                Period.between(profil.getDateCreation(), java.time.LocalDate.now()).getYears(),
+                identite.promotionLibelle(),
+                dernierReleve == null ? null : dernierReleve.getMoyenneGenerale(),
+                dernierReleve == null ? null : dernierReleve.getPeriode(),
+                releves.size(),
+                situationService.lister(id).size(),
+                profil.getPosteActuel() != null && !profil.getPosteActuel().isBlank(),
+                forumSujetRepository.countByAuteurIdAndPortee(id, PorteeForumSujet.ALUMNI),
+                forumMessageRepository.countByAuteurIdAndSujet_Portee(id, PorteeForumSujet.ALUMNI),
+                documentPartageRepository.countByAuteurId(id),
+                consultationRepository.countByLecteurId(id),
+                reponseRepository.countByAlumniProfilId(id),
+                enqueteRepository.findByActiveTrueOrderByDateCreationDesc().size());
+        return ResponseEntity.ok(metriques);
     }
 
     /**

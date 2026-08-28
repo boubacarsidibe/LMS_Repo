@@ -6,12 +6,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -20,7 +23,9 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
 
 import inpg.sn.lms.auth.entity.User;
+import inpg.sn.lms.espace_alumni.entity.ConsultationDocumentPartage;
 import inpg.sn.lms.espace_alumni.entity.DocumentPartage;
+import inpg.sn.lms.espace_alumni.repository.ConsultationDocumentPartageRepository;
 import inpg.sn.lms.espace_alumni.repository.DocumentPartageRepository;
 import inpg.sn.lms.espace_alumni.service.AlumniDocumentStorageService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
@@ -43,6 +48,8 @@ class AlumniDocumentControllerTest {
     @Mock
     private UtilisateurCourantService utilisateurCourant;
     @Mock
+    private ConsultationDocumentPartageRepository consultationRepository;
+    @Mock
     private Authentication authentication;
 
     private AlumniDocumentController controller;
@@ -50,7 +57,8 @@ class AlumniDocumentControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new AlumniDocumentController(documentRepository, storage, utilisateurCourant);
+        controller = new AlumniDocumentController(documentRepository, storage, utilisateurCourant,
+                consultationRepository);
         auteur = new User();
         auteur.setId(42L);
     }
@@ -135,5 +143,52 @@ class AlumniDocumentControllerTest {
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         verify(documentRepository).delete(document);
+    }
+
+    @Test
+    @DisplayName("Première ouverture d'un document : consultation enregistrée")
+    void telecharger_premiere_ouverture_enregistre_la_consultation() throws IOException {
+        DocumentPartage document = new DocumentPartage(auteur, "Titre", null, "f.pdf", "uuid-f.pdf",
+                "application/pdf");
+        setId(document, 3L);
+        Path fichier = Files.createTempFile("alumni-doc", ".pdf");
+        try {
+            when(documentRepository.findById(3L)).thenReturn(Optional.of(document));
+            when(storage.cheminDe(document)).thenReturn(fichier);
+            User lecteur = new User();
+            lecteur.setId(7L);
+            when(utilisateurCourant.utilisateur(authentication)).thenReturn(lecteur);
+            when(consultationRepository.existsByDocumentIdAndLecteurId(3L, 7L)).thenReturn(false);
+
+            ResponseEntity<?> reponse = controller.telecharger(3L, authentication);
+
+            assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+            verify(consultationRepository).save(ArgumentMatchers.any(ConsultationDocumentPartage.class));
+        } finally {
+            Files.deleteIfExists(fichier);
+        }
+    }
+
+    @Test
+    @DisplayName("Ouverture déjà consultée : idempotent, aucun doublon enregistré")
+    void telecharger_deja_consulte_n_enregistre_rien_de_plus() throws IOException {
+        DocumentPartage document = new DocumentPartage(auteur, "Titre", null, "f.pdf", "uuid-f.pdf",
+                "application/pdf");
+        setId(document, 3L);
+        Path fichier = Files.createTempFile("alumni-doc", ".pdf");
+        try {
+            when(documentRepository.findById(3L)).thenReturn(Optional.of(document));
+            when(storage.cheminDe(document)).thenReturn(fichier);
+            User lecteur = new User();
+            lecteur.setId(7L);
+            when(utilisateurCourant.utilisateur(authentication)).thenReturn(lecteur);
+            when(consultationRepository.existsByDocumentIdAndLecteurId(3L, 7L)).thenReturn(true);
+
+            controller.telecharger(3L, authentication);
+
+            verify(consultationRepository, never()).save(ArgumentMatchers.any());
+        } finally {
+            Files.deleteIfExists(fichier);
+        }
     }
 }

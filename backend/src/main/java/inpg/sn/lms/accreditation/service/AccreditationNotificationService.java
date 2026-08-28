@@ -1,5 +1,7 @@
 package inpg.sn.lms.accreditation.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -19,6 +21,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AccreditationNotificationService {
 
+    private static final Logger log = LoggerFactory.getLogger(AccreditationNotificationService.class);
+
     private final JavaMailSender mailSender;
     private final String emailAccreditation;
 
@@ -28,12 +32,18 @@ public class AccreditationNotificationService {
         this.emailAccreditation = emailAccreditation;
     }
 
+    // Best-effort : une panne SMTP ne doit jamais faire echouer la decision
+    // metier (prise en charge, accreditation, rejet...) qui declenche l'email.
     private void envoyerEmail(String destinataire, String sujet, String contenu) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(destinataire);
         message.setSubject("[INPG Accréditation] " + sujet);
         message.setText(contenu);
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+        } catch (Exception e) {
+            log.error("Échec de l'envoi de l'email d'accréditation à {} : {}", destinataire, e.getMessage(), e);
+        }
     }
 
     /** Alerte l'équipe d'accréditation qu'une nouvelle demande attend d'être évaluée. */

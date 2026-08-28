@@ -1238,9 +1238,80 @@ règle plus large (scanner tous les contrôleurs du paquet), mais cela dépasse
 la portée immédiate — combler le trou concret plutôt qu'anticiper les
 suivants.
 
+## 2026-08-28 — Epic « profil alumni enrichi »
+
+### 52. Gap analysis complète du TDR, phrase par phrase : plus aucun écart actionnable
+
+Après la fusion de la PR #91 (revue de sécurité messagerie), une analyse de gap a
+relu l'intégralité du `.docx` (172 paragraphes, pas seulement les titres de
+section) et confronté chaque phrase au code réel. Résultat, section par section :
+A (recrutement), B (comptes/scolarité), C (Alumni), E (e-learning), F
+(accréditation), G (qualité), H (entreprise), I (personnel), J (rendez-vous) sont
+toutes couvertes jusque dans leurs clauses secondaires (colonnes d'export
+configurables, extraction zip des pièces, suspension de dépôt hors délai,
+filigrane/QR des certificats, activités parascolaires, messagerie privée
+entreprise↔pédagogie — vérifiées une à une dans le code, pas seulement supposées
+« déjà faites » parce que le titre de section existe). Seuls deux points restent
+ouverts, tous deux déjà identifiés lors de passages précédents (points 16 et 41
+de ce journal) : §D (SIGB), bloqué faute de système cible nommé dans le TDR, et
+« profil alumni enrichi », un souhait utilisateur adjacent au TDR §C plutôt
+qu'une phrase littérale du texte.
+
+**Décision** : avec un TDR sans plus aucun écart actionnable, « profil alumni
+enrichi » — déprécié deux fois de suite (points 41 et l'entrée du 2026-08-28
+08:50 UTC du journal du jour) en faveur d'écarts TDR réels qui n'existent plus
+aujourd'hui — devient le chantier de ce passage.
+
+### 53. Métriques agrégées à partir de données déjà servies ailleurs, aucune nouvelle table
+
+L'écran `mon-profil` de l'espace alumni n'avait qu'une vraie section de saisie
+(situation professionnelle courante) et des cartes de navigation sans contenu
+(« Accès rapide », ajoutées le 2026-08-25). Plutôt que d'inventer une nouvelle
+table de métriques à tenir à jour en parallèle (risque de divergence, même
+famille de défaut que `cours_promotion` documenté dans `CLAUDE.md` §3), le
+nouvel endpoint `GET /api/espace-alumni/mes-metriques` agrège des données qui
+existaient déjà, chacune servie par un endpoint séparé : dernier relevé délivré
+(`ReleveDelivranceService.deLEtudiant`, premier élément — la liste est déjà
+triée par date décroissante), nombre de postes du parcours pro
+(`SituationProfessionnelleService.lister`), ancienneté depuis l'entrée dans
+l'espace alumni (`AlumniProfil.dateCreation`), contributions au salon de forum
+alumni (nouvelles méthodes `countByAuteurIdAndPortee`/
+`countByAuteurIdAndSujet_Portee`, filtrées sur `PorteeForumSujet.ALUMNI` pour ne
+compter que le salon alumni, jamais les sujets de cours d'un ancien passage
+étudiant), documents partagés déposés (`countByAuteurId`), et enquêtes de suivi
+répondues (`countByAlumniProfilId`). Trois nouvelles méthodes de comptage sur des
+repositories déjà existants, zéro migration.
+
+Le relevé le plus récent reste `null` (jamais 0) tant qu'aucun n'a été délivré —
+même distinction que `CLAUDE.md` §3 entre relevé courant recalculé et relevé
+délivré figé, appliquée ici à l'absence de délivrance plutôt qu'à son contenu.
+
+### 54. Accès rapide de la page profil : deux entrées manquantes ajoutées au passage
+
+En comparant la page profil à la barre latérale de l'espace alumni (sept
+entrées : Mon profil, Parcours professionnel, Mes relevés, Enquêtes de suivi,
+Forum, Documents partagés, Rendez-vous), les cartes « Accès rapide » de la page
+n'en reprenaient que quatre — Enquêtes de suivi et Rendez-vous manquaient,
+depuis leur ajout respectif aux epics « Processus qualité » et « Gestion des
+rendez-vous ». Cohérence inter-écrans (ÉTAPE 4 de la routine) : ajoutées, même
+patron visuel que les quatre déjà en place.
+
+### 55. Écarts non traités
+
+- Le nombre de documents partagés compte les documents **déposés** par
+  l'alumni, pas ceux qu'il a consultés — aucune table de suivi de lecture
+  n'existe pour `DocumentPartage` (ni pour la photothèque étudiante, patron
+  similaire ailleurs dans ce dépôt) ; l'introduire serait une story à part.
+- Pas de test dédié type `EspaceEtudiantGardeFousTest` pour `AlumniController` :
+  la classe porte déjà `@PreAuthorize` au niveau classe (hérité par
+  `mesMetriques`) et chaque méthode existante est `@Transactional`, vérifié à la
+  main plutôt qu'ajouter un garde-fou structurel séparé pour ce seul contrôleur
+  — écart déjà signalé plus largement au point 51 (le garde-fou ne généralise à
+  aucun contrôleur voisin d'`EspaceEtudiantController`).
+
 ## 2026-08-28 — Demande directe de l'utilisateur : rendez-vous accessibles depuis les neuf espaces
 
-### 52. L'écart de navigation du point 47 est comblé
+### 56. L'écart de navigation du point 47 est comblé
 
 Relecture du TDR §J demandée par l'utilisateur (« qui a besoin de fixer des
 rendez-vous avec les formateurs ? »). La phrase du TDR est sans ambiguïté :
@@ -1277,3 +1348,48 @@ Neuf espaces sur neuf donnent désormais accès à l'écran. Vérifié par
 `npx ng build` (compilation AOT réelle des gabarits, y compris les gabarits
 en ligne des cadres école/évaluateur et du nouveau composant d'enveloppe), pas
 seulement par `tsc --noEmit` qui ne lit pas les gabarits.
+
+## 2026-08-28 — Demande directe de l'utilisateur : combler les écarts non traités de l'epic « profil alumni enrichi »
+
+### 57. Suivi de consultation des documents partagés : nouvelle table, même patron que `progressions_support`
+
+Le point 55 signalait que « Vie du réseau » ne comptait les documents que par
+dépôt, faute de tout suivi de lecture. Comblé sur le même patron que
+`ProgressionSupport` (suivi des apprentissages, §3.5, baseline) : une ligne par
+lecteur et par document, posée à la première ouverture et jamais mise à jour
+ensuite. Migration `V29` (`consultations_document_partage`), entité
+`ConsultationDocumentPartage`, `ON DELETE CASCADE` sur `document_id` — à la
+différence des suppressions de cours/promotion (`CLAUDE.md` §3, aucune cascade
+pour ne pas effacer un contenu partagé entre modules), supprimer un document
+supprime légitimement ses propres traces de lecture, sans effet de bord ailleurs.
+
+Contrairement à `ScolariteController#marquerConsulte` (bouton dédié côté
+client), il n'existe pas de geste séparé « marquer consulté » pour un document
+partagé : `AlumniDocumentController#telecharger` (`GET /documents/{id}/fichier`)
+enregistre lui-même la consultation, idempotente, avant de servir le fichier —
+l'ouverture fait foi. Nouveau champ `AlumniMetriquesDto.nombreDocumentsConsultes`,
+distinct de `nombreDocumentsPartages` (dépôt) : l'un mesure la contribution,
+l'autre l'engagement, aucun ne remplace l'autre.
+
+### 58. Garde-fou structurel pour les trois contrôleurs de l'espace alumni
+
+Le point 55 signalait aussi l'absence de garde-fou structurel pour
+`AlumniController`. Plutôt qu'un test à la seule classe nommée, `EspaceAlumniGardeFousTest`
+couvre les trois contrôleurs du paquet (`AlumniController`, `AlumniForumController`,
+`AlumniDocumentController`) — les trois portent leur `@PreAuthorize` au niveau
+classe, la vérification porte donc sur la présence de cette annotation par
+classe (pas méthode par méthode, à la différence d'`EspaceEtudiantGardeFousTest`)
+et sur `@Transactional` par méthode de route, même principe que
+`MessagerieControllerTest`. Un futur endpoint ajouté dans l'un des trois sans
+transaction fera désormais échouer ce test plutôt que produire un 500 en
+production. Reste un test par paquet concerné, pas une règle générale
+scannant tout le classpath — écart déjà assumé au point 51, hors de portée de
+ce correctif ciblé.
+
+### 59. §D (SIGB) : question reposée directement à l'utilisateur
+
+Seul écart des points 52-55 non actionnable par du code : aucun système cible
+n'est nommé nulle part (TDR ou dépôt), voir point 16. Plutôt que de laisser ce
+blocage dormir dans ce journal, reposé directement à l'utilisateur dans la
+conversation — la seule voie pour le débloquer, le TDR n'apportant rien de
+plus qu'au point 16.

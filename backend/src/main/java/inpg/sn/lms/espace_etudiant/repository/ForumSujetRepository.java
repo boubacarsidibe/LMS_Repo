@@ -65,4 +65,7 @@ public interface ForumSujetRepository extends JpaRepository<ForumSujet, Long> {
 
     /** Sert à bloquer la suppression d'un compte ayant publié dans le forum. */
     boolean existsByAuteurId(Long auteurId);
+
+    /** Sujets ouverts par un alumni dans le salon qui lui est propre — profil enrichi. */
+    long countByAuteurIdAndPortee(Long auteurId, PorteeForumSujet portee);
 }

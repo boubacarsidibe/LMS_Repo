@@ -30,15 +30,21 @@ import inpg.sn.lms.espace_alumni.dto.ReponseEnqueteSuiviDto;
 import inpg.sn.lms.espace_alumni.dto.ReponseEnqueteSuiviRequest;
 import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleDto;
 import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleRequest;
+import inpg.sn.lms.espace_alumni.dto.AlumniMetriquesDto;
 import inpg.sn.lms.espace_alumni.entity.EnqueteSuivi;
 import inpg.sn.lms.espace_alumni.entity.ReponseEnqueteSuivi;
 import inpg.sn.lms.espace_alumni.enums.EnumStatutEmploi;
+import inpg.sn.lms.espace_alumni.repository.ConsultationDocumentPartageRepository;
+import inpg.sn.lms.espace_alumni.repository.DocumentPartageRepository;
 import inpg.sn.lms.espace_alumni.repository.EnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.repository.ReponseEnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.service.AlumniProfilService;
 import inpg.sn.lms.espace_alumni.service.SituationProfessionnelleService;
 import inpg.sn.lms.espace_etudiant.dto.ReleveDelivreDto;
+import inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.ReleveNotes;
+import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
@@ -66,6 +72,14 @@ class AlumniControllerTest {
     @Mock
     private ReponseEnqueteSuiviRepository reponseRepository;
     @Mock
+    private ForumSujetRepository forumSujetRepository;
+    @Mock
+    private ForumMessageRepository forumMessageRepository;
+    @Mock
+    private DocumentPartageRepository documentPartageRepository;
+    @Mock
+    private ConsultationDocumentPartageRepository consultationRepository;
+    @Mock
     private Authentication authentication;
 
     private AlumniController controller;
@@ -73,7 +87,8 @@ class AlumniControllerTest {
     @BeforeEach
     void setUp() {
         controller = new AlumniController(utilisateurCourant, alumniProfilService, situationService,
-                releveDelivranceService, enqueteRepository, reponseRepository);
+                releveDelivranceService, enqueteRepository, reponseRepository, forumSujetRepository,
+                forumMessageRepository, documentPartageRepository, consultationRepository);
     }
 
     /**
@@ -263,5 +278,85 @@ class AlumniControllerTest {
         assertThat(corps.id()).isEqualTo(77L);
         assertThat(corps.noteApplicationCompetences()).isEqualTo(4);
         assertThat(corps.commentaire()).isEqualTo("Nouvel avis");
+    }
+
+    @Test
+    @DisplayName("Sans profil alumni associé au compte, mes-metriques renvoie 404")
+    void mesMetriquesSansFicheRenvoie404() {
+        when(utilisateurCourant.alumniProfil(authentication)).thenReturn(null);
+
+        ResponseEntity<?> reponse = controller.mesMetriques(authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("Mes métriques : agrège relevé le plus récent, parcours pro, forum, documents et enquêtes")
+    void mesMetriquesAgregeLesDonneesDuProfilConnecte() {
+        AlumniProfil profil = profil();
+        profil.setDateCreation(LocalDate.now().minusYears(3));
+        profil.setPosteActuel("Ingénieure Procédés");
+        when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil);
+        AlumniProfilDto identite = new AlumniProfilDto(42L, "Ndoye", "Awa", "ETU-2026-001", "M1 Data Science",
+                "Ingénieure Procédés", "Petrosen", "Pétrole & Gaz", true, profil.getDateCreation());
+        when(alumniProfilService.toDto(profil)).thenReturn(identite);
+
+        ReleveNotes releveRecent = new ReleveNotes();
+        releveRecent.setPeriode("Semestre 2 — 2025/2026");
+        releveRecent.setMoyenneGenerale(14.2);
+        ReleveNotes releveAncien = new ReleveNotes();
+        releveAncien.setPeriode("Semestre 1 — 2025/2026");
+        releveAncien.setMoyenneGenerale(12.0);
+        when(releveDelivranceService.deLEtudiant(42L)).thenReturn(List.of(releveRecent, releveAncien));
+
+        when(situationService.lister(42L)).thenReturn(List.of(
+                new SituationProfessionnelleDto(1L, "Ingénieure Procédés", "Petrosen", LocalDate.now(), null,
+                        EnumStatutEmploi.EN_EMPLOI)));
+        when(forumSujetRepository.countByAuteurIdAndPortee(42L, PorteeForumSujet.ALUMNI)).thenReturn(2L);
+        when(forumMessageRepository.countByAuteurIdAndSujet_Portee(42L, PorteeForumSujet.ALUMNI)).thenReturn(5L);
+        when(documentPartageRepository.countByAuteurId(42L)).thenReturn(1L);
+        when(consultationRepository.countByLecteurId(42L)).thenReturn(4L);
+        when(reponseRepository.countByAlumniProfilId(42L)).thenReturn(3L);
+        EnqueteSuivi enqueteActive = new EnqueteSuivi("Suivi 2026", null);
+        enqueteActive.setId(9L);
+        when(enqueteRepository.findByActiveTrueOrderByDateCreationDesc()).thenReturn(List.of(enqueteActive));
+
+        ResponseEntity<?> reponse = controller.mesMetriques(authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        AlumniMetriquesDto corps = (AlumniMetriquesDto) reponse.getBody();
+        assertThat(corps.anneesDepuisDiplome()).isEqualTo(3);
+        assertThat(corps.promotionLibelle()).isEqualTo("M1 Data Science");
+        assertThat(corps.moyenneGeneraleDernierReleve()).isEqualTo(14.2);
+        assertThat(corps.periodeDernierReleve()).isEqualTo("Semestre 2 — 2025/2026");
+        assertThat(corps.nombreRelevesDelivres()).isEqualTo(2);
+        assertThat(corps.nombrePostesParcours()).isEqualTo(1);
+        assertThat(corps.posteActuelRenseigne()).isTrue();
+        assertThat(corps.nombreSujetsForumAlumni()).isEqualTo(2L);
+        assertThat(corps.nombreMessagesForumAlumni()).isEqualTo(5L);
+        assertThat(corps.nombreDocumentsPartages()).isEqualTo(1L);
+        assertThat(corps.nombreDocumentsConsultes()).isEqualTo(4L);
+        assertThat(corps.nombreEnquetesRepondues()).isEqualTo(3L);
+        assertThat(corps.nombreEnquetesActives()).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("Mes métriques sans aucun relevé délivré : moyenne et période restent nulles, pas zéro")
+    void mesMetriquesSansReleveLaisseLaMoyenneNulle() {
+        AlumniProfil profil = profil();
+        when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil);
+        when(alumniProfilService.toDto(profil)).thenReturn(new AlumniProfilDto(42L, "Ndoye", "Awa", "ETU-2026-001",
+                "M1 Data Science", null, null, null, true, profil.getDateCreation()));
+        when(releveDelivranceService.deLEtudiant(42L)).thenReturn(List.of());
+        when(situationService.lister(42L)).thenReturn(List.of());
+        when(enqueteRepository.findByActiveTrueOrderByDateCreationDesc()).thenReturn(List.of());
+
+        ResponseEntity<?> reponse = controller.mesMetriques(authentication);
+
+        AlumniMetriquesDto corps = (AlumniMetriquesDto) reponse.getBody();
+        assertThat(corps.moyenneGeneraleDernierReleve()).isNull();
+        assertThat(corps.periodeDernierReleve()).isNull();
+        assertThat(corps.nombreRelevesDelivres()).isZero();
+        assertThat(corps.posteActuelRenseigne()).isFalse();
     }
 }

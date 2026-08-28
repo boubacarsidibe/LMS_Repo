@@ -18,6 +18,23 @@ export interface AlumniProfilUpdate {
   visible: boolean;
 }
 
+/** Temps forts du parcours de l'alumni connecté — profil enrichi. */
+export interface AlumniMetriques {
+  anneesDepuisDiplome: number;
+  promotionLibelle: string | null;
+  moyenneGeneraleDernierReleve: number | null;
+  periodeDernierReleve: string | null;
+  nombreRelevesDelivres: number;
+  nombrePostesParcours: number;
+  posteActuelRenseigne: boolean;
+  nombreSujetsForumAlumni: number;
+  nombreMessagesForumAlumni: number;
+  nombreDocumentsPartages: number;
+  nombreDocumentsConsultes: number;
+  nombreEnquetesRepondues: number;
+  nombreEnquetesActives: number;
+}
+
 /** Nature de la situation, distincte de dateFin === null qui ne dit que « en cours ». */
 export type StatutEmploi = 'EN_EMPLOI' | 'RECHERCHE_EMPLOI' | 'ENTREPRENARIAT' | 'POURSUITE_ETUDES' | 'AUTRE';
 
