@@ -27,7 +27,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.espace_alumni.dto.DocumentPartageDto;
+import inpg.sn.lms.espace_alumni.entity.ConsultationDocumentPartage;
 import inpg.sn.lms.espace_alumni.entity.DocumentPartage;
+import inpg.sn.lms.espace_alumni.repository.ConsultationDocumentPartageRepository;
 import inpg.sn.lms.espace_alumni.repository.DocumentPartageRepository;
 import inpg.sn.lms.espace_alumni.service.AlumniDocumentStorageService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
@@ -51,12 +53,15 @@ public class AlumniDocumentController {
     private final DocumentPartageRepository documentRepository;
     private final AlumniDocumentStorageService storage;
     private final UtilisateurCourantService utilisateurCourant;
+    private final ConsultationDocumentPartageRepository consultationRepository;
 
     public AlumniDocumentController(DocumentPartageRepository documentRepository,
-            AlumniDocumentStorageService storage, UtilisateurCourantService utilisateurCourant) {
+            AlumniDocumentStorageService storage, UtilisateurCourantService utilisateurCourant,
+            ConsultationDocumentPartageRepository consultationRepository) {
         this.documentRepository = documentRepository;
         this.storage = storage;
         this.utilisateurCourant = utilisateurCourant;
+        this.consultationRepository = consultationRepository;
     }
 
     /** Documents partagés, les plus récents en tête — visibles de tous les alumni. */
@@ -100,10 +105,18 @@ public class AlumniDocumentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toDto(document, auteur));
     }
 
-    /** Télécharge un document — toujours en pièce jointe, quel que soit son type. */
+    /**
+     * Télécharge un document — toujours en pièce jointe, quel que soit son type.
+     *
+     * <p>C'est le seul geste qui prouve qu'un document a vraiment été ouvert : à la
+     * différence de {@code ProgressionSupport} (support de cours), il n'y a pas de
+     * bouton « marquer consulté » séparé côté client, l'ouverture du fichier fait
+     * foi. Idempotent, même patron que {@code marquerConsulte} de
+     * {@code ScolariteController}.
+     */
     @GetMapping("/{id}/fichier")
-    @Transactional(readOnly = true)
-    public ResponseEntity<Resource> telecharger(@PathVariable Long id) {
+    @Transactional
+    public ResponseEntity<Resource> telecharger(@PathVariable Long id, Authentication authentication) {
         DocumentPartage document = documentRepository.findById(id).orElse(null);
         if (document == null) {
             return ResponseEntity.notFound().build();
@@ -111,6 +124,10 @@ public class AlumniDocumentController {
         Path chemin = storage.cheminDe(document);
         if (chemin == null || !Files.isRegularFile(chemin)) {
             return ResponseEntity.notFound().build();
+        }
+        User lecteur = utilisateurCourant.utilisateur(authentication);
+        if (lecteur != null && !consultationRepository.existsByDocumentIdAndLecteurId(id, lecteur.getId())) {
+            consultationRepository.save(new ConsultationDocumentPartage(document, lecteur));
         }
         MediaType type = document.getTypeContenu() != null
                 ? MediaType.parseMediaType(document.getTypeContenu())

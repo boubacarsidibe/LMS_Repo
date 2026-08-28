@@ -30,6 +30,7 @@ import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleDto;
 import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleRequest;
 import inpg.sn.lms.espace_alumni.entity.EnqueteSuivi;
 import inpg.sn.lms.espace_alumni.entity.ReponseEnqueteSuivi;
+import inpg.sn.lms.espace_alumni.repository.ConsultationDocumentPartageRepository;
 import inpg.sn.lms.espace_alumni.repository.DocumentPartageRepository;
 import inpg.sn.lms.espace_alumni.repository.EnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.repository.ReponseEnqueteSuiviRepository;
@@ -71,12 +72,14 @@ public class AlumniController {
     private final ForumSujetRepository forumSujetRepository;
     private final ForumMessageRepository forumMessageRepository;
     private final DocumentPartageRepository documentPartageRepository;
+    private final ConsultationDocumentPartageRepository consultationRepository;
 
     public AlumniController(UtilisateurCourantService utilisateurCourant, AlumniProfilService alumniProfilService,
             SituationProfessionnelleService situationService, ReleveDelivranceService releveDelivranceService,
             EnqueteSuiviRepository enqueteRepository, ReponseEnqueteSuiviRepository reponseRepository,
             ForumSujetRepository forumSujetRepository, ForumMessageRepository forumMessageRepository,
-            DocumentPartageRepository documentPartageRepository) {
+            DocumentPartageRepository documentPartageRepository,
+            ConsultationDocumentPartageRepository consultationRepository) {
         this.utilisateurCourant = utilisateurCourant;
         this.alumniProfilService = alumniProfilService;
         this.situationService = situationService;
@@ -86,6 +89,7 @@ public class AlumniController {
         this.forumSujetRepository = forumSujetRepository;
         this.forumMessageRepository = forumMessageRepository;
         this.documentPartageRepository = documentPartageRepository;
+        this.consultationRepository = consultationRepository;
     }
 
     @GetMapping("/mon-profil")
@@ -215,6 +219,7 @@ public class AlumniController {
                 forumSujetRepository.countByAuteurIdAndPortee(id, PorteeForumSujet.ALUMNI),
                 forumMessageRepository.countByAuteurIdAndSujet_Portee(id, PorteeForumSujet.ALUMNI),
                 documentPartageRepository.countByAuteurId(id),
+                consultationRepository.countByLecteurId(id),
                 reponseRepository.countByAlumniProfilId(id),
                 enqueteRepository.findByActiveTrueOrderByDateCreationDesc().size());
         return ResponseEntity.ok(metriques);
