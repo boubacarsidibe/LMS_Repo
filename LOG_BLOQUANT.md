@@ -1193,3 +1193,118 @@ Rien à corriger côté code ; les PR concernées (dont #86) restent par ailleur
 mergeables — seul l'aperçu de déploiement Vercel manque, la CI de test réelle
 (`ci.yml`, séparément indisponible — voir le ghost workflow `331865476`) n'en
 dépend pas.
+
+## 2026-08-28 — Revue de sécurité : messagerie privée et réponses au forum (commit d'équipe)
+
+### 51. `MessagerieController` : code sain, mais garde-fou structurel absent — comblé
+
+Le 2026-08-27 au soir, un coéquipier a poussé directement sur `develop` un
+commit substantiel (« Final version1 », `e21fcca`) apportant une messagerie
+privée apprenant ↔ formateur (`MessagerieController`, `Conversation`,
+`MessagePrive`) et les réponses citées dans le forum (`ForumMessage.reponseA`).
+Ce commit a été fusionné dans `main` (PR #89) avant d'avoir traversé le
+protocole de revue habituel de cette session — aucun test, ni de sécurité ni
+fonctionnel, n'existait pour ce code.
+
+**Relecture faite a posteriori** : le code lui-même suit correctement les
+patrons déjà établis dans ce dépôt — `@PreAuthorize` de classe restreint à
+ÉTUDIANT/FORMATEUR (jamais ALUMNI, dont l'espace vit sous son propre préfixe
+verrouillé côté `SecurityConfig`), chaque endpoint est `@Transactional`, la
+liste des personnes contactables est recoupée côté serveur avant tout envoi
+(même principe que les citations du forum, `MentionForumService`), l'accès à
+une conversation est vérifié par appartenance aux deux participants avant
+lecture ou réponse. La réponse à un message du forum recoupe de même
+l'identifiant cité avec le sujet courant, pour qu'on ne puisse pas citer un
+message d'un fil auquel on n'a pas accès. Aucun défaut de sécurité trouvé.
+
+**Trou réel trouvé et comblé** : `EspaceEtudiantGardeFousTest` — le test qui
+fige structurellement « chaque endpoint déclare `@PreAuthorize`, chaque
+endpoint ouvre sa transaction » — ne réfléchit que sur la classe
+`EspaceEtudiantController`, par son nom. Un contrôleur voisin ajouté dans le
+même paquet, comme `MessagerieController`, n'est protégé par aucun garde-fou
+automatique : un futur endpoint qui omettrait `@Transactional` passerait
+inaperçu jusqu'à l'écran 500 en production, exactement le défaut que ce test
+existe pour prévenir. Comblé par `MessagerieControllerTest`, qui ajoute le
+même garde-fou structurel pour cette classe (en tenant compte du contrôle de
+rôle porté une fois pour toutes au niveau de la classe, plutôt que méthode par
+méthode) et des tests de comportement sur les points qui comptent : démarrer
+une conversation avec un destinataire hors périmètre, lire ou répondre à une
+conversation dont on n'est pas participant.
+
+**Écart non traité** : `EspaceEtudiantGardeFousTest` reste spécifique à une
+seule classe ; il ne généralise pas automatiquement à tout nouveau contrôleur
+du paquet `espace_etudiant`. Une prochaine session pourrait envisager une
+règle plus large (scanner tous les contrôleurs du paquet), mais cela dépasse
+la portée immédiate — combler le trou concret plutôt qu'anticiper les
+suivants.
+
+## 2026-08-28 — Epic « profil alumni enrichi »
+
+### 52. Gap analysis complète du TDR, phrase par phrase : plus aucun écart actionnable
+
+Après la fusion de la PR #91 (revue de sécurité messagerie), une analyse de gap a
+relu l'intégralité du `.docx` (172 paragraphes, pas seulement les titres de
+section) et confronté chaque phrase au code réel. Résultat, section par section :
+A (recrutement), B (comptes/scolarité), C (Alumni), E (e-learning), F
+(accréditation), G (qualité), H (entreprise), I (personnel), J (rendez-vous) sont
+toutes couvertes jusque dans leurs clauses secondaires (colonnes d'export
+configurables, extraction zip des pièces, suspension de dépôt hors délai,
+filigrane/QR des certificats, activités parascolaires, messagerie privée
+entreprise↔pédagogie — vérifiées une à une dans le code, pas seulement supposées
+« déjà faites » parce que le titre de section existe). Seuls deux points restent
+ouverts, tous deux déjà identifiés lors de passages précédents (points 16 et 41
+de ce journal) : §D (SIGB), bloqué faute de système cible nommé dans le TDR, et
+« profil alumni enrichi », un souhait utilisateur adjacent au TDR §C plutôt
+qu'une phrase littérale du texte.
+
+**Décision** : avec un TDR sans plus aucun écart actionnable, « profil alumni
+enrichi » — déprécié deux fois de suite (points 41 et l'entrée du 2026-08-28
+08:50 UTC du journal du jour) en faveur d'écarts TDR réels qui n'existent plus
+aujourd'hui — devient le chantier de ce passage.
+
+### 53. Métriques agrégées à partir de données déjà servies ailleurs, aucune nouvelle table
+
+L'écran `mon-profil` de l'espace alumni n'avait qu'une vraie section de saisie
+(situation professionnelle courante) et des cartes de navigation sans contenu
+(« Accès rapide », ajoutées le 2026-08-25). Plutôt que d'inventer une nouvelle
+table de métriques à tenir à jour en parallèle (risque de divergence, même
+famille de défaut que `cours_promotion` documenté dans `CLAUDE.md` §3), le
+nouvel endpoint `GET /api/espace-alumni/mes-metriques` agrège des données qui
+existaient déjà, chacune servie par un endpoint séparé : dernier relevé délivré
+(`ReleveDelivranceService.deLEtudiant`, premier élément — la liste est déjà
+triée par date décroissante), nombre de postes du parcours pro
+(`SituationProfessionnelleService.lister`), ancienneté depuis l'entrée dans
+l'espace alumni (`AlumniProfil.dateCreation`), contributions au salon de forum
+alumni (nouvelles méthodes `countByAuteurIdAndPortee`/
+`countByAuteurIdAndSujet_Portee`, filtrées sur `PorteeForumSujet.ALUMNI` pour ne
+compter que le salon alumni, jamais les sujets de cours d'un ancien passage
+étudiant), documents partagés déposés (`countByAuteurId`), et enquêtes de suivi
+répondues (`countByAlumniProfilId`). Trois nouvelles méthodes de comptage sur des
+repositories déjà existants, zéro migration.
+
+Le relevé le plus récent reste `null` (jamais 0) tant qu'aucun n'a été délivré —
+même distinction que `CLAUDE.md` §3 entre relevé courant recalculé et relevé
+délivré figé, appliquée ici à l'absence de délivrance plutôt qu'à son contenu.
+
+### 54. Accès rapide de la page profil : deux entrées manquantes ajoutées au passage
+
+En comparant la page profil à la barre latérale de l'espace alumni (sept
+entrées : Mon profil, Parcours professionnel, Mes relevés, Enquêtes de suivi,
+Forum, Documents partagés, Rendez-vous), les cartes « Accès rapide » de la page
+n'en reprenaient que quatre — Enquêtes de suivi et Rendez-vous manquaient,
+depuis leur ajout respectif aux epics « Processus qualité » et « Gestion des
+rendez-vous ». Cohérence inter-écrans (ÉTAPE 4 de la routine) : ajoutées, même
+patron visuel que les quatre déjà en place.
+
+### 55. Écarts non traités
+
+- Le nombre de documents partagés compte les documents **déposés** par
+  l'alumni, pas ceux qu'il a consultés — aucune table de suivi de lecture
+  n'existe pour `DocumentPartage` (ni pour la photothèque étudiante, patron
+  similaire ailleurs dans ce dépôt) ; l'introduire serait une story à part.
+- Pas de test dédié type `EspaceEtudiantGardeFousTest` pour `AlumniController` :
+  la classe porte déjà `@PreAuthorize` au niveau classe (hérité par
+  `mesMetriques`) et chaque méthode existante est `@Transactional`, vérifié à la
+  main plutôt qu'ajouter un garde-fou structurel séparé pour ce seul contrôleur
+  — écart déjà signalé plus largement au point 51 (le garde-fou ne généralise à
+  aucun contrôleur voisin d'`EspaceEtudiantController`).

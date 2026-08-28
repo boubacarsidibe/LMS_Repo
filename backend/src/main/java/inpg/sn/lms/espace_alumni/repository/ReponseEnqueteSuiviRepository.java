@@ -21,6 +21,9 @@ public interface ReponseEnqueteSuiviRepository extends JpaRepository<ReponseEnqu
 
     long countByEnqueteId(Long enqueteId);
 
+    /** Enquêtes déjà répondues par un alumni donné — profil enrichi. */
+    long countByAlumniProfilId(Long alumniProfilId);
+
     @Query("SELECT AVG(r.noteApplicationCompetences) FROM ReponseEnqueteSuivi r WHERE r.enquete.id = :enqueteId")
     Double moyenneApplicationCompetences(@Param("enqueteId") Long enqueteId);
 

@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
+  AlumniMetriques,
   AlumniProfil,
   AlumniProfilUpdate,
   DocumentPartage,
@@ -33,6 +34,10 @@ export class AlumniService {
 
   mettreAJourProfil(donnees: AlumniProfilUpdate): Observable<AlumniProfil> {
     return this.http.put<AlumniProfil>(`${this.api}/mon-profil`, donnees);
+  }
+
+  getMesMetriques(): Observable<AlumniMetriques> {
+    return this.http.get<AlumniMetriques>(`${this.api}/mes-metriques`);
   }
 
   getMesSituations(): Observable<SituationProfessionnelle[]> {

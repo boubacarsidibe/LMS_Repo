@@ -1,14 +1,20 @@
 <div class="min-h-screen bg-surface-container-low flex items-center justify-center p-4 w-full">
-    <!-- Carte principale avec une hauteur maximale autorisée -->
-    <div class="w-full max-w-5xl bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant flex flex-col md:flex-row overflow-hidden max-h-[92vh] my-auto">
-      
+    <!--
+      Pas de hauteur maximale ni de scroll interne : a fort niveau de zoom, un
+      conteneur a hauteur plafonnee (max-h + overflow-hidden) combine a un
+      contenu centre (justify-center) dans une zone overflow-y-auto masque le
+      haut du contenu qui deborde au lieu de le rendre atteignable au scroll.
+      La carte grandit avec son contenu et c'est la page elle-meme qui defile.
+    -->
+    <div class="w-full max-w-5xl bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant flex flex-col md:flex-row my-8 md:my-auto">
+
       <!-- GAUCHE : La bannière fixe (SidebarAuth) -->
       <app-sidebar-auth class="hidden md:flex md:w-1/2 flex-shrink-0"></app-sidebar-auth>
-  
-      <!-- DROITE : Zone de formulaire avec défilement vertical si nécessaire -->
-      <div class="w-full md:w-1/2 p-6 sm:p-8 md:p-12 flex flex-col justify-center bg-surface-container-lowest overflow-y-auto">
+
+      <!-- DROITE : Zone de formulaire -->
+      <div class="w-full md:w-1/2 p-6 sm:p-8 md:p-12 flex flex-col justify-center bg-surface-container-lowest">
         <router-outlet></router-outlet>
       </div>
-  
+
     </div>
   </div>
