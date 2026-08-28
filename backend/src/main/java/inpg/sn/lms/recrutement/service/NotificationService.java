@@ -2,6 +2,7 @@ package inpg.sn.lms.recrutement.service;
 
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,13 @@ public class NotificationService {
     private final JavaMailSender mailSender;
     private final NotificationTemplateService templateService;
 
+    // Sans expéditeur explicite, l'envoi part avec un From vide : certains
+    // serveurs SMTP (dont Brevo) le rejettent silencieusement ou le remplacent,
+    // et les relances collectives n'arrivaient jamais malgré des identifiants
+    // correctement transmis.
+    @Value("${app.mail.from}")
+    private String expediteur;
+
     public NotificationService(JavaMailSender mailSender, NotificationTemplateService templateService) {
         this.mailSender = mailSender;
         this.templateService = templateService;
@@ -22,6 +30,7 @@ public class NotificationService {
 
     public void envoyerEmail(String destinataire, String sujet, String contenu) {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(expediteur);
         message.setTo(destinataire);
         message.setSubject("[INPG Recrutement] " + sujet);
         message.setText(contenu);

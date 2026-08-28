@@ -68,6 +68,7 @@ import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
+import inpg.sn.lms.espace_etudiant.service.CompletionProgrammeService;
 import inpg.sn.lms.espace_etudiant.service.EtudiantImportService;
 import inpg.sn.lms.espace_etudiant.service.EtudiantSuppressionService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
@@ -122,6 +123,7 @@ public class PedagogieScolariteController {
     private final ReponseEnqueteSuiviRepository reponseEnqueteSuiviRepository;
     private final NotificationRepository notificationRepository;
     private final RapportQualitePdfService rapportQualitePdfService;
+    private final CompletionProgrammeService completionProgrammeService;
 
     public PedagogieScolariteController(PromotionRepository promotionRepository,
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
@@ -135,7 +137,8 @@ public class PedagogieScolariteController {
             CandidatRepository candidatRepository, AlumniProfilRepository alumniProfilRepository,
             AlumniProfilService alumniProfilService, EnqueteSuiviRepository enqueteSuiviRepository,
             ReponseEnqueteSuiviRepository reponseEnqueteSuiviRepository,
-            NotificationRepository notificationRepository, RapportQualitePdfService rapportQualitePdfService) {
+            NotificationRepository notificationRepository, RapportQualitePdfService rapportQualitePdfService,
+            CompletionProgrammeService completionProgrammeService) {
         this.promotionRepository = promotionRepository;
         this.formationRepository = formationRepository;
         this.etudiantRepository = etudiantRepository;
@@ -159,6 +162,7 @@ public class PedagogieScolariteController {
         this.reponseEnqueteSuiviRepository = reponseEnqueteSuiviRepository;
         this.notificationRepository = notificationRepository;
         this.rapportQualitePdfService = rapportQualitePdfService;
+        this.completionProgrammeService = completionProgrammeService;
     }
 
     // ===================== PROMOTIONS =====================
@@ -414,8 +418,15 @@ public class PedagogieScolariteController {
     @PutMapping("/etudiants/{id}/promouvoir-alumni")
     @Transactional
     public ResponseEntity<?> promouvoirAlumni(@PathVariable Long id) {
-        if (!etudiantRepository.existsById(id)) {
+        Etudiant etudiant = etudiantRepository.findById(id).orElse(null);
+        if (etudiant == null) {
             return ResponseEntity.notFound().build();
+        }
+        List<String> coursNonTermines = completionProgrammeService.coursNonTermines(etudiant);
+        if (!coursNonTermines.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message",
+                    "Cet étudiant n'a pas terminé son programme, il ne peut pas encore être promu alumni.",
+                    "coursNonTermines", coursNonTermines));
         }
         AlumniProfil profil = alumniProfilService.promouvoir(id);
         if (profil == null) {
@@ -532,6 +543,12 @@ public class PedagogieScolariteController {
         Etudiant etudiant = etudiantRepository.findById(request.etudiantId()).orElse(null);
         if (etudiant == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Étudiant introuvable."));
+        }
+        List<String> coursNonTermines = completionProgrammeService.coursNonTermines(etudiant);
+        if (!coursNonTermines.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message",
+                    "Cet étudiant n'a pas terminé son programme, le certificat ne peut pas encore être délivré.",
+                    "coursNonTermines", coursNonTermines));
         }
         Promotion promotion = null;
         if (request.cohorteId() != null) {

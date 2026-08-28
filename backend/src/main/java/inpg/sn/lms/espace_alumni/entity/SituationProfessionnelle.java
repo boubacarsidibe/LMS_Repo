@@ -2,8 +2,11 @@ package inpg.sn.lms.espace_alumni.entity;
 
 import java.time.LocalDate;
 import inpg.sn.lms.auth.entity.AlumniProfil;
+import inpg.sn.lms.espace_alumni.enums.EnumStatutEmploi;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -52,12 +55,22 @@ public class SituationProfessionnelle {
     @Column(name = "date_fin")
     private LocalDate dateFin;
 
+    /**
+     * Nature de la situation, distincte de {@code dateFin == null} : celle-ci ne
+     * dit que « en cours » ou pas, pas ce qu'elle est. Sert la répartition
+     * affichée côté pédagogie (en emploi / en recherche / entreprenariat / etc.).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut_emploi", nullable = false, length = 20)
+    private EnumStatutEmploi statutEmploi = EnumStatutEmploi.EN_EMPLOI;
+
     public SituationProfessionnelle(AlumniProfil alumniProfil, String intitulePoste, String entreprise,
-            LocalDate dateDebut, LocalDate dateFin) {
+            LocalDate dateDebut, LocalDate dateFin, EnumStatutEmploi statutEmploi) {
         this.alumniProfil = alumniProfil;
         this.intitulePoste = intitulePoste;
         this.entreprise = entreprise;
         this.dateDebut = dateDebut;
         this.dateFin = dateFin;
+        this.statutEmploi = statutEmploi == null ? EnumStatutEmploi.EN_EMPLOI : statutEmploi;
     }
 }

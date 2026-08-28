@@ -13,13 +13,14 @@ import inpg.sn.lms.auth.repository.ResponsableAdmissionRepository;
 import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
 import inpg.sn.lms.espace_alumni.entity.SituationProfessionnelle;
+import inpg.sn.lms.espace_alumni.enums.EnumStatutEmploi;
 import inpg.sn.lms.espace_alumni.repository.SituationProfessionnelleRepository;
 import inpg.sn.lms.espace_etudiant.entity.AlbumPhoto;
 import inpg.sn.lms.espace_etudiant.entity.Annonce;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
-import inpg.sn.lms.espace_etudiant.entity.Evenement;
+import inpg.sn.lms.espace_etudiant.entity.Seance;
 import inpg.sn.lms.espace_etudiant.entity.ForumMessage;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.Photo;
@@ -28,12 +29,11 @@ import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 import inpg.sn.lms.espace_etudiant.enums.EnumStatutRetour;
 import inpg.sn.lms.espace_etudiant.enums.EnumTypeAnnonce;
-import inpg.sn.lms.espace_etudiant.enums.EnumTypeEvenement;
 import inpg.sn.lms.espace_etudiant.repository.AlbumPhotoRepository;
 import inpg.sn.lms.espace_etudiant.repository.AnnonceRepository;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
-import inpg.sn.lms.espace_etudiant.repository.EvenementRepository;
+import inpg.sn.lms.espace_etudiant.repository.SeanceRepository;
 import inpg.sn.lms.espace_etudiant.repository.PhotoRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
@@ -67,6 +67,16 @@ import java.util.List;
 @Configuration
 public class DataInitializer {
 
+    /**
+     * Date de création attribuée aux comptes de démonstration, délibérément
+     * antérieure à tout contenu semé par cette classe (annonces, sujets et
+     * messages du forum, dont certains sont horodatés dans le passé pour
+     * paraître réalistes). Sans cela, l'isolation temporelle — qui masque à un
+     * compte tout contenu publié avant sa création — masquait aux comptes de
+     * démonstration eux-mêmes le contenu de démonstration censé leur être visible.
+     */
+    private static final LocalDateTime DATE_CREATION_COMPTES_DEMO = LocalDateTime.of(2020, 1, 1, 0, 0);
+
     @Bean
     @Order(1) // Doit précéder PedagogieDataInitializer, qui s'appuie sur les rôles créés ici.
     CommandLineRunner initData(
@@ -83,7 +93,7 @@ public class DataInitializer {
             FormationRepository formationRepository,
             CoursRepository coursRepository,
             AnnonceRepository annonceRepository,
-            EvenementRepository evenementRepository,
+            SeanceRepository seanceRepository,
             RetourEvaluationRepository retourEvaluationRepository,
             SupportCoursRepository supportCoursRepository,
             PhotoRepository photoRepository,
@@ -214,6 +224,7 @@ public class DataInitializer {
                 user.setEmail("admin@inpg.sn");
                 user.setPassword(passwordEncoder.encode("Admin@2026"));
                 user.addRole(roleResp);
+                user.setDateCreation(DATE_CREATION_COMPTES_DEMO);
                 user = userRepository.save(user);
 
                 ResponsableAdmission resp = new ResponsableAdmission();
@@ -267,6 +278,7 @@ public class DataInitializer {
                 userFormateur.setEmail("prof.demo@inpg.sn");
                 userFormateur.setPassword(passwordEncoder.encode("Demo@2026"));
                 userFormateur.addRole(roleFormateur);
+                userFormateur.setDateCreation(DATE_CREATION_COMPTES_DEMO);
                 userFormateur = userRepository.save(userFormateur);
                 Formateur formateurDemo = new Formateur(userFormateur, "Ndiaye", "Moussa", "+221771112233");
                 formateurRepository.save(formateurDemo);
@@ -302,7 +314,8 @@ public class DataInitializer {
                     alumniAwa = alumniProfilRepository.save(alumniAwa);
 
                     situationProfessionnelleRepository.save(new SituationProfessionnelle(alumniAwa,
-                            "Ingenieure Procedes", "Petrosen", LocalDate.of(2026, 10, 1), null));
+                            "Ingenieure Procedes", "Petrosen", LocalDate.of(2026, 10, 1), null,
+                            EnumStatutEmploi.EN_EMPLOI));
                 }
 
                 Cours coursDS = new Cours();
@@ -381,35 +394,42 @@ public class DataInitializer {
                 annonce2.setEpinglee(false);
                 annonceRepository.save(annonce2);
 
-                Evenement evenement1 = new Evenement();
-                evenement1.setTitre("Classe virtuelle - Introduction au Machine Learning");
-                evenement1.setDate(LocalDate.now().plusDays(2));
-                evenement1.setHeure("09:00");
-                evenement1.setType(EnumTypeEvenement.COURS);
-                evenement1.setLienVisio("https://meet.example.com/ds-101");
-                evenementRepository.save(evenement1);
+                // Rattachees a un cours (et donc a une promotion via son formateur) : une
+                // seance n'apparait que dans le calendrier des etudiants qui y ont droit,
+                // contrairement a l'ancien Evenement, visible et modifiable par n'importe qui.
+                Seance seance1 = new Seance();
+                seance1.setCours(coursDS);
+                seance1.setTitre("Classe virtuelle - Introduction au Machine Learning");
+                seance1.setType("COURS");
+                seance1.setDateHeure(LocalDateTime.now().plusDays(2).withHour(9).withMinute(0));
+                seance1.setDureeMinutes(90);
+                seance1.setLieuOuLien("https://meet.example.com/ds-101");
+                seanceRepository.save(seance1);
 
-                Evenement evenement2 = new Evenement();
-                evenement2.setTitre("Tutorat - Analyse Financiere Avancee");
-                evenement2.setDate(LocalDate.now().plusDays(3));
-                evenement2.setHeure("14:30");
-                evenement2.setType(EnumTypeEvenement.TUTORAT);
-                evenementRepository.save(evenement2);
+                Seance seance2 = new Seance();
+                seance2.setCours(coursFinance);
+                seance2.setTitre("Tutorat - Analyse Financiere Avancee");
+                seance2.setType("TUTORAT");
+                seance2.setDateHeure(LocalDateTime.now().plusDays(3).withHour(14).withMinute(30));
+                seance2.setDureeMinutes(60);
+                seanceRepository.save(seance2);
 
-                Evenement evenement3 = new Evenement();
-                evenement3.setTitre("Rendu de projet - Genie des Procedes");
-                evenement3.setDate(LocalDate.now().plusDays(7));
-                evenement3.setHeure("23:59");
-                evenement3.setType(EnumTypeEvenement.ECHEANCE);
-                evenementRepository.save(evenement3);
+                Seance seance3 = new Seance();
+                seance3.setCours(coursProcedes);
+                seance3.setTitre("Rendu de projet - Genie des Procedes");
+                seance3.setType("ECHEANCE");
+                seance3.setDateHeure(LocalDateTime.now().plusDays(7).withHour(23).withMinute(59));
+                seance3.setDureeMinutes(0);
+                seanceRepository.save(seance3);
 
-                Evenement evenement4 = new Evenement();
-                evenement4.setTitre("Classe virtuelle - Analyse Financiere Avancee");
-                evenement4.setDate(LocalDate.now().plusDays(9));
-                evenement4.setHeure("10:00");
-                evenement4.setType(EnumTypeEvenement.COURS);
-                evenement4.setLienVisio("https://meet.example.com/fin-201");
-                evenementRepository.save(evenement4);
+                Seance seance4 = new Seance();
+                seance4.setCours(coursFinance);
+                seance4.setTitre("Classe virtuelle - Analyse Financiere Avancee");
+                seance4.setType("COURS");
+                seance4.setDateHeure(LocalDateTime.now().plusDays(9).withHour(10).withMinute(0));
+                seance4.setDureeMinutes(90);
+                seance4.setLieuOuLien("https://meet.example.com/fin-201");
+                seanceRepository.save(seance4);
 
                 // ----- Forum : un sujet par cours, avec de vraies associations -----
                 // Depuis la fusion des deux forums (migration V5), l'auteur est un User et
@@ -433,7 +453,7 @@ public class DataInitializer {
                 retourEvaluationRepository.save(creerRetourDemo(coursFinance, fatou, 2,
                         "Le volume de lecture pour le module 2 est tres dense, difficile a suivre avant le test."));
 
-                System.out.println("Donnees de demo creees (3 cohortes, 1 formateur, 6 etudiants dont 1 alumni, 3 cours, 6 supports, 3 photos, 2 certificats, 2 annonces, 4 evenements, 3 retours)");
+                System.out.println("Donnees de demo creees (3 cohortes, 1 formateur, 6 etudiants dont 1 alumni, 3 cours, 6 supports, 3 photos, 2 certificats, 2 annonces, 4 seances, 3 retours)");
             }
         };
     }
@@ -474,6 +494,7 @@ public class DataInitializer {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode("Etudiant@2026"));
         user.addRole(roleEtudiant);
+        user.setDateCreation(DATE_CREATION_COMPTES_DEMO);
         user = userRepository.save(user);
         Etudiant etudiant = new Etudiant(user, nom, prenom, telephone);
         etudiant.setPromotion(promotion);

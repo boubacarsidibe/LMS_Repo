@@ -69,7 +69,8 @@ public class AnnonceController {
     @Transactional(readOnly = true)
     public ResponseEntity<?> mesAnnonces(Authentication authentication) {
         Etudiant etudiant = utilisateurCourant.etudiant(authentication);
-        List<Annonce> annonces = annoncesVisibles(etudiant);
+        User utilisateur = utilisateurCourant.utilisateur(authentication);
+        List<Annonce> annonces = filtrerParAnciennete(annoncesVisibles(etudiant), utilisateur);
         List<Long> lues = etudiant == null ? List.of() : lectureRepository.findAnnonceIdsLues(etudiant.getId());
         return ResponseEntity.ok(annonces.stream()
                 .map(annonce -> toDto(annonce, lues.contains(annonce.getId())))
@@ -84,8 +85,9 @@ public class AnnonceController {
         if (etudiant == null) {
             return ResponseEntity.ok(Map.of("count", 0));
         }
+        User utilisateur = utilisateurCourant.utilisateur(authentication);
         List<Long> lues = lectureRepository.findAnnonceIdsLues(etudiant.getId());
-        long nonLues = annoncesVisibles(etudiant).stream()
+        long nonLues = filtrerParAnciennete(annoncesVisibles(etudiant), utilisateur).stream()
                 .filter(annonce -> !lues.contains(annonce.getId()))
                 .count();
         return ResponseEntity.ok(Map.of("count", nonLues));
@@ -192,6 +194,24 @@ public class AnnonceController {
         return promotion == null
                 ? annonceRepository.findGenerales()
                 : annonceRepository.findVisiblesPour(promotion.getId());
+    }
+
+    /**
+     * Un compte créé après la publication d'une communication ne doit pas se
+     * retrouver submergé par tout l'historique antérieur à son inscription — ce
+     * n'était vrai ni pour un nouvel étudiant, ni pour un nouveau formateur.
+     * Une communication épinglée reste visible malgré tout : elle exprime une
+     * volonté explicite de la maintenir en avant, quelle que soit son ancienneté.
+     */
+    private List<Annonce> filtrerParAnciennete(List<Annonce> annonces, User utilisateur) {
+        if (utilisateur == null || utilisateur.getDateCreation() == null) {
+            return annonces;
+        }
+        return annonces.stream()
+                .filter(annonce -> annonce.isEpinglee()
+                        || annonce.getDatePublication() == null
+                        || !annonce.getDatePublication().isBefore(utilisateur.getDateCreation()))
+                .toList();
     }
 
     private boolean estVisiblePour(Annonce annonce, Etudiant etudiant) {

@@ -44,6 +44,7 @@ export class FormateurLayout implements OnInit {
     { label: 'Suivi Étudiants', icon: 'analytics', route: 'suivi-etudiants' },
     { label: 'Planning & Calendrier', icon: 'calendar_today', route: 'planning-calendrier' },
     { label: 'Forum & Interaction', icon: 'forum', route: 'forum' },
+    { label: 'Messagerie', icon: 'chat', route: 'messagerie' },
     { label: 'Retours & Évaluations', icon: 'assignment_turned_in', route: 'retours-evaluations' },
     { label: 'Annonces', icon: 'campaign', route: 'annonces' },
     { label: 'Photothèque', icon: 'photo_library', route: 'phototheque' },

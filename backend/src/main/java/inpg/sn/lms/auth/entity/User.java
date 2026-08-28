@@ -1,5 +1,6 @@
 package inpg.sn.lms.auth.entity;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -63,6 +64,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "type_inscription", nullable = false, length = 20)
     private EnumTypeInscription typeInscription = EnumTypeInscription.CANDIDAT;
+
+    // Sert à isoler dans le temps : un compte créé après la publication d'une
+    // annonce ou l'ouverture d'un fil de forum ne doit pas se retrouver submergé
+    // par tout l'historique antérieur à son inscription.
+    @Column(name = "date_creation", nullable = false)
+    private LocalDateTime dateCreation = LocalDateTime.now();
 
     // @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     // private Candidat candidat;

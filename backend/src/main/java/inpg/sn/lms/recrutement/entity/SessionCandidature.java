@@ -101,6 +101,22 @@ public class SessionCandidature {
     @Column(nullable = false)
     private float seuilReussiteTest = 10f;
 
+    /**
+     * Informations affichées au candidat admis sur l'écran "Prochaines étapes"
+     * (délai de paiement des frais, disponibilité de la carte étudiante, date de
+     * rentrée). Texte libre, saisi par le responsable admission : ces informations
+     * varient d'une session à l'autre et n'étaient jamais stockées — elles étaient
+     * codées en dur dans le frontend, invariables et parfois fausses.
+     */
+    @Column(name = "info_frais_scolarite", length = 255)
+    private String infoFraisScolarite;
+
+    @Column(name = "info_carte_etudiante", length = 255)
+    private String infoCarteEtudiante;
+
+    @Column(name = "info_rentree", length = 255)
+    private String infoRentree;
+
     @OneToMany(mappedBy = "sessionCandidature", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Candidature> candidatures = new ArrayList<>();
 

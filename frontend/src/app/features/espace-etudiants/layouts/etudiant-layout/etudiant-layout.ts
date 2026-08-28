@@ -39,6 +39,7 @@ export class EtudiantLayout implements OnInit, OnDestroy {
     { libelle: 'Calendrier', lien: 'calendrier', icone: 'calendar_today' },
     { libelle: 'Annonces', lien: 'annonces', icone: 'campaign' },
     { libelle: 'Forum', lien: 'forum', icone: 'forum' },
+    { libelle: 'Messagerie', lien: 'messagerie', icone: 'chat' },
     { libelle: 'Photothèque', lien: 'photheque', icone: 'photo_library' },
     { libelle: 'Formations', lien: 'mes-formations', icone: 'school' },
     { libelle: 'Ma promotion', lien: 'ma-promotion', icone: 'groups' },

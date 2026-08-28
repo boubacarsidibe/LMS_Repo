@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import inpg.sn.lms.auth.entity.Etudiant;
+import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
@@ -47,15 +48,37 @@ public class ForumVisibiliteService {
     @Transactional(readOnly = true)
     public List<ForumSujet> sujetsVisibles(Authentication authentication) {
         Etudiant etudiant = utilisateurCourant.etudiant(authentication);
+        User utilisateur = utilisateurCourant.utilisateur(authentication);
+        List<ForumSujet> sujets;
         if (etudiant == null) {
             // Formateur ou personnel : accès à l'ensemble des salons de l'espace étudiant.
-            return sujetRepository.findVisiblesEtudiantFormateur();
+            sujets = sujetRepository.findVisiblesEtudiantFormateur();
+        } else {
+            List<Long> coursIds = habilitation.idsCoursAutorises(etudiant);
+            Long promotionId = etudiant.getPromotion() == null ? null : etudiant.getPromotion().getId();
+            sujets = coursIds.isEmpty()
+                    ? sujetRepository.findGeneraux(promotionId)
+                    : sujetRepository.findVisiblesPour(coursIds, promotionId);
         }
-        List<Long> coursIds = habilitation.idsCoursAutorises(etudiant);
-        Long promotionId = etudiant.getPromotion() == null ? null : etudiant.getPromotion().getId();
-        return coursIds.isEmpty()
-                ? sujetRepository.findGeneraux(promotionId)
-                : sujetRepository.findVisiblesPour(coursIds, promotionId);
+        return filtrerParAnciennete(sujets, utilisateur);
+    }
+
+    /**
+     * Un compte créé après l'ouverture d'un sujet ne doit pas se retrouver
+     * submergé par tout l'historique antérieur à son inscription — même défaut
+     * que pour les annonces (cf. {@code AnnonceController}). Un sujet épinglé
+     * reste visible malgré tout : l'épingler exprime une volonté explicite de le
+     * maintenir en avant, quelle que soit son ancienneté.
+     */
+    private List<ForumSujet> filtrerParAnciennete(List<ForumSujet> sujets, User utilisateur) {
+        if (utilisateur == null || utilisateur.getDateCreation() == null) {
+            return sujets;
+        }
+        return sujets.stream()
+                .filter(sujet -> sujet.isEpingle()
+                        || sujet.getDateCreation() == null
+                        || !sujet.getDateCreation().isBefore(utilisateur.getDateCreation()))
+                .toList();
     }
 
     /** Un sujet donné est-il accessible au connecté ? */

@@ -25,4 +25,6 @@ public interface NoteModuleRepository extends JpaRepository<NoteModule, Long> {
     void deleteByCoursId(Long coursId);
 
     void deleteByEtudiantId(Long etudiantId);
+
+    boolean existsByEtudiantIdAndCoursId(Long etudiantId, Long coursId);
 }

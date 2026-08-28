@@ -7,6 +7,7 @@ import inpg.sn.lms.auth.entity.AlumniProfil;
 import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleDto;
 import inpg.sn.lms.espace_alumni.dto.SituationProfessionnelleRequest;
 import inpg.sn.lms.espace_alumni.entity.SituationProfessionnelle;
+import inpg.sn.lms.espace_alumni.enums.EnumStatutEmploi;
 import inpg.sn.lms.espace_alumni.repository.SituationProfessionnelleRepository;
 
 /** Historique professionnel d'un alumni : lecture et écriture, cloisonnées par propriétaire. */
@@ -27,7 +28,8 @@ public class SituationProfessionnelleService {
 
     public SituationProfessionnelleDto creer(AlumniProfil profil, SituationProfessionnelleRequest requete) {
         SituationProfessionnelle situation = new SituationProfessionnelle(profil,
-                requete.intitulePoste().trim(), requete.entreprise().trim(), requete.dateDebut(), requete.dateFin());
+                requete.intitulePoste().trim(), requete.entreprise().trim(), requete.dateDebut(), requete.dateFin(),
+                requete.statutEmploi());
         return toDto(repository.save(situation));
     }
 
@@ -41,6 +43,7 @@ public class SituationProfessionnelleService {
         situation.setEntreprise(requete.entreprise().trim());
         situation.setDateDebut(requete.dateDebut());
         situation.setDateFin(requete.dateFin());
+        situation.setStatutEmploi(requete.statutEmploi() == null ? EnumStatutEmploi.EN_EMPLOI : requete.statutEmploi());
         return toDto(repository.save(situation));
     }
 
@@ -69,6 +72,7 @@ public class SituationProfessionnelleService {
                 situation.getIntitulePoste(),
                 situation.getEntreprise(),
                 situation.getDateDebut(),
-                situation.getDateFin());
+                situation.getDateFin(),
+                situation.getStatutEmploi());
     }
 }

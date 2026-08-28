@@ -69,6 +69,14 @@ public class ForumMessage {
     @Column
     private String pieceJointeTypeContenu;
 
+    /**
+     * Message précis auquel celui-ci répond (citation façon WhatsApp), facultatif.
+     * L'auteur du message cité est notifié — voir {@code ForumController#repondre}.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reponse_a_id")
+    private ForumMessage reponseA;
+
     public ForumMessage(ForumSujet sujet, User auteur, String contenu) {
         this.sujet = sujet;
         this.auteur = auteur;

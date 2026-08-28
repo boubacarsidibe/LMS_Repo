@@ -30,56 +30,95 @@
          n'est encore attribué à ce stade, il ne l'est qu'à la soumission réelle). -->
     <div>
       <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5">Je m'inscris en tant que</label>
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <button
           type="button"
           (click)="choisirTypeInscription('CANDIDAT')"
           [class.border-secondary]="typeInscription === 'CANDIDAT'"
-          [class.bg-secondary-container/20]="typeInscription === 'CANDIDAT'"
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-colors cursor-pointer">
-          <span class="font-label-md text-label-md text-on-surface block">Candidat(e)</span>
-          <span class="font-body-sm text-body-sm text-on-surface-variant">Postuler à une formation</span>
+          [class.ring-2]="typeInscription === 'CANDIDAT'"
+          [class.ring-secondary/20]="typeInscription === 'CANDIDAT'"
+          [class.bg-secondary-container]="typeInscription === 'CANDIDAT'"
+          class="rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-all cursor-pointer">
+          <span
+            class="font-label-md text-label-md block"
+            [class.text-on-secondary-container]="typeInscription === 'CANDIDAT'"
+            [class.text-on-surface]="typeInscription !== 'CANDIDAT'">Candidat(e)</span>
+          <span
+            class="font-body-sm text-body-sm"
+            [class.text-on-secondary-container]="typeInscription === 'CANDIDAT'"
+            [class.text-on-surface-variant]="typeInscription !== 'CANDIDAT'">Postuler à une formation</span>
         </button>
         <button
           type="button"
           (click)="choisirTypeInscription('ECOLE')"
           [class.border-secondary]="typeInscription === 'ECOLE'"
-          [class.bg-secondary-container/20]="typeInscription === 'ECOLE'"
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-colors cursor-pointer">
-          <span class="font-label-md text-label-md text-on-surface block">École de formation</span>
-          <span class="font-body-sm text-body-sm text-on-surface-variant">Demander une accréditation</span>
+          [class.ring-2]="typeInscription === 'ECOLE'"
+          [class.ring-secondary/20]="typeInscription === 'ECOLE'"
+          [class.bg-secondary-container]="typeInscription === 'ECOLE'"
+          class="rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-all cursor-pointer">
+          <span
+            class="font-label-md text-label-md block"
+            [class.text-on-secondary-container]="typeInscription === 'ECOLE'"
+            [class.text-on-surface]="typeInscription !== 'ECOLE'">École de formation</span>
+          <span
+            class="font-body-sm text-body-sm"
+            [class.text-on-secondary-container]="typeInscription === 'ECOLE'"
+            [class.text-on-surface-variant]="typeInscription !== 'ECOLE'">Demander une accréditation</span>
         </button>
         <button
           type="button"
           (click)="choisirTypeInscription('ENTREPRISE')"
           [class.border-secondary]="typeInscription === 'ENTREPRISE'"
-          [class.bg-secondary-container/20]="typeInscription === 'ENTREPRISE'"
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-colors cursor-pointer">
-          <span class="font-label-md text-label-md text-on-surface block">Entreprise</span>
-          <span class="font-body-sm text-body-sm text-on-surface-variant">Soumettre un besoin de formation</span>
+          [class.ring-2]="typeInscription === 'ENTREPRISE'"
+          [class.ring-secondary/20]="typeInscription === 'ENTREPRISE'"
+          [class.bg-secondary-container]="typeInscription === 'ENTREPRISE'"
+          class="rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-all cursor-pointer">
+          <span
+            class="font-label-md text-label-md block"
+            [class.text-on-secondary-container]="typeInscription === 'ENTREPRISE'"
+            [class.text-on-surface]="typeInscription !== 'ENTREPRISE'">Entreprise</span>
+          <span
+            class="font-body-sm text-body-sm"
+            [class.text-on-secondary-container]="typeInscription === 'ENTREPRISE'"
+            [class.text-on-surface-variant]="typeInscription !== 'ENTREPRISE'">Soumettre un besoin de formation</span>
         </button>
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    <!-- Candidat(e) : identité d'une personne -->
+    <div class="grid grid-cols-2 gap-4" *ngIf="!estOrganisation">
       <div>
         <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-prenom">Prénom</label>
-        <input 
+        <input
           id="reg-prenom"
-          type="text" 
+          type="text"
           formControlName="prenom"
           class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
           required />
       </div>
       <div>
         <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-nom">Nom</label>
-        <input 
+        <input
           id="reg-nom"
-          type="text" 
+          type="text"
           formControlName="nom"
           class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
           required />
       </div>
+    </div>
+
+    <!-- École / Entreprise : identité d'une organisation, pas d'une personne -->
+    <div *ngIf="estOrganisation">
+      <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-nom-organisation">{{ libelleNomOrganisation }}</label>
+      <input
+        id="reg-nom-organisation"
+        type="text"
+        formControlName="nomOrganisation"
+        class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
+        required />
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
+        Les autres informations (description, secteur, adresse…) seront demandées à l'étape suivante.
+      </p>
     </div>
 
     <div>

@@ -38,6 +38,17 @@ public class CandidatureResponse {
     private String candidatNationalite;
     private Long sessionCandidatureId;
     private String sessionCandidatureLibelle;
+
+    /**
+     * Informations "Prochaines étapes" saisies par le responsable admission sur la
+     * session (délai de paiement, disponibilité de la carte étudiante, date de
+     * rentrée) — affichées au candidat une fois admis. Nulles si non renseignées :
+     * l'écran l'indique alors plutôt que d'inventer une date.
+     */
+    private String sessionInfoFraisScolarite;
+    private String sessionInfoCarteEtudiante;
+    private String sessionInfoRentree;
+
     private String informationsAcademiques;
     private String informationsProfessionnelles;
     private List<PieceJustificativeResponse> piecesJustificatives;

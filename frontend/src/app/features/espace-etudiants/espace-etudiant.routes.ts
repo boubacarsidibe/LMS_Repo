@@ -52,6 +52,14 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/forum/forum').then(m => m.Forum)
             },
             {
+                path: 'messagerie',
+                loadComponent: () => import('./pages/messagerie/messagerie').then(m => m.Messagerie)
+            },
+            {
+                path: 'messagerie/:id',
+                loadComponent: () => import('./pages/fil-messagerie/fil-messagerie').then(m => m.FilMessagerie)
+            },
+            {
                 path: 'retours-evaluations',
                 loadComponent: () => import('./pages/retours-evaluations/retours-evaluations').then(m => m.RetoursEvaluations)
             },
@@ -123,6 +131,14 @@ export const routes: Routes = [
             {
                 path: 'forum/:id',
                 loadComponent: () => import('./pages/fil-forum/fil-forum').then(m => m.FilForum)
+            },
+            {
+                path: 'messagerie',
+                loadComponent: () => import('./pages/messagerie/messagerie').then(m => m.Messagerie)
+            },
+            {
+                path: 'messagerie/:id',
+                loadComponent: () => import('./pages/fil-messagerie/fil-messagerie').then(m => m.FilMessagerie)
             },
             {
                 path: 'photheque',

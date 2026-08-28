@@ -131,7 +131,7 @@ class AlumniForumControllerTest {
         when(utilisateurCourant.utilisateur(authentication)).thenReturn(alumni);
         when(sujetRepository.findById(7L)).thenReturn(Optional.of(sujetEtudiant));
 
-        ResponseEntity<?> reponse = controller.repondre(7L, new ForumMessageCreateRequest("Bonjour", java.util.List.of()),
+        ResponseEntity<?> reponse = controller.repondre(7L, new ForumMessageCreateRequest("Bonjour", java.util.List.of(), null),
                 authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);

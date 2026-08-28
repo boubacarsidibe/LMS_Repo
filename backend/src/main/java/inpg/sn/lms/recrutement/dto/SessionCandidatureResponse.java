@@ -29,4 +29,7 @@ public class SessionCandidatureResponse {
     private Integer criteresExperienceMinimale;
     private float seuilReussiteTest;
     private int nbCandidatures;
+    private String infoFraisScolarite;
+    private String infoCarteEtudiante;
+    private String infoRentree;
 }

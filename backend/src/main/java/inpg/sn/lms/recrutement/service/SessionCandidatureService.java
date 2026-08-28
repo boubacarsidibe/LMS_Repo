@@ -62,6 +62,13 @@ public class SessionCandidatureService {
                         : request.getCriteresGenre());
         session.setCriteresExperienceMinimale(request.getCriteresExperienceMinimale());
         session.setSeuilReussiteTest(request.getSeuilReussiteTest() != null ? request.getSeuilReussiteTest() : 10f);
+        session.setInfoFraisScolarite(vide(request.getInfoFraisScolarite()) ? null : request.getInfoFraisScolarite());
+        session.setInfoCarteEtudiante(vide(request.getInfoCarteEtudiante()) ? null : request.getInfoCarteEtudiante());
+        session.setInfoRentree(vide(request.getInfoRentree()) ? null : request.getInfoRentree());
+    }
+
+    private boolean vide(String valeur) {
+        return valeur == null || valeur.isBlank();
     }
 
     public List<SessionCandidatureResponse> getSessionsOuvertes() {
@@ -107,6 +114,9 @@ public class SessionCandidatureService {
                 .criteresExperienceMinimale(s.getCriteresExperienceMinimale())
                 .seuilReussiteTest(s.getSeuilReussiteTest())
                 .nbCandidatures(s.getCandidatures().size())
+                .infoFraisScolarite(s.getInfoFraisScolarite())
+                .infoCarteEtudiante(s.getInfoCarteEtudiante())
+                .infoRentree(s.getInfoRentree())
                 .build();
     }
 }

@@ -27,6 +27,10 @@ export interface SessionCandidatureResponse {
   criteresExperienceMinimale: number | null;
   seuilReussiteTest: number;
   nbCandidatures: number;
+  /** Informations "Prochaines étapes" affichées au candidat admis, null si non renseignées. */
+  infoFraisScolarite: string | null;
+  infoCarteEtudiante: string | null;
+  infoRentree: string | null;
 }
 
 /** Compte rendu d'un envoi groupé (relance dossiers incomplets ou paiements impayés). */
@@ -62,6 +66,10 @@ export interface CandidatureResponse {
   candidatNationalite: string | null;
   sessionCandidatureId: number;
   sessionCandidatureLibelle: string;
+  /** Informations "Prochaines étapes" de la session, saisies par le responsable admission. */
+  sessionInfoFraisScolarite: string | null;
+  sessionInfoCarteEtudiante: string | null;
+  sessionInfoRentree: string | null;
   piecesJustificatives: PieceJustificativeResponse[];
   paiement: PaiementResponse | null;
 }
@@ -112,6 +120,9 @@ export interface SessionCandidatureRequest {
   criteresGenre: string | null;
   criteresExperienceMinimale: number | null;
   seuilReussiteTest: number;
+  infoFraisScolarite: string | null;
+  infoCarteEtudiante: string | null;
+  infoRentree: string | null;
 }
 
 export type EnumTypeNotification =

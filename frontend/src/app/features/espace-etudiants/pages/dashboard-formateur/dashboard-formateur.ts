@@ -4,12 +4,21 @@ import { RouterLink } from '@angular/router';
 import { FormateurService, FormateurProfile, FormateurDashboard } from '../../services/formateur.service';
 import { CoursService } from '../../services/cours.service';
 import { Cours } from '../../models/cours';
-import { EvenementService } from '../../services/evenement.service';
-import { Evenement } from '../../models/evenement';
+import { SeanceService } from '../../services/seance.service';
+import { Seance } from '../../models/seance';
 import { SujetService } from '../../services/sujet.service';
 import { SujetForum } from '../../models/sujet';
 import { EtudiantService } from '../../services/etudiant.service';
 import { Etudiant } from '../../models/etudiant';
+
+/** Vue d'aperçu d'une {@link Seance} : la date/heure ISO unique de l'API est
+ * éclatée en {@code date}/{@code heure} pour l'affichage du tableau de bord. */
+interface SeanceApercu {
+  titre: string;
+  type: string;
+  date: Date;
+  heure: string;
+}
 
 @Component({
   selector: 'app-dashboard-formateur',
@@ -26,7 +35,7 @@ export class DashboardFormateur implements OnInit {
   mesCours: Cours[] = [];
   chargementCours = false;
 
-  prochainesSeances: Evenement[] = [];
+  prochainesSeances: SeanceApercu[] = [];
   chargementSeances = false;
 
   derniersSujets: SujetForum[] = [];
@@ -41,7 +50,7 @@ export class DashboardFormateur implements OnInit {
   constructor(
     private formateurService: FormateurService,
     private coursService: CoursService,
-    private evenementService: EvenementService,
+    private seanceService: SeanceService,
     private sujetService: SujetService,
     private etudiantService: EtudiantService
   ) {}
@@ -65,12 +74,13 @@ export class DashboardFormateur implements OnInit {
     });
 
     this.chargementSeances = true;
-    this.evenementService.getAll().subscribe({
+    this.seanceService.getMesSeances().subscribe({
       next: list => {
         const aujourdhui = new Date();
         aujourdhui.setHours(0, 0, 0, 0);
         this.prochainesSeances = (list || [])
-          .filter(e => e.date >= aujourdhui)
+          .map(s => this.versApercu(s))
+          .filter(s => s.date >= aujourdhui)
           .sort((a, b) => a.date.getTime() - b.date.getTime())
           .slice(0, 3);
         this.chargementSeances = false;
@@ -96,6 +106,16 @@ export class DashboardFormateur implements OnInit {
       next: list => { this.mesEtudiants = list || []; this.chargementEtudiants = false; },
       error: () => { this.mesEtudiants = []; this.chargementEtudiants = false; }
     });
+  }
+
+  private versApercu(s: Seance): SeanceApercu {
+    const date = new Date(s.dateHeure);
+    return {
+      titre: s.titre,
+      type: s.type,
+      date,
+      heure: `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
+    };
   }
 
   get nombreRessourcesTotal(): number {
