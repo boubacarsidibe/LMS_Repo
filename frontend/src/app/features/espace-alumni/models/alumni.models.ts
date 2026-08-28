@@ -30,6 +30,7 @@ export interface AlumniMetriques {
   nombreSujetsForumAlumni: number;
   nombreMessagesForumAlumni: number;
   nombreDocumentsPartages: number;
+  nombreDocumentsConsultes: number;
   nombreEnquetesRepondues: number;
   nombreEnquetesActives: number;
 }

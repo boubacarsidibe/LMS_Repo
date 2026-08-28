@@ -34,6 +34,7 @@ import inpg.sn.lms.espace_alumni.dto.AlumniMetriquesDto;
 import inpg.sn.lms.espace_alumni.entity.EnqueteSuivi;
 import inpg.sn.lms.espace_alumni.entity.ReponseEnqueteSuivi;
 import inpg.sn.lms.espace_alumni.enums.EnumStatutEmploi;
+import inpg.sn.lms.espace_alumni.repository.ConsultationDocumentPartageRepository;
 import inpg.sn.lms.espace_alumni.repository.DocumentPartageRepository;
 import inpg.sn.lms.espace_alumni.repository.EnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.repository.ReponseEnqueteSuiviRepository;
@@ -77,6 +78,8 @@ class AlumniControllerTest {
     @Mock
     private DocumentPartageRepository documentPartageRepository;
     @Mock
+    private ConsultationDocumentPartageRepository consultationRepository;
+    @Mock
     private Authentication authentication;
 
     private AlumniController controller;
@@ -85,7 +88,7 @@ class AlumniControllerTest {
     void setUp() {
         controller = new AlumniController(utilisateurCourant, alumniProfilService, situationService,
                 releveDelivranceService, enqueteRepository, reponseRepository, forumSujetRepository,
-                forumMessageRepository, documentPartageRepository);
+                forumMessageRepository, documentPartageRepository, consultationRepository);
     }
 
     /**
@@ -312,6 +315,7 @@ class AlumniControllerTest {
         when(forumSujetRepository.countByAuteurIdAndPortee(42L, PorteeForumSujet.ALUMNI)).thenReturn(2L);
         when(forumMessageRepository.countByAuteurIdAndSujet_Portee(42L, PorteeForumSujet.ALUMNI)).thenReturn(5L);
         when(documentPartageRepository.countByAuteurId(42L)).thenReturn(1L);
+        when(consultationRepository.countByLecteurId(42L)).thenReturn(4L);
         when(reponseRepository.countByAlumniProfilId(42L)).thenReturn(3L);
         EnqueteSuivi enqueteActive = new EnqueteSuivi("Suivi 2026", null);
         enqueteActive.setId(9L);
@@ -331,6 +335,7 @@ class AlumniControllerTest {
         assertThat(corps.nombreSujetsForumAlumni()).isEqualTo(2L);
         assertThat(corps.nombreMessagesForumAlumni()).isEqualTo(5L);
         assertThat(corps.nombreDocumentsPartages()).isEqualTo(1L);
+        assertThat(corps.nombreDocumentsConsultes()).isEqualTo(4L);
         assertThat(corps.nombreEnquetesRepondues()).isEqualTo(3L);
         assertThat(corps.nombreEnquetesActives()).isEqualTo(1L);
     }
