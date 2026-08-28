@@ -30,7 +30,7 @@
          n'est encore attribué à ce stade, il ne l'est qu'à la soumission réelle). -->
     <div>
       <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5">Je m'inscris en tant que</label>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="grid grid-cols-3 gap-2">
         <button
           type="button"
           (click)="choisirTypeInscription('CANDIDAT')"
@@ -38,15 +38,11 @@
           [class.ring-2]="typeInscription === 'CANDIDAT'"
           [class.ring-secondary/20]="typeInscription === 'CANDIDAT'"
           [class.bg-secondary-container]="typeInscription === 'CANDIDAT'"
-          class="rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-all cursor-pointer">
+          class="rounded-lg border border-outline-variant shadow-sm py-2.5 px-2 text-center transition-all cursor-pointer">
           <span
-            class="font-label-md text-label-md block"
+            class="font-label-sm text-label-sm block"
             [class.text-on-secondary-container]="typeInscription === 'CANDIDAT'"
             [class.text-on-surface]="typeInscription !== 'CANDIDAT'">Candidat(e)</span>
-          <span
-            class="font-body-sm text-body-sm"
-            [class.text-on-secondary-container]="typeInscription === 'CANDIDAT'"
-            [class.text-on-surface-variant]="typeInscription !== 'CANDIDAT'">Postuler à une formation</span>
         </button>
         <button
           type="button"
@@ -55,15 +51,11 @@
           [class.ring-2]="typeInscription === 'ECOLE'"
           [class.ring-secondary/20]="typeInscription === 'ECOLE'"
           [class.bg-secondary-container]="typeInscription === 'ECOLE'"
-          class="rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-all cursor-pointer">
+          class="rounded-lg border border-outline-variant shadow-sm py-2.5 px-2 text-center transition-all cursor-pointer">
           <span
-            class="font-label-md text-label-md block"
+            class="font-label-sm text-label-sm block"
             [class.text-on-secondary-container]="typeInscription === 'ECOLE'"
-            [class.text-on-surface]="typeInscription !== 'ECOLE'">École de formation</span>
-          <span
-            class="font-body-sm text-body-sm"
-            [class.text-on-secondary-container]="typeInscription === 'ECOLE'"
-            [class.text-on-surface-variant]="typeInscription !== 'ECOLE'">Demander une accréditation</span>
+            [class.text-on-surface]="typeInscription !== 'ECOLE'">École</span>
         </button>
         <button
           type="button"
@@ -72,15 +64,11 @@
           [class.ring-2]="typeInscription === 'ENTREPRISE'"
           [class.ring-secondary/20]="typeInscription === 'ENTREPRISE'"
           [class.bg-secondary-container]="typeInscription === 'ENTREPRISE'"
-          class="rounded-xl border border-outline-variant shadow-sm p-4 text-left transition-all cursor-pointer">
+          class="rounded-lg border border-outline-variant shadow-sm py-2.5 px-2 text-center transition-all cursor-pointer">
           <span
-            class="font-label-md text-label-md block"
+            class="font-label-sm text-label-sm block"
             [class.text-on-secondary-container]="typeInscription === 'ENTREPRISE'"
             [class.text-on-surface]="typeInscription !== 'ENTREPRISE'">Entreprise</span>
-          <span
-            class="font-body-sm text-body-sm"
-            [class.text-on-secondary-container]="typeInscription === 'ENTREPRISE'"
-            [class.text-on-surface-variant]="typeInscription !== 'ENTREPRISE'">Soumettre un besoin de formation</span>
         </button>
       </div>
     </div>
