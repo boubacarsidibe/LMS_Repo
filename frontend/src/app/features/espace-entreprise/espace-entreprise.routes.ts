@@ -27,6 +27,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/messagerie/messagerie').then(m => m.MessagerieEntreprise)
       },
       {
+        path: 'rendez-vous',
+        loadComponent: () =>
+          import('../rendez-vous/pages/rendez-vous/rendez-vous.component').then(m => m.RendezVousComponent)
+      },
+      {
         path: 'mon-profil',
         loadComponent: () =>
           import('./pages/mon-profil/entreprise-mon-profil.component').then(m => m.EntrepriseMonProfilComponent)

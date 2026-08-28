@@ -120,6 +120,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'rendez-vous',
+        loadComponent: () =>
+          import('./features/rendez-vous/pages/rendez-vous/rendez-vous.component').then(
+            (m) => m.RendezVousComponent
+          ),
+      },
+      {
         path: 'mon-profil',
         loadComponent: () =>
           import('./features/accreditation/pages/mon-profil/ecole-mon-profil.component').then(

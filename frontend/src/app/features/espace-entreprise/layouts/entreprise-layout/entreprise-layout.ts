@@ -29,6 +29,7 @@ export class EntrepriseLayout {
     { libelle: 'Mes demandes', lien: 'nouvelle-demande', icone: 'assignment' },
     { libelle: 'Catalogue des formations', lien: 'catalogue', icone: 'menu_book' },
     { libelle: 'Messagerie', lien: 'messagerie', icone: 'forum' },
+    { libelle: 'Rendez-vous', lien: 'rendez-vous', icone: 'event' },
   ];
 
   get initiales(): string {

@@ -87,6 +87,7 @@ export class EvaluateurLayout {
   readonly navigation: EntreeNavigation[] = [
     { libelle: 'Demandes', lien: 'demandes', icone: 'fact_check' },
     { libelle: 'Critères', lien: 'criteres', icone: 'checklist' },
+    { libelle: 'Rendez-vous', lien: 'rendez-vous', icone: 'event' },
   ];
 
   get initiales(): string {

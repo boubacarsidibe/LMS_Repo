@@ -34,6 +34,14 @@ import { Auth } from '../../../../core/auth/services/authService';
           <span class="material-symbols-outlined">school</span>
           <span class="flex-1 text-label-md">Ma demande</span>
         </a>
+        <a
+          routerLink="/accreditation/rendez-vous"
+          routerLinkActive="bg-primary-container text-on-primary-container shadow-sm"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+        >
+          <span class="material-symbols-outlined">event</span>
+          <span class="flex-1 text-label-md">Rendez-vous</span>
+        </a>
       </nav>
 
       <div class="p-4 border-t border-outline-variant">
