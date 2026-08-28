@@ -13,6 +13,56 @@
   <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
 
   <ng-container *ngIf="!chargement && profil">
+    <!-- Temps forts du parcours : métriques réelles plutôt qu'un simple formulaire de réglages. -->
+    <section *ngIf="metriques" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter">
+      <article class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+        <div class="flex items-center gap-2 text-on-surface-variant">
+          <span class="material-symbols-outlined">school</span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider">Diplômé(e) depuis</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">
+          {{ metriques.anneesDepuisDiplome }} an{{ metriques.anneesDepuisDiplome > 1 ? 's' : '' }}
+        </p>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ metriques.promotionLibelle || '—' }}</p>
+      </article>
+      <article class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+        <div class="flex items-center gap-2 text-on-surface-variant">
+          <span class="material-symbols-outlined">star_rate</span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider">Moyenne au diplôme</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">
+          {{ metriques.moyenneGeneraleDernierReleve !== null ? (metriques.moyenneGeneraleDernierReleve | number: '1.1-1') + ' / 20' : '—' }}
+        </p>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+          {{ metriques.nombreRelevesDelivres }} relevé{{ metriques.nombreRelevesDelivres > 1 ? 's' : '' }} délivré{{ metriques.nombreRelevesDelivres > 1 ? 's' : '' }}
+        </p>
+      </article>
+      <article class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+        <div class="flex items-center gap-2 text-on-surface-variant">
+          <span class="material-symbols-outlined">work_history</span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider">Parcours professionnel</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ metriques.nombrePostesParcours }}</p>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+          poste{{ metriques.nombrePostesParcours > 1 ? 's' : '' }} renseigné{{ metriques.nombrePostesParcours > 1 ? 's' : '' }}
+          {{ metriques.posteActuelRenseigne ? '· en poste' : '' }}
+        </p>
+      </article>
+      <article class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+        <div class="flex items-center gap-2 text-on-surface-variant">
+          <span class="material-symbols-outlined">forum</span>
+          <span class="font-label-sm text-label-sm uppercase tracking-wider">Vie du réseau</span>
+        </div>
+        <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">
+          {{ metriques.nombreSujetsForumAlumni + metriques.nombreMessagesForumAlumni }}
+        </p>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+          contribution{{ (metriques.nombreSujetsForumAlumni + metriques.nombreMessagesForumAlumni) > 1 ? 's' : '' }} au forum ·
+          {{ metriques.nombreDocumentsPartages }} document{{ metriques.nombreDocumentsPartages > 1 ? 's' : '' }} partagé{{ metriques.nombreDocumentsPartages > 1 ? 's' : '' }}
+        </p>
+      </article>
+    </section>
+
     <!-- Accès rapide : première page vue après connexion, elle sert de point de départ vers le reste de l'espace. -->
     <section class="grid grid-cols-2 lg:grid-cols-4 gap-gutter">
       <a routerLink="../mon-parcours" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors flex flex-col items-center text-center gap-2">
@@ -30,6 +80,14 @@
       <a routerLink="../documents" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors flex flex-col items-center text-center gap-2">
         <span class="material-symbols-outlined text-secondary text-[28px]">folder_shared</span>
         <span class="font-label-md text-label-md text-on-surface">Documents partagés</span>
+      </a>
+      <a routerLink="../enquetes" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors flex flex-col items-center text-center gap-2">
+        <span class="material-symbols-outlined text-secondary text-[28px]">fact_check</span>
+        <span class="font-label-md text-label-md text-on-surface">Enquêtes de suivi</span>
+      </a>
+      <a routerLink="../rendez-vous" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors flex flex-col items-center text-center gap-2">
+        <span class="material-symbols-outlined text-secondary text-[28px]">event</span>
+        <span class="font-label-md text-label-md text-on-surface">Rendez-vous</span>
       </a>
     </section>
 

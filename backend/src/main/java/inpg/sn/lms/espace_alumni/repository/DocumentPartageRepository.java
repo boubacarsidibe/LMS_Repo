@@ -11,4 +11,7 @@ import inpg.sn.lms.espace_alumni.entity.DocumentPartage;
 public interface DocumentPartageRepository extends JpaRepository<DocumentPartage, Long> {
 
     List<DocumentPartage> findAllByOrderByDateAjoutDesc();
+
+    /** Documents partagés par un alumni donné — profil enrichi. */
+    long countByAuteurId(Long auteurId);
 }
