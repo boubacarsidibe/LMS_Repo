@@ -1,0 +1,143 @@
+<!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
+
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm mb-2">
+  <a routerLink="/responsable-admission/sessions" class="hover:underline">Admissions</a>
+  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+  <a routerLink="/responsable-admission/sessions" class="hover:underline">Sessions</a>
+  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+  <span class="font-medium text-on-surface">{{ sessionId ? (session?.libelle || 'Modifier') : 'Nouvelle session' }}</span>
+</div>
+
+<div class="flex items-center justify-between gap-4 mb-stack-lg">
+  <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">
+    {{ sessionId ? 'Modifier la session' : 'Créer une session' }}
+  </h2>
+  <a *ngIf="sessionId" [routerLink]="['/responsable-admission/sessions', sessionId, 'criteres']"
+     class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm">
+    <span class="material-symbols-outlined text-[18px]">checklist</span>
+    Gérer les critères personnalisés
+  </a>
+</div>
+
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement…</div>
+
+<form *ngIf="!loading" [formGroup]="sessionForm" (ngSubmit)="enregistrer()" class="max-w-3xl">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 space-y-6">
+    <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ formError }}</div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Intitulé de la formation</label>
+        <input formControlName="libelle" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" placeholder="Ex: Master Data Science 2025" type="text"/>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date d'ouverture</label>
+          <input formControlName="dateOuverture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
+        </div>
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date limite</label>
+          <input formControlName="dateFermeture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
+        </div>
+      </div>
+      <label class="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant">
+        <input formControlName="estOuverte" type="checkbox" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+        Session ouverte aux candidatures
+      </label>
+    </div>
+
+    <div class="border-t border-outline-variant pt-4">
+      <label class="flex items-center justify-between gap-2 cursor-pointer">
+        <span class="font-label-md text-label-md text-on-surface font-bold">Filtre automatique de présélection</span>
+        <button type="button" (click)="sessionForm.get('criteresActifs')!.setValue(!sessionForm.value.criteresActifs)" role="switch" [attr.aria-checked]="sessionForm.value.criteresActifs"
+                class="relative w-11 h-6 rounded-full transition-colors shrink-0" [class.bg-secondary]="sessionForm.value.criteresActifs" [class.bg-outline-variant]="!sessionForm.value.criteresActifs">
+          <span class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform" [class.translate-x-5]="sessionForm.value.criteresActifs"></span>
+        </button>
+      </label>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+        S'applique aux critères de base ci-dessous et à tout critère personnalisé actif (page « Gérer les critères personnalisés »).
+        Ne rejette rien automatiquement : le responsable admission déclenche le filtre lui-même sur les dossiers « Soumis ».
+      </p>
+
+      <div class="space-y-4 mt-4" [class.opacity-50]="!sessionForm.value.criteresActifs">
+        <div>
+          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Niveau d'études minimum requis</label>
+          <select formControlName="criteresNiveauEtudeMinimum" [disabled]="!sessionForm.value.criteresActifs" aria-label="Niveau d'études minimum"
+                  class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
+            <option [ngValue]="null">-- Aucune contrainte --</option>
+            <option *ngFor="let n of niveaux" [value]="n">{{ n }}</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Âge minimum</label>
+            <input formControlName="criteresAgeMinimum" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="100" placeholder="Ex: 18"
+                   class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+          </div>
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Âge maximum</label>
+            <input formControlName="criteresAgeMaximum" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="100" placeholder="Ex: 45"
+                   class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Genre requis</label>
+            <select formControlName="criteresGenre" [disabled]="!sessionForm.value.criteresActifs" aria-label="Genre requis"
+                    class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
+              <option [ngValue]="null">-- Aucune contrainte --</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Expérience minimale (années)</label>
+            <input formControlName="criteresExperienceMinimale" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="60" placeholder="Ex: 2"
+                   class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!sessionId" class="mt-4 p-3 bg-surface-container-low rounded-lg font-body-sm text-body-sm text-on-surface-variant flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">info</span>
+        Enregistrez d'abord la session pour pouvoir y ajouter des critères personnalisés.
+      </div>
+    </div>
+
+    <div class="border-t border-outline-variant pt-4">
+      <label class="block font-label-md text-label-md text-on-surface font-bold mb-1">Seuil de réussite des tests académiques</label>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Note minimale sur 20 pour être considéré « admissible » à cette session (TDR : pass/fail défini par l'INPG).</p>
+      <input formControlName="seuilReussiteTest" type="number" min="0" max="20" step="0.5" placeholder="Ex: 10"
+             class="w-32 h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+    </div>
+
+    <div class="border-t border-outline-variant pt-4">
+      <label class="block font-label-md text-label-md text-on-surface font-bold mb-1">Prochaines étapes affichées au candidat admis</label>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Ces trois informations apparaissent sur l'écran de suivi une fois le candidat admis. Laisser vide si non applicable.</p>
+      <div class="space-y-3">
+        <div>
+          <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Frais de scolarité</label>
+          <input formControlName="infoFraisScolarite" placeholder="Ex: Procédez au règlement avant le 15 décembre."
+                 class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="text"/>
+        </div>
+        <div>
+          <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Carte étudiante</label>
+          <input formControlName="infoCarteEtudiante" placeholder="Ex: Votre carte sera disponible en janvier."
+                 class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="text"/>
+        </div>
+        <div>
+          <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Rentrée</label>
+          <input formControlName="infoRentree" placeholder="Ex: Journée d'intégration le 15 janvier."
+                 class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="text"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-3 mt-stack-lg">
+    <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="annuler()">Annuler</button>
+    <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+      {{ isSubmitting ? 'Enregistrement…' : (sessionId ? 'Enregistrer' : 'Créer la session') }}
+    </button>
+  </div>
+</form>

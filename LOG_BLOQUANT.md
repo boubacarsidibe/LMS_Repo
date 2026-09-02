@@ -1485,3 +1485,46 @@ Les réponses aux critères sont validées à la soumission
 (`CandidatController.enregistrerReponsesCriteres`) : un critère actif et
 obligatoire sans réponse renvoie 422 avant toute écriture, jamais un dossier
 silencieusement incomplet.
+
+### 62. Critères personnalisés : pages dédiées à la place du tiroir
+
+Retour direct de l'utilisateur sur le point 61 : deux demandes, une confirmée
+en l'état, une changement de structure.
+
+**Confirmé sans changement** : les critères de base (niveau d'étude, âge,
+genre, expérience) restent fixes et codés en dur sur `SessionCandidature` —
+pas de refonte vers un modèle tout-dynamique. Seul l'affichage des critères
+personnalisés devait être vérifié : le formulaire public ne proposait déjà
+que les critères `actif=true` (`SessionCandidatureService.getSessionsOuvertes`
+appelle `toResponse(s, true)`), conforme à la demande.
+
+**Changement de structure** : le tiroir latéral (`responsable-admission-sessions.component`)
+portait tout — champs de session, critères de base, liste des critères
+personnalisés *et* leur mini-formulaire d'ajout replié. Éclaté en quatre
+écrans à part entière, chacun avec sa propre route :
+
+```
+/responsable-admission/sessions                       liste (inchangée)
+/responsable-admission/sessions/nouvelle               SessionFormComponent (création)
+/responsable-admission/sessions/:id                    SessionFormComponent (édition)
+/responsable-admission/sessions/:id/criteres           SessionCriteresComponent
+/responsable-admission/sessions/:id/criteres/nouveau   CritereFormComponent (création)
+/responsable-admission/sessions/:id/criteres/:critereId CritereFormComponent (édition)
+```
+
+Piège Angular à connaître si une route littérale s'ajoute un jour sous
+`sessions/` : `sessions/nouvelle` doit être déclarée **avant**
+`sessions/:id` dans `app.routes.ts`, sinon le routeur capture `"nouvelle"`
+comme un id de session. Même règle pour `criteres/nouveau` avant
+`criteres/:critereId`.
+
+Sur `SessionCriteresComponent`, seuls les critères actifs s'affichent par
+défaut ; les retirés sont repliés sous un bouton « Afficher les critères
+retirés (N) » — cohérent avec le retrait toujours logique du point 61, sans
+jamais les mélanger visuellement aux critères encore proposés aux candidats.
+
+Un endpoint manquait pour rendre ces pages consultables au rechargement/lien
+direct : `GET /api/admin/recrutement/sessions/{id}` (le service portait déjà
+`getSessionById`, jamais exposé) et `GET /api/admin/recrutement/criteres/{critereId}`
+(pour précharger le formulaire d'édition d'un critère sans redemander toute
+la liste de la session).
