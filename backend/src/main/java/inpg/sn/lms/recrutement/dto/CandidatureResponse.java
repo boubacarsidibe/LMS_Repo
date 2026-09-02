@@ -53,4 +53,5 @@ public class CandidatureResponse {
     private String informationsProfessionnelles;
     private List<PieceJustificativeResponse> piecesJustificatives;
     private PaiementResponse paiement;
+    private List<ReponseCritereResponse> reponsesCriteres;
 }

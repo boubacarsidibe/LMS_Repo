@@ -1,6 +1,7 @@
 package inpg.sn.lms.recrutement.dto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,4 +33,5 @@ public class SessionCandidatureResponse {
     private String infoFraisScolarite;
     private String infoCarteEtudiante;
     private String infoRentree;
+    private List<CritereAdmissionResponse> criteresPersonnalises;
 }

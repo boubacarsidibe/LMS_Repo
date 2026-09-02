@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import inpg.sn.lms.auth.entity.Candidat;
 import jakarta.persistence.CascadeType;
@@ -120,6 +121,10 @@ public class SessionCandidature {
     @OneToMany(mappedBy = "sessionCandidature", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Candidature> candidatures = new ArrayList<>();
 
+    /** Critères ajoutés librement par le responsable admission, en plus des critères de base ci-dessus. */
+    @OneToMany(mappedBy = "sessionCandidature", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CritereAdmissionPersonnalise> criteresPersonnalises = new ArrayList<>();
+
     public boolean estSessionActive() {
         LocalDate now = LocalDate.now();
         return estOuverte
@@ -127,12 +132,37 @@ public class SessionCandidature {
                 && (dateFermeture == null || !now.isAfter(dateFermeture));
     }
 
-    /** Évalue un candidat par rapport aux critères de cette session. Toujours vrai si le filtre est désactivé. */
-    public boolean respecteCriteres(Candidat candidat) {
+    /**
+     * Évalue un candidat par rapport aux critères de cette session — critères de base
+     * ci-dessus, puis critères personnalisés ({@code reponsesCriteresPersonnalises},
+     * clé = {@link CritereAdmissionPersonnalise#getId()}, valeur = réponse du candidat).
+     * Toujours vrai si le filtre est désactivé.
+     */
+    public boolean respecteCriteres(Candidat candidat, Map<Long, String> reponsesCriteresPersonnalises) {
         if (!criteresActifs) {
             return true;
         }
 
+        if (!respecteCriteresDeBase(candidat)) {
+            return false;
+        }
+
+        for (CritereAdmissionPersonnalise critere : criteresPersonnalises) {
+            if (!critere.isActif()) {
+                continue;
+            }
+            String valeur = reponsesCriteresPersonnalises == null
+                    ? null
+                    : reponsesCriteresPersonnalises.get(critere.getId());
+            if (!critere.estRespecte(valeur)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean respecteCriteresDeBase(Candidat candidat) {
         if (criteresNiveauEtudeMinimum != null) {
             int seuil = NIVEAUX_ORDONNES.indexOf(criteresNiveauEtudeMinimum);
             int niveauCandidat = NIVEAUX_ORDONNES.indexOf(candidat.getNiveauEtude());
