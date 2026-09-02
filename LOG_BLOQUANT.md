@@ -1393,3 +1393,95 @@ n'est nommé nulle part (TDR ou dépôt), voir point 16. Plutôt que de laisser 
 blocage dormir dans ce journal, reposé directement à l'utilisateur dans la
 conversation — la seule voie pour le débloquer, le TDR n'apportant rien de
 plus qu'au point 16.
+
+### 60. Neuf demandes directes de l'utilisateur (2026-09-02) : critères d'admission
+personnalisables traité, huit autres consignées en backlog
+
+L'utilisateur a formulé neuf demandes en une seule fois pour l'espace
+recrutement/admission. Plutôt que de deviner un ordre, la priorité et le
+périmètre du point le plus ambigu ont été posés en question directe ; les
+réponses ont fixé ce qui suit.
+
+1. **Modifications en temps réel** — aucune trace dans le code ni dans ce
+   journal ; aucun mécanisme de rafraîchissement live (websocket, SSE,
+   polling) n'existe nulle part dans le dépôt. L'utilisateur a désigné trois
+   cibles possibles (suivi des candidatures, cloche de notification,
+   résultats de notation) tout en indiquant que ce n'est **pas prioritaire
+   maintenant** — différé, à reprendre en clarifiant laquelle de ces trois
+   cibles (ou les trois) avant toute implémentation.
+2. **Paiement obligatoire, lié à l'interface candidat** — `Paiement` existe
+   déjà (`PaiementService`, endpoints `CandidatController`) mais
+   `Candidature.soumettre()` ne le vérifie jamais : le paiement reste
+   aujourd'hui informatif, jamais bloquant. Non traité dans ce passage.
+3. **Tests/entretiens groupés par cohorte** — `POST /tests/convocation-groupee`
+   et `/entretiens/convocation-groupee` existent déjà avec sélection
+   multiple ; il manque un raccourci « toute la promotion » en un clic
+   plutôt qu'un moteur à construire. Non traité dans ce passage.
+4. **Notes indépendantes de la création (CSV + saisie manuelle groupée)** —
+   la saisie manuelle en masse existe déjà
+   (`POST /academic-tests/exams/{nom}/scores/batch`) ; l'import CSV n'existe
+   nulle part dans le module recrutement (la pédagogie a un import CSV
+   réutilisable comme patron, `PedagogieScolariteController.importerEtudiants`).
+   Non traité dans ce passage.
+5. **Élimination après saisie des notes** — rien d'automatique aujourd'hui :
+   `seuilReussiteTest` sert au filtre de présélection déclaratif, pas à une
+   action d'élimination post-notation. Non traité dans ce passage.
+6. **Réversibilité + mot de passe de confirmation** — aucun historique/audit
+   de dossier candidat n'existe. Le patron de confirmation par mot de passe
+   existe ailleurs (`AuthController.changePassword`, `passwordEncoder.matches()`
+   avant d'agir) et est directement réutilisable. Non traité dans ce passage.
+7. **Page dédiée à la création de test (lieu, heure, date, session)** —
+   aujourd'hui un simple tiroir latéral sans champ lieu (alors qu'`Entretien.lieuOuLien`
+   existe déjà côté entretiens). Non traité dans ce passage.
+8. **Export avec choix de colonnes/filtres** — déjà construit côté backend
+   (`COLONNES_SESSIONS`/`COLONNES_CANDIDATURES`, paramètres `colonnes` et
+   `statut`) ; le travail restant est côté UI (sélecteur de colonnes
+   visible). Piège à ne pas reproduire : un second export mort existe dans
+   `ApplicationController.exportApplications()`, jamais branché côté front —
+   ne pas le réactiver ni le dupliquer. Non traité dans ce passage.
+9. **Critères d'admission personnalisables** — traité dans ce passage, voir
+   ci-dessous.
+
+Priorité posée à l'utilisateur pour ces neuf points : les critères
+personnalisables d'abord, parce que le formulaire de candidature et la
+future page dédiée aux tests (point 7) en dépendent — les traiter en premier
+évite de reprendre les autres chantiers ensuite.
+
+### 61. Critères d'admission personnalisables : nouveau modèle + filtre
+automatique enfin câblé
+
+`SessionCandidature` ne portait que des critères fixes codés en dur (niveau
+d'étude, âge, genre, expérience), évalués par `respecteCriteres(Candidat)` —
+un `if` par champ, aucune extensibilité. Migration V30 ajoute
+`criteres_admission_personnalises` (libellé, type NUMERIQUE/TEXTE/BOOLEEN/CHOIX,
+obligatoire, règle d'évaluation optionnelle) et `reponses_critere_candidature`
+(une réponse par candidature et par critère). Un critère sans règle définie
+(ni `valeurMinimale` ni `valeurAttendue`) est purement informatif : collecté,
+jamais éliminatoire.
+
+**Retrait toujours logique, jamais physique.** `DELETE
+/api/admin/recrutement/criteres/{id}` ne fait que `actif = false` — un
+critère déjà répondu par des candidats ne doit jamais perdre ces réponses
+parce que l'admin a cessé de le proposer aux nouvelles candidatures (même
+principe que `releve_ligne`, sans clé étrangère cassante). `PUT
+.../reactiver` revient en arrière.
+
+**Découverte en cours de route : `respecteCriteres()` n'était appelée nulle
+part.** Un commentaire de `CandidatController#soumettreCandidature` renvoyait
+vers `AdminRecrutementController#appliquerFiltreAutomatique` comme si cette
+méthode existait déjà — elle n'a jamais été écrite. Le filtre automatique de
+premier niveau (TDR 3.1.1) était donc un champ de données inerte
+(`criteresActifs`) sans aucune action pour le faire agir, base **et**
+personnalisé confondus. Comblé par
+`POST /api/admin/recrutement/sessions/{id}/appliquer-filtre-criteres` :
+action manuelle du responsable admission sur les dossiers `SOUMIS` d'une
+session — volontairement **pas** un effet de bord de la soumission
+elle-même, pour que l'admin voie toujours passer chaque dossier par l'état
+`SOUMIS` (raison déjà documentée dans le commentaire d'origine). Zéro test
+ne couvrait `respecteCriteres()` avant ce passage ; `SessionCandidatureCriteresTest`
+et `CandidatureServiceFiltreCriteresTest` le figent désormais.
+
+Les réponses aux critères sont validées à la soumission
+(`CandidatController.enregistrerReponsesCriteres`) : un critère actif et
+obligatoire sans réponse renvoie 422 avant toute écriture, jamais un dossier
+silencieusement incomplet.

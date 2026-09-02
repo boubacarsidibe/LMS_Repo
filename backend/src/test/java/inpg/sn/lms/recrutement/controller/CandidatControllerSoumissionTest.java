@@ -10,11 +10,13 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -36,9 +38,13 @@ import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.recrutement.dto.CandidatureRequest;
 import inpg.sn.lms.recrutement.dto.CandidatureResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
+import inpg.sn.lms.recrutement.entity.CritereAdmissionPersonnalise;
+import inpg.sn.lms.recrutement.entity.SessionCandidature;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
+import inpg.sn.lms.recrutement.enums.EnumTypeCritere;
 import inpg.sn.lms.recrutement.repository.BrouillonCandidatureRepository;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
+import inpg.sn.lms.recrutement.repository.CritereAdmissionPersonnaliseRepository;
 import inpg.sn.lms.recrutement.repository.EntretienRepository;
 import inpg.sn.lms.recrutement.repository.PieceJustificativeRepository;
 import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
@@ -96,6 +102,7 @@ class CandidatControllerSoumissionTest {
     @Mock private EntretienService entretienService;
     @Mock private ConvocationPdfService convocationPdfService;
     @Mock private LettreAdmissionPdfService lettreAdmissionPdfService;
+    @Mock private CritereAdmissionPersonnaliseRepository critereRepository;
 
     @Mock private Authentication authentication;
 
@@ -130,6 +137,9 @@ class CandidatControllerSoumissionTest {
         // lenient : les tests qui s'arrêtent au contrôle de rôle n'atteignent pas ces appels.
         lenient().when(authentication.getName()).thenReturn("awa_diop");
         lenient().when(userRepository.findByUsername("awa_diop")).thenReturn(utilisateur);
+        // Aucun critère personnalisé par défaut : les tests qui n'en définissent pas ne sont pas concernés.
+        lenient().when(critereRepository.findBySessionCandidatureIdAndActifTrueOrderByOrdreAsc(any()))
+                .thenReturn(List.of());
     }
 
     // ===================== Rôle du compte =====================
@@ -284,6 +294,80 @@ class CandidatControllerSoumissionTest {
         }
     }
 
+    // ===================== Critères personnalisés =====================
+
+    @Test
+    void un_critere_personnalise_obligatoire_manquant_bloque_la_soumission() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of());
+        when(sessionRepository.findById(ID_SESSION)).thenReturn(Optional.of(sessionActive()));
+        when(critereRepository.findBySessionCandidatureIdAndActifTrueOrderByOrdreAsc(ID_SESSION))
+                .thenReturn(List.of(critere(10L, true)));
+        // requete.getReponsesCriteres() reste null : aucune réponse fournie.
+
+        assertThrows(BusinessException.class,
+                () -> controller.soumettreCandidature(requete, authentication));
+        verify(candidatureRepository, never()).save(any());
+    }
+
+    /** Un critère non obligatoire, sans réponse, ne bloque rien. */
+    @Test
+    void un_critere_personnalise_facultatif_sans_reponse_ne_bloque_pas() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of());
+        when(sessionRepository.findById(ID_SESSION)).thenReturn(Optional.of(sessionActive()));
+        when(brouillonRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.empty());
+        when(candidatureService.getCandidatureById(any())).thenReturn(new CandidatureResponse());
+        when(candidatureRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(critereRepository.findBySessionCandidatureIdAndActifTrueOrderByOrdreAsc(ID_SESSION))
+                .thenReturn(List.of(critere(10L, false)));
+
+        assertEquals(HttpStatus.OK,
+                controller.soumettreCandidature(requete, authentication).getStatusCode());
+    }
+
+    @Test
+    void les_reponses_aux_criteres_personnalises_sont_enregistrees() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of());
+        when(sessionRepository.findById(ID_SESSION)).thenReturn(Optional.of(sessionActive()));
+        when(brouillonRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.empty());
+        when(candidatureService.getCandidatureById(any())).thenReturn(new CandidatureResponse());
+        when(candidatureRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(critereRepository.findBySessionCandidatureIdAndActifTrueOrderByOrdreAsc(ID_SESSION))
+                .thenReturn(List.of(critere(10L, true)));
+        requete.setReponsesCriteres(Map.of(10L, "Oui"));
+
+        ResponseEntity<?> reponse = controller.soumettreCandidature(requete, authentication);
+
+        assertEquals(HttpStatus.OK, reponse.getStatusCode());
+        ArgumentCaptor<Candidature> captor = ArgumentCaptor.forClass(Candidature.class);
+        verify(candidatureRepository).save(captor.capture());
+        assertEquals(1, captor.getValue().getReponsesCriteres().size());
+        assertEquals("Oui", captor.getValue().getReponsesCriteres().get(0).getValeur());
+    }
+
+    private SessionCandidature sessionActive() {
+        SessionCandidature session = new SessionCandidature();
+        session.setId(ID_SESSION);
+        session.setLibelle("Session test");
+        session.setEstOuverte(true);
+        return session;
+    }
+
+    private CritereAdmissionPersonnalise critere(Long id, boolean obligatoire) {
+        CritereAdmissionPersonnalise c = new CritereAdmissionPersonnalise();
+        c.setId(id);
+        c.setLibelle("Critère test");
+        c.setType(EnumTypeCritere.TEXTE);
+        c.setObligatoire(obligatoire);
+        c.setActif(true);
+        return c;
+    }
+
     // ===================== Fabriques =====================
 
     private Role role(String code, String libelle) {
@@ -299,6 +383,9 @@ class CandidatControllerSoumissionTest {
         candidature.setNumeroDossier("INPG-TEST42");
         candidature.setStatut(statut);
         candidature.setCandidat(candidat);
+        // Invariant réel : sessionCandidature n'est jamais nul sur une candidature persistée
+        // (colonne NOT NULL) — enregistrerReponsesCriteres() en dépend désormais.
+        candidature.setSessionCandidature(sessionActive());
         return candidature;
     }
 }
