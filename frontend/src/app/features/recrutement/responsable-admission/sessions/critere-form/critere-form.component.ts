@@ -52,30 +52,42 @@ export class CritereFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sessionId = Number(this.route.snapshot.paramMap.get('id'));
-    this.recrutementService.getSession(this.sessionId).subscribe({ next: (s) => (this.session = s) });
+    // Abonnement au paramMap : Angular réutilise l'instance du composant en
+    // naviguant entre deux critères sur la même route, sans rappeler ngOnInit.
+    this.route.paramMap.subscribe((params) => {
+      this.sessionId = Number(params.get('id'));
+      this.formError = '';
+      this.recrutementService.getSession(this.sessionId).subscribe({ next: (s) => (this.session = s) });
 
-    const critereParam = this.route.snapshot.paramMap.get('critereId');
-    if (!critereParam) return;
-    this.critereId = Number(critereParam);
-    this.loading = true;
-    this.recrutementService.getCritere(this.critereId).subscribe({
-      next: (critere) => {
-        this.critereForm.setValue({
-          libelle: critere.libelle,
-          type: critere.type,
-          obligatoire: critere.obligatoire,
-          options: critere.options,
-          valeurMinimale: critere.valeurMinimale,
-          valeurAttendue: critere.valeurAttendue,
-          ordre: critere.ordre,
+      const critereParam = params.get('critereId');
+      if (!critereParam) {
+        this.critereId = null;
+        this.critereForm.reset({
+          libelle: '', type: 'TEXTE', obligatoire: true,
+          options: null, valeurMinimale: null, valeurAttendue: null, ordre: 0,
         });
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-        this.formError = 'Impossible de charger ce critère.';
-      },
+        return;
+      }
+      this.critereId = Number(critereParam);
+      this.loading = true;
+      this.recrutementService.getCritere(this.critereId).subscribe({
+        next: (critere) => {
+          this.critereForm.setValue({
+            libelle: critere.libelle,
+            type: critere.type,
+            obligatoire: critere.obligatoire,
+            options: critere.options,
+            valeurMinimale: critere.valeurMinimale,
+            valeurAttendue: critere.valeurAttendue,
+            ordre: critere.ordre,
+          });
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+          this.formError = 'Impossible de charger ce critère.';
+        },
+      });
     });
   }
 

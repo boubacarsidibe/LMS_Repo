@@ -54,7 +54,6 @@ export class TestFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loading = true;
     this.recrutementService.getAllCandidatures().subscribe({
       next: (data) => (this.candidatures = data || []),
       error: () => (this.candidatures = []),
@@ -64,29 +63,40 @@ export class TestFormComponent implements OnInit {
       error: () => (this.sessions = []),
     });
 
-    const param = this.route.snapshot.paramMap.get('id');
-    if (!param) {
-      this.loading = false;
-      return;
-    }
-    this.testId = Number(param);
-    this.recrutementService.getTest(this.testId).subscribe({
-      next: (test) => {
-        this.test = test;
-        this.testForm.setValue({
-          candidatId: test.candidatId,
-          nomEpreuve: test.nomEpreuve,
-          coefficient: test.coefficient,
-          noteObtenue: test.noteObtenue ?? null,
-          dateEpreuve: test.dateEpreuve ? test.dateEpreuve.slice(0, 16) : '',
-          lieuOuLien: test.lieuOuLien ?? '',
+    // Abonnement au paramMap : Angular réutilise l'instance du composant en
+    // naviguant entre deux tests sur la même route, sans rappeler ngOnInit.
+    this.route.paramMap.subscribe((params) => {
+      const param = params.get('id');
+      this.formError = '';
+      if (!param) {
+        this.testId = null;
+        this.test = null;
+        this.testForm.reset({
+          candidatId: '', nomEpreuve: '', coefficient: 1, noteObtenue: null, dateEpreuve: '', lieuOuLien: '',
         });
         this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-        this.formError = 'Impossible de charger ce test.';
-      },
+        return;
+      }
+      this.testId = Number(param);
+      this.loading = true;
+      this.recrutementService.getTest(this.testId).subscribe({
+        next: (test) => {
+          this.test = test;
+          this.testForm.setValue({
+            candidatId: test.candidatId,
+            nomEpreuve: test.nomEpreuve,
+            coefficient: test.coefficient,
+            noteObtenue: test.noteObtenue ?? null,
+            dateEpreuve: test.dateEpreuve ? test.dateEpreuve.slice(0, 16) : '',
+            lieuOuLien: test.lieuOuLien ?? '',
+          });
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+          this.formError = 'Impossible de charger ce test.';
+        },
+      });
     });
   }
 

@@ -39,8 +39,13 @@ export class SessionCriteresComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.sessionId = Number(this.route.snapshot.paramMap.get('id'));
-    this.charger();
+    // Abonnement au paramMap : Angular réutilise l'instance du composant en
+    // naviguant entre deux sessions sur la même route, sans rappeler ngOnInit.
+    this.route.paramMap.subscribe((params) => {
+      this.sessionId = Number(params.get('id'));
+      this.afficherRetires = false;
+      this.charger();
+    });
   }
 
   private charger(): void {

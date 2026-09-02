@@ -56,35 +56,52 @@ export class SessionFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const param = this.route.snapshot.paramMap.get('id');
-    if (!param) return;
-    this.sessionId = Number(param);
-    this.loading = true;
-    this.recrutementService.getSession(this.sessionId).subscribe({
-      next: (session) => {
-        this.session = session;
-        this.sessionForm.setValue({
-          libelle: session.libelle,
-          dateOuverture: session.dateOuverture,
-          dateFermeture: session.dateFermeture,
-          estOuverte: session.estOuverte,
-          criteresActifs: session.criteresActifs,
-          criteresNiveauEtudeMinimum: session.criteresNiveauEtudeMinimum,
-          criteresAgeMinimum: session.criteresAgeMinimum,
-          criteresAgeMaximum: session.criteresAgeMaximum,
-          criteresGenre: session.criteresGenre,
-          criteresExperienceMinimale: session.criteresExperienceMinimale,
-          seuilReussiteTest: session.seuilReussiteTest ?? 10,
-          infoFraisScolarite: session.infoFraisScolarite,
-          infoCarteEtudiante: session.infoCarteEtudiante,
-          infoRentree: session.infoRentree,
+    // Abonnement au paramMap (pas juste route.snapshot) : Angular réutilise l'instance
+    // du composant quand on navigue de /sessions/5 vers /sessions/8 (même route), sans
+    // jamais rappeler ngOnInit. Un snapshot lu une seule fois y laissait la page
+    // « Modifier » figée sur les données de la première session ouverte.
+    this.route.paramMap.subscribe((params) => {
+      const param = params.get('id');
+      if (!param) {
+        this.sessionId = null;
+        this.session = null;
+        this.sessionForm.reset({
+          libelle: '', dateOuverture: '', dateFermeture: '', estOuverte: true,
+          criteresActifs: false, criteresNiveauEtudeMinimum: null, criteresAgeMinimum: null,
+          criteresAgeMaximum: null, criteresGenre: null, criteresExperienceMinimale: null,
+          seuilReussiteTest: 10, infoFraisScolarite: null, infoCarteEtudiante: null, infoRentree: null,
         });
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-        this.formError = 'Impossible de charger cette session.';
-      },
+        return;
+      }
+      this.sessionId = Number(param);
+      this.loading = true;
+      this.formError = '';
+      this.recrutementService.getSession(this.sessionId).subscribe({
+        next: (session) => {
+          this.session = session;
+          this.sessionForm.setValue({
+            libelle: session.libelle,
+            dateOuverture: session.dateOuverture,
+            dateFermeture: session.dateFermeture,
+            estOuverte: session.estOuverte,
+            criteresActifs: session.criteresActifs,
+            criteresNiveauEtudeMinimum: session.criteresNiveauEtudeMinimum,
+            criteresAgeMinimum: session.criteresAgeMinimum,
+            criteresAgeMaximum: session.criteresAgeMaximum,
+            criteresGenre: session.criteresGenre,
+            criteresExperienceMinimale: session.criteresExperienceMinimale,
+            seuilReussiteTest: session.seuilReussiteTest ?? 10,
+            infoFraisScolarite: session.infoFraisScolarite,
+            infoCarteEtudiante: session.infoCarteEtudiante,
+            infoRentree: session.infoRentree,
+          });
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+          this.formError = 'Impossible de charger cette session.';
+        },
+      });
     });
   }
 
