@@ -219,6 +219,21 @@ export const routes: Routes = [
           ),
       },
       {
+        // Route littérale avant 'tests/:id' : sinon Angular la capturerait comme un id de test.
+        path: 'tests/nouveau',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/tests/test-form/test-form.component').then(
+            (m) => m.TestFormComponent
+          ),
+      },
+      {
+        path: 'tests/:id',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/tests/test-form/test-form.component').then(
+            (m) => m.TestFormComponent
+          ),
+      },
+      {
         path: 'entretiens',
         loadComponent: () =>
           import('./features/recrutement/responsable-admission/entretiens/responsable-admission-entretiens.component').then(

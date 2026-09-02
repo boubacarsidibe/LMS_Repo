@@ -185,6 +185,7 @@ export interface ConvocationTestGroupeeRequest {
   nomEpreuve: string;
   coefficient: number;
   dateEpreuve: string;
+  lieuOuLien: string | null;
 }
 
 export interface ConvocationEntretienGroupeeRequest {
@@ -198,7 +199,7 @@ export interface TestAcademiqueRequest {
   coefficient: number;
   noteObtenue: number | null;
   dateEpreuve: string;
-  lieu: string | null;
+  lieuOuLien: string | null;
   candidatId: number;
 }
 
@@ -208,8 +209,10 @@ export interface TestAcademiqueResponse {
   coefficient: number;
   noteObtenue: number | null;
   dateEpreuve: string;
-  lieu: string | null;
+  lieuOuLien: string | null;
   candidatId: number;
+  sessionCandidatureId: number | null;
+  sessionCandidatureLibelle: string | null;
 }
 
 export interface EntretienRequest {
@@ -682,6 +685,10 @@ export class RecrutementService {
   // Tests Académiques
   getAllTests(): Observable<TestAcademiqueResponse[]> {
     return this.http.get<TestAcademiqueResponse[]>(`${this.baseUrl}/admin/recrutement/tests`);
+  }
+
+  getTest(id: number): Observable<TestAcademiqueResponse> {
+    return this.http.get<TestAcademiqueResponse>(`${this.baseUrl}/admin/recrutement/tests/${id}`);
   }
 
   creerTest(request: TestAcademiqueRequest): Observable<TestAcademiqueResponse> {

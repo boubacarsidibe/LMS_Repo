@@ -14,7 +14,9 @@ import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.auth.repository.CandidatRepository;
 import inpg.sn.lms.recrutement.dto.TestAcademiqueRequest;
 import inpg.sn.lms.recrutement.dto.TestAcademiqueResponse;
+import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.TestAcademique;
+import inpg.sn.lms.recrutement.repository.CandidatureRepository;
 import inpg.sn.lms.recrutement.repository.TestAcademiqueRepository;
 
 @Service
@@ -26,15 +28,18 @@ public class TestAcademiqueService {
 
     private final TestAcademiqueRepository testAcademiqueRepository;
     private final CandidatRepository candidatRepository;
+    private final CandidatureRepository candidatureRepository;
     private final NotificationService notificationService;
     private final NotificationCandidatService notificationCandidatService;
 
     public TestAcademiqueService(TestAcademiqueRepository testAcademiqueRepository,
             CandidatRepository candidatRepository,
+            CandidatureRepository candidatureRepository,
             NotificationService notificationService,
             NotificationCandidatService notificationCandidatService) {
         this.testAcademiqueRepository = testAcademiqueRepository;
         this.candidatRepository = candidatRepository;
+        this.candidatureRepository = candidatureRepository;
         this.notificationService = notificationService;
         this.notificationCandidatService = notificationCandidatService;
     }
@@ -48,6 +53,7 @@ public class TestAcademiqueService {
         test.setCoefficient(request.getCoefficient());
         test.setNoteObtenue(request.getNoteObtenue());
         test.setDateEpreuve(request.getDateEpreuve());
+        test.setLieuOuLien(request.getLieuOuLien());
         test.setCandidat(candidat);
 
         TestAcademique saved = testAcademiqueRepository.save(test);
@@ -58,7 +64,8 @@ public class TestAcademiqueService {
             String emailCandidat = candidat.getUser() != null ? candidat.getUser().getEmail() : null;
             if (emailCandidat != null) {
                 try {
-                    notificationService.notifierConvocationTest(emailCandidat, saved.getNomEpreuve(), dateFormatee);
+                    notificationService.notifierConvocationTest(emailCandidat, saved.getNomEpreuve(), dateFormatee,
+                            saved.getLieuOuLien());
                 } catch (Exception e) {
                     log.error("Échec de l'envoi de la convocation au test à {} : {}", emailCandidat, e.getMessage(), e);
                 }
@@ -79,9 +86,16 @@ public class TestAcademiqueService {
         test.setCoefficient(request.getCoefficient());
         test.setNoteObtenue(request.getNoteObtenue());
         test.setDateEpreuve(request.getDateEpreuve());
+        test.setLieuOuLien(request.getLieuOuLien());
 
         TestAcademique saved = testAcademiqueRepository.save(test);
         return toResponse(saved);
+    }
+
+    public TestAcademiqueResponse getTestById(Long id) {
+        TestAcademique test = testAcademiqueRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Test non trouvé avec l'ID: " + id));
+        return toResponse(test);
     }
 
     public List<TestAcademiqueResponse> getTestsByCandidatId(Long candidatId) {
@@ -106,13 +120,22 @@ public class TestAcademiqueService {
     }
 
     private TestAcademiqueResponse toResponse(TestAcademique t) {
+        // Un candidat n'a normalement qu'une seule candidature active à la fois
+        // (garde-fou de CandidatController#soumettreCandidature) : la première suffit
+        // à retrouver la session à afficher sur la convocation.
+        Candidature candidature = candidatureRepository.findByCandidatId(t.getCandidat().getId())
+                .stream().findFirst().orElse(null);
+
         return TestAcademiqueResponse.builder()
                 .id(t.getId())
                 .nomEpreuve(t.getNomEpreuve())
                 .coefficient(t.getCoefficient())
                 .noteObtenue(t.getNoteObtenue())
                 .dateEpreuve(t.getDateEpreuve())
+                .lieuOuLien(t.getLieuOuLien())
                 .candidatId(t.getCandidat().getId())
+                .sessionCandidatureId(candidature != null ? candidature.getSessionCandidature().getId() : null)
+                .sessionCandidatureLibelle(candidature != null ? candidature.getSessionCandidature().getLibelle() : null)
                 .build();
     }
 }

@@ -17,5 +17,6 @@ public class TestAcademiqueRequest {
     private Float coefficient;
     private Float noteObtenue;
     private LocalDateTime dateEpreuve;
+    private String lieuOuLien;
     private Long candidatId;
 }

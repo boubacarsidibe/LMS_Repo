@@ -20,5 +20,8 @@ public class TestAcademiqueResponse {
     private Float coefficient;
     private Float noteObtenue;
     private LocalDateTime dateEpreuve;
+    private String lieuOuLien;
     private Long candidatId;
+    private Long sessionCandidatureId;
+    private String sessionCandidatureLibelle;
 }

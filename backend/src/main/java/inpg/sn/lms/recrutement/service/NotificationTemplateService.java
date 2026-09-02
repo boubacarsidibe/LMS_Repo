@@ -70,6 +70,7 @@ public class NotificationTemplateService {
             case CONVOCATION_TEST -> {
                 t.setSujet("Convocation au test académique");
                 t.setCorps("Bonjour,\n\nVous êtes convoqué(e) au test \"{{nomEpreuve}}\" le {{date}}."
+                        + "\nLieu/Lien : {{lieuOuLien}}"
                         + "\n\nCordialement,\nL'équipe INPG");
             }
             case CONVOCATION_ENTRETIEN -> {
