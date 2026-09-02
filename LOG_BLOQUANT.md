@@ -1309,9 +1309,49 @@ patron visuel que les quatre déjà en place.
   — écart déjà signalé plus largement au point 51 (le garde-fou ne généralise à
   aucun contrôleur voisin d'`EspaceEtudiantController`).
 
+## 2026-08-28 — Demande directe de l'utilisateur : rendez-vous accessibles depuis les neuf espaces
+
+### 56. L'écart de navigation du point 47 est comblé
+
+Relecture du TDR §J demandée par l'utilisateur (« qui a besoin de fixer des
+rendez-vous avec les formateurs ? »). La phrase du TDR est sans ambiguïté :
+« **Chaque utilisateur** pourra consulter le profil des membres du personnel de
+l'INPG et envoyer une demande de rendez-vous en choisissant un créneau
+disponible dans leur emploi du temps. » Aucune restriction de rôle côté
+demandeur — ce n'est pas réservé aux étudiants.
+
+Le backend respectait déjà cette phrase (`SecurityConfig` : `/api/rendez-vous/**`
+en `authenticated()` seul, seuls les endpoints de gestion de créneaux et de
+réponse portent une restriction de rôle). C'est la **navigation** qui ne suivait
+pas : la rubrique n'existait que dans cinq des neuf espaces à barre latérale, et
+les quatre autres — candidat, entreprise, école de formation, évaluateur
+accréditation — n'y accédaient qu'en tapant l'URL à la main. Écart borné
+délibérément à l'époque et consigné au point 47, pas un oubli ; l'utilisateur a
+demandé de le combler.
+
+**Corrigé** : rubrique « Rendez-vous » ajoutée aux quatre espaces restants, avec
+la route correspondante. Trois d'entre eux (entreprise, école, évaluateur)
+enveloppent `RendezVousComponent` par une route enfant de leur cadre existant,
+exactement comme les cinq espaces déjà servis.
+
+**Le quatrième cas n'est pas symétrique** : l'espace candidat n'a pas de cadre à
+barre latérale. Ses pages composent chacune leur barre supérieure
+(`CandidatNavbarComponent`) et leur pied de page — voir `SuiviComponent`.
+Plutôt que d'introduire un cadre à part pour une seule page, un composant
+d'enveloppe minimal (`CandidatRendezVousComponent`) suit le patron déjà en
+place dans cet espace. Sa route porte `authGuard` et **non** `candidatGuard`,
+contrairement à `/recrutement/suivi` : « chaque utilisateur » inclut quelqu'un
+qui n'a pas encore soumis de candidature — c'est même précisément le profil qui
+a des raisons de vouloir rencontrer le personnel avant de déposer un dossier.
+
+Neuf espaces sur neuf donnent désormais accès à l'écran. Vérifié par
+`npx ng build` (compilation AOT réelle des gabarits, y compris les gabarits
+en ligne des cadres école/évaluateur et du nouveau composant d'enveloppe), pas
+seulement par `tsc --noEmit` qui ne lit pas les gabarits.
+
 ## 2026-08-28 — Demande directe de l'utilisateur : combler les écarts non traités de l'epic « profil alumni enrichi »
 
-### 56. Suivi de consultation des documents partagés : nouvelle table, même patron que `progressions_support`
+### 57. Suivi de consultation des documents partagés : nouvelle table, même patron que `progressions_support`
 
 Le point 55 signalait que « Vie du réseau » ne comptait les documents que par
 dépôt, faute de tout suivi de lecture. Comblé sur le même patron que
@@ -1331,7 +1371,7 @@ l'ouverture fait foi. Nouveau champ `AlumniMetriquesDto.nombreDocumentsConsultes
 distinct de `nombreDocumentsPartages` (dépôt) : l'un mesure la contribution,
 l'autre l'engagement, aucun ne remplace l'autre.
 
-### 57. Garde-fou structurel pour les trois contrôleurs de l'espace alumni
+### 58. Garde-fou structurel pour les trois contrôleurs de l'espace alumni
 
 Le point 55 signalait aussi l'absence de garde-fou structurel pour
 `AlumniController`. Plutôt qu'un test à la seule classe nommée, `EspaceAlumniGardeFousTest`
@@ -1346,10 +1386,102 @@ production. Reste un test par paquet concerné, pas une règle générale
 scannant tout le classpath — écart déjà assumé au point 51, hors de portée de
 ce correctif ciblé.
 
-### 58. §D (SIGB) : question reposée directement à l'utilisateur
+### 59. §D (SIGB) : question reposée directement à l'utilisateur
 
 Seul écart des points 52-55 non actionnable par du code : aucun système cible
 n'est nommé nulle part (TDR ou dépôt), voir point 16. Plutôt que de laisser ce
 blocage dormir dans ce journal, reposé directement à l'utilisateur dans la
 conversation — la seule voie pour le débloquer, le TDR n'apportant rien de
 plus qu'au point 16.
+
+### 60. Neuf demandes directes de l'utilisateur (2026-09-02) : critères d'admission
+personnalisables traité, huit autres consignées en backlog
+
+L'utilisateur a formulé neuf demandes en une seule fois pour l'espace
+recrutement/admission. Plutôt que de deviner un ordre, la priorité et le
+périmètre du point le plus ambigu ont été posés en question directe ; les
+réponses ont fixé ce qui suit.
+
+1. **Modifications en temps réel** — aucune trace dans le code ni dans ce
+   journal ; aucun mécanisme de rafraîchissement live (websocket, SSE,
+   polling) n'existe nulle part dans le dépôt. L'utilisateur a désigné trois
+   cibles possibles (suivi des candidatures, cloche de notification,
+   résultats de notation) tout en indiquant que ce n'est **pas prioritaire
+   maintenant** — différé, à reprendre en clarifiant laquelle de ces trois
+   cibles (ou les trois) avant toute implémentation.
+2. **Paiement obligatoire, lié à l'interface candidat** — `Paiement` existe
+   déjà (`PaiementService`, endpoints `CandidatController`) mais
+   `Candidature.soumettre()` ne le vérifie jamais : le paiement reste
+   aujourd'hui informatif, jamais bloquant. Non traité dans ce passage.
+3. **Tests/entretiens groupés par cohorte** — `POST /tests/convocation-groupee`
+   et `/entretiens/convocation-groupee` existent déjà avec sélection
+   multiple ; il manque un raccourci « toute la promotion » en un clic
+   plutôt qu'un moteur à construire. Non traité dans ce passage.
+4. **Notes indépendantes de la création (CSV + saisie manuelle groupée)** —
+   la saisie manuelle en masse existe déjà
+   (`POST /academic-tests/exams/{nom}/scores/batch`) ; l'import CSV n'existe
+   nulle part dans le module recrutement (la pédagogie a un import CSV
+   réutilisable comme patron, `PedagogieScolariteController.importerEtudiants`).
+   Non traité dans ce passage.
+5. **Élimination après saisie des notes** — rien d'automatique aujourd'hui :
+   `seuilReussiteTest` sert au filtre de présélection déclaratif, pas à une
+   action d'élimination post-notation. Non traité dans ce passage.
+6. **Réversibilité + mot de passe de confirmation** — aucun historique/audit
+   de dossier candidat n'existe. Le patron de confirmation par mot de passe
+   existe ailleurs (`AuthController.changePassword`, `passwordEncoder.matches()`
+   avant d'agir) et est directement réutilisable. Non traité dans ce passage.
+7. **Page dédiée à la création de test (lieu, heure, date, session)** —
+   aujourd'hui un simple tiroir latéral sans champ lieu (alors qu'`Entretien.lieuOuLien`
+   existe déjà côté entretiens). Non traité dans ce passage.
+8. **Export avec choix de colonnes/filtres** — déjà construit côté backend
+   (`COLONNES_SESSIONS`/`COLONNES_CANDIDATURES`, paramètres `colonnes` et
+   `statut`) ; le travail restant est côté UI (sélecteur de colonnes
+   visible). Piège à ne pas reproduire : un second export mort existe dans
+   `ApplicationController.exportApplications()`, jamais branché côté front —
+   ne pas le réactiver ni le dupliquer. Non traité dans ce passage.
+9. **Critères d'admission personnalisables** — traité dans ce passage, voir
+   ci-dessous.
+
+Priorité posée à l'utilisateur pour ces neuf points : les critères
+personnalisables d'abord, parce que le formulaire de candidature et la
+future page dédiée aux tests (point 7) en dépendent — les traiter en premier
+évite de reprendre les autres chantiers ensuite.
+
+### 61. Critères d'admission personnalisables : nouveau modèle + filtre
+automatique enfin câblé
+
+`SessionCandidature` ne portait que des critères fixes codés en dur (niveau
+d'étude, âge, genre, expérience), évalués par `respecteCriteres(Candidat)` —
+un `if` par champ, aucune extensibilité. Migration V30 ajoute
+`criteres_admission_personnalises` (libellé, type NUMERIQUE/TEXTE/BOOLEEN/CHOIX,
+obligatoire, règle d'évaluation optionnelle) et `reponses_critere_candidature`
+(une réponse par candidature et par critère). Un critère sans règle définie
+(ni `valeurMinimale` ni `valeurAttendue`) est purement informatif : collecté,
+jamais éliminatoire.
+
+**Retrait toujours logique, jamais physique.** `DELETE
+/api/admin/recrutement/criteres/{id}` ne fait que `actif = false` — un
+critère déjà répondu par des candidats ne doit jamais perdre ces réponses
+parce que l'admin a cessé de le proposer aux nouvelles candidatures (même
+principe que `releve_ligne`, sans clé étrangère cassante). `PUT
+.../reactiver` revient en arrière.
+
+**Découverte en cours de route : `respecteCriteres()` n'était appelée nulle
+part.** Un commentaire de `CandidatController#soumettreCandidature` renvoyait
+vers `AdminRecrutementController#appliquerFiltreAutomatique` comme si cette
+méthode existait déjà — elle n'a jamais été écrite. Le filtre automatique de
+premier niveau (TDR 3.1.1) était donc un champ de données inerte
+(`criteresActifs`) sans aucune action pour le faire agir, base **et**
+personnalisé confondus. Comblé par
+`POST /api/admin/recrutement/sessions/{id}/appliquer-filtre-criteres` :
+action manuelle du responsable admission sur les dossiers `SOUMIS` d'une
+session — volontairement **pas** un effet de bord de la soumission
+elle-même, pour que l'admin voie toujours passer chaque dossier par l'état
+`SOUMIS` (raison déjà documentée dans le commentaire d'origine). Zéro test
+ne couvrait `respecteCriteres()` avant ce passage ; `SessionCandidatureCriteresTest`
+et `CandidatureServiceFiltreCriteresTest` le figent désormais.
+
+Les réponses aux critères sont validées à la soumission
+(`CandidatController.enregistrerReponsesCriteres`) : un critère actif et
+obligatoire sans réponse renvoie 422 avant toute écriture, jamais un dossier
+silencieusement incomplet.

@@ -241,6 +241,80 @@
       </div>
 
       <div class="border-t border-outline-variant pt-4">
+        <span class="font-label-md text-label-md text-on-surface font-bold">Critères personnalisés</span>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1 mb-3">S'ajoutent aux critères de base ci-dessus sur le formulaire de candidature. Un critère sans règle définie est informatif : collecté, jamais éliminatoire.</p>
+
+        <div *ngIf="!sessionEnEdition" class="font-body-sm text-body-sm text-on-surface-variant italic">Enregistrez d'abord la session pour pouvoir y ajouter des critères.</div>
+
+        <ng-container *ngIf="sessionEnEdition">
+          <div *ngIf="criteresSession.length === 0 && !critereFormOpen" class="font-body-sm text-body-sm text-on-surface-variant italic mb-2">Aucun critère personnalisé pour cette session.</div>
+
+          <ul class="space-y-2 mb-2">
+            <li *ngFor="let c of criteresSession" class="flex items-center justify-between gap-2 p-2 border border-outline-variant rounded-lg" [class.opacity-50]="!c.actif">
+              <div class="min-w-0">
+                <div class="font-label-sm text-label-sm text-on-surface truncate">
+                  {{ c.libelle }}<span *ngIf="c.obligatoire" class="text-error"> *</span>
+                </div>
+                <div class="font-body-sm text-body-sm text-on-surface-variant">
+                  {{ c.type }}<span *ngIf="!c.actif"> · retiré</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button type="button" (click)="openCritereForm(c)" class="p-1.5 text-on-surface-variant hover:bg-surface-variant rounded-full" title="Modifier">
+                  <span class="material-symbols-outlined text-[18px]">edit</span>
+                </button>
+                <button *ngIf="c.actif" type="button" (click)="retirerCritereListe(c)" class="p-1.5 text-error hover:bg-error-container/20 rounded-full" title="Retirer">
+                  <span class="material-symbols-outlined text-[18px]">delete</span>
+                </button>
+                <button *ngIf="!c.actif" type="button" (click)="reactiverCritereListe(c)" class="p-1.5 text-secondary hover:bg-secondary/10 rounded-full" title="Réactiver">
+                  <span class="material-symbols-outlined text-[18px]">restore</span>
+                </button>
+              </div>
+            </li>
+          </ul>
+
+          <button type="button" *ngIf="!critereFormOpen" (click)="openCritereForm()" class="text-secondary font-label-sm text-label-sm flex items-center gap-1 hover:underline">
+            <span class="material-symbols-outlined text-[16px]">add</span> Ajouter un critère
+          </button>
+
+          <div *ngIf="critereFormOpen" [formGroup]="critereForm" class="mt-2 p-3 border border-outline-variant rounded-lg bg-surface-container-low space-y-2">
+            <div *ngIf="critereError" class="text-error font-body-sm text-body-sm">{{ critereError }}</div>
+            <input formControlName="libelle" placeholder="Libellé du critère" aria-label="Libellé du critère"
+                   class="w-full h-9 px-2 border border-outline-variant rounded-lg bg-surface text-on-surface font-body-sm text-body-sm" type="text"/>
+            <div class="grid grid-cols-2 gap-2">
+              <select formControlName="type" aria-label="Type de critère"
+                      class="h-9 px-2 border border-outline-variant rounded-lg bg-surface text-on-surface font-body-sm text-body-sm">
+                <option *ngFor="let t of typesCritere" [value]="t.valeur">{{ t.libelle }}</option>
+              </select>
+              <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface-variant">
+                <input formControlName="obligatoire" type="checkbox" class="rounded border-outline-variant text-secondary focus:ring-secondary"/> Obligatoire
+              </label>
+            </div>
+            <input *ngIf="critereForm.value.type === 'CHOIX'" formControlName="options" placeholder="Options séparées par une virgule" aria-label="Options"
+                   class="w-full h-9 px-2 border border-outline-variant rounded-lg bg-surface text-on-surface font-body-sm text-body-sm" type="text"/>
+            <input *ngIf="critereForm.value.type === 'NUMERIQUE'" formControlName="valeurMinimale" type="number" placeholder="Valeur minimale exigée (optionnel)" aria-label="Valeur minimale exigée"
+                   class="w-full h-9 px-2 border border-outline-variant rounded-lg bg-surface text-on-surface font-body-sm text-body-sm"/>
+            <input *ngIf="critereForm.value.type !== 'NUMERIQUE'" formControlName="valeurAttendue" type="text" placeholder="Réponse attendue (optionnel)" aria-label="Réponse attendue"
+                   class="w-full h-9 px-2 border border-outline-variant rounded-lg bg-surface text-on-surface font-body-sm text-body-sm"/>
+            <div class="flex justify-end gap-2">
+              <button type="button" (click)="closeCritereForm()" class="px-3 py-1.5 font-body-sm text-body-sm text-on-surface-variant border border-outline-variant rounded-lg">Annuler</button>
+              <button type="button" [disabled]="critereSubmitting" (click)="enregistrerCritere()" class="px-3 py-1.5 font-body-sm text-body-sm text-on-primary bg-secondary rounded-lg disabled:opacity-60">
+                {{ critereSubmitting ? '…' : 'Enregistrer' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-outline-variant" *ngIf="sessionForm.value.criteresActifs">
+            <button type="button" [disabled]="filtreEnCours" (click)="appliquerFiltre()"
+                    class="w-full px-3 py-2 font-label-sm text-label-sm text-on-primary bg-primary rounded-lg disabled:opacity-60">
+              {{ filtreEnCours ? 'Application en cours…' : 'Appliquer le filtre sur les dossiers « Soumis »' }}
+            </button>
+            <p *ngIf="filtreMessage" class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ filtreMessage }}</p>
+          </div>
+        </ng-container>
+      </div>
+
+      <div class="border-t border-outline-variant pt-4">
         <label class="block font-label-md text-label-md text-on-surface font-bold mb-1">Seuil de réussite des tests académiques</label>
         <p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Note minimale sur 20 pour être considéré « admissible » à cette session (TDR : pass/fail défini par l'INPG).</p>
         <input formControlName="seuilReussiteTest" type="number" min="0" max="20" step="0.5" placeholder="Ex: 10"

@@ -40,8 +40,11 @@ import inpg.sn.lms.auth.repository.UserRepository;
 import inpg.sn.lms.recrutement.dto.CandidatureResponse;
 import inpg.sn.lms.recrutement.dto.ConvocationEntretienGroupeeRequest;
 import inpg.sn.lms.recrutement.dto.ConvocationTestGroupeeRequest;
+import inpg.sn.lms.recrutement.dto.CritereAdmissionRequest;
+import inpg.sn.lms.recrutement.dto.CritereAdmissionResponse;
 import inpg.sn.lms.recrutement.dto.EntretienRequest;
 import inpg.sn.lms.recrutement.dto.EntretienResponse;
+import inpg.sn.lms.recrutement.dto.FiltreCriteresResponse;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.dto.PieceJustificativeResponse;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureRequest;
@@ -165,6 +168,46 @@ public class AdminRecrutementController {
     public ResponseEntity<Map<String, String>> supprimerSession(@PathVariable Long id) {
         sessionService.supprimerSession(id);
         return ResponseEntity.ok(Map.of("message", "Session supprimée avec succès."));
+    }
+
+    /**
+     * Déclenche le filtre automatique de premier niveau (TDR 3.1.1) sur les dossiers
+     * SOUMIS de la session : évalue les critères de base et personnalisés, bascule en
+     * présélection ou rejette. Action manuelle du responsable admission — jamais
+     * déclenchée à la soumission elle-même (voir CandidatController#soumettreCandidature).
+     */
+    @PostMapping("/sessions/{id}/appliquer-filtre-criteres")
+    public ResponseEntity<FiltreCriteresResponse> appliquerFiltreCriteres(@PathVariable Long id) {
+        return ResponseEntity.ok(candidatureService.appliquerFiltreCriteres(id));
+    }
+
+    // ===================== CRITÈRES PERSONNALISÉS =====================
+
+    @GetMapping("/sessions/{id}/criteres")
+    public ResponseEntity<List<CritereAdmissionResponse>> getCriteresDeSession(@PathVariable Long id) {
+        return ResponseEntity.ok(sessionService.getCriteresDeSession(id));
+    }
+
+    @PostMapping("/sessions/{id}/criteres")
+    public ResponseEntity<CritereAdmissionResponse> creerCritere(@PathVariable Long id,
+            @RequestBody CritereAdmissionRequest request) {
+        return ResponseEntity.ok(sessionService.creerCritere(id, request));
+    }
+
+    @PutMapping("/criteres/{critereId}")
+    public ResponseEntity<CritereAdmissionResponse> modifierCritere(@PathVariable Long critereId,
+            @RequestBody CritereAdmissionRequest request) {
+        return ResponseEntity.ok(sessionService.modifierCritere(critereId, request));
+    }
+
+    @DeleteMapping("/criteres/{critereId}")
+    public ResponseEntity<CritereAdmissionResponse> retirerCritere(@PathVariable Long critereId) {
+        return ResponseEntity.ok(sessionService.retirerCritere(critereId));
+    }
+
+    @PutMapping("/criteres/{critereId}/reactiver")
+    public ResponseEntity<CritereAdmissionResponse> reactiverCritere(@PathVariable Long critereId) {
+        return ResponseEntity.ok(sessionService.reactiverCritere(critereId));
     }
 
     /** Colonnes disponibles pour l'export "Sessions", dans l'ordre proposé au front. */
