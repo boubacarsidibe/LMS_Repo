@@ -638,6 +638,11 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(testAcademiqueService.getAllTests());
     }
 
+    @GetMapping("/tests/{id}")
+    public ResponseEntity<TestAcademiqueResponse> getTest(@PathVariable Long id) {
+        return ResponseEntity.ok(testAcademiqueService.getTestById(id));
+    }
+
     @PostMapping("/tests")
     public ResponseEntity<TestAcademiqueResponse> creerTest(@RequestBody TestAcademiqueRequest request) {
         return ResponseEntity.ok(testAcademiqueService.creerTest(request));
@@ -666,6 +671,7 @@ public class AdminRecrutementController {
                     r.setNomEpreuve(request.getNomEpreuve());
                     r.setCoefficient(request.getCoefficient());
                     r.setDateEpreuve(request.getDateEpreuve());
+                    r.setLieuOuLien(request.getLieuOuLien());
                     return testAcademiqueService.creerTest(r);
                 })
                 .collect(Collectors.toList());
