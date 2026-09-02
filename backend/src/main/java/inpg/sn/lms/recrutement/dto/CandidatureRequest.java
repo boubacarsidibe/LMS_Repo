@@ -1,5 +1,7 @@
 package inpg.sn.lms.recrutement.dto;
 
+import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,4 +17,7 @@ public class CandidatureRequest {
     private String informationsPersonnelles;
     private String informationsAcademiques;
     private String informationsProfessionnelles;
+
+    /** Réponses aux critères personnalisés de la session : clé = id du critère, valeur = réponse saisie. */
+    private Map<Long, String> reponsesCriteres;
 }

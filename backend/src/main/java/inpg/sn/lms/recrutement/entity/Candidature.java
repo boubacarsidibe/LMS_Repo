@@ -69,6 +69,9 @@ public class Candidature {
     @OneToOne(mappedBy = "candidature", cascade = CascadeType.ALL, orphanRemoval = true)
     private Paiement paiement;
 
+    @OneToMany(mappedBy = "candidature", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReponseCritereCandidature> reponsesCriteres = new ArrayList<>();
+
     public void sauvegarderBrouillon() {
         this.statut = EnumStatutCandidature.BROUILLON;
     }
