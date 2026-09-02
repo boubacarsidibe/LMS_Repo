@@ -86,9 +86,9 @@ public class NotificationService {
                 Map.of("numeroDossier", numeroDossier));
     }
 
-    public void notifierConvocationTest(String emailCandidat, String nomEpreuve, String date) {
+    public void notifierConvocationTest(String emailCandidat, String nomEpreuve, String date, String lieuOuLien) {
         envoyerNotification(EnumTypeNotification.CONVOCATION_TEST, emailCandidat,
-                Map.of("nomEpreuve", nomEpreuve, "date", date));
+                Map.of("nomEpreuve", nomEpreuve, "date", date, "lieuOuLien", lieuOuLien != null ? lieuOuLien : ""));
     }
 
     public void notifierConvocationEntretien(String emailCandidat, String date, String lieuOuLien) {

@@ -1528,3 +1528,39 @@ direct : `GET /api/admin/recrutement/sessions/{id}` (le service portait déjà
 `getSessionById`, jamais exposé) et `GET /api/admin/recrutement/criteres/{critereId}`
 (pour précharger le formulaire d'édition d'un critère sans redemander toute
 la liste de la session).
+
+### 63. Point 7 du backlog (point 60) : page dédiée à la création de test académique
+
+Deuxième chantier du backlog des neuf demandes du 2026-09-02, traité après
+les critères d'admission. Le tiroir latéral de `responsable-admission-tests`
+ne portait que candidat, épreuve, coefficient, note et date/heure — ni lieu,
+ni session visible (elle se déduisait en silence côté front d'une liste de
+sessions chargée à part). Éclaté en page dédiée
+(`/responsable-admission/tests/nouveau` et `/tests/:id`), la convocation
+groupée restant en modale (flux différent : plusieurs candidats à la fois,
+pas un formulaire d'un seul objet).
+
+**Champ `lieuOuLien` ajouté à `TestAcademique`** (migration V31), même nom que
+sur `Entretien`/`RendezVous`/`Seance` — pas de nouveau nom pour la même idée.
+Colonne nullable en base (une note sur des dossiers déjà en base ne devient
+pas invalide du jour au lendemain) ; le formulaire de création exige la
+valeur côté frontend. Propagé à la convocation groupée
+(`ConvocationTestGroupeeRequest`) et à l'email de convocation automatique
+(`NotificationService.notifierConvocationTest`, gabarit par défaut mis à jour).
+
+**La session n'était jamais renvoyée par l'API.** `TestAcademiqueResponse`
+expose désormais `sessionCandidatureId`/`sessionCandidatureLibelle`, dérivés
+du candidat via `CandidatureRepository.findByCandidatId(...).findFirst()` —
+même simplification que le frontend faisait déjà (`candidatureDe()` prend le
+premier match sans filtrer), cohérente avec l'invariant « un candidat n'a
+qu'une seule candidature active » posé par
+`CandidatController#soumettreCandidature`. Zéro test ne couvrait
+`TestAcademiqueService` avant ce passage ; `TestAcademiqueServiceTest` fige
+ces deux points (lieu conservé, session dérivée, absence de session ne fait
+pas planter la réponse).
+
+**Piège frontend découvert au passage** : `TestAcademiqueRequest`/`Response`
+côté Angular portaient déjà un champ `lieu` — jamais lu ni écrit par aucun
+composant, jamais relié à un `lieuOuLien` côté backend qui n'existait pas
+encore. Renommé en `lieuOuLien` pour rejoindre la convention du reste du
+dépôt plutôt que de garder deux noms pour la même idée.
