@@ -1,0 +1,86 @@
+<!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
+
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm mb-2 flex-wrap">
+  <a routerLink="/responsable-admission/sessions" class="hover:underline">Admissions</a>
+  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+  <a routerLink="/responsable-admission/sessions" class="hover:underline">Sessions</a>
+  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+  <a [routerLink]="['/responsable-admission/sessions', sessionId]" class="hover:underline">{{ session?.libelle || '…' }}</a>
+  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+  <a [routerLink]="['/responsable-admission/sessions', sessionId, 'criteres']" class="hover:underline">Critères personnalisés</a>
+  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+  <span class="font-medium text-on-surface">{{ critereId ? 'Modifier' : 'Nouveau critère' }}</span>
+</div>
+
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-stack-lg">
+  {{ critereId ? 'Modifier le critère' : 'Ajouter un critère' }}
+</h2>
+
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement…</div>
+
+<form *ngIf="!loading" [formGroup]="critereForm" (ngSubmit)="enregistrer()" class="max-w-2xl">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 space-y-5">
+    <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ formError }}</div>
+
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Nom du critère</label>
+      <input formControlName="libelle" placeholder="Ex : Diplôme en ingénierie" aria-label="Nom du critère"
+             class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="text"/>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Type de réponse</label>
+        <select formControlName="type" aria-label="Type de critère"
+                class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
+          <option *ngFor="let t of typesCritere" [value]="t.valeur">{{ t.libelle }}</option>
+        </select>
+      </div>
+      <div class="flex items-end pb-2">
+        <label class="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant">
+          <input formControlName="obligatoire" type="checkbox" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
+          Réponse obligatoire
+        </label>
+      </div>
+    </div>
+
+    <div *ngIf="critereForm.value.type === 'CHOIX'">
+      <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Options proposées</label>
+      <input formControlName="options" placeholder="Ex : Dakar, Thiès, Saint-Louis" aria-label="Options, séparées par une virgule"
+             class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="text"/>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Séparées par une virgule.</p>
+    </div>
+
+    <div class="border-t border-outline-variant pt-4">
+      <label class="block font-label-md text-label-md text-on-surface font-bold mb-1">Condition d'évaluation (optionnelle)</label>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mb-3">
+        Sans condition, le critère est purement informatif : collecté auprès du candidat, jamais éliminatoire.
+        Avec une condition, il compte dans le filtre automatique de présélection de la session.
+      </p>
+
+      <div *ngIf="critereForm.value.type === 'NUMERIQUE'">
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Valeur minimale exigée</label>
+        <input formControlName="valeurMinimale" type="number" placeholder="Ex : 12" aria-label="Valeur minimale exigée"
+               class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+      </div>
+
+      <div *ngIf="critereForm.value.type !== 'NUMERIQUE'">
+        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Réponse attendue</label>
+        <input formControlName="valeurAttendue" type="text" placeholder="Ex : Oui" aria-label="Réponse attendue"
+               class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+      </div>
+    </div>
+
+    <div class="border-t border-outline-variant pt-4">
+      <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Ordre d'affichage sur le formulaire</label>
+      <input formControlName="ordre" type="number" min="0" class="w-32 h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-3 mt-stack-lg">
+    <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="annuler()">Annuler</button>
+    <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+      {{ isSubmitting ? 'Enregistrement…' : 'Enregistrer' }}
+    </button>
+  </div>
+</form>

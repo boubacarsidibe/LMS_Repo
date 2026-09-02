@@ -115,6 +115,12 @@ public class SessionCandidatureService {
                 .collect(Collectors.toList());
     }
 
+    public CritereAdmissionResponse getCritere(Long critereId) {
+        CritereAdmissionPersonnalise critere = critereRepository.findById(critereId)
+                .orElseThrow(() -> new ResourceNotFoundException("Critère non trouvé avec l'ID: " + critereId));
+        return toCritereResponse(critere);
+    }
+
     public CritereAdmissionResponse creerCritere(Long sessionId, CritereAdmissionRequest request) {
         SessionCandidature session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session non trouvée avec l'ID: " + sessionId));

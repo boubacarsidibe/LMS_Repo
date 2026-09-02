@@ -152,6 +152,11 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(sessionService.getAllSessions());
     }
 
+    @GetMapping("/sessions/{id}")
+    public ResponseEntity<SessionCandidatureResponse> getSession(@PathVariable Long id) {
+        return ResponseEntity.ok(sessionService.getSessionById(id));
+    }
+
     @PostMapping("/sessions")
     public ResponseEntity<SessionCandidatureResponse> creerSession(
             @RequestBody SessionCandidatureRequest request) {
@@ -192,6 +197,11 @@ public class AdminRecrutementController {
     public ResponseEntity<CritereAdmissionResponse> creerCritere(@PathVariable Long id,
             @RequestBody CritereAdmissionRequest request) {
         return ResponseEntity.ok(sessionService.creerCritere(id, request));
+    }
+
+    @GetMapping("/criteres/{critereId}")
+    public ResponseEntity<CritereAdmissionResponse> getCritere(@PathVariable Long critereId) {
+        return ResponseEntity.ok(sessionService.getCritere(critereId));
     }
 
     @PutMapping("/criteres/{critereId}")

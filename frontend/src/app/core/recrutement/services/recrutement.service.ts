@@ -527,6 +527,10 @@ export class RecrutementService {
     return this.http.get<FormationOption[]>(`${this.baseUrl}/admin/recrutement/formations`);
   }
 
+  getSession(id: number): Observable<SessionCandidatureResponse> {
+    return this.http.get<SessionCandidatureResponse>(`${this.baseUrl}/admin/recrutement/sessions/${id}`);
+  }
+
   creerSession(request: SessionCandidatureRequest): Observable<SessionCandidatureResponse> {
     return this.http.post<SessionCandidatureResponse>(`${this.baseUrl}/admin/recrutement/sessions`, request);
   }
@@ -560,6 +564,10 @@ export class RecrutementService {
 
   creerCritere(sessionId: number, request: CritereAdmissionRequest): Observable<CritereAdmissionResponse> {
     return this.http.post<CritereAdmissionResponse>(`${this.baseUrl}/admin/recrutement/sessions/${sessionId}/criteres`, request);
+  }
+
+  getCritere(critereId: number): Observable<CritereAdmissionResponse> {
+    return this.http.get<CritereAdmissionResponse>(`${this.baseUrl}/admin/recrutement/criteres/${critereId}`);
   }
 
   modifierCritere(critereId: number, request: CritereAdmissionRequest): Observable<CritereAdmissionResponse> {
