@@ -13,8 +13,14 @@ export class RendezVousService {
   private http = inject(HttpClient);
   private api = `${environment.apiUrl}/rendez-vous`;
 
-  getPersonnel(): Observable<PersonnelProfil[]> {
-    return this.http.get<PersonnelProfil[]>(`${this.api}/personnel`);
+  /**
+   * Personnel consultable pour une prise de rendez-vous. {@code scope='PEDAGOGIE'}
+   * restreint au responsable pédagogique — l'unique interlocuteur des écoles
+   * partenaires et des entreprises.
+   */
+  getPersonnel(scope?: 'PEDAGOGIE'): Observable<PersonnelProfil[]> {
+    const params = scope ? { params: { scope } } : {};
+    return this.http.get<PersonnelProfil[]>(`${this.api}/personnel`, params);
   }
 
   getCreneauxLibres(personnelId: number): Observable<Creneau[]> {

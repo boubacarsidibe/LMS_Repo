@@ -38,6 +38,7 @@ export class PedagogieRelevesComponent implements OnInit {
 
   messageSucces = '';
   messageErreur = '';
+  releveEnCoursId: number | null = null;
 
   // --- Consultation du relevé courant, avant délivrance ---
   etudiantConsulte: EtudiantScolarite | null = null;
@@ -102,6 +103,27 @@ export class PedagogieRelevesComponent implements OnInit {
   fermerConsultation(): void {
     this.etudiantConsulte = null;
     this.releveCourant = null;
+  }
+
+  /** Télécharge le PDF officiel d'un relevé délivré (le jeton passe par l'intercepteur). */
+  telechargerReleve(releve: ReleveDelivre): void {
+    this.releveEnCoursId = releve.id;
+    this.reinitialiserMessages();
+    this.pedagogie.telechargerRelevePdf(releve.id).subscribe({
+      next: (blob) => {
+        this.releveEnCoursId = null;
+        const url = window.URL.createObjectURL(blob);
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = `INPG-releve-${releve.reference}.pdf`;
+        lien.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.releveEnCoursId = null;
+        this.messageErreur = 'Le relevé n’a pas pu être téléchargé.';
+      },
+    });
   }
 
   // ===================== Délivrance =====================

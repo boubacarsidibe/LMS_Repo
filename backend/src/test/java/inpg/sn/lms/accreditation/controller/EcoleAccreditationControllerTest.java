@@ -72,13 +72,33 @@ class EcoleAccreditationControllerTest {
         user.setId(7L);
     }
 
+    /** Requête de dépôt valide, coordonnées école + programme renseignés. */
+    private static DemandeAccreditationCreateRequest requete(String nomEcole) {
+        return new DemandeAccreditationCreateRequest(nomEcole, "Adresse", "77000000", null,
+                "Licence Forage & Production", "LICENCE", "ECOLE_PRIVEE_RECONNUE", 24, "2026-10-01");
+    }
+
     @Test
     @DisplayName("Champs obligatoires manquants : 400, rien n'est enregistré")
     void soumettre_sans_champs_obligatoires_est_refuse() {
         when(utilisateurCourant.utilisateur(authentication)).thenReturn(user);
 
         ResponseEntity<?> reponse = controller.soumettreDemande(
-                new DemandeAccreditationCreateRequest("", "Adresse", "77000000", null), authentication);
+                requete(""), authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(demandeRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Programme non décrit (intitulé / niveau / type de structure) : 400")
+    void soumettre_sans_programme_est_refuse() {
+        when(utilisateurCourant.utilisateur(authentication)).thenReturn(user);
+
+        ResponseEntity<?> reponse = controller.soumettreDemande(
+                new DemandeAccreditationCreateRequest("École X", "Adresse", "77000000", null,
+                        null, null, null, null, null),
+                authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verify(demandeRepository, never()).save(any());
@@ -92,7 +112,7 @@ class EcoleAccreditationControllerTest {
         when(utilisateurCourant.utilisateur(authentication)).thenReturn(user);
 
         ResponseEntity<?> reponse = controller.soumettreDemande(
-                new DemandeAccreditationCreateRequest("École X", "Adresse", "77000000", null), authentication);
+                requete("École X"), authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         verify(demandeRepository, never()).save(any());
@@ -112,7 +132,7 @@ class EcoleAccreditationControllerTest {
                 .thenReturn(List.of(active));
 
         ResponseEntity<?> reponse = controller.soumettreDemande(
-                new DemandeAccreditationCreateRequest("École X", "Adresse", "77000000", null), authentication);
+                requete("École X"), authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         verify(demandeRepository, never()).save(any());
@@ -139,8 +159,7 @@ class EcoleAccreditationControllerTest {
         when(roleRepository.findByCode("ROLE_ECOLE_FORMATION")).thenReturn(roleEcole);
 
         ResponseEntity<?> reponse = controller.soumettreDemande(
-                new DemandeAccreditationCreateRequest("École X", "Adresse", "77000000", "https://ecole.example"),
-                authentication);
+                requete("École X"), authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(user.getRoles()).extracting(Role::getCode).containsExactly("ROLE_ECOLE_FORMATION");
@@ -220,5 +239,42 @@ class EcoleAccreditationControllerTest {
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         verify(pieceRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Suppression d'une pièce sur une demande en cours : 204, ligne retirée")
+    void supprimer_piece_valide() {
+        EcoleFormation monEcole = new EcoleFormation(user, "Mon École", "Adresse", "77000000", null);
+        monEcole.setId(7L);
+        when(utilisateurCourant.ecoleFormation(authentication)).thenReturn(monEcole);
+        DemandeAccreditation demande = new DemandeAccreditation(monEcole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+        PieceAccreditation piece = new PieceAccreditation(EnumTypeDocumentAccreditation.CURRICULUM, demande, null);
+        piece.setId(9L);
+        when(pieceRepository.findById(9L)).thenReturn(Optional.of(piece));
+
+        ResponseEntity<?> reponse = controller.supprimerPiece(5L, 9L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        verify(pieceRepository).delete(piece);
+    }
+
+    @Test
+    @DisplayName("Suppression d'une pièce sur une demande déjà tranchée : 409")
+    void supprimer_piece_sur_demande_tranchee_est_refuse() {
+        EcoleFormation monEcole = new EcoleFormation(user, "Mon École", "Adresse", "77000000", null);
+        monEcole.setId(7L);
+        when(utilisateurCourant.ecoleFormation(authentication)).thenReturn(monEcole);
+        DemandeAccreditation demande = new DemandeAccreditation(monEcole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.REJETE);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+
+        ResponseEntity<?> reponse = controller.supprimerPiece(5L, 9L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        verify(pieceRepository, never()).delete(any());
     }
 }

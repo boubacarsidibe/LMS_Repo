@@ -76,7 +76,8 @@ class ScolariteCamaradesTest {
     void setUp() {
         controller = new ScolariteController(utilisateurCourant, matriculeService, coursRepository, seanceRepository,
                 supportService, progressionRepository, retourRepository, etudiantRepository, habilitation,
-                noteModuleService, releveNotesService, releveDelivranceService);
+                noteModuleService, releveNotesService, releveDelivranceService,
+                new inpg.sn.lms.espace_etudiant.service.RelevePdfService());
     }
 
     private void setId(Object entite, Long id) {

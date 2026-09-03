@@ -19,13 +19,19 @@ import org.springframework.web.bind.annotation.RestController;
 import inpg.sn.lms.auth.entity.Entreprise;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.EntrepriseRepository;
+import inpg.sn.lms.entreprise.dto.FicheTechniqueModuleRequest;
 import inpg.sn.lms.entreprise.dto.MessageEntrepriseDto;
 import inpg.sn.lms.entreprise.dto.ReponseDemandeRequest;
 import inpg.sn.lms.entreprise.entity.DemandeEntreprise;
+import inpg.sn.lms.entreprise.entity.FicheTechniqueModule;
 import inpg.sn.lms.entreprise.entity.MessageEntreprise;
 import inpg.sn.lms.entreprise.enums.EnumStatutDemandeEntreprise;
+import inpg.sn.lms.entreprise.enums.EnumStatutFicheModule;
 import inpg.sn.lms.entreprise.repository.DemandeEntrepriseRepository;
+import inpg.sn.lms.entreprise.repository.FicheTechniqueModuleRepository;
 import inpg.sn.lms.entreprise.repository.MessageEntrepriseRepository;
+import inpg.sn.lms.entreprise.service.EntrepriseNotificationService;
+import inpg.sn.lms.entreprise.service.FicheTechniqueModuleService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
 /**
@@ -46,14 +52,21 @@ public class PedagogieEntrepriseController {
     private final DemandeEntrepriseRepository demandeRepository;
     private final MessageEntrepriseRepository messageRepository;
     private final EntrepriseRepository entrepriseRepository;
+    private final FicheTechniqueModuleRepository ficheRepository;
+    private final FicheTechniqueModuleService ficheService;
+    private final EntrepriseNotificationService notificationService;
     private final UtilisateurCourantService utilisateurCourant;
 
     public PedagogieEntrepriseController(DemandeEntrepriseRepository demandeRepository,
             MessageEntrepriseRepository messageRepository, EntrepriseRepository entrepriseRepository,
-            UtilisateurCourantService utilisateurCourant) {
+            FicheTechniqueModuleRepository ficheRepository, FicheTechniqueModuleService ficheService,
+            EntrepriseNotificationService notificationService, UtilisateurCourantService utilisateurCourant) {
         this.demandeRepository = demandeRepository;
         this.messageRepository = messageRepository;
         this.entrepriseRepository = entrepriseRepository;
+        this.ficheRepository = ficheRepository;
+        this.ficheService = ficheService;
+        this.notificationService = notificationService;
         this.utilisateurCourant = utilisateurCourant;
     }
 
@@ -87,6 +100,72 @@ public class PedagogieEntrepriseController {
         }
         demandeRepository.save(demande);
         return ResponseEntity.ok(EntrepriseController.toDto(demande));
+    }
+
+    // ===================== Fiche technique de module =====================
+
+    /** Fiche technique rattachée à une demande (404 si aucune n'a encore été créée). */
+    @GetMapping("/demandes/{id}/fiche")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> fiche(@PathVariable Long id) {
+        FicheTechniqueModule fiche = ficheRepository.findByDemandeId(id).orElse(null);
+        if (fiche == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(ficheService.toDto(fiche));
+    }
+
+    /**
+     * Enregistre (crée ou remplace) la fiche technique d'une demande. La fiche
+     * naît en {@code BROUILLON}, invisible pour l'entreprise tant qu'elle n'est
+     * pas transmise. Une fiche déjà acceptée est figée.
+     */
+    @PutMapping("/demandes/{id}/fiche")
+    @Transactional
+    public ResponseEntity<?> enregistrerFiche(@PathVariable Long id, @RequestBody FicheTechniqueModuleRequest requete) {
+        DemandeEntreprise demande = demandeRepository.findById(id).orElse(null);
+        if (demande == null) {
+            return ResponseEntity.notFound().build();
+        }
+        FicheTechniqueModule fiche = ficheRepository.findByDemandeId(id)
+                .orElseGet(() -> new FicheTechniqueModule(demande));
+        if (fiche.getStatut() == EnumStatutFicheModule.ACCEPTEE) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Cette fiche a été acceptée par l'entreprise : elle ne peut plus être modifiée."));
+        }
+        ficheService.appliquer(fiche, requete);
+        return ResponseEntity.ok(ficheService.toDto(ficheRepository.save(fiche)));
+    }
+
+    /** Transmet la fiche à l'entreprise pour revue. Exige une fiche instruisable. */
+    @PutMapping("/demandes/{id}/fiche/transmettre")
+    @Transactional
+    public ResponseEntity<?> transmettreFiche(@PathVariable Long id) {
+        FicheTechniqueModule fiche = ficheRepository.findByDemandeId(id).orElse(null);
+        if (fiche == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (fiche.getStatut() == EnumStatutFicheModule.ACCEPTEE) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Cette fiche a déjà été acceptée par l'entreprise."));
+        }
+        if (!ficheService.estTransmissible(fiche)) {
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "La fiche doit comporter au minimum un intitulé, un objectif général et une journée de programme."));
+        }
+        fiche.setStatut(EnumStatutFicheModule.TRANSMISE);
+        fiche.setDateTransmission(LocalDateTime.now());
+        ficheRepository.save(fiche);
+
+        DemandeEntreprise demande = fiche.getDemande();
+        if (demande.getStatut() == EnumStatutDemandeEntreprise.SOUMISE) {
+            demande.setStatut(EnumStatutDemandeEntreprise.EN_COURS);
+            demandeRepository.save(demande);
+        }
+        Entreprise entreprise = demande.getEntreprise();
+        String email = entreprise.getUser() != null ? entreprise.getUser().getEmail() : null;
+        notificationService.notifierFicheTransmise(email, entreprise.getRaisonSociale(), fiche.getIntitule());
+        return ResponseEntity.ok(ficheService.toDto(fiche));
     }
 
     /** Messagerie privée avec une entreprise donnée. */

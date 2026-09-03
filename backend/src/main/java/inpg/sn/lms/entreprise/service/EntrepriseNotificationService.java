@@ -57,4 +57,29 @@ public class EntrepriseNotificationService {
         envoyerEmail(emailEntreprise, "Nouveau message entreprise",
                 "L'entreprise « " + raisonSociale + " » a envoyé un nouveau message dans sa messagerie privée.");
     }
+
+    /** Prévient l'entreprise que sa fiche technique de module est disponible pour revue. */
+    public void notifierFicheTransmise(String emailDestinataire, String raisonSociale, String intituleModule) {
+        if (emailDestinataire == null || emailDestinataire.isBlank()) {
+            return;
+        }
+        envoyerEmail(emailDestinataire, "Votre fiche technique de module est disponible",
+                "Bonjour,\n\nLa fiche technique du module « "
+                        + (intituleModule == null || intituleModule.isBlank() ? "formation sur mesure" : intituleModule)
+                        + " » proposé à « " + raisonSociale
+                        + " » est disponible dans votre espace. Vous pouvez l'accepter ou demander des ajustements.");
+    }
+
+    /** Prévient l'équipe pédagogique de la décision de l'entreprise sur la fiche. */
+    public void notifierDecisionFiche(String raisonSociale, boolean acceptee, String commentaire) {
+        if (acceptee) {
+            envoyerEmail(emailEntreprise, "Fiche technique acceptée",
+                    "L'entreprise « " + raisonSociale + " » a accepté la fiche technique du module. "
+                            + "La demande est clôturée.");
+        } else {
+            envoyerEmail(emailEntreprise, "Ajustements demandés sur la fiche technique",
+                    "L'entreprise « " + raisonSociale + " » demande des ajustements sur la fiche technique du module.\n\n"
+                            + "Commentaire : " + (commentaire != null ? commentaire : "Non précisé"));
+        }
+    }
 }

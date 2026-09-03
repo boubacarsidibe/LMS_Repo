@@ -238,13 +238,6 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'activites-personnel',
-        loadComponent: () =>
-          import('./features/personnel/pages/activites-personnel/activites-personnel.component').then(
-            (m) => m.ActivitesPersonnelComponent
-          ),
-      },
-      {
         path: 'rendez-vous',
         loadComponent: () =>
           import('./features/rendez-vous/pages/rendez-vous/rendez-vous.component').then(

@@ -1,6 +1,7 @@
 package inpg.sn.lms.config;
 
 import inpg.sn.lms.security.JwtRequestFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -56,6 +57,15 @@ public class SecurityConfig {
             // API REST Stateless -> Pas de CSRF ni de Session
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Jeton absent, illisible ou expiré -> 401 (et non le 403 par défaut de
+            // Spring Security). Sans ce point d'entrée, JwtRequestFilter laisse passer
+            // la requête non authentifiée et l'autorisation répond 403 : le front, qui
+            // ne réagit qu'au 401, ne détecte alors jamais la session expirée et les
+            // écrans « ne chargent plus » jusqu'au rechargement manuel. Un utilisateur
+            // authentifié mais sans le rôle requis continue de recevoir 403.
+            .exceptionHandling(handling -> handling.authenticationEntryPoint(
+                    (request, response, authException) ->
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentification requise")))
             
             
             .authenticationProvider(authenticationProvider())
@@ -133,11 +143,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/espace-etudiant/**").hasAnyRole("ETUDIANT", "FORMATEUR")
                 // Espace Alumni (TDR §C) : profil, situation professionnelle, relevés délivrés.
                 .requestMatchers("/api/espace-alumni/**").hasRole("ALUMNI")
-                // Suivi des activités du personnel INPG (TDR §I) : les trois rôles internes
-                // déjà établis dans ce dépôt comme « personnel », par opposition aux rôles
-                // candidats/étudiants/externes.
-                .requestMatchers("/api/personnel/**")
-                    .hasAnyRole("FORMATEUR", "RESPONSABLE_PEDAGOGIQUE", "RESPONSABLE_ADMISSION")
+                // Suivi des activités du personnel INPG (TDR §I) : réservé au responsable
+                // pédagogique, qui pilote seul ce suivi (décision produit). Le formateur et
+                // le responsable admission n'y ont plus accès.
+                .requestMatchers("/api/personnel/**").hasRole("RESPONSABLE_PEDAGOGIQUE")
                 // Gestion des rendez-vous (TDR §J) : « chaque utilisateur » peut consulter le
                 // personnel et demander un rendez-vous — pas de restriction de rôle au niveau de
                 // l'URL, les endpoints de gestion de créneaux/réponse restent verrouillés par

@@ -44,11 +44,15 @@ export class PersonnelService {
     return this.http.delete<void>(`${this.api}/activites/${id}`);
   }
 
-  urlRapportDepartement(departementId: number, mois: number, annee: number): string {
-    return `/api/personnel/rapports/departement/${departementId}?mois=${mois}&annee=${annee}`;
+  /** Rapport PDF d'un département (Blob : le serveur pose un nom de fichier daté). */
+  telechargerRapportDepartement(departementId: number, mois: number, annee: number): Observable<Blob> {
+    return this.http.get(`${this.api}/rapports/departement/${departementId}?mois=${mois}&annee=${annee}`, {
+      responseType: 'blob',
+    });
   }
 
-  urlRapportGlobal(mois: number, annee: number): string {
-    return `/api/personnel/rapports/global?mois=${mois}&annee=${annee}`;
+  /** Rapport PDF consolidé de tous les départements. */
+  telechargerRapportGlobal(mois: number, annee: number): Observable<Blob> {
+    return this.http.get(`${this.api}/rapports/global?mois=${mois}&annee=${annee}`, { responseType: 'blob' });
   }
 }

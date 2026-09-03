@@ -11,6 +11,8 @@ public record RendezVousDto(
         String personnelNom,
         Long demandeurId,
         String demandeurNom,
+        String demandeurRole,
+        String demandeurOrganisation,
         String modalite,
         String lieuOuLien,
         String motif,

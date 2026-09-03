@@ -1393,3 +1393,54 @@ n'est nommé nulle part (TDR ou dépôt), voir point 16. Plutôt que de laisser 
 blocage dormir dans ce journal, reposé directement à l'utilisateur dans la
 conversation — la seule voie pour le débloquer, le TDR n'apportant rien de
 plus qu'au point 16.
+
+### 60. Module d'accréditation aligné sur les référentiels officiels de la DRCQ
+
+Deux documents officiels déposés à la racine du dépôt (`Cadre de référence
+DRCQ.pdf`, rév. 19/01/2026 ; `Référentiel Accréditation Programme Oil & Gas
+DRCQ.pdf`, rév. 23/03/2026) fixent la doctrine que le module — bâti sur le seul
+TDR §F — n'appliquait pas. Corrections (migrations `V31`/`V32`, Phase 1) :
+
+- **L'accréditation porte sur un PROGRAMME**, pas l'établissement (Cadre §II).
+  `demandes_accreditation` gagne `intitule_programme`, `niveau_programme`
+  (`TECHNICIEN`…`AUTRE`), `type_structure` (les 4 structures éligibles du
+  Cadre §II.1), `effectif_cohorte`, `date_debut_cohorte`. Colonnes nullables :
+  les demandes de démonstration antérieures restent lisibles ; le formulaire
+  école les impose pour toute **nouvelle** soumission (validation applicative,
+  pas contrainte `NOT NULL`).
+- **Décision conditionnelle** (Cadre §IV.8) : `EnumStatutDemandeAccreditation`
+  gagne `ACCREDITE_SOUS_RESERVE` (le `statut` reste un `VARCHAR(30)`, aucune
+  migration d'enum), colonne `plan_actions` obligatoire pour ce cas. Endpoint
+  `PUT /demandes/{id}/accrediter-sous-reserve`, mêmes garde-fous que
+  l'accréditation pleine (dossier en cours, ≥ 1 avis).
+- **Validité 3 ans** (Cadre §V.4) : `date_expiration` = décision + 3 ans, posée
+  pour `ACCREDITE` et `ACCREDITE_SOUS_RESERVE`, servie à l'école, à l'évaluateur
+  et à la liste publique.
+- **Référentiel réel** : `criteres_accreditation` gagne `code` / `section` /
+  `ordre` ; les **31 conditions** (4 sections) sont amorcées par
+  `AccreditationReferentielInitializer` depuis
+  `data/referentiel-accreditation.json`, idempotent par `code` (ne réécrit pas un
+  critère retouché via le CRUD). `libelle` élargi à `VARCHAR(600)` (`V32`) : la
+  colonne « Condition » du PDF dépasse 200 caractères (2.1 notamment) — piège
+  vu au déploiement, le `CommandLineRunner` échouait après `Started`. La grille
+  de l'évaluateur s'affiche groupée par section avec un avancement par section.
+- **Pièces** alignées sur le Cadre §IV.1/§IV.4 : ajout de
+  `ENGAGEMENT_REFERENTIEL`, `PREUVE_RECONNAISSANCE`, `RAPPORT_AUTO_EVALUATION`
+  (requis), `ORGANIGRAMME`, `CV_CERTIFICATIONS_FORMATEURS`,
+  `RESULTATS_COHORTES_PRECEDENTES`, `REGLEMENT_INTERIEUR` (recommandés). Aucune
+  migration : `type_document` est un `VARCHAR(40)`.
+- **Nommage DRCQ** : l'espace évaluateur porte « Direction de la Régulation et
+  du Contrôle Qualité », les e-mails d'accréditation sont signés DRCQ.
+
+Un critère ad hoc « Corps enseignant qualifié » (code `NULL`), créé pendant la
+recette du lot précédent, coexiste sans heurt avec le référentiel amorcé —
+l'évaluateur peut le désactiver depuis le CRUD.
+
+**Non traité (décision de périmètre)** : la **Phase 2** (répercussion du §3 du
+Référentiel — heures de simulation 20 h/70 h, anglais professionnel, soft
+skills, crédits/volume horaire — sur `Formation` et le catalogue, migration
+`V33`) est planifiée mais non livrée. Un module « formation + certification des
+formateurs INPG » (Cadre §III.2, §V.3/V.5) reste hors périmètre : la
+certification du formateur est ici une **pièce** du dossier, pas un workflow
+géré. Les modalités financières (Cadre §V) sont hors LMS, réglées par
+convention.

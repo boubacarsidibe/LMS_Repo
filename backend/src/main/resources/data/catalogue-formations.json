@@ -87,6 +87,11 @@
     "niveau": "Master 2",
     "domaine": "Ingénierie",
     "duree": "12 mois",
+    "heuresSimulationLabo": 70,
+    "anglaisProfessionnel": true,
+    "softSkills": true,
+    "creditsTotaux": 120,
+    "volumeHoraireTotal": 900,
     "imageUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDrfUkHIoEEVDLPeGSLuk5TdJ01_NW-pys3UYPAlbCVINhzZJbtEfPjtbgcxpBmMcg8USGuYuIsogdAxHg-JHLhA__h8VLmTGzQmSWC7Hns3mUNU-gEKj67qXoPw1D5_cetLzfwJCZxvIRUfJAvKCqATAwPcZ7ZNlHcmda__UadZhoZLt_IBr8hMJ8_x_simo7IoXnyu06F5FcPMg6r2VxlOSE_Uf6FhfJoRh4wGkx3o167n_mPgzgXIg",
     "publiee": true,
     "ficheDetaillee": {
@@ -417,6 +422,10 @@
   {
     "code": "GEO-ING-RES-06",
     "intitule": "Géosciences et Ingénierie de Réservoir",
+    "heuresSimulationLabo": 70,
+    "anglaisProfessionnel": true,
+    "creditsTotaux": 120,
+    "volumeHoraireTotal": 900,
     "description": "Spécialisation avancée dans l'exploration et la gestion des réservoirs.",
     "niveau": "Master 2",
     "domaine": "Géosciences",

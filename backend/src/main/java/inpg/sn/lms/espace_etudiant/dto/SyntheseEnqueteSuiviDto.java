@@ -17,6 +17,7 @@ public record SyntheseEnqueteSuiviDto(
         LocalDateTime dateCreation,
         boolean active,
         int nombreReponses,
+        int nombreDestinataires,
         Double moyenneApplicationCompetences,
         Double moyenneImpactCarriere,
         List<String> derniersCommentaires) {

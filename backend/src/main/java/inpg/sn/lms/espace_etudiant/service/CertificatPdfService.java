@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.time.format.DateTimeFormatter;
 
 import javax.imageio.ImageIO;
 
@@ -38,6 +40,10 @@ import inpg.sn.lms.espace_etudiant.entity.Certificat;
 @Service
 public class CertificatPdfService {
 
+    private static final DateTimeFormatter FORMAT_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    /** Encodage réellement utilisé par Helvetica dans PDFBox. */
+    private static final Charset WINANSI = Charset.forName("windows-1252");
+
     private final String frontendUrl;
 
     public CertificatPdfService(@Value("${app.frontend-url}") String frontendUrl) {
@@ -45,6 +51,14 @@ public class CertificatPdfService {
     }
 
     public byte[] genererPdf(Certificat certificat) {
+        return genererPdf(certificat, null);
+    }
+
+    /**
+     * @param moyenneGenerale moyenne générale de l'étudiant sur 20, pour porter
+     *        une mention sur le document ; {@code null} pour l'omettre.
+     */
+    public byte[] genererPdf(Certificat certificat, Double moyenneGenerale) {
         try (PDDocument document = new PDDocument()) {
             PDRectangle paysage = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
             PDPage page = new PDPage(paysage);
@@ -69,24 +83,31 @@ public class CertificatPdfService {
                 content.stroke();
 
                 ecrireCentre(content, titreFont, 26, "CERTIFICAT DE FORMATION", largeur, hauteur - 100);
-                ecrireCentre(content, texteFont, 13, "Institut National du Petrole et du Gaz", largeur, hauteur - 130);
+                ecrireCentre(content, texteFont, 13, "Institut National du Pétrole et du Gaz", largeur, hauteur - 130);
 
                 String etudiantNom = String.join(" ", certificat.getEtudiant().getPrenom(), certificat.getEtudiant().getNom());
-                ecrireCentre(content, texteFont, 12, "Decerne a", largeur, hauteur - 190);
+                ecrireCentre(content, texteFont, 12, "Décerné à", largeur, hauteur - 190);
                 ecrireCentre(content, titreFont, 22, etudiantNom, largeur, hauteur - 220);
                 if (certificat.getEtudiant().getMatricule() != null) {
                     ecrireCentre(content, texteItalique, 10, "Matricule : " + certificat.getEtudiant().getMatricule(), largeur, hauteur - 240);
                 }
 
-                ecrireCentre(content, texteFont, 12, "pour avoir suivi avec succes la formation", largeur, hauteur - 280);
+                ecrireCentre(content, texteFont, 12, "pour avoir suivi avec succès la formation", largeur, hauteur - 280);
                 ecrireCentre(content, titreFont, 16, certificat.getIntituleFormation(), largeur, hauteur - 305);
                 if (certificat.getPromotion() != null) {
                     ecrireCentre(content, texteFont, 11, "Promotion : " + certificat.getPromotion().getLibelle(), largeur, hauteur - 328);
                 }
 
+                String mention = mention(moyenneGenerale);
+                if (mention != null) {
+                    ecrireCentre(content, texteFont, 11, "Mention : " + mention, largeur, hauteur - 348);
+                }
+
+                String dateEmission = certificat.getDateEmission() == null ? "-"
+                        : certificat.getDateEmission().format(FORMAT_DATE);
                 ecrireCentre(content, texteFont, 11,
-                        "Delivre le " + certificat.getDateEmission() + " - Reference : " + certificat.getReference(),
-                        largeur, hauteur - 365);
+                        "Délivré le " + dateEmission + "  -  Référence : " + certificat.getReference(),
+                        largeur, hauteur - (mention != null ? 378 : 365));
 
                 dessinerCachet(content, texteFont, titreFont, 110, 90);
                 content.setStrokingColor(Color.BLACK);
@@ -94,12 +115,14 @@ public class CertificatPdfService {
                 content.moveTo(200, 100);
                 content.lineTo(380, 100);
                 content.stroke();
-                ecrireCentre(content, texteItalique, 9, "Signature du responsable pedagogique", 580, 85);
+                ecrireCentre(content, texteItalique, 9, "Signature du responsable pédagogique", 580, 85);
 
                 byte[] qrPng = genererQrCode(frontendUrl + "/verification-certificat/" + certificat.getReference());
                 PDImageXObject qrImage = PDImageXObject.createFromByteArray(document, qrPng, "qr");
                 float qrTaille = 90;
-                content.drawImage(qrImage, largeur - qrTaille - 60, 60, qrTaille, qrTaille);
+                content.drawImage(qrImage, largeur - qrTaille - 60, 66, qrTaille, qrTaille);
+                ecrireCentreA(content, texteItalique, 7,
+                        "Vérifier l'authenticité", largeur - qrTaille / 2 - 60, 58);
             }
 
             ByteArrayOutputStream sortie = new ByteArrayOutputStream();
@@ -138,7 +161,7 @@ public class CertificatPdfService {
         content.stroke();
         content.setNonStrokingColor(new Color(180, 30, 30));
         ecrireCentreA(content, fontGras, 10, "INPG", x, y + 8);
-        ecrireCentreA(content, font, 8, "CERTIFIE", x, y - 8);
+        ecrireCentreA(content, font, 8, "CERTIFIÉ", x, y - 8);
         content.setNonStrokingColor(Color.BLACK);
     }
 
@@ -167,21 +190,58 @@ public class CertificatPdfService {
     }
 
     private void ecrireCentre(PDPageContentStream content, PDType1Font font, float taille, String texte, float largeurPage, float y) throws IOException {
-        float largeurTexte = font.getStringWidth(texte) / 1000 * taille;
+        String sur = texteSur(texte);
+        float largeurTexte = font.getStringWidth(sur) / 1000 * taille;
         float x = (largeurPage - largeurTexte) / 2;
-        ecrireTexte(content, font, taille, texte, x, y);
+        ecrireTexte(content, font, taille, sur, x, y);
     }
 
     private void ecrireCentreA(PDPageContentStream content, PDType1Font font, float taille, String texte, float centreX, float y) throws IOException {
-        float largeurTexte = font.getStringWidth(texte) / 1000 * taille;
-        ecrireTexte(content, font, taille, texte, centreX - largeurTexte / 2, y);
+        String sur = texteSur(texte);
+        float largeurTexte = font.getStringWidth(sur) / 1000 * taille;
+        ecrireTexte(content, font, taille, sur, centreX - largeurTexte / 2, y);
     }
 
     private void ecrireTexte(PDPageContentStream content, PDType1Font font, float taille, String texte, float x, float y) throws IOException {
         content.beginText();
         content.setFont(font, taille);
         content.newLineAtOffset(x, y);
-        content.showText(texte);
+        content.showText(texteSur(texte));
         content.endText();
+    }
+
+    /** Mention académique à partir de la moyenne /20, ou {@code null} si non disponible. */
+    private String mention(Double moyenneSur20) {
+        if (moyenneSur20 == null) {
+            return null;
+        }
+        if (moyenneSur20 >= 16) {
+            return "Très bien";
+        }
+        if (moyenneSur20 >= 14) {
+            return "Bien";
+        }
+        if (moyenneSur20 >= 12) {
+            return "Assez bien";
+        }
+        return "Passable";
+    }
+
+    /**
+     * Rend un texte sûr pour l'encodage WinAnsi de Helvetica : les accents
+     * latins passent tels quels, seul un caractère hors Latin-1 (émoji, alphabet
+     * non latin dans un nom saisi librement) est remplacé par '?', ce qui évite
+     * un {@code IllegalArgumentException} en pleine génération.
+     */
+    private static String texteSur(String valeur) {
+        if (valeur == null) {
+            return "";
+        }
+        StringBuilder resultat = new StringBuilder(valeur.length());
+        var encodeur = WINANSI.newEncoder();
+        for (char c : valeur.toCharArray()) {
+            resultat.append(encodeur.canEncode(c) ? c : '?');
+        }
+        return resultat.toString();
     }
 }

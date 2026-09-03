@@ -17,6 +17,9 @@ public interface DemandeAccreditationRepository extends JpaRepository<DemandeAcc
 
     List<DemandeAccreditation> findByStatutOrderByDateSoumissionDesc(EnumStatutDemandeAccreditation statut);
 
+    /** Programmes tranchés favorablement (pleine ou sous réserve), plus récents d'abord. */
+    List<DemandeAccreditation> findByStatutInOrderByDateDecisionDesc(List<EnumStatutDemandeAccreditation> statuts);
+
     /** Une demande active (non tranchée) pour cette école, s'il y en a une. */
     List<DemandeAccreditation> findByEcoleIdAndStatutIn(Long ecoleId, List<EnumStatutDemandeAccreditation> statuts);
 }

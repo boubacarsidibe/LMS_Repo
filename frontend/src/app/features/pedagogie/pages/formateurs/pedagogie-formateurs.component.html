@@ -17,7 +17,8 @@
   </header>
 
   <p *ngIf="messageSucces" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">{{ messageSucces }}</p>
-  <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
+  <!-- Erreur de page : seulement hors modale, sinon elle s'affiche derrière l'overlay. -->
+  <p *ngIf="messageErreur && !formulaireOuvert && !detailOuvert" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
 
   <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
 
@@ -90,6 +91,10 @@
         <span class="material-symbols-outlined text-[18px] text-secondary shrink-0">info</span>
         Un mot de passe provisoire est généré et envoyé par courriel au titulaire.
       </p>
+      <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3 flex items-start gap-2">
+        <span class="material-symbols-outlined text-[18px] shrink-0">error</span>
+        <span>{{ messageErreur }}</span>
+      </p>
       <div class="flex gap-stack-md pt-2">
         <button type="button" (click)="formulaireOuvert = false" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Annuler</button>
         <button type="button" [disabled]="!saisieValide || enregistrement" (click)="creer()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
@@ -143,6 +148,10 @@
             </ul>
           </dd>
         </div>
+        <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3 flex items-start gap-2">
+          <span class="material-symbols-outlined text-[18px] shrink-0">error</span>
+          <span>{{ messageErreur }}</span>
+        </p>
         <div class="flex gap-stack-md pt-2">
           <button type="button" (click)="fermerDetail()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Fermer</button>
           <button type="button" [disabled]="suppressionEnCours" (click)="supprimerDepuisDetail()"

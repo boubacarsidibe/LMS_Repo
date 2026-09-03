@@ -168,10 +168,17 @@ import { ScolariteService } from '../../services/scolarite.service';
                 </p>
                 <p class="font-body-sm text-body-sm text-on-surface-variant">{{ r.delivrePar }}</p>
               </div>
-              <p class="font-headline-sm text-headline-sm text-secondary tabular-nums shrink-0">
-                {{ r.moyenneGenerale !== null ? (r.moyenneGenerale | number: '1.1-1') : '—' }}<span
-                  class="font-body-sm text-body-sm text-on-surface-variant">/20</span>
-              </p>
+              <div class="flex items-center gap-3 shrink-0">
+                <p class="font-headline-sm text-headline-sm text-secondary tabular-nums">
+                  {{ r.moyenneGenerale !== null ? (r.moyenneGenerale | number: '1.1-1') : '—' }}<span
+                    class="font-body-sm text-body-sm text-on-surface-variant">/20</span>
+                </p>
+                <button type="button" (click)="telechargerReleve(r)" [disabled]="releveEnCoursId === r.id"
+                        class="flex items-center gap-1 px-3 py-2 rounded-lg border border-outline-variant font-label-sm text-label-sm text-on-surface hover:bg-surface-container transition-colors disabled:opacity-50">
+                  <span class="material-symbols-outlined text-[18px]">download</span>
+                  {{ releveEnCoursId === r.id ? 'Téléchargement…' : 'PDF' }}
+                </button>
+              </div>
             </div>
 
             <ul class="mt-4 border-t border-outline-variant/50 pt-3 space-y-1">
@@ -242,6 +249,7 @@ export class MesResultats implements OnInit {
   releves: ReleveDelivre[] = [];
   certificats: Certificat[] = [];
   telechargementEnCoursId: number | null = null;
+  releveEnCoursId: number | null = null;
   erreurTelechargement: string | null = null;
 
   constructor(
@@ -279,13 +287,33 @@ export class MesResultats implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const lien = document.createElement('a');
         lien.href = url;
-        lien.download = `certificat-${certificat.reference}.pdf`;
+        lien.download = `INPG-certificat-${certificat.reference}.pdf`;
         lien.click();
         window.URL.revokeObjectURL(url);
       },
       error: () => {
         this.telechargementEnCoursId = null;
         this.erreurTelechargement = "Le certificat n'a pas pu être téléchargé. Réessayez dans un instant.";
+      },
+    });
+  }
+
+  telechargerReleve(releve: ReleveDelivre): void {
+    this.releveEnCoursId = releve.id;
+    this.erreurTelechargement = null;
+    this.scolarite.telechargerRelevePdf(releve.id).subscribe({
+      next: (blob) => {
+        this.releveEnCoursId = null;
+        const url = window.URL.createObjectURL(blob);
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = `INPG-releve-${releve.reference}.pdf`;
+        lien.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.releveEnCoursId = null;
+        this.erreurTelechargement = "Le relevé n'a pas pu être téléchargé. Réessayez dans un instant.";
       },
     });
   }

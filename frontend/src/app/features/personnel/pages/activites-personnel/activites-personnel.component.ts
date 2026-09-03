@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../../../../core/auth/services/authService';
-import { MediaProtegeService } from '../../../espace-etudiants/services/media-protege.service';
+import { Observable } from 'rxjs';
 import {
   Activite,
   ActiviteSaisie,
@@ -38,8 +38,9 @@ const MOIS_LIBELLES = [
 })
 export class ActivitesPersonnelComponent implements OnInit {
   private personnelService = inject(PersonnelService);
-  private mediaProtege = inject(MediaProtegeService);
   private auth = inject(Auth);
+
+  telechargementRapport = false;
 
   moisLibelles = MOIS_LIBELLES;
   libellesType = LIBELLES_TYPE_ACTIVITE;
@@ -167,13 +168,43 @@ export class ActivitesPersonnelComponent implements OnInit {
     if (!this.filtreDepartementId) {
       return;
     }
-    this.mediaProtege.ouvrir(
-      this.personnelService.urlRapportDepartement(this.filtreDepartementId, this.filtreMois, this.filtreAnnee)
+    const departement = this.departements.find((d) => d.id === this.filtreDepartementId);
+    const code = departement ? departement.code : this.filtreDepartementId;
+    this.telechargerRapport(
+      this.personnelService.telechargerRapportDepartement(this.filtreDepartementId, this.filtreMois, this.filtreAnnee),
+      `INPG-activites-${code}-${this.filtreAnnee}-${this.deuxChiffres(this.filtreMois)}.pdf`
     );
   }
 
   ouvrirRapportGlobal(): void {
-    this.mediaProtege.ouvrir(this.personnelService.urlRapportGlobal(this.filtreMois, this.filtreAnnee));
+    this.telechargerRapport(
+      this.personnelService.telechargerRapportGlobal(this.filtreMois, this.filtreAnnee),
+      `INPG-activites-global-${this.filtreAnnee}-${this.deuxChiffres(this.filtreMois)}.pdf`
+    );
+  }
+
+  /** Récupère le PDF en Blob (le jeton passe par l'intercepteur) puis force un téléchargement nommé. */
+  private telechargerRapport(flux: Observable<Blob>, nom: string): void {
+    this.telechargementRapport = true;
+    flux.subscribe({
+      next: (blob) => {
+        this.telechargementRapport = false;
+        const url = URL.createObjectURL(blob);
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = nom;
+        lien.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.telechargementRapport = false;
+        this.messageErreur = 'Le rapport n’a pas pu être généré.';
+      },
+    });
+  }
+
+  private deuxChiffres(n: number): string {
+    return n < 10 ? `0${n}` : `${n}`;
   }
 
   get peutGererDepartements(): boolean {

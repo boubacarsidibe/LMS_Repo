@@ -5,7 +5,10 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -146,6 +149,20 @@ class PedagogieFormateursTest {
 
         controller.creerFormateur(requete);
 
+        verify(notificationService, never()).envoyerEmail(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Téléphone déjà pris : 400 avec un message explicite, aucune création tentée")
+    void telephone_deja_pris_est_refuse_avant_ecriture() {
+        FormateurDto requete = requeteValide("motdepasse");
+        when(formateurRepository.findByTelephone("770000000")).thenReturn(Optional.of(new Formateur()));
+
+        ResponseEntity<?> reponse = controller.creerFormateur(requete);
+
+        assertThat(reponse.getStatusCode().value()).isEqualTo(400);
+        assertThat(reponse.getBody().toString()).contains("téléphone");
+        verifyNoInteractions(formateurService);
         verify(notificationService, never()).envoyerEmail(anyString(), anyString(), anyString());
     }
 

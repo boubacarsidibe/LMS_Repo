@@ -66,6 +66,27 @@ public class Formation {
     @Column(columnDefinition = "text")
     private String ficheDetaillee;
 
+    // ===== Conformité au §3 du Référentiel d'accréditation DRCQ =====
+    // Heures de simulation en laboratoire INPG (§3.1 : 20 h technicien / 70 h ingénieur).
+    @Column(name = "heures_simulation_labo")
+    private Integer heuresSimulationLabo;
+
+    /** Le programme intègre un enseignement d'anglais professionnel (§3.4). */
+    @Column(name = "anglais_professionnel", columnDefinition = "boolean default false")
+    private boolean anglaisProfessionnel = false;
+
+    /** Le programme développe des compétences transversales / soft skills (§3.5). */
+    @Column(name = "soft_skills", columnDefinition = "boolean default false")
+    private boolean softSkills = false;
+
+    /** Nombre total de crédits pour l'obtention du diplôme (§3.6). */
+    @Column(name = "credits_totaux")
+    private Integer creditsTotaux;
+
+    /** Volume horaire total du programme, en heures (§3.6). */
+    @Column(name = "volume_horaire_total")
+    private Integer volumeHoraireTotal;
+
     /**
      * Cours au programme de la formation. Formation est le côté propriétaire :
      * c'est elle qui écrit dans la table de jointure {@code formation_cours}.
@@ -153,6 +174,46 @@ public class Formation {
 
     public void setFicheDetaillee(String ficheDetaillee) {
         this.ficheDetaillee = ficheDetaillee;
+    }
+
+    public Integer getHeuresSimulationLabo() {
+        return heuresSimulationLabo;
+    }
+
+    public void setHeuresSimulationLabo(Integer heuresSimulationLabo) {
+        this.heuresSimulationLabo = heuresSimulationLabo;
+    }
+
+    public boolean isAnglaisProfessionnel() {
+        return anglaisProfessionnel;
+    }
+
+    public void setAnglaisProfessionnel(boolean anglaisProfessionnel) {
+        this.anglaisProfessionnel = anglaisProfessionnel;
+    }
+
+    public boolean isSoftSkills() {
+        return softSkills;
+    }
+
+    public void setSoftSkills(boolean softSkills) {
+        this.softSkills = softSkills;
+    }
+
+    public Integer getCreditsTotaux() {
+        return creditsTotaux;
+    }
+
+    public void setCreditsTotaux(Integer creditsTotaux) {
+        this.creditsTotaux = creditsTotaux;
+    }
+
+    public Integer getVolumeHoraireTotal() {
+        return volumeHoraireTotal;
+    }
+
+    public void setVolumeHoraireTotal(Integer volumeHoraireTotal) {
+        this.volumeHoraireTotal = volumeHoraireTotal;
     }
 
     public Set<Cours> getCours() {

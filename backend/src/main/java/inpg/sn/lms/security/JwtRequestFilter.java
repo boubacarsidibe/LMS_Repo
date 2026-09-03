@@ -55,8 +55,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             try {
                 username = jwtUtils.extractUsername(jwtToken);
             } catch (Exception e) {
-                // Token invalide / expiré
-                System.out.println("JWT invalide ou expiré : " + e.getMessage());
+                // Token invalide / expiré : on laisse la requête continuer sans
+                // authentification. Le point d'entrée déclaré dans SecurityConfig
+                // renverra alors un 401 (et non un 403), que le front interprète
+                // comme une session expirée.
+                logger.debug("JWT invalide ou expiré : " + e.getMessage());
             }
         }
 

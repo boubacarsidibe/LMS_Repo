@@ -73,6 +73,7 @@ import inpg.sn.lms.espace_etudiant.service.EtudiantImportService;
 import inpg.sn.lms.espace_etudiant.service.EtudiantSuppressionService;
 import inpg.sn.lms.espace_etudiant.service.MatriculeService;
 import inpg.sn.lms.espace_etudiant.service.RapportQualitePdfService;
+import inpg.sn.lms.espace_etudiant.service.RelevePdfService;
 import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
 import inpg.sn.lms.espace_etudiant.service.ReleveNotesService;
 import inpg.sn.lms.recrutement.service.NotificationService;
@@ -123,6 +124,7 @@ public class PedagogieScolariteController {
     private final ReponseEnqueteSuiviRepository reponseEnqueteSuiviRepository;
     private final NotificationRepository notificationRepository;
     private final RapportQualitePdfService rapportQualitePdfService;
+    private final RelevePdfService relevePdfService;
     private final CompletionProgrammeService completionProgrammeService;
 
     public PedagogieScolariteController(PromotionRepository promotionRepository,
@@ -138,6 +140,7 @@ public class PedagogieScolariteController {
             AlumniProfilService alumniProfilService, EnqueteSuiviRepository enqueteSuiviRepository,
             ReponseEnqueteSuiviRepository reponseEnqueteSuiviRepository,
             NotificationRepository notificationRepository, RapportQualitePdfService rapportQualitePdfService,
+            RelevePdfService relevePdfService,
             CompletionProgrammeService completionProgrammeService) {
         this.promotionRepository = promotionRepository;
         this.formationRepository = formationRepository;
@@ -162,6 +165,7 @@ public class PedagogieScolariteController {
         this.reponseEnqueteSuiviRepository = reponseEnqueteSuiviRepository;
         this.notificationRepository = notificationRepository;
         this.rapportQualitePdfService = rapportQualitePdfService;
+        this.relevePdfService = relevePdfService;
         this.completionProgrammeService = completionProgrammeService;
     }
 
@@ -596,6 +600,20 @@ public class PedagogieScolariteController {
         return ResponseEntity.ok(releveDelivranceService.tous().stream().map(this::toReleveDto).toList());
     }
 
+    /** Version PDF d'un relevé délivré — le responsable pédagogique peut télécharger celui de n'importe quel étudiant. */
+    @GetMapping("/releves/{id}/pdf")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> relevePdf(@PathVariable Long id) {
+        ReleveNotes releve = releveDelivranceService.tous().stream()
+                .filter(r -> r.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+        if (releve == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return relevePdfService.reponsePdf(releve);
+    }
+
     /**
      * Délivre un relevé à un ou plusieurs étudiants.
      *
@@ -751,23 +769,40 @@ public class PedagogieScolariteController {
     }
 
     /**
-     * Rapport qualité global en PDF (TDR §G, besoin B5), consolidant le suivi
-     * qualité des cours et les campagnes d'enquête de suivi — sans rien
-     * recalculer, uniquement mis en page à partir de {@link #suiviQualite()}
-     * et {@link #enquetesSuivi()} pour ne jamais diverger de l'écran.
+     * Rapport PDF des avis des étudiants sur les cours (TDR §G, besoin B5).
+     *
+     * <p>Distinct du rapport d'enquêtes de suivi : deux lectures, deux publics.
+     * Rien n'est recalculé — mise en page de {@link #suiviQualite()}.
      */
-    @GetMapping("/qualite/rapport")
+    @GetMapping("/qualite/rapport/avis-cours")
     @Transactional(readOnly = true)
-    public ResponseEntity<?> rapportQualite() {
+    public ResponseEntity<?> rapportAvisCours() {
         QualiteCoursDto qualiteCours = (QualiteCoursDto) suiviQualite().getBody();
+        byte[] pdf = rapportQualitePdfService.genererRapportAvisCours(qualiteCours);
+        return pdfEnPieceJointe(pdf, "INPG-avis-cours-" + rapportQualitePdfService.suffixeDuJour() + ".pdf");
+    }
+
+    /**
+     * Rapport PDF des enquêtes de suivi de carrière des diplômés (TDR §G).
+     *
+     * <p>Mise en page de {@link #enquetesSuivi()}, sans rien recalculer.
+     */
+    @GetMapping("/qualite/rapport/enquetes-suivi")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> rapportEnquetesSuivi() {
         List<SyntheseEnqueteSuiviDto> enquetes = enqueteSuiviRepository.findAllByOrderByDateCreationDesc().stream()
                 .map(this::toSyntheseDto)
                 .toList();
-        byte[] pdf = rapportQualitePdfService.genererPdf(qualiteCours, enquetes);
+        byte[] pdf = rapportQualitePdfService.genererRapportEnquetes(enquetes);
+        return pdfEnPieceJointe(pdf,
+                "INPG-enquetes-suivi-carriere-" + rapportQualitePdfService.suffixeDuJour() + ".pdf");
+    }
+
+    private ResponseEntity<byte[]> pdfEnPieceJointe(byte[] pdf, String nomFichier) {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.inline().filename("rapport-qualite.pdf").build().toString())
+                        ContentDisposition.attachment().filename(nomFichier).build().toString())
                 .body(pdf);
     }
 
@@ -850,6 +885,10 @@ public class PedagogieScolariteController {
                 enquete.getDateCreation(),
                 enquete.isActive(),
                 (int) reponseEnqueteSuiviRepository.countByEnqueteId(enquete.getId()),
+                // Population alumni visée par une campagne : approchée par l'effectif
+                // alumni courant (tous sont notifiés au lancement). Sert au taux de
+                // réponse du rapport, pas à un décompte nominatif.
+                (int) alumniProfilRepository.count(),
                 arrondi(reponseEnqueteSuiviRepository.moyenneApplicationCompetences(enquete.getId())),
                 arrondi(reponseEnqueteSuiviRepository.moyenneImpactCarriere(enquete.getId())),
                 commentaires);

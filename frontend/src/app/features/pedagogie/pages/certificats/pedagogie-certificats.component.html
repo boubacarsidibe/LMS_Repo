@@ -14,7 +14,8 @@
   </header>
 
   <p *ngIf="messageSucces" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">{{ messageSucces }}</p>
-  <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
+  <!-- Erreur de page : seulement hors modale, sinon elle s'affiche derrière l'overlay. -->
+  <p *ngIf="messageErreur && !formulaireOuvert" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
 
   <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
 
@@ -86,6 +87,16 @@
         Le certificat est délivré au nom de l’institut : il porte
         « INPG — Direction pédagogique », et non votre nom.
       </p>
+
+      <div *ngIf="messageErreur" class="bg-error-container/20 rounded-lg px-4 py-3 space-y-1">
+        <p class="font-body-sm text-body-sm text-error flex items-start gap-2">
+          <span class="material-symbols-outlined text-[18px] shrink-0">error</span>
+          <span>{{ messageErreur }}</span>
+        </p>
+        <ul *ngIf="coursNonTermines.length" class="list-disc list-inside font-body-sm text-body-sm text-error/90 pl-1">
+          <li *ngFor="let c of coursNonTermines">{{ c }}</li>
+        </ul>
+      </div>
 
       <div class="flex gap-stack-md pt-2">
         <button type="button" (click)="formulaireOuvert = false" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Annuler</button>
