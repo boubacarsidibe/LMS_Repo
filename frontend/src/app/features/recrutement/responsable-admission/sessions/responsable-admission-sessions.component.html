@@ -23,7 +23,7 @@
       (openChange)="exportModalOpen = $event"
       (exporter)="exporter($event)">
     </app-export-columns-modal>
-    <button type="button" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md" (click)="openDrawer()">
+    <button type="button" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md" (click)="nouvelleSession()">
       <span class="material-symbols-outlined text-[18px]">add</span>
       Nouvelle Session
     </button>
@@ -61,7 +61,7 @@
     </div>
     <h3 class="font-headline-lg text-headline-lg text-primary">{{ nbActives }}</h3>
   </button>
-  <button type="button" [disabled]="!prochaineFermeture" (click)="prochaineFermeture && openDrawer(prochaineFermeture)" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group disabled:hover:border-outline-variant disabled:cursor-default">
+  <button type="button" [disabled]="!prochaineFermeture" (click)="prochaineFermeture && voirSession(prochaineFermeture)" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group disabled:hover:border-outline-variant disabled:cursor-default">
     <div class="flex items-center justify-between mb-4">
       <p class="font-label-md text-label-md text-on-surface-variant">Prochaine Clôture</p>
       <span class="material-symbols-outlined text-on-surface-variant opacity-70">timer</span>
@@ -123,7 +123,7 @@
       </tr>
     </thead>
     <tbody class="divide-y divide-outline-variant text-on-surface font-body-sm text-body-sm">
-      <tr *ngFor="let s of sessionsFiltrees" (click)="openDrawer(s)" class="cursor-pointer hover:bg-surface-container-low transition-colors">
+      <tr *ngFor="let s of sessionsFiltrees" (click)="voirSession(s)" class="cursor-pointer hover:bg-surface-container-low transition-colors">
         <td class="px-6 py-4 font-medium">{{ s.libelle }}</td>
         <td class="px-6 py-4 text-on-surface-variant">{{ s.dateOuverture | date:'dd MMM yyyy' }}</td>
         <td class="px-6 py-4 text-on-surface-variant">{{ s.dateFermeture | date:'dd MMM yyyy' }}</td>
@@ -145,7 +145,7 @@
           </div>
         </td>
         <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
-          <button type="button" (click)="openDrawer(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors" title="Modifier">
+          <button type="button" (click)="voirSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors" title="Modifier">
             <span class="material-symbols-outlined text-[20px]">edit</span>
           </button>
           <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded transition-colors" title="Supprimer">
@@ -156,124 +156,3 @@
     </tbody>
   </table>
 </div>
-
-<!-- Drawer Overlay -->
-<div class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 transition-opacity duration-300" [class.hidden]="!drawerOpen" (click)="closeDrawer()"></div>
-
-<!-- Side Drawer -->
-<aside class="fixed top-0 right-0 h-full w-full max-w-md bg-surface shadow-[0_12px_32px_rgba(19,23,65,0.1)] z-50 transform transition-transform duration-300 ease-in-out flex flex-col border-l border-outline-variant" [class.translate-x-full]="!drawerOpen" [class.translate-x-0]="drawerOpen">
-  <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
-    <h2 class="font-headline-sm text-headline-sm text-primary">{{ sessionEnEdition ? 'Modifier la session' : 'Créer une session' }}</h2>
-    <button type="button" class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" (click)="closeDrawer()"><span class="material-symbols-outlined">close</span></button>
-  </div>
-  <form [formGroup]="sessionForm" (ngSubmit)="enregistrer()" class="flex-1 flex flex-col overflow-y-auto">
-    <div class="flex-1 overflow-y-auto p-6 space-y-6">
-      <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ formError }}</div>
-      <div class="space-y-4">
-        <div>
-          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Intitulé de la formation</label>
-          <input formControlName="libelle" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" placeholder="Ex: Master Data Science 2025" type="text"/>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date d'ouverture</label>
-            <input formControlName="dateOuverture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
-          </div>
-          <div>
-            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date limite</label>
-            <input formControlName="dateFermeture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
-          </div>
-        </div>
-        <label class="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant">
-          <input formControlName="estOuverte" type="checkbox" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
-          Session ouverte aux candidatures
-        </label>
-      </div>
-
-      <div class="border-t border-outline-variant pt-4">
-        <label class="flex items-center justify-between gap-2 cursor-pointer">
-          <span class="font-label-md text-label-md text-on-surface font-bold">Filtre automatique de présélection</span>
-          <button type="button" (click)="sessionForm.get('criteresActifs')!.setValue(!sessionForm.value.criteresActifs)" role="switch" [attr.aria-checked]="sessionForm.value.criteresActifs"
-                  class="relative w-11 h-6 rounded-full transition-colors shrink-0" [class.bg-secondary]="sessionForm.value.criteresActifs" [class.bg-outline-variant]="!sessionForm.value.criteresActifs">
-            <span class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform" [class.translate-x-5]="sessionForm.value.criteresActifs"></span>
-          </button>
-        </label>
-        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Les candidatures qui ne remplissent pas ces critères sont automatiquement rejetées à la soumission ; les autres passent directement en présélection.</p>
-
-        <div class="space-y-4 mt-4" [class.opacity-50]="!sessionForm.value.criteresActifs">
-          <div>
-            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Niveau d'études minimum requis</label>
-            <select formControlName="criteresNiveauEtudeMinimum" [disabled]="!sessionForm.value.criteresActifs" aria-label="Niveau d'études minimum"
-                    class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
-              <option [ngValue]="null">-- Aucune contrainte --</option>
-              <option *ngFor="let n of niveaux" [value]="n">{{ n }}</option>
-            </select>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Âge minimum</label>
-              <input formControlName="criteresAgeMinimum" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="100" placeholder="Ex: 18"
-                     class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
-            </div>
-            <div>
-              <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Âge maximum</label>
-              <input formControlName="criteresAgeMaximum" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="100" placeholder="Ex: 45"
-                     class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Genre requis</label>
-              <select formControlName="criteresGenre" [disabled]="!sessionForm.value.criteresActifs" aria-label="Genre requis"
-                      class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
-                <option [ngValue]="null">-- Aucune contrainte --</option>
-                <option value="Homme">Homme</option>
-                <option value="Femme">Femme</option>
-              </select>
-            </div>
-            <div>
-              <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Expérience minimale (années)</label>
-              <input formControlName="criteresExperienceMinimale" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="60" placeholder="Ex: 2"
-                     class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="border-t border-outline-variant pt-4">
-        <label class="block font-label-md text-label-md text-on-surface font-bold mb-1">Seuil de réussite des tests académiques</label>
-        <p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Note minimale sur 20 pour être considéré « admissible » à cette session (TDR : pass/fail défini par l'INPG).</p>
-        <input formControlName="seuilReussiteTest" type="number" min="0" max="20" step="0.5" placeholder="Ex: 10"
-               class="w-32 h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
-      </div>
-
-      <div class="border-t border-outline-variant pt-4">
-        <label class="block font-label-md text-label-md text-on-surface font-bold mb-1">Prochaines étapes affichées au candidat admis</label>
-        <p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Ces trois informations apparaissent sur l'écran de suivi une fois le candidat admis. Laisser vide si non applicable.</p>
-        <div class="space-y-3">
-          <div>
-            <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Frais de scolarité</label>
-            <input formControlName="infoFraisScolarite" placeholder="Ex: Procédez au règlement avant le 15 décembre."
-                   class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="text"/>
-          </div>
-          <div>
-            <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Carte étudiante</label>
-            <input formControlName="infoCarteEtudiante" placeholder="Ex: Votre carte sera disponible en janvier."
-                   class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="text"/>
-          </div>
-          <div>
-            <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Rentrée</label>
-            <input formControlName="infoRentree" placeholder="Ex: Journée d'intégration le 15 janvier."
-                   class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="text"/>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="p-6 border-t border-outline-variant bg-surface-container-low flex justify-end gap-3">
-      <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="closeDrawer()">Annuler</button>
-      <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
-        {{ isSubmitting ? 'Enregistrement…' : (sessionEnEdition ? 'Enregistrer' : 'Créer la session') }}
-      </button>
-    </div>
-  </form>
-</aside>

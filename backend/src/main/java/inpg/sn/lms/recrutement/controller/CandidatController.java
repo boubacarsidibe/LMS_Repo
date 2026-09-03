@@ -17,13 +17,16 @@ import inpg.sn.lms.recrutement.dto.PaiementRequest;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.entity.BrouillonCandidature;
 import inpg.sn.lms.recrutement.entity.Candidature;
+import inpg.sn.lms.recrutement.entity.CritereAdmissionPersonnalise;
 import inpg.sn.lms.recrutement.entity.FichierStocke;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
+import inpg.sn.lms.recrutement.entity.ReponseCritereCandidature;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.repository.BrouillonCandidatureRepository;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
+import inpg.sn.lms.recrutement.repository.CritereAdmissionPersonnaliseRepository;
 import inpg.sn.lms.recrutement.repository.PieceJustificativeRepository;
 import inpg.sn.lms.recrutement.repository.EntretienRepository;
 import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
@@ -125,6 +128,7 @@ public class CandidatController {
     private final ConvocationPdfService convocationPdfService;
     private final LettreAdmissionPdfService lettreAdmissionPdfService;
     private final ObjectMapper objectMapper;
+    private final CritereAdmissionPersonnaliseRepository critereRepository;
 
     @Value("${app.admission.email:admin@inpg.sn}")
     private String emailAdmission;
@@ -147,8 +151,10 @@ public class CandidatController {
             EntretienService entretienService,
             ConvocationPdfService convocationPdfService,
             LettreAdmissionPdfService lettreAdmissionPdfService,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            CritereAdmissionPersonnaliseRepository critereRepository) {
         this.objectMapper = objectMapper;
+        this.critereRepository = critereRepository;
         this.testAcademiqueRepository = testAcademiqueRepository;
         this.entretienRepository = entretienRepository;
         this.entretienService = entretienService;
@@ -259,6 +265,7 @@ public class CandidatController {
             // et effaçait la décision du responsable d'admission. Le seul garde-fou est
             // celui de l'étape 2, qui a déjà écarté ces dossiers — ne pas appeler cette
             // méthode depuis un autre chemin sans reproduire ce contrôle.
+            enregistrerReponsesCriteres(existante, existante.getSessionCandidature(), request.getReponsesCriteres());
             existante.soumettre(); // passe le statut à SOUMIS + date
             candidatureRepository.save(existante);
             garantirRoleCandidat(user);
@@ -283,6 +290,7 @@ public class CandidatController {
         candidature.setDateSoumission(LocalDateTime.now());
         candidature.setCandidat(candidat);
         candidature.setSessionCandidature(session);
+        enregistrerReponsesCriteres(candidature, session, request.getReponsesCriteres());
 
         Candidature saved = candidatureRepository.save(candidature);
         garantirRoleCandidat(user);
@@ -308,6 +316,43 @@ public class CandidatController {
                         + "Session : " + session.getLibelle());
 
         return ResponseEntity.ok(candidatureService.getCandidatureById(saved.getId()));
+    }
+
+    /**
+     * Valide les critères personnalisés actifs et obligatoires de la session, puis
+     * remplace les réponses de la candidature par celles reçues. Un critère retiré
+     * ({@code actif=false}) n'est ni exigé, ni écrasé s'il portait déjà une réponse.
+     */
+    private void enregistrerReponsesCriteres(Candidature candidature, SessionCandidature session,
+            Map<Long, String> reponsesRecues) {
+        Map<Long, String> reponses = reponsesRecues == null ? Map.of() : reponsesRecues;
+        List<CritereAdmissionPersonnalise> criteresActifs = critereRepository
+                .findBySessionCandidatureIdAndActifTrueOrderByOrdreAsc(session.getId());
+
+        List<String> manquants = criteresActifs.stream()
+                .filter(CritereAdmissionPersonnalise::isObligatoire)
+                .filter(c -> {
+                    String valeur = reponses.get(c.getId());
+                    return valeur == null || valeur.isBlank();
+                })
+                .map(CritereAdmissionPersonnalise::getLibelle)
+                .toList();
+        if (!manquants.isEmpty()) {
+            throw new BusinessException("Critère(s) requis manquant(s) : " + String.join(", ", manquants));
+        }
+
+        candidature.getReponsesCriteres().clear();
+        for (CritereAdmissionPersonnalise critere : criteresActifs) {
+            String valeur = reponses.get(critere.getId());
+            if (valeur == null || valeur.isBlank()) {
+                continue;
+            }
+            ReponseCritereCandidature reponse = new ReponseCritereCandidature();
+            reponse.setCandidature(candidature);
+            reponse.setCritere(critere);
+            reponse.setValeur(valeur.trim());
+            candidature.getReponsesCriteres().add(reponse);
+        }
     }
 
     /**

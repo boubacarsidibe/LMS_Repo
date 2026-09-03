@@ -1,5 +1,5 @@
 -- =====================================================================
--- V31 — Accréditation : la demande porte sur un PROGRAMME, décision
+-- V33 — Accréditation : la demande porte sur un PROGRAMME, décision
 --       conditionnelle, validité 3 ans, référentiel DRCQ codifié
 -- =====================================================================
 --

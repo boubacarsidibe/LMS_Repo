@@ -4,6 +4,7 @@ import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -14,9 +15,12 @@ import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.auth.repository.CandidatRepository;
 import inpg.sn.lms.recrutement.dto.CandidatureRequest;
 import inpg.sn.lms.recrutement.dto.CandidatureResponse;
+import inpg.sn.lms.recrutement.dto.FiltreCriteresResponse;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.dto.PieceJustificativeResponse;
+import inpg.sn.lms.recrutement.dto.ReponseCritereResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
+import inpg.sn.lms.recrutement.entity.ReponseCritereCandidature;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
@@ -36,6 +40,47 @@ public class CandidatureService {
         this.candidatureRepository = candidatureRepository;
         this.sessionCandidatureRepository = sessionCandidatureRepository;
         this.candidatRepository = candidatRepository;
+    }
+
+    /**
+     * Filtre automatique de premier niveau (TDR 3.1.1) : évalue chaque dossier SOUMIS
+     * de la session par rapport à ses critères (de base + personnalisés) et bascule en
+     * présélection ou rejette en conséquence. Déclenché à la main par le responsable
+     * admission (jamais un effet de bord de la soumission — voir CandidatController),
+     * afin que chaque dossier reste visible à l'état SOUMIS le temps de la revue.
+     */
+    public FiltreCriteresResponse appliquerFiltreCriteres(Long sessionId) {
+        SessionCandidature session = sessionCandidatureRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session non trouvée avec l'ID: " + sessionId));
+        if (!session.isCriteresActifs()) {
+            throw new BusinessException("Le filtre de critères n'est pas activé pour cette session.");
+        }
+
+        List<Candidature> soumis = candidatureRepository.findBySessionCandidatureId(sessionId).stream()
+                .filter(c -> c.getStatut() == EnumStatutCandidature.SOUMIS)
+                .toList();
+
+        int preselectionnes = 0;
+        int rejetes = 0;
+        for (Candidature candidature : soumis) {
+            Map<Long, String> reponses = candidature.getReponsesCriteres().stream()
+                    .collect(Collectors.toMap(r -> r.getCritere().getId(), ReponseCritereCandidature::getValeur));
+            if (session.respecteCriteres(candidature.getCandidat(), reponses)) {
+                candidature.setStatut(EnumStatutCandidature.EN_COURS_DE_PRESELECTION);
+                preselectionnes++;
+            } else {
+                candidature.setStatut(EnumStatutCandidature.REJETE);
+                candidature.setMotifRejet("Critères de présélection de la session non remplis (filtre automatique).");
+                rejetes++;
+            }
+            candidatureRepository.save(candidature);
+        }
+
+        return FiltreCriteresResponse.builder()
+                .total(soumis.size())
+                .preselectionnes(preselectionnes)
+                .rejetes(rejetes)
+                .build();
     }
 
     // creerBrouillon() et soumettreCandidature() vivaient ici sans aucun appelant :
@@ -196,6 +241,13 @@ public class CandidatureService {
                 .informationsProfessionnelles(c.getInformationsProfessionnelles())
                 .piecesJustificatives(pieces)
                 .paiement(paiementResponse)
+                .reponsesCriteres(c.getReponsesCriteres().stream()
+                        .map(r -> ReponseCritereResponse.builder()
+                                .critereId(r.getCritere().getId())
+                                .libelle(r.getCritere().getLibelle())
+                                .valeur(r.getValeur())
+                                .build())
+                        .collect(Collectors.toList()))
                 .build();
     }
 }

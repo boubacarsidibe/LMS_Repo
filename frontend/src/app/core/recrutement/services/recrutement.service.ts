@@ -31,6 +31,39 @@ export interface SessionCandidatureResponse {
   infoFraisScolarite: string | null;
   infoCarteEtudiante: string | null;
   infoRentree: string | null;
+  /** Critères ajoutés librement par le responsable admission, en plus des critères de base ci-dessus. */
+  criteresPersonnalises: CritereAdmissionResponse[];
+}
+
+export type EnumTypeCritere = 'NUMERIQUE' | 'TEXTE' | 'BOOLEEN' | 'CHOIX';
+
+export interface CritereAdmissionResponse {
+  id: number;
+  libelle: string;
+  type: EnumTypeCritere;
+  obligatoire: boolean;
+  /** Options proposées (type CHOIX), séparées par des virgules. */
+  options: string | null;
+  valeurMinimale: number | null;
+  valeurAttendue: string | null;
+  ordre: number;
+  actif: boolean;
+}
+
+export interface CritereAdmissionRequest {
+  libelle: string;
+  type: EnumTypeCritere;
+  obligatoire: boolean;
+  options: string | null;
+  valeurMinimale: number | null;
+  valeurAttendue: string | null;
+  ordre: number;
+}
+
+export interface FiltreCriteresResponse {
+  total: number;
+  preselectionnes: number;
+  rejetes: number;
 }
 
 /** Compte rendu d'un envoi groupé (relance dossiers incomplets ou paiements impayés). */
@@ -44,6 +77,14 @@ export interface CandidatureRequest {
   informationsPersonnelles: string;
   informationsAcademiques: string;
   informationsProfessionnelles: string;
+  /** Réponses aux critères personnalisés de la session : clé = id du critère. */
+  reponsesCriteres?: { [critereId: number]: string };
+}
+
+export interface ReponseCritereResponse {
+  critereId: number;
+  libelle: string;
+  valeur: string | null;
 }
 
 export interface CandidatureResponse {
@@ -72,6 +113,7 @@ export interface CandidatureResponse {
   sessionInfoRentree: string | null;
   piecesJustificatives: PieceJustificativeResponse[];
   paiement: PaiementResponse | null;
+  reponsesCriteres: ReponseCritereResponse[];
 }
 
 export interface PieceJustificativeResponse {
@@ -143,6 +185,7 @@ export interface ConvocationTestGroupeeRequest {
   nomEpreuve: string;
   coefficient: number;
   dateEpreuve: string;
+  lieuOuLien: string | null;
 }
 
 export interface ConvocationEntretienGroupeeRequest {
@@ -156,7 +199,7 @@ export interface TestAcademiqueRequest {
   coefficient: number;
   noteObtenue: number | null;
   dateEpreuve: string;
-  lieu: string | null;
+  lieuOuLien: string | null;
   candidatId: number;
 }
 
@@ -166,8 +209,10 @@ export interface TestAcademiqueResponse {
   coefficient: number;
   noteObtenue: number | null;
   dateEpreuve: string;
-  lieu: string | null;
+  lieuOuLien: string | null;
   candidatId: number;
+  sessionCandidatureId: number | null;
+  sessionCandidatureLibelle: string | null;
 }
 
 export interface EntretienRequest {
@@ -485,6 +530,10 @@ export class RecrutementService {
     return this.http.get<FormationOption[]>(`${this.baseUrl}/admin/recrutement/formations`);
   }
 
+  getSession(id: number): Observable<SessionCandidatureResponse> {
+    return this.http.get<SessionCandidatureResponse>(`${this.baseUrl}/admin/recrutement/sessions/${id}`);
+  }
+
   creerSession(request: SessionCandidatureRequest): Observable<SessionCandidatureResponse> {
     return this.http.post<SessionCandidatureResponse>(`${this.baseUrl}/admin/recrutement/sessions`, request);
   }
@@ -503,6 +552,37 @@ export class RecrutementService {
       colonnes.forEach((c) => (params = params.append('colonnes', c)));
     }
     return this.http.get(`${this.baseUrl}/admin/recrutement/sessions/export`, { responseType: 'blob', params });
+  }
+
+  /** Filtre automatique de premier niveau (TDR 3.1.1) : présélectionne ou rejette les dossiers SOUMIS de la session. */
+  appliquerFiltreCriteres(sessionId: number): Observable<FiltreCriteresResponse> {
+    return this.http.post<FiltreCriteresResponse>(
+      `${this.baseUrl}/admin/recrutement/sessions/${sessionId}/appliquer-filtre-criteres`, {});
+  }
+
+  // Critères personnalisés
+  getCriteresDeSession(sessionId: number): Observable<CritereAdmissionResponse[]> {
+    return this.http.get<CritereAdmissionResponse[]>(`${this.baseUrl}/admin/recrutement/sessions/${sessionId}/criteres`);
+  }
+
+  creerCritere(sessionId: number, request: CritereAdmissionRequest): Observable<CritereAdmissionResponse> {
+    return this.http.post<CritereAdmissionResponse>(`${this.baseUrl}/admin/recrutement/sessions/${sessionId}/criteres`, request);
+  }
+
+  getCritere(critereId: number): Observable<CritereAdmissionResponse> {
+    return this.http.get<CritereAdmissionResponse>(`${this.baseUrl}/admin/recrutement/criteres/${critereId}`);
+  }
+
+  modifierCritere(critereId: number, request: CritereAdmissionRequest): Observable<CritereAdmissionResponse> {
+    return this.http.put<CritereAdmissionResponse>(`${this.baseUrl}/admin/recrutement/criteres/${critereId}`, request);
+  }
+
+  retirerCritere(critereId: number): Observable<CritereAdmissionResponse> {
+    return this.http.delete<CritereAdmissionResponse>(`${this.baseUrl}/admin/recrutement/criteres/${critereId}`);
+  }
+
+  reactiverCritere(critereId: number): Observable<CritereAdmissionResponse> {
+    return this.http.put<CritereAdmissionResponse>(`${this.baseUrl}/admin/recrutement/criteres/${critereId}/reactiver`, {});
   }
 
   // Candidatures admin
@@ -605,6 +685,10 @@ export class RecrutementService {
   // Tests Académiques
   getAllTests(): Observable<TestAcademiqueResponse[]> {
     return this.http.get<TestAcademiqueResponse[]>(`${this.baseUrl}/admin/recrutement/tests`);
+  }
+
+  getTest(id: number): Observable<TestAcademiqueResponse> {
+    return this.http.get<TestAcademiqueResponse>(`${this.baseUrl}/admin/recrutement/tests/${id}`);
   }
 
   creerTest(request: TestAcademiqueRequest): Observable<TestAcademiqueResponse> {

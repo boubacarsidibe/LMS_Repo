@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { RecrutementService, SessionCandidatureResponse, CandidatureRequest, CandidatureResponse } from '../../../../core/recrutement/services/recrutement.service';
+import { RecrutementService, SessionCandidatureResponse, CandidatureRequest, CandidatureResponse, CritereAdmissionResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
 import { CandidatNavbarComponent } from '../../../../shared/components/candidat-navbar/candidat-navbar.component';
 import { Auth } from '../../../../core/auth/services/authService';
@@ -26,6 +26,8 @@ interface CandidatureFormData {
   diplome: string; anneeObtention: string;
   fichierIdentite: string; fichierCV: string; fichierMotivation: string; fichierReleves: string;
   consentement: boolean;
+  /** Réponses aux critères personnalisés de la session choisie : clé = id du critère. */
+  reponsesCriteres: { [critereId: number]: string };
 }
 
 @Component({
@@ -59,6 +61,7 @@ export class FormulaireComponent implements OnInit {
     diplome: '', anneeObtention: '',
     fichierIdentite: '', fichierCV: '', fichierMotivation: '', fichierReleves: '',
     consentement: false,
+    reponsesCriteres: {},
   };
 
   /** Session imposée via l'URL (ex: venant de la page « Sessions ouvertes ») : prioritaire sur un brouillon existant. */
@@ -187,6 +190,23 @@ export class FormulaireComponent implements OnInit {
     return this.sessions.find(s => s.id === this.data.sessionCandidatureId);
   }
 
+  /** Critères ajoutés librement par le responsable admission pour la session choisie, en plus des critères de base. */
+  get criteresPersonnalises(): CritereAdmissionResponse[] {
+    return this.sessionSelectionnee?.criteresPersonnalises || [];
+  }
+
+  optionsCritere(critere: CritereAdmissionResponse): string[] {
+    return (critere.options || '').split(',').map(o => o.trim()).filter(o => o.length > 0);
+  }
+
+  /** Libellés des critères personnalisés obligatoires non encore répondus. */
+  get criteresPersonnalisesManquants(): string[] {
+    return this.criteresPersonnalises
+      .filter(c => c.obligatoire)
+      .filter(c => !this.data.reponsesCriteres[c.id]?.trim())
+      .map(c => c.libelle);
+  }
+
   private calculerAge(dateNaissance: string): number | null {
     if (!dateNaissance) return null;
     const naissance = new Date(dateNaissance);
@@ -253,7 +273,9 @@ export class FormulaireComponent implements OnInit {
       }
     }
     if (this.etape === 2) {
-      if (this.sessionInvalide || !this.data.programme.trim()) { this.showErrors = true; return false; }
+      if (this.sessionInvalide || !this.data.programme.trim() || this.criteresPersonnalisesManquants.length > 0) {
+        this.showErrors = true; return false;
+      }
     }
     return true;
   }
@@ -283,7 +305,7 @@ export class FormulaireComponent implements OnInit {
       this.showErrors = true;
       return;
     }
-    if (this.sessionInvalide || !this.data.programme.trim()) {
+    if (this.sessionInvalide || !this.data.programme.trim() || this.criteresPersonnalisesManquants.length > 0) {
       this.etape = 2;
       this.showErrors = true;
       return;
@@ -309,6 +331,7 @@ export class FormulaireComponent implements OnInit {
       informationsProfessionnelles: JSON.stringify({
         campus: this.data.campus, sessionRentree: this.data.sessionRentree,
       }),
+      reponsesCriteres: this.data.reponsesCriteres,
     };
     this.recrutementService.soumettreCandidature(request).subscribe({
       next: (response) => {

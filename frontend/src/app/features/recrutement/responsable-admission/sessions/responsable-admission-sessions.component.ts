@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import {
   RecrutementService,
-  SessionCandidatureRequest,
   SessionCandidatureResponse,
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
@@ -13,7 +12,7 @@ import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/c
 @Component({
   selector: 'app-responsable-admission-sessions',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, ExportColumnsModalComponent],
+  imports: [CommonModule, RouterModule, FormsModule, ExportColumnsModalComponent],
   templateUrl: './responsable-admission-sessions.component.html',
 })
 export class ResponsableAdmissionSessionsComponent implements OnInit {
@@ -23,12 +22,6 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
 
   recherche = '';
   filtreStatut: 'TOUTES' | 'OUVERTES' | 'FERMEES' | 'ACTIVES' = 'TOUTES';
-
-  drawerOpen = false;
-  sessionEnEdition: SessionCandidatureResponse | null = null;
-  sessionForm: FormGroup;
-  isSubmitting = false;
-  formError = '';
 
   exporting = false;
   exportModalOpen = false;
@@ -43,29 +36,10 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   ];
   readonly colonnesExportParDefaut = ['libelle', 'dateOuverture', 'dateFermeture', 'estOuverte', 'estActive', 'nbCandidatures'];
 
-  readonly niveaux = ['Baccalauréat', 'Licence (L3)', 'Master 1 (M1)', 'Master 2 (M2)'];
-
   triColonne: 'libelle' | 'dateOuverture' | 'dateFermeture' | 'nbCandidatures' = 'dateOuverture';
   triDesc = true;
 
-  constructor(private recrutementService: RecrutementService, private fb: FormBuilder) {
-    this.sessionForm = this.fb.group({
-      libelle: ['', Validators.required],
-      dateOuverture: ['', Validators.required],
-      dateFermeture: ['', Validators.required],
-      estOuverte: [true],
-      criteresActifs: [false],
-      criteresNiveauEtudeMinimum: [null],
-      criteresAgeMinimum: [null],
-      criteresAgeMaximum: [null],
-      criteresGenre: [null],
-      criteresExperienceMinimale: [null],
-      seuilReussiteTest: [10],
-      infoFraisScolarite: [null],
-      infoCarteEtudiante: [null],
-      infoRentree: [null],
-    });
-  }
+  constructor(private recrutementService: RecrutementService, private router: Router) {}
 
   ngOnInit(): void {
     this.chargerSessions();
@@ -140,66 +114,12 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
     return candidates.length > 0 ? candidates[0] : null;
   }
 
-  openDrawer(session?: SessionCandidatureResponse): void {
-    this.formError = '';
-    if (session) {
-      this.sessionEnEdition = session;
-      this.sessionForm.setValue({
-        libelle: session.libelle,
-        dateOuverture: session.dateOuverture,
-        dateFermeture: session.dateFermeture,
-        estOuverte: session.estOuverte,
-        criteresActifs: session.criteresActifs,
-        criteresNiveauEtudeMinimum: session.criteresNiveauEtudeMinimum,
-        criteresAgeMinimum: session.criteresAgeMinimum,
-        criteresAgeMaximum: session.criteresAgeMaximum,
-        criteresGenre: session.criteresGenre,
-        criteresExperienceMinimale: session.criteresExperienceMinimale,
-        seuilReussiteTest: session.seuilReussiteTest ?? 10,
-        infoFraisScolarite: session.infoFraisScolarite,
-        infoCarteEtudiante: session.infoCarteEtudiante,
-        infoRentree: session.infoRentree,
-      });
-    } else {
-      this.sessionEnEdition = null;
-      this.sessionForm.reset({
-        libelle: '', dateOuverture: '', dateFermeture: '', estOuverte: true,
-        criteresActifs: false, criteresNiveauEtudeMinimum: null, criteresAgeMinimum: null, criteresAgeMaximum: null,
-        criteresGenre: null, criteresExperienceMinimale: null, seuilReussiteTest: 10,
-        infoFraisScolarite: null, infoCarteEtudiante: null, infoRentree: null,
-      });
-    }
-    this.drawerOpen = true;
+  nouvelleSession(): void {
+    this.router.navigate(['/responsable-admission/sessions/nouvelle']);
   }
 
-  closeDrawer(): void {
-    this.drawerOpen = false;
-  }
-
-  enregistrer(): void {
-    if (this.sessionForm.invalid) {
-      this.sessionForm.markAllAsTouched();
-      return;
-    }
-    this.isSubmitting = true;
-    this.formError = '';
-    const request: SessionCandidatureRequest = this.sessionForm.getRawValue();
-
-    const obs = this.sessionEnEdition
-      ? this.recrutementService.modifierSession(this.sessionEnEdition.id, request)
-      : this.recrutementService.creerSession(request);
-
-    obs.subscribe({
-      next: () => {
-        this.isSubmitting = false;
-        this.closeDrawer();
-        this.chargerSessions();
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        this.formError = err.error?.message || "Échec de l'enregistrement de la session.";
-      },
-    });
+  voirSession(session: SessionCandidatureResponse): void {
+    this.router.navigate(['/responsable-admission/sessions', session.id]);
   }
 
   supprimer(session: SessionCandidatureResponse): void {

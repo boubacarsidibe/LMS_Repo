@@ -2,8 +2,10 @@
 
 > Document de reprise. Rédigé au milieu d'un lot de travail, pour qu'un autre
 > poste (pull de la branche `develop`) puisse **continuer exactement** là où je
-> me suis arrêté. Tout le travail décrit ici est **non commité** : il arrive par
-> le push. Lis ce fichier en entier avant de toucher au code.
+> me suis arrêté. Le travail est **commité** (commit `e2fc4dd` « version 1 apres
+> reception des doc ») puis **mergé avec `origin/develop`** (8 commits recrutement/
+> admission de l'autre équipe). Migrations renumérotées (voir §2). Lis ce fichier
+> en entier avant de toucher au code.
 >
 > Dernière mise à jour : 2026-09-03, branche `develop`.
 
@@ -15,16 +17,15 @@ Trois lots successifs autour de l'**accréditation**, de l'**espace entreprise**
 et du **catalogue**, déclenchés par des documents officiels de l'INPG déposés à
 la racine du dépôt.
 **Lot 1 (accréditation) : terminé, déployé, vérifié.**
-**Lot 2 (fiche technique de module + catalogue §3) : commencé, le back compile
-mais les tests NE compilent PAS — 2 constructeurs de test à mettre à jour — et
-tout le front reste à faire.**
+**Lot 2 (fiche technique de module + catalogue §3) : back terminé (compile + tests
+compilent, étape 0 déjà faite pendant le merge), tout le FRONT reste à faire.**
 
 ### État de compilation à l'instant de la passation
 
 | Cible | État |
 |---|---|
 | `backend` — `mvnw -o compile` | ✅ **OK** |
-| `backend` — `mvnw -o test-compile` | ❌ **CASSÉ** — 2 fichiers (voir §4, étape 0) |
+| `backend` — `mvnw -o test-compile` | ✅ **OK** (étape 0 faite pendant le merge) |
 | `frontend` — `ng build` | ✅ OK (aucun code front du lot 2 n'a été écrit) |
 | Conteneurs Docker | Lot 1 déployé et vérifié. Lot 2 **pas déployé**. |
 
@@ -46,20 +47,20 @@ tout le front reste à faire.**
 
 Déployé sur la stack Docker locale et vérifié end-to-end (curl + 37 tests
 backend verts). **Ne pas y retoucher**, sauf bug. Résumé (détail complet :
-entrée **60** de `LOG_BLOQUANT.md`, elle aussi non commitée) :
+entrée **64** de `LOG_BLOQUANT.md`) :
 
 - **La demande d'accréditation porte sur un PROGRAMME** (Cadre §II), pas
   l'établissement : `demandes_accreditation` gagne `intitule_programme`,
   `niveau_programme` (enum `EnumNiveauProgramme`), `type_structure` (enum
   `EnumTypeStructure`), `effectif_cohorte`, `date_debut_cohorte`. Migration
-  **`V31`**.
+  **`V33`**.
 - **Décision conditionnelle** : `EnumStatutDemandeAccreditation` +
   `ACCREDITE_SOUS_RESERVE`, colonne `plan_actions`. Endpoint
   `PUT /api/admin/accreditation/demandes/{id}/accrediter-sous-reserve`.
 - **Validité 3 ans** : `date_expiration` = décision + 3 ans, servie école /
   évaluateur / liste publique.
 - **Référentiel réel** : `criteres_accreditation` + `code`/`section`/`ordre`,
-  `libelle` élargi à `VARCHAR(600)` (migration **`V32`** — piège : la condition
+  `libelle` élargi à `VARCHAR(600)` (migration **`V34`** — piège : la condition
   2.1 dépasse 200 car., le `CommandLineRunner` plantait après « Started »).
   Amorçage : `AccreditationReferentielInitializer` +
   `resources/data/referentiel-accreditation.json` (31 critères), idempotent par
@@ -73,15 +74,23 @@ entrée **60** de `LOG_BLOQUANT.md`, elle aussi non commitée) :
   (le build de dev ne versionne pas `main.js` → le proxy Codespaces resservait
   du périmé).
 
-Fichiers du lot 1 (tous `M` ou `??` dans `git status`, non commités) :
+Fichiers du lot 1 (dans le commit `e2fc4dd`) :
 `backend/.../accreditation/**`, `backend/.../config/AccreditationReferentielInitializer.java`,
 `backend/.../config/SecurityConfig.java`, `resources/data/referentiel-accreditation.json`,
-`resources/db/migration/V30..V32`, `frontend/.../features/accreditation/**`,
+`resources/db/migration/V32..V34`, `frontend/.../features/accreditation/**`,
 `frontend/.../features/evaluateur-accreditation/**`, `frontend/nginx.local.conf`.
 
-> ⚠️ Les migrations **V30, V31, V32 ont déjà été appliquées sur la base Docker
-> locale**. Sur une base neuve tout repart de zéro sans souci. Sur la base
-> locale actuelle, Flyway les considère déjà passées.
+> ⚠️ **Renumérotation après merge avec `origin/develop`.** L'autre équipe avait
+> déjà des migrations `V30` / `V31` (critères d'admission, lieu de test). Mes
+> migrations d'accréditation/entreprise ont donc été décalées :
+> `V30→V32` (grille éval), `V31→V33` (programme + décision), `V32→V34` (libellé),
+> `V33→V35` (fiche technique), `V34→V36` (catalogue §3).
+> Sur une **base neuve**, Flyway applique V1→V36 dans l'ordre, aucun souci.
+> Sur **ma base Docker locale**, les anciens V30/V31/V32 (mes numéros d'avant)
+> sont déjà dans `flyway_schema_history` : après ce merge il faut **réinitialiser
+> la base locale** (`docker compose down` + supprimer le volume postgres, ou
+> `DROP SCHEMA public CASCADE;` puis laisser Flyway tout rejouer). Le collègue
+> qui pull sur une autre machine avec sa propre base n'est pas concerné.
 
 ---
 
@@ -94,7 +103,7 @@ Fichiers du lot 1 (tous `M` ou `??` dans `git status`, non commités) :
 | **Entreprise** | QMS-008 (offre technique **et** financière), QMS-010. Aujourd'hui : dépôt texte libre → réponse texte libre. | **Lot 2** : reçoit la Fiche Technique structurée, l'accepte ou demande des ajustements. |
 | **Responsable admission ≈ DPI/DAF** | QMS-009 ; Fiche §3 « test de prérequis ». Le module recrutement fait déjà tests + entretiens. | Aucun changement, alignement déjà en place. |
 | **Formateur ≈ PF** | QMS-007/010/011 ; Fiche §9 profil formateur. | Marginal — champ « profil formateur » porté par la Fiche. Pas d'écran nouveau. |
-| **Alumni** | QMS-013 : base alumni, besoins entreprises, partage, **mises en relation**, suivi insertion, analyse. L'espace alumni couvre base + enquêtes de suivi. | « Mises en relation alumni ↔ entreprises » = **hors périmètre**, à consigner (LOG_BLOQUANT 61). |
+| **Alumni** | QMS-013 : base alumni, besoins entreprises, partage, **mises en relation**, suivi insertion, analyse. L'espace alumni couvre base + enquêtes de suivi. | « Mises en relation alumni ↔ entreprises » = **hors périmètre**, à consigner (LOG_BLOQUANT, nouvelle entrée 65). |
 | **Étudiant** | QMS-010/012 — couverts. | Rien. |
 
 **Périmètre validé par le propriétaire pour le lot 2 :** fonctionnalité *complète*
@@ -109,7 +118,7 @@ LMS en DPI/DAF/… (churn sans valeur) ; mises en relation alumni ↔ entreprise
 ### Ce qui est DÉJÀ sur le disque (fait, à ne pas refaire)
 
 **Phase 3 — back, fichiers CRÉÉS (`??`) :**
-- `backend/src/main/resources/db/migration/V33__fiche_technique_module.sql`
+- `backend/src/main/resources/db/migration/V35__fiche_technique_module.sql`
   (tables `fiche_technique_module` [1:1 avec `demandes_entreprise`, `demande_id`
   UNIQUE] et `fiche_module_jour`).
 - `backend/.../entreprise/enums/EnumStatutFicheModule.java`
@@ -157,7 +166,7 @@ LMS en DPI/DAF/… (churn sans valeur) ; mises en relation alumni ↔ entreprise
   `notifierDecisionFiche(raisonSociale, acceptee, commentaire)`.
 
 **Phase 2 — back, fichiers déjà touchés :**
-- `backend/src/main/resources/db/migration/V34__formation_caracteristiques_referentiel.sql`
+- `backend/src/main/resources/db/migration/V36__formation_caracteristiques_referentiel.sql`
   (CRÉÉ — `ALTER TABLE formations ADD COLUMN heures_simulation_labo INT,
   anglais_professionnel BOOLEAN DEFAULT false, soft_skills BOOLEAN DEFAULT false,
   credits_totaux INT, volume_horaire_total INT`).
@@ -176,9 +185,12 @@ LMS en DPI/DAF/… (churn sans valeur) ; mises en relation alumni ↔ entreprise
 
 ---
 
-### Étape 0 — DÉBLOQUER LA COMPILATION DES TESTS (obligatoire, en premier)
+### Étape 0 — ~~DÉBLOQUER LA COMPILATION DES TESTS~~ ✅ DÉJÀ FAIT (pendant le merge `origin/develop`)
 
-`mvnw -o test-compile` échoue sur 2 constructeurs. À corriger :
+Les 2 constructeurs de `EntrepriseControllerTest` et
+`PedagogieEntrepriseControllerTest` ont été mis à jour (mocks `ficheRepository`,
+`ficheService`, `notificationService`). `mvnw -o test-compile` = BUILD SUCCESS,
+61 tests unitaires ciblés verts. Description conservée ci-dessous pour mémoire :
 
 **a) `backend/src/test/java/inpg/sn/lms/entreprise/controller/EntrepriseControllerTest.java`, ~ligne 44-70 :**
 Ajouter deux `@Mock` et les passer au constructeur :
@@ -305,7 +317,7 @@ pédagogique. À créer, sur le patron de
 ### Étape 6 — Vérification (stack Docker locale, front nginx `:4200`)
 
 1. `docker compose up -d --build backend` → vérifier le log Flyway
-   `V33` **et** `V34` (`now at version v34`) et l'absence d'erreur au démarrage
+   `V35` **et** `V36` (`now at version v36`) et l'absence d'erreur au démarrage
    (le `CommandLineRunner` du catalogue tourne après « Started »).
 2. `rm -rf frontend/.angular/cache && docker compose up -d --build frontend`.
 3. **Pédagogie** (`test.pedago@inpg.sn` / `Test@2026`) : onglet « Entreprises »
@@ -329,7 +341,7 @@ pédagogique. À créer, sur le patron de
 
 ### Étape 7 — Journalisation
 
-- `LOG_BLOQUANT.md` : ajouter l'**entrée 61** — Fiche Technique de Module
+- `LOG_BLOQUANT.md` : ajouter l'**entrée 65** — Fiche Technique de Module
   (résumé du modèle + workflow `BROUILLON→TRANSMISE→ACCEPTEE/AJUSTEMENTS`), le
   §3 catalogue (5 champs seed-only, pas d'écran d'édition), et les 2 points
   **consignés non construits** : renommage rôles DPI/DAF, mises en relation
@@ -351,7 +363,7 @@ pédagogique. À créer, sur le patron de
 pédagogie « Entreprises » (liste + éditeur) ; bloc lecture seule + décision côté
 entreprise ; tests ciblés.
 
-**Phase 2 — catalogue §3** : migration `V34` (5 colonnes) ; entité `Formation` ;
+**Phase 2 — catalogue §3** : migration `V36` (5 colonnes) ; entité `Formation` ;
 `CatalogueDataInitializer` + `catalogue-formations.json` ; exposer sur le
 `FormationDetailPubliqueDto` + `PublicController` ; encart « Conforme au
 référentiel DRCQ » sur `formation-detail`. Pas d'écran d'édition (aucun endpoint
@@ -386,7 +398,7 @@ alumni ↔ entreprises (QMS-013).
 - **Docker** : `docker compose up -d --build <svc>` ; `--build` ne suffit pas
   pour `.env` ou `.angular/cache` (vivent dans le montage) → `--force-recreate`
   ou `down`+`up` si besoin.
-- Migrations **V30–V32 déjà appliquées** sur la base Docker locale.
+- **Après le merge** : migrations d'accréditation/entreprise renumérotées `V30→V32` … `V34→V36` (les V30/V31 de l'autre équipe passent avant). La base Docker **locale** doit être réinitialisée (voir l'encadré ⚠️ du §2). Entrée `LOG_BLOQUANT.md` : mon bloc accréditation est l'**entrée 64** (les 60–63 sont le travail recrutement/admission de l'autre équipe).
 
 ## 7. Comptes de test (mot de passe commun `Test@2026`)
 
@@ -409,11 +421,107 @@ Démo : `prof.demo@inpg.sn` / `Demo@2026`. Login = `POST /api/auth/login` avec
 ## 8. Résumé pour le repreneur — checklist courte
 
 - [ ] Lire ce fichier + entrée 60 de `LOG_BLOQUANT.md`.
-- [ ] **Étape 0** : réparer les 2 constructeurs de test (§4). `test-compile` vert.
+- [x] ~~Étape 0~~ : constructeurs de test réparés pendant le merge. `test-compile` vert.
 - [ ] Étape 1 : `FicheTechniqueModuleControllerTest` + lancer la suite ciblée.
 - [ ] Étape 2 : exposer les 5 champs catalogue sur le DTO public.
 - [ ] Étape 3 : écran pédagogie « Entreprises » (liste + éditeur de fiche + nav + route + service).
 - [ ] Étape 4 : espace entreprise — vue fiche + accepter / ajustements.
 - [ ] Étape 5 : encart §3 sur `formation-detail`.
-- [ ] Étape 6 : rebuild Docker, vérifier Flyway V33/V34, tester les 3 rôles, `ng build`.
+- [ ] Étape 6 : rebuild Docker, vérifier Flyway V35/V36, tester les 3 rôles, `ng build`.
 - [ ] Étape 7 : `LOG_BLOQUANT.md` entrée 61 ; analyser `Calendrier Formations INPG2026.pdf`.
+
+
+---
+
+## 9. Fichiers locaux NON versionnés à recréer (gitignore, ne suivent pas le push)
+
+Pour monter la stack Docker locale (front statique nginx + proxy `/api`). Le
+correctif `Cache-Control: no-store` du lot 1 est DANS ces fichiers, donc à
+recréer à l'identique.
+
+### `backend/.env`  (secrets — GÉNÈRE LES TIENS)
+```
+POSTGRES_DB=myappdb
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin
+JWT_SECRET=<génère : openssl rand -base64 64>
+JWT_EXPIRATION=6000000
+MAIL_HOST=
+MAIL_PORT=
+MAIL_USERNAME=
+MAIL_PASSWORD=
+APP_MAIL_FROM=no-reply@inpg.sn
+APP_ADMISSION_EMAIL=admission@inpg.sn
+APP_ACCREDITATION_EMAIL=accreditation@inpg.sn
+APP_FRONTEND_URL=http://localhost:4200
+CERTIFICAT_SIGNATURE_SECRET=<mets la MÊME valeur que JWT_SECRET>
+```
+> Piège connu : `certificat.signature.secret` a un fallback `${jwt.secret}` qui ne
+> se déclenche que si la variable est ABSENTE, pas si elle est vide — d'où la
+> recopie explicite.
+
+### `docker-compose.override.yml`  (racine)
+```yaml
+services:
+  frontend:
+    build: !override
+      context: ./frontend
+      dockerfile: Dockerfile.local
+    ports: !override
+      - "4200:80"
+    volumes: !reset []
+    environment: !reset []
+```
+
+### `frontend/Dockerfile.local`
+```dockerfile
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npx ng build --configuration development
+
+FROM nginx:1.27-alpine
+COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
+COPY nginx.local.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### `frontend/nginx.local.conf`
+```nginx
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-store" always;   # <-- correctif cache lot 1
+    }
+
+    location /api/ {
+        proxy_pass http://backend:8080/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 20m;
+    }
+
+    location /uploads/ {
+        proxy_pass http://backend:8080/uploads/;
+        proxy_set_header Host $host;
+    }
+}
+```
+
+### Base de données
+Après le merge (renumérotation V30→V32 … V34→V36), si tu réutilises une base
+Docker qui avait déjà mes anciens V30–V32 : `docker compose down`, supprimer le
+volume postgres (`docker volume rm <projet>_pgdata` ou équivalent), puis
+`docker compose up -d` — Flyway rejoue V1→V36 proprement. Sur une base neuve :
+rien à faire.

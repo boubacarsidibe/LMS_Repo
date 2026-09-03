@@ -40,6 +40,9 @@ public class TestAcademique {
     @Column
     private LocalDateTime dateEpreuve;
 
+    @Column(name = "lieu_ou_lien")
+    private String lieuOuLien;
+
     @ManyToOne
     @JoinColumn(name = "candidat_id", nullable = false)
     private Candidat candidat;

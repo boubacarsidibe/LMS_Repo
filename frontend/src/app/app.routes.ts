@@ -168,6 +168,43 @@ export const routes: Routes = [
           ),
       },
       {
+        // Route littérale déclarée avant 'sessions/:id' : sinon Angular la
+        // capturerait comme un id de session.
+        path: 'sessions/nouvelle',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/sessions/session-form/session-form.component').then(
+            (m) => m.SessionFormComponent
+          ),
+      },
+      {
+        path: 'sessions/:id/criteres/nouveau',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/sessions/critere-form/critere-form.component').then(
+            (m) => m.CritereFormComponent
+          ),
+      },
+      {
+        path: 'sessions/:id/criteres/:critereId',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/sessions/critere-form/critere-form.component').then(
+            (m) => m.CritereFormComponent
+          ),
+      },
+      {
+        path: 'sessions/:id/criteres',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/sessions/session-criteres/session-criteres.component').then(
+            (m) => m.SessionCriteresComponent
+          ),
+      },
+      {
+        path: 'sessions/:id',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/sessions/session-form/session-form.component').then(
+            (m) => m.SessionFormComponent
+          ),
+      },
+      {
         path: 'candidatures',
         loadComponent: () =>
           import(
@@ -179,6 +216,21 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/recrutement/responsable-admission/tests/responsable-admission-tests.component').then(
             (m) => m.ResponsableAdmissionTestsComponent
+          ),
+      },
+      {
+        // Route littérale avant 'tests/:id' : sinon Angular la capturerait comme un id de test.
+        path: 'tests/nouveau',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/tests/test-form/test-form.component').then(
+            (m) => m.TestFormComponent
+          ),
+      },
+      {
+        path: 'tests/:id',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/tests/test-form/test-form.component').then(
+            (m) => m.TestFormComponent
           ),
       },
       {

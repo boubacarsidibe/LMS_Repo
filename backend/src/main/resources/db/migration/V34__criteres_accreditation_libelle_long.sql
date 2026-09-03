@@ -1,5 +1,5 @@
 -- =====================================================================
--- V32 — Élargir le libellé d'un critère d'accréditation
+-- V34 — Élargir le libellé d'un critère d'accréditation
 -- =====================================================================
 --
 -- La colonne « Condition » du Référentiel DRCQ dépasse 200 caractères pour

@@ -19,4 +19,5 @@ public class ConvocationTestGroupeeRequest {
     private String nomEpreuve;
     private Float coefficient;
     private LocalDateTime dateEpreuve;
+    private String lieuOuLien;
 }

@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.service;
 
+import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,9 +8,13 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import inpg.sn.lms.recrutement.dto.CritereAdmissionRequest;
+import inpg.sn.lms.recrutement.dto.CritereAdmissionResponse;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureRequest;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureResponse;
+import inpg.sn.lms.recrutement.entity.CritereAdmissionPersonnalise;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
+import inpg.sn.lms.recrutement.repository.CritereAdmissionPersonnaliseRepository;
 import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
 
 @Service
@@ -17,9 +22,12 @@ import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
 public class SessionCandidatureService {
 
     private final SessionCandidatureRepository sessionRepository;
+    private final CritereAdmissionPersonnaliseRepository critereRepository;
 
-    public SessionCandidatureService(SessionCandidatureRepository sessionRepository) {
+    public SessionCandidatureService(SessionCandidatureRepository sessionRepository,
+            CritereAdmissionPersonnaliseRepository critereRepository) {
         this.sessionRepository = sessionRepository;
+        this.critereRepository = critereRepository;
     }
 
     public SessionCandidatureResponse creerSession(SessionCandidatureRequest request) {
@@ -71,10 +79,11 @@ public class SessionCandidatureService {
         return valeur == null || valeur.isBlank();
     }
 
+    /** Catalogue public : seuls les critères encore proposés (actifs) apparaissent sur le formulaire. */
     public List<SessionCandidatureResponse> getSessionsOuvertes() {
         return sessionRepository.findByEstOuverteTrue()
                 .stream()
-                .map(this::toResponse)
+                .map(s -> toResponse(s, true))
                 .collect(Collectors.toList());
     }
 
@@ -98,7 +107,99 @@ public class SessionCandidatureService {
         sessionRepository.deleteById(id);
     }
 
+    // ===================== CRITÈRES PERSONNALISÉS =====================
+
+    public List<CritereAdmissionResponse> getCriteresDeSession(Long sessionId) {
+        return critereRepository.findBySessionCandidatureIdOrderByOrdreAsc(sessionId).stream()
+                .map(this::toCritereResponse)
+                .collect(Collectors.toList());
+    }
+
+    public CritereAdmissionResponse getCritere(Long critereId) {
+        CritereAdmissionPersonnalise critere = critereRepository.findById(critereId)
+                .orElseThrow(() -> new ResourceNotFoundException("Critère non trouvé avec l'ID: " + critereId));
+        return toCritereResponse(critere);
+    }
+
+    public CritereAdmissionResponse creerCritere(Long sessionId, CritereAdmissionRequest request) {
+        SessionCandidature session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Session non trouvée avec l'ID: " + sessionId));
+
+        CritereAdmissionPersonnalise critere = new CritereAdmissionPersonnalise();
+        critere.setSessionCandidature(session);
+        appliquerCritere(critere, request);
+
+        return toCritereResponse(critereRepository.save(critere));
+    }
+
+    public CritereAdmissionResponse modifierCritere(Long critereId, CritereAdmissionRequest request) {
+        CritereAdmissionPersonnalise critere = critereRepository.findById(critereId)
+                .orElseThrow(() -> new ResourceNotFoundException("Critère non trouvé avec l'ID: " + critereId));
+        appliquerCritere(critere, request);
+        return toCritereResponse(critereRepository.save(critere));
+    }
+
+    /**
+     * Retrait logique uniquement (voir migration V30) : un critère déjà répondu par
+     * des candidats ne doit jamais perdre ces réponses parce que l'admin a cessé de
+     * le proposer aux nouvelles candidatures.
+     */
+    public CritereAdmissionResponse retirerCritere(Long critereId) {
+        CritereAdmissionPersonnalise critere = critereRepository.findById(critereId)
+                .orElseThrow(() -> new ResourceNotFoundException("Critère non trouvé avec l'ID: " + critereId));
+        critere.setActif(false);
+        return toCritereResponse(critereRepository.save(critere));
+    }
+
+    public CritereAdmissionResponse reactiverCritere(Long critereId) {
+        CritereAdmissionPersonnalise critere = critereRepository.findById(critereId)
+                .orElseThrow(() -> new ResourceNotFoundException("Critère non trouvé avec l'ID: " + critereId));
+        critere.setActif(true);
+        return toCritereResponse(critereRepository.save(critere));
+    }
+
+    private void appliquerCritere(CritereAdmissionPersonnalise critere, CritereAdmissionRequest request) {
+        if (request.getLibelle() == null || request.getLibelle().isBlank()) {
+            throw new BusinessException("Le libellé du critère est obligatoire.");
+        }
+        if (request.getType() == null) {
+            throw new BusinessException("Le type du critère est obligatoire.");
+        }
+        critere.setLibelle(request.getLibelle());
+        critere.setType(request.getType());
+        critere.setObligatoire(request.isObligatoire());
+        critere.setOptions(vide(request.getOptions()) ? null : request.getOptions());
+        critere.setValeurMinimale(request.getValeurMinimale());
+        critere.setValeurAttendue(vide(request.getValeurAttendue()) ? null : request.getValeurAttendue());
+        critere.setOrdre(request.getOrdre());
+    }
+
+    private CritereAdmissionResponse toCritereResponse(CritereAdmissionPersonnalise c) {
+        return CritereAdmissionResponse.builder()
+                .id(c.getId())
+                .libelle(c.getLibelle())
+                .type(c.getType())
+                .obligatoire(c.isObligatoire())
+                .options(c.getOptions())
+                .valeurMinimale(c.getValeurMinimale())
+                .valeurAttendue(c.getValeurAttendue())
+                .ordre(c.getOrdre())
+                .actif(c.isActif())
+                .build();
+    }
+
     private SessionCandidatureResponse toResponse(SessionCandidature s) {
+        return toResponse(s, false);
+    }
+
+    /** {@code seulsActifs} : le formulaire public ne doit jamais proposer un critère retiré. */
+    private SessionCandidatureResponse toResponse(SessionCandidature s, boolean seulsActifs) {
+        List<CritereAdmissionResponse> criteres = s.getCriteresPersonnalises().stream()
+                .filter(c -> !seulsActifs || c.isActif())
+                .sorted((a, b) -> Integer.compare(a.getOrdre(), b.getOrdre()))
+                .map(this::toCritereResponse)
+                .collect(Collectors.toList());
+
         return SessionCandidatureResponse.builder()
                 .id(s.getId())
                 .libelle(s.getLibelle())
@@ -117,6 +218,7 @@ public class SessionCandidatureService {
                 .infoFraisScolarite(s.getInfoFraisScolarite())
                 .infoCarteEtudiante(s.getInfoCarteEtudiante())
                 .infoRentree(s.getInfoRentree())
+                .criteresPersonnalises(criteres)
                 .build();
     }
 }

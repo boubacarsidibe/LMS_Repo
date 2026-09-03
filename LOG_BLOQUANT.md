@@ -1394,12 +1394,183 @@ blocage dormir dans ce journal, reposé directement à l'utilisateur dans la
 conversation — la seule voie pour le débloquer, le TDR n'apportant rien de
 plus qu'au point 16.
 
-### 60. Module d'accréditation aligné sur les référentiels officiels de la DRCQ
+### 60. Neuf demandes directes de l'utilisateur (2026-09-02) : critères d'admission
+personnalisables traité, huit autres consignées en backlog
+
+L'utilisateur a formulé neuf demandes en une seule fois pour l'espace
+recrutement/admission. Plutôt que de deviner un ordre, la priorité et le
+périmètre du point le plus ambigu ont été posés en question directe ; les
+réponses ont fixé ce qui suit.
+
+1. **Modifications en temps réel** — aucune trace dans le code ni dans ce
+   journal ; aucun mécanisme de rafraîchissement live (websocket, SSE,
+   polling) n'existe nulle part dans le dépôt. L'utilisateur a désigné trois
+   cibles possibles (suivi des candidatures, cloche de notification,
+   résultats de notation) tout en indiquant que ce n'est **pas prioritaire
+   maintenant** — différé, à reprendre en clarifiant laquelle de ces trois
+   cibles (ou les trois) avant toute implémentation.
+2. **Paiement obligatoire, lié à l'interface candidat** — `Paiement` existe
+   déjà (`PaiementService`, endpoints `CandidatController`) mais
+   `Candidature.soumettre()` ne le vérifie jamais : le paiement reste
+   aujourd'hui informatif, jamais bloquant. Non traité dans ce passage.
+3. **Tests/entretiens groupés par cohorte** — `POST /tests/convocation-groupee`
+   et `/entretiens/convocation-groupee` existent déjà avec sélection
+   multiple ; il manque un raccourci « toute la promotion » en un clic
+   plutôt qu'un moteur à construire. Non traité dans ce passage.
+4. **Notes indépendantes de la création (CSV + saisie manuelle groupée)** —
+   la saisie manuelle en masse existe déjà
+   (`POST /academic-tests/exams/{nom}/scores/batch`) ; l'import CSV n'existe
+   nulle part dans le module recrutement (la pédagogie a un import CSV
+   réutilisable comme patron, `PedagogieScolariteController.importerEtudiants`).
+   Non traité dans ce passage.
+5. **Élimination après saisie des notes** — rien d'automatique aujourd'hui :
+   `seuilReussiteTest` sert au filtre de présélection déclaratif, pas à une
+   action d'élimination post-notation. Non traité dans ce passage.
+6. **Réversibilité + mot de passe de confirmation** — aucun historique/audit
+   de dossier candidat n'existe. Le patron de confirmation par mot de passe
+   existe ailleurs (`AuthController.changePassword`, `passwordEncoder.matches()`
+   avant d'agir) et est directement réutilisable. Non traité dans ce passage.
+7. **Page dédiée à la création de test (lieu, heure, date, session)** —
+   aujourd'hui un simple tiroir latéral sans champ lieu (alors qu'`Entretien.lieuOuLien`
+   existe déjà côté entretiens). Non traité dans ce passage.
+8. **Export avec choix de colonnes/filtres** — déjà construit côté backend
+   (`COLONNES_SESSIONS`/`COLONNES_CANDIDATURES`, paramètres `colonnes` et
+   `statut`) ; le travail restant est côté UI (sélecteur de colonnes
+   visible). Piège à ne pas reproduire : un second export mort existe dans
+   `ApplicationController.exportApplications()`, jamais branché côté front —
+   ne pas le réactiver ni le dupliquer. Non traité dans ce passage.
+9. **Critères d'admission personnalisables** — traité dans ce passage, voir
+   ci-dessous.
+
+Priorité posée à l'utilisateur pour ces neuf points : les critères
+personnalisables d'abord, parce que le formulaire de candidature et la
+future page dédiée aux tests (point 7) en dépendent — les traiter en premier
+évite de reprendre les autres chantiers ensuite.
+
+### 61. Critères d'admission personnalisables : nouveau modèle + filtre
+automatique enfin câblé
+
+`SessionCandidature` ne portait que des critères fixes codés en dur (niveau
+d'étude, âge, genre, expérience), évalués par `respecteCriteres(Candidat)` —
+un `if` par champ, aucune extensibilité. Migration V30 ajoute
+`criteres_admission_personnalises` (libellé, type NUMERIQUE/TEXTE/BOOLEEN/CHOIX,
+obligatoire, règle d'évaluation optionnelle) et `reponses_critere_candidature`
+(une réponse par candidature et par critère). Un critère sans règle définie
+(ni `valeurMinimale` ni `valeurAttendue`) est purement informatif : collecté,
+jamais éliminatoire.
+
+**Retrait toujours logique, jamais physique.** `DELETE
+/api/admin/recrutement/criteres/{id}` ne fait que `actif = false` — un
+critère déjà répondu par des candidats ne doit jamais perdre ces réponses
+parce que l'admin a cessé de le proposer aux nouvelles candidatures (même
+principe que `releve_ligne`, sans clé étrangère cassante). `PUT
+.../reactiver` revient en arrière.
+
+**Découverte en cours de route : `respecteCriteres()` n'était appelée nulle
+part.** Un commentaire de `CandidatController#soumettreCandidature` renvoyait
+vers `AdminRecrutementController#appliquerFiltreAutomatique` comme si cette
+méthode existait déjà — elle n'a jamais été écrite. Le filtre automatique de
+premier niveau (TDR 3.1.1) était donc un champ de données inerte
+(`criteresActifs`) sans aucune action pour le faire agir, base **et**
+personnalisé confondus. Comblé par
+`POST /api/admin/recrutement/sessions/{id}/appliquer-filtre-criteres` :
+action manuelle du responsable admission sur les dossiers `SOUMIS` d'une
+session — volontairement **pas** un effet de bord de la soumission
+elle-même, pour que l'admin voie toujours passer chaque dossier par l'état
+`SOUMIS` (raison déjà documentée dans le commentaire d'origine). Zéro test
+ne couvrait `respecteCriteres()` avant ce passage ; `SessionCandidatureCriteresTest`
+et `CandidatureServiceFiltreCriteresTest` le figent désormais.
+
+Les réponses aux critères sont validées à la soumission
+(`CandidatController.enregistrerReponsesCriteres`) : un critère actif et
+obligatoire sans réponse renvoie 422 avant toute écriture, jamais un dossier
+silencieusement incomplet.
+
+### 62. Critères personnalisés : pages dédiées à la place du tiroir
+
+Retour direct de l'utilisateur sur le point 61 : deux demandes, une confirmée
+en l'état, une changement de structure.
+
+**Confirmé sans changement** : les critères de base (niveau d'étude, âge,
+genre, expérience) restent fixes et codés en dur sur `SessionCandidature` —
+pas de refonte vers un modèle tout-dynamique. Seul l'affichage des critères
+personnalisés devait être vérifié : le formulaire public ne proposait déjà
+que les critères `actif=true` (`SessionCandidatureService.getSessionsOuvertes`
+appelle `toResponse(s, true)`), conforme à la demande.
+
+**Changement de structure** : le tiroir latéral (`responsable-admission-sessions.component`)
+portait tout — champs de session, critères de base, liste des critères
+personnalisés *et* leur mini-formulaire d'ajout replié. Éclaté en quatre
+écrans à part entière, chacun avec sa propre route :
+
+```
+/responsable-admission/sessions                       liste (inchangée)
+/responsable-admission/sessions/nouvelle               SessionFormComponent (création)
+/responsable-admission/sessions/:id                    SessionFormComponent (édition)
+/responsable-admission/sessions/:id/criteres           SessionCriteresComponent
+/responsable-admission/sessions/:id/criteres/nouveau   CritereFormComponent (création)
+/responsable-admission/sessions/:id/criteres/:critereId CritereFormComponent (édition)
+```
+
+Piège Angular à connaître si une route littérale s'ajoute un jour sous
+`sessions/` : `sessions/nouvelle` doit être déclarée **avant**
+`sessions/:id` dans `app.routes.ts`, sinon le routeur capture `"nouvelle"`
+comme un id de session. Même règle pour `criteres/nouveau` avant
+`criteres/:critereId`.
+
+Sur `SessionCriteresComponent`, seuls les critères actifs s'affichent par
+défaut ; les retirés sont repliés sous un bouton « Afficher les critères
+retirés (N) » — cohérent avec le retrait toujours logique du point 61, sans
+jamais les mélanger visuellement aux critères encore proposés aux candidats.
+
+Un endpoint manquait pour rendre ces pages consultables au rechargement/lien
+direct : `GET /api/admin/recrutement/sessions/{id}` (le service portait déjà
+`getSessionById`, jamais exposé) et `GET /api/admin/recrutement/criteres/{critereId}`
+(pour précharger le formulaire d'édition d'un critère sans redemander toute
+la liste de la session).
+
+### 63. Point 7 du backlog (point 60) : page dédiée à la création de test académique
+
+Deuxième chantier du backlog des neuf demandes du 2026-09-02, traité après
+les critères d'admission. Le tiroir latéral de `responsable-admission-tests`
+ne portait que candidat, épreuve, coefficient, note et date/heure — ni lieu,
+ni session visible (elle se déduisait en silence côté front d'une liste de
+sessions chargée à part). Éclaté en page dédiée
+(`/responsable-admission/tests/nouveau` et `/tests/:id`), la convocation
+groupée restant en modale (flux différent : plusieurs candidats à la fois,
+pas un formulaire d'un seul objet).
+
+**Champ `lieuOuLien` ajouté à `TestAcademique`** (migration V31), même nom que
+sur `Entretien`/`RendezVous`/`Seance` — pas de nouveau nom pour la même idée.
+Colonne nullable en base (une note sur des dossiers déjà en base ne devient
+pas invalide du jour au lendemain) ; le formulaire de création exige la
+valeur côté frontend. Propagé à la convocation groupée
+(`ConvocationTestGroupeeRequest`) et à l'email de convocation automatique
+(`NotificationService.notifierConvocationTest`, gabarit par défaut mis à jour).
+
+**La session n'était jamais renvoyée par l'API.** `TestAcademiqueResponse`
+expose désormais `sessionCandidatureId`/`sessionCandidatureLibelle`, dérivés
+du candidat via `CandidatureRepository.findByCandidatId(...).findFirst()` —
+même simplification que le frontend faisait déjà (`candidatureDe()` prend le
+premier match sans filtrer), cohérente avec l'invariant « un candidat n'a
+qu'une seule candidature active » posé par
+`CandidatController#soumettreCandidature`. Zéro test ne couvrait
+`TestAcademiqueService` avant ce passage ; `TestAcademiqueServiceTest` fige
+ces deux points (lieu conservé, session dérivée, absence de session ne fait
+pas planter la réponse).
+
+**Piège frontend découvert au passage** : `TestAcademiqueRequest`/`Response`
+côté Angular portaient déjà un champ `lieu` — jamais lu ni écrit par aucun
+composant, jamais relié à un `lieuOuLien` côté backend qui n'existait pas
+encore. Renommé en `lieuOuLien` pour rejoindre la convention du reste du
+dépôt plutôt que de garder deux noms pour la même idée.
+
+### 64. Module d'accréditation aligné sur les référentiels officiels de la DRCQ
 
 Deux documents officiels déposés à la racine du dépôt (`Cadre de référence
 DRCQ.pdf`, rév. 19/01/2026 ; `Référentiel Accréditation Programme Oil & Gas
 DRCQ.pdf`, rév. 23/03/2026) fixent la doctrine que le module — bâti sur le seul
-TDR §F — n'appliquait pas. Corrections (migrations `V31`/`V32`, Phase 1) :
+TDR §F — n'appliquait pas. Corrections (migrations `V33`/`V34`, Phase 1) :
 
 - **L'accréditation porte sur un PROGRAMME**, pas l'établissement (Cadre §II).
   `demandes_accreditation` gagne `intitule_programme`, `niveau_programme`
@@ -1420,7 +1591,7 @@ TDR §F — n'appliquait pas. Corrections (migrations `V31`/`V32`, Phase 1) :
   `ordre` ; les **31 conditions** (4 sections) sont amorcées par
   `AccreditationReferentielInitializer` depuis
   `data/referentiel-accreditation.json`, idempotent par `code` (ne réécrit pas un
-  critère retouché via le CRUD). `libelle` élargi à `VARCHAR(600)` (`V32`) : la
+  critère retouché via le CRUD). `libelle` élargi à `VARCHAR(600)` (`V34`) : la
   colonne « Condition » du PDF dépasse 200 caractères (2.1 notamment) — piège
   vu au déploiement, le `CommandLineRunner` échouait après `Started`. La grille
   de l'évaluateur s'affiche groupée par section avec un avancement par section.
@@ -1439,7 +1610,7 @@ l'évaluateur peut le désactiver depuis le CRUD.
 **Non traité (décision de périmètre)** : la **Phase 2** (répercussion du §3 du
 Référentiel — heures de simulation 20 h/70 h, anglais professionnel, soft
 skills, crédits/volume horaire — sur `Formation` et le catalogue, migration
-`V33`) est planifiée mais non livrée. Un module « formation + certification des
+`V36`) est planifiée mais non livrée. Un module « formation + certification des
 formateurs INPG » (Cadre §III.2, §V.3/V.5) reste hors périmètre : la
 certification du formateur est ici une **pièce** du dossier, pas un workflow
 géré. Les modalités financières (Cadre §V) sont hors LMS, réglées par

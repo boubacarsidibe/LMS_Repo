@@ -1,5 +1,5 @@
 -- =====================================================================
--- V34 — Caractéristiques du §3 du Référentiel d'accréditation DRCQ sur le
+-- V36 — Caractéristiques du §3 du Référentiel d'accréditation DRCQ sur le
 --       catalogue de formations
 -- =====================================================================
 --
