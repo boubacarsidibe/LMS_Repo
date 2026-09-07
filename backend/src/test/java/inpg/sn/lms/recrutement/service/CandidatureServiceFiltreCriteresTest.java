@@ -40,6 +40,7 @@ class CandidatureServiceFiltreCriteresTest {
     @Mock private CandidatureRepository candidatureRepository;
     @Mock private SessionCandidatureRepository sessionCandidatureRepository;
     @Mock private CandidatRepository candidatRepository;
+    @Mock private JournalEtapeService journalEtapeService;
 
     @InjectMocks private CandidatureService service;
 
@@ -59,14 +60,14 @@ class CandidatureServiceFiltreCriteresTest {
     void session_introuvable_est_signalee() {
         when(sessionCandidatureRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> service.appliquerFiltreCriteres(99L));
+        assertThrows(ResourceNotFoundException.class, () -> service.appliquerFiltreCriteres(99L, null));
     }
 
     @Test
     void refuse_de_filtrer_une_session_sans_filtre_actif() {
         session.setCriteresActifs(false);
 
-        assertThrows(BusinessException.class, () -> service.appliquerFiltreCriteres(ID_SESSION));
+        assertThrows(BusinessException.class, () -> service.appliquerFiltreCriteres(ID_SESSION, null));
     }
 
     @Test
@@ -77,7 +78,7 @@ class CandidatureServiceFiltreCriteresTest {
         when(candidatureRepository.findBySessionCandidatureId(ID_SESSION))
                 .thenReturn(List.of(soumisRespecte, soumisRejete, dejaPreselectionne));
 
-        FiltreCriteresResponse resultat = service.appliquerFiltreCriteres(ID_SESSION);
+        FiltreCriteresResponse resultat = service.appliquerFiltreCriteres(ID_SESSION, null);
 
         assertEquals(2, resultat.getTotal(), "seuls les dossiers SOUMIS comptent");
         assertEquals(1, resultat.getPreselectionnes());

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
-import { CandidatureResponse, PieceJustificativeResponse, RecrutementService, ResultatRelance } from '../../../../core/recrutement/services/recrutement.service';
+import { CandidatureResponse, EtapeDossierResponse, PieceJustificativeResponse, RecrutementService, ResultatRelance } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 
@@ -31,6 +31,11 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   exportModalOpen = false;
   relanceEnCours = false;
   relanceMessage = '';
+
+  /** Dossiers ADMIS3 dont l'inscription (étape 6, QMS-009) reste à finaliser. */
+  idsEnAttenteInscription = new Set<number>();
+  journalSelection: EtapeDossierResponse[] = [];
+  journalChargement = false;
 
   readonly colonnesExport: ColonneExport[] = [
     { key: 'numeroDossier', label: 'N° Dossier' },
@@ -93,6 +98,10 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
         this.loading = false;
         this.errorMessage = 'Impossible de charger les candidatures.';
       },
+    });
+    this.recrutementService.getCandidaturesEnAttenteInscription().subscribe({
+      next: (data) => (this.idsEnAttenteInscription = new Set((data || []).map((c) => c.id))),
+      error: () => (this.idsEnAttenteInscription = new Set()),
     });
   }
 
@@ -161,6 +170,12 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
         return { libelle: 'Admettre à l\'entretien', action: () => this.admettreEntretien(c) };
       case 'ADMIS2':
         return { libelle: 'Admettre (final)', action: () => this.admettreFinal(c) };
+      case 'ADMIS3':
+        // Étape 6 de QMS-009 : la sélection (admettre-final) n'ouvre plus l'accès étudiant
+        // elle-même — voir finaliserInscription().
+        return this.idsEnAttenteInscription.has(c.id)
+          ? { libelle: 'Finaliser l\'inscription', action: () => this.finaliserInscription(c) }
+          : null;
       default:
         return null;
     }
@@ -172,10 +187,33 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
 
   voirDetail(c: CandidatureResponse): void {
     this.candidatureSelectionnee = c;
+    this.journalSelection = [];
+    this.journalChargement = true;
+    this.recrutementService.getJournalDossier(c.id).subscribe({
+      next: (journal) => {
+        this.journalSelection = journal || [];
+        this.journalChargement = false;
+      },
+      error: () => (this.journalChargement = false),
+    });
   }
 
   fermerDetail(): void {
     this.candidatureSelectionnee = null;
+    this.journalSelection = [];
+  }
+
+  /** Libellés lisibles des étapes QMS-009, pour le journal du dossier. */
+  libelleEtapeQms(etape: string): string {
+    switch (etape) {
+      case 'RECEPTION': return 'Réception du dossier';
+      case 'FILTRE_INITIAL': return 'Filtre initial';
+      case 'EVALUATION': return 'Évaluation';
+      case 'SELECTION': return 'Sélection';
+      case 'INSCRIPTION': return 'Inscription';
+      case 'PUBLICATION': return 'Publication';
+      default: return etape;
+    }
   }
 
   private executer(obs: Observable<CandidatureResponse>): void {
@@ -207,6 +245,22 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
 
   admettreFinal(c: CandidatureResponse): void {
     this.executer(this.recrutementService.admettreFinal(c.id));
+  }
+
+  /** Étape 6 de QMS-009 : ouvre l'accès étudiant d'un dossier définitivement admis. */
+  finaliserInscription(c: CandidatureResponse): void {
+    this.actionEnCours = true;
+    this.recrutementService.finaliserInscription(c.id).subscribe({
+      next: () => {
+        this.actionEnCours = false;
+        this.candidatureSelectionnee = null;
+        this.chargerCandidatures();
+      },
+      error: (err) => {
+        this.actionEnCours = false;
+        alert(err.error?.message || "Échec de la finalisation de l'inscription.");
+      },
+    });
   }
 
   rejeter(c: CandidatureResponse): void {

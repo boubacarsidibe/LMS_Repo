@@ -1564,3 +1564,63 @@ côté Angular portaient déjà un champ `lieu` — jamais lu ni écrit par aucu
 composant, jamais relié à un `lieuOuLien` côté backend qui n'existait pas
 encore. Renommé en `lieuOuLien` pour rejoindre la convention du reste du
 dépôt plutôt que de garder deux noms pour la même idée.
+
+### 64. Alignement QMS-009 : journal d'étapes + séparation décision/inscription
+
+Après la synthèse des écarts entre la procédure qualité officielle (QMS-009,
+document uploadé par l'utilisateur) et la plateforme, deux défauts se sont
+détachés comme prioritaires ("la première partie à gérer", QMS-009 étape 1
+citée directement par l'utilisateur) : la plateforme ne conservait que
+l'état courant d'un dossier — aucune preuve de qui a fait passer une étape
+ni quand — et `admettreFinal` fusionnait la décision d'admission (étape 5,
+« sélection ») avec l'ouverture de l'accès étudiant (étape 6, « inscription
+et finalisation »), deux étapes que la procédure attribue à des
+responsables différents.
+
+**Journal, pas recalcul.** Table `etapes_dossier` (migration V32) : une
+ligne par étape franchie, jamais modifiée ni supprimée. `auteur_nom` est un
+cliché figé à l'écriture — même patron que `releve_ligne` (migration V9,
+point 3 de ce fichier) : la suppression ou le renommage d'un compte ne doit
+pas réécrire l'historique, sans quoi le journal cesserait d'être une
+preuve. `auteur_id` garde le lien tant que le compte existe (`ON DELETE
+SET NULL`, sans cascade destructrice). Une étape sans agent (dépôt du
+candidat, filtre automatique non déclenché à la main) est signée
+« Système ». `JournalEtapeServiceTest` fige ce repli et le cliché du nom.
+
+**Six étapes, `EnumEtapeQms`** : RECEPTION, FILTRE_INITIAL, EVALUATION,
+SELECTION, INSCRIPTION, PUBLICATION. RECEPTION s'écrit à l'arrivée du
+dossier (`CandidatController#soumettreCandidature`), pas dérivée plus tard
+de son statut — un dossier rejeté puis redéposé passe deux fois par cette
+étape, ce qu'un état courant ne dirait pas. PUBLICATION n'est pas encore
+déclenchée : elle reste hors périmètre (voir plus bas, R3 en attente).
+
+**Décision et inscription séparées (R2).** `admettreFinal` ne fait plus que
+la sélection (ADMIS3) et journalise SELECTION ; l'ouverture de l'accès
+étudiant (`inscrireCommeEtudiant`, jusqu'ici appelée automatiquement) est
+devenue un geste distinct : `POST /candidatures/{id}/finaliser-inscription`,
+idempotent (`JournalEtapeService#etapeFranchie` évite une seconde ligne et
+un second appel à `inscrireCommeEtudiant`). Ce découpage réintroduit
+exactement le risque que l'inscription automatique évitait — un admis
+laissé sans accès, sans que personne ne le sache (point 3 de ce fichier,
+« l'admission ouvre l'accès, la pédagogie inscrit ») — tenu par une file
+dédiée : `GET /candidatures/en-attente-inscription`, les dossiers ADMIS3
+n'ayant pas encore franchi INSCRIPTION. Affichée côté frontend comme un
+badge « Inscription à finaliser » sur chaque ligne concernée, et comme
+seule action possible sur un dossier ADMIS3 tant que la file le contient.
+
+**Historique visible côté responsable admission.** Le panneau de détail
+d'un dossier (`responsable-admission-candidatures`) charge désormais
+`GET /candidatures/{id}/journal` à l'ouverture et affiche une frise
+(étape, auteur, date, commentaire) — jusqu'ici aucune vue ne montrait le
+cheminement d'un dossier, seulement son état final.
+
+**Reste hors périmètre de ce passage**, à traiter séparément :
+- R3 (publication des résultats, étape 6 contributeur) : en attente d'une
+  réponse de l'utilisateur sur la cible (email groupé ? tableau de bord
+  candidat ? les deux ?) — ne pas l'implémenter à l'aveugle.
+- QMS-002 (conservation des dossiers) : absent de la plateforme, non
+  instruit ici.
+- Les points restants du backlog du 2026-09-02 (temps réel, paiement
+  obligatoire, convocation groupée, notes CSV, élimination post-notation,
+  réversibilité avec mot de passe, export filtrable) : toujours en
+  attente, voir point 60.

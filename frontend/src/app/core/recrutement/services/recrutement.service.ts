@@ -66,6 +66,18 @@ export interface FiltreCriteresResponse {
   rejetes: number;
 }
 
+export type EnumEtapeQms = 'RECEPTION' | 'FILTRE_INITIAL' | 'EVALUATION' | 'SELECTION' | 'INSCRIPTION' | 'PUBLICATION';
+
+/** Une ligne du journal d'étapes d'un dossier (procédure qualité QMS-009). */
+export interface EtapeDossierResponse {
+  id: number;
+  etape: EnumEtapeQms;
+  statutResultant: string | null;
+  auteurNom: string;
+  dateEtape: string;
+  commentaire: string | null;
+}
+
 /** Compte rendu d'un envoi groupé (relance dossiers incomplets ou paiements impayés). */
 export interface ResultatRelance {
   envoyes: number;
@@ -657,6 +669,24 @@ export class RecrutementService {
 
   admettreFinal(id: number): Observable<CandidatureResponse> {
     return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/admettre-final`, {});
+  }
+
+  /**
+   * Étape 6 de QMS-009 : ouvre l'accès étudiant d'un dossier ADMIS3. Distincte de
+   * {@link admettreFinal}, qui ne fait plus que la sélection (voir LOG_BLOQUANT §QMS-009).
+   */
+  finaliserInscription(id: number): Observable<CandidatureResponse> {
+    return this.http.post<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/finaliser-inscription`, {});
+  }
+
+  /** Dossiers ADMIS3 dont l'inscription (étape 6) n'a pas encore été finalisée. */
+  getCandidaturesEnAttenteInscription(): Observable<CandidatureResponse[]> {
+    return this.http.get<CandidatureResponse[]>(`${this.baseUrl}/admin/recrutement/candidatures/en-attente-inscription`);
+  }
+
+  /** Journal des étapes franchies par un dossier (procédure QMS-009). */
+  getJournalDossier(id: number): Observable<EtapeDossierResponse[]> {
+    return this.http.get<EtapeDossierResponse[]>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/journal`);
   }
 
   enregistrerPaiementHorsLigne(candidatureId: number, methodePaiement?: string): Observable<PaiementResponse> {
