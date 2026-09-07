@@ -1,6 +1,8 @@
 package inpg.sn.lms.accreditation.controller;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,8 +26,10 @@ import inpg.sn.lms.accreditation.dto.DemandeAccreditationDto;
 import inpg.sn.lms.accreditation.dto.PieceAccreditationDto;
 import inpg.sn.lms.accreditation.entity.DemandeAccreditation;
 import inpg.sn.lms.accreditation.entity.PieceAccreditation;
+import inpg.sn.lms.accreditation.enums.EnumNiveauProgramme;
 import inpg.sn.lms.accreditation.enums.EnumStatutDemandeAccreditation;
 import inpg.sn.lms.accreditation.enums.EnumTypeDocumentAccreditation;
+import inpg.sn.lms.accreditation.enums.EnumTypeStructure;
 import inpg.sn.lms.accreditation.repository.DemandeAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.PieceAccreditationRepository;
 import inpg.sn.lms.accreditation.service.AccreditationNotificationService;
@@ -100,6 +104,34 @@ public class EcoleAccreditationController {
             return ResponseEntity.badRequest()
                     .body(Map.of("message", "Le nom de l'école, l'adresse et le téléphone sont obligatoires."));
         }
+        if (estVide(requete.intituleProgramme()) || estVide(requete.niveauProgramme())
+                || estVide(requete.typeStructure())) {
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "L'intitulé du programme, son niveau et le type de structure sont obligatoires : "
+                            + "l'accréditation porte sur un programme, pas sur l'établissement."));
+        }
+        EnumNiveauProgramme niveauProgramme;
+        EnumTypeStructure typeStructure;
+        try {
+            niveauProgramme = EnumNiveauProgramme.valueOf(requete.niveauProgramme());
+            typeStructure = EnumTypeStructure.valueOf(requete.typeStructure());
+        } catch (IllegalArgumentException invalide) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Niveau de programme ou type de structure invalide."));
+        }
+        if (requete.effectifCohorte() != null && requete.effectifCohorte() <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "L'effectif de la cohorte doit être un nombre positif."));
+        }
+        LocalDate dateDebutCohorte = null;
+        if (!estVide(requete.dateDebutCohorte())) {
+            try {
+                dateDebutCohorte = LocalDate.parse(requete.dateDebutCohorte().trim());
+            } catch (DateTimeParseException invalide) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("message", "La date de début de la cohorte est invalide (format attendu AAAA-MM-JJ)."));
+            }
+        }
         boolean dejaEcole = user.getRoles().stream().anyMatch(r -> "ROLE_ECOLE_FORMATION".equals(r.getCode()));
         if (!dejaEcole) {
             Optional<Role> roleOuvrant = user.getRoles().stream()
@@ -133,7 +165,13 @@ public class EcoleAccreditationController {
                             + ") : elle doit être tranchée avant tout nouveau dépôt."));
         }
 
-        DemandeAccreditation demande = demandeRepository.save(new DemandeAccreditation(ecole));
+        DemandeAccreditation demande = new DemandeAccreditation(ecole);
+        demande.setIntituleProgramme(requete.intituleProgramme().trim());
+        demande.setNiveauProgramme(niveauProgramme);
+        demande.setTypeStructure(typeStructure);
+        demande.setEffectifCohorte(requete.effectifCohorte());
+        demande.setDateDebutCohorte(dateDebutCohorte);
+        demande = demandeRepository.save(demande);
         garantirRoleEcole(user);
         notificationService.notifierNouvelleDemande(ecole.getNomEcole());
         return ResponseEntity.status(HttpStatus.CREATED).body(toDto(demande));
@@ -197,6 +235,43 @@ public class EcoleAccreditationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Le fichier n'a pas pu être enregistré."));
         }
+    }
+
+    /**
+     * Retire une pièce, tant que la demande n'est pas tranchée. Permet à l'école
+     * de corriger une pièce erronée (le « remplacement » côté client = retrait
+     * puis nouveau dépôt du même type).
+     */
+    @org.springframework.web.bind.annotation.DeleteMapping("/demande/{id}/pieces/{pieceId}")
+    @Transactional
+    public ResponseEntity<?> supprimerPiece(@PathVariable Long id, @PathVariable Long pieceId,
+            Authentication authentication) {
+        DemandeAccreditation demande = demandePropriete(id, authentication);
+        if (demande == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (demande.getStatut() == EnumStatutDemandeAccreditation.ACCREDITE
+                || demande.getStatut() == EnumStatutDemandeAccreditation.REJETE) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Cette demande est déjà tranchée : ses pièces ne peuvent plus être modifiées."));
+        }
+        PieceAccreditation piece = pieceRepository.findById(pieceId).orElse(null);
+        if (piece == null || piece.getDemande() == null || !piece.getDemande().getId().equals(demande.getId())) {
+            return ResponseEntity.notFound().build();
+        }
+        if (piece.getFichierStocke() != null) {
+            var chemin = storage.cheminDe(piece.getFichierStocke());
+            if (chemin != null) {
+                try {
+                    java.nio.file.Files.deleteIfExists(chemin);
+                } catch (IOException ignore) {
+                    // Best-effort : la ligne en base part de toute façon, le fichier orphelin sur
+                    // disque n'a pas d'impact fonctionnel.
+                }
+            }
+        }
+        pieceRepository.delete(piece); // orphanRemoval retire le FichierStocke associé
+        return ResponseEntity.noContent().build();
     }
 
     /** Relit une pièce déjà déposée. */
@@ -271,10 +346,17 @@ public class EcoleAccreditationController {
                 demande.getStatut().name(),
                 demande.getDateSoumission(),
                 demande.getDateDecision(),
+                demande.getDateExpiration(),
                 demande.getMotifRejet(),
                 demande.getCommentaireEvaluation(),
+                demande.getPlanActions(),
                 demande.getEcole().getId(),
                 demande.getEcole().getNomEcole(),
+                demande.getIntituleProgramme(),
+                demande.getNiveauProgramme() != null ? demande.getNiveauProgramme().name() : null,
+                demande.getTypeStructure() != null ? demande.getTypeStructure().name() : null,
+                demande.getEffectifCohorte(),
+                demande.getDateDebutCohorte(),
                 pieces);
     }
 

@@ -121,7 +121,8 @@ class PedagogieScolariteEnquetesTest {
                 forumSujetRepository, forumMessageRepository, forumMentionRepository, notificationService,
                 retourRepository, releveNotesService, releveDelivranceService, candidatRepository,
                 alumniProfilRepository, alumniProfilService, enqueteSuiviRepository, reponseEnqueteSuiviRepository,
-                notificationRepository, rapportQualitePdfService, completionProgrammeService);
+                notificationRepository, rapportQualitePdfService,
+                new inpg.sn.lms.espace_etudiant.service.RelevePdfService(), completionProgrammeService);
     }
 
     private AlumniProfil alumniAvecCompte(long id) {
@@ -227,17 +228,35 @@ class PedagogieScolariteEnquetesTest {
     }
 
     @Test
-    @DisplayName("Rapport qualité : consolide qualité des cours et enquêtes sans rien recalculer, renvoie un PDF")
-    void rapportQualiteConsolideEtRenvoieUnPdf() {
+    @DisplayName("Rapport « avis sur les cours » : met en page la synthèse qualité, renvoie un PDF en pièce jointe")
+    void rapportAvisCoursRenvoieUnPdf() {
         when(retourRepository.findAllByOrderByDateCreationDesc()).thenReturn(List.of(new RetourEvaluation()));
-        when(enqueteSuiviRepository.findAllByOrderByDateCreationDesc()).thenReturn(List.of());
         byte[] pdfAttendu = { 1, 2, 3 };
-        when(rapportQualitePdfService.genererPdf(any(QualiteCoursDto.class), any())).thenReturn(pdfAttendu);
+        when(rapportQualitePdfService.suffixeDuJour()).thenReturn("2026-08-31");
+        when(rapportQualitePdfService.genererRapportAvisCours(any(QualiteCoursDto.class))).thenReturn(pdfAttendu);
 
-        ResponseEntity<?> reponse = controller.rapportQualite();
+        ResponseEntity<?> reponse = controller.rapportAvisCours();
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(reponse.getBody()).isEqualTo(pdfAttendu);
         assertThat(reponse.getHeaders().getContentType()).isEqualTo(org.springframework.http.MediaType.APPLICATION_PDF);
+        assertThat(reponse.getHeaders().getFirst(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION))
+                .contains("attachment").contains("INPG-avis-cours-2026-08-31.pdf");
+    }
+
+    @Test
+    @DisplayName("Rapport « enquêtes de suivi » : met en page les campagnes, renvoie un PDF en pièce jointe")
+    void rapportEnquetesSuiviRenvoieUnPdf() {
+        when(enqueteSuiviRepository.findAllByOrderByDateCreationDesc()).thenReturn(List.of());
+        byte[] pdfAttendu = { 4, 5, 6 };
+        when(rapportQualitePdfService.suffixeDuJour()).thenReturn("2026-08-31");
+        when(rapportQualitePdfService.genererRapportEnquetes(any())).thenReturn(pdfAttendu);
+
+        ResponseEntity<?> reponse = controller.rapportEnquetesSuivi();
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(reponse.getBody()).isEqualTo(pdfAttendu);
+        assertThat(reponse.getHeaders().getFirst(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION))
+                .contains("INPG-enquetes-suivi-carriere-2026-08-31.pdf");
     }
 }

@@ -3,7 +3,7 @@
     <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Rendez-vous</span>
     <h1 class="font-display text-display text-on-surface leading-none -ml-1">Rendez-vous</h1>
     <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
-      Consultez le personnel de l'INPG et demandez un rendez-vous sur un créneau disponible.
+      {{ sousTitre }}
     </p>
   </header>
 
@@ -30,17 +30,17 @@
       <!-- Personnel -->
       <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg space-y-stack-sm">
         <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
-          <span class="material-symbols-outlined text-secondary">badge</span>Personnel
+          <span class="material-symbols-outlined text-secondary">badge</span>{{ estExterne ? 'Votre interlocuteur' : 'Personnel' }}
         </h2>
         <p *ngIf="chargementPersonnel" class="font-body-sm text-body-sm text-on-surface-variant">Chargement…</p>
         <button *ngFor="let p of personnel" type="button" (click)="choisirPersonnel(p)"
                 [class.border-secondary]="personnelSelectionne?.id === p.id"
                 class="w-full text-left px-4 py-3 rounded-lg border border-outline-variant hover:border-secondary transition-colors">
-          <span class="font-label-md text-label-md text-on-surface block">{{ p.nomAffiche }}</span>
+          <span class="font-label-md text-label-md text-on-surface block">{{ estExterne ? "Responsable pédagogique de l'INPG" : p.nomAffiche }}</span>
           <span class="font-body-sm text-body-sm text-on-surface-variant">{{ p.role }}</span>
         </button>
         <p *ngIf="!chargementPersonnel && personnel.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
-          Aucun membre du personnel disponible.
+          {{ estExterne ? "Aucun responsable pédagogique n'est joignable pour le moment." : 'Aucun membre du personnel disponible.' }}
         </p>
       </div>
 
@@ -111,7 +111,9 @@
       <div *ngIf="!chargementDemandes" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm divide-y divide-outline-variant/50">
         <div *ngFor="let d of mesDemandes" class="px-stack-lg py-stack-md flex items-center justify-between gap-stack-md flex-wrap">
           <div>
-            <span class="font-label-md text-label-md text-on-surface block">Avec {{ d.personnelNom }}</span>
+            <span class="font-label-md text-label-md text-on-surface block">
+              Avec {{ estExterne ? "le responsable pédagogique de l'INPG" : d.personnelNom }}
+            </span>
             <span class="font-body-sm text-body-sm text-on-surface-variant">
               {{ d.dateHeureDebut | date:'EEEE d MMMM, HH:mm' }} — {{ libelleModalite(d.modalite) }}
             </span>
@@ -204,9 +206,17 @@
         </h2>
         <div *ngFor="let d of demandesRecues" class="px-4 py-3 rounded-lg border border-outline-variant space-y-2">
           <div class="flex items-center justify-between gap-stack-sm flex-wrap">
-            <div>
-              <span class="font-label-md text-label-md text-on-surface block">{{ d.demandeurNom }}</span>
-              <span class="font-body-sm text-body-sm text-on-surface-variant">
+            <div class="min-w-0">
+              <span class="font-label-md text-label-md text-on-surface block">
+                {{ d.demandeurOrganisation || d.demandeurNom }}
+              </span>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 mt-0.5 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm">
+                {{ d.demandeurRole }}
+              </span>
+              <span *ngIf="d.demandeurOrganisation" class="font-body-sm text-body-sm text-on-surface-variant block mt-0.5">
+                Contact : {{ d.demandeurNom }}
+              </span>
+              <span class="font-body-sm text-body-sm text-on-surface-variant block">
                 {{ d.dateHeureDebut | date:'EEEE d MMMM, HH:mm' }} — {{ libelleModalite(d.modalite) }}
               </span>
               <span *ngIf="d.motif" class="font-body-sm text-body-sm text-on-surface-variant block">« {{ d.motif }} »</span>

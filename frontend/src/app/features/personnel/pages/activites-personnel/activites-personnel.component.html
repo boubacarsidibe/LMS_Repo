@@ -96,7 +96,7 @@
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Département</th>
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Type</th>
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Activité</th>
-            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Saisie par</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Saisie le</th>
             <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md"></th>
           </tr>
         </thead>
@@ -112,7 +112,7 @@
               <span class="font-label-md text-label-md text-on-surface block">{{ a.titre }}</span>
               <span *ngIf="a.description" class="font-body-sm text-body-sm text-on-surface-variant">{{ a.description }}</span>
             </td>
-            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant">{{ a.auteurNom }}</td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ a.dateCreation | date: 'dd/MM/yyyy' }}</td>
             <td class="px-stack-lg py-stack-md text-right">
               <button type="button" (click)="supprimer(a)" title="Retirer cette activité"
                       class="text-outline hover:text-error transition-colors">

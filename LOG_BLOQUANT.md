@@ -1564,3 +1564,209 @@ côté Angular portaient déjà un champ `lieu` — jamais lu ni écrit par aucu
 composant, jamais relié à un `lieuOuLien` côté backend qui n'existait pas
 encore. Renommé en `lieuOuLien` pour rejoindre la convention du reste du
 dépôt plutôt que de garder deux noms pour la même idée.
+
+### 64. Module d'accréditation aligné sur les référentiels officiels de la DRCQ
+
+Deux documents officiels déposés à la racine du dépôt (`Cadre de référence
+DRCQ.pdf`, rév. 19/01/2026 ; `Référentiel Accréditation Programme Oil & Gas
+DRCQ.pdf`, rév. 23/03/2026) fixent la doctrine que le module — bâti sur le seul
+TDR §F — n'appliquait pas. Corrections (migrations `V33`/`V34`, Phase 1) :
+
+- **L'accréditation porte sur un PROGRAMME**, pas l'établissement (Cadre §II).
+  `demandes_accreditation` gagne `intitule_programme`, `niveau_programme`
+  (`TECHNICIEN`…`AUTRE`), `type_structure` (les 4 structures éligibles du
+  Cadre §II.1), `effectif_cohorte`, `date_debut_cohorte`. Colonnes nullables :
+  les demandes de démonstration antérieures restent lisibles ; le formulaire
+  école les impose pour toute **nouvelle** soumission (validation applicative,
+  pas contrainte `NOT NULL`).
+- **Décision conditionnelle** (Cadre §IV.8) : `EnumStatutDemandeAccreditation`
+  gagne `ACCREDITE_SOUS_RESERVE` (le `statut` reste un `VARCHAR(30)`, aucune
+  migration d'enum), colonne `plan_actions` obligatoire pour ce cas. Endpoint
+  `PUT /demandes/{id}/accrediter-sous-reserve`, mêmes garde-fous que
+  l'accréditation pleine (dossier en cours, ≥ 1 avis).
+- **Validité 3 ans** (Cadre §V.4) : `date_expiration` = décision + 3 ans, posée
+  pour `ACCREDITE` et `ACCREDITE_SOUS_RESERVE`, servie à l'école, à l'évaluateur
+  et à la liste publique.
+- **Référentiel réel** : `criteres_accreditation` gagne `code` / `section` /
+  `ordre` ; les **31 conditions** (4 sections) sont amorcées par
+  `AccreditationReferentielInitializer` depuis
+  `data/referentiel-accreditation.json`, idempotent par `code` (ne réécrit pas un
+  critère retouché via le CRUD). `libelle` élargi à `VARCHAR(600)` (`V34`) : la
+  colonne « Condition » du PDF dépasse 200 caractères (2.1 notamment) — piège
+  vu au déploiement, le `CommandLineRunner` échouait après `Started`. La grille
+  de l'évaluateur s'affiche groupée par section avec un avancement par section.
+- **Pièces** alignées sur le Cadre §IV.1/§IV.4 : ajout de
+  `ENGAGEMENT_REFERENTIEL`, `PREUVE_RECONNAISSANCE`, `RAPPORT_AUTO_EVALUATION`
+  (requis), `ORGANIGRAMME`, `CV_CERTIFICATIONS_FORMATEURS`,
+  `RESULTATS_COHORTES_PRECEDENTES`, `REGLEMENT_INTERIEUR` (recommandés). Aucune
+  migration : `type_document` est un `VARCHAR(40)`.
+- **Nommage DRCQ** : l'espace évaluateur porte « Direction de la Régulation et
+  du Contrôle Qualité », les e-mails d'accréditation sont signés DRCQ.
+
+Un critère ad hoc « Corps enseignant qualifié » (code `NULL`), créé pendant la
+recette du lot précédent, coexiste sans heurt avec le référentiel amorcé —
+l'évaluateur peut le désactiver depuis le CRUD.
+
+**Non traité (décision de périmètre)** : la **Phase 2** (répercussion du §3 du
+Référentiel — heures de simulation 20 h/70 h, anglais professionnel, soft
+skills, crédits/volume horaire — sur `Formation` et le catalogue, migration
+`V36`) est planifiée mais non livrée. Un module « formation + certification des
+formateurs INPG » (Cadre §III.2, §V.3/V.5) reste hors périmètre : la
+certification du formateur est ici une **pièce** du dossier, pas un workflow
+géré. Les modalités financières (Cadre §V) sont hors LMS, réglées par
+convention.
+
+## 2026-09-07 — Reprise du lot 2 (Fiche Technique de Module + catalogue §3), passation `PASSATION.md`
+
+### 65. Fiche Technique de Module (espace entreprise) + Phase 2 du référentiel sur le catalogue
+
+Lot 2 annoncé dans l'entrée 64 comme « planifié mais non livré » : livré et
+vérifié en exécution réelle sur la stack Docker (rebuild complet, Flyway,
+front, 3 rôles testés au navigateur via Playwright — voir plus bas). Reprise
+d'un travail commencé par un autre poste (`PASSATION.md`, retiré après cette
+entrée) ; le back (entités, endpoints, migrations `V35`/`V36`) existait déjà à
+la reprise, le front du lot 2 était entièrement à faire.
+
+**Fiche Technique de Module** (`entreprise/entity/FicheTechniqueModule`,
+1:1 avec `demandes_entreprise`, migration `V35`) : reprend les 10 sections du
+gabarit officiel (`FICHE TECHNIQUE LUBRIFICATION DES MACHINES TOURNANTES.docx`),
+le planning jour par jour dans une table séparée `fiche_module_jour`. Cycle de
+vie à 4 états (`EnumStatutFicheModule`) : `BROUILLON` (rédaction pédagogie,
+invisible entreprise) → `TRANSMISE` (visible, décision entreprise) →
+`ACCEPTEE` (fige la fiche, clôture la demande) ou `AJUSTEMENTS_DEMANDES`
+(commentaire obligatoire, retour pédagogie, fiche reste modifiable). Une fiche
+n'est transmissible qu'avec un intitulé, un objectif général et ≥ 1 journée
+(`FicheTechniqueModuleService.estTransmissible`) — recopié côté front pour
+désactiver le bouton avant l'appel serveur, mais c'est bien le serveur qui
+tranche.
+
+Front créé :
+- `pedagogie/pages/entreprises/pedagogie-entreprises.component.*` — écran
+  « Entreprises » (liste + panneau détail : réponse texte libre à la demande +
+  éditeur de fiche complet + jour par jour dynamique) et son service dédié
+  `pedagogie-entreprise.service.ts`, sur le patron de `pedagogie-formateurs`.
+  Entrée de nav ajoutée après « Suivi qualité ».
+- `espace-entreprise/pages/nouvelle-demande/nouvelle-demande.ts` étendu (c'est
+  déjà l'écran de suivi des demandes, confirmé en lisant le routing) : bloc
+  dépliable par demande (accordéon, une seule fiche ouverte à la fois) avec
+  vue lecture seule complète + planning en tableau, et actions « Accepter » /
+  « Demander des ajustements » tant que la fiche n'est pas acceptée.
+- Modèles et endpoints dupliqués côté pédagogie et côté entreprise (deux
+  fichiers de types quasi identiques) plutôt qu'un modèle partagé cross-
+  feature : aucun répertoire de modèles partagés n'existe dans ce dépôt pour
+  ce genre de DTO, et l'introduire pour ce seul cas aurait été une abstraction
+  prématurée.
+
+**Catalogue §3** (migration `V36`, entité `Formation` +5 champs) :
+`heuresSimulationLabo`, `anglaisProfessionnel`, `softSkills`, `creditsTotaux`,
+`volumeHoraireTotal` exposés sur `FormationDetailPubliqueDto` /
+`PublicController.consulterFormation`. Encart « Conforme au référentiel DRCQ »
+sur `formation-detail.component`, affiché seulement si au moins un champ est
+renseigné (2 fiches sur 16 en amorçage : `ING-PET-GAZ-02`, `GEO-ING-RES-06`).
+**Confirmé, pas juste supposé** : `GET /pedagogie/formations` ne renvoie que
+`id/code/intitule`, aucun endpoint de création/édition de formation n'existe
+dans ce backend — les 5 champs restent éditables uniquement via le JSON
+d'amorçage (`catalogue-formations.json`), pas par un formulaire pédagogie.
+
+**Bug trouvé et corrigé avant tout déploiement** : la migration `V36` visait
+`ALTER TABLE public.formations` — la table s'appelle `formation` (singulier,
+`V1__baseline.sql` ligne 276). Le nom au pluriel n'existe nulle part ailleurs
+dans le schéma ; seule cette migration se trompait. Sur une base neuve,
+Flyway échouait à V36 et l'application ne démarrait pas du tout (transaction
+DDL annulée proprement par Postgres, aucune corruption, mais blocage total).
+Détecté uniquement parce que la vérification s'est faite sur une base
+Postgres réellement neuve — une base qui possédait déjà l'ancienne table
+`formations` d'un essai antérieur n'aurait montré aucun symptôme. Corrigé
+dans le fichier de migration lui-même (jamais appliqué avec succès nulle
+part, donc rien à rejouer en `V37`).
+
+**Écarts non traités (déjà consignés comme tels à l'entrée 64, confirmés
+toujours hors périmètre)** : renommage des rôles LMS en DPI/DAF/BDU/… (churn
+sans valeur fonctionnelle) ; mises en relation alumni ↔ entreprises (QMS-013,
+périmètre alumni distinct).
+
+**Méthode de vérification** : suite ciblée verte (`FicheTechniqueModuleControllerTest`
+— nouveau, 12 tests couvrant upsert/transmission/cloisonnement/décision —,
+`EntrepriseControllerTest`, `PedagogieEntrepriseControllerTest`,
+`EspaceEtudiantGardeFousTest`, `EspaceAlumniGardeFousTest`,
+`AccreditationReferentielInitializerTest` : 35/35). Puis bout-en-bout réel :
+rebuild Docker complet, un compte entreprise créé via `/api/auth/register` +
+première soumission (`ROLE_ENTREPRISE` octroyé), fiche rédigée côté pédagogie,
+transmise, acceptée puis (sur une 2ᵉ demande) ajustements demandés — vérifié
+par `curl` **et** par capture d'écran Playwright (navigateur Chromium réel
+lancé dans un conteneur `mcr.microsoft.com/playwright`, faute de support
+Playwright sur l'Ubuntu 20.04 de cet environnement) pour les trois rôles :
+pédagogie, entreprise, catalogue public. Cloisonnement vérifié : une seconde
+entreprise reçoit 404 sur la fiche de la première.
+
+**Piège d'environnement rencontré (nouveau conteneur, sans rapport avec le
+code)** : `~/.m2` et les fichiers locaux non versionnés (`backend/.env`,
+`docker-compose.override.yml`, `frontend/Dockerfile.local`,
+`frontend/nginx.local.conf`) étaient totalement absents — poste neuf, jamais
+les mêmes que celui qui a écrit `PASSATION.md`. Recréés à l'identique
+(§9 de `PASSATION.md`). `seed-demo-formateur.sql` échoue sur une base neuve
+(`relation "cours_promotion" does not exist` — table supprimée par la
+migration `V6`, voir CLAUDE.md §3) : script de démonstration obsolète, non
+corrigé ici (hors périmètre du lot 2, sans rapport avec la Fiche Technique ou
+le catalogue), la démonstration client tournera sur la base de recette
+existante qui n'a pas ce problème.
+
+### 66. Alignement QMS-009 : journal d'étapes + séparation décision/inscription
+
+Après la synthèse des écarts entre la procédure qualité officielle (QMS-009,
+document uploadé par l'utilisateur) et la plateforme, deux défauts se sont
+détachés comme prioritaires ("la première partie à gérer", QMS-009 étape 1
+citée directement par l'utilisateur) : la plateforme ne conservait que
+l'état courant d'un dossier — aucune preuve de qui a fait passer une étape
+ni quand — et `admettreFinal` fusionnait la décision d'admission (étape 5,
+« sélection ») avec l'ouverture de l'accès étudiant (étape 6, « inscription
+et finalisation »), deux étapes que la procédure attribue à des
+responsables différents.
+
+**Journal, pas recalcul.** Table `etapes_dossier` (migration V37) : une
+ligne par étape franchie, jamais modifiée ni supprimée. `auteur_nom` est un
+cliché figé à l'écriture — même patron que `releve_ligne` (migration V9,
+point 3 de ce fichier) : la suppression ou le renommage d'un compte ne doit
+pas réécrire l'historique, sans quoi le journal cesserait d'être une
+preuve. `auteur_id` garde le lien tant que le compte existe (`ON DELETE
+SET NULL`, sans cascade destructrice). Une étape sans agent (dépôt du
+candidat, filtre automatique non déclenché à la main) est signée
+« Système ». `JournalEtapeServiceTest` fige ce repli et le cliché du nom.
+
+**Six étapes, `EnumEtapeQms`** : RECEPTION, FILTRE_INITIAL, EVALUATION,
+SELECTION, INSCRIPTION, PUBLICATION. RECEPTION s'écrit à l'arrivée du
+dossier (`CandidatController#soumettreCandidature`), pas dérivée plus tard
+de son statut — un dossier rejeté puis redéposé passe deux fois par cette
+étape, ce qu'un état courant ne dirait pas. PUBLICATION n'est pas encore
+déclenchée : elle reste hors périmètre (voir plus bas, R3 en attente).
+
+**Décision et inscription séparées (R2).** `admettreFinal` ne fait plus que
+la sélection (ADMIS3) et journalise SELECTION ; l'ouverture de l'accès
+étudiant (`inscrireCommeEtudiant`, jusqu'ici appelée automatiquement) est
+devenue un geste distinct : `POST /candidatures/{id}/finaliser-inscription`,
+idempotent (`JournalEtapeService#etapeFranchie` évite une seconde ligne et
+un second appel à `inscrireCommeEtudiant`). Ce découpage réintroduit
+exactement le risque que l'inscription automatique évitait — un admis
+laissé sans accès, sans que personne ne le sache (point 3 de ce fichier,
+« l'admission ouvre l'accès, la pédagogie inscrit ») — tenu par une file
+dédiée : `GET /candidatures/en-attente-inscription`, les dossiers ADMIS3
+n'ayant pas encore franchi INSCRIPTION. Affichée côté frontend comme un
+badge « Inscription à finaliser » sur chaque ligne concernée, et comme
+seule action possible sur un dossier ADMIS3 tant que la file le contient.
+
+**Historique visible côté responsable admission.** Le panneau de détail
+d'un dossier (`responsable-admission-candidatures`) charge désormais
+`GET /candidatures/{id}/journal` à l'ouverture et affiche une frise
+(étape, auteur, date, commentaire) — jusqu'ici aucune vue ne montrait le
+cheminement d'un dossier, seulement son état final.
+
+**Reste hors périmètre de ce passage**, à traiter séparément :
+- R3 (publication des résultats, étape 6 contributeur) : en attente d'une
+  réponse de l'utilisateur sur la cible (email groupé ? tableau de bord
+  candidat ? les deux ?) — ne pas l'implémenter à l'aveugle.
+- QMS-002 (conservation des dossiers) : absent de la plateforme, non
+  instruit ici.
+- Les points restants du backlog du 2026-09-02 (temps réel, paiement
+  obligatoire, convocation groupée, notes CSV, élimination post-notation,
+  réversibilité avec mot de passe, export filtrable) : toujours en
+  attente, voir point 60.

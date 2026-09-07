@@ -1,0 +1,446 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
+        Direction de la Régulation et du Contrôle Qualité
+      </p>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Demandes d'accréditation</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-1">
+        Instruisez les dossiers déposés par les écoles de formation et rendez votre décision
+        (accréditation pleine, conditionnelle ou refus).
+      </p>
+    </div>
+    <select
+      [(ngModel)]="filtreStatut"
+      (ngModelChange)="charger()"
+      class="p-3 rounded-lg bg-surface-container-low border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors"
+    >
+      <option [ngValue]="undefined">Tous les statuts</option>
+      <option *ngFor="let s of statuts" [ngValue]="s">{{ libellesStatut[s] }}</option>
+    </select>
+  </header>
+
+  <section *ngIf="!chargement" class="grid grid-cols-2 lg:grid-cols-4 gap-gutter">
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined">pending_actions</span>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider">À traiter</span>
+      </div>
+      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ compte('SOUMISE') }}</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined">fact_check</span>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider">En évaluation</span>
+      </div>
+      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ compte('EN_COURS_EVALUATION') }}</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined text-success">verified</span>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider">Accréditées</span>
+      </div>
+      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ compteAccreditees }}</p>
+      <p class="font-body-sm text-body-sm text-on-surface-variant tabular-nums">
+        dont {{ compte('ACCREDITE_SOUS_RESERVE') }} sous réserve
+      </p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+      <div class="flex items-center gap-2 text-on-surface-variant">
+        <span class="material-symbols-outlined text-error">cancel</span>
+        <span class="font-label-sm text-label-sm uppercase tracking-wider">Rejetées</span>
+      </div>
+      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ compte('REJETE') }}</p>
+    </div>
+  </section>
+
+  <app-ui-spinner *ngIf="chargement" message="Chargement des demandes…"></app-ui-spinner>
+
+  <app-ui-empty-state
+    *ngIf="!chargement && demandes.length === 0"
+    icone="fact_check"
+    titre="Aucune demande"
+    description="Aucune demande d'accréditation ne correspond à ce filtre."
+  ></app-ui-empty-state>
+
+  <div class="grid lg:grid-cols-2 gap-base" *ngIf="!chargement && demandes.length > 0">
+    <!-- Liste -->
+    <ul class="space-y-base">
+      <li
+        *ngFor="let d of demandes"
+        (click)="selectionner(d)"
+        class="cursor-pointer bg-surface-container-lowest rounded-xl border p-stack-lg shadow-sm transition-colors"
+        [ngClass]="selection?.id === d.id ? 'border-secondary' : 'border-outline-variant hover:border-secondary'"
+      >
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="font-label-md text-label-md text-on-surface truncate">{{ d.intituleProgramme || d.nomEcole }}</h2>
+          <span
+            class="px-2 py-0.5 rounded-full font-label-sm text-label-sm shrink-0"
+            [ngClass]="{
+              'bg-surface-container text-on-surface-variant': d.statut === 'SOUMISE',
+              'bg-secondary-container text-on-secondary-container': d.statut === 'EN_COURS_EVALUATION',
+              'bg-success/15 text-success': d.statut === 'ACCREDITE',
+              'bg-warning/15 text-warning': d.statut === 'ACCREDITE_SOUS_RESERVE',
+              'bg-error-container text-on-error-container': d.statut === 'REJETE'
+            }"
+          >
+            {{ libellesStatut[d.statut] }}
+          </span>
+        </div>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+          {{ d.nomEcole }}<span *ngIf="d.niveauProgramme"> · {{ libellesNiveau[d.niveauProgramme] }}</span>
+        </p>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+          Déposée le {{ d.dateSoumission | date: 'd MMM y' }} · {{ d.pieces.length }} pièce(s)
+        </p>
+      </li>
+    </ul>
+
+    <!-- Panneau d'instruction -->
+    <div *ngIf="selection" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg space-y-4 h-fit">
+      <app-ui-spinner *ngIf="chargementDetail" message="Chargement du dossier…"></app-ui-spinner>
+
+      <ng-container *ngIf="!chargementDetail">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <h2 class="font-headline-sm text-headline-sm text-primary">{{ selection.intituleProgramme || selection.nomEcole }}</h2>
+          <span
+            class="px-2 py-0.5 rounded-full font-label-sm text-label-sm"
+            [ngClass]="{
+              'bg-surface-container text-on-surface-variant': selection.statut === 'SOUMISE',
+              'bg-secondary-container text-on-secondary-container': selection.statut === 'EN_COURS_EVALUATION',
+              'bg-success/15 text-success': selection.statut === 'ACCREDITE',
+              'bg-warning/15 text-warning': selection.statut === 'ACCREDITE_SOUS_RESERVE',
+              'bg-error-container text-on-error-container': selection.statut === 'REJETE'
+            }"
+          >
+            {{ libellesStatut[selection.statut] }}
+          </span>
+        </div>
+
+        <!-- Programme visé -->
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-body-sm font-body-sm bg-primary-container/40 rounded-lg p-3">
+          <div class="sm:col-span-2">
+            <dt class="text-on-surface-variant uppercase tracking-wider text-label-sm font-label-sm">Établissement</dt>
+            <dd class="text-on-surface">{{ selection.nomEcole }}</dd>
+          </div>
+          <div>
+            <dt class="text-on-surface-variant uppercase tracking-wider text-label-sm font-label-sm">Niveau</dt>
+            <dd class="text-on-surface">{{ selection.niveauProgramme ? libellesNiveau[selection.niveauProgramme] : '—' }}</dd>
+          </div>
+          <div>
+            <dt class="text-on-surface-variant uppercase tracking-wider text-label-sm font-label-sm">Type de structure</dt>
+            <dd class="text-on-surface">{{ selection.typeStructure ? libellesTypeStructure[selection.typeStructure] : '—' }}</dd>
+          </div>
+          <div>
+            <dt class="text-on-surface-variant uppercase tracking-wider text-label-sm font-label-sm">Effectif de la cohorte</dt>
+            <dd class="text-on-surface">{{ selection.effectifCohorte ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt class="text-on-surface-variant uppercase tracking-wider text-label-sm font-label-sm">Début de la cohorte</dt>
+            <dd class="text-on-surface">{{ selection.dateDebutCohorte ? (selection.dateDebutCohorte | date: 'd MMM y') : '—' }}</dd>
+          </div>
+        </dl>
+
+        <!-- École -->
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-body-sm font-body-sm bg-surface-container-low rounded-lg p-3">
+          <div>
+            <dt class="text-on-surface-variant uppercase tracking-wider text-label-sm font-label-sm">Adresse</dt>
+            <dd class="text-on-surface">{{ selection.adresse || '—' }}</dd>
+          </div>
+          <div>
+            <dt class="text-on-surface-variant uppercase tracking-wider text-label-sm font-label-sm">Téléphone</dt>
+            <dd class="text-on-surface">{{ selection.telephone || '—' }}</dd>
+          </div>
+          <div>
+            <dt class="text-on-surface-variant uppercase tracking-wider text-label-sm font-label-sm">E-mail</dt>
+            <dd class="text-on-surface break-all">{{ selection.emailEcole || '—' }}</dd>
+          </div>
+          <div>
+            <dt class="text-on-surface-variant uppercase tracking-wider text-label-sm font-label-sm">Site web</dt>
+            <dd class="text-on-surface break-all">{{ selection.siteWeb || '—' }}</dd>
+          </div>
+        </dl>
+
+        <!-- Pièces par type attendu -->
+        <div>
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="font-label-md text-label-md text-on-surface">Pièces du dossier</h3>
+            <span class="font-label-sm text-label-sm"
+                  [ngClass]="typesRequisManquants.length === 0 ? 'text-success' : 'text-error'">
+              {{ typesRequisManquants.length === 0 ? 'Requis : complet' : typesRequisManquants.length + ' requise(s) manquante(s)' }}
+            </span>
+          </div>
+          <ul class="mt-2 divide-y divide-outline-variant/50 border border-outline-variant rounded-lg overflow-hidden">
+            <li *ngFor="let type of typesRequis" class="flex items-center gap-2 p-2.5 font-body-sm text-body-sm">
+              <span class="material-symbols-outlined text-[18px] shrink-0"
+                    [class.text-success]="pieceDeType(type)" [class.text-outline]="!pieceDeType(type)">
+                {{ pieceDeType(type) ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              <span class="flex-1 min-w-0 truncate text-on-surface">
+                {{ libellesType[type] }}
+                <span *ngIf="pieceDeType(type) as p" class="text-on-surface-variant">— {{ p.nomFichierOriginal }}</span>
+              </span>
+              <button *ngIf="pieceDeType(type) as p" type="button" (click)="consulterPiece(p.id)" title="Consulter"
+                      class="shrink-0 text-outline hover:text-secondary">
+                <span class="material-symbols-outlined text-[18px]">visibility</span>
+              </button>
+            </li>
+          </ul>
+          <p class="font-label-sm text-label-sm text-on-surface-variant mt-3 mb-1">Pièces recommandées (visite du comité)</p>
+          <ul class="divide-y divide-outline-variant/50 border border-outline-variant rounded-lg overflow-hidden">
+            <li *ngFor="let type of typesRecommandes" class="flex items-center gap-2 p-2.5 font-body-sm text-body-sm">
+              <span class="material-symbols-outlined text-[18px] shrink-0"
+                    [class.text-success]="pieceDeType(type)" [class.text-outline]="!pieceDeType(type)">
+                {{ pieceDeType(type) ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              <span class="flex-1 min-w-0 truncate text-on-surface">
+                {{ libellesType[type] }}
+                <span *ngIf="pieceDeType(type) as p" class="text-on-surface-variant">— {{ p.nomFichierOriginal }}</span>
+              </span>
+              <button *ngIf="pieceDeType(type) as p" type="button" (click)="consulterPiece(p.id)" title="Consulter"
+                      class="shrink-0 text-outline hover:text-secondary">
+                <span class="material-symbols-outlined text-[18px]">visibility</span>
+              </button>
+            </li>
+            <li *ngFor="let p of piecesAutres" class="flex items-center gap-2 p-2.5 font-body-sm text-body-sm">
+              <span class="material-symbols-outlined text-[18px] text-on-surface-variant shrink-0">draft</span>
+              <span class="flex-1 min-w-0 truncate text-on-surface">
+                {{ libellesType['AUTRE'] }} — {{ p.nomFichierOriginal }}
+              </span>
+              <button type="button" (click)="consulterPiece(p.id)" title="Consulter"
+                      class="shrink-0 text-outline hover:text-secondary">
+                <span class="material-symbols-outlined text-[18px]">visibility</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <!-- SOUMISE : prise en charge -->
+        <div *ngIf="selection.statut === 'SOUMISE'" class="pt-3 border-t border-outline-variant">
+          <button type="button" (click)="prendreEnCharge()"
+                  class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity">
+            Prendre en charge
+          </button>
+          <p *ngIf="erreurDecision" class="font-body-sm text-body-sm text-error mt-2">{{ erreurDecision }}</p>
+        </div>
+
+        <!-- EN_COURS_EVALUATION : grille + avis + décision -->
+        <ng-container *ngIf="selection.statut === 'EN_COURS_EVALUATION'">
+          <!-- Grille d'évaluation, par section du référentiel -->
+          <div class="pt-3 border-t border-outline-variant space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="font-label-md text-label-md text-on-surface">Grille d'évaluation — référentiel DRCQ</h3>
+              <span class="font-label-sm text-label-sm text-on-surface-variant">
+                Appliqué à {{ avancementGlobalPourcent }} %
+              </span>
+            </div>
+            <p *ngIf="selection.criteresActifs.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
+              Aucun critère actif dans le référentiel.
+            </p>
+
+            <div *ngFor="let s of sectionsGrille" class="space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-label-sm text-label-sm text-primary">{{ s.nom }}</p>
+                <span class="font-label-sm text-label-sm"
+                      [ngClass]="s.jugees === s.total ? 'text-success' : 'text-on-surface-variant'">
+                  {{ s.jugees }} / {{ s.total }} évalué(s)
+                </span>
+              </div>
+              <div *ngFor="let c of s.criteres" class="p-3 rounded-lg bg-surface-container-low space-y-2">
+                <div>
+                  <p class="font-label-sm text-label-sm text-on-surface">
+                    <span *ngIf="c.code" class="text-secondary">{{ c.code }}</span> {{ c.libelle }}
+                  </p>
+                  <p *ngIf="c.description" class="font-body-sm text-body-sm text-on-surface-variant">{{ c.description }}</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    *ngFor="let a of appreciations"
+                    type="button"
+                    (click)="evaluerCritere(c.id, a)"
+                    class="px-3 py-1.5 rounded-full font-label-sm text-label-sm border transition-colors"
+                    [ngClass]="appreciationDe(c.id) === a
+                      ? (a === 'CONFORME' ? 'bg-success/15 border-success text-success'
+                         : a === 'NON_CONFORME' ? 'bg-error-container border-error text-on-error-container'
+                         : 'bg-surface-container border-outline text-on-surface-variant')
+                      : 'border-outline-variant text-on-surface-variant hover:border-secondary'"
+                  >
+                    {{ libellesAppreciation[a] }}
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  [(ngModel)]="grilleCommentaires[c.id]"
+                  (blur)="sauverObservation(c.id)"
+                  placeholder="Observation (facultative)"
+                  class="w-full p-2 rounded-lg bg-surface-container-lowest border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Avis interne collégial -->
+          <div class="pt-3 border-t border-outline-variant space-y-3">
+            <h3 class="font-label-md text-label-md text-on-surface">Avis des évaluateurs (interne)</h3>
+            <ul *ngIf="selection.avis.length > 0" class="space-y-2">
+              <li
+                *ngFor="let a of selection.avis"
+                class="p-3 rounded-lg border font-body-sm text-body-sm"
+                [ngClass]="a.avis === 'FAVORABLE' ? 'bg-success/10 border-success/30' : 'bg-error-container/40 border-error/30'"
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-label-sm text-label-sm text-on-surface">
+                    {{ a.evaluateurNom }}<span *ngIf="estMonAvis(a)" class="text-on-surface-variant"> (vous)</span>
+                  </span>
+                  <span class="font-label-sm text-label-sm" [ngClass]="a.avis === 'FAVORABLE' ? 'text-success' : 'text-error'">
+                    {{ libellesAvis[a.avis] }}
+                  </span>
+                </div>
+                <p *ngIf="a.commentaire" class="text-on-surface-variant mt-1">{{ a.commentaire }}</p>
+                <p class="text-on-surface-variant mt-1">{{ a.dateAvis | date: 'd MMM y, HH:mm' }}</p>
+              </li>
+            </ul>
+            <p *ngIf="selection.avis.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
+              Aucun avis déposé pour l'instant.
+            </p>
+
+            <div class="p-3 rounded-lg bg-surface-container-low space-y-2">
+              <p class="font-label-sm text-label-sm text-on-surface">{{ monAvis ? 'Mettre à jour mon avis' : 'Déposer mon avis' }}</p>
+              <div class="flex gap-4">
+                <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
+                  <input type="radio" name="avisValeur" [(ngModel)]="avisSaisi" value="FAVORABLE" class="accent-secondary" />
+                  Favorable
+                </label>
+                <label class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface cursor-pointer">
+                  <input type="radio" name="avisValeur" [(ngModel)]="avisSaisi" value="DEFAVORABLE" class="accent-secondary" />
+                  Défavorable
+                </label>
+              </div>
+              <textarea
+                [(ngModel)]="avisCommentaire"
+                name="avisCommentaire"
+                rows="2"
+                placeholder="Motivation de votre avis (facultatif) — repris comme base de la synthèse"
+                class="w-full p-3 rounded-lg bg-surface-container-lowest border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors resize-y"
+              ></textarea>
+              <p *ngIf="erreurAvis" class="font-body-sm text-body-sm text-error">{{ erreurAvis }}</p>
+              <button
+                type="button"
+                (click)="deposerAvis()"
+                [disabled]="!avisSaisi || avisEnCours"
+                class="px-4 py-2 rounded-lg border border-secondary text-secondary font-label-md text-label-md hover:bg-secondary-container/30 transition-colors disabled:opacity-50"
+              >
+                {{ avisEnCours ? 'Envoi…' : monAvis ? 'Mettre à jour mon avis' : 'Envoyer mon avis' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Décision -->
+          <div class="pt-3 border-t border-outline-variant space-y-3">
+            <p *ngIf="selection.avis.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
+              Au moins un avis d'évaluateur est requis avant de statuer.
+            </p>
+
+            <div *ngIf="!decisionCible" class="flex flex-wrap gap-3">
+              <button type="button" (click)="ouvrirDecision('ACCREDITE')" [disabled]="selection.avis.length === 0"
+                      class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50">
+                Accréditer
+              </button>
+              <button type="button" (click)="ouvrirDecision('ACCREDITE_SOUS_RESERVE')" [disabled]="selection.avis.length === 0"
+                      class="px-4 py-2 rounded-lg bg-warning/20 text-warning border border-warning/50 font-label-md text-label-md hover:bg-warning/30 transition-colors disabled:opacity-50">
+                Accréditer sous réserve
+              </button>
+              <button type="button" (click)="ouvrirDecision('REJETE')" [disabled]="selection.avis.length === 0"
+                      class="px-4 py-2 rounded-lg bg-error text-on-error font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50">
+                Rejeter
+              </button>
+            </div>
+
+            <div *ngIf="decisionCible" class="p-3 rounded-lg bg-surface-container-low space-y-2">
+              <p class="font-label-sm text-label-sm text-on-surface">
+                {{ decisionCible === 'REJETE' ? 'Refus' : decisionCible === 'ACCREDITE_SOUS_RESERVE' ? 'Accréditation conditionnelle' : 'Accréditation pleine' }}
+              </p>
+              <p *ngIf="criteresNonEvalues > 0" class="font-body-sm text-body-sm text-on-surface-variant">
+                Rappel : {{ criteresNonEvalues }} critère(s) de la grille non renseigné(s).
+              </p>
+
+              <div *ngIf="decisionCible === 'ACCREDITE_SOUS_RESERVE'">
+                <label class="font-label-sm text-label-sm text-on-surface">Plan d'actions transmis à l'école (obligatoire)</label>
+                <textarea
+                  [(ngModel)]="planActionsDecision"
+                  name="planActionsDecision"
+                  rows="4"
+                  placeholder="Mesures que l'établissement doit mettre en œuvre pendant la période d'accréditation"
+                  class="mt-1 w-full p-3 rounded-lg bg-surface-container-lowest border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors resize-y"
+                ></textarea>
+              </div>
+
+              <label class="font-label-sm text-label-sm text-on-surface">
+                {{ decisionCible === 'REJETE' ? 'Motif du refus (obligatoire)' : 'Synthèse transmise à l\'école (facultative)' }}
+              </label>
+              <textarea
+                [(ngModel)]="syntheseDecision"
+                name="syntheseDecision"
+                rows="3"
+                class="mt-1 w-full p-3 rounded-lg bg-surface-container-lowest border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors resize-y"
+              ></textarea>
+              <p *ngIf="erreurDecision" class="font-body-sm text-body-sm text-error">{{ erreurDecision }}</p>
+              <div class="flex gap-3">
+                <button type="button" (click)="confirmerDecision()" [disabled]="decisionEnCours"
+                        class="px-4 py-2 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                        [ngClass]="decisionCible === 'REJETE' ? 'bg-error text-on-error'
+                          : decisionCible === 'ACCREDITE_SOUS_RESERVE' ? 'bg-warning text-on-surface'
+                          : 'bg-secondary text-on-secondary'">
+                  {{ decisionEnCours ? 'Envoi…' : 'Confirmer' }}
+                </button>
+                <button type="button" (click)="annulerDecision()"
+                        class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors">
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Décision rendue : récapitulatif -->
+        <div *ngIf="selection.statut === 'ACCREDITE' || selection.statut === 'ACCREDITE_SOUS_RESERVE' || selection.statut === 'REJETE'"
+             class="pt-3 border-t border-outline-variant space-y-2">
+          <p class="font-label-md text-label-md"
+             [ngClass]="selection.statut === 'REJETE' ? 'text-error' : selection.statut === 'ACCREDITE_SOUS_RESERVE' ? 'text-warning' : 'text-success'">
+            {{ libellesStatut[selection.statut] }}
+            <span class="font-body-sm text-body-sm text-on-surface-variant">
+              le {{ selection.dateDecision | date: 'd MMM y' }}
+            </span>
+          </p>
+          <p *ngIf="selection.dateExpiration && selection.statut !== 'REJETE'"
+             class="font-body-sm text-body-sm text-on-surface-variant">
+            Valable jusqu'au {{ selection.dateExpiration | date: 'd MMMM y' }} (3 ans).
+          </p>
+          <p *ngIf="selection.statut === 'REJETE' && selection.motifRejet"
+             class="p-3 rounded-lg bg-error-container text-on-error-container font-body-sm text-body-sm">
+            Motif : {{ selection.motifRejet }}
+          </p>
+          <p *ngIf="selection.statut !== 'REJETE' && selection.commentaireEvaluation"
+             class="p-3 rounded-lg bg-success/10 border border-success/30 text-on-surface font-body-sm text-body-sm">
+            Synthèse : {{ selection.commentaireEvaluation }}
+          </p>
+          <p *ngIf="selection.statut === 'ACCREDITE_SOUS_RESERVE' && selection.planActions"
+             class="p-3 rounded-lg bg-warning/10 border border-warning/40 text-on-surface font-body-sm text-body-sm whitespace-pre-line">
+            <span class="font-label-sm text-label-sm text-on-surface-variant block">Plan d'actions</span>
+            {{ selection.planActions }}
+          </p>
+          <div *ngIf="selection.avis.length > 0">
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Avis rendus</p>
+            <ul class="mt-1 space-y-1">
+              <li *ngFor="let a of selection.avis" class="font-body-sm text-body-sm text-on-surface">
+                {{ a.evaluateurNom }} —
+                <span [ngClass]="a.avis === 'FAVORABLE' ? 'text-success' : 'text-error'">{{ libellesAvis[a.avis] }}</span>
+                <span *ngIf="a.commentaire" class="text-on-surface-variant"> · {{ a.commentaire }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>

@@ -198,6 +198,14 @@ public class PedagogieController {
             return ResponseEntity.badRequest()
                     .body(Map.of("message", "Le nom, le prénom, l'identifiant, l'email et le téléphone sont requis."));
         }
+        // Formateur.telephone est NOT NULL UNIQUE : un doublon lèverait une
+        // DataIntegrityViolationException au commit, hors de portée du catch
+        // ci-dessous, et remonterait en 500 « La création du compte a échoué »
+        // sans dire pourquoi. On constate le conflit avant d'écrire.
+        if (formateurRepository.findByTelephone(requete.getTelephone().trim()).isPresent()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Ce numéro de téléphone est déjà associé à un formateur."));
+        }
         boolean motDePasseGenere = estVide(requete.getPassword());
         try {
             Formateur formateur = formateurService.createFormateur(requete);

@@ -22,6 +22,7 @@ import inpg.sn.lms.recrutement.entity.FichierStocke;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.entity.ReponseCritereCandidature;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
+import inpg.sn.lms.recrutement.enums.EnumEtapeQms;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.repository.BrouillonCandidatureRepository;
@@ -270,6 +271,8 @@ public class CandidatController {
             candidatureRepository.save(existante);
             garantirRoleCandidat(user);
             brouillonRepository.findByUserId(user.getId()).ifPresent(brouillonRepository::delete);
+            candidatureService.journaliser(existante.getId(), EnumEtapeQms.RECEPTION,
+                    existante.getStatut(), null, "Dossier redéposé par le candidat.");
             return ResponseEntity.ok(candidatureService.getCandidatureById(existante.getId()));
         }
 
@@ -296,9 +299,15 @@ public class CandidatController {
         garantirRoleCandidat(user);
         brouillonRepository.findByUserId(user.getId()).ifPresent(brouillonRepository::delete);
 
+        // Étape 1 de QMS-009 (« Réception du dossier ») : le journal se remplit ici, à
+        // l'arrivée du dossier, et non plus tard depuis son statut — un dossier rejeté
+        // puis redéposé passe deux fois par cette étape, ce qu'un état courant ne dit pas.
+        candidatureService.journaliser(saved.getId(), EnumEtapeQms.RECEPTION,
+                saved.getStatut(), null, "Dossier déposé par le candidat.");
+
         // Le dossier reste en SOUMIS : le filtre automatique de premier niveau (TDR 3.1.1)
         // est une action d'étape 2 déclenchée par l'admin (cf. AdminRecrutementController
-        // #appliquerFiltreAutomatique), pas un effet de bord de la soumission elle-même —
+        // #appliquerFiltreCriteres), pas un effet de bord de la soumission elle-même —
         // sinon l'admin n'a jamais l'occasion de voir passer le dossier par l'état SOUMIS.
         String candidatEmail = user.getEmail();
         notificationCandidatService.creerNotification(candidat,

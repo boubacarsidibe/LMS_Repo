@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { EMPTY } from 'rxjs';
 import { finalize, tap, catchError } from 'rxjs/operators';
 import { Auth } from '../../../core/auth/services/authService';
@@ -42,8 +42,14 @@ export class Login {
     private formBuilder: FormBuilder,
     private authService: Auth,
     private router: Router,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) {
+
+    // Redirigé ici par l'intercepteur quand le jeton a expiré en cours de session.
+    if (this.route.snapshot.queryParamMap.has('expired')) {
+      this.errorMessage = 'Votre session a expiré. Merci de vous reconnecter.';
+    }
 
     this.form = this.formBuilder.group({
 

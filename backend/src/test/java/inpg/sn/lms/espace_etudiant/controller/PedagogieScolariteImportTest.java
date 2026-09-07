@@ -130,7 +130,8 @@ class PedagogieScolariteImportTest {
                 forumSujetRepository, forumMessageRepository, forumMentionRepository, notificationService,
                 retourRepository, releveNotesService, releveDelivranceService, candidatRepository,
                 alumniProfilRepository, alumniProfilService, enqueteSuiviRepository, reponseEnqueteSuiviRepository,
-                notificationRepository, rapportQualitePdfService, completionProgrammeService);
+                notificationRepository, rapportQualitePdfService,
+                new inpg.sn.lms.espace_etudiant.service.RelevePdfService(), completionProgrammeService);
     }
 
     private Etudiant etudiantCree(long id) {

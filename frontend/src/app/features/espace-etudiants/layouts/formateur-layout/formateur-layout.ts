@@ -49,7 +49,6 @@ export class FormateurLayout implements OnInit {
     { label: 'Annonces', icon: 'campaign', route: 'annonces' },
     { label: 'Photothèque', icon: 'photo_library', route: 'phototheque' },
     { label: 'Certificats', icon: 'workspace_premium', route: 'certificats' },
-    { label: 'Activités du personnel', icon: 'apartment', route: 'activites-personnel' },
     { label: 'Rendez-vous', icon: 'event', route: 'rendez-vous' },
   ];
 

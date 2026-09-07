@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
+  AppreciationCritere,
   AvisValeur,
   CritereAccreditation,
   DemandeAccreditationEvaluateur,
@@ -38,6 +39,14 @@ export class EvaluateurAccreditationService {
     });
   }
 
+  /** Accréditation conditionnelle : le plan d'actions est obligatoire (Cadre DRCQ §IV.8). */
+  accrediterSousReserve(id: number, planActions: string, motif?: string): Observable<DemandeAccreditationEvaluateur> {
+    return this.http.put<DemandeAccreditationEvaluateur>(`${this.api}/demandes/${id}/accrediter-sous-reserve`, {
+      planActions,
+      motif: motif || null,
+    });
+  }
+
   rejeter(id: number, motif: string): Observable<DemandeAccreditationEvaluateur> {
     return this.http.put<DemandeAccreditationEvaluateur>(`${this.api}/demandes/${id}/rejeter`, { motif });
   }
@@ -47,16 +56,38 @@ export class EvaluateurAccreditationService {
     return this.http.post<DemandeAccreditationEvaluateur>(`${this.api}/demandes/${id}/avis`, { avis, commentaire });
   }
 
+  /** Dépose ou met à jour le jugement de l'évaluateur courant sur un critère du référentiel (upsert). */
+  evaluerCritere(
+    demandeId: number,
+    critereId: number,
+    appreciation: AppreciationCritere,
+    commentaire: string | null
+  ): Observable<DemandeAccreditationEvaluateur> {
+    return this.http.put<DemandeAccreditationEvaluateur>(
+      `${this.api}/demandes/${demandeId}/criteres/${critereId}`,
+      { appreciation, commentaire }
+    );
+  }
+
   getCriteres(): Observable<CritereAccreditation[]> {
     return this.http.get<CritereAccreditation[]>(`${this.api}/criteres`);
   }
 
-  creerCritere(libelle: string, description: string | null): Observable<CritereAccreditation> {
-    return this.http.post<CritereAccreditation>(`${this.api}/criteres`, { libelle, description });
+  creerCritere(
+    libelle: string,
+    description: string | null,
+    code: string | null,
+    section: string | null
+  ): Observable<CritereAccreditation> {
+    return this.http.post<CritereAccreditation>(`${this.api}/criteres`, { libelle, description, code, section });
   }
 
   desactiverCritere(id: number): Observable<CritereAccreditation> {
     return this.http.put<CritereAccreditation>(`${this.api}/criteres/${id}/desactiver`, {});
+  }
+
+  reactiverCritere(id: number): Observable<CritereAccreditation> {
+    return this.http.put<CritereAccreditation>(`${this.api}/criteres/${id}/reactiver`, {});
   }
 
   supprimerCritere(id: number): Observable<void> {

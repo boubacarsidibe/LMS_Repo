@@ -114,6 +114,9 @@
             <span class="inline-flex items-center px-2 py-1 rounded-md font-label-sm text-label-sm" [ngClass]="classeStatut(c.statut)">
               {{ libelleStatut(c.statut) }}
             </span>
+            <span *ngIf="idsEnAttenteInscription.has(c.id)" class="ml-1 inline-flex items-center px-2 py-1 rounded-md font-label-sm text-label-sm bg-error-container/20 text-error" title="Étape 6 de QMS-009 non finalisée : l'accès étudiant n'a pas encore été ouvert.">
+              Inscription à finaliser
+            </span>
           </td>
           <td class="p-4 text-right" (click)="$event.stopPropagation()">
             <div class="flex justify-end gap-1" [class.opacity-40]="actionEnCours">
@@ -177,6 +180,19 @@
       <div *ngIf="sel.motifRejet">
         <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Motif de rejet</div>
         <p class="text-body-sm text-error">{{ sel.motifRejet }}</p>
+      </div>
+
+      <div>
+        <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Historique du dossier (QMS-009)</div>
+        <p *ngIf="journalChargement" class="text-body-sm text-on-surface-variant">Chargement…</p>
+        <p *ngIf="!journalChargement && journalSelection.length === 0" class="text-body-sm text-on-surface-variant">Aucune étape consignée.</p>
+        <ol class="space-y-3" *ngIf="!journalChargement && journalSelection.length">
+          <li *ngFor="let etape of journalSelection" class="border-l-2 border-outline-variant pl-3">
+            <div class="font-label-sm text-label-sm text-on-surface font-semibold">{{ libelleEtapeQms(etape.etape) }}</div>
+            <div class="text-body-sm text-on-surface-variant">{{ etape.auteurNom }} — {{ etape.dateEtape | date:'dd/MM/yyyy HH:mm' }}</div>
+            <div *ngIf="etape.commentaire" class="text-body-sm text-on-surface-variant italic">{{ etape.commentaire }}</div>
+          </li>
+        </ol>
       </div>
     </div>
     <div class="mt-auto p-4 border-t border-outline-variant bg-surface-container-lowest sticky bottom-0 z-10 flex gap-2">

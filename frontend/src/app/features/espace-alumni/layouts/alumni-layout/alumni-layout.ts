@@ -33,7 +33,6 @@ export class AlumniLayout implements OnInit {
     { libelle: 'Enquêtes de suivi', lien: 'enquetes', icone: 'fact_check' },
     { libelle: 'Forum', lien: 'forum', icone: 'forum' },
     { libelle: 'Documents partagés', lien: 'documents', icone: 'folder_shared' },
-    { libelle: 'Rendez-vous', lien: 'rendez-vous', icone: 'event' },
   ];
 
   constructor(

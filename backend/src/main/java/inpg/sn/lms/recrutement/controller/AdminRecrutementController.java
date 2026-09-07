@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import inpg.sn.lms.auth.entity.Candidat;
@@ -44,6 +45,7 @@ import inpg.sn.lms.recrutement.dto.CritereAdmissionRequest;
 import inpg.sn.lms.recrutement.dto.CritereAdmissionResponse;
 import inpg.sn.lms.recrutement.dto.EntretienRequest;
 import inpg.sn.lms.recrutement.dto.EntretienResponse;
+import inpg.sn.lms.recrutement.dto.EtapeDossierResponse;
 import inpg.sn.lms.recrutement.dto.FiltreCriteresResponse;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.dto.PieceJustificativeResponse;
@@ -55,11 +57,13 @@ import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.FichierStocke;
 import inpg.sn.lms.recrutement.entity.NotificationTemplate;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
+import inpg.sn.lms.recrutement.enums.EnumEtapeQms;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.enums.EnumTypeNotification;
 import inpg.sn.lms.recrutement.repository.PieceJustificativeRepository;
 import inpg.sn.lms.recrutement.service.CandidatureService;
+import inpg.sn.lms.recrutement.service.JournalEtapeService;
 import inpg.sn.lms.recrutement.service.EntretienService;
 import inpg.sn.lms.recrutement.service.ExcelExportService;
 import inpg.sn.lms.recrutement.service.FichierStockeService;
@@ -101,6 +105,7 @@ public class AdminRecrutementController {
     private final EtudiantRepository etudiantRepository;
     private final CandidatRepository candidatRepository;
     private final NotificationTemplateService notificationTemplateService;
+    private final JournalEtapeService journalEtapeService;
 
     public AdminRecrutementController(SessionCandidatureService sessionService,
             CandidatureService candidatureService,
@@ -116,7 +121,9 @@ public class AdminRecrutementController {
             UserRepository userRepository,
             EtudiantRepository etudiantRepository,
             CandidatRepository candidatRepository,
-            NotificationTemplateService notificationTemplateService) {
+            NotificationTemplateService notificationTemplateService,
+            JournalEtapeService journalEtapeService) {
+        this.journalEtapeService = journalEtapeService;
         this.sessionService = sessionService;
         this.candidatureService = candidatureService;
         this.paiementService = paiementService;
@@ -182,8 +189,9 @@ public class AdminRecrutementController {
      * déclenchée à la soumission elle-même (voir CandidatController#soumettreCandidature).
      */
     @PostMapping("/sessions/{id}/appliquer-filtre-criteres")
-    public ResponseEntity<FiltreCriteresResponse> appliquerFiltreCriteres(@PathVariable Long id) {
-        return ResponseEntity.ok(candidatureService.appliquerFiltreCriteres(id));
+    public ResponseEntity<FiltreCriteresResponse> appliquerFiltreCriteres(@PathVariable Long id,
+            Authentication authentication) {
+        return ResponseEntity.ok(candidatureService.appliquerFiltreCriteres(id, agentCourant(authentication)));
     }
 
     // ===================== CRITÈRES PERSONNALISÉS =====================
@@ -438,10 +446,26 @@ public class AdminRecrutementController {
                 .orElse("Absent");
     }
 
+    /**
+     * Agent à l'origine de l'action, pour le journal d'étapes (procédure QMS-009).
+     * Renvoie {@code null} plutôt que d'échouer : une étape mal attribuée vaut mieux
+     * qu'une décision d'admission refusée parce que le journal n'a pas su qui agissait.
+     */
+    private User agentCourant(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return null;
+        }
+        User user = userRepository.findByUsername(authentication.getName());
+        return user != null ? user : userRepository.findByEmail(authentication.getName());
+    }
+
     @PutMapping("/candidatures/{id}/valider-preselection")
-    public ResponseEntity<CandidatureResponse> validerPreselection(@PathVariable Long id) {
+    public ResponseEntity<CandidatureResponse> validerPreselection(@PathVariable Long id,
+            Authentication authentication) {
         CandidatureResponse response = candidatureService.changerStatut(id,
                 EnumStatutCandidature.EN_COURS_DE_PRESELECTION, null);
+        candidatureService.journaliser(id, EnumEtapeQms.FILTRE_INITIAL, response.getStatut(),
+                agentCourant(authentication), "Dossier validé et passé en présélection.");
         if (response.getCandidatEmail() != null) {
             notificationService.notifierValidationDossier(response.getCandidatEmail(),
                     response.getNumeroDossier());
@@ -453,7 +477,7 @@ public class AdminRecrutementController {
 
     @PutMapping("/candidatures/{id}/rejeter")
     public ResponseEntity<CandidatureResponse> rejeterDossier(@PathVariable Long id,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body, Authentication authentication) {
         String motif = body.getOrDefault("motif", "Non spécifié");
         // Un candidat déjà admis au test ou à l'entretien qui n'est finalement pas retenu
         // reçoit un message de résultat de parcours plutôt qu'un simple rejet de dossier
@@ -464,6 +488,8 @@ public class AdminRecrutementController {
 
         CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.REJETE,
                 motif);
+        candidatureService.journaliser(id, EnumEtapeQms.SELECTION, response.getStatut(),
+                agentCourant(authentication), "Dossier rejeté. Motif : " + motif);
         if (response.getCandidatEmail() != null) {
             if (apresEvaluation) {
                 notificationService.notifierNonAdmission(response.getCandidatEmail(), response.getNumeroDossier());
@@ -479,9 +505,12 @@ public class AdminRecrutementController {
     }
 
     @PutMapping("/candidatures/{id}/admettre-test")
-    public ResponseEntity<CandidatureResponse> admettreTestAcademique(@PathVariable Long id) {
+    public ResponseEntity<CandidatureResponse> admettreTestAcademique(@PathVariable Long id,
+            Authentication authentication) {
         CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS1,
                 null);
+        candidatureService.journaliser(id, EnumEtapeQms.EVALUATION, response.getStatut(),
+                agentCourant(authentication), "Dossier admis au test académique.");
         if (response.getCandidatEmail() != null) {
             notificationService.notifierAdmissionTest(response.getCandidatEmail(),
                     response.getNumeroDossier());
@@ -492,9 +521,12 @@ public class AdminRecrutementController {
     }
 
     @PutMapping("/candidatures/{id}/admettre-entretien")
-    public ResponseEntity<CandidatureResponse> admettreEntretien(@PathVariable Long id) {
+    public ResponseEntity<CandidatureResponse> admettreEntretien(@PathVariable Long id,
+            Authentication authentication) {
         CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS2,
                 null);
+        candidatureService.journaliser(id, EnumEtapeQms.EVALUATION, response.getStatut(),
+                agentCourant(authentication), "Dossier admis à l'entretien.");
         if (response.getCandidatEmail() != null) {
             notificationService.notifierAdmissionEntretien(response.getCandidatEmail(),
                     response.getNumeroDossier());
@@ -504,18 +536,74 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Étape 5 de la procédure QMS-009 : <strong>sélection</strong>. Décide de l'admission,
+     * rien de plus.
+     *
+     * <p>L'ouverture de l'accès étudiant, qui suivait automatiquement, est devenue un geste
+     * distinct ({@link #finaliserInscription}) : la procédure qualité en fait l'étape 6,
+     * portée par une autre unité. Le risque de cette séparation — un admis oublié, sans
+     * accès et sans que personne ne le sache — est tenu par
+     * {@link #candidaturesEnAttenteInscription}, la file que le responsable doit vider.
+     */
     @PutMapping("/candidatures/{id}/admettre-final")
-    public ResponseEntity<CandidatureResponse> admettreFinal(@PathVariable Long id) {
+    public ResponseEntity<CandidatureResponse> admettreFinal(@PathVariable Long id,
+            Authentication authentication) {
         CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS3,
                 null);
+        candidatureService.journaliser(id, EnumEtapeQms.SELECTION, response.getStatut(),
+                agentCourant(authentication), "Candidature définitivement admise ; inscription à finaliser.");
         if (response.getCandidatEmail() != null) {
             notificationService.notifierAdmissionFinale(response.getCandidatEmail(),
                     response.getNumeroDossier());
         }
         notifierCandidatEnLigne(response, "Félicitations ! Votre candidature n°" + response.getNumeroDossier()
                 + " est définitivement admise à l'INPG.");
-        inscrireCommeEtudiant(response.getCandidatId());
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Étape 6 de la procédure QMS-009 : <strong>inscription et finalisation</strong>.
+     * Ouvre l'accès étudiant au candidat admis, et consigne qui l'a fait.
+     *
+     * <p>Idempotente : rejouée sur un dossier déjà inscrit, elle ne réécrit rien et
+     * n'ajoute pas de seconde ligne au journal.
+     */
+    @PostMapping("/candidatures/{id}/finaliser-inscription")
+    public ResponseEntity<?> finaliserInscription(@PathVariable Long id, Authentication authentication) {
+        CandidatureResponse response = candidatureService.getCandidatureById(id);
+        if (response.getStatut() != EnumStatutCandidature.ADMIS3) {
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "Seule une candidature définitivement admise peut être inscrite."));
+        }
+        if (journalEtapeService.etapeFranchie(id, EnumEtapeQms.INSCRIPTION)) {
+            return ResponseEntity.ok(response);
+        }
+
+        inscrireCommeEtudiant(response.getCandidatId());
+        candidatureService.journaliser(id, EnumEtapeQms.INSCRIPTION, response.getStatut(),
+                agentCourant(authentication), "Accès étudiant ouvert ; affectation à une promotion à faire côté pédagogie.");
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Les admis dont l'inscription reste à faire — la file de l'étape 6. Sans elle, la
+     * séparation entre décision et inscription laisserait des admis sans accès, exactement
+     * le défaut que l'inscription automatique évitait.
+     */
+    @GetMapping("/candidatures/en-attente-inscription")
+    public ResponseEntity<List<CandidatureResponse>> candidaturesEnAttenteInscription() {
+        List<CandidatureResponse> enAttente = candidatureService
+                .getCandidaturesByStatut(EnumStatutCandidature.ADMIS3).stream()
+                .filter(c -> !journalEtapeService.etapeFranchie(c.getId(), EnumEtapeQms.INSCRIPTION))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(enAttente);
+    }
+
+    /** Journal des étapes franchies par un dossier (procédure QMS-009). */
+    @GetMapping("/candidatures/{id}/journal")
+    public ResponseEntity<List<EtapeDossierResponse>> journalDuDossier(@PathVariable Long id) {
+        return ResponseEntity.ok(journalEtapeService.journalDe(id));
     }
 
     /**

@@ -42,15 +42,14 @@ import inpg.sn.lms.personnel.service.RapportActivitePdfService;
  *
  * <p>Le TDR ne fournit ni organigramme ni notion d'affectation d'un compte à
  * un département : la saisie porte sur le catalogue de départements, pas sur
- * une hiérarchie inventée. Ouvert aux trois rôles internes déjà établis dans
- * ce dépôt comme « personnel » (par opposition aux rôles candidats/étudiants/
- * externes) : formateur, responsable pédagogique, responsable admission.
- * Le catalogue des départements reste géré par la pédagogie, qui gère déjà
- * d'autres référentiels de ce type (formations, promotions).
+ * une hiérarchie inventée. Piloté par le seul responsable pédagogique (décision
+ * produit) : c'est lui qui centralise le suivi et la génération des rapports.
+ * Le catalogue des départements est géré au même endroit, comme les autres
+ * référentiels pédagogiques (formations, promotions).
  */
 @RestController
 @RequestMapping("/api/personnel")
-@PreAuthorize("hasAnyRole('FORMATEUR', 'RESPONSABLE_PEDAGOGIQUE', 'RESPONSABLE_ADMISSION')")
+@PreAuthorize("hasRole('RESPONSABLE_PEDAGOGIQUE')")
 public class PersonnelActiviteController {
 
     private final DepartementRepository departementRepository;
@@ -205,7 +204,7 @@ public class PersonnelActiviteController {
         List<ActivitePersonnel> activites = activiteRepository
                 .findByDepartementIdAndAnneeAndMoisOrderByDateCreationDesc(id, annee, mois);
         byte[] pdf = rapportPdfService.genererRapportDepartement(departement.getLibelle(), mois, annee, activites);
-        return pdfReponse(pdf, "rapport-" + departement.getCode() + "-" + annee + "-" + mois + ".pdf");
+        return pdfReponse(pdf, nomFichier("INPG-activites-" + departement.getCode(), annee, mois));
     }
 
     @GetMapping("/rapports/global")
@@ -214,14 +213,19 @@ public class PersonnelActiviteController {
         List<ActivitePersonnel> activites = activiteRepository
                 .findByAnneeAndMoisOrderByDepartement_LibelleAscDateCreationDesc(annee, mois);
         byte[] pdf = rapportPdfService.genererRapportGlobal(mois, annee, activites);
-        return pdfReponse(pdf, "rapport-global-inpg-" + annee + "-" + mois + ".pdf");
+        return pdfReponse(pdf, nomFichier("INPG-activites-global", annee, mois));
+    }
+
+    /** {@code prefixe-AAAA-MM.pdf} : mois sur deux chiffres, pour un tri de fichiers correct. */
+    private String nomFichier(String prefixe, int annee, int mois) {
+        return String.format("%s-%04d-%02d.pdf", prefixe, annee, mois);
     }
 
     private ResponseEntity<byte[]> pdfReponse(byte[] pdf, String nomFichier) {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.inline().filename(nomFichier).build().toString())
+                        ContentDisposition.attachment().filename(nomFichier).build().toString())
                 .body(pdf);
     }
 

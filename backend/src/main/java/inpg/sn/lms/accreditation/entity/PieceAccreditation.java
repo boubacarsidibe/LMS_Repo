@@ -2,6 +2,7 @@ package inpg.sn.lms.accreditation.entity;
 
 import inpg.sn.lms.accreditation.enums.EnumTypeDocumentAccreditation;
 import inpg.sn.lms.recrutement.entity.FichierStocke;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -46,7 +47,14 @@ public class PieceAccreditation {
     @JoinColumn(name = "demande_id", nullable = false)
     private DemandeAccreditation demande;
 
-    @OneToOne
+    /**
+     * Le fichier physique appartient à la pièce : sa ligne {@code FichierStocke}
+     * est créée par le storage sans être persistée — c'est cette cascade qui
+     * l'enregistre au {@code save} de la pièce (sinon
+     * {@code TransientPropertyValueException} au flush). {@code orphanRemoval}
+     * fait suivre la suppression.
+     */
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "fichier_stocke_id")
     private FichierStocke fichierStocke;
 

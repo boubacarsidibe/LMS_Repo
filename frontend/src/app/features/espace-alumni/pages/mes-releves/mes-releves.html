@@ -28,11 +28,19 @@
           </p>
           <p class="font-body-sm text-body-sm text-on-surface-variant">{{ r.delivrePar }}</p>
         </div>
-        <p class="font-headline-sm text-headline-sm text-secondary tabular-nums shrink-0">
-          {{ r.moyenneGenerale !== null ? (r.moyenneGenerale | number: '1.1-1') : '—' }}<span
-            class="font-body-sm text-body-sm text-on-surface-variant">/20</span>
-        </p>
+        <div class="flex items-center gap-3 shrink-0">
+          <p class="font-headline-sm text-headline-sm text-secondary tabular-nums">
+            {{ r.moyenneGenerale !== null ? (r.moyenneGenerale | number: '1.1-1') : '—' }}<span
+              class="font-body-sm text-body-sm text-on-surface-variant">/20</span>
+          </p>
+          <button type="button" (click)="telechargerReleve(r)" [disabled]="releveEnCoursId === r.id"
+                  class="flex items-center gap-1 px-3 py-2 rounded-lg border border-outline-variant font-label-sm text-label-sm text-on-surface hover:bg-surface-container transition-colors disabled:opacity-50">
+            <span class="material-symbols-outlined text-[18px]">download</span>
+            {{ releveEnCoursId === r.id ? 'Téléchargement…' : 'PDF' }}
+          </button>
+        </div>
       </div>
+      <p *ngIf="erreur" class="mt-2 font-body-sm text-body-sm text-error">{{ erreur }}</p>
 
       <ul class="mt-4 border-t border-outline-variant/50 pt-3 space-y-1">
         <li *ngFor="let l of r.lignes"

@@ -52,6 +52,10 @@ class EntrepriseControllerTest {
     @Mock
     private FormationRepository formationRepository;
     @Mock
+    private inpg.sn.lms.entreprise.repository.FicheTechniqueModuleRepository ficheRepository;
+    @Mock
+    private inpg.sn.lms.entreprise.service.FicheTechniqueModuleService ficheService;
+    @Mock
     private RoleRepository roleRepository;
     @Mock
     private UtilisateurCourantService utilisateurCourant;
@@ -66,7 +70,8 @@ class EntrepriseControllerTest {
     @BeforeEach
     void setUp() {
         controller = new EntrepriseController(entrepriseRepository, demandeRepository, messageRepository,
-                formationRepository, roleRepository, utilisateurCourant, notificationService);
+                formationRepository, ficheRepository, ficheService, roleRepository, utilisateurCourant,
+                notificationService);
         user = new User();
         user.setId(7L);
     }

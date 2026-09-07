@@ -57,6 +57,8 @@ class EvaluateurAccreditationControllerTest {
     @Mock
     private AvisAccreditationRepository avisRepository;
     @Mock
+    private inpg.sn.lms.accreditation.repository.EvaluationCritereRepository evaluationCritereRepository;
+    @Mock
     private UtilisateurCourantService utilisateurCourant;
     @Mock
     private PieceAccreditationStorageService storage;
@@ -73,7 +75,7 @@ class EvaluateurAccreditationControllerTest {
     @BeforeEach
     void setUp() {
         controller = new EvaluateurAccreditationController(demandeRepository, pieceRepository, critereRepository,
-                avisRepository, utilisateurCourant, storage, notificationService);
+                avisRepository, evaluationCritereRepository, utilisateurCourant, storage, notificationService);
         evaluateur = new User();
         evaluateur.setId(1L);
         ecoleUser = new User();
@@ -86,7 +88,7 @@ class EvaluateurAccreditationControllerTest {
     @Test
     @DisplayName("Rejet sans motif : 400, la demande n'est pas modifiée")
     void rejeter_sans_motif_est_refuse() {
-        ResponseEntity<?> reponse = controller.rejeter(5L, new DecisionAccreditationRequest(""), authentication);
+        ResponseEntity<?> reponse = controller.rejeter(5L, new DecisionAccreditationRequest("", null), authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verify(demandeRepository, never()).save(any());
@@ -101,7 +103,7 @@ class EvaluateurAccreditationControllerTest {
         demande.setStatut(EnumStatutDemandeAccreditation.ACCREDITE);
         when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
 
-        ResponseEntity<?> reponse = controller.rejeter(5L, new DecisionAccreditationRequest("Dossier incomplet"),
+        ResponseEntity<?> reponse = controller.rejeter(5L, new DecisionAccreditationRequest("Dossier incomplet", null),
                 authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -121,7 +123,7 @@ class EvaluateurAccreditationControllerTest {
         when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L))
                 .thenReturn(List.of(new AvisAccreditation(demande, evaluateur, EnumAvisAccreditation.DEFAVORABLE, "Trop juste")));
 
-        ResponseEntity<?> reponse = controller.rejeter(5L, new DecisionAccreditationRequest("Dossier incomplet"),
+        ResponseEntity<?> reponse = controller.rejeter(5L, new DecisionAccreditationRequest("Dossier incomplet", null),
                 authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -139,7 +141,7 @@ class EvaluateurAccreditationControllerTest {
         when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
         when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L)).thenReturn(List.of());
 
-        ResponseEntity<?> reponse = controller.rejeter(5L, new DecisionAccreditationRequest("Dossier incomplet"),
+        ResponseEntity<?> reponse = controller.rejeter(5L, new DecisionAccreditationRequest("Dossier incomplet", null),
                 authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -178,7 +180,7 @@ class EvaluateurAccreditationControllerTest {
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(demande.getStatut()).isEqualTo(EnumStatutDemandeAccreditation.ACCREDITE);
-        verify(notificationService).notifierAccreditation("ecole@example.sn", "École X");
+        verify(notificationService).notifierAccreditation(org.mockito.ArgumentMatchers.eq("ecole@example.sn"), org.mockito.ArgumentMatchers.eq("École X"), any());
     }
 
     @Test
@@ -194,7 +196,7 @@ class EvaluateurAccreditationControllerTest {
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verify(demandeRepository, never()).save(any());
-        verify(notificationService, never()).notifierAccreditation(any(), any());
+        verify(notificationService, never()).notifierAccreditation(any(), any(), any());
     }
 
     @Test
@@ -214,7 +216,7 @@ class EvaluateurAccreditationControllerTest {
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(avisRepository).save(any(AvisAccreditation.class));
-        verify(notificationService, never()).notifierAccreditation(any(), any());
+        verify(notificationService, never()).notifierAccreditation(any(), any(), any());
         verify(notificationService, never()).notifierRejet(any(), any(), any());
     }
 
@@ -260,7 +262,7 @@ class EvaluateurAccreditationControllerTest {
     @Test
     @DisplayName("Création d'un critère sans libellé : 400")
     void creer_critere_sans_libelle_est_refuse() {
-        ResponseEntity<?> reponse = controller.creerCritere(new CritereAccreditationRequest("  ", null));
+        ResponseEntity<?> reponse = controller.creerCritere(new CritereAccreditationRequest(null, null, "  ", null));
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verify(critereRepository, never()).save(any());
@@ -276,10 +278,35 @@ class EvaluateurAccreditationControllerTest {
         });
 
         ResponseEntity<?> reponse = controller
-                .creerCritere(new CritereAccreditationRequest("Corps enseignant qualifié", null));
+                .creerCritere(new CritereAccreditationRequest(null, null, "Corps enseignant qualifié", null));
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         verify(critereRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Réactivation d'un critère désactivé : actif repasse à true")
+    void reactiver_critere_le_remet_dans_la_grille() {
+        CritereAccreditation critere = new CritereAccreditation("Anglais professionnel", null);
+        critere.setActif(false);
+        when(critereRepository.findById(3L)).thenReturn(Optional.of(critere));
+        when(critereRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ResponseEntity<?> reponse = controller.reactiverCritere(3L);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(critere.isActif()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Réactivation d'un critère inexistant : 404")
+    void reactiver_critere_inexistant_est_introuvable() {
+        when(critereRepository.findById(9L)).thenReturn(Optional.empty());
+
+        ResponseEntity<?> reponse = controller.reactiverCritere(9L);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        verify(critereRepository, never()).save(any());
     }
 
     @Test
@@ -291,5 +318,97 @@ class EvaluateurAccreditationControllerTest {
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         verify(critereRepository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("Grille : jugement d'un critère avec appréciation invalide : 400")
+    void evaluer_critere_appreciation_invalide_est_refuse() {
+        DemandeAccreditation demande = new DemandeAccreditation(ecole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+        when(critereRepository.findById(3L)).thenReturn(Optional.of(new CritereAccreditation("Équipements", null)));
+
+        ResponseEntity<?> reponse = controller.evaluerCritere(5L, 3L,
+                new inpg.sn.lms.accreditation.dto.EvaluationCritereRequest("PRESQUE", null), authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(evaluationCritereRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Grille : premier jugement d'un critère : enregistré (upsert)")
+    void evaluer_critere_nouveau_est_enregistre() {
+        DemandeAccreditation demande = new DemandeAccreditation(ecole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+        when(critereRepository.findById(3L)).thenReturn(Optional.of(new CritereAccreditation("Équipements", null)));
+        when(utilisateurCourant.utilisateur(authentication)).thenReturn(evaluateur);
+        when(evaluationCritereRepository.findByDemandeIdAndCritereIdAndEvaluateurId(5L, 3L, 1L))
+                .thenReturn(Optional.empty());
+        when(pieceRepository.findByDemandeId(5L)).thenReturn(List.of());
+        when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L)).thenReturn(List.of());
+
+        ResponseEntity<?> reponse = controller.evaluerCritere(5L, 3L,
+                new inpg.sn.lms.accreditation.dto.EvaluationCritereRequest("NON_CONFORME", "Salles insuffisantes"),
+                authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(evaluationCritereRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("Accréditation pleine : date d'expiration posée à décision + 3 ans")
+    void accrediter_pose_une_date_expiration_a_trois_ans() {
+        DemandeAccreditation demande = new DemandeAccreditation(ecole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+        when(utilisateurCourant.utilisateur(authentication)).thenReturn(evaluateur);
+        when(demandeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(pieceRepository.findByDemandeId(5L)).thenReturn(List.of());
+        when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L))
+                .thenReturn(List.of(new AvisAccreditation(demande, evaluateur, EnumAvisAccreditation.FAVORABLE, null)));
+
+        controller.accrediter(5L, null, authentication);
+
+        assertThat(demande.getDateExpiration())
+                .isEqualTo(demande.getDateDecision().toLocalDate().plusYears(3));
+    }
+
+    @Test
+    @DisplayName("Accréditation sous réserve sans plan d'actions : 400")
+    void accrediter_sous_reserve_sans_plan_est_refuse() {
+        ResponseEntity<?> reponse = controller.accrediterSousReserve(5L,
+                new DecisionAccreditationRequest("synthèse", "   "), authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(demandeRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Accréditation sous réserve valide : statut ACCREDITE_SOUS_RESERVE, plan enregistré, école notifiée")
+    void accrediter_sous_reserve_valide_est_applique() {
+        DemandeAccreditation demande = new DemandeAccreditation(ecole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+        when(utilisateurCourant.utilisateur(authentication)).thenReturn(evaluateur);
+        when(demandeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(pieceRepository.findByDemandeId(5L)).thenReturn(List.of());
+        when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L))
+                .thenReturn(List.of(new AvisAccreditation(demande, evaluateur, EnumAvisAccreditation.FAVORABLE, null)));
+
+        ResponseEntity<?> reponse = controller.accrediterSousReserve(5L,
+                new DecisionAccreditationRequest("Synthèse école", "Renforcer le corps enseignant"), authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(demande.getStatut()).isEqualTo(EnumStatutDemandeAccreditation.ACCREDITE_SOUS_RESERVE);
+        assertThat(demande.getPlanActions()).isEqualTo("Renforcer le corps enseignant");
+        assertThat(demande.getDateExpiration()).isNotNull();
+        verify(notificationService).notifierAccreditationSousReserve(
+                org.mockito.ArgumentMatchers.eq("ecole@example.sn"), org.mockito.ArgumentMatchers.eq("École X"),
+                org.mockito.ArgumentMatchers.eq("Renforcer le corps enseignant"), any());
     }
 }

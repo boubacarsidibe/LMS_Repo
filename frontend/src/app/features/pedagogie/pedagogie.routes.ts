@@ -78,6 +78,13 @@ export const PEDAGOGIE_ROUTES: Routes = [
           ),
       },
       {
+        path: 'entreprises',
+        loadComponent: () =>
+          import('./pages/entreprises/pedagogie-entreprises.component').then(
+            (m) => m.PedagogieEntreprisesComponent
+          ),
+      },
+      {
         path: 'mon-profil',
         loadComponent: () =>
           import('./pages/mon-profil/pedagogie-mon-profil.component').then(

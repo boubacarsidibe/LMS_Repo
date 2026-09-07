@@ -102,6 +102,7 @@
                 <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Période</th>
                 <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Moyenne</th>
                 <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Délivré le</th>
+                <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">PDF</th>
               </tr>
             </thead>
             <tbody>
@@ -118,9 +119,16 @@
                 <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">
                   {{ r.dateEmission | date: 'dd/MM/yyyy' }}
                 </td>
+                <td class="px-stack-lg py-stack-md text-right">
+                  <button type="button" (click)="telechargerReleve(r)" [disabled]="releveEnCoursId === r.id"
+                          class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant font-label-sm text-label-sm text-on-surface hover:bg-surface-container transition-colors disabled:opacity-50">
+                    <span class="material-symbols-outlined text-[18px]">download</span>
+                    {{ releveEnCoursId === r.id ? '…' : 'PDF' }}
+                  </button>
+                </td>
               </tr>
               <tr *ngIf="releves.length === 0">
-                <td colspan="5" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+                <td colspan="6" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
                   Aucun relevé délivré.
                 </td>
               </tr>

@@ -19,7 +19,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
@@ -62,6 +64,33 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("Accès refusé [{}] : {}", path(request), ex.getMessage());
         return build(HttpStatus.FORBIDDEN, "Vous n'avez pas les droits nécessaires pour effectuer cette action.",
                 request);
+    }
+
+    /**
+     * Filet de sécurité pour les contraintes de base non rattrapées en amont
+     * (colonnes {@code NOT NULL UNIQUE} : e-mail, identifiant, téléphone...).
+     * Ces violations surviennent au flush/commit, souvent après le retour du
+     * contrôleur : sans ce handler elles tombaient en 500 générique.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex, WebRequest request) {
+        log.warn("Violation de contrainte de données [{}] : {}", path(request), ex.getMostSpecificCause().getMessage());
+        return build(HttpStatus.CONFLICT,
+                "Cette opération entre en conflit avec une donnée déjà enregistrée "
+                        + "(un identifiant, un e-mail ou un numéro déjà utilisé).",
+                request);
+    }
+
+    /**
+     * Requête multipart illisible (limite gérée à part par
+     * {@link #handleMaxUploadSizeExceededException}). Renvoie un 400 avec message
+     * plutôt qu'un 500 muet côté client.
+     */
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ErrorResponse> handleMultipart(MultipartException ex, WebRequest request) {
+        log.warn("Envoi de fichier invalide [{}] : {}", path(request), ex.getMessage());
+        return build(HttpStatus.BAD_REQUEST,
+                "Le fichier n'a pas pu être lu. Réessayez ou choisissez un autre fichier.", request);
     }
 
     /**

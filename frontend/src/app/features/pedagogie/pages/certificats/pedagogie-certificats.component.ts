@@ -38,6 +38,8 @@ export class PedagogieCertificatsComponent implements OnInit {
 
   messageErreur = '';
   messageSucces = '';
+  /** Cours que l'étudiant n'a pas terminés (renvoyés par le 409 du serveur). */
+  coursNonTermines: string[] = [];
 
   ngOnInit(): void {
     this.charger();
@@ -70,6 +72,7 @@ export class PedagogieCertificatsComponent implements OnInit {
     this.formulaireOuvert = true;
     this.messageErreur = '';
     this.messageSucces = '';
+    this.coursNonTermines = [];
   }
 
   get saisieValide(): boolean {
@@ -82,6 +85,7 @@ export class PedagogieCertificatsComponent implements OnInit {
     }
     this.enregistrement = true;
     this.messageErreur = '';
+    this.coursNonTermines = [];
     this.pedagogie
       .delivrerCertificat(this.etudiantId!, this.intitule.trim(), this.promotionId)
       .subscribe({
@@ -94,6 +98,9 @@ export class PedagogieCertificatsComponent implements OnInit {
         error: (erreur) => {
           this.enregistrement = false;
           this.messageErreur = erreur.error?.message || 'La délivrance a échoué.';
+          this.coursNonTermines = Array.isArray(erreur.error?.coursNonTermines)
+            ? erreur.error.coursNonTermines
+            : [];
         },
       });
   }

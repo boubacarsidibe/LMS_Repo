@@ -1,0 +1,192 @@
+{
+  "_source": "Référentiel d'accréditation — Programmes de formation Oil & Gas, Direction de la Régulation et du Contrôle Qualité (DRCQ) de l'INPG, version révisée du 23 mars 2026.",
+  "_usage": "Amorçage de la table criteres_accreditation (colonnes code / section / libelle / description / ordre). Insertion idempotente par code : un critère déjà présent n'est jamais réécrit, pour préserver les retouches faites par l'INPG via le CRUD de l'espace évaluateur.",
+  "criteres": [
+    {
+      "code": "1.1",
+      "section": "1. Management de la qualité",
+      "libelle": "L'établissement doit être officiellement reconnu par les autorités compétentes.",
+      "description": "Disposer d'un statut légal et être inscrit auprès des autorités compétentes. Publier et rendre accessibles les informations sur la reconnaissance."
+    },
+    {
+      "code": "1.2",
+      "section": "1. Management de la qualité",
+      "libelle": "L'établissement doit démontrer l'engagement de la direction à garantir l'efficacité du Système de Management de la Qualité (SMQ). Les rôles et responsabilités des personnes impliquées dans sa mise en œuvre doivent être précisés.",
+      "description": "Formaliser l'engagement de la direction envers le SMQ via des politiques et déclarations. Définir clairement les rôles et responsabilités de chaque personne impliquée. Communiquer et sensibiliser les équipes aux objectifs qualité et procédures. Mettre en place des mécanismes de suivi pour assurer l'efficacité et la conformité du SMQ."
+    },
+    {
+      "code": "1.3",
+      "section": "1. Management de la qualité",
+      "libelle": "Les formateurs spécialisés affectés aux modules du programme Oil & Gas doivent détenir une certification délivrée par l'Institut National du Pétrole et du Gaz.",
+      "description": "Vérifier que chaque formateur spécialisé possède la certification de l'INPG correspondant à son domaine d'enseignement. Tenir à jour un registre des formateurs certifiés et des modules qu'ils peuvent enseigner. Soumettre tout nouveau formateur spécialisé à la procédure de certification de l'INPG avant affectation. Mettre en œuvre des actions de renforcement ou de mise à jour des compétences des formateurs."
+    },
+    {
+      "code": "1.4",
+      "section": "1. Management de la qualité",
+      "libelle": "Le programme de formation doit définir des objectifs clairs et adaptés, mesurables et régulièrement évalués.",
+      "description": "Définir des objectifs clairs et adaptés aux exigences du programme. Assurer que les objectifs sont mesurables et évaluables. Mettre en place un mécanisme d'évaluation régulière pour suivre l'atteinte des objectifs. Réviser les objectifs périodiquement en fonction des résultats et retours."
+    },
+    {
+      "code": "1.5",
+      "section": "1. Management de la qualité",
+      "libelle": "L'établissement doit s'assurer que les programmes de formation en pétrole et gaz prennent en compte les exigences spécifiques du secteur et l'évolution des normes et technologies.",
+      "description": "Identifier les exigences spécifiques du secteur pétrolier et gazier. Intégrer dans les programmes les normes et standards du secteur des hydrocarbures. Mettre à jour régulièrement les contenus pédagogiques pour suivre l'évolution du secteur. Consulter les experts et partenaires industriels pour assurer la conformité des programmes par rapport aux standards."
+    },
+    {
+      "code": "1.6",
+      "section": "1. Management de la qualité",
+      "libelle": "Le programme de formation doit faire l'objet d'une évaluation régulière afin de garantir son adéquation avec les exigences spécifiques du secteur.",
+      "description": "Mettre en place un processus d'évaluation périodique du programme. Collecter les retours des parties prenantes, notamment étudiants, formateurs et professionnels du secteur. Analyser la pertinence du contenu du programme par rapport aux exigences du secteur. Mettre à jour le programme sur la base des résultats de l'évaluation."
+    },
+    {
+      "code": "1.7",
+      "section": "1. Management de la qualité",
+      "libelle": "L'établissement doit disposer d'un processus détaillant les étapes à suivre si un candidat souhaite contester une décision d'évaluation.",
+      "description": "Établir un processus clair pour la contestation des décisions d'évaluation. Décrire les étapes à suivre, les délais et les responsables. Communiquer ce processus à tous les étudiants et parties prenantes. Assurer le suivi et le traitement équitable de chaque contestation."
+    },
+    {
+      "code": "1.8",
+      "section": "1. Management de la qualité",
+      "libelle": "L'établissement doit disposer d'un processus garantissant que le système de management de la qualité (SMQ) soit audité en interne au moins une fois par an.",
+      "description": "Mettre en place un processus d'audit interne du SMQ. Planifier les audits au moins une fois par an. Désigner des auditeurs internes compétents et indépendants. Documenter les résultats des audits et mettre en œuvre les actions correctives nécessaires."
+    },
+    {
+      "code": "1.9",
+      "section": "1. Management de la qualité",
+      "libelle": "L'établissement doit mettre en place un processus structuré d'auto-évaluation en amont de l'audit formel.",
+      "description": "Établir un processus d'auto-évaluation clair et structuré. Planifier l'auto-évaluation avant chaque audit formel. Impliquer tous les services concernés dans l'auto-évaluation. Analyser les résultats et préparer les actions correctives avant l'audit externe."
+    },
+    {
+      "code": "1.10",
+      "section": "1. Management de la qualité",
+      "libelle": "Le programme de formation doit assurer un suivi du volume horaire de chaque module.",
+      "description": "Suivre le volume horaire prévu pour chaque module. Contrôler le temps effectivement dispensé. Comparer les heures prévues et réalisées pour détecter tout écart. Adapter le planning pour respecter le volume horaire défini."
+    },
+    {
+      "code": "1.11",
+      "section": "1. Management de la qualité",
+      "libelle": "Le règlement intérieur de l'établissement doit encadrer les conditions de formation et de fonctionnement du programme.",
+      "description": "Définir clairement les conditions de formation et de participation des étudiants. Préciser les règles de fonctionnement du programme et les responsabilités des acteurs. Communiquer le règlement intérieur à tous les étudiants et parties prenantes. Mettre à jour régulièrement le règlement pour refléter les évolutions du programme et des politiques de l'établissement."
+    },
+    {
+      "code": "1.12",
+      "section": "1. Management de la qualité",
+      "libelle": "L'établissement doit garantir l'égalité des chances dans l'ensemble du processus éducatif, depuis l'admission jusqu'à l'évaluation des apprentissages.",
+      "description": "Assurer l'égalité d'accès pour tous les candidats lors de l'admission. Promouvoir l'équité dans la participation aux activités d'enseignement et d'apprentissage. Appliquer des critères justes et transparents lors de l'évaluation des apprentissages. Suivre et réviser régulièrement les pratiques pour garantir l'égalité des chances."
+    },
+    {
+      "code": "2.1",
+      "section": "2. Suivi et évaluation des compétences",
+      "libelle": "L'établissement doit justifier de la présence d'un nombre suffisant de vérificateurs qualifiés et expérimentés dans le domaine du pétrole et du gaz, chargés de s'assurer de la qualité des évaluations et de la conformité du programme aux exigences du référentiel.",
+      "description": "Définir clairement les missions du vérificateur interne : vérification de l'application correcte des critères d'évaluation, conformité des notes attribuées aux performances des apprenants, harmonisation des pratiques entre évaluateurs. Déterminer le nombre nécessaire de vérificateurs internes qualifiés selon la taille et la complexité du programme. Sélectionner des profils expérimentés dans les métiers du pétrole et du gaz."
+    },
+    {
+      "code": "2.2",
+      "section": "2. Suivi et évaluation des compétences",
+      "libelle": "L'établissement doit disposer d'un processus structuré garantissant la rigueur et la cohérence des évaluations dans les formations aux métiers du pétrole et du gaz, tout en définissant les mesures à appliquer en cas d'échec des apprenants.",
+      "description": "Mettre en place un processus structuré pour toutes les évaluations. Garantir la rigueur et la cohérence des critères d'évaluation. Informer les parties prenantes des procédures et attentes."
+    },
+    {
+      "code": "2.3",
+      "section": "2. Suivi et évaluation des compétences",
+      "libelle": "L'établissement doit mettre en place un processus structuré pour assurer le suivi et la mise à jour continue des compétences des candidats tout au long du programme de formation.",
+      "description": "Mettre en place un processus structuré de suivi des compétences des candidats. Évaluer régulièrement les compétences acquises par les apprenants. Identifier les besoins de mise à jour ou de renforcement des compétences. Adapter le programme et les activités pédagogiques pour garantir le développement continu des compétences."
+    },
+    {
+      "code": "2.4",
+      "section": "2. Suivi et évaluation des compétences",
+      "libelle": "L'établissement doit s'assurer que les évaluations reflètent les objectifs pédagogiques et les exigences du référentiel du programme.",
+      "description": "Comparer systématiquement les contenus et objectifs pédagogiques avec les critères d'évaluation. Vérifier que chaque évaluation mesure les compétences attendues. Ajuster les évaluations si elles ne reflètent pas correctement les objectifs du programme. Communiquer les changements aux formateurs et aux évaluateurs."
+    },
+    {
+      "code": "2.5",
+      "section": "2. Suivi et évaluation des compétences",
+      "libelle": "L'établissement doit assurer l'enregistrement, l'archivage sécurisé et la traçabilité de toutes les décisions d'évaluation et des résultats des apprenants.",
+      "description": "Enregistrer toutes les décisions d'évaluation et les résultats des apprenants. Assurer que les données sont accessibles aux auditeurs et parties prenantes autorisées. Mettre en place un système de classement et d'archivage sécurisé des résultats. Réaliser des vérifications périodiques pour garantir l'exactitude et la conformité des informations."
+    },
+    {
+      "code": "2.6",
+      "section": "2. Suivi et évaluation des compétences",
+      "libelle": "L'établissement doit mettre en place un mécanisme de retour d'information pour améliorer en continu les méthodes d'évaluation et le programme de formation.",
+      "description": "Collecter régulièrement les retours des étudiants, formateurs et professionnels du secteur sur les évaluations et le programme. Analyser les commentaires pour identifier les points d'amélioration. Mettre en œuvre les ajustements nécessaires dans les méthodes d'évaluation et le contenu du programme. Documenter les actions correctives et les résultats pour assurer le suivi."
+    },
+    {
+      "code": "3.1",
+      "section": "3. Structure et contenu des programmes",
+      "libelle": "Les étudiants des programmes technicien et ingénierie en pétrole et gaz doivent effectuer un nombre obligatoire d'heures de simulation dans les laboratoires de l'Institut National du Pétrole et du Gaz.",
+      "description": "Planifier la réalisation de 20 heures de simulation pour les techniciens et 70 heures pour les ingénieurs au sein des laboratoires de l'INPG. Organiser les sessions de simulation conformément aux disponibilités et ressources des laboratoires de l'INPG. Suivre la participation effective des étudiants aux sessions de simulation. Prendre en compte les travaux de simulation dans l'évaluation des étudiants."
+    },
+    {
+      "code": "3.2",
+      "section": "3. Structure et contenu des programmes",
+      "libelle": "Le programme de formation doit promouvoir l'employabilité et le développement de compétences adaptées aux besoins du marché.",
+      "description": "Identifier les compétences et profils recherchés par le marché du travail. Intégrer dans le programme des contenus et activités favorisant l'employabilité. Mettre en place des partenariats avec le secteur industriel pour l'adéquation des compétences. Évaluer régulièrement la pertinence du programme par rapport aux besoins du marché."
+    },
+    {
+      "code": "3.3",
+      "section": "3. Structure et contenu des programmes",
+      "libelle": "Le programme de formation doit être conçu en tenant compte des particularités du secteur pétrolier et gazier au Sénégal.",
+      "description": "Identifier les spécificités du secteur pétrolier et gazier. Adapter le contenu du programme pour refléter ces particularités. Impliquer les experts industriels dans la conception du programme. Réviser périodiquement le programme pour maintenir sa pertinence vis-à-vis du secteur."
+    },
+    {
+      "code": "3.4",
+      "section": "3. Structure et contenu des programmes",
+      "libelle": "Le programme de formation doit intégrer un enseignement de l'anglais adapté aux besoins professionnels du secteur pétrolier et gazier.",
+      "description": "Identifier les besoins en anglais spécifiques au secteur pétrolier et gazier. Intégrer dans la structure du programme des unités d'enseignement en anglais professionnel, alignées avec les objectifs de formation et les compétences attendues du diplôme. Définir des objectifs clairs et mesurables pour l'apprentissage de l'anglais. Évaluer régulièrement les progrès des apprenants et ajuster l'enseignement en conséquence."
+    },
+    {
+      "code": "3.5",
+      "section": "3. Structure et contenu des programmes",
+      "libelle": "Le programme doit favoriser le développement des compétences transversales (soft skills), telles que la gestion de projet, la communication professionnelle et le travail en équipe.",
+      "description": "Identifier les compétences transversales à développer en lien avec les objectifs du programme. Intégrer ces compétences dans les unités d'enseignement et les activités pédagogiques. Mettre en œuvre des méthodes pédagogiques favorisant leur développement (travaux de groupe, projets, présentations). Évaluer l'acquisition des compétences transversales selon des critères définis."
+    },
+    {
+      "code": "3.6",
+      "section": "3. Structure et contenu des programmes",
+      "libelle": "Le programme de formation doit inclure des unités d'enseignement obligatoires avec un volume horaire et des crédits définis pour l'obtention du diplôme.",
+      "description": "Définir les unités d'enseignement obligatoires en cohérence avec les objectifs du programme. Structurer l'ensemble des unités d'enseignement (obligatoires et optionnelles) avec un volume horaire défini. Attribuer des crédits à chaque unité d'enseignement selon son poids dans le programme. Définir les conditions d'obtention du diplôme basées sur la validation des unités obligatoires et l'accumulation des crédits requis."
+    },
+    {
+      "code": "3.7",
+      "section": "3. Structure et contenu des programmes",
+      "libelle": "L'établissement doit disposer d'un processus pour la conception, la révision et l'approbation des programmes de formation dans le domaine du pétrole et du gaz.",
+      "description": "Définir un processus clair pour la conception des programmes. Mettre en place un processus de révision des programmes pour l'amélioration de la qualité. Prévoir que toute modification du programme soit soumise à l'approbation formelle de la Direction de la Régulation, du Contrôle et de la Qualité de l'INPG. Documenter toutes les étapes pour assurer la traçabilité et la conformité aux exigences du référentiel."
+    },
+    {
+      "code": "3.8",
+      "section": "3. Structure et contenu des programmes",
+      "libelle": "L'établissement dispose d'infrastructures adéquates pour soutenir efficacement le programme de formation.",
+      "description": "Mettre à disposition des infrastructures nécessaires pour la réalisation des activités prévues dans le programme. Garantir que les infrastructures supportent spécifiquement les exigences pédagogiques du programme (cours théoriques, travaux pratiques, évaluations). Adapter le programme si les infrastructures disponibles limitent certaines activités pédagogiques. Documenter la correspondance entre les infrastructures et les exigences du programme."
+    },
+    {
+      "code": "4.1",
+      "section": "4. Admission et intégration des étudiants",
+      "libelle": "L'établissement doit mettre à disposition des candidats des supports d'information clairs et complets sur le programme et les procédures d'admission.",
+      "description": "Produire un document ou une plateforme web présentant le contenu du programme et ses modalités. Décrire les critères et les étapes du processus d'admission de manière transparente. Assurer la mise à jour régulière des informations en cas de changement du programme ou des procédures. Vérifier l'accessibilité et la compréhension des informations pour tous les candidats."
+    },
+    {
+      "code": "4.2",
+      "section": "4. Admission et intégration des étudiants",
+      "libelle": "L'établissement doit informer les candidats sur les documents requis et les délais à respecter pour l'admission.",
+      "description": "Définir et publier la liste des documents nécessaires pour le dépôt des candidatures. Préciser les dates limites et les échéances du processus d'admission. Communiquer clairement ces informations via le site web et les plateformes digitales de l'établissement. Mettre en place un suivi pour s'assurer que tous les candidats disposent des informations avant de soumettre leur dossier."
+    },
+    {
+      "code": "4.3",
+      "section": "4. Admission et intégration des étudiants",
+      "libelle": "Les candidats doivent fournir des références académiques ou professionnelles.",
+      "description": "Exiger des références académiques ou professionnelles lors du dépôt du dossier. Vérifier l'authenticité et la pertinence des références fournies. Documenter les références dans le dossier du candidat."
+    },
+    {
+      "code": "4.4",
+      "section": "4. Admission et intégration des étudiants",
+      "libelle": "Le programme de formation doit inclure un processus structuré d'intégration des nouveaux étudiants dans les programmes de formation en pétrole et gaz.",
+      "description": "Définir un processus d'accueil et d'intégration des nouveaux étudiants. Fournir des informations sur le programme, les attentes et les ressources disponibles. Assurer un suivi pour faciliter l'adaptation des étudiants. Évaluer régulièrement l'efficacité du processus d'intégration et l'améliorer si nécessaire."
+    },
+    {
+      "code": "4.5",
+      "section": "4. Admission et intégration des étudiants",
+      "libelle": "L'établissement doit expliquer aux candidats les critères de sélection et les modalités d'évaluation lors du processus d'admission.",
+      "description": "Définir les critères de sélection applicables à chaque programme. Décrire les modalités d'évaluation des candidats (tests, entretiens, dossiers, etc.). Communiquer ces critères et modalités aux candidats. S'assurer que les évaluateurs appliquent uniformément ces critères lors du processus de sélection."
+    }
+  ]
+}

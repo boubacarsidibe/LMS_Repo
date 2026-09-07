@@ -210,6 +210,26 @@ class RendezVousControllerTest {
     }
 
     @Test
+    @DisplayName("école / entreprise : une demande vers un créneau non tenu par un responsable pédagogique est refusée")
+    void demanderRendezVous_externe_hors_pedagogie_refuse() {
+        User titulaire = personnel(9L); // ROLE_FORMATEUR
+        User ecole = demandeur(30L);
+        CreneauDisponibilite creneau = new CreneauDisponibilite(titulaire, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(1).plusHours(1));
+        when(creneauRepository.findById(3L)).thenReturn(Optional.of(creneau));
+        when(utilisateurCourant.utilisateur(authentication)).thenReturn(ecole);
+        when(rendezVousService.estDemandeurExterne(ecole)).thenReturn(true);
+        when(rendezVousService.estResponsablePedagogique(titulaire)).thenReturn(false);
+
+        ResponseEntity<?> reponse = controller.demanderRendezVous(
+                new DemandeRendezVousRequest(3L, "EN_LIGNE", null, null), authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(creneau.isReserve()).isFalse();
+        verify(rendezVousRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("seul le titulaire du créneau peut répondre à une demande")
     void repondre_tiers_refuse() {
         User titulaire = personnel(9L);

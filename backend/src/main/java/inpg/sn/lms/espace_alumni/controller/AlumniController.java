@@ -42,6 +42,7 @@ import inpg.sn.lms.espace_etudiant.entity.ReleveNotes;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
+import inpg.sn.lms.espace_etudiant.service.RelevePdfService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
 /**
@@ -67,6 +68,7 @@ public class AlumniController {
     private final AlumniProfilService alumniProfilService;
     private final SituationProfessionnelleService situationService;
     private final ReleveDelivranceService releveDelivranceService;
+    private final RelevePdfService relevePdfService;
     private final EnqueteSuiviRepository enqueteRepository;
     private final ReponseEnqueteSuiviRepository reponseRepository;
     private final ForumSujetRepository forumSujetRepository;
@@ -76,6 +78,7 @@ public class AlumniController {
 
     public AlumniController(UtilisateurCourantService utilisateurCourant, AlumniProfilService alumniProfilService,
             SituationProfessionnelleService situationService, ReleveDelivranceService releveDelivranceService,
+            RelevePdfService relevePdfService,
             EnqueteSuiviRepository enqueteRepository, ReponseEnqueteSuiviRepository reponseRepository,
             ForumSujetRepository forumSujetRepository, ForumMessageRepository forumMessageRepository,
             DocumentPartageRepository documentPartageRepository,
@@ -84,6 +87,7 @@ public class AlumniController {
         this.alumniProfilService = alumniProfilService;
         this.situationService = situationService;
         this.releveDelivranceService = releveDelivranceService;
+        this.relevePdfService = relevePdfService;
         this.enqueteRepository = enqueteRepository;
         this.reponseRepository = reponseRepository;
         this.forumSujetRepository = forumSujetRepository;
@@ -188,6 +192,24 @@ public class AlumniController {
                 .map(this::toReleveDelivreDto)
                 .toList();
         return ResponseEntity.ok(releves);
+    }
+
+    /** Version PDF d'un relevé délivré à l'alumni connecté (sa fiche étudiant d'origine subsiste, migration V12). */
+    @GetMapping("/mes-releves/{id}/pdf")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> monRelevePdf(@PathVariable Long id, Authentication authentication) {
+        AlumniProfil profil = utilisateurCourant.alumniProfil(authentication);
+        if (profil == null) {
+            return profilIntrouvable();
+        }
+        ReleveNotes releve = releveDelivranceService.deLEtudiant(profil.getId()).stream()
+                .filter(r -> r.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+        if (releve == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return relevePdfService.reponsePdf(releve);
     }
 
     /**
