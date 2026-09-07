@@ -82,7 +82,12 @@ public class PublicController {
                 formation.getDomaine(),
                 formation.getDuree(),
                 formation.getImageUrl(),
-                lireFiche(formation)));
+                lireFiche(formation),
+                formation.getHeuresSimulationLabo(),
+                formation.isAnglaisProfessionnel(),
+                formation.isSoftSkills(),
+                formation.getCreditsTotaux(),
+                formation.getVolumeHoraireTotal()));
     }
 
     private FormationPubliqueDto toFormationDto(Formation formation) {

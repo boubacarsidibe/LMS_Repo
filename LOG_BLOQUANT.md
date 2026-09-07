@@ -1615,3 +1615,98 @@ formateurs INPG » (Cadre §III.2, §V.3/V.5) reste hors périmètre : la
 certification du formateur est ici une **pièce** du dossier, pas un workflow
 géré. Les modalités financières (Cadre §V) sont hors LMS, réglées par
 convention.
+
+## 2026-09-07 — Reprise du lot 2 (Fiche Technique de Module + catalogue §3), passation `PASSATION.md`
+
+### 65. Fiche Technique de Module (espace entreprise) + Phase 2 du référentiel sur le catalogue
+
+Lot 2 annoncé dans l'entrée 64 comme « planifié mais non livré » : livré et
+vérifié en exécution réelle sur la stack Docker (rebuild complet, Flyway,
+front, 3 rôles testés au navigateur via Playwright — voir plus bas). Reprise
+d'un travail commencé par un autre poste (`PASSATION.md`, retiré après cette
+entrée) ; le back (entités, endpoints, migrations `V35`/`V36`) existait déjà à
+la reprise, le front du lot 2 était entièrement à faire.
+
+**Fiche Technique de Module** (`entreprise/entity/FicheTechniqueModule`,
+1:1 avec `demandes_entreprise`, migration `V35`) : reprend les 10 sections du
+gabarit officiel (`FICHE TECHNIQUE LUBRIFICATION DES MACHINES TOURNANTES.docx`),
+le planning jour par jour dans une table séparée `fiche_module_jour`. Cycle de
+vie à 4 états (`EnumStatutFicheModule`) : `BROUILLON` (rédaction pédagogie,
+invisible entreprise) → `TRANSMISE` (visible, décision entreprise) →
+`ACCEPTEE` (fige la fiche, clôture la demande) ou `AJUSTEMENTS_DEMANDES`
+(commentaire obligatoire, retour pédagogie, fiche reste modifiable). Une fiche
+n'est transmissible qu'avec un intitulé, un objectif général et ≥ 1 journée
+(`FicheTechniqueModuleService.estTransmissible`) — recopié côté front pour
+désactiver le bouton avant l'appel serveur, mais c'est bien le serveur qui
+tranche.
+
+Front créé :
+- `pedagogie/pages/entreprises/pedagogie-entreprises.component.*` — écran
+  « Entreprises » (liste + panneau détail : réponse texte libre à la demande +
+  éditeur de fiche complet + jour par jour dynamique) et son service dédié
+  `pedagogie-entreprise.service.ts`, sur le patron de `pedagogie-formateurs`.
+  Entrée de nav ajoutée après « Suivi qualité ».
+- `espace-entreprise/pages/nouvelle-demande/nouvelle-demande.ts` étendu (c'est
+  déjà l'écran de suivi des demandes, confirmé en lisant le routing) : bloc
+  dépliable par demande (accordéon, une seule fiche ouverte à la fois) avec
+  vue lecture seule complète + planning en tableau, et actions « Accepter » /
+  « Demander des ajustements » tant que la fiche n'est pas acceptée.
+- Modèles et endpoints dupliqués côté pédagogie et côté entreprise (deux
+  fichiers de types quasi identiques) plutôt qu'un modèle partagé cross-
+  feature : aucun répertoire de modèles partagés n'existe dans ce dépôt pour
+  ce genre de DTO, et l'introduire pour ce seul cas aurait été une abstraction
+  prématurée.
+
+**Catalogue §3** (migration `V36`, entité `Formation` +5 champs) :
+`heuresSimulationLabo`, `anglaisProfessionnel`, `softSkills`, `creditsTotaux`,
+`volumeHoraireTotal` exposés sur `FormationDetailPubliqueDto` /
+`PublicController.consulterFormation`. Encart « Conforme au référentiel DRCQ »
+sur `formation-detail.component`, affiché seulement si au moins un champ est
+renseigné (2 fiches sur 16 en amorçage : `ING-PET-GAZ-02`, `GEO-ING-RES-06`).
+**Confirmé, pas juste supposé** : `GET /pedagogie/formations` ne renvoie que
+`id/code/intitule`, aucun endpoint de création/édition de formation n'existe
+dans ce backend — les 5 champs restent éditables uniquement via le JSON
+d'amorçage (`catalogue-formations.json`), pas par un formulaire pédagogie.
+
+**Bug trouvé et corrigé avant tout déploiement** : la migration `V36` visait
+`ALTER TABLE public.formations` — la table s'appelle `formation` (singulier,
+`V1__baseline.sql` ligne 276). Le nom au pluriel n'existe nulle part ailleurs
+dans le schéma ; seule cette migration se trompait. Sur une base neuve,
+Flyway échouait à V36 et l'application ne démarrait pas du tout (transaction
+DDL annulée proprement par Postgres, aucune corruption, mais blocage total).
+Détecté uniquement parce que la vérification s'est faite sur une base
+Postgres réellement neuve — une base qui possédait déjà l'ancienne table
+`formations` d'un essai antérieur n'aurait montré aucun symptôme. Corrigé
+dans le fichier de migration lui-même (jamais appliqué avec succès nulle
+part, donc rien à rejouer en `V37`).
+
+**Écarts non traités (déjà consignés comme tels à l'entrée 64, confirmés
+toujours hors périmètre)** : renommage des rôles LMS en DPI/DAF/BDU/… (churn
+sans valeur fonctionnelle) ; mises en relation alumni ↔ entreprises (QMS-013,
+périmètre alumni distinct).
+
+**Méthode de vérification** : suite ciblée verte (`FicheTechniqueModuleControllerTest`
+— nouveau, 12 tests couvrant upsert/transmission/cloisonnement/décision —,
+`EntrepriseControllerTest`, `PedagogieEntrepriseControllerTest`,
+`EspaceEtudiantGardeFousTest`, `EspaceAlumniGardeFousTest`,
+`AccreditationReferentielInitializerTest` : 35/35). Puis bout-en-bout réel :
+rebuild Docker complet, un compte entreprise créé via `/api/auth/register` +
+première soumission (`ROLE_ENTREPRISE` octroyé), fiche rédigée côté pédagogie,
+transmise, acceptée puis (sur une 2ᵉ demande) ajustements demandés — vérifié
+par `curl` **et** par capture d'écran Playwright (navigateur Chromium réel
+lancé dans un conteneur `mcr.microsoft.com/playwright`, faute de support
+Playwright sur l'Ubuntu 20.04 de cet environnement) pour les trois rôles :
+pédagogie, entreprise, catalogue public. Cloisonnement vérifié : une seconde
+entreprise reçoit 404 sur la fiche de la première.
+
+**Piège d'environnement rencontré (nouveau conteneur, sans rapport avec le
+code)** : `~/.m2` et les fichiers locaux non versionnés (`backend/.env`,
+`docker-compose.override.yml`, `frontend/Dockerfile.local`,
+`frontend/nginx.local.conf`) étaient totalement absents — poste neuf, jamais
+les mêmes que celui qui a écrit `PASSATION.md`. Recréés à l'identique
+(§9 de `PASSATION.md`). `seed-demo-formateur.sql` échoue sur une base neuve
+(`relation "cours_promotion" does not exist` — table supprimée par la
+migration `V6`, voir CLAUDE.md §3) : script de démonstration obsolète, non
+corrigé ici (hors périmètre du lot 2, sans rapport avec la Fiche Technique ou
+le catalogue), la démonstration client tournera sur la base de recette
+existante qui n'a pas ce problème.

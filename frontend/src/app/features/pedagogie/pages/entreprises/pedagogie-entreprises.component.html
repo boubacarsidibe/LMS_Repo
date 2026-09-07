@@ -1,0 +1,353 @@
+<div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+  <header>
+    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Espace Entreprise</span>
+    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Entreprises</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+      Besoins de formation et demandes de devis reçus des entreprises. Pour une session sur mesure,
+      rédigez la Fiche Technique de Module puis transmettez-la pour décision.
+    </p>
+  </header>
+
+  <p *ngIf="messageSucces && !detailOuvert" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">{{ messageSucces }}</p>
+  <p *ngIf="messageErreur && !detailOuvert" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
+
+  <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+
+  <div *ngIf="!chargement" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-outline-variant">
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Entreprise</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Nature</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Statut</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Fiche technique</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Déposée le</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of demandes" (click)="ouvrirDetail(d)"
+              class="border-b border-outline-variant/50 last:border-0 cursor-pointer hover:bg-surface-container-low transition-colors">
+            <td class="px-stack-lg py-stack-md font-label-md text-label-md text-on-surface">{{ d.raisonSociale }}</td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant">{{ libellesType[d.type] }}</td>
+            <td class="px-stack-lg py-stack-md">
+              <span class="px-3 py-1 rounded-full font-label-sm text-label-sm" [ngClass]="classesStatutDemande[d.statut]">
+                {{ libellesStatutDemande[d.statut] }}
+              </span>
+            </td>
+            <td class="px-stack-lg py-stack-md">
+              <span *ngIf="d.ficheStatut as fs; else aucuneFiche" class="px-3 py-1 rounded-full font-label-sm text-label-sm" [ngClass]="classesStatutFiche[fs]">
+                {{ libellesStatutFiche[fs] }}
+              </span>
+              <ng-template #aucuneFiche><span class="font-body-sm text-body-sm text-on-surface-variant">—</span></ng-template>
+            </td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant">{{ d.dateSoumission | date: 'd MMM y' }}</td>
+          </tr>
+          <tr *ngIf="demandes.length === 0">
+            <td colspan="5" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+              Aucune demande entreprise pour l’instant.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Panneau détail -->
+<div *ngIf="detailOuvert" class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerDetail()">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm w-full max-w-4xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant sticky top-0 bg-surface-container-lowest z-10">
+      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">domain</span>
+        {{ demandeSelectionnee?.raisonSociale }}
+      </h2>
+      <button type="button" (click)="fermerDetail()" aria-label="Fermer" class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </header>
+
+    <div class="p-stack-lg space-y-stack-lg" *ngIf="demandeSelectionnee as d">
+      <!-- Détail de la demande -->
+      <section class="space-y-3">
+        <h3 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary">info</span>Demande
+        </h3>
+        <dl class="grid sm:grid-cols-2 gap-stack-md">
+          <div>
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Nature</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface">{{ libellesType[d.type] }}</dd>
+          </div>
+          <div>
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Formation visée</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface">{{ d.intituleFormation || 'Aucune en particulier' }}</dd>
+          </div>
+          <div *ngIf="d.effectifConcerne">
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Effectif concerné</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface">{{ d.effectifConcerne }}</dd>
+          </div>
+          <div *ngIf="d.datesSouhaitees">
+            <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Dates souhaitées</dt>
+            <dd class="font-body-sm text-body-sm text-on-surface">{{ d.datesSouhaitees }}</dd>
+          </div>
+        </dl>
+        <p class="font-body-md text-body-md text-on-surface whitespace-pre-line bg-surface-container-low rounded-lg p-3">{{ d.description }}</p>
+      </section>
+
+      <!-- Réponse de l'équipe -->
+      <section class="space-y-3 border-t border-outline-variant pt-stack-lg">
+        <h3 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary">reply</span>Réponse de l’équipe pédagogique
+        </h3>
+        <div class="grid sm:grid-cols-[200px_1fr] gap-stack-md items-start">
+          <label class="flex flex-col gap-1">
+            <span class="font-label-sm text-label-sm text-on-surface-variant">Statut</span>
+            <select [(ngModel)]="statutSelectionne" name="statutDemande"
+                    class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+              <option value="SOUMISE">Soumise</option>
+              <option value="EN_COURS">En cours</option>
+              <option value="REPONDUE">Répondue</option>
+              <option value="CLOTUREE">Clôturée</option>
+            </select>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="font-label-sm text-label-sm text-on-surface-variant">Message à l’entreprise (facultatif)</span>
+            <textarea rows="2" [(ngModel)]="reponseTexte" name="reponseTexte"
+                      class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+          </label>
+        </div>
+        <button type="button" [disabled]="enregistrementReponse" (click)="enregistrerReponse()"
+                class="px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+          {{ enregistrementReponse ? 'Enregistrement…' : 'Enregistrer la réponse' }}
+        </button>
+      </section>
+
+      <!-- Fiche technique de module -->
+      <section class="space-y-stack-md border-t border-outline-variant pt-stack-lg">
+        <h3 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary">description</span>Fiche Technique de Module
+        </h3>
+
+        <p *ngIf="ficheChargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
+
+        <ng-container *ngIf="!ficheChargement">
+          <p *ngIf="ficheExistante as fe" class="font-body-sm text-body-sm text-on-surface-variant">
+            Statut : <strong>{{ libellesStatutFiche[fe.statut] }}</strong>
+            <span *ngIf="fe.dateTransmission"> · transmise le {{ fe.dateTransmission | date: 'd MMMM y' }}</span>
+          </p>
+          <p *ngIf="ficheExistante?.statut === 'AJUSTEMENTS_DEMANDES'" class="font-body-sm text-body-sm text-on-surface bg-error-container/20 rounded-lg px-4 py-3 flex items-start gap-2">
+            <span class="material-symbols-outlined text-[18px] text-error shrink-0">feedback</span>
+            <span><strong>Ajustements demandés par l’entreprise :</strong> {{ ficheExistante?.commentaireEntreprise }}</span>
+          </p>
+          <p *ngIf="ficheExistante?.statut === 'ACCEPTEE'" class="font-body-sm text-body-sm text-success bg-success/10 rounded-lg px-4 py-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>Fiche acceptée par l’entreprise : elle n’est plus modifiable.
+          </p>
+
+          <fieldset [disabled]="!ficheModifiable" class="space-y-stack-md">
+            <!-- En-tête -->
+            <div class="grid sm:grid-cols-2 gap-stack-md">
+              <label class="flex flex-col gap-1 sm:col-span-2">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Intitulé du module *</span>
+                <input type="text" [(ngModel)]="fiche.intitule" name="intitule"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Code</span>
+                <input type="text" [(ngModel)]="fiche.code" name="code"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Version</span>
+                <input type="text" [(ngModel)]="fiche.version" name="version"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Responsable du module</span>
+                <input type="text" [(ngModel)]="fiche.responsableModule" name="responsableModule"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Date de révision</span>
+                <input type="date" [(ngModel)]="fiche.dateRevision" name="dateRevision"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+            </div>
+
+            <!-- §1 -->
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">§1 — Caractéristiques des cibles à former</h4>
+            <div class="grid sm:grid-cols-2 gap-stack-md">
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Département</span>
+                <input type="text" [(ngModel)]="fiche.departement" name="departement"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Atelier / Service</span>
+                <input type="text" [(ngModel)]="fiche.atelierService" name="atelierService"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1 sm:col-span-2">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Fonctions cibles</span>
+                <input type="text" [(ngModel)]="fiche.fonctionsCibles" name="fonctionsCibles"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1 sm:col-span-2">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Thématiques</span>
+                <input type="text" [(ngModel)]="fiche.thematiques" name="thematiques"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1 sm:col-span-2">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Prérequis</span>
+                <textarea rows="2" [(ngModel)]="fiche.prerequis" name="prerequis"
+                          class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Langue</span>
+                <input type="text" [(ngModel)]="fiche.langue" name="langue"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Niveau</span>
+                <input type="text" [(ngModel)]="fiche.niveau" name="niveau"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Effectif</span>
+                <input type="number" min="0" [(ngModel)]="fiche.effectif" name="effectif"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Durée (heures)</span>
+                <input type="number" min="0" [(ngModel)]="fiche.dureeHeures" name="dureeHeuresTotal"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Durée (jours)</span>
+                <input type="number" min="0" [(ngModel)]="fiche.dureeJours" name="dureeJours"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Période probable</span>
+                <input type="text" [(ngModel)]="fiche.periodeProbable" name="periodeProbable"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+            </div>
+
+            <!-- §2 -->
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">§2 — Objectifs d’apprentissage</h4>
+            <label class="flex flex-col gap-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">Objectif général *</span>
+              <textarea rows="2" [(ngModel)]="fiche.objectifGeneral" name="objectifGeneral"
+                        class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">Objectifs spécifiques</span>
+              <textarea rows="3" [(ngModel)]="fiche.objectifsSpecifiques" name="objectifsSpecifiques"
+                        class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+            </label>
+
+            <!-- §3 -->
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">§3 — Modalités de test de prérequis</h4>
+            <textarea rows="2" [(ngModel)]="fiche.modalitesTestPrerequis" name="modalitesTestPrerequis"
+                      class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+
+            <!-- §4 -->
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">§4 — Programme jour par jour *</h4>
+            <div class="space-y-3">
+              <div *ngFor="let j of fiche.jours; let i = index" class="bg-surface-container-low rounded-lg border border-outline-variant p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-label-md text-label-md text-on-surface">Jour {{ j.numero }}</span>
+                  <button type="button" [disabled]="!ficheModifiable" (click)="retirerJour(i)"
+                          class="text-error font-label-sm text-label-sm flex items-center gap-1 disabled:opacity-50">
+                    <span class="material-symbols-outlined text-[16px]">delete</span>Retirer
+                  </button>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-3">
+                  <label class="flex flex-col gap-1 sm:col-span-2">
+                    <span class="font-label-sm text-label-sm text-on-surface-variant">Contenus et activités</span>
+                    <textarea rows="2" [(ngModel)]="j.contenus" [name]="'jourContenus' + i"
+                              class="p-3 bg-surface-container-lowest rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+                  </label>
+                  <label class="flex flex-col gap-1">
+                    <span class="font-label-sm text-label-sm text-on-surface-variant">Durée (h)</span>
+                    <input type="number" min="0" [(ngModel)]="j.dureeHeures" [name]="'jourDuree' + i"
+                           class="p-3 bg-surface-container-lowest rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+                  </label>
+                  <label class="flex flex-col gap-1">
+                    <span class="font-label-sm text-label-sm text-on-surface-variant">Type d’enseignement</span>
+                    <input type="text" [(ngModel)]="j.typeEnseignement" [name]="'jourType' + i"
+                           class="p-3 bg-surface-container-lowest rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+                  </label>
+                  <label class="flex flex-col gap-1 sm:col-span-2">
+                    <span class="font-label-sm text-label-sm text-on-surface-variant">Modalités</span>
+                    <input type="text" [(ngModel)]="j.modalites" [name]="'jourModalites' + i"
+                           class="p-3 bg-surface-container-lowest rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+                  </label>
+                </div>
+              </div>
+              <button type="button" [disabled]="!ficheModifiable" (click)="ajouterJour()"
+                      class="flex items-center gap-2 px-4 py-2 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors disabled:opacity-50">
+                <span class="material-symbols-outlined text-[18px]">add</span>Ajouter une journée
+              </button>
+            </div>
+
+            <!-- §5 à §9 -->
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">§5 — Formation sur site</h4>
+            <textarea rows="2" [(ngModel)]="fiche.formationSurSite" name="formationSurSite"
+                      class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">§6 — Types d’évaluation</h4>
+            <textarea rows="2" [(ngModel)]="fiche.typesEvaluation" name="typesEvaluation"
+                      class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">§7 — Ressources pédagogiques</h4>
+            <textarea rows="2" [(ngModel)]="fiche.ressourcesPedagogiques" name="ressourcesPedagogiques"
+                      class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">§8 — Bibliographie</h4>
+            <textarea rows="2" [(ngModel)]="fiche.bibliographie" name="bibliographie"
+                      class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">§9 — Profil des formateurs</h4>
+            <textarea rows="2" [(ngModel)]="fiche.profilFormateur" name="profilFormateur"
+                      class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
+
+            <!-- Proposition financière -->
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">Proposition financière</h4>
+            <div class="grid sm:grid-cols-2 gap-stack-md">
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Coût total</span>
+                <input type="text" [(ngModel)]="fiche.coutTotal" name="coutTotal"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="font-label-sm text-label-sm text-on-surface-variant">Modalités financières</span>
+                <input type="text" [(ngModel)]="fiche.modalitesFinancieres" name="modalitesFinancieres"
+                       class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+              </label>
+            </div>
+          </fieldset>
+
+          <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
+          <p *ngIf="messageSucces" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">{{ messageSucces }}</p>
+
+          <div *ngIf="ficheModifiable" class="space-y-2 pt-2">
+            <div class="flex flex-wrap gap-stack-md">
+              <button type="button" [disabled]="enregistrementFiche" (click)="enregistrerBrouillon()"
+                      class="px-6 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors disabled:opacity-50">
+                {{ enregistrementFiche ? 'Enregistrement…' : 'Enregistrer le brouillon' }}
+              </button>
+              <button type="button" [disabled]="!ficheTransmissible || enregistrementFiche" (click)="transmettre()"
+                      class="px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+                {{ enregistrementFiche ? 'Transmission…' : 'Transmettre à l’entreprise' }}
+              </button>
+            </div>
+            <p *ngIf="!ficheTransmissible" class="font-body-sm text-body-sm text-on-surface-variant">
+              Intitulé, objectif général et au moins une journée de programme sont requis pour transmettre la fiche.
+            </p>
+          </div>
+        </ng-container>
+      </section>
+    </div>
+  </div>
+</div>

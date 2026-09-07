@@ -5,9 +5,12 @@ import { ActivatedRoute } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import {
   DemandeEntreprise,
+  FicheTechniqueModule,
   FormationCatalogue,
   LIBELLES_STATUT_DEMANDE_ENTREPRISE,
+  LIBELLES_STATUT_FICHE_MODULE,
   LIBELLES_TYPE_DEMANDE,
+  StatutFicheModule,
   TypeDemandeEntreprise,
 } from '../../models/entreprise.models';
 import { EntrepriseService } from '../../services/entreprise.service';
@@ -210,6 +213,142 @@ import { EntrepriseService } from '../../services/entreprise.service';
               <strong>Réponse de l'équipe pédagogique</strong> ({{ d.dateReponse | date: 'd MMMM y' }}) :
               {{ d.reponseEquipe }}
             </p>
+
+            <div *ngIf="d.ficheStatut" class="mt-4 border-t border-outline-variant pt-4">
+              <button
+                type="button"
+                (click)="basculerFiche(d)"
+                class="w-full flex items-center gap-2 font-label-md text-label-md text-primary"
+              >
+                <span class="material-symbols-outlined text-secondary text-[20px]">description</span>
+                Fiche technique du module
+                <span class="px-2.5 py-1 rounded-full font-label-sm text-label-sm" [ngClass]="classesStatutFiche[d.ficheStatut]">
+                  {{ libellesStatutFiche[d.ficheStatut] }}
+                </span>
+                <span class="material-symbols-outlined text-[20px] ml-auto text-on-surface-variant">
+                  {{ ficheOuverteId === d.id ? 'expand_less' : 'expand_more' }}
+                </span>
+              </button>
+
+              <div *ngIf="ficheOuverteId === d.id" class="mt-3 space-y-3">
+                <app-ui-spinner *ngIf="ficheEnChargement" message="Chargement de la fiche…"></app-ui-spinner>
+
+                <ng-container *ngIf="!ficheEnChargement && ficheAffichee as f">
+                  <p
+                    *ngIf="f.statut === 'AJUSTEMENTS_DEMANDES'"
+                    class="font-body-sm text-body-sm text-on-surface bg-error-container/20 rounded-lg px-4 py-3"
+                  >
+                    Vous avez demandé des ajustements : « {{ f.commentaireEntreprise }} ». L'équipe pédagogique révise la fiche.
+                  </p>
+                  <p *ngIf="f.statut === 'ACCEPTEE'" class="font-body-sm text-body-sm text-success bg-success/10 rounded-lg px-4 py-3">
+                    Vous avez accepté cette fiche technique.
+                  </p>
+
+                  <dl class="grid sm:grid-cols-2 gap-3 bg-surface-container-low rounded-lg p-4">
+                    <div class="sm:col-span-2">
+                      <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Intitulé</dt>
+                      <dd class="font-body-sm text-body-sm text-on-surface">{{ f.intitule }}</dd>
+                    </div>
+                    <div *ngIf="f.niveau">
+                      <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Niveau</dt>
+                      <dd class="font-body-sm text-body-sm text-on-surface">{{ f.niveau }}</dd>
+                    </div>
+                    <div *ngIf="f.effectif">
+                      <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Effectif</dt>
+                      <dd class="font-body-sm text-body-sm text-on-surface">{{ f.effectif }}</dd>
+                    </div>
+                    <div *ngIf="f.dureeJours || f.dureeHeures">
+                      <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Durée</dt>
+                      <dd class="font-body-sm text-body-sm text-on-surface">
+                        <span *ngIf="f.dureeJours">{{ f.dureeJours }} j</span>
+                        <span *ngIf="f.dureeJours && f.dureeHeures"> — </span>
+                        <span *ngIf="f.dureeHeures">{{ f.dureeHeures }} h</span>
+                      </dd>
+                    </div>
+                    <div *ngIf="f.periodeProbable">
+                      <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Période probable</dt>
+                      <dd class="font-body-sm text-body-sm text-on-surface">{{ f.periodeProbable }}</dd>
+                    </div>
+                    <div class="sm:col-span-2" *ngIf="f.objectifGeneral">
+                      <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Objectif général</dt>
+                      <dd class="font-body-sm text-body-sm text-on-surface whitespace-pre-line">{{ f.objectifGeneral }}</dd>
+                    </div>
+                    <div class="sm:col-span-2" *ngIf="f.objectifsSpecifiques">
+                      <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Objectifs spécifiques</dt>
+                      <dd class="font-body-sm text-body-sm text-on-surface whitespace-pre-line">{{ f.objectifsSpecifiques }}</dd>
+                    </div>
+                    <div class="sm:col-span-2" *ngIf="f.prerequis">
+                      <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Prérequis</dt>
+                      <dd class="font-body-sm text-body-sm text-on-surface whitespace-pre-line">{{ f.prerequis }}</dd>
+                    </div>
+                    <div class="sm:col-span-2" *ngIf="f.profilFormateur">
+                      <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Profil des formateurs</dt>
+                      <dd class="font-body-sm text-body-sm text-on-surface whitespace-pre-line">{{ f.profilFormateur }}</dd>
+                    </div>
+                    <div *ngIf="f.coutTotal">
+                      <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Coût total</dt>
+                      <dd class="font-body-sm text-body-sm text-on-surface">{{ f.coutTotal }}</dd>
+                    </div>
+                    <div class="sm:col-span-2" *ngIf="f.modalitesFinancieres">
+                      <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Modalités financières</dt>
+                      <dd class="font-body-sm text-body-sm text-on-surface">{{ f.modalitesFinancieres }}</dd>
+                    </div>
+                  </dl>
+
+                  <div *ngIf="f.jours.length > 0" class="overflow-x-auto bg-surface-container-low rounded-lg">
+                    <table class="w-full">
+                      <thead>
+                        <tr class="border-b border-outline-variant">
+                          <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-2">Jour</th>
+                          <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-2">Contenus</th>
+                          <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-2">Durée</th>
+                          <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-2">Type</th>
+                          <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-2">Modalités</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let j of f.jours" class="border-b border-outline-variant/50 last:border-0">
+                          <td class="px-3 py-2 font-body-sm text-body-sm text-on-surface">{{ j.numero }}</td>
+                          <td class="px-3 py-2 font-body-sm text-body-sm text-on-surface whitespace-pre-line">{{ j.contenus }}</td>
+                          <td class="px-3 py-2 font-body-sm text-body-sm text-on-surface">{{ j.dureeHeures ? j.dureeHeures + ' h' : '—' }}</td>
+                          <td class="px-3 py-2 font-body-sm text-body-sm text-on-surface">{{ j.typeEnseignement || '—' }}</td>
+                          <td class="px-3 py-2 font-body-sm text-body-sm text-on-surface">{{ j.modalites || '—' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div *ngIf="f.statut !== 'ACCEPTEE'" class="space-y-2">
+                    <p *ngIf="erreurFiche" class="font-body-sm text-body-sm text-error">{{ erreurFiche }}</p>
+                    <button
+                      type="button"
+                      [disabled]="decisionEnCours"
+                      (click)="accepter(d)"
+                      class="px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50"
+                    >
+                      Accepter la fiche
+                    </button>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        [(ngModel)]="ajustementsTexte"
+                        name="ajustementsTexte"
+                        placeholder="Précisez les ajustements souhaités…"
+                        class="flex-1 p-3 rounded-lg bg-surface-container-low border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors"
+                      />
+                      <button
+                        type="button"
+                        [disabled]="decisionEnCours || !ajustementsTexte.trim()"
+                        (click)="demanderAjustementsAction(d)"
+                        class="px-4 py-2 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors disabled:opacity-50 whitespace-nowrap"
+                      >
+                        Demander des ajustements
+                      </button>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+            </div>
           </li>
         </ul>
         <p *ngIf="demandes.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
@@ -228,6 +367,22 @@ export class NouvelleDemande implements OnInit {
   catalogue: FormationCatalogue[] = [];
   libellesStatut = LIBELLES_STATUT_DEMANDE_ENTREPRISE;
   libellesType = LIBELLES_TYPE_DEMANDE;
+  libellesStatutFiche = LIBELLES_STATUT_FICHE_MODULE;
+
+  readonly classesStatutFiche: Record<StatutFicheModule, string> = {
+    BROUILLON: 'bg-surface-container text-on-surface-variant',
+    TRANSMISE: 'bg-secondary-container text-on-secondary-container',
+    ACCEPTEE: 'bg-success/15 text-success',
+    AJUSTEMENTS_DEMANDES: 'bg-error-container/40 text-on-error-container',
+  };
+
+  // Fiche technique de module — une seule dépliée à la fois.
+  ficheOuverteId: number | null = null;
+  ficheEnChargement = false;
+  ficheAffichee: FicheTechniqueModule | null = null;
+  ajustementsTexte = '';
+  decisionEnCours = false;
+  erreurFiche = '';
 
   type: TypeDemandeEntreprise = 'BESOIN_FORMATION';
   raisonSociale = '';
@@ -300,5 +455,69 @@ export class NouvelleDemande implements OnInit {
           this.erreur = e?.error?.message || 'La soumission de la demande a échoué.';
         },
       });
+  }
+
+  basculerFiche(demande: DemandeEntreprise): void {
+    if (this.ficheOuverteId === demande.id) {
+      this.ficheOuverteId = null;
+      this.ficheAffichee = null;
+      return;
+    }
+    this.ficheOuverteId = demande.id;
+    this.ficheAffichee = null;
+    this.ajustementsTexte = '';
+    this.erreurFiche = '';
+    this.ficheEnChargement = true;
+    this.entrepriseService.getFiche(demande.id).subscribe({
+      next: (fiche) => {
+        this.ficheEnChargement = false;
+        this.ficheAffichee = fiche;
+      },
+      error: () => {
+        this.ficheEnChargement = false;
+        this.erreurFiche = 'La fiche technique n\'a pas pu être chargée.';
+      },
+    });
+  }
+
+  accepter(demande: DemandeEntreprise): void {
+    if (this.decisionEnCours) {
+      return;
+    }
+    this.decisionEnCours = true;
+    this.erreurFiche = '';
+    this.entrepriseService.accepterFiche(demande.id).subscribe({
+      next: (fiche) => {
+        this.decisionEnCours = false;
+        this.ficheAffichee = fiche;
+        this.demandes = this.demandes.map((d) =>
+          d.id === demande.id ? { ...d, ficheStatut: fiche.statut, statut: 'CLOTUREE' } : d
+        );
+      },
+      error: (e) => {
+        this.decisionEnCours = false;
+        this.erreurFiche = e?.error?.message || 'L\'acceptation de la fiche a échoué.';
+      },
+    });
+  }
+
+  demanderAjustementsAction(demande: DemandeEntreprise): void {
+    if (this.decisionEnCours || !this.ajustementsTexte.trim()) {
+      return;
+    }
+    this.decisionEnCours = true;
+    this.erreurFiche = '';
+    this.entrepriseService.demanderAjustements(demande.id, this.ajustementsTexte.trim()).subscribe({
+      next: (fiche) => {
+        this.decisionEnCours = false;
+        this.ficheAffichee = fiche;
+        this.ajustementsTexte = '';
+        this.demandes = this.demandes.map((d) => (d.id === demande.id ? { ...d, ficheStatut: fiche.statut } : d));
+      },
+      error: (e) => {
+        this.decisionEnCours = false;
+        this.erreurFiche = e?.error?.message || 'La demande d\'ajustements a échoué.';
+      },
+    });
   }
 }
