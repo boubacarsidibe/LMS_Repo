@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import inpg.sn.lms.auth.entity.Candidat;
+import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.CandidatRepository;
 import inpg.sn.lms.recrutement.dto.CandidatureRequest;
 import inpg.sn.lms.recrutement.dto.CandidatureResponse;
@@ -22,6 +23,7 @@ import inpg.sn.lms.recrutement.dto.ReponseCritereResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.ReponseCritereCandidature;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
+import inpg.sn.lms.recrutement.enums.EnumEtapeQms;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
 import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
@@ -33,13 +35,28 @@ public class CandidatureService {
     private final CandidatureRepository candidatureRepository;
     private final SessionCandidatureRepository sessionCandidatureRepository;
     private final CandidatRepository candidatRepository;
+    private final JournalEtapeService journalEtapeService;
 
     public CandidatureService(CandidatureRepository candidatureRepository,
             SessionCandidatureRepository sessionCandidatureRepository,
-            CandidatRepository candidatRepository) {
+            CandidatRepository candidatRepository,
+            JournalEtapeService journalEtapeService) {
         this.candidatureRepository = candidatureRepository;
         this.sessionCandidatureRepository = sessionCandidatureRepository;
         this.candidatRepository = candidatRepository;
+        this.journalEtapeService = journalEtapeService;
+    }
+
+    /**
+     * Consigne une étape de la procédure QMS-009 sur un dossier. Passe par ce service
+     * plutôt que directement par le journal : les appelants n'ont ainsi pas besoin du
+     * dépôt des candidatures pour retrouver l'entité.
+     */
+    public void journaliser(Long candidatureId, EnumEtapeQms etape, EnumStatutCandidature statutResultant,
+            User auteur, String commentaire) {
+        Candidature candidature = candidatureRepository.findById(candidatureId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée avec l'ID: " + candidatureId));
+        journalEtapeService.enregistrer(candidature, etape, statutResultant, auteur, commentaire);
     }
 
     /**
@@ -49,7 +66,7 @@ public class CandidatureService {
      * admission (jamais un effet de bord de la soumission — voir CandidatController),
      * afin que chaque dossier reste visible à l'état SOUMIS le temps de la revue.
      */
-    public FiltreCriteresResponse appliquerFiltreCriteres(Long sessionId) {
+    public FiltreCriteresResponse appliquerFiltreCriteres(Long sessionId, User auteur) {
         SessionCandidature session = sessionCandidatureRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session non trouvée avec l'ID: " + sessionId));
         if (!session.isCriteresActifs()) {
@@ -65,15 +82,20 @@ public class CandidatureService {
         for (Candidature candidature : soumis) {
             Map<Long, String> reponses = candidature.getReponsesCriteres().stream()
                     .collect(Collectors.toMap(r -> r.getCritere().getId(), ReponseCritereCandidature::getValeur));
+            String resultat;
             if (session.respecteCriteres(candidature.getCandidat(), reponses)) {
                 candidature.setStatut(EnumStatutCandidature.EN_COURS_DE_PRESELECTION);
+                resultat = "Critères remplis : dossier retenu pour la présélection.";
                 preselectionnes++;
             } else {
                 candidature.setStatut(EnumStatutCandidature.REJETE);
                 candidature.setMotifRejet("Critères de présélection de la session non remplis (filtre automatique).");
+                resultat = "Critères non remplis : dossier rejeté par le filtre automatique.";
                 rejetes++;
             }
             candidatureRepository.save(candidature);
+            journalEtapeService.enregistrer(candidature, EnumEtapeQms.FILTRE_INITIAL,
+                    candidature.getStatut(), auteur, resultat);
         }
 
         return FiltreCriteresResponse.builder()
