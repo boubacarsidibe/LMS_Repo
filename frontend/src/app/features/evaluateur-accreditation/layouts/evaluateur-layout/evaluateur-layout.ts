@@ -50,7 +50,7 @@ interface EntreeNavigation {
 
     <div class="pl-72">
       <header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
-        <p class="font-label-md text-label-md text-on-surface-variant">Espace Évaluateur — Accréditation des écoles</p>
+        <p class="font-label-md text-label-md text-on-surface-variant">Direction de la Régulation et du Contrôle Qualité (DRCQ) — Accréditation des programmes Oil &amp; Gas</p>
         <div class="flex items-center gap-3">
           <a
             routerLink="mon-profil"
@@ -86,7 +86,7 @@ export class EvaluateurLayout {
 
   readonly navigation: EntreeNavigation[] = [
     { libelle: 'Demandes', lien: 'demandes', icone: 'fact_check' },
-    { libelle: 'Critères', lien: 'criteres', icone: 'checklist' },
+    { libelle: 'Référentiel', lien: 'criteres', icone: 'checklist' },
     { libelle: 'Rendez-vous', lien: 'rendez-vous', icone: 'event' },
   ];
 

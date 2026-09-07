@@ -3,7 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
-import { EcoleAccreditee } from '../../models/accreditation.models';
+import { EcoleAccreditee, LIBELLES_NIVEAU_PROGRAMME } from '../../models/accreditation.models';
 import { AccreditationService } from '../../services/accreditation.service';
 
 /**
@@ -21,10 +21,10 @@ import { AccreditationService } from '../../services/accreditation.service';
         <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
           Accréditation
         </p>
-        <h1 class="font-display text-display text-on-surface leading-none -ml-1">Écoles accréditées</h1>
+        <h1 class="font-display text-display text-on-surface leading-none -ml-1">Programmes accrédités</h1>
         <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
-          Ces écoles de formation ont été accréditées par l'INPG pour dispenser des formations dans
-          le domaine du pétrole et du gaz.
+          Ces programmes de formation ont été accrédités par l'INPG pour être dispensés dans le
+          domaine du pétrole et du gaz. L'accréditation est valable trois ans.
         </p>
       </header>
 
@@ -52,14 +52,26 @@ import { AccreditationService } from '../../services/accreditation.service';
       <ul *ngIf="!chargement && ecoles.length > 0" class="grid sm:grid-cols-2 gap-base">
         <li
           *ngFor="let e of ecoles"
-          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg flex items-center gap-3"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg flex items-start gap-3"
         >
-          <span class="material-symbols-outlined text-secondary text-[28px]">verified</span>
-          <div>
-            <p class="font-label-md text-label-md text-on-surface">{{ e.nomEcole }}</p>
-            <p class="font-body-sm text-body-sm text-on-surface-variant">
-              Accréditée le {{ e.dateAccreditation | date: 'd MMMM y' }}
+          <span class="material-symbols-outlined text-[28px] shrink-0"
+                [class.text-secondary]="!e.sousReserve" [class.text-warning]="e.sousReserve">
+            {{ e.sousReserve ? 'verified_user' : 'verified' }}
+          </span>
+          <div class="min-w-0">
+            <p class="font-label-md text-label-md text-on-surface">
+              {{ e.intituleProgramme || 'Programme non précisé' }}
             </p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">
+              {{ e.nomEcole }}<span *ngIf="e.niveauProgramme"> · {{ libellesNiveau[e.niveauProgramme] }}</span>
+            </p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Accrédité le {{ e.dateAccreditation | date: 'd MMMM y' }}<span *ngIf="e.dateExpiration">, valable jusqu'au {{ e.dateExpiration | date: 'd MMMM y' }}</span>
+            </p>
+            <span *ngIf="e.sousReserve"
+                  class="inline-block mt-2 px-2 py-0.5 rounded-full bg-warning/15 text-warning font-label-sm text-label-sm">
+              Sous réserve (plan d'actions en cours)
+            </span>
           </div>
         </li>
       </ul>
@@ -71,6 +83,7 @@ export class EcolesAccrediteesComponent implements OnInit {
 
   ecoles: EcoleAccreditee[] = [];
   chargement = true;
+  libellesNiveau = LIBELLES_NIVEAU_PROGRAMME;
 
   ngOnInit(): void {
     this.accreditationService.getEcolesAccreditees().subscribe({

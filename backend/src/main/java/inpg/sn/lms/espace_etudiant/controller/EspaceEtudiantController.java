@@ -664,8 +664,10 @@ public class EspaceEtudiantController {
                     .body(Map.of("message", "Vous n'avez pas accès à ce certificat."));
         }
 
-        byte[] pdf = certificatPdfService.genererPdf(certificat);
-        String nomFichier = "certificat-" + certificat.getReference() + ".pdf";
+        Double moyenne = certificat.getEtudiant() == null ? null
+                : releveNotesService.moyenneDeLEtudiant(certificat.getEtudiant().getId());
+        byte[] pdf = certificatPdfService.genererPdf(certificat, moyenne);
+        String nomFichier = "INPG-certificat-" + certificat.getReference() + ".pdf";
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION,

@@ -37,8 +37,17 @@ public class AccreditationPublicController {
     @Transactional(readOnly = true)
     public ResponseEntity<List<EcoleAccrediteeDto>> ecolesAccreditees() {
         List<EcoleAccrediteeDto> ecoles = demandeRepository
-                .findByStatutOrderByDateSoumissionDesc(EnumStatutDemandeAccreditation.ACCREDITE).stream()
-                .map(demande -> new EcoleAccrediteeDto(demande.getEcole().getNomEcole(), demande.getDateDecision()))
+                .findByStatutInOrderByDateDecisionDesc(List.of(
+                        EnumStatutDemandeAccreditation.ACCREDITE,
+                        EnumStatutDemandeAccreditation.ACCREDITE_SOUS_RESERVE))
+                .stream()
+                .map(demande -> new EcoleAccrediteeDto(
+                        demande.getEcole().getNomEcole(),
+                        demande.getIntituleProgramme(),
+                        demande.getNiveauProgramme() != null ? demande.getNiveauProgramme().name() : null,
+                        demande.getDateDecision(),
+                        demande.getDateExpiration(),
+                        demande.getStatut() == EnumStatutDemandeAccreditation.ACCREDITE_SOUS_RESERVE))
                 .toList();
         return ResponseEntity.ok(ecoles);
     }

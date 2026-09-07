@@ -78,7 +78,7 @@ class ScolariteReleveNotesTest {
         controller = new ScolariteController(utilisateurCourant, matriculeService, coursRepository,
                 seanceRepository, supportService, progressionRepository, retourRepository,
                 etudiantRepository, habilitation, noteModuleService, releveNotesService,
-                releveDelivranceService);
+                releveDelivranceService, new inpg.sn.lms.espace_etudiant.service.RelevePdfService());
 
         etudiant = new Etudiant();
         etudiant.setId(38L);

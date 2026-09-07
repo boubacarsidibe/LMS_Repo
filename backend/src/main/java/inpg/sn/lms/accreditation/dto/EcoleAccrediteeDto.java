@@ -1,14 +1,20 @@
 package inpg.sn.lms.accreditation.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * École accréditée, vue publique (TDR §F : « base de données des écoles
- * accréditées », « processus transparent »). Volontairement restreint : ni
- * adresse, ni téléphone, ni site web — un tiers vérifie qu'une école est
- * accréditée, il n'a pas besoin d'en obtenir les coordonnées complètes.
+ * Programme accrédité, vue publique (TDR §F : « base de données des écoles
+ * accréditées », « processus transparent » ; Cadre de référence DRCQ §VI :
+ * label « Programme accrédité par l'INPG »). Volontairement restreint : ni
+ * adresse, ni téléphone, ni site web — un tiers vérifie qu'un programme est
+ * accrédité et jusqu'à quand, il n'a pas besoin des coordonnées complètes.
  */
 public record EcoleAccrediteeDto(
         String nomEcole,
-        LocalDateTime dateAccreditation) {
+        String intituleProgramme,
+        String niveauProgramme,
+        LocalDateTime dateAccreditation,
+        LocalDate dateExpiration,
+        boolean sousReserve) {
 }

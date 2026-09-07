@@ -15,5 +15,7 @@ public record DemandeEntrepriseDto(
         String datesSouhaitees,
         LocalDateTime dateSoumission,
         LocalDateTime dateReponse,
-        String reponseEquipe) {
+        String reponseEquipe,
+        /** Statut de la fiche technique de module rattachée, ou {@code null} si aucune. */
+        String ficheStatut) {
 }

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import inpg.sn.lms.auth.entity.User;
@@ -66,9 +67,19 @@ public class RendezVousController {
 
     // ===================== PERSONNEL & CRÉNEAUX =====================
 
+    /**
+     * Liste des membres du personnel consultables pour une prise de rendez-vous.
+     *
+     * <p>{@code scope=PEDAGOGIE} restreint au responsable pédagogique : c'est
+     * l'unique interlocuteur des écoles partenaires et des entreprises (décision
+     * client), qui n'ont donc pas à voir tout l'annuaire du personnel.
+     */
     @GetMapping("/personnel")
     @Transactional(readOnly = true)
-    public ResponseEntity<?> listerPersonnel() {
+    public ResponseEntity<?> listerPersonnel(@RequestParam(required = false) String scope) {
+        if ("PEDAGOGIE".equalsIgnoreCase(scope)) {
+            return ResponseEntity.ok(rendezVousService.listerResponsablesPedagogiques());
+        }
         return ResponseEntity.ok(rendezVousService.listerPersonnel());
     }
 
@@ -159,6 +170,14 @@ public class RendezVousController {
         }
         if (demandeur.getId().equals(creneau.getPersonnel().getId())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Vous ne pouvez pas demander un rendez-vous avec vous-même."));
+        }
+        // Écoles partenaires et entreprises : leur interlocuteur est le seul
+        // responsable pédagogique. On le vérifie côté serveur, la liste envoyée
+        // par le navigateur ne faisant pas foi.
+        if (rendezVousService.estDemandeurExterne(demandeur)
+                && !rendezVousService.estResponsablePedagogique(creneau.getPersonnel())) {
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "Les demandes de rendez-vous des écoles et des entreprises sont adressées au responsable pédagogique."));
         }
         creneau.setReserve(true);
         creneauRepository.save(creneau);

@@ -52,6 +52,30 @@ public class RendezVousService {
                 .toList();
     }
 
+    /**
+     * Personnel restreint aux responsables pédagogiques : c'est le seul
+     * interlocuteur habilité à traiter les demandes de rendez-vous des écoles
+     * partenaires et des entreprises (décision client). Les écoles / entreprises
+     * ne se voient donc proposer que lui.
+     */
+    public List<PersonnelProfilDto> listerResponsablesPedagogiques() {
+        return userRepository.findDistinctByRoles_CodeInOrderByUsernameAsc(List.of("ROLE_RESPONSABLE_PEDAGOGIQUE"))
+                .stream()
+                .map(this::toPersonnelProfilDto)
+                .toList();
+    }
+
+    /** Vrai si l'utilisateur est une école partenaire ou une entreprise (demandeur « externe »). */
+    public boolean estDemandeurExterne(User user) {
+        return user.getRoles().stream()
+                .anyMatch(r -> "ROLE_ECOLE_FORMATION".equals(r.getCode()) || "ROLE_ENTREPRISE".equals(r.getCode()));
+    }
+
+    /** Vrai si l'utilisateur porte le rôle responsable pédagogique. */
+    public boolean estResponsablePedagogique(User user) {
+        return user.getRoles().stream().anyMatch(r -> "ROLE_RESPONSABLE_PEDAGOGIQUE".equals(r.getCode()));
+    }
+
     public List<CreneauDto> creneauxLibres(Long personnelId) {
         return creneauRepository
                 .findByPersonnelIdAndReserveFalseAndDateHeureDebutAfterOrderByDateHeureDebutAsc(
@@ -84,6 +108,33 @@ public class RendezVousService {
         return "Personnel INPG";
     }
 
+    /** Libellé lisible du profil du demandeur, pour distinguer une demande externe d'une demande interne. */
+    public String libelleRoleDemandeur(User user) {
+        if (user == null) {
+            return "Utilisateur supprimé";
+        }
+        return switch (premierRoleConnu(user)) {
+            case "ROLE_ECOLE_FORMATION" -> "École partenaire";
+            case "ROLE_ENTREPRISE" -> "Entreprise";
+            case "ROLE_RESPONSABLE_PEDAGOGIQUE" -> "Responsable pédagogique";
+            case "ROLE_RESPONSABLE_ADMISSION" -> "Responsable admission";
+            case "ROLE_FORMATEUR" -> "Formateur";
+            case "ROLE_ETUDIANT" -> "Étudiant";
+            case "ROLE_ALUMNI" -> "Alumni";
+            case "ROLE_CANDIDAT" -> "Candidat";
+            default -> "Utilisateur INPG";
+        };
+    }
+
+    private String premierRoleConnu(User user) {
+        List<String> ordre = List.of("ROLE_ECOLE_FORMATION", "ROLE_ENTREPRISE", "ROLE_RESPONSABLE_PEDAGOGIQUE",
+                "ROLE_RESPONSABLE_ADMISSION", "ROLE_FORMATEUR", "ROLE_ETUDIANT", "ROLE_ALUMNI", "ROLE_CANDIDAT");
+        return ordre.stream()
+                .filter(code -> user.getRoles().stream().anyMatch(r -> code.equals(r.getCode())))
+                .findFirst()
+                .orElse("");
+    }
+
     public CreneauDto toCreneauDto(CreneauDisponibilite creneau) {
         return new CreneauDto(creneau.getId(), creneau.getPersonnel().getId(),
                 utilisateurCourant.nomAffiche(creneau.getPersonnel()), creneau.getDateHeureDebut(),
@@ -105,6 +156,8 @@ public class RendezVousService {
                 utilisateurCourant.nomAffiche(creneau.getPersonnel()),
                 rdv.getDemandeur().getId(),
                 utilisateurCourant.nomAffiche(rdv.getDemandeur()),
+                libelleRoleDemandeur(rdv.getDemandeur()),
+                utilisateurCourant.organisationDe(rdv.getDemandeur()),
                 rdv.getModalite().name(),
                 rdv.getLieuOuLien(),
                 rdv.getMotif(),

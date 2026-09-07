@@ -18,5 +18,10 @@ public record FormationDetailPubliqueDto(
         String domaine,
         String duree,
         String imageUrl,
-        JsonNode ficheDetaillee) {
+        JsonNode ficheDetaillee,
+        Integer heuresSimulationLabo,
+        boolean anglaisProfessionnel,
+        boolean softSkills,
+        Integer creditsTotaux,
+        Integer volumeHoraireTotal) {
 }

@@ -47,6 +47,11 @@ export class ScolariteService {
     return this.http.get<ReleveDelivre[]>(`${this.api}/mes-releves`);
   }
 
+  /** PDF officiel d'un relevé délivré (Blob : nom de fichier posé par le serveur). */
+  telechargerRelevePdf(id: number): Observable<Blob> {
+    return this.http.get(`${this.api}/mes-releves/${id}/pdf`, { responseType: 'blob' });
+  }
+
   getMesNotes(): Observable<ReleveNotes> {
     return this.http.get<ReleveNotes>(`${this.api}/mes-notes`);
   }

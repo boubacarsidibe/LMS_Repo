@@ -29,6 +29,13 @@ build/
 # ce dossier n'apparaît en local que si l'on lance le backend hors Docker.
 uploads/
 
+# ===================== Surcharges locales =====================
+# Fichiers d'aide au test en local (non partagés) : override Compose servant le
+# frontend en statique derrière nginx, et son Dockerfile/conf associés.
+docker-compose.override.yml
+frontend/Dockerfile.local
+frontend/nginx.local.conf
+
 # ===================== Outils / IDE =====================
 .DS_Store
 Thumbs.db

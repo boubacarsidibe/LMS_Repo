@@ -177,9 +177,17 @@ export class PedagogieService {
     return this.http.post<ResultatRappel>(`${this.api}/rappels`, { objet, message, etudiantIds });
   }
 
-  /** URL relative du rapport qualité PDF, à passer à `MediaProtegeService.ouvrir(...)`. */
-  urlRapportQualite(): string {
-    return '/api/pedagogie/qualite/rapport';
+  /**
+   * Rapport PDF « Avis sur les cours » (téléchargé en Blob : le serveur pose un
+   * `Content-Disposition: attachment` avec un nom de fichier daté).
+   */
+  telechargerRapportAvisCours(): Observable<Blob> {
+    return this.http.get(`${this.api}/qualite/rapport/avis-cours`, { responseType: 'blob' });
+  }
+
+  /** Rapport PDF « Enquêtes de suivi de carrière ». */
+  telechargerRapportEnquetesSuivi(): Observable<Blob> {
+    return this.http.get(`${this.api}/qualite/rapport/enquetes-suivi`, { responseType: 'blob' });
   }
 
   // ===================== Enquêtes de suivi =====================
@@ -206,6 +214,11 @@ export class PedagogieService {
   /** Registre des relevés délivrés. */
   getReleves(): Observable<ReleveDelivre[]> {
     return this.http.get<ReleveDelivre[]>(`${this.api}/releves`);
+  }
+
+  /** PDF officiel d'un relevé délivré (Blob : nom de fichier posé par le serveur). */
+  telechargerRelevePdf(id: number): Observable<Blob> {
+    return this.http.get(`${this.api}/releves/${id}/pdf`, { responseType: 'blob' });
   }
 
   /**
@@ -409,6 +422,7 @@ export interface SyntheseEnqueteSuivi {
   dateCreation: string;
   active: boolean;
   nombreReponses: number;
+  nombreDestinataires: number;
   moyenneApplicationCompetences: number | null;
   moyenneImpactCarriere: number | null;
   derniersCommentaires: string[];

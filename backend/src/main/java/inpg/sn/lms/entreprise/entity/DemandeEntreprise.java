@@ -2,6 +2,8 @@ package inpg.sn.lms.entreprise.entity;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import inpg.sn.lms.auth.entity.Entreprise;
 import inpg.sn.lms.entreprise.enums.EnumStatutDemandeEntreprise;
 import inpg.sn.lms.entreprise.enums.EnumTypeDemandeEntreprise;
@@ -16,6 +18,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -74,6 +77,14 @@ public class DemandeEntreprise {
 
     @Column(name = "reponse_equipe", length = 2000)
     private String reponseEquipe;
+
+    /**
+     * Fiche technique de module rattachée à cette demande (formation sur mesure),
+     * le cas échéant. Côté inverse : {@code fiche_technique_module.demande_id}.
+     */
+    @OneToOne(mappedBy = "demande", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private FicheTechniqueModule fiche;
 
     public DemandeEntreprise(Entreprise entreprise, EnumTypeDemandeEntreprise type, Formation formation,
             String description, Integer effectifConcerne, String datesSouhaitees) {

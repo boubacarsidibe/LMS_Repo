@@ -254,6 +254,12 @@ export interface FormationPublique {
  */
 export interface FormationDetailPublique extends FormationPublique {
   ficheDetaillee: Record<string, any> | null;
+  /** §3 du Référentiel Accréditation — non renseigné (null/false) sur la plupart des fiches. */
+  heuresSimulationLabo: number | null;
+  anglaisProfessionnel: boolean;
+  softSkills: boolean;
+  creditsTotaux: number | null;
+  volumeHoraireTotal: number | null;
 }
 
 /** Épreuve académique telle que le candidat peut la consulter. */

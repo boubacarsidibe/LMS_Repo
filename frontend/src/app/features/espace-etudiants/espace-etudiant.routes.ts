@@ -83,12 +83,6 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/certificats/certificats').then(m => m.Certificats)
             },
             {
-                path: 'activites-personnel',
-                loadComponent: () =>
-                    import('../personnel/pages/activites-personnel/activites-personnel.component').then(
-                        m => m.ActivitesPersonnelComponent)
-            },
-            {
                 path: 'rendez-vous',
                 loadComponent: () =>
                     import('../rendez-vous/pages/rendez-vous/rendez-vous.component').then(

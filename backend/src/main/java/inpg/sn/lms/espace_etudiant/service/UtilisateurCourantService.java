@@ -85,7 +85,14 @@ public class UtilisateurCourantService {
         return user == null ? null : entrepriseRepository.findByUserId(user.getId()).orElse(null);
     }
 
-    /** Libellé « Prénom Nom » d'un utilisateur, avec repli sur son identifiant. */
+    /**
+     * Libellé lisible d'un utilisateur : « Prénom Nom » pour une personne
+     * physique (étudiant, formateur, alumni — l'alumni garde sa fiche étudiant),
+     * raison sociale / nom d'école pour une personne morale, avec repli sur
+     * l'identifiant. Utilisé partout où un nom d'auteur est affiché (forum,
+     * documents, rendez-vous, notifications) : sans les branches école /
+     * entreprise, ces comptes s'affichaient sous leur identifiant technique.
+     */
     public String nomAffiche(User user) {
         if (user == null) {
             return "Utilisateur supprimé";
@@ -98,6 +105,48 @@ public class UtilisateurCourantService {
         if (formateur != null) {
             return formateur.getPrenom() + " " + formateur.getNom();
         }
-        return user.getUsername();
+        EcoleFormation ecole = ecoleFormationRepository.findByUserId(user.getId()).orElse(null);
+        if (ecole != null) {
+            return ecole.getNomEcole();
+        }
+        Entreprise entreprise = entrepriseRepository.findByUserId(user.getId()).orElse(null);
+        if (entreprise != null) {
+            return entreprise.getRaisonSociale();
+        }
+        // Rôles sans fiche dédiée (responsable pédagogique, évaluateur...) : à défaut de
+        // vrai nom, on présente l'identifiant proprement (« test_evaluateur » -> « Test
+        // Evaluateur ») plutôt que le jeton technique brut.
+        return depuisIdentifiant(user.getUsername());
+    }
+
+    private static String depuisIdentifiant(String identifiant) {
+        if (identifiant == null || identifiant.isBlank()) {
+            return "Utilisateur";
+        }
+        String[] mots = identifiant.replaceAll("[._-]+", " ").trim().split("\\s+");
+        StringBuilder resultat = new StringBuilder();
+        for (String mot : mots) {
+            if (mot.isEmpty()) {
+                continue;
+            }
+            if (resultat.length() > 0) {
+                resultat.append(' ');
+            }
+            resultat.append(Character.toUpperCase(mot.charAt(0))).append(mot.substring(1));
+        }
+        return resultat.length() == 0 ? identifiant : resultat.toString();
+    }
+
+    /** Organisation d'un compte personne morale (école ou entreprise), ou {@code null}. */
+    public String organisationDe(User user) {
+        if (user == null) {
+            return null;
+        }
+        EcoleFormation ecole = ecoleFormationRepository.findByUserId(user.getId()).orElse(null);
+        if (ecole != null) {
+            return ecole.getNomEcole();
+        }
+        Entreprise entreprise = entrepriseRepository.findByUserId(user.getId()).orElse(null);
+        return entreprise != null ? entreprise.getRaisonSociale() : null;
     }
 }

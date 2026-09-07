@@ -46,6 +46,7 @@ import inpg.sn.lms.espace_etudiant.dto.ReleveDelivreDto;
 import inpg.sn.lms.espace_etudiant.entity.ReleveNotes;
 import inpg.sn.lms.espace_etudiant.service.ReleveDelivranceService;
 import inpg.sn.lms.espace_etudiant.service.ReleveNotesService;
+import inpg.sn.lms.espace_etudiant.service.RelevePdfService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
@@ -85,16 +86,18 @@ public class ScolariteController {
     private final NoteModuleService noteModuleService;
     private final ReleveNotesService releveNotesService;
     private final ReleveDelivranceService releveDelivranceService;
+    private final RelevePdfService relevePdfService;
 
     public ScolariteController(UtilisateurCourantService utilisateurCourant, MatriculeService matriculeService,
             CoursRepository coursRepository, SeanceRepository seanceRepository, SupportService supportService,
             ProgressionSupportRepository progressionRepository, RetourEvaluationRepository retourRepository,
             EtudiantRepository etudiantRepository, HabilitationCoursService habilitation,
             NoteModuleService noteModuleService, ReleveNotesService releveNotesService,
-            ReleveDelivranceService releveDelivranceService) {
+            ReleveDelivranceService releveDelivranceService, RelevePdfService relevePdfService) {
         this.habilitation = habilitation;
         this.releveNotesService = releveNotesService;
         this.releveDelivranceService = releveDelivranceService;
+        this.relevePdfService = relevePdfService;
         this.utilisateurCourant = utilisateurCourant;
         this.matriculeService = matriculeService;
         this.coursRepository = coursRepository;
@@ -144,6 +147,27 @@ public class ScolariteController {
         return ResponseEntity.ok(releveDelivranceService.deLEtudiant(etudiant.getId()).stream()
                 .map(this::toReleveDelivreDto)
                 .toList());
+    }
+
+    /**
+     * Version PDF d'un relevé délivré à l'étudiant connecté. Le relevé est
+     * cherché dans <em>ses</em> relevés, ce qui vaut contrôle de propriété.
+     */
+    @GetMapping("/mes-releves/{id}/pdf")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> monRelevePdf(@PathVariable Long id, Authentication authentication) {
+        Etudiant etudiant = utilisateurCourant.etudiant(authentication);
+        if (etudiant == null) {
+            return profilIntrouvable();
+        }
+        ReleveNotes releve = releveDelivranceService.deLEtudiant(etudiant.getId()).stream()
+                .filter(r -> r.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+        if (releve == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return relevePdfService.reponsePdf(releve);
     }
 
     private ReleveDelivreDto toReleveDelivreDto(ReleveNotes releve) {

@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,11 +26,16 @@ import inpg.sn.lms.entreprise.dto.DemandeEntrepriseCreateRequest;
 import inpg.sn.lms.entreprise.dto.DemandeEntrepriseDto;
 import inpg.sn.lms.entreprise.dto.MessageEntrepriseDto;
 import inpg.sn.lms.entreprise.entity.DemandeEntreprise;
+import inpg.sn.lms.entreprise.entity.FicheTechniqueModule;
 import inpg.sn.lms.entreprise.entity.MessageEntreprise;
+import inpg.sn.lms.entreprise.enums.EnumStatutDemandeEntreprise;
+import inpg.sn.lms.entreprise.enums.EnumStatutFicheModule;
 import inpg.sn.lms.entreprise.enums.EnumTypeDemandeEntreprise;
 import inpg.sn.lms.entreprise.repository.DemandeEntrepriseRepository;
+import inpg.sn.lms.entreprise.repository.FicheTechniqueModuleRepository;
 import inpg.sn.lms.entreprise.repository.MessageEntrepriseRepository;
 import inpg.sn.lms.entreprise.service.EntrepriseNotificationService;
+import inpg.sn.lms.entreprise.service.FicheTechniqueModuleService;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
 import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
@@ -58,18 +64,23 @@ public class EntrepriseController {
     private final DemandeEntrepriseRepository demandeRepository;
     private final MessageEntrepriseRepository messageRepository;
     private final FormationRepository formationRepository;
+    private final FicheTechniqueModuleRepository ficheRepository;
+    private final FicheTechniqueModuleService ficheService;
     private final RoleRepository roleRepository;
     private final UtilisateurCourantService utilisateurCourant;
     private final EntrepriseNotificationService notificationService;
 
     public EntrepriseController(EntrepriseRepository entrepriseRepository,
             DemandeEntrepriseRepository demandeRepository, MessageEntrepriseRepository messageRepository,
-            FormationRepository formationRepository, RoleRepository roleRepository,
+            FormationRepository formationRepository, FicheTechniqueModuleRepository ficheRepository,
+            FicheTechniqueModuleService ficheService, RoleRepository roleRepository,
             UtilisateurCourantService utilisateurCourant, EntrepriseNotificationService notificationService) {
         this.entrepriseRepository = entrepriseRepository;
         this.demandeRepository = demandeRepository;
         this.messageRepository = messageRepository;
         this.formationRepository = formationRepository;
+        this.ficheRepository = ficheRepository;
+        this.ficheService = ficheService;
         this.roleRepository = roleRepository;
         this.utilisateurCourant = utilisateurCourant;
         this.notificationService = notificationService;
@@ -162,6 +173,84 @@ public class EntrepriseController {
                 .stream().map(EntrepriseController::toDto).toList());
     }
 
+    // ===================== Fiche technique de module =====================
+
+    /** Fiche technique transmise pour une de ses demandes (jamais un brouillon). */
+    @GetMapping("/demandes/{id}/fiche")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> fiche(@PathVariable Long id, Authentication authentication) {
+        FicheTechniqueModule fiche = ficheVisible(id, authentication);
+        if (fiche == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(ficheService.toDto(fiche));
+    }
+
+    /** L'entreprise accepte la fiche : la demande est clôturée. */
+    @PutMapping("/demandes/{id}/fiche/accepter")
+    @Transactional
+    public ResponseEntity<?> accepterFiche(@PathVariable Long id, Authentication authentication) {
+        FicheTechniqueModule fiche = ficheVisible(id, authentication);
+        if (fiche == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (fiche.getStatut() == EnumStatutFicheModule.ACCEPTEE) {
+            return ResponseEntity.ok(ficheService.toDto(fiche));
+        }
+        fiche.setStatut(EnumStatutFicheModule.ACCEPTEE);
+        fiche.setDateDecisionEntreprise(java.time.LocalDateTime.now());
+        DemandeEntreprise demande = fiche.getDemande();
+        demande.setStatut(EnumStatutDemandeEntreprise.CLOTUREE);
+        demandeRepository.save(demande);
+        ficheRepository.save(fiche);
+        notificationService.notifierDecisionFiche(demande.getEntreprise().getRaisonSociale(), true, null);
+        return ResponseEntity.ok(ficheService.toDto(fiche));
+    }
+
+    /** L'entreprise demande des ajustements : commentaire obligatoire. */
+    @PutMapping("/demandes/{id}/fiche/ajustements")
+    @Transactional
+    public ResponseEntity<?> demanderAjustements(@PathVariable Long id, @RequestBody Map<String, String> corps,
+            Authentication authentication) {
+        String commentaire = corps.get("commentaire");
+        if (estVide(commentaire)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Merci de préciser les ajustements souhaités."));
+        }
+        FicheTechniqueModule fiche = ficheVisible(id, authentication);
+        if (fiche == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (fiche.getStatut() == EnumStatutFicheModule.ACCEPTEE) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Cette fiche a déjà été acceptée."));
+        }
+        fiche.setStatut(EnumStatutFicheModule.AJUSTEMENTS_DEMANDES);
+        fiche.setCommentaireEntreprise(commentaire.trim());
+        fiche.setDateDecisionEntreprise(java.time.LocalDateTime.now());
+        ficheRepository.save(fiche);
+        notificationService.notifierDecisionFiche(fiche.getDemande().getEntreprise().getRaisonSociale(), false,
+                commentaire.trim());
+        return ResponseEntity.ok(ficheService.toDto(fiche));
+    }
+
+    /** Fiche d'une demande appartenant à l'entreprise connectée, si elle n'est plus un brouillon. */
+    private FicheTechniqueModule ficheVisible(Long demandeId, Authentication authentication) {
+        Entreprise entreprise = utilisateurCourant.entreprise(authentication);
+        if (entreprise == null) {
+            return null;
+        }
+        FicheTechniqueModule fiche = ficheRepository.findByDemandeId(demandeId).orElse(null);
+        if (fiche == null || fiche.getStatut() == EnumStatutFicheModule.BROUILLON) {
+            return null;
+        }
+        DemandeEntreprise demande = fiche.getDemande();
+        if (demande == null || !demande.getEntreprise().getId().equals(entreprise.getId())) {
+            return null;
+        }
+        return fiche;
+    }
+
     /** Historique de la messagerie privée de l'entreprise connectée. */
     @GetMapping("/messages")
     @Transactional(readOnly = true)
@@ -221,7 +310,8 @@ public class EntrepriseController {
                 demande.getDatesSouhaitees(),
                 demande.getDateSoumission(),
                 demande.getDateReponse(),
-                demande.getReponseEquipe());
+                demande.getReponseEquipe(),
+                demande.getFiche() != null ? demande.getFiche().getStatut().name() : null);
     }
 
     static MessageEntrepriseDto toMessageDto(MessageEntreprise message, Entreprise entreprise) {

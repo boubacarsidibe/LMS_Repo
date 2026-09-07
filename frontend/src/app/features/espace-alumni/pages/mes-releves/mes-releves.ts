@@ -18,6 +18,8 @@ import { AlumniService } from '../../services/alumni.service';
 export class MesReleves implements OnInit {
   chargement = true;
   releves: ReleveDelivre[] = [];
+  releveEnCoursId: number | null = null;
+  erreur: string | null = null;
 
   constructor(private alumniService: AlumniService) {}
 
@@ -28,6 +30,26 @@ export class MesReleves implements OnInit {
         this.chargement = false;
       },
       error: () => (this.chargement = false),
+    });
+  }
+
+  telechargerReleve(releve: ReleveDelivre): void {
+    this.releveEnCoursId = releve.id;
+    this.erreur = null;
+    this.alumniService.telechargerRelevePdf(releve.id).subscribe({
+      next: (blob) => {
+        this.releveEnCoursId = null;
+        const url = window.URL.createObjectURL(blob);
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = `INPG-releve-${releve.reference}.pdf`;
+        lien.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.releveEnCoursId = null;
+        this.erreur = "Le relevé n'a pas pu être téléchargé. Réessayez dans un instant.";
+      },
     });
   }
 }

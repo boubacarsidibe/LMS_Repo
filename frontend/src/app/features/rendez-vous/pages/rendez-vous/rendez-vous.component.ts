@@ -15,6 +15,7 @@ import {
 import { RendezVousService } from '../../services/rendez-vous.service';
 
 const ROLES_PERSONNEL = ['ROLE_FORMATEUR', 'ROLE_RESPONSABLE_PEDAGOGIQUE', 'ROLE_RESPONSABLE_ADMISSION'];
+const ROLES_EXTERNE = ['ROLE_ECOLE_FORMATION', 'ROLE_ENTREPRISE'];
 
 /**
  * Gestion des rendez-vous (TDR §J) : « Chaque utilisateur pourra consulter le
@@ -24,12 +25,21 @@ const ROLES_PERSONNEL = ['ROLE_FORMATEUR', 'ROLE_RESPONSABLE_PEDAGOGIQUE', 'ROLE
  * autre date. »
  *
  * <p>Un seul composant, partagé par tous les espaces qui y renvoient depuis
- * leur propre navigation (étudiant, alumni, formateur, pédagogie, admission) —
- * même modélisation, pas de triplication par rôle. Le TDR dit « chaque
- * utilisateur » : la section « Demander un rendez-vous » est donc toujours
- * visible, tandis que « Mon agenda » (gestion des créneaux et réponse aux
- * demandes) n'apparaît qu'aux trois rôles internes établis comme « personnel »
- * — divulgation progressive plutôt que deux écrans séparés à maintenir.
+ * leur propre navigation (étudiant, formateur, pédagogie, admission, école,
+ * entreprise) — même modélisation, pas de triplication par rôle. « Mon agenda »
+ * (gestion des créneaux et réponse aux demandes) n'apparaît qu'aux rôles
+ * internes établis comme « personnel ».
+ *
+ * <p>Deux adaptations selon le rôle connecté :
+ * <ul>
+ *   <li><b>École partenaire / entreprise</b> : leur unique interlocuteur est le
+ *       responsable pédagogique (décision client, garde côté serveur). L'écran
+ *       ne montre donc que « Demander un rendez-vous » avec ce seul contact,
+ *       pré-sélectionné, et « Mes demandes ».</li>
+ *   <li><b>Responsable pédagogique</b> : c'est lui qui traite ces demandes
+ *       externes — l'onglet « Mon agenda » (demandes reçues + créneaux) est
+ *       affiché en premier.</li>
+ * </ul>
  */
 @Component({
   selector: 'app-rendez-vous',
@@ -44,9 +54,32 @@ export class RendezVousComponent implements OnInit {
   libellesModalite = LIBELLES_MODALITE;
   libellesStatut = LIBELLES_STATUT;
 
+  private get roles(): string[] {
+    return this.auth.currentUser()?.roles ?? [];
+  }
+
   get estPersonnel(): boolean {
-    const roles = this.auth.currentUser()?.roles ?? [];
-    return ROLES_PERSONNEL.some((r) => roles.includes(r));
+    return ROLES_PERSONNEL.some((r) => this.roles.includes(r));
+  }
+
+  /** École partenaire ou entreprise : demandeur « externe », interlocuteur = responsable pédagogique. */
+  get estExterne(): boolean {
+    return ROLES_EXTERNE.some((r) => this.roles.includes(r));
+  }
+
+  get estResponsablePedagogique(): boolean {
+    return this.roles.includes('ROLE_RESPONSABLE_PEDAGOGIQUE');
+  }
+
+  /** Sous-titre de l'écran, adapté au rôle. */
+  get sousTitre(): string {
+    if (this.estExterne) {
+      return "Demandez un rendez-vous au responsable pédagogique de l'INPG sur l'un de ses créneaux disponibles.";
+    }
+    if (this.estResponsablePedagogique) {
+      return 'Traitez les demandes de rendez-vous des écoles partenaires et des entreprises, et gérez vos créneaux de disponibilité.';
+    }
+    return "Consultez le personnel de l'INPG et demandez un rendez-vous sur un créneau disponible.";
   }
 
   ongletActif: 'demander' | 'agenda' = 'demander';
@@ -82,6 +115,10 @@ export class RendezVousComponent implements OnInit {
   messageSucces = '';
 
   ngOnInit(): void {
+    // Le responsable pédagogique arrive d'abord sur les demandes à traiter.
+    if (this.estResponsablePedagogique) {
+      this.ongletActif = 'agenda';
+    }
     this.chargerPersonnel();
     this.chargerMesDemandes();
     if (this.estPersonnel) {
@@ -108,10 +145,15 @@ export class RendezVousComponent implements OnInit {
   chargerPersonnel(): void {
     this.chargementPersonnel = true;
     const monId = this.auth.currentUser()?.id;
-    this.rendezVousService.getPersonnel().subscribe({
+    // Écoles / entreprises : on ne propose que le responsable pédagogique.
+    this.rendezVousService.getPersonnel(this.estExterne ? 'PEDAGOGIE' : undefined).subscribe({
       next: (personnel) => {
         this.personnel = personnel.filter((p) => p.id !== monId);
         this.chargementPersonnel = false;
+        // Interlocuteur unique : on le sélectionne d'emblée pour aller droit aux créneaux.
+        if (this.estExterne && this.personnel.length === 1) {
+          this.choisirPersonnel(this.personnel[0]);
+        }
       },
       error: () => {
         this.personnel = [];

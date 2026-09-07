@@ -56,7 +56,7 @@ import { Auth } from '../../../../core/auth/services/authService';
 
     <div class="pl-72">
       <header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
-        <p class="font-label-md text-label-md text-on-surface-variant">Espace École de formation — Accréditation</p>
+        <p class="font-label-md text-label-md text-on-surface-variant">Espace École de formation — Accréditation d'un programme (Cadre de référence DRCQ)</p>
         <div class="flex items-center gap-3">
           <a
             routerLink="/accreditation/mon-profil"

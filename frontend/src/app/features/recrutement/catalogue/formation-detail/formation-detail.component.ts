@@ -16,6 +16,12 @@ export interface FormationDetailData {
   ctaText?: string;
   sections?: Array<{ titre: string; icon: string; type: 'grid'|'list'|'cards'|'accordion'; items: Array<{ titre?: string; description?: string; icon?: string; badge?: string; sousItems?: string[] }> }>;
   sidebar?: { duree?: string; format?: string; langue?: string; certificat?: string; lieu?: string; tarif?: string; prochaineRentree?: string; dateLimite?: string; boutonTexte?: string; brochure?: boolean };
+  /** §3 du Référentiel Accréditation DRCQ — encart affiché seulement si au moins un champ est renseigné. */
+  heuresSimulationLabo?: number | null;
+  anglaisProfessionnel?: boolean;
+  softSkills?: boolean;
+  creditsTotaux?: number | null;
+  volumeHoraireTotal?: number | null;
 }
 
 
@@ -54,6 +60,11 @@ export class FormationDetailComponent implements OnInit {
           niveau: dto.niveau ?? '',
           domaine: dto.domaine ?? '',
           duree: dto.duree ?? '',
+          heuresSimulationLabo: dto.heuresSimulationLabo,
+          anglaisProfessionnel: dto.anglaisProfessionnel,
+          softSkills: dto.softSkills,
+          creditsTotaux: dto.creditsTotaux,
+          volumeHoraireTotal: dto.volumeHoraireTotal,
         } as FormationDetailData;
         this.chargement = false;
       },
@@ -62,6 +73,15 @@ export class FormationDetailComponent implements OnInit {
         this.chargement = false;
       },
     });
+  }
+
+  /** L'encart §3 « Conforme au référentiel DRCQ » ne s'affiche que si au moins un champ est renseigné. */
+  get conformiteReferentielVisible(): boolean {
+    const f = this.formation;
+    if (!f) {
+      return false;
+    }
+    return !!(f.heuresSimulationLabo || f.anglaisProfessionnel || f.softSkills || f.creditsTotaux || f.volumeHoraireTotal);
   }
 
   methodeIcon(item: string): string {

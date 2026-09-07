@@ -39,6 +39,10 @@ export interface RendezVous {
   personnelNom: string;
   demandeurId: number;
   demandeurNom: string;
+  /** Libellé du profil du demandeur : « École partenaire », « Entreprise », « Étudiant »… */
+  demandeurRole: string;
+  /** Raison sociale / nom d'école si le demandeur est une personne morale, sinon null. */
+  demandeurOrganisation: string | null;
   modalite: ModaliteRendezVous;
   lieuOuLien: string | null;
   motif: string | null;

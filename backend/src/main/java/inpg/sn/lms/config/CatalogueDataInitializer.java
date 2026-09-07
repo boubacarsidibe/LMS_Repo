@@ -73,6 +73,28 @@ public class CatalogueDataInitializer {
                                 modifie = true;
                             }
                         }
+                        // Caractéristiques du §3 du Référentiel DRCQ : on ne complète que
+                        // ce qui n'a pas encore de valeur, sans écraser une retouche back-office.
+                        if (existante.getHeuresSimulationLabo() == null && entree.hasNonNull("heuresSimulationLabo")) {
+                            existante.setHeuresSimulationLabo(entree.get("heuresSimulationLabo").asInt());
+                            modifie = true;
+                        }
+                        if (!existante.isAnglaisProfessionnel() && entree.path("anglaisProfessionnel").asBoolean(false)) {
+                            existante.setAnglaisProfessionnel(true);
+                            modifie = true;
+                        }
+                        if (!existante.isSoftSkills() && entree.path("softSkills").asBoolean(false)) {
+                            existante.setSoftSkills(true);
+                            modifie = true;
+                        }
+                        if (existante.getCreditsTotaux() == null && entree.hasNonNull("creditsTotaux")) {
+                            existante.setCreditsTotaux(entree.get("creditsTotaux").asInt());
+                            modifie = true;
+                        }
+                        if (existante.getVolumeHoraireTotal() == null && entree.hasNonNull("volumeHoraireTotal")) {
+                            existante.setVolumeHoraireTotal(entree.get("volumeHoraireTotal").asInt());
+                            modifie = true;
+                        }
                         if (modifie) {
                             formationRepository.save(existante);
                         }
@@ -88,6 +110,17 @@ public class CatalogueDataInitializer {
                     formation.setDuree(texte(entree, "duree"));
                     formation.setImageUrl(texte(entree, "imageUrl"));
                     formation.setPubliee(entree.path("publiee").asBoolean(true));
+                    if (entree.hasNonNull("heuresSimulationLabo")) {
+                        formation.setHeuresSimulationLabo(entree.get("heuresSimulationLabo").asInt());
+                    }
+                    formation.setAnglaisProfessionnel(entree.path("anglaisProfessionnel").asBoolean(false));
+                    formation.setSoftSkills(entree.path("softSkills").asBoolean(false));
+                    if (entree.hasNonNull("creditsTotaux")) {
+                        formation.setCreditsTotaux(entree.get("creditsTotaux").asInt());
+                    }
+                    if (entree.hasNonNull("volumeHoraireTotal")) {
+                        formation.setVolumeHoraireTotal(entree.get("volumeHoraireTotal").asInt());
+                    }
 
                     JsonNode fiche = entree.get("ficheDetaillee");
                     if (fiche != null && !fiche.isNull()) {

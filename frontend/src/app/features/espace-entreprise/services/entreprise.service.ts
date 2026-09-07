@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 import {
   DemandeEntreprise,
   DemandeEntrepriseSaisie,
+  FicheTechniqueModule,
   FormationCatalogue,
   MessageEntreprise,
 } from '../models/entreprise.models';
@@ -36,5 +37,20 @@ export class EntrepriseService {
 
   envoyerMessage(contenu: string): Observable<MessageEntreprise> {
     return this.http.post<MessageEntreprise>(`${this.api}/messages`, { contenu });
+  }
+
+  // ===================== Fiche technique de module =====================
+
+  /** 404 tant que la fiche n'a pas été transmise (jamais un brouillon côté entreprise). */
+  getFiche(demandeId: number): Observable<FicheTechniqueModule> {
+    return this.http.get<FicheTechniqueModule>(`${this.api}/demandes/${demandeId}/fiche`);
+  }
+
+  accepterFiche(demandeId: number): Observable<FicheTechniqueModule> {
+    return this.http.put<FicheTechniqueModule>(`${this.api}/demandes/${demandeId}/fiche/accepter`, {});
+  }
+
+  demanderAjustements(demandeId: number, commentaire: string): Observable<FicheTechniqueModule> {
+    return this.http.put<FicheTechniqueModule>(`${this.api}/demandes/${demandeId}/fiche/ajustements`, { commentaire });
   }
 }

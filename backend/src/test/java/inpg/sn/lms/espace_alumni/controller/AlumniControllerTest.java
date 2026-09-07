@@ -87,7 +87,8 @@ class AlumniControllerTest {
     @BeforeEach
     void setUp() {
         controller = new AlumniController(utilisateurCourant, alumniProfilService, situationService,
-                releveDelivranceService, enqueteRepository, reponseRepository, forumSujetRepository,
+                releveDelivranceService, new inpg.sn.lms.espace_etudiant.service.RelevePdfService(),
+                enqueteRepository, reponseRepository, forumSujetRepository,
                 forumMessageRepository, documentPartageRepository, consultationRepository);
     }
 

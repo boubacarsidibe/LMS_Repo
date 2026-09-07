@@ -35,6 +35,10 @@ export class AccreditationService {
     return this.http.post<PieceAccreditation>(`${this.api}/ecole/demande/${demandeId}/pieces`, donnees);
   }
 
+  supprimerPiece(demandeId: number, pieceId: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/ecole/demande/${demandeId}/pieces/${pieceId}`);
+  }
+
   urlFichierPiece(demandeId: number, pieceId: number): string {
     return `/api/accreditation/ecole/demande/${demandeId}/pieces/${pieceId}/fichier`;
   }

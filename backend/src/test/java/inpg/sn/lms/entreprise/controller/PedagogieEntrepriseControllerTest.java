@@ -45,6 +45,12 @@ class PedagogieEntrepriseControllerTest {
     @Mock
     private EntrepriseRepository entrepriseRepository;
     @Mock
+    private inpg.sn.lms.entreprise.repository.FicheTechniqueModuleRepository ficheRepository;
+    @Mock
+    private inpg.sn.lms.entreprise.service.FicheTechniqueModuleService ficheService;
+    @Mock
+    private inpg.sn.lms.entreprise.service.EntrepriseNotificationService notificationService;
+    @Mock
     private UtilisateurCourantService utilisateurCourant;
     @Mock
     private Authentication authentication;
@@ -54,7 +60,7 @@ class PedagogieEntrepriseControllerTest {
     @BeforeEach
     void setUp() {
         controller = new PedagogieEntrepriseController(demandeRepository, messageRepository, entrepriseRepository,
-                utilisateurCourant);
+                ficheRepository, ficheService, notificationService, utilisateurCourant);
     }
 
     @Test

@@ -11,14 +11,26 @@
         l'attention est utile.
       </p>
     </div>
-    <button
-      type="button"
-      (click)="telechargerRapport()"
-      class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity"
-    >
-      <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
-      Rapport qualité (PDF)
-    </button>
+    <div class="shrink-0 flex flex-wrap gap-2">
+      <button
+        type="button"
+        (click)="telechargerRapportAvisCours()"
+        [disabled]="telechargementEnCours !== null"
+        class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50"
+      >
+        <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+        {{ telechargementEnCours === 'avis' ? 'Génération…' : 'Rapport — avis sur les cours' }}
+      </button>
+      <button
+        type="button"
+        (click)="telechargerRapportEnquetes()"
+        [disabled]="telechargementEnCours !== null"
+        class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors disabled:opacity-50"
+      >
+        <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+        {{ telechargementEnCours === 'enquetes' ? 'Génération…' : 'Rapport — enquêtes de suivi' }}
+      </button>
+    </div>
   </header>
 
   <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
@@ -194,7 +206,11 @@
           <p *ngIf="e.description" class="font-body-sm text-body-sm text-on-surface-variant mt-1">
             {{ e.description }}
           </p>
-          <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ e.nombreReponses }} réponse(s)</p>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            {{ e.nombreReponses }} réponse(s)<ng-container *ngIf="e.nombreDestinataires > 0">
+              sur {{ e.nombreDestinataires }} alumni
+              ({{ (e.nombreReponses / e.nombreDestinataires) | percent: '1.0-0' }})</ng-container>
+          </p>
         </div>
         <div class="flex items-center gap-4 shrink-0">
           <div class="text-right">
