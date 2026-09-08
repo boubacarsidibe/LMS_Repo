@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { RecrutementService, SessionCandidatureResponse, CandidatureRequest, CandidatureResponse, CritereAdmissionResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { CandidatNavbarComponent } from '../../../../shared/components/candidat-navbar/candidat-navbar.component';
+import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { Auth } from '../../../../core/auth/services/authService';
 
 const STORAGE_KEY = 'candidature_brouillon';
@@ -33,7 +33,7 @@ interface CandidatureFormData {
 @Component({
   selector: 'app-formulaire',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, CandidatNavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
   templateUrl: './formulaire.component.html'
 })
 export class FormulaireComponent implements OnInit {
@@ -347,6 +347,13 @@ export class FormulaireComponent implements OnInit {
     });
   }
 
+  private readonly libelleTypePiece: Record<string, string> = {
+    'identite': "Pièce d'identité",
+    'cv': 'CV',
+    'motivation': 'Lettre de motivation',
+    'releves': 'Relevé de notes',
+  };
+
   private uploadAllFiles(candidatureId: number): void {
     const typeMap: Record<string, string> = {
       'identite': 'PIECE_IDENTITE',
@@ -354,6 +361,10 @@ export class FormulaireComponent implements OnInit {
       'motivation': 'LETTRE_MOTIVATION',
       'releves': 'RELEVE_NOTES',
     };
+    // Échecs suivis explicitement : un upload qui échoue silencieusement laissait
+    // afficher « Candidature soumise avec succès ! » alors que le dossier restait
+    // sans pièces, sans que le candidat n'en sache jamais rien.
+    const echecs: string[] = [];
     const uploads: Promise<any>[] = [];
     this.filesToUpload.forEach((files, type) => {
       files.forEach(file => {
@@ -362,21 +373,32 @@ export class FormulaireComponent implements OnInit {
         uploads.push(
           firstValueFrom(upload$).catch((err) => {
             console.error(`[uploadAllFiles] Échec upload "${type}" (${file.name}) comme ${docType}:`, err);
-            return Promise.resolve(null);
+            echecs.push(`${this.libelleTypePiece[type] || type} (${file.name})`);
+            return null;
           })
         );
       });
     });
     if (uploads.length > 0) {
-      Promise.all(uploads).finally(() => this.onSubmitComplete());
+      Promise.all(uploads).finally(() => this.onSubmitComplete(echecs));
     } else {
-      this.onSubmitComplete();
+      this.onSubmitComplete(echecs);
     }
   }
 
-  private onSubmitComplete(): void {
+  private onSubmitComplete(echecsUpload: string[] = []): void {
     this.loading = false;
-    this.successMessage = 'Candidature soumise avec succès ! N° ' + (this.candidature?.numeroDossier || '');
+    const numero = this.candidature?.numeroDossier || '';
+    if (echecsUpload.length > 0) {
+      alert(
+        `Votre candidature n°${numero} a bien été enregistrée, mais ${echecsUpload.length} document(s) n'ont pas pu être transmis :\n\n`
+        + echecsUpload.join('\n')
+        + `\n\nVous pourrez les ajouter depuis votre espace candidat (page Suivi), rubrique « Dossier soumis ».`
+      );
+      this.successMessage = '';
+    } else {
+      this.successMessage = 'Candidature soumise avec succès ! N° ' + numero;
+    }
     localStorage.removeItem(STORAGE_KEY);
     // La soumission vient d'accorder ROLE_CANDIDAT côté backend : on rafraîchit
     // currentUser AVANT de naviguer vers /suivi (gardée par candidatGuard), sinon
@@ -385,7 +407,7 @@ export class FormulaireComponent implements OnInit {
       next: () => {
         setTimeout(() => {
           this.router.navigate(['/recrutement/suivi']);
-        }, 1500);
+        }, echecsUpload.length > 0 ? 200 : 1500);
       },
     });
   }

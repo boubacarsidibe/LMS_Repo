@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.controller;
 
+import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -61,6 +62,7 @@ import inpg.sn.lms.recrutement.entity.NotificationTemplate;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.enums.EnumEtapeQms;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
+import inpg.sn.lms.recrutement.enums.EnumStatutPaiement;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.enums.EnumTypeNotification;
 import inpg.sn.lms.recrutement.repository.PieceJustificativeRepository;
@@ -531,6 +533,15 @@ public class AdminRecrutementController {
     @PutMapping("/candidatures/{id}/admettre-test")
     public ResponseEntity<CandidatureResponse> admettreTestAcademique(@PathVariable Long id,
             Authentication authentication) {
+        // TDR : les frais de dossier doivent être réglés avant le passage du test — un
+        // candidat qui n'a pas payé ne doit pas pouvoir être convoqué.
+        CandidatureResponse existante = candidatureService.getCandidatureById(id);
+        PaiementResponse paiement = existante.getPaiement();
+        if (paiement == null || paiement.getStatut() != EnumStatutPaiement.SUCCES) {
+            throw new BusinessException(
+                    "Les frais de dossier doivent être réglés et confirmés avant d'admettre ce candidat au test académique.");
+        }
+
         CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS1,
                 null);
         candidatureService.journaliser(id, EnumEtapeQms.EVALUATION, response.getStatut(),
@@ -628,6 +639,29 @@ public class AdminRecrutementController {
     @GetMapping("/candidatures/{id}/journal")
     public ResponseEntity<List<EtapeDossierResponse>> journalDuDossier(@PathVariable Long id) {
         return ResponseEntity.ok(journalEtapeService.journalDe(id));
+    }
+
+    /**
+     * Annule la dernière décision prise sur cette candidature (retour au statut
+     * précédent). Correction administrative, pas une nouvelle décision : ni email ni
+     * notification cloche envoyés, pour ne pas contredire sans explication la
+     * notification déjà reçue par le candidat pour la décision qu'on vient d'annuler.
+     */
+    @PutMapping("/candidatures/{id}/annuler")
+    public ResponseEntity<CandidatureResponse> annulerDerniereAction(@PathVariable Long id) {
+        return ResponseEntity.ok(candidatureService.annulerDerniereAction(id));
+    }
+
+    /**
+     * Fait reculer explicitement une candidature vers une étape antérieure choisie,
+     * à tout moment — pas seulement juste après la décision à défaire. Même absence
+     * de notification que {@link #annulerDerniereAction} : correction administrative.
+     */
+    @PutMapping("/candidatures/{id}/reculer-statut")
+    public ResponseEntity<CandidatureResponse> reculerStatut(@PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        EnumStatutCandidature cible = EnumStatutCandidature.valueOf(body.get("statut").toUpperCase());
+        return ResponseEntity.ok(candidatureService.reculerStatut(id, cible));
     }
 
     /**
@@ -764,6 +798,19 @@ public class AdminRecrutementController {
     public ResponseEntity<TestAcademiqueResponse> modifierTest(@PathVariable Long id,
             @RequestBody TestAcademiqueRequest request) {
         return ResponseEntity.ok(testAcademiqueService.modifierTest(id, request));
+    }
+
+    /** Saisie rapide de la note seule — utilisé par la grille de notation (édition en ligne). */
+    @PutMapping("/tests/{id}/note")
+    public ResponseEntity<TestAcademiqueResponse> modifierNoteTest(@PathVariable Long id,
+            @RequestBody Map<String, Float> body) {
+        return ResponseEntity.ok(testAcademiqueService.modifierNote(id, body.get("noteObtenue")));
+    }
+
+    /** Annule la dernière saisie de note d'un test. */
+    @PutMapping("/tests/{id}/annuler-note")
+    public ResponseEntity<TestAcademiqueResponse> annulerNoteTest(@PathVariable Long id) {
+        return ResponseEntity.ok(testAcademiqueService.annulerNote(id));
     }
 
     @DeleteMapping("/tests/{id}")

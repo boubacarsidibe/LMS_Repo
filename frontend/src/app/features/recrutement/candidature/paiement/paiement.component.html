@@ -1,8 +1,8 @@
 <div class="min-h-screen flex flex-col bg-[#f7f9fb]">
-  <app-candidat-navbar></app-candidat-navbar>
+  <app-navbar></app-navbar>
 
   <!-- ========== VUE CONFIRMATION (Paiement réussi) ========== -->
-  <ng-container *ngIf="paiementReussi; else choixPaiement">
+  <ng-container *ngIf="paiementReussi; else nonReussi">
     <main class="flex-1 w-full max-w-[800px] mx-auto px-4 md:px-10 py-8 flex items-center justify-center">
       <div class="w-full flex flex-col gap-8">
         <!-- Progress Header -->
@@ -101,9 +101,96 @@
     </main>
   </ng-container>
 
+  <!-- ========== VUE INTERMÉDIAIRE : paiement EN_ATTENTE ou ECHEC (sinon formulaire) ========== -->
+  <ng-template #nonReussi>
+    <ng-container *ngIf="paiement && !modifierMethode; else choixPaiement">
+      <main class="flex-1 w-full max-w-[800px] mx-auto px-4 md:px-10 py-8 flex items-center justify-center">
+        <div class="w-full flex flex-col gap-8">
+          <div class="text-center">
+            <span class="inline-block text-xs tracking-[0.05em] font-semibold text-[#30609a] uppercase bg-[#d4e3ff] px-3 py-1 rounded-full">Étape 3 sur 3</span>
+            <h1 class="text-2xl md:text-[32px] leading-8 md:leading-10 -tracking-[0.01em] font-semibold mt-4 text-[#191c1e]">
+              {{ paiementEchoue ? 'Paiement non abouti' : 'Paiement en cours de traitement' }}
+            </h1>
+          </div>
+
+          <div class="bg-white rounded-xl border border-[#e0e3e5] p-6 md:p-10 shadow-sm">
+            <div class="flex flex-col items-center text-center border-b border-[#e0e3e5] pb-8 mb-8">
+              <div class="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+                   [class.bg-[#fdecea]]="paiementEchoue" [class.bg-[#fff4e5]]="!paiementEchoue">
+                <span class="material-symbols-outlined text-[40px]"
+                      [class.text-error]="paiementEchoue" [class.text-[#b7791f]]="!paiementEchoue"
+                      style="font-variation-settings: 'FILL' 1;">
+                  {{ paiementEchoue ? 'error' : 'hourglass_top' }}
+                </span>
+              </div>
+              <h2 class="text-xl md:text-2xl leading-8 font-semibold text-[#191c1e] mb-2">
+                {{ paiementEchoue ? "Le règlement n'a pas abouti" : 'Votre demande de paiement a bien été enregistrée' }}
+              </h2>
+              <p class="text-base text-[#46464e]">Transaction : <span class="text-sm leading-4 tracking-[0.01em] font-medium text-[#191c1e]">{{ referenceTransaction }}</span></p>
+              <div class="mt-6 bg-[#f2f4f6] px-4 py-3 rounded-lg border border-[#e0e3e5] flex items-center gap-3 w-full max-w-md text-left">
+                <span class="material-symbols-outlined text-[#30609a]">info</span>
+                <p class="text-sm text-[#46464e]" *ngIf="!paiementEchoue">
+                  Le service admission confirme les règlements dès réception. Vous serez notifié par email et dans votre espace candidat dès la confirmation — aucune action supplémentaire n'est requise de votre part.
+                </p>
+                <p class="text-sm text-[#46464e]" *ngIf="paiementEchoue">
+                  La tentative précédente n'a pas pu être finalisée. Vous pouvez réessayer avec le même moyen de paiement ou en choisir un autre.
+                </p>
+              </div>
+            </div>
+
+            <div class="mb-8">
+              <h3 class="text-xl leading-7 font-semibold text-[#191c1e] mb-4">Résumé</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 bg-[#f7f9fb] p-6 rounded-lg border border-[#e0e3e5]">
+                <div>
+                  <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Candidat</p>
+                  <p class="text-base font-medium text-[#191c1e]">{{ nomComplet || '—' }}</p>
+                </div>
+                <div>
+                  <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Formation</p>
+                  <p class="text-base font-medium text-[#191c1e]">{{ libelleFormation }}</p>
+                </div>
+                <div>
+                  <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Montant</p>
+                  <p class="text-base font-medium text-[#191c1e]">{{ montantFormate }}</p>
+                </div>
+                <div>
+                  <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Méthode de paiement</p>
+                  <p class="text-base font-medium text-[#191c1e]">{{ methodePaiement }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-center gap-3 mb-2">
+              <button (click)="actualiserStatut()" [disabled]="actualisationEnCours"
+                      class="bg-white text-[#0e4781] text-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg border border-[#c7c5d0] hover:bg-[#f2f4f6] transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">refresh</span>
+                {{ actualisationEnCours ? 'Actualisation…' : 'Actualiser le statut' }}
+              </button>
+              <button (click)="essayerAutreMoyen()"
+                      class="bg-[#30609a] text-white text-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg hover:bg-[#254d7b] transition-colors border-t border-[#4f7cb3] cursor-pointer">
+                {{ paiementEchoue ? 'Réessayer le paiement' : 'Changer de moyen de paiement' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="flex justify-center mt-2">
+            <button (click)="accederEspaceCandidat()"
+                    class="bg-white text-[#0e4781] text-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg border border-[#c7c5d0] hover:bg-[#f2f4f6] transition-colors cursor-pointer">
+              Accéder à mon espace candidat
+            </button>
+          </div>
+        </div>
+      </main>
+    </ng-container>
+  </ng-template>
+
   <!-- ========== VUE CHOIX DE PAIEMENT (par défaut) ========== -->
   <ng-template #choixPaiement>
     <main class="flex-1 w-full max-w-[1280px] mx-auto px-4 md:px-10 py-8">
+      <div *ngIf="paiementEchoue" class="max-w-[1280px] mb-4 p-3 bg-[#fdecea] border border-error rounded-lg text-sm text-error flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">error</span>
+        Le précédent règlement n'a pas abouti. Vous pouvez réessayer ci-dessous.
+      </div>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-4">
           <div class="bg-white rounded-xl border border-[#c7c5d0] p-6">

@@ -84,6 +84,7 @@ public class PaiementService {
                         "Candidature non trouvée avec l'ID: " + request.getCandidatureId()));
 
         Optional<Paiement> existant = paiementRepository.findByCandidatureId(request.getCandidatureId());
+        Paiement saved;
         if (existant.isPresent()) {
             Paiement precedent = existant.get();
             if (precedent.getStatut() == EnumStatutPaiement.SUCCES) {
@@ -96,25 +97,57 @@ public class PaiementService {
             precedent.setStatut(EnumStatutPaiement.EN_ATTENTE);
             precedent.setDatePaiement(null);
             precedent.setMethodePaiement(methodeOuDefaut(request));
-            return toResponse(paiementRepository.save(precedent));
+            saved = paiementRepository.save(precedent);
+        } else {
+            Paiement paiement = new Paiement();
+            paiement.setReferenceTransaction(genererReference());
+            // Tarif et devise proviennent de la session (ou du repli global), jamais de la requête.
+            paiement.setMontant(montantPour(candidature));
+            paiement.setDevise(deviseFraisDossier);
+            paiement.setStatut(EnumStatutPaiement.EN_ATTENTE);
+            paiement.setMethodePaiement(methodeOuDefaut(request));
+            paiement.setCandidature(candidature);
+            saved = paiementRepository.save(paiement);
         }
 
-        Paiement paiement = new Paiement();
-        paiement.setReferenceTransaction(genererReference());
-        // Tarif et devise proviennent de la configuration, jamais de la requête.
-        paiement.setMontant(new BigDecimal(fraisDossier));
-        paiement.setDevise(deviseFraisDossier);
-        paiement.setStatut(EnumStatutPaiement.EN_ATTENTE);
-        paiement.setMethodePaiement(methodeOuDefaut(request));
-        paiement.setCandidature(candidature);
-
-        Paiement saved = paiementRepository.save(paiement);
+        notifierAdmissionPaiementAValider(candidature, saved);
         return toResponse(saved);
+    }
+
+    /**
+     * Alerte le responsable admission qu'un candidat vient de déclarer un règlement —
+     * jusqu'ici l'admission ne l'apprenait qu'en consultant elle-même le tableau de bord
+     * des paiements, sans aucune sollicitation active à sa création.
+     */
+    private void notifierAdmissionPaiementAValider(Candidature candidature, Paiement paiement) {
+        try {
+            notificationService.envoyerEmail(emailAdmission,
+                    "Paiement à valider",
+                    "Le candidat du dossier n°" + candidature.getNumeroDossier() + " ("
+                            + candidature.getCandidat().getPrenom() + " " + candidature.getCandidat().getNom()
+                            + ") déclare avoir réglé les frais de dossier (" + paiement.getMontant() + " "
+                            + paiement.getDevise() + ", " + paiement.getMethodePaiement()
+                            + "). Merci de vérifier et valider ce règlement.");
+        } catch (Exception e) {
+            log.error("Échec de l'envoi de l'email d'alerte paiement à valider à {} : {}", emailAdmission,
+                    e.getMessage(), e);
+        }
     }
 
     /** Référence de transaction, unique en base : deux tentatives ne doivent jamais la partager. */
     private String genererReference() {
         return "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    /**
+     * Frais de dossier applicables à cette candidature : le tarif propre à sa session
+     * s'il a été fixé par le responsable admission, sinon le tarif global de repli.
+     */
+    private BigDecimal montantPour(Candidature candidature) {
+        BigDecimal montantSession = candidature.getSessionCandidature() != null
+                ? candidature.getSessionCandidature().getMontantFraisDossier()
+                : null;
+        return montantSession != null ? montantSession : new BigDecimal(fraisDossier);
     }
 
     private String methodeOuDefaut(PaiementRequest request) {
@@ -215,7 +248,7 @@ public class PaiementService {
         } else {
             paiement = new Paiement();
             paiement.setReferenceTransaction(genererReference());
-            paiement.setMontant(new BigDecimal(fraisDossier));
+            paiement.setMontant(montantPour(candidature));
             paiement.setDevise(deviseFraisDossier);
             paiement.setCandidature(candidature);
         }

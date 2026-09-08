@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.service;
 
+import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -84,12 +85,39 @@ public class TestAcademiqueService {
 
         test.setNomEpreuve(request.getNomEpreuve());
         test.setCoefficient(request.getCoefficient());
+        test.setNoteObtenuePrecedente(test.getNoteObtenue());
         test.setNoteObtenue(request.getNoteObtenue());
         test.setDateEpreuve(request.getDateEpreuve());
         test.setLieuOuLien(request.getLieuOuLien());
 
         TestAcademique saved = testAcademiqueRepository.save(test);
         return toResponse(saved);
+    }
+
+    /**
+     * Saisie rapide d'une note seule, sans repasser par le formulaire complet de
+     * l'épreuve (nom, date, lieu, coefficient) — {@link #modifierTest} écrase tous ces
+     * champs avec ce que le client envoie, donc l'utiliser pour ne changer que la note
+     * les aurait effacés si le client ne les renvoyait pas.
+     */
+    public TestAcademiqueResponse modifierNote(Long id, Float noteObtenue) {
+        TestAcademique test = testAcademiqueRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Test non trouvé avec l'ID: " + id));
+        test.setNoteObtenuePrecedente(test.getNoteObtenue());
+        test.setNoteObtenue(noteObtenue);
+        return toResponse(testAcademiqueRepository.save(test));
+    }
+
+    /** Annule la dernière saisie de note (un seul niveau, pas d'historique complet). */
+    public TestAcademiqueResponse annulerNote(Long id) {
+        TestAcademique test = testAcademiqueRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Test non trouvé avec l'ID: " + id));
+        if (test.getNoteObtenuePrecedente() == null) {
+            throw new BusinessException("Aucune saisie récente à annuler pour ce test.");
+        }
+        test.setNoteObtenue(test.getNoteObtenuePrecedente());
+        test.setNoteObtenuePrecedente(null);
+        return toResponse(testAcademiqueRepository.save(test));
     }
 
     public TestAcademiqueResponse getTestById(Long id) {
@@ -130,6 +158,7 @@ public class TestAcademiqueService {
                 .id(t.getId())
                 .nomEpreuve(t.getNomEpreuve())
                 .coefficient(t.getCoefficient())
+                .noteObtenuePrecedente(t.getNoteObtenuePrecedente())
                 .noteObtenue(t.getNoteObtenue())
                 .dateEpreuve(t.getDateEpreuve())
                 .lieuOuLien(t.getLieuOuLien())

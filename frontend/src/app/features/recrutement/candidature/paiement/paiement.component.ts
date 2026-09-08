@@ -4,13 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RecrutementService, CandidatureResponse, PaiementResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { CandidatNavbarComponent } from '../../../../shared/components/candidat-navbar/candidat-navbar.component';
+import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 
 @Component({
   selector: 'app-paiement',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, CandidatNavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
   templateUrl: './paiement.component.html'
 })
 export class PaiementComponent implements OnInit {
@@ -19,7 +19,10 @@ export class PaiementComponent implements OnInit {
   paiement: PaiementResponse | null = null;
   loading = false;
   telechargementRecu = false;
+  actualisationEnCours = false;
   currentDate = '';
+  /** Bascule vers le formulaire même si un paiement EN_ATTENTE/ECHEC existe déjà — permet de changer de moyen. */
+  modifierMethode = false;
 
   // Méthode de paiement
   paymentMethod = 'mobile_money';
@@ -46,6 +49,16 @@ export class PaiementComponent implements OnInit {
 
   get paiementReussi(): boolean {
     return this.paiement?.statut === 'SUCCES' || this.paiement?.statut === 'CONFIRME';
+  }
+
+  /** Tentative enregistrée côté serveur, en attente de confirmation par l'admission. */
+  get paiementEnAttente(): boolean {
+    return this.paiement?.statut === 'EN_ATTENTE';
+  }
+
+  /** Tentative précédente soldée en échec — un nouveau règlement reste possible. */
+  get paiementEchoue(): boolean {
+    return this.paiement?.statut === 'ECHEC';
   }
 
   get nomComplet(): string {
@@ -84,12 +97,38 @@ export class PaiementComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       this.candidatureId = params['candidatureId'] ? +params['candidatureId'] : null;
       if (this.candidatureId) {
-        this.recrutementService.getCandidature(this.candidatureId).subscribe({
-          next: (data) => {
-            this.candidature = data;
-            this.paiement = data.paiement;
-          }
-        });
+        this.chargerCandidature();
+      }
+    });
+  }
+
+  private chargerCandidature(): void {
+    if (!this.candidatureId) return;
+    this.recrutementService.getCandidature(this.candidatureId).subscribe({
+      next: (data) => {
+        this.candidature = data;
+        this.paiement = data.paiement;
+      }
+    });
+  }
+
+  /** Revient au formulaire pour régler avec un autre moyen — une tentative EN_ATTENTE/ECHEC reste rejouable côté serveur. */
+  essayerAutreMoyen(): void {
+    this.modifierMethode = true;
+  }
+
+  /** Recharge le statut depuis le serveur — l'admission peut avoir confirmé le règlement hors ligne entre-temps. */
+  actualiserStatut(): void {
+    if (!this.candidatureId || this.actualisationEnCours) return;
+    this.actualisationEnCours = true;
+    this.recrutementService.getCandidature(this.candidatureId).subscribe({
+      next: (data) => {
+        this.candidature = data;
+        this.paiement = data.paiement;
+        this.actualisationEnCours = false;
+      },
+      error: () => {
+        this.actualisationEnCours = false;
       }
     });
   }
@@ -121,8 +160,9 @@ export class PaiementComponent implements OnInit {
       next: (response) => {
         this.paiement = response;
         this.loading = false;
+        this.modifierMethode = false;
         this.updateCurrentDate();
-        // La vue de confirmation s'affichera automatiquement via paiementReussi
+        // La vue de confirmation ou d'attente s'affichera automatiquement selon le statut renvoyé.
       },
       error: (err) => {
         alert('Erreur de paiement: ' + (err.error?.message || 'Erreur inconnue'));

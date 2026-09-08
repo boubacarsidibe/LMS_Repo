@@ -96,7 +96,7 @@ public class ApplicationController {
      */
     @PostMapping("/reminder-incomplets")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    @Transactional(readOnly = true)
+    @Transactional
     public ResponseEntity<Map<String, Object>> sendReminder() {
         List<Candidature> incomplets = candidatureRepo.findAll().stream()
                 .filter(this::isDossierIncomplet)

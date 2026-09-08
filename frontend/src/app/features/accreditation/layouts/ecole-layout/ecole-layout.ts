@@ -19,7 +19,11 @@ import { Auth } from '../../../../core/auth/services/authService';
   standalone: true,
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
-    <aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col shadow-sm">
+    <div *ngIf="sidebarMobileOpen" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-40 md:hidden" (click)="toggleSidebarMobile()"></div>
+
+    <aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col shadow-sm transition-transform duration-200 md:translate-x-0"
+      [class.-translate-x-full]="!sidebarMobileOpen"
+      [class.translate-x-0]="sidebarMobileOpen">
       <div class="p-margin-desktop mb-4 flex items-center">
         <span class="text-2xl font-extrabold tracking-tight text-primary">INPG<span class="text-brand"> LMS</span></span>
       </div>
@@ -54,9 +58,14 @@ import { Auth } from '../../../../core/auth/services/authService';
       </div>
     </aside>
 
-    <div class="pl-72">
-      <header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
-        <p class="font-label-md text-label-md text-on-surface-variant">Espace École de formation — Accréditation d'un programme (Cadre de référence DRCQ)</p>
+    <div class="md:pl-72">
+      <header class="fixed top-0 left-0 md:left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-30 flex items-center justify-between px-4 md:px-margin-desktop">
+        <div class="flex items-center gap-3">
+          <button type="button" (click)="toggleSidebarMobile()" class="md:hidden p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors" aria-label="Ouvrir le menu">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+          <p class="font-label-md text-label-md text-on-surface-variant hidden sm:block">Espace École de formation — Accréditation</p>
+        </div>
         <div class="flex items-center gap-3">
           <a
             routerLink="/accreditation/mon-profil"
@@ -89,6 +98,7 @@ import { Auth } from '../../../../core/auth/services/authService';
 export class EcoleLayout {
   auth = inject(Auth);
   private router = inject(Router);
+  sidebarMobileOpen = false;
 
   get initiales(): string {
     const nom = this.auth.currentUser()?.username || '';
@@ -104,5 +114,9 @@ export class EcoleLayout {
       next: () => this.router.navigate(['/accueil']),
       error: () => this.router.navigate(['/accueil']),
     });
+  }
+
+  toggleSidebarMobile(): void {
+    this.sidebarMobileOpen = !this.sidebarMobileOpen;
   }
 }

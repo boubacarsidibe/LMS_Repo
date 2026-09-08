@@ -1,5 +1,5 @@
 <div class="min-h-screen flex flex-col bg-surface">
-  <app-candidat-navbar></app-candidat-navbar>
+  <app-navbar></app-navbar>
 
   <!-- ==================== LOADING ==================== -->
   <main *ngIf="loading" class="flex-grow flex justify-center py-20">
@@ -32,22 +32,20 @@
             <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">Votre dossier est en cours d'évaluation.</h2>
             <p class="text-lg text-on-surface-variant max-w-2xl">Félicitations pour avoir complété la première étape. Notre jury d'admission examine actuellement vos documents avec la plus grande attention.</p>
           </div>
-          <!-- Stepper -->
+          <!-- Stepper : mêmes données que la Timeline détaillée plus bas (timelineItems), pour ne jamais diverger -->
           <div class="flex items-start justify-between w-full pt-4">
-            <div *ngFor="let step of steps; let i = index" class="flex flex-col items-center gap-3 flex-1 relative" [class.opacity-50]="i > activeStepIndex">
+            <div *ngFor="let item of timelineItems; let i = index" class="flex flex-col items-center gap-3 flex-1 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
               <div class="w-6 h-6 rounded-full flex items-center justify-center z-10 shadow-sm"
-                   [class.bg-secondary]="i <= activeStepIndex" [class.text-white]="i <= activeStepIndex"
-                   [class.border]="i > activeStepIndex" [class.border-outline-variant]="i > activeStepIndex" [class.bg-surface]="i > activeStepIndex">
-                <ng-container *ngIf="i < activeStepIndex; else stepIcon">
-                  <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;font-weight:700;">check</span>
-                </ng-container>
-                <ng-template #stepIcon>
-                  <span *ngIf="i === activeStepIndex" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                  <span *ngIf="i > activeStepIndex" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
-                </ng-template>
+                   [class.bg-secondary]="!item.pending && !item.erreur" [class.text-white]="!item.pending && !item.erreur"
+                   [class.bg-error]="item.erreur" [class.text-white]="item.erreur"
+                   [class.border]="item.pending || item.erreur" [class.border-outline-variant]="item.pending" [class.bg-surface]="item.pending && !item.erreur">
+                <span *ngIf="!item.pending && !item.active && !item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;font-weight:700;">check</span>
+                <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                <span *ngIf="item.pending && !item.active && !item.erreur" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+                <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
               </div>
-              <span class="text-label-md font-semibold" [class.text-secondary]="i <= activeStepIndex" [class.text-on-surface-variant]="i > activeStepIndex">{{ step }}</span>
-              <div class="absolute top-3 left-1/2 w-full h-[2px]" [class.bg-secondary]="i < activeStepIndex" [class.bg-outline-variant]="i >= activeStepIndex"></div>
+              <span class="text-label-md font-semibold text-center" [class.text-secondary]="!item.pending" [class.text-error]="item.erreur" [class.text-on-surface-variant]="item.pending && !item.active">{{ item.label }}</span>
+              <div *ngIf="i < timelineItems.length - 1" class="absolute top-3 left-1/2 w-full h-[2px]" [class.bg-secondary]="!item.pending && !item.active && !item.erreur" [class.bg-outline-variant]="item.pending || item.active || item.erreur"></div>
             </div>
           </div>
         </div>
@@ -68,6 +66,30 @@
         </div>
       </div>
 
+      <!-- PAIEMENT REQUIS : dossier validé, frais de dossier pas encore réglés -->
+      <div *ngIf="candidature.statut === STATUT_PRESELECTION && !paiementConfirme" class="bg-white border border-outline-variant rounded-xl p-8 flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between hover:shadow-md transition-all">
+        <div class="flex gap-6 items-start">
+          <div class="w-16 h-16 bg-secondary-container rounded-2xl flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-on-secondary-container text-3xl" style="font-variation-settings:'FILL' 1;">payments</span>
+          </div>
+          <div class="space-y-2">
+            <h3 class="text-xl font-semibold text-on-surface">
+              {{ paiementEchoue ? "Le règlement précédent n'a pas abouti" : (paiementEnAttente ? 'Paiement en cours de confirmation' : 'Réglez les frais de dossier') }}
+            </h3>
+            <p class="text-base text-on-surface-variant leading-relaxed max-w-xl">
+              <ng-container *ngIf="!paiementEnAttente && !paiementEchoue">Votre dossier a été validé et est en cours de présélection. Merci de régler les frais de dossier pour poursuivre votre parcours d'admission.</ng-container>
+              <ng-container *ngIf="paiementEnAttente">Votre paiement a été enregistré ; le service admission le confirme dès réception. Vous serez notifié(e) dès sa validation.</ng-container>
+              <ng-container *ngIf="paiementEchoue">La tentative précédente n'a pas pu être finalisée. Vous pouvez réessayer ci-dessous.</ng-container>
+            </p>
+          </div>
+        </div>
+        <a [routerLink]="['/recrutement/candidature/paiement']" [queryParams]="{ candidatureId: candidature.id }"
+           class="shrink-0 inline-flex items-center gap-2 bg-secondary text-on-secondary px-6 py-3 rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors no-underline">
+          <span class="material-symbols-outlined text-[20px]">payments</span>
+          {{ paiementEchoue ? 'Réessayer le paiement' : (paiementEnAttente ? 'Suivre mon paiement' : 'Payer maintenant') }}
+        </a>
+      </div>
+
       <!-- GRILLE -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white border border-outline-variant rounded-xl p-6 h-full">
@@ -81,6 +103,30 @@
               <span class="material-symbols-outlined text-emerald-600 text-sm" style="font-variation-settings:'FILL' 1;">check_circle</span>
             </div>
             <div *ngIf="!candidature.piecesJustificatives || candidature.piecesJustificatives.length === 0" class="text-sm text-on-surface-variant text-center py-4">Aucun document pour le moment.</div>
+          </div>
+
+          <!-- Ajout d'un document manquant : rattrape un dépôt qui aurait échoué au moment de la soumission -->
+          <div class="mt-4 pt-4 border-t border-outline-variant">
+            <div class="flex flex-col sm:flex-row gap-2">
+              <select [(ngModel)]="typeDocumentAAjouter" aria-label="Type de document" class="flex-1 h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface text-label-sm focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
+                <option value="" disabled selected>Type de document…</option>
+                <option value="PIECE_IDENTITE">Pièce d'identité</option>
+                <option value="CV">CV</option>
+                <option value="LETTRE_MOTIVATION">Lettre de motivation</option>
+                <option value="RELEVE_NOTES">Relevé de notes</option>
+                <option value="DIPLOME">Diplôme</option>
+              </select>
+              <label class="flex items-center justify-center gap-2 px-4 h-10 border border-secondary rounded-lg text-label-sm font-medium text-secondary hover:bg-secondary-fixed transition-colors cursor-pointer whitespace-nowrap"
+                     [class.opacity-50]="!typeDocumentAAjouter || ajoutPieceEnCours" [class.pointer-events-none]="!typeDocumentAAjouter || ajoutPieceEnCours">
+                <span class="material-symbols-outlined text-[18px]">upload_file</span>
+                {{ ajoutPieceEnCours ? 'Envoi…' : 'Ajouter un document' }}
+                <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" (change)="ajouterPiece($event)" [disabled]="!typeDocumentAAjouter || ajoutPieceEnCours">
+              </label>
+            </div>
+            <p *ngIf="ajoutPieceErreur" class="text-body-sm text-error mt-2">{{ ajoutPieceErreur }}</p>
+            <p *ngIf="ajoutPieceSucces" class="text-body-sm text-emerald-600 mt-2 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">check_circle</span> Document ajouté avec succès.
+            </p>
           </div>
         </div>
         <div class="bg-white border border-outline-variant rounded-xl p-6 h-full">
@@ -99,6 +145,15 @@
               <div>
                 <h4 class="text-label-md font-bold text-on-surface">{{ item.label }}</h4>
                 <p *ngIf="item.desc" class="text-body-sm text-on-surface-variant">{{ item.desc }}</p>
+                <ng-container *ngIf="i === 2 && item.active">
+                  <p *ngIf="paiementEnAttente" class="text-body-sm text-[#b7791f] mt-1">Paiement enregistré, en attente de confirmation par l'admission.</p>
+                  <p *ngIf="paiementEchoue" class="text-body-sm text-error mt-1">La précédente tentative n'a pas abouti.</p>
+                  <a [routerLink]="['/recrutement/candidature/paiement']" [queryParams]="{ candidatureId: candidature.id }"
+                     class="inline-flex items-center gap-1.5 mt-2 text-label-sm font-semibold text-secondary hover:underline no-underline">
+                    <span class="material-symbols-outlined text-[16px]">payments</span>
+                    {{ paiementEchoue ? 'Réessayer le paiement' : (paiementEnAttente ? 'Suivre mon paiement' : 'Payer les frais de dossier') }}
+                  </a>
+                </ng-container>
               </div>
               <div *ngIf="i < timelineItems.length - 1" class="absolute -bottom-5 left-4 h-4 w-[2px] bg-outline-variant"></div>
             </li>
@@ -164,26 +219,20 @@
             <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">Résultats du Test Académique</h2>
             <p class="text-lg text-on-surface-variant max-w-2xl">Malgré tout l'intérêt que nous portons à votre candidature pour le Bachelor in Strategic Management, nous regrettons de vous informer que vos résultats au test ne nous permettent pas de poursuivre le processus d'admission pour cette session.</p>
           </div>
-          <!-- Progress Stepper -->
+          <!-- Progress Stepper : mêmes données que la page principale (timelineItems) -->
           <div class="flex items-start justify-between w-full pt-6">
-            <div class="flex flex-col items-center gap-3 flex-1 relative">
-              <div class="w-6 h-6 rounded-full bg-secondary text-white flex items-center justify-center z-10 shadow-sm"><span class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span></div>
-              <span class="text-label-md text-secondary font-bold">Dossier</span>
-              <div class="absolute top-3 left-1/2 w-full h-[2px] bg-secondary"></div>
-            </div>
-            <div class="flex flex-col items-center gap-3 flex-1 relative">
-              <div class="w-6 h-6 rounded-full bg-secondary text-white flex items-center justify-center z-10 shadow-sm"><span class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span></div>
-              <span class="text-label-md text-secondary font-bold">Évaluation</span>
-              <div class="absolute top-3 left-1/2 w-full h-[2px] bg-error"></div>
-            </div>
-            <div class="flex flex-col items-center gap-3 flex-1 relative">
-              <div class="w-6 h-6 rounded-full bg-error text-white flex items-center justify-center z-10 shadow-sm"><span class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">close</span></div>
-              <span class="text-label-md text-error font-bold">Test Académique</span>
-              <div class="absolute top-3 left-1/2 w-full h-[2px] bg-outline-variant"></div>
-            </div>
-            <div class="flex flex-col items-center gap-3">
-              <div class="w-6 h-6 rounded-full border border-outline-variant bg-surface flex items-center justify-center z-10"><span class="text-[10px] font-bold text-on-surface-variant">4</span></div>
-              <span class="text-label-md text-on-surface-variant">Entretien</span>
+            <div *ngFor="let item of timelineItems; let i = index" class="flex flex-col items-center gap-3 flex-1 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center z-10 shadow-sm"
+                   [class.bg-secondary]="!item.pending && !item.erreur" [class.text-white]="!item.pending && !item.erreur"
+                   [class.bg-error]="item.erreur" [class.text-white]="item.erreur"
+                   [class.border]="item.pending || item.erreur" [class.border-outline-variant]="item.pending" [class.bg-surface]="item.pending && !item.erreur">
+                <span *ngIf="!item.pending && !item.active && !item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span>
+                <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                <span *ngIf="item.pending && !item.active && !item.erreur" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+                <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">close</span>
+              </div>
+              <span class="text-label-md font-bold text-center" [class.text-secondary]="!item.pending && !item.erreur" [class.text-error]="item.erreur" [class.text-on-surface-variant]="item.pending && !item.active">{{ item.label }}</span>
+              <div *ngIf="i < timelineItems.length - 1" class="absolute top-3 left-1/2 w-full h-[2px]" [class.bg-secondary]="!item.pending && !item.active && !item.erreur" [class.bg-error]="item.erreur" [class.bg-outline-variant]="item.pending || item.active"></div>
             </div>
           </div>
         </div>
@@ -249,10 +298,19 @@
             <p class="text-lg text-on-surface-variant max-w-2xl" *ngIf="aDesResultats">Votre épreuve a été corrigée. Le résultat détaillé figure ci-dessous ; la suite du parcours (entretien) vous sera communiquée séparément.</p>
           </div>
           <div class="flex items-start justify-between w-full pt-6">
-            <div class="flex flex-col items-center gap-3 flex-1 relative"><div class="w-6 h-6 rounded-full bg-secondary text-white flex items-center justify-center z-10 shadow-sm"><span class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span></div><span class="text-label-md text-secondary font-bold">Dossier</span><div class="absolute top-3 left-1/2 w-full h-[2px] bg-secondary"></div></div>
-            <div class="flex flex-col items-center gap-3 flex-1 relative"><div class="w-6 h-6 rounded-full bg-secondary text-white flex items-center justify-center z-10 shadow-sm"><span class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span></div><span class="text-label-md text-secondary font-bold">Évaluation</span><div class="absolute top-3 left-1/2 w-full h-[2px] bg-secondary"></div></div>
-            <div class="flex flex-col items-center gap-3 flex-1 relative"><div class="w-6 h-6 rounded-full flex items-center justify-center z-10 shadow-sm" [class.bg-secondary]="aDesResultats" [class.text-white]="aDesResultats" [class.border]="!aDesResultats" [class.border-outline-variant]="!aDesResultats" [class.bg-surface]="!aDesResultats"><span *ngIf="aDesResultats" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span><span *ngIf="!aDesResultats" class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span></div><span class="text-label-md font-bold" [class.text-secondary]="aDesResultats" [class.text-on-surface-variant]="!aDesResultats">Test Académique</span><div class="absolute top-3 left-1/2 w-full h-[2px] bg-outline-variant"></div></div>
-            <div class="flex flex-col items-center gap-3"><div class="w-6 h-6 rounded-full border border-outline-variant bg-surface flex items-center justify-center z-10"><span class="text-[10px] font-bold text-on-surface-variant">4</span></div><span class="text-label-md text-on-surface-variant">Entretien</span></div>
+            <div *ngFor="let item of timelineItems; let i = index" class="flex flex-col items-center gap-3 flex-1 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center z-10 shadow-sm"
+                   [class.bg-secondary]="!item.pending && !item.erreur" [class.text-white]="!item.pending && !item.erreur"
+                   [class.bg-error]="item.erreur" [class.text-white]="item.erreur"
+                   [class.border]="item.pending || item.erreur" [class.border-outline-variant]="item.pending" [class.bg-surface]="item.pending && !item.erreur">
+                <span *ngIf="!item.pending && !item.active && !item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span>
+                <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                <span *ngIf="item.pending && !item.active && !item.erreur" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+                <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">close</span>
+              </div>
+              <span class="text-label-md font-bold text-center" [class.text-secondary]="!item.pending && !item.erreur" [class.text-error]="item.erreur" [class.text-on-surface-variant]="item.pending && !item.active">{{ item.label }}</span>
+              <div *ngIf="i < timelineItems.length - 1" class="absolute top-3 left-1/2 w-full h-[2px]" [class.bg-secondary]="!item.pending && !item.active && !item.erreur" [class.bg-error]="item.erreur" [class.bg-outline-variant]="item.pending || item.active"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -307,7 +365,7 @@
       <section class="mb-10 text-center relative overflow-hidden p-8 rounded-3xl bg-primary-container text-white shadow-sm">
         <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
         <div class="relative z-10">
-          <div class="inline-flex items-center px-4 py-1.5 bg-white/10 rounded-full border border-white/20 mb-4 backdrop-blur-sm"><span class="text-label-sm">Étape 3 sur 4</span></div>
+          <div class="inline-flex items-center px-4 py-1.5 bg-white/10 rounded-full border border-white/20 mb-4 backdrop-blur-sm"><span class="text-label-sm">{{ etapeActuelle }}</span></div>
           <h2 class="text-4xl font-bold mb-2">Tu y es presque !</h2>
           <p class="text-lg text-white/80 max-w-xl mx-auto">Ton parcours de sélection avance avec succès. Ton dossier a retenu toute notre attention.</p>
         </div>

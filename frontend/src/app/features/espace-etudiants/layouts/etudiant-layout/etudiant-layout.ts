@@ -32,6 +32,7 @@ export class EtudiantLayout implements OnInit, OnDestroy {
   promotionLibelle = '';
   chargement = true;
   nbAnnoncesNonLues = 0;
+  sidebarMobileOpen = false;
 
   readonly navigation: EntreeNavigation[] = [
     { libelle: 'Tableau de bord', lien: 'dashboard', icone: 'dashboard' },
@@ -117,5 +118,9 @@ export class EtudiantLayout implements OnInit, OnDestroy {
       next: () => this.router.navigate(['/accueil']),
       error: () => this.router.navigate(['/accueil']),
     });
+  }
+
+  toggleSidebarMobile(): void {
+    this.sidebarMobileOpen = !this.sidebarMobileOpen;
   }
 }

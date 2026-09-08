@@ -24,6 +24,7 @@ interface EntreeNavigation {
 export class EntrepriseLayout {
   auth = inject(Auth);
   private router = inject(Router);
+  sidebarMobileOpen = false;
 
   readonly navigation: EntreeNavigation[] = [
     { libelle: 'Mes demandes', lien: 'nouvelle-demande', icone: 'assignment' },
@@ -46,5 +47,9 @@ export class EntrepriseLayout {
       next: () => this.router.navigate(['/accueil']),
       error: () => this.router.navigate(['/accueil']),
     });
+  }
+
+  toggleSidebarMobile(): void {
+    this.sidebarMobileOpen = !this.sidebarMobileOpen;
   }
 }

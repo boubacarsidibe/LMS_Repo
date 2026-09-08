@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { EnumTypeNotification, NotificationTemplate, RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
 
 interface TemplateAffiche extends NotificationTemplate {
@@ -21,13 +22,15 @@ const LIBELLES: Record<EnumTypeNotification, string> = {
   NON_ADMISSION: 'Non-admission',
   DOCUMENT_CONFORME: 'Document validé',
   DOCUMENT_NON_CONFORME: 'Document non conforme',
+  RAPPEL_DOSSIER_INCOMPLET: 'Rappel : dossier incomplet',
+  RAPPEL_PAIEMENT: 'Rappel : paiement en attente',
 };
 
 const PLACEHOLDERS: Record<EnumTypeNotification, string[]> = {
   VALIDATION_DOSSIER: ['numeroDossier'],
   REJET_DOSSIER: ['numeroDossier', 'motif'],
   PAIEMENT_SUCCES: ['numeroDossier'],
-  CONVOCATION_TEST: ['nomEpreuve', 'date'],
+  CONVOCATION_TEST: ['nomEpreuve', 'date', 'lieuOuLien'],
   CONVOCATION_ENTRETIEN: ['date', 'lieuOuLien'],
   ADMISSION_TEST: ['numeroDossier'],
   ADMISSION_ENTRETIEN: ['numeroDossier'],
@@ -35,12 +38,14 @@ const PLACEHOLDERS: Record<EnumTypeNotification, string[]> = {
   NON_ADMISSION: ['numeroDossier'],
   DOCUMENT_CONFORME: ['numeroDossier', 'typeDocument'],
   DOCUMENT_NON_CONFORME: ['numeroDossier', 'typeDocument'],
+  RAPPEL_DOSSIER_INCOMPLET: ['numeroDossier', 'piecesManquantes'],
+  RAPPEL_PAIEMENT: ['numeroDossier'],
 };
 
 @Component({
   selector: 'app-responsable-admission-notifications',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './responsable-admission-notifications.component.html',
 })
 export class ResponsableAdmissionNotificationsComponent implements OnInit {

@@ -31,11 +31,16 @@ export interface SessionCandidatureResponse {
   infoFraisScolarite: string | null;
   infoCarteEtudiante: string | null;
   infoRentree: string | null;
+  /** Frais de dossier propres à cette session ; null = tarif global appliqué en repli. */
+  montantFraisDossier: number | null;
   /** Critères ajoutés librement par le responsable admission, en plus des critères de base ci-dessus. */
   criteresPersonnalises: CritereAdmissionResponse[];
 }
 
 export type EnumTypeCritere = 'NUMERIQUE' | 'TEXTE' | 'BOOLEEN' | 'CHOIX';
+
+/** Format au choix pour un rapport de synthèse téléchargeable (Candidatures, Tests, Entretiens). */
+export type FormatRapport = 'pdf' | 'xlsx';
 
 export interface CritereAdmissionResponse {
   id: number;
@@ -64,6 +69,7 @@ export interface FiltreCriteresResponse {
   total: number;
   preselectionnes: number;
   rejetes: number;
+  dossiersVides: number;
 }
 
 export type EnumEtapeQms = 'RECEPTION' | 'FILTRE_INITIAL' | 'EVALUATION' | 'SELECTION' | 'INSCRIPTION' | 'PUBLICATION';
@@ -177,13 +183,15 @@ export interface SessionCandidatureRequest {
   infoFraisScolarite: string | null;
   infoCarteEtudiante: string | null;
   infoRentree: string | null;
+  montantFraisDossier: number | null;
 }
 
 export type EnumTypeNotification =
   | 'VALIDATION_DOSSIER' | 'REJET_DOSSIER' | 'PAIEMENT_SUCCES'
   | 'CONVOCATION_TEST' | 'CONVOCATION_ENTRETIEN'
   | 'ADMISSION_TEST' | 'ADMISSION_ENTRETIEN' | 'ADMISSION_FINALE' | 'NON_ADMISSION'
-  | 'DOCUMENT_CONFORME' | 'DOCUMENT_NON_CONFORME';
+  | 'DOCUMENT_CONFORME' | 'DOCUMENT_NON_CONFORME'
+  | 'RAPPEL_DOSSIER_INCOMPLET' | 'RAPPEL_PAIEMENT';
 
 export interface NotificationTemplate {
   type: EnumTypeNotification;
@@ -220,6 +228,8 @@ export interface TestAcademiqueResponse {
   nomEpreuve: string;
   coefficient: number;
   noteObtenue: number | null;
+  /** Non nul si la dernière saisie de note peut être annulée. */
+  noteObtenuePrecedente: number | null;
   dateEpreuve: string;
   lieuOuLien: string | null;
   candidatId: number;
@@ -369,6 +379,24 @@ export class RecrutementService {
 
   exportAnalyticsReport(annee: string = '2026-2027'): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/analytics/export-report?annee=${annee}`, { responseType: 'blob' });
+  }
+
+  /** Rapport de synthèse Candidatures (indicateurs + répartitions), toutes sessions confondues. */
+  genererRapportCandidatures(format: FormatRapport): Observable<Blob> {
+    const params = new HttpParams().set('format', format);
+    return this.http.get(`${this.baseUrl}/analytics/rapport-candidatures`, { responseType: 'blob', params });
+  }
+
+  /** Rapport de synthèse Tests académiques (indicateurs + répartitions). */
+  genererRapportTests(format: FormatRapport): Observable<Blob> {
+    const params = new HttpParams().set('format', format);
+    return this.http.get(`${this.baseUrl}/analytics/rapport-tests`, { responseType: 'blob', params });
+  }
+
+  /** Rapport de synthèse Entretiens (indicateurs + répartitions). */
+  genererRapportEntretiens(format: FormatRapport): Observable<Blob> {
+    const params = new HttpParams().set('format', format);
+    return this.http.get(`${this.baseUrl}/analytics/rapport-entretiens`, { responseType: 'blob', params });
   }
 
   // ===================== INTERVIEWS =====================
@@ -742,6 +770,15 @@ export class RecrutementService {
 
   supprimerTest(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin/recrutement/tests/${id}`);
+  }
+
+  /** Saisie rapide d'une note seule (grille de notation) — n'écrase pas les autres champs de l'épreuve. */
+  modifierNoteTest(id: number, noteObtenue: number | null): Observable<TestAcademiqueResponse> {
+    return this.http.put<TestAcademiqueResponse>(`${this.baseUrl}/admin/recrutement/tests/${id}/note`, { noteObtenue });
+  }
+
+  annulerNoteTest(id: number): Observable<TestAcademiqueResponse> {
+    return this.http.put<TestAcademiqueResponse>(`${this.baseUrl}/admin/recrutement/tests/${id}/annuler-note`, {});
   }
 
   convoquerTestsGroupe(request: ConvocationTestGroupeeRequest): Observable<TestAcademiqueResponse[]> {

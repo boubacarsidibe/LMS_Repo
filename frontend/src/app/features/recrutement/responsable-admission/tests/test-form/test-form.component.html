@@ -5,11 +5,11 @@
   <span class="material-symbols-outlined text-[16px]">chevron_right</span>
   <a routerLink="/responsable-admission/tests" class="hover:underline">Tests Académiques</a>
   <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <span class="font-medium text-on-surface">{{ testId ? 'Modifier' : 'Planifier un test' }}</span>
+  <span class="font-medium text-on-surface">Modifier</span>
 </div>
 
 <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-stack-lg">
-  {{ testId ? 'Modifier le test' : 'Planifier un test' }}
+  Modifier l'épreuve
 </h2>
 
 <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement…</div>
@@ -19,15 +19,15 @@
     <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ formError }}</div>
 
     <div>
-      <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Candidat (admis au test)</label>
-      <select formControlName="candidatId" aria-label="Candidat" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
-        <option value="" disabled>Sélectionner un candidat</option>
-        <option *ngFor="let c of candidatsEligibles" [value]="c.candidatId">{{ c.candidatPrenom }} {{ c.candidatNom }} — {{ c.numeroDossier }}</option>
-      </select>
-      <p *ngIf="sessionAffichee" class="mt-1.5 flex items-center gap-1.5 font-body-sm text-body-sm text-on-surface-variant">
-        <span class="material-symbols-outlined text-[16px]">event</span>
-        Session : <span class="font-medium text-on-surface">{{ sessionAffichee }}</span>
-      </p>
+      <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Candidat</div>
+      <div class="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg border border-outline-variant">
+        <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs shrink-0">{{ candidatAffiche | slice:0:1 }}</div>
+        <div>
+          <div class="font-label-md text-label-md text-on-surface">{{ candidatAffiche }}</div>
+          <div class="font-body-sm text-body-sm text-on-surface-variant" *ngIf="sessionAffichee">{{ sessionAffichee }}</div>
+        </div>
+      </div>
+      <p class="mt-1.5 font-body-sm text-body-sm text-on-surface-variant">Pour convoquer d'autres candidats à cette même épreuve, utilisez « Convocation groupée » depuis la liste.</p>
     </div>
 
     <div>
@@ -47,23 +47,21 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Coefficient</label>
-        <input formControlName="coefficient" aria-label="Coefficient" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0.1" step="0.5"/>
-      </div>
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Note obtenue /20</label>
-        <input formControlName="noteObtenue" aria-label="Note sur 20" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0" max="20" step="0.25"/>
-        <p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">À laisser vide tant que l'épreuve n'est pas corrigée.</p>
-      </div>
+    <div>
+      <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Coefficient</label>
+      <input formControlName="coefficient" aria-label="Coefficient" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0.1" step="0.5"/>
     </div>
+
+    <p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1.5">
+      <span class="material-symbols-outlined text-[16px]">info</span>
+      La note se saisit directement dans la liste des tests.
+    </p>
   </div>
 
   <div class="flex justify-end gap-3 mt-stack-lg">
     <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="annuler()">Annuler</button>
     <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
-      {{ isSubmitting ? 'Enregistrement…' : (testId ? 'Enregistrer' : 'Planifier') }}
+      {{ isSubmitting ? 'Enregistrement…' : 'Enregistrer' }}
     </button>
   </div>
 </form>

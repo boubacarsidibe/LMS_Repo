@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import {
   RecrutementService,
   SessionCandidatureResponse,
@@ -38,6 +39,11 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
 
   triColonne: 'libelle' | 'dateOuverture' | 'dateFermeture' | 'nbCandidatures' = 'dateOuverture';
   triDesc = true;
+
+  /** Sélection multiple (checkboxes) — mêmes conventions que la liste des candidatures. */
+  selection = new Set<number>();
+  private dernierIndexClique: number | null = null;
+  suppressionGroupeeEnCours = false;
 
   constructor(private recrutementService: RecrutementService, private router: Router) {}
 
@@ -127,6 +133,63 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
     this.recrutementService.supprimerSession(session.id).subscribe({
       next: () => this.chargerSessions(),
       error: () => alert('Échec de la suppression de la session.'),
+    });
+  }
+
+  // ===================== Sélection multiple =====================
+
+  estSelectionne(id: number): boolean {
+    return this.selection.has(id);
+  }
+
+  get toutesSelectionnees(): boolean {
+    return this.sessionsFiltrees.length > 0 && this.sessionsFiltrees.every((s) => this.selection.has(s.id));
+  }
+
+  /** Coche/décoche une ligne ; Shift+clic étend la sélection depuis la dernière ligne cliquée. */
+  basculerSelection(id: number, index: number, event: MouseEvent): void {
+    const liste = this.sessionsFiltrees;
+    if (event.shiftKey && this.dernierIndexClique !== null) {
+      const [debut, fin] = [this.dernierIndexClique, index].sort((a, b) => a - b);
+      for (let i = debut; i <= fin; i++) this.selection.add(liste[i].id);
+    } else if (this.selection.has(id)) {
+      this.selection.delete(id);
+    } else {
+      this.selection.add(id);
+    }
+    this.dernierIndexClique = index;
+  }
+
+  basculerToutSelectionner(): void {
+    if (this.toutesSelectionnees) {
+      this.sessionsFiltrees.forEach((s) => this.selection.delete(s.id));
+    } else {
+      this.sessionsFiltrees.forEach((s) => this.selection.add(s.id));
+    }
+  }
+
+  viderSelection(): void {
+    this.selection.clear();
+    this.dernierIndexClique = null;
+  }
+
+  supprimerSelection(): void {
+    if (this.selection.size === 0) return;
+    const noms = this.sessions.filter((s) => this.selection.has(s.id)).map((s) => s.libelle);
+    if (!confirm(`Supprimer définitivement ${noms.length} session(s) ?\n\n${noms.join('\n')}`)) return;
+    this.suppressionGroupeeEnCours = true;
+    forkJoin(Array.from(this.selection).map((id) => this.recrutementService.supprimerSession(id))).subscribe({
+      next: () => {
+        this.suppressionGroupeeEnCours = false;
+        this.viderSelection();
+        this.chargerSessions();
+      },
+      error: () => {
+        this.suppressionGroupeeEnCours = false;
+        alert('Échec de la suppression groupée — certaines sessions ont peut-être tout de même été supprimées.');
+        this.viderSelection();
+        this.chargerSessions();
+      },
     });
   }
 

@@ -7,8 +7,11 @@ import {
   ConvocationEntretienGroupeeRequest,
   EntretienRequest,
   EntretienResponse,
+  FormatRapport,
   RecrutementService,
 } from '../../../../core/recrutement/services/recrutement.service';
+import { downloadBlob } from '../../../../shared/utils/download-file';
+import { ReportButtonComponent } from '../../../../shared/components/report-button/report-button.component';
 
 interface EntretienAffiche extends EntretienResponse {
   candidatNom: string;
@@ -19,7 +22,7 @@ interface EntretienAffiche extends EntretienResponse {
 @Component({
   selector: 'app-responsable-admission-entretiens',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, ReportButtonComponent],
   templateUrl: './responsable-admission-entretiens.component.html',
 })
 export class ResponsableAdmissionEntretiensComponent implements OnInit {
@@ -27,6 +30,7 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
   candidatures: CandidatureResponse[] = [];
   loading = false;
   errorMessage = '';
+  generatingReport = false;
   private chargementsEnCours = 0;
 
   recherche = '';
@@ -274,6 +278,20 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
       error: (err) => {
         this.envoiGroupeEnCours = false;
         this.convocationFormError = err.error?.message || "Échec de l'envoi des convocations.";
+      },
+    });
+  }
+
+  genererRapport(format: FormatRapport): void {
+    this.generatingReport = true;
+    this.recrutementService.genererRapportEntretiens(format).subscribe({
+      next: (blob) => {
+        downloadBlob(blob, `rapport_entretiens_${new Date().toISOString().slice(0, 10)}.${format}`);
+        this.generatingReport = false;
+      },
+      error: () => {
+        this.generatingReport = false;
+        alert('Échec de la génération du rapport.');
       },
     });
   }

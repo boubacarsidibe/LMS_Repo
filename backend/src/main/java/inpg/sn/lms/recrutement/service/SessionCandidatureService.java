@@ -73,6 +73,7 @@ public class SessionCandidatureService {
         session.setInfoFraisScolarite(vide(request.getInfoFraisScolarite()) ? null : request.getInfoFraisScolarite());
         session.setInfoCarteEtudiante(vide(request.getInfoCarteEtudiante()) ? null : request.getInfoCarteEtudiante());
         session.setInfoRentree(vide(request.getInfoRentree()) ? null : request.getInfoRentree());
+        session.setMontantFraisDossier(request.getMontantFraisDossier());
     }
 
     private boolean vide(String valeur) {
@@ -218,6 +219,7 @@ public class SessionCandidatureService {
                 .infoFraisScolarite(s.getInfoFraisScolarite())
                 .infoCarteEtudiante(s.getInfoCarteEtudiante())
                 .infoRentree(s.getInfoRentree())
+                .montantFraisDossier(s.getMontantFraisDossier())
                 .criteresPersonnalises(criteres)
                 .build();
     }

@@ -32,6 +32,7 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
 
   private candidaturesSoumises = 0;
   private sessionsBientotFermees: SessionCandidatureResponse[] = [];
+  private paiementsEnAttente = 0;
 
   navItems: NavItem[] = [
     { label: "Vue d'ensemble", icon: 'dashboard', route: '/responsable-admission' },
@@ -81,6 +82,12 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
       },
       error: () => {},
     });
+    this.recrutementService.getAllPaiements().subscribe({
+      next: (data) => {
+        this.paiementsEnAttente = (data || []).filter((p) => p.statut === 'EN_ATTENTE').length;
+      },
+      error: () => {},
+    });
   }
 
   get alertes(): Alerte[] {
@@ -90,6 +97,13 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
         icone: 'inbox',
         message: `${this.candidaturesSoumises} candidature(s) en attente de traitement`,
         route: '/responsable-admission/candidatures',
+      });
+    }
+    if (this.paiementsEnAttente > 0) {
+      items.push({
+        icone: 'payments',
+        message: `${this.paiementsEnAttente} paiement(s) à valider`,
+        route: '/responsable-admission/paiements',
       });
     }
     for (const s of this.sessionsBientotFermees) {

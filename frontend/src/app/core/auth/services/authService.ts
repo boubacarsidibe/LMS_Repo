@@ -37,9 +37,8 @@ export class Auth {
 
   /**
    * URL de l'espace propre au rôle de l'utilisateur connecté, ou null s'il n'a
-   * encore aucun rôle métier (compte tout juste créé). Centralise la même
-   * correspondance que redirectByRole pour que le lien « Mon espace » de la
-   * navbar publique et la redirection post-connexion ne divergent jamais.
+   * encore aucun rôle métier (compte tout juste créé). Utilisée par
+   * redirectByRole pour la redirection post-connexion.
    */
   getHomeUrl(): string | null {
     const roles = this.getUserRoles();

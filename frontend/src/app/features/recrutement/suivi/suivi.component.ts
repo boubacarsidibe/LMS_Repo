@@ -10,7 +10,7 @@ import {
   TestCandidat,
 } from '../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
-import { CandidatNavbarComponent } from '../../../shared/components/candidat-navbar/candidat-navbar.component';
+import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
 import { downloadBlob } from '../../../shared/utils/download-file';
 
 interface TimelineItem {
@@ -24,14 +24,12 @@ interface TimelineItem {
 @Component({
   selector: 'app-suivi',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, CandidatNavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
   templateUrl: './suivi.component.html'
 })
 export class SuiviComponent implements OnInit {
   candidature: CandidatureResponse | null = null;
   loading = true;
-
-  steps: string[] = ['Dossier', 'Évaluation', 'Test Académique', 'Entretien'];
 
   /** Étapes disponibles selon le statut */
   readonly STATUT_SOUMIS = 'SOUMIS';
@@ -41,27 +39,6 @@ export class SuiviComponent implements OnInit {
   readonly STATUT_ADMIS2 = 'ADMIS2';
   readonly STATUT_ADMIS3 = 'ADMIS3';
   readonly STATUT_LISTE_ATTENTE = 'LISTE_ATTENTE';
-
-  /** Index de l'étape active dans le stepper (0 = Dossier, 1 = Évaluation, 2 = Test Académique, 3 = Entretien) */
-  get activeStepIndex(): number {
-    const statut = this.candidature?.statut;
-    if (!statut || statut === 'BROUILLON') return 0;
-    switch (statut) {
-      case this.STATUT_SOUMIS:
-      case this.STATUT_PRESELECTION: return 1; // Évaluation
-      case this.STATUT_REJETE: return 2; // Bloqué au Test Académique
-      case this.STATUT_ADMIS1: return 3; // Entretien
-      case this.STATUT_ADMIS2: return 3;        // Entretien
-      case this.STATUT_LISTE_ATTENTE: return 4; // En attente d'une place
-      case this.STATUT_ADMIS3: return 4; // Terminé
-      default: return 1;
-    }
-  }
-
-  /** Indique si l'étape "step" (0-3) est complétée */
-  isStepCompleted(stepIndex: number): boolean {
-    return stepIndex < this.activeStepIndex;
-  }
 
   /**
    * Interlocuteur affiché. Aucun nom de personne n'est inventé : le dossier n'est
@@ -78,6 +55,68 @@ export class SuiviComponent implements OnInit {
   parcours: ParcoursCandidature | null = null;
 
   /** Note globale pondérée par les coefficients, ou null si aucune épreuve saisie. */
+  /**
+   * Ajout d'un document depuis le suivi — l'endpoint acceptait déjà une pièce sur
+   * une candidature déposée, sans qu'aucun écran n'y mène. Sert notamment à
+   * rattraper un document qui aurait échoué silencieusement au dépôt initial.
+   */
+  typeDocumentAAjouter = '';
+  ajoutPieceEnCours = false;
+  ajoutPieceErreur = '';
+  ajoutPieceSucces = false;
+
+  ajouterPiece(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.candidature?.id || !this.typeDocumentAAjouter) return;
+
+    const MAX_SIZE_MO = 5;
+    if (file.size > MAX_SIZE_MO * 1024 * 1024) {
+      this.ajoutPieceErreur = `Le fichier dépasse la taille maximale autorisée (${MAX_SIZE_MO} Mo).`;
+      this.ajoutPieceSucces = false;
+      input.value = '';
+      return;
+    }
+
+    this.ajoutPieceEnCours = true;
+    this.ajoutPieceErreur = '';
+    this.ajoutPieceSucces = false;
+    this.recrutementService.televerserPiece(this.candidature.id, file, this.typeDocumentAAjouter).subscribe({
+      next: () => {
+        this.ajoutPieceEnCours = false;
+        this.ajoutPieceSucces = true;
+        this.typeDocumentAAjouter = '';
+        input.value = '';
+        this.rafraichirCandidature();
+      },
+      error: (err) => {
+        this.ajoutPieceEnCours = false;
+        this.ajoutPieceErreur = err.error?.message || "Échec de l'envoi du document.";
+        input.value = '';
+      },
+    });
+  }
+
+  private rafraichirCandidature(): void {
+    this.recrutementService.getMesCandidatures().subscribe({
+      next: (data) => {
+        this.candidature = data.length > 0 ? data[data.length - 1] : null;
+      },
+    });
+  }
+
+  get paiementConfirme(): boolean {
+    return this.candidature?.paiement?.statut === 'SUCCES';
+  }
+
+  get paiementEnAttente(): boolean {
+    return this.candidature?.paiement?.statut === 'EN_ATTENTE';
+  }
+
+  get paiementEchoue(): boolean {
+    return this.candidature?.paiement?.statut === 'ECHEC';
+  }
+
   get noteGlobale(): number | null {
     const tests = (this.parcours?.tests ?? []).filter((t) => t.noteObtenue != null);
     if (tests.length === 0) return null;
@@ -166,11 +205,11 @@ export class SuiviComponent implements OnInit {
    */
   get timelineItems(): TimelineItem[] {
     const statut = this.candidature?.statut;
-    const paiementConfirme = this.candidature?.paiement?.statut === 'SUCCES';
+    const paiementConfirme = this.paiementConfirme;
     const items: TimelineItem[] = [
-      { label: 'Dossier soumis', desc: 'Tous les documents requis téléchargés.', pending: true, active: false, erreur: false },
-      { label: 'Évaluation en cours', desc: 'Le jury examine votre candidature.', pending: true, active: false, erreur: false },
-      { label: 'Paiement confirmé', desc: 'Frais de dossier réglés.', pending: true, active: false, erreur: false },
+      { label: 'Dossier', desc: 'Tous les documents requis téléchargés.', pending: true, active: false, erreur: false },
+      { label: 'Présélection', desc: 'Le jury examine votre candidature.', pending: true, active: false, erreur: false },
+      { label: 'Paiement', desc: 'Frais de dossier réglés.', pending: true, active: false, erreur: false },
       { label: 'Test Académique', desc: '', pending: true, active: false, erreur: false },
       { label: 'Entretien', desc: 'Rencontre avec le jury.', pending: true, active: false, erreur: false },
     ];
@@ -306,11 +345,11 @@ export class SuiviComponent implements OnInit {
     }
   }
 
-  /** Étape actuelle dans le parcours (pour admis2) */
+  /** Étape actuelle dans le parcours (pour admis2/admis3) — synchronisée avec timelineItems (5 étapes). */
   get etapeActuelle(): string {
     const s = this.candidature?.statut;
-    if (s === this.STATUT_ADMIS2) return 'Étape 3 sur 4';
-    if (s === this.STATUT_LISTE_ATTENTE || s === this.STATUT_ADMIS3) return 'Étape 4 sur 4';
+    if (s === this.STATUT_ADMIS2) return 'Étape 4 sur 5';
+    if (s === this.STATUT_LISTE_ATTENTE || s === this.STATUT_ADMIS3) return 'Étape 5 sur 5';
     return '';
   }
 

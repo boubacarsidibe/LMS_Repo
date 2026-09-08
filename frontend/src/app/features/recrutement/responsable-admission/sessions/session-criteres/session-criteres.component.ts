@@ -105,7 +105,8 @@ export class SessionCriteresComponent implements OnInit {
     this.recrutementService.appliquerFiltreCriteres(this.sessionId).subscribe({
       next: (resultat) => {
         this.filtreEnCours = false;
-        this.filtreMessage = `${resultat.total} dossier(s) évalué(s) : ${resultat.preselectionnes} en présélection, ${resultat.rejetes} rejeté(s).`;
+        this.filtreMessage = `${resultat.total} dossier(s) évalué(s) : ${resultat.preselectionnes} en présélection, ${resultat.rejetes} rejeté(s)`
+          + (resultat.dossiersVides > 0 ? `, ${resultat.dossiersVides} laissé(s) de côté (aucune pièce jointe).` : '.');
       },
       error: (err) => {
         this.filtreEnCours = false;

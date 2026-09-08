@@ -50,76 +50,95 @@ public class NotificationTemplateService {
         NotificationTemplate t = new NotificationTemplate();
         t.setType(type);
         t.setActif(true);
+        final String signature = "\n\nCordialement,\nL'équipe des admissions\nInstitut National du Pétrole et du Gaz (INPG)";
         switch (type) {
             case VALIDATION_DOSSIER -> {
-                t.setSujet("Dossier validé");
-                t.setCorps("Bonjour,\n\nVotre dossier de candidature n°{{numeroDossier}} a été validé et est "
-                        + "maintenant en cours de présélection. Merci de procéder au paiement des frais de dossier "
-                        + "depuis votre espace candidat.\n\nCordialement,\nL'équipe INPG");
+                t.setSujet("Votre dossier de candidature a été validé");
+                t.setCorps("Bonjour,\n\nNous vous informons que votre dossier de candidature n°{{numeroDossier}} a "
+                        + "été validé avec succès et qu'il est désormais en cours de présélection. Merci de bien "
+                        + "vouloir procéder au règlement des frais de dossier depuis votre espace candidat afin de "
+                        + "poursuivre votre parcours d'admission." + signature);
             }
             case REJET_DOSSIER -> {
-                t.setSujet("Dossier rejeté");
-                t.setCorps("Bonjour,\n\nVotre dossier de candidature n°{{numeroDossier}} a été rejeté.\nMotif : "
-                        + "{{motif}}\n\nCordialement,\nL'équipe INPG");
+                t.setSujet("Votre dossier de candidature n'a pas été retenu");
+                t.setCorps("Bonjour,\n\nAprès examen de votre dossier de candidature n°{{numeroDossier}}, nous "
+                        + "sommes au regret de vous informer qu'il n'a pas été retenu.\n\nMotif : {{motif}}\n\nNous "
+                        + "vous remercions de l'intérêt que vous avez porté à notre établissement et vous souhaitons "
+                        + "plein succès dans la suite de vos démarches." + signature);
             }
             case PAIEMENT_SUCCES -> {
-                t.setSujet("Paiement confirmé");
-                t.setCorps("Bonjour,\n\nLe paiement des frais de dossier pour la candidature n°{{numeroDossier}} a "
-                        + "été confirmé.\n\nCordialement,\nL'équipe INPG");
+                t.setSujet("Confirmation de paiement des frais de dossier");
+                t.setCorps("Bonjour,\n\nNous vous confirmons la bonne réception du paiement des frais de dossier "
+                        + "pour votre candidature n°{{numeroDossier}}. Votre dossier peut désormais être traité dans "
+                        + "le cadre du processus de présélection." + signature);
             }
             case CONVOCATION_TEST -> {
                 t.setSujet("Convocation au test académique");
-                t.setCorps("Bonjour,\n\nVous êtes convoqué(e) au test \"{{nomEpreuve}}\" le {{date}}."
-                        + "\nLieu/Lien : {{lieuOuLien}}"
-                        + "\n\nCordialement,\nL'équipe INPG");
+                t.setCorps("Bonjour,\n\nNous avons le plaisir de vous convoquer au test académique "
+                        + "\"{{nomEpreuve}}\", qui se tiendra le {{date}}.\n\nLieu / Lien de connexion : "
+                        + "{{lieuOuLien}}\n\nNous vous remercions de vous présenter quelques minutes avant l'heure "
+                        + "prévue et de vous munir d'une pièce d'identité." + signature);
             }
             case CONVOCATION_ENTRETIEN -> {
                 t.setSujet("Convocation à l'entretien");
-                t.setCorps("Bonjour,\n\nVous êtes convoqué(e) à l'entretien le {{date}}.\nLieu/Lien : {{lieuOuLien}}"
-                        + "\n\nCordialement,\nL'équipe INPG");
+                t.setCorps("Bonjour,\n\nNous avons le plaisir de vous convoquer à un entretien dans le cadre de "
+                        + "votre candidature, qui se tiendra le {{date}}.\n\nLieu / Lien de connexion : "
+                        + "{{lieuOuLien}}\n\nNous vous remercions de vous présenter quelques minutes avant l'heure "
+                        + "prévue et de vous munir d'une pièce d'identité." + signature);
             }
             case ADMISSION_TEST -> {
                 t.setSujet("Admission au Test Académique");
-                t.setCorps("Bonjour,\n\nFélicitations ! Votre dossier n°{{numeroDossier}} a été retenu. Vous êtes "
-                        + "convoqué(e) au Test Académique.\n\nCordialement,\nL'équipe INPG");
+                t.setCorps("Bonjour,\n\nNous avons le plaisir de vous informer que votre dossier de candidature "
+                        + "n°{{numeroDossier}} a été retenu à l'issue de la présélection. Vous êtes à présent "
+                        + "convoqué(e) au Test Académique ; les modalités vous seront communiquées séparément."
+                        + signature);
             }
             case ADMISSION_ENTRETIEN -> {
                 t.setSujet("Admission à l'Entretien");
-                t.setCorps("Bonjour,\n\nFélicitations ! Vous avez réussi le Test Académique. Votre dossier "
-                        + "n°{{numeroDossier}} passe à l'étape de l'Entretien.\n\nCordialement,\nL'équipe INPG");
+                t.setCorps("Bonjour,\n\nNous avons le plaisir de vous informer que vous avez été admis(e) à l'issue "
+                        + "du Test Académique. Votre dossier de candidature n°{{numeroDossier}} passe désormais à "
+                        + "l'étape de l'entretien ; les modalités vous seront communiquées séparément." + signature);
             }
             case ADMISSION_FINALE -> {
-                t.setSujet("Félicitations - Admission Définitive");
-                t.setCorps("Bonjour,\n\nFélicitations ! Votre candidature n°{{numeroDossier}} a été définitivement "
-                        + "retenue. Vous êtes admis(e) à l'INPG.\n\nCordialement,\nL'équipe INPG");
+                t.setSujet("Félicitations - Admission définitive à l'INPG");
+                t.setCorps("Bonjour,\n\nNous avons le plaisir de vous annoncer que votre candidature "
+                        + "n°{{numeroDossier}} a été définitivement retenue. Toute l'équipe de l'INPG vous félicite "
+                        + "pour votre admission et se réjouit de vous accueillir prochainement." + signature);
             }
             case NON_ADMISSION -> {
-                t.setSujet("Résultat de candidature");
-                t.setCorps("Bonjour,\n\nNous vous informons que votre candidature n°{{numeroDossier}} n'a "
-                        + "malheureusement pas été retenue.\n\nCordialement,\nL'équipe INPG");
+                t.setSujet("Résultat de votre candidature");
+                t.setCorps("Bonjour,\n\nAprès un examen attentif de votre candidature n°{{numeroDossier}}, nous "
+                        + "sommes au regret de vous informer qu'elle n'a pas été retenue à l'issue du processus "
+                        + "d'admission.\n\nNous vous remercions sincèrement de l'intérêt que vous avez porté à notre "
+                        + "établissement et vous souhaitons plein succès dans la suite de votre parcours." + signature);
             }
             case DOCUMENT_CONFORME -> {
                 t.setSujet("Document validé");
-                t.setCorps("Bonjour,\n\nLe document \"{{typeDocument}}\" de votre dossier n°{{numeroDossier}} a été "
-                        + "vérifié et validé comme conforme.\n\nCordialement,\nL'équipe INPG");
+                t.setCorps("Bonjour,\n\nNous vous informons que le document « {{typeDocument}} » transmis dans le "
+                        + "cadre de votre dossier de candidature n°{{numeroDossier}} a été vérifié et jugé conforme."
+                        + signature);
             }
             case DOCUMENT_NON_CONFORME -> {
                 t.setSujet("Document à corriger");
-                t.setCorps("Bonjour,\n\nLe document \"{{typeDocument}}\" de votre dossier n°{{numeroDossier}} n'a "
-                        + "pas été jugé conforme. Merci de vous connecter à votre espace candidat pour le remplacer "
-                        + "au plus vite.\n\nCordialement,\nL'équipe INPG");
+                t.setCorps("Bonjour,\n\nNous vous informons que le document « {{typeDocument}} » transmis dans le "
+                        + "cadre de votre dossier de candidature n°{{numeroDossier}} n'a pas été jugé conforme. "
+                        + "Merci de bien vouloir vous connecter à votre espace candidat afin de le remplacer dans "
+                        + "les meilleurs délais." + signature);
             }
             case RAPPEL_DOSSIER_INCOMPLET -> {
-                t.setSujet("Votre dossier de candidature est incomplet");
-                t.setCorps("Bonjour,\n\nVotre dossier de candidature n°{{numeroDossier}} est encore incomplet : "
-                        + "{{piecesManquantes}}. Merci de vous connecter à votre espace candidat pour compléter ou "
-                        + "remplacer les pièces concernées dès que possible.\n\nCordialement,\nL'équipe INPG");
+                t.setSujet("Rappel : votre dossier de candidature est incomplet");
+                t.setCorps("Bonjour,\n\nNous vous rappelons que votre dossier de candidature n°{{numeroDossier}} "
+                        + "est actuellement incomplet : {{piecesManquantes}}.\n\nMerci de bien vouloir vous "
+                        + "connecter à votre espace candidat afin de compléter ou de remplacer les pièces "
+                        + "manquantes dans les meilleurs délais, sous peine de retarder le traitement de votre "
+                        + "dossier." + signature);
             }
             case RAPPEL_PAIEMENT -> {
-                t.setSujet("Frais de dossier en attente de règlement");
-                t.setCorps("Bonjour,\n\nVotre dossier de candidature n°{{numeroDossier}} est retenu, mais les frais "
-                        + "de dossier n'ont pas encore été réglés. Merci de procéder au paiement depuis votre espace "
-                        + "candidat pour poursuivre votre parcours d'admission.\n\nCordialement,\nL'équipe INPG");
+                t.setSujet("Rappel : frais de dossier en attente de règlement");
+                t.setCorps("Bonjour,\n\nNous vous rappelons que votre dossier de candidature n°{{numeroDossier}} a "
+                        + "été retenu, mais que les frais de dossier restent à ce jour impayés. Merci de bien "
+                        + "vouloir procéder à leur règlement depuis votre espace candidat afin de poursuivre votre "
+                        + "parcours d'admission." + signature);
             }
         }
         return t;
