@@ -136,6 +136,43 @@ export const routes: Routes = [
     ],
   },
 
+  // Recrutement des formateurs (procédure QMS-007) : tout utilisateur connecté
+  // peut consulter les offres et postuler (le rôle ROLE_CANDIDAT_FORMATEUR n'est
+  // accordé qu'au premier dépôt, cf. CandidatFormateurController) — même patron
+  // que /accreditation, authGuard seul.
+  {
+    path: 'offres-formateurs',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/recrutement-formateurs/pages/offres-publiques/offres-publiques').then(
+        (m) => m.OffresPubliquesComponent
+      ),
+  },
+  {
+    path: 'candidature-formateur',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/recrutement-formateurs/layouts/candidat-formateur-layout/candidat-formateur-layout').then(
+        (m) => m.CandidatFormateurLayout
+      ),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/pages/ma-candidature/ma-candidature').then(
+            (m) => m.MaCandidatureComponent
+          ),
+      },
+      {
+        path: 'mon-profil',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/pages/mon-profil/candidat-formateur-mon-profil').then(
+            (m) => m.CandidatFormateurMonProfilComponent
+          ),
+      },
+    ],
+  },
+
   // Espace Évaluateur Accréditation
   {
     path: 'evaluateur-accreditation',

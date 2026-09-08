@@ -1,0 +1,104 @@
+import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
+import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
+import { LIBELLES_TYPE_CONTRAT, OffreFormateur } from '../../models/recrutement-formateur.models';
+import { RecrutementFormateurService } from '../../services/recrutement-formateur.service';
+
+/**
+ * Vitrine publique des offres de recrutement de formateurs (procédure QMS-007
+ * §2). Cartes façon catalogue ; « Postuler » mène à l'espace candidat formateur
+ * avec l'offre présélectionnée.
+ */
+@Component({
+  selector: 'app-offres-formateurs',
+  standalone: true,
+  imports: [CommonModule, RouterLink, UiSpinnerComponent, UiEmptyStateComponent],
+  template: `
+    <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
+      <header>
+        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
+          Recrutement des formateurs
+        </p>
+        <h1 class="font-display text-display text-on-surface leading-none -ml-1">Offres de recrutement</h1>
+        <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+          L'INPG recrute des formateurs de spécialité. Consultez les postes ouverts et déposez votre
+          candidature en ligne.
+        </p>
+      </header>
+
+      <app-ui-spinner *ngIf="chargement" message="Chargement des offres…"></app-ui-spinner>
+
+      <app-ui-empty-state
+        *ngIf="!chargement && offres.length === 0"
+        icone="work_off"
+        titre="Aucune offre ouverte pour l'instant"
+        description="Revenez plus tard : cette liste s'enrichit au fil des besoins de l'INPG."
+      ></app-ui-empty-state>
+
+      <ul *ngIf="!chargement && offres.length > 0" class="grid md:grid-cols-2 gap-base">
+        <li
+          *ngFor="let o of offres"
+          class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg flex flex-col gap-3"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <h2 class="font-headline-sm text-headline-sm text-primary">{{ o.intitule }}</h2>
+            <span class="shrink-0 px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+              {{ libellesContrat[o.typeContrat] }}
+            </span>
+          </div>
+
+          <dl class="flex flex-wrap gap-x-6 gap-y-1 font-body-sm text-body-sm text-on-surface-variant">
+            <span *ngIf="o.domaine" class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[18px]">category</span>{{ o.domaine }}
+            </span>
+            <span *ngIf="o.lieu" class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[18px]">location_on</span>{{ o.lieu }}
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[18px]">groups</span>{{ o.nbPostes }} poste(s)
+            </span>
+            <span *ngIf="o.dateLimiteCandidature" class="flex items-center gap-1">
+              <span class="material-symbols-outlined text-[18px]">event</span>
+              Limite : {{ o.dateLimiteCandidature | date: 'd MMMM y' }}
+            </span>
+          </dl>
+
+          <p *ngIf="o.descriptionMissions" class="font-body-sm text-body-sm text-on-surface line-clamp-3">
+            {{ o.descriptionMissions }}
+          </p>
+          <p *ngIf="o.profilRecherche" class="font-body-sm text-body-sm text-on-surface-variant">
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block">Profil recherché</span>
+            {{ o.profilRecherche }}
+          </p>
+
+          <a
+            [routerLink]="['/candidature-formateur']"
+            [queryParams]="{ offre: o.id }"
+            class="mt-auto self-start px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity no-underline"
+          >
+            Postuler
+          </a>
+        </li>
+      </ul>
+    </div>
+  `,
+})
+export class OffresPubliquesComponent implements OnInit {
+  private service = inject(RecrutementFormateurService);
+
+  offres: OffreFormateur[] = [];
+  chargement = true;
+  libellesContrat = LIBELLES_TYPE_CONTRAT;
+
+  ngOnInit(): void {
+    this.service.getOffres().subscribe({
+      next: (offres) => {
+        this.offres = offres;
+        this.chargement = false;
+      },
+      error: () => (this.chargement = false),
+    });
+  }
+}
