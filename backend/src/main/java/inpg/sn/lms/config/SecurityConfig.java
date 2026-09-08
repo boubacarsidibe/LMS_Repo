@@ -82,7 +82,8 @@ public class SecurityConfig {
                         "/api/auth/send-otp",
                         "/api/auth/verify-otp",
                         "/api/auth/reset-password").permitAll()
-                .requestMatchers("/api/recrutement/public/**", "/", "/error", "/login", "/uploads/**").permitAll()
+                .requestMatchers("/api/recrutement/public/**", "/api/recrutement-formateurs/public/**",
+                        "/", "/error", "/login", "/uploads/**").permitAll()
                 // Vérification publique d'un certificat par sa référence (page vers laquelle
                 // pointe le QR code imprimé) : destinée à un tiers sans compte, qui n'obtient
                 // qu'une DTO restreinte (voir CertificatPublicController), jamais l'entité.
