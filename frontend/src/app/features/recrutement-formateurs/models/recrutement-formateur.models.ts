@@ -102,3 +102,16 @@ export interface CandidatureFormateurSaisie {
   anneesExperience: number | null;
   lettreMotivation: string | null;
 }
+
+/** Création / modification d'une offre par le responsable admission. */
+export interface OffreFormateurSaisie {
+  intitule: string;
+  domaine: string | null;
+  descriptionMissions: string | null;
+  profilRecherche: string | null;
+  typeContrat: TypeContratFormateur;
+  lieu: string | null;
+  nbPostes: number | null;
+  formationId: number | null;
+  dateLimiteCandidature: string | null;
+}

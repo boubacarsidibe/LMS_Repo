@@ -241,6 +241,43 @@ export const routes: Routes = [
             (m) => m.SessionFormComponent
           ),
       },
+
+      // Recrutement des formateurs (QMS-007) — onglet Formateurs de l'espace admission.
+      {
+        path: 'recrutement-formateurs',
+        pathMatch: 'full',
+        redirectTo: 'recrutement-formateurs/offres',
+      },
+      {
+        // Route littérale avant 'offres/:id' : sinon Angular la capterait comme un id.
+        path: 'recrutement-formateurs/offres/nouvelle',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/admin/offre-form/offre-form.component').then(
+            (m) => m.OffreFormFormateursComponent
+          ),
+      },
+      {
+        path: 'recrutement-formateurs/offres/:id',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/admin/offre-form/offre-form.component').then(
+            (m) => m.OffreFormFormateursComponent
+          ),
+      },
+      {
+        path: 'recrutement-formateurs/offres',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/admin/offres-admin/offres-admin.component').then(
+            (m) => m.OffresAdminFormateursComponent
+          ),
+      },
+      {
+        path: 'recrutement-formateurs/candidatures',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/admin/candidatures-admin/candidatures-admin.component').then(
+            (m) => m.CandidaturesAdminFormateursComponent
+          ),
+      },
+
       {
         path: 'candidatures',
         loadComponent: () =>
