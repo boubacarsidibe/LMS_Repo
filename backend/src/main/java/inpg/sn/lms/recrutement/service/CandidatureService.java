@@ -19,6 +19,7 @@ import inpg.sn.lms.recrutement.dto.CandidatureResponse;
 import inpg.sn.lms.recrutement.dto.FiltreCriteresResponse;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.dto.PieceJustificativeResponse;
+import inpg.sn.lms.recrutement.dto.RapportRecrutementDto;
 import inpg.sn.lms.recrutement.dto.ReponseCritereResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.ReponseCritereCandidature;
@@ -192,6 +193,57 @@ public class CandidatureService {
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    private static final List<EnumStatutCandidature> ETAPES_WORKFLOW = List.of(
+            EnumStatutCandidature.SOUMIS,
+            EnumStatutCandidature.EN_COURS_DE_PRESELECTION,
+            EnumStatutCandidature.ADMIS1,
+            EnumStatutCandidature.ADMIS2,
+            EnumStatutCandidature.ADMIS3,
+            EnumStatutCandidature.REJETE);
+
+    private static final Map<EnumStatutCandidature, String> LIBELLES_ETAPES = Map.of(
+            EnumStatutCandidature.SOUMIS, "Soumis",
+            EnumStatutCandidature.EN_COURS_DE_PRESELECTION, "En présélection",
+            EnumStatutCandidature.ADMIS1, "Admis au test académique",
+            EnumStatutCandidature.ADMIS2, "Admis à l'entretien",
+            EnumStatutCandidature.ADMIS3, "Admis (décision finale)",
+            EnumStatutCandidature.REJETE, "Rejetés");
+
+    /**
+     * Rapport qualité recrutement (demande responsable admission) : répartition des
+     * candidatures par étape du workflow, avec la liste nominative de chaque étape.
+     * Ne recalcule rien : s'appuie sur getAllCandidatures()/toResponse() déjà en place.
+     */
+    public RapportRecrutementDto genererRapportParEtape() {
+        List<CandidatureResponse> toutes = getAllCandidatures();
+
+        List<RapportRecrutementDto.EtapeRapport> etapes = ETAPES_WORKFLOW.stream()
+                .map(statut -> {
+                    List<RapportRecrutementDto.CandidatRapport> candidats = toutes.stream()
+                            .filter(c -> c.getStatut() == statut)
+                            .sorted((a, b) -> {
+                                LocalDateTime da = a.getDateSoumission();
+                                LocalDateTime db = b.getDateSoumission();
+                                if (da == null || db == null) return 0;
+                                return da.compareTo(db);
+                            })
+                            .map(c -> new RapportRecrutementDto.CandidatRapport(
+                                    c.getNumeroDossier(),
+                                    c.getCandidatNom(),
+                                    c.getCandidatPrenom(),
+                                    c.getCandidatEmail(),
+                                    c.getSessionCandidatureLibelle(),
+                                    c.getDateSoumission(),
+                                    statut == EnumStatutCandidature.REJETE ? c.getMotifRejet() : null))
+                            .toList();
+                    return new RapportRecrutementDto.EtapeRapport(
+                            statut.name(), LIBELLES_ETAPES.get(statut), candidats.size(), candidats);
+                })
+                .toList();
+
+        return new RapportRecrutementDto(toutes.size(), etapes);
     }
 
     // --- Méthodes privées ---

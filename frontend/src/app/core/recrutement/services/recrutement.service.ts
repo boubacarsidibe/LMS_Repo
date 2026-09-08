@@ -632,6 +632,11 @@ export class RecrutementService {
     return this.http.get(`${this.baseUrl}/admin/recrutement/candidatures/documents/export`, { responseType: 'blob', params });
   }
 
+  /** Rapport qualité recrutement : répartition des candidatures par étape du workflow, avec liste nominative. */
+  genererRapportQualiteRecrutement(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/admin/recrutement/candidatures/rapport/pdf`, { responseType: 'blob' });
+  }
+
   telechargerPiece(pieceId: number): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/admin/recrutement/pieces/${pieceId}/telecharger`, { responseType: 'blob' });
   }

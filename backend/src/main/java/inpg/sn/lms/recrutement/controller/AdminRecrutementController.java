@@ -4,6 +4,7 @@ import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,7 @@ import inpg.sn.lms.recrutement.dto.EtapeDossierResponse;
 import inpg.sn.lms.recrutement.dto.FiltreCriteresResponse;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.dto.PieceJustificativeResponse;
+import inpg.sn.lms.recrutement.dto.RapportRecrutementDto;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureRequest;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureResponse;
 import inpg.sn.lms.recrutement.dto.TestAcademiqueRequest;
@@ -71,6 +73,7 @@ import inpg.sn.lms.recrutement.service.NotificationCandidatService;
 import inpg.sn.lms.recrutement.service.NotificationService;
 import inpg.sn.lms.recrutement.service.NotificationTemplateService;
 import inpg.sn.lms.recrutement.service.PaiementService;
+import inpg.sn.lms.recrutement.service.RapportRecrutementPdfService;
 import inpg.sn.lms.recrutement.service.SessionCandidatureService;
 import inpg.sn.lms.recrutement.service.TestAcademiqueService;
 
@@ -106,6 +109,7 @@ public class AdminRecrutementController {
     private final CandidatRepository candidatRepository;
     private final NotificationTemplateService notificationTemplateService;
     private final JournalEtapeService journalEtapeService;
+    private final RapportRecrutementPdfService rapportRecrutementPdfService;
 
     public AdminRecrutementController(SessionCandidatureService sessionService,
             CandidatureService candidatureService,
@@ -122,7 +126,8 @@ public class AdminRecrutementController {
             EtudiantRepository etudiantRepository,
             CandidatRepository candidatRepository,
             NotificationTemplateService notificationTemplateService,
-            JournalEtapeService journalEtapeService) {
+            JournalEtapeService journalEtapeService,
+            RapportRecrutementPdfService rapportRecrutementPdfService) {
         this.journalEtapeService = journalEtapeService;
         this.sessionService = sessionService;
         this.candidatureService = candidatureService;
@@ -139,6 +144,7 @@ public class AdminRecrutementController {
         this.etudiantRepository = etudiantRepository;
         this.candidatRepository = candidatRepository;
         this.notificationTemplateService = notificationTemplateService;
+        this.rapportRecrutementPdfService = rapportRecrutementPdfService;
     }
 
     private ResponseEntity<byte[]> telechargerXlsx(byte[] contenu, String nomFichier) {
@@ -146,6 +152,13 @@ public class AdminRecrutementController {
         headers.setContentDisposition(
                 ContentDisposition.attachment().filename(nomFichier, StandardCharsets.UTF_8).build());
         return ResponseEntity.ok().contentType(XLSX).headers(headers).body(contenu);
+    }
+
+    private ResponseEntity<byte[]> telechargerPdf(byte[] contenu, String nomFichier) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(
+                ContentDisposition.attachment().filename(nomFichier, StandardCharsets.UTF_8).build());
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).headers(headers).body(contenu);
     }
 
     private String nvl(String valeur) {
@@ -404,6 +417,17 @@ public class AdminRecrutementController {
                 ContentDisposition.attachment().filename("documents_candidatures.zip", StandardCharsets.UTF_8).build());
         return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/zip")).headers(headers)
                 .body(baos.toByteArray());
+    }
+
+    /**
+     * Rapport qualité recrutement (demande responsable admission) : répartition des
+     * candidatures par étape du workflow, avec la liste nominative de chaque étape.
+     */
+    @GetMapping("/candidatures/rapport/pdf")
+    public ResponseEntity<byte[]> genererRapportQualiteRecrutement() {
+        RapportRecrutementDto rapport = candidatureService.genererRapportParEtape();
+        byte[] pdf = rapportRecrutementPdfService.genererRapport(rapport);
+        return telechargerPdf(pdf, "rapport_qualite_recrutement_" + LocalDate.now() + ".pdf");
     }
 
     /** Nom de dossier sûr (sans caractères interdits dans un chemin de fichier) pour l'archive de documents. */

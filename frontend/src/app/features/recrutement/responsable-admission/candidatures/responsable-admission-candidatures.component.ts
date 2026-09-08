@@ -24,10 +24,17 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   filtreStatut: StatutFiltre = 'TOUS';
   filtreSessionId: number | null = null;
 
+  /** Recalculées explicitement (pas des getters) : un getter renvoyant un nouveau
+   * tableau à chaque cycle de détection de changements provoque NG0103 (boucle
+   * infinie de rafraîchissement), notamment via le <select ngModel> des sessions. */
+  sessionsDisponibles: { id: number; libelle: string }[] = [];
+  candidaturesFiltrees: CandidatureResponse[] = [];
+
   candidatureSelectionnee: CandidatureResponse | null = null;
   actionEnCours = false;
   exporting = false;
   exportingDocuments = false;
+  generatingRapport = false;
   exportModalOpen = false;
   relanceEnCours = false;
   relanceMessage = '';
@@ -74,17 +81,6 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     'TOUS', 'SOUMIS', 'EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 'ADMIS3', 'REJETE', 'BROUILLON',
   ];
 
-  /** Sessions distinctes présentes dans les candidatures chargées, pour le filtre. */
-  get sessionsDisponibles(): { id: number; libelle: string }[] {
-    const vues = new Map<number, string>();
-    for (const c of this.candidatures) {
-      if (!vues.has(c.sessionCandidatureId)) vues.set(c.sessionCandidatureId, c.sessionCandidatureLibelle);
-    }
-    return Array.from(vues.entries())
-      .map(([id, libelle]) => ({ id, libelle }))
-      .sort((a, b) => a.libelle.localeCompare(b.libelle));
-  }
-
   private chargerCandidatures(): void {
     this.loading = true;
     this.errorMessage = '';
@@ -92,11 +88,15 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       next: (data) => {
         this.candidatures = data || [];
         this.loading = false;
+        this.recalculerSessionsDisponibles();
+        this.recalculerFiltres();
       },
       error: () => {
         this.candidatures = [];
         this.loading = false;
         this.errorMessage = 'Impossible de charger les candidatures.';
+        this.recalculerSessionsDisponibles();
+        this.recalculerFiltres();
       },
     });
     this.recrutementService.getCandidaturesEnAttenteInscription().subscribe({
@@ -105,9 +105,22 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     });
   }
 
-  get candidaturesFiltrees(): CandidatureResponse[] {
+  /** Sessions distinctes présentes dans les candidatures chargées, pour le filtre. */
+  private recalculerSessionsDisponibles(): void {
+    const vues = new Map<number, string>();
+    for (const c of this.candidatures) {
+      if (!vues.has(c.sessionCandidatureId)) vues.set(c.sessionCandidatureId, c.sessionCandidatureLibelle);
+    }
+    this.sessionsDisponibles = Array.from(vues.entries())
+      .map(([id, libelle]) => ({ id, libelle }))
+      .sort((a, b) => a.libelle.localeCompare(b.libelle));
+  }
+
+  /** Recalcule la liste filtrée — à appeler après toute modification de candidatures,
+   * recherche, filtreStatut ou filtreSessionId. */
+  recalculerFiltres(): void {
     const q = this.recherche.trim().toLowerCase();
-    return this.candidatures.filter((c) => {
+    this.candidaturesFiltrees = this.candidatures.filter((c) => {
       if (this.filtreStatut !== 'TOUS' && c.statut !== this.filtreStatut) return false;
       if (this.filtreSessionId !== null && c.sessionCandidatureId !== this.filtreSessionId) return false;
       if (!q) return true;
@@ -118,6 +131,11 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
         (c.numeroDossier || '').toLowerCase().includes(q)
       );
     });
+  }
+
+  setFiltreStatut(statut: StatutFiltre): void {
+    this.filtreStatut = statut;
+    this.recalculerFiltres();
   }
 
   compter(statut: StatutFiltre): number {
@@ -346,6 +364,21 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       error: (err) => {
         this.exportingDocuments = false;
         alert(err.status === 400 ? "Aucun document à exporter pour cette sélection." : "Échec de l'export des documents.");
+      },
+    });
+  }
+
+  /** Rapport qualité (demande responsable admission) : nombre + liste nominative des candidats par étape. */
+  genererRapportQualite(): void {
+    this.generatingRapport = true;
+    this.recrutementService.genererRapportQualiteRecrutement().subscribe({
+      next: (blob) => {
+        downloadBlob(blob, `rapport_qualite_recrutement_${new Date().toISOString().slice(0, 10)}.pdf`);
+        this.generatingRapport = false;
+      },
+      error: () => {
+        this.generatingRapport = false;
+        alert('Échec de la génération du rapport qualité.');
       },
     });
   }

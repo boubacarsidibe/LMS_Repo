@@ -15,6 +15,9 @@
     <button type="button" [disabled]="exportingDocuments" (click)="exporterDocuments()" title="Télécharge les documents (pièces justificatives) des candidatures actuellement filtrées, en une archive .zip" class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface disabled:opacity-60">
       <span class="material-symbols-outlined text-sm">folder_zip</span> {{ exportingDocuments ? 'Archive en cours…' : 'Exporter les documents' }}
     </button>
+    <button type="button" [disabled]="generatingRapport" (click)="genererRapportQualite()" title="Génère un rapport PDF : nombre de candidats par étape du workflow (présélection, admis test, admis entretien, admis final, rejetés), avec la liste nominative de chaque étape — toutes sessions confondues" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md disabled:opacity-60">
+      <span class="material-symbols-outlined text-sm">summarize</span> {{ generatingRapport ? 'Génération en cours…' : 'Rapport qualité (PDF)' }}
+    </button>
   </div>
 </div>
 
@@ -39,9 +42,9 @@
 <div class="flex flex-col sm:flex-row gap-3 mb-stack-md">
   <div class="relative max-w-md flex-1">
     <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-    <input [(ngModel)]="recherche" class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none text-body-md" placeholder="Nom, prénom, email ou n° dossier..." type="text"/>
+    <input [(ngModel)]="recherche" (ngModelChange)="recalculerFiltres()" class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none text-body-md" placeholder="Nom, prénom, email ou n° dossier..." type="text"/>
   </div>
-  <select [(ngModel)]="filtreSessionId" aria-label="Filtrer par session" class="px-4 py-2 bg-surface border border-outline-variant rounded-lg text-on-surface-variant font-body-sm text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
+  <select [(ngModel)]="filtreSessionId" (ngModelChange)="recalculerFiltres()" aria-label="Filtrer par session" class="px-4 py-2 bg-surface border border-outline-variant rounded-lg text-on-surface-variant font-body-sm text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
     <option [ngValue]="null">Toutes les sessions</option>
     <option *ngFor="let s of sessionsDisponibles" [ngValue]="s.id">{{ s.libelle }}</option>
   </select>
@@ -49,25 +52,25 @@
 
 <!-- Onglets de statut -->
 <div class="flex overflow-x-auto pb-2 mb-stack-md gap-2 hide-scrollbar border-b border-outline-variant">
-  <button type="button" (click)="filtreStatut = 'TOUS'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'TOUS'" [class.border-b-2]="filtreStatut === 'TOUS'" [class.border-secondary]="filtreStatut === 'TOUS'" [class.font-bold]="filtreStatut === 'TOUS'" [class.text-on-surface-variant]="filtreStatut !== 'TOUS'">
+  <button type="button" (click)="setFiltreStatut('TOUS')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'TOUS'" [class.border-b-2]="filtreStatut === 'TOUS'" [class.border-secondary]="filtreStatut === 'TOUS'" [class.font-bold]="filtreStatut === 'TOUS'" [class.text-on-surface-variant]="filtreStatut !== 'TOUS'">
     Tous ({{ compter('TOUS') }})
   </button>
-  <button type="button" (click)="filtreStatut = 'SOUMIS'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'SOUMIS'" [class.border-b-2]="filtreStatut === 'SOUMIS'" [class.border-secondary]="filtreStatut === 'SOUMIS'" [class.font-bold]="filtreStatut === 'SOUMIS'" [class.text-on-surface-variant]="filtreStatut !== 'SOUMIS'">
+  <button type="button" (click)="setFiltreStatut('SOUMIS')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'SOUMIS'" [class.border-b-2]="filtreStatut === 'SOUMIS'" [class.border-secondary]="filtreStatut === 'SOUMIS'" [class.font-bold]="filtreStatut === 'SOUMIS'" [class.text-on-surface-variant]="filtreStatut !== 'SOUMIS'">
     Soumis ({{ compter('SOUMIS') }})
   </button>
-  <button type="button" (click)="filtreStatut = 'EN_COURS_DE_PRESELECTION'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.border-b-2]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.border-secondary]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.font-bold]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.text-on-surface-variant]="filtreStatut !== 'EN_COURS_DE_PRESELECTION'">
+  <button type="button" (click)="setFiltreStatut('EN_COURS_DE_PRESELECTION')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.border-b-2]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.border-secondary]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.font-bold]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.text-on-surface-variant]="filtreStatut !== 'EN_COURS_DE_PRESELECTION'">
     En présélection ({{ compter('EN_COURS_DE_PRESELECTION') }})
   </button>
-  <button type="button" (click)="filtreStatut = 'ADMIS1'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'ADMIS1'" [class.border-b-2]="filtreStatut === 'ADMIS1'" [class.border-secondary]="filtreStatut === 'ADMIS1'" [class.font-bold]="filtreStatut === 'ADMIS1'" [class.text-on-surface-variant]="filtreStatut !== 'ADMIS1'">
+  <button type="button" (click)="setFiltreStatut('ADMIS1')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'ADMIS1'" [class.border-b-2]="filtreStatut === 'ADMIS1'" [class.border-secondary]="filtreStatut === 'ADMIS1'" [class.font-bold]="filtreStatut === 'ADMIS1'" [class.text-on-surface-variant]="filtreStatut !== 'ADMIS1'">
     Admis au test ({{ compter('ADMIS1') }})
   </button>
-  <button type="button" (click)="filtreStatut = 'ADMIS2'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'ADMIS2'" [class.border-b-2]="filtreStatut === 'ADMIS2'" [class.border-secondary]="filtreStatut === 'ADMIS2'" [class.font-bold]="filtreStatut === 'ADMIS2'" [class.text-on-surface-variant]="filtreStatut !== 'ADMIS2'">
+  <button type="button" (click)="setFiltreStatut('ADMIS2')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'ADMIS2'" [class.border-b-2]="filtreStatut === 'ADMIS2'" [class.border-secondary]="filtreStatut === 'ADMIS2'" [class.font-bold]="filtreStatut === 'ADMIS2'" [class.text-on-surface-variant]="filtreStatut !== 'ADMIS2'">
     Admis entretien ({{ compter('ADMIS2') }})
   </button>
-  <button type="button" (click)="filtreStatut = 'ADMIS3'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'ADMIS3'" [class.border-b-2]="filtreStatut === 'ADMIS3'" [class.border-secondary]="filtreStatut === 'ADMIS3'" [class.font-bold]="filtreStatut === 'ADMIS3'" [class.text-on-surface-variant]="filtreStatut !== 'ADMIS3'">
+  <button type="button" (click)="setFiltreStatut('ADMIS3')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'ADMIS3'" [class.border-b-2]="filtreStatut === 'ADMIS3'" [class.border-secondary]="filtreStatut === 'ADMIS3'" [class.font-bold]="filtreStatut === 'ADMIS3'" [class.text-on-surface-variant]="filtreStatut !== 'ADMIS3'">
     Admis final ({{ compter('ADMIS3') }})
   </button>
-  <button type="button" (click)="filtreStatut = 'REJETE'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'REJETE'" [class.border-b-2]="filtreStatut === 'REJETE'" [class.border-secondary]="filtreStatut === 'REJETE'" [class.font-bold]="filtreStatut === 'REJETE'" [class.text-on-surface-variant]="filtreStatut !== 'REJETE'">
+  <button type="button" (click)="setFiltreStatut('REJETE')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'REJETE'" [class.border-b-2]="filtreStatut === 'REJETE'" [class.border-secondary]="filtreStatut === 'REJETE'" [class.font-bold]="filtreStatut === 'REJETE'" [class.text-on-surface-variant]="filtreStatut !== 'REJETE'">
     Rejetés ({{ compter('REJETE') }})
   </button>
 </div>
