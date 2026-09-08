@@ -158,6 +158,8 @@ public class DataInitializer {
                     "École externe — soumet et suit sa demande d'accréditation");
             ensureRole(roleRepository, "ROLE_ENTREPRISE", "Entreprise",
                     "Entreprise partenaire — soumet des besoins de formation, des demandes de devis, échange avec la pédagogie");
+            ensureRole(roleRepository, "ROLE_CANDIDAT_FORMATEUR", "Candidat formateur",
+                    "Postulant à une offre de recrutement de formateur — dépose et suit sa candidature (QMS-007)");
 
             // ===================== SESSIONS =====================
             // Garde-fou : plutôt qu'un IndexOutOfBoundsException opaque au démarrage,
