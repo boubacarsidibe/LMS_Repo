@@ -1770,3 +1770,63 @@ cheminement d'un dossier, seulement son état final.
   obligatoire, convocation groupée, notes CSV, élimination post-notation,
   réversibilité avec mot de passe, export filtrable) : toujours en
   attente, voir point 60.
+
+### 67. Recrutement des formateurs (procédure QMS-007) : workflow complet
+
+« La plateforme doit permettre le recrutement de formateur à l'INPG. » Jusqu'ici
+un formateur était créé d'un seul geste par le responsable pédagogique
+(`PedagogieController#creerFormateur` → `FormateurService.createFormateur`),
+sans offre, sans candidature, sans traçabilité.
+
+**Périmètre retenu (décisions produit 2026-09-08)** : offre de poste → candidature
+avec pièces → tri/sélection → création du compte formateur → e-mail à chaque
+étape. Suivi en **3 états** : `DOSSIER_RECU` → `EN_COURS_DE_TRAITEMENT` →
+`TERMINE` (+ `decision` `RETENU`/`NON_RETENU`). **Pilote =
+`RESPONSABLE_ADMISSION`** (pas de rôle DAF/RH distinct — QMS-007 confie pourtant
+le pilotage à la DAF ; à rouvrir si la séparation des responsabilités devient un
+besoin réel). Roadmap détaillée : `docs/roadmap-recrutement-formateurs.md`.
+
+**Nouveau paquet `inpg.sn.lms.recrutementformateur`** (sibling de `recrutement`,
+pas une greffe : ce dernier est trop couplé aux étudiants — promotions, frais de
+dossier, tests académiques). Migration **V38** :
+`offres_recrutement_formateur`, `candidatures_formateur` (index unique partiel :
+une candidature active par `(offre, candidat)` tant que `statut <> 'TERMINE'`),
+`pieces_candidature_formateur` (réutilise `fichiers_stockes` +
+`FichierStockeService`). Rôle **`ROLE_CANDIDAT_FORMATEUR`** amorcé dans
+`DataInitializer`, accordé au premier dépôt (patron `garantirRoleEcole`) ;
+au `RETENU`, le **compte du candidat est basculé** en `ROLE_FORMATEUR` + fiche
+`Formateur` créée (on ne crée pas un compte neuf : `FormateurService.createFormateur`
+refuse un e-mail déjà pris ; on promeut l'existant, patron
+`AdminRecrutementController#inscrireCommeEtudiant`). Garde-fous : `formateur_cree`
+(idempotence), téléphone unique (`Formateur.telephone`), motif obligatoire au
+refus.
+
+**API** : `RecrutementFormateurPublicController` (`/api/recrutement-formateurs/public/**`,
+ajouté au `permitAll` de `SecurityConfig`), `CandidatFormateurController`
+(authentifié, exclusivité d'espace, pièces), `AdminRecrutementFormateurController`
+(`/api/admin/recrutement-formateurs/**`, couvert par le joker admin). `PUT /statut`
+ne fait avancer que `DOSSIER_RECU → EN_COURS_DE_TRAITEMENT` ; la clôture passe par
+`PUT /decision` (comme l'accréditation sépare prise en charge et décision).
+
+**Front** : nouveau paquet `features/recrutement-formateurs/`, calqué sur
+l'espace école d'accréditation (layout, checklist de pièces, barre de
+progression) et sur `responsable-admission/sessions` (pages dédiées, onglet de
+nav « Formateurs »). Vitrine `/offres-formateurs`, espace candidat
+`/candidature-formateur`, onglet admission
+`/responsable-admission/recrutement-formateurs/{offres,candidatures}`.
+
+**Vérifié bout en bout sur la stack Docker** (base locale réinitialisée pour la
+renumérotation des migrations du lot précédent — Flyway V1→V38) : offre
+créée/publiée/listée sans token, candidature + rôle accordé, doublon 409, upload
+de pièce 201, `EN_COURS` notifié, `RETENU` → compte formateur actif et connexion
+OK, garde-fous 400/409. 17 tests unitaires ciblés
+(`CandidatFormateurControllerTest`, `AdminRecrutementFormateurControllerTest`).
+
+**Reporté (phases suivantes)** : épreuves/tests d'aptitude, entretiens, grille du
+comité de recrutement, contrat PDF + suivi paiements (QMS-007 §5), export Excel,
+journal d'étapes fin. Et surtout la **certification INPG des formateurs**
+(condition 1.3 du Référentiel DRCQ : formation des formateurs → certificat 3 ans
+renouvelable, registre des modules qu'un formateur peut enseigner) — à brancher
+sur l'accréditation. Discoverability : un lien « Rejoindre l'INPG comme
+formateur » sur le site vitrine reste à poser (les écrans sont sinon atteignables
+par URL et se cross-linkent).
