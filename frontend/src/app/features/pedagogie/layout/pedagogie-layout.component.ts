@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Auth } from '../../../core/auth/services/authService';
+import { ClocheNotificationsService, NotificationCloche } from '../../../shared/services/cloche-notifications.service';
 
 interface EntreeNavigation {
   libelle: string;
@@ -27,11 +28,15 @@ interface EntreeNavigation {
 export class PedagogieLayoutComponent implements OnInit {
   private auth = inject(Auth);
   private router = inject(Router);
+  private cloche = inject(ClocheNotificationsService);
 
   nomAffiche = '';
+  emailAffiche = '';
   initiales = '?';
   sidebarMobileOuverte = false;
   menuProfilOuvert = false;
+  menuNotificationOuvert = false;
+  notifications: NotificationCloche[] = [];
 
   readonly navigation: EntreeNavigation[] = [
     { libelle: 'Vue d’ensemble', lien: 'vue-ensemble', icone: 'dashboard' },
@@ -51,7 +56,51 @@ export class PedagogieLayoutComponent implements OnInit {
   ngOnInit(): void {
     const utilisateur = this.auth.currentUser();
     this.nomAffiche = utilisateur?.username || 'Responsable pédagogique';
+    this.emailAffiche = utilisateur?.email || '';
     this.initiales = this.calculerInitiales(this.nomAffiche);
+    this.cloche.lister().subscribe({
+      next: (liste) => (this.notifications = (liste || []).filter((n) => !n.lu)),
+      error: () => {},
+    });
+  }
+
+  /** Une seule liste déroulante ouverte à la fois, comme dans l'espace admission. */
+  basculerMenu(type: 'notification' | 'profil'): void {
+    const notificationEtaitOuverte = this.menuNotificationOuvert;
+    const profilEtaitOuvert = this.menuProfilOuvert;
+    this.fermerMenus();
+    if (type === 'notification') {
+      this.menuNotificationOuvert = !notificationEtaitOuverte;
+    } else {
+      this.menuProfilOuvert = !profilEtaitOuvert;
+    }
+  }
+
+  private fermerMenus(): void {
+    this.menuNotificationOuvert = false;
+    this.menuProfilOuvert = false;
+  }
+
+  /** Ouvre la cible et marque la notification lue, sans quoi la cloche répète un événement traité. */
+  ouvrirNotification(notification: NotificationCloche): void {
+    this.cloche.marquerLue(notification.id).subscribe({
+      next: () => (this.notifications = this.notifications.filter((n) => n.id !== notification.id)),
+      error: () => {},
+    });
+    this.fermerMenus();
+    if (notification.lien) {
+      this.router.navigateByUrl(notification.lien);
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  auClicDocument(evenement: MouseEvent): void {
+    const cible = evenement.target as HTMLElement;
+    if (cible.closest('#notification-btn') || cible.closest('#profile-btn')
+        || cible.closest('#notification-dropdown') || cible.closest('#profile-dropdown')) {
+      return;
+    }
+    this.fermerMenus();
   }
 
   private calculerInitiales(nom: string): string {
@@ -65,10 +114,6 @@ export class PedagogieLayoutComponent implements OnInit {
 
   basculerSidebarMobile(): void {
     this.sidebarMobileOuverte = !this.sidebarMobileOuverte;
-  }
-
-  basculerMenuProfil(): void {
-    this.menuProfilOuvert = !this.menuProfilOuvert;
   }
 
   seDeconnecter(): void {

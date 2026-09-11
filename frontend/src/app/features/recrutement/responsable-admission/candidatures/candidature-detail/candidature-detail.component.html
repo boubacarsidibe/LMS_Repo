@@ -35,17 +35,22 @@
     <!-- Mêmes données que le suivi candidat (timelineItems), pour ne jamais diverger -->
     <ul class="space-y-5">
       <li *ngFor="let item of timelineItems; let i = index" class="flex gap-4 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
+        <!-- L'échec prime sur tout le reste : il portait à la fois bg-surface (via
+             « pending || erreur ») et bg-error, deux classes Tailwind concurrentes dont
+             c'est l'ordre dans la feuille qui tranchait — la pastille de rejet s'affichait
+             donc en gris. Les trois états sont désormais exclusifs. -->
         <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 relative z-10"
-             [class.bg-secondary]="!item.pending && !item.erreur" [class.text-white]="!item.pending"
-             [class.border]="item.pending || item.erreur" [class.border-outline-variant]="item.pending || item.erreur"
-             [class.bg-surface]="item.pending || item.erreur" [class.bg-error]="item.erreur">
-          <span *ngIf="!item.pending && !item.active && !item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;">check</span>
-          <span *ngIf="item.pending" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
-          <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+             [ngClass]="item.erreur ? 'bg-error text-white'
+                        : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
           <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
+          <ng-container *ngIf="!item.erreur">
+            <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;">check</span>
+            <span *ngIf="item.pending" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+            <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+          </ng-container>
         </div>
         <div>
-          <h4 class="font-label-md text-label-md font-bold text-on-surface">{{ item.label }}</h4>
+          <h4 class="font-label-md text-label-md font-bold" [class.text-error]="item.erreur" [class.text-on-surface]="!item.erreur">{{ item.label }}</h4>
           <p *ngIf="item.desc" class="font-body-sm text-body-sm text-on-surface-variant">{{ item.desc }}</p>
           <ng-container *ngIf="i === 2 && item.active">
             <p *ngIf="paiementEnAttente" class="font-body-sm text-body-sm text-[#b7791f] mt-1">Paiement enregistré par le candidat, en attente de confirmation.</p>
@@ -78,7 +83,7 @@
       <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Pièces justificatives</div>
       <div class="space-y-2" *ngIf="sel.piecesJustificatives.length; else aucunePiece">
         <div *ngFor="let p of sel.piecesJustificatives" class="flex items-center justify-between py-2 border-b border-outline-variant last:border-0 text-body-sm">
-          <span class="text-on-surface">{{ p.typeDocument }}</span>
+          <span class="text-on-surface">{{ p.typeDocument }}<span *ngIf="p.moyenneDeclaree !== null" class="text-on-surface-variant"> — Moyenne déclarée : {{ p.moyenneDeclaree }}/20</span></span>
           <div class="flex items-center gap-2">
             <button type="button" *ngIf="p.fichierStockeId" (click)="telechargerPiece(p)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Télécharger le document">
               <span class="material-symbols-outlined text-[18px]">download</span>

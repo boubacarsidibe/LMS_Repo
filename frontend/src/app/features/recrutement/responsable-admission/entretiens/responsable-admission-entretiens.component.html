@@ -6,11 +6,18 @@
   </div>
   <div class="flex gap-3">
     <app-report-button [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button>
-    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center justify-center w-10 h-10 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-on-surface disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : 'Convocation groupée'">
+    <!--
+      Convoquer plusieurs candidats est le geste courant à cette étape ; le faire un par un
+      est l'exception. L'action groupée était pourtant une icône seule, sans libellé, qu'on ne
+      trouvait qu'en survolant — d'où des entretiens planifiés candidat par candidat.
+    -->
+    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center gap-2 px-4 h-10 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg font-label-md text-label-md transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50 whitespace-nowrap" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : 'Convoquer plusieurs candidats à la fois'">
       <span class="material-symbols-outlined text-[20px]">groups</span>
+      Convoquer un groupe
     </button>
-    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="openDrawer()" class="flex items-center justify-center w-10 h-10 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : 'Nouvel Entretien'">
-      <span class="material-symbols-outlined text-[20px]">add</span>
+    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="openDrawer()" class="flex items-center gap-2 px-4 h-10 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-on-surface font-label-md text-label-md disabled:opacity-50 whitespace-nowrap" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : 'Planifier l’entretien d’un seul candidat'">
+      <span class="material-symbols-outlined text-[20px]">person_add</span>
+      Un seul candidat
     </button>
   </div>
 </div>
@@ -65,7 +72,14 @@
           </td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ e.lieuOuLien }}</td>
           <td class="p-4 font-body-sm text-body-sm text-primary">{{ e.dateHeure | date:'dd MMM yyyy, HH:mm' }}</td>
-          <td class="p-4 font-body-sm text-body-sm text-primary">{{ e.noteEntretien ?? '—' }}</td>
+          <!-- Note saisissable sur place : après un entretien groupé, on note en série
+               sans rouvrir la fiche de chaque candidat. -->
+          <td class="p-4" (click)="$event.stopPropagation()">
+            <app-ui-note [valeur]="e.noteEntretien"
+                         [contexte]="e"
+                         [enregistrer]="enregistrerNoteEntretien"
+                         [etiquette]="'Note sur 20 de ' + e.candidatPrenom + ' ' + e.candidatNom"></app-ui-note>
+          </td>
           <td class="p-4">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                   [ngClass]="estPasse(e.dateHeure) ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-primary-fixed text-on-primary-fixed-variant'">

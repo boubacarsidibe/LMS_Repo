@@ -50,6 +50,9 @@ public class Notification {
     /** Réponse (acceptation, refus ou contre-proposition) à une demande de rendez-vous (TDR §J). */
     public static final String RENDEZ_VOUS_REPONSE = "RENDEZ_VOUS_REPONSE";
 
+    /** Un candidat déclare avoir réglé ses frais de dossier : le règlement attend la validation de l'admission. */
+    public static final String PAIEMENT_A_VALIDER = "PAIEMENT_A_VALIDER";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

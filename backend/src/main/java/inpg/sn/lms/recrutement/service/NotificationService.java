@@ -1,6 +1,9 @@
 package inpg.sn.lms.recrutement.service;
 
+import java.util.HashMap;
 import java.util.Map;
+
+import inpg.sn.lms.auth.repository.CandidatRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +22,7 @@ public class NotificationService {
 
     private final JavaMailSender mailSender;
     private final NotificationTemplateService templateService;
+    private final CandidatRepository candidatRepository;
 
     // Sans expéditeur explicite, l'envoi part avec un From vide : certains
     // serveurs SMTP (dont Brevo) le rejettent silencieusement ou le remplacent,
@@ -27,9 +31,11 @@ public class NotificationService {
     @Value("${app.mail.from}")
     private String expediteur;
 
-    public NotificationService(JavaMailSender mailSender, NotificationTemplateService templateService) {
+    public NotificationService(JavaMailSender mailSender, NotificationTemplateService templateService,
+            CandidatRepository candidatRepository) {
         this.mailSender = mailSender;
         this.templateService = templateService;
+        this.candidatRepository = candidatRepository;
     }
 
     // Best-effort : cette methode est appelee depuis de tres nombreuses actions
@@ -59,8 +65,42 @@ public class NotificationService {
         if (!template.isActif()) {
             return;
         }
-        envoyerEmail(emailCandidat, remplacerVariables(template.getSujet(), variables),
-                remplacerVariables(template.getCorps(), variables));
+        Map<String, String> avecIdentite = new HashMap<>(variables);
+        avecIdentite.put("nomCandidat", nomDuDestinataire(emailCandidat));
+        envoyerEmail(emailCandidat, remplacerVariables(template.getSujet(), avecIdentite),
+                remplacerVariables(template.getCorps(), avecIdentite));
+    }
+
+    /**
+     * Nom du destinataire, résolu ici plutôt que réclamé à chaque appelant.
+     *
+     * <p>Treize méthodes {@code notifier*} et une vingtaine de points d'appel : faire porter
+     * le nom par les signatures, c'était vingt occasions de l'oublier et un modèle qui
+     * s'adresserait à « Bonjour , ». La résolution centrale coûte une lecture par courriel
+     * envoyé — le volume est celui des décisions d'admission, pas d'un flux — et garantit
+     * que tout modèle utilisant {{nomCandidat}} est servi.
+     *
+     * <p>Repli sur une formule neutre : certains destinataires ne sont pas des candidats
+     * (boîte de l'admission), et une adresse peut ne correspondre à aucune fiche.
+     */
+    private String nomDuDestinataire(String email) {
+        if (email == null || email.isBlank()) {
+            return "";
+        }
+        try {
+            return candidatRepository.findByUserEmail(email.trim().toLowerCase())
+                    .map(c -> {
+                        String prenom = c.getPrenom() != null ? c.getPrenom().trim() : "";
+                        String nom = c.getNom() != null ? c.getNom().trim() : "";
+                        return (prenom + " " + nom).trim();
+                    })
+                    .filter(n -> !n.isEmpty())
+                    .orElse("");
+        } catch (Exception e) {
+            // Un nom manquant ne doit jamais empêcher l'envoi du message lui-même.
+            log.warn("Nom du destinataire {} non résolu : {}", email, e.getMessage());
+            return "";
+        }
     }
 
     private String remplacerVariables(String texte, Map<String, String> variables) {
@@ -68,7 +108,10 @@ public class NotificationService {
         for (Map.Entry<String, String> entree : variables.entrySet()) {
             resultat = resultat.replace("{{" + entree.getKey() + "}}", entree.getValue() != null ? entree.getValue() : "");
         }
-        return resultat;
+        // Une variable vide laisse sa ponctuation orpheline : « Bonjour {{nomCandidat}}, »
+        // donnerait « Bonjour , » pour un destinataire dont le nom est inconnu. On recolle
+        // l'espace avant la ponctuation plutôt que d'interdire les variables vides.
+        return resultat.replace(" ,", ",").replace(" .", ".").replaceAll("[ \\t]{2,}", " ");
     }
 
     public void notifierValidationDossier(String emailCandidat, String numeroDossier) {
@@ -113,6 +156,12 @@ public class NotificationService {
 
     public void notifierNonAdmission(String emailCandidat, String numeroDossier) {
         envoyerNotification(EnumTypeNotification.NON_ADMISSION, emailCandidat,
+                Map.of("numeroDossier", numeroDossier));
+    }
+
+    /** Liste complémentaire : retenu, mais en attente qu'une place se libère (TDR §3.1.C). */
+    public void notifierListeAttente(String emailCandidat, String numeroDossier) {
+        envoyerNotification(EnumTypeNotification.LISTE_ATTENTE, emailCandidat,
                 Map.of("numeroDossier", numeroDossier));
     }
 

@@ -13,10 +13,33 @@
 
 <div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
 
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-gutter mb-stack-lg">
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Total Tests</span><span class="material-symbols-outlined text-secondary">quiz</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ totalTests }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Programmés</div></div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Notés</span><span class="material-symbols-outlined text-secondary">edit_note</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbNotes }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Notes saisies</div></div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Admissibles</span><span class="material-symbols-outlined text-outline">check_circle</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbAdmissibles }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Note ≥ 10/20</div></div>
+<!--
+  Compteurs de contexte, pas le sujet de la page : le sujet est la grille de notation
+  plus bas. Ils tenaient auparavant sur trois grandes cartes (32 px pour un chiffre à
+  un digit) qui repoussaient la grille sous la ligne de flottaison.
+-->
+<div class="grid grid-cols-3 divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest mb-stack-md">
+  <div class="flex items-center gap-3 px-4 py-3">
+    <span class="material-symbols-outlined text-secondary text-[20px]">quiz</span>
+    <div class="min-w-0">
+      <div class="font-headline-sm text-headline-sm text-primary leading-none">{{ totalTests }}</div>
+      <div class="font-label-sm text-label-sm text-on-surface-variant truncate">Tests programmés</div>
+    </div>
+  </div>
+  <div class="flex items-center gap-3 px-4 py-3">
+    <span class="material-symbols-outlined text-secondary text-[20px]">edit_note</span>
+    <div class="min-w-0">
+      <div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbNotes }}</div>
+      <div class="font-label-sm text-label-sm text-on-surface-variant truncate">Notes saisies</div>
+    </div>
+  </div>
+  <div class="flex items-center gap-3 px-4 py-3">
+    <span class="material-symbols-outlined text-outline text-[20px]">check_circle</span>
+    <div class="min-w-0">
+      <div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbAdmissibles }}</div>
+      <div class="font-label-sm text-label-sm text-on-surface-variant truncate">Admissibles (≥ 10/20)</div>
+    </div>
+  </div>
 </div>
 
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
@@ -68,13 +91,11 @@
           <td class="p-4 font-body-sm text-body-sm text-primary">{{ t.coefficient }}</td>
           <td class="p-4" (click)="$event.stopPropagation()">
             <div class="flex items-center gap-1">
-              <input type="number" min="0" max="20" step="0.25"
-                     [value]="t.noteObtenue ?? ''"
-                     (blur)="enregistrerNote(t, $event)"
-                     [disabled]="noteEnCoursId === t.id"
-                     placeholder="—"
-                     title="Cliquer pour saisir la note"
-                     class="w-20 px-2 py-1 border border-outline-variant rounded-lg bg-surface text-on-surface text-body-sm focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none disabled:opacity-50">
+              <app-ui-note [valeur]="t.noteObtenue"
+                           [contexte]="t"
+                           [enregistrer]="enregistrerNote"
+                           [desactive]="noteEnCoursId === t.id"
+                           [etiquette]="'Note sur 20 de ' + t.candidatPrenom + ' ' + t.candidatNom"></app-ui-note>
               <button *ngIf="t.noteObtenuePrecedente != null" type="button" [disabled]="noteEnCoursId === t.id" (click)="annulerNote(t)" [title]="'Annuler : revenir à ' + t.noteObtenuePrecedente" class="p-1 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors">
                 <span class="material-symbols-outlined text-[18px]">undo</span>
               </button>

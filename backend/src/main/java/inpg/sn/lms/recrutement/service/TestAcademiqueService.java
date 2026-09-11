@@ -83,6 +83,7 @@ public class TestAcademiqueService {
         TestAcademique test = testAcademiqueRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Test non trouvé avec l'ID: " + id));
 
+        verifierNote(request.getNoteObtenue());
         test.setNomEpreuve(request.getNomEpreuve());
         test.setCoefficient(request.getCoefficient());
         test.setNoteObtenuePrecedente(test.getNoteObtenue());
@@ -103,9 +104,25 @@ public class TestAcademiqueService {
     public TestAcademiqueResponse modifierNote(Long id, Float noteObtenue) {
         TestAcademique test = testAcademiqueRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Test non trouvé avec l'ID: " + id));
+        verifierNote(noteObtenue);
         test.setNoteObtenuePrecedente(test.getNoteObtenue());
         test.setNoteObtenue(noteObtenue);
         return toResponse(testAcademiqueRepository.save(test));
+    }
+
+    /**
+     * La plage de notes n'était contrôlée que par l'attribut {@code max} du champ HTML,
+     * c'est-à-dire nulle part : un appel direct enregistrait 999 ou -5, et cette note
+     * entrait ensuite dans le classement de délibération. {@code EntretienService}
+     * appliquait déjà cette règle de son côté ; les deux notes se comparent, elles
+     * doivent se contrôler pareil.
+     *
+     * <p>{@code null} reste admis — c'est ainsi qu'on efface une note saisie par erreur.
+     */
+    private void verifierNote(Float note) {
+        if (note != null && (note < 0 || note > 20)) {
+            throw new BusinessException("La note du test doit être comprise entre 0 et 20.");
+        }
     }
 
     /** Annule la dernière saisie de note (un seul niveau, pas d'historique complet). */

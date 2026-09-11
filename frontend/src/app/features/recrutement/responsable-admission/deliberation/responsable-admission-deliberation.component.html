@@ -24,6 +24,7 @@
     <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
       <button type="button" (click)="filtre = 'EN_ATTENTE'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtre === 'EN_ATTENTE'" [class.border-b-2]="filtre === 'EN_ATTENTE'" [class.border-secondary]="filtre === 'EN_ATTENTE'" [class.font-bold]="filtre === 'EN_ATTENTE'" [class.text-on-surface-variant]="filtre !== 'EN_ATTENTE'">En attente ({{ nbEnAttente }})</button>
       <button type="button" (click)="filtre = 'ADMIS'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtre === 'ADMIS'" [class.border-b-2]="filtre === 'ADMIS'" [class.border-secondary]="filtre === 'ADMIS'" [class.font-bold]="filtre === 'ADMIS'" [class.text-on-surface-variant]="filtre !== 'ADMIS'">Admis ({{ nbAdmis }})</button>
+      <button type="button" (click)="filtre = 'LISTE_ATTENTE'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtre === 'LISTE_ATTENTE'" [class.border-b-2]="filtre === 'LISTE_ATTENTE'" [class.border-secondary]="filtre === 'LISTE_ATTENTE'" [class.font-bold]="filtre === 'LISTE_ATTENTE'" [class.text-on-surface-variant]="filtre !== 'LISTE_ATTENTE'">Liste complémentaire ({{ nbListeAttente }})</button>
       <button type="button" (click)="filtre = 'REJETES'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtre === 'REJETES'" [class.border-b-2]="filtre === 'REJETES'" [class.border-secondary]="filtre === 'REJETES'" [class.font-bold]="filtre === 'REJETES'" [class.text-on-surface-variant]="filtre !== 'REJETES'">Non retenus ({{ nbRejetes }})</button>
       <button type="button" (click)="filtre = 'TOUS'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtre === 'TOUS'" [class.border-b-2]="filtre === 'TOUS'" [class.border-secondary]="filtre === 'TOUS'" [class.font-bold]="filtre === 'TOUS'" [class.text-on-surface-variant]="filtre !== 'TOUS'">Tous ({{ lignes.length }})</button>
     </div>
@@ -64,14 +65,23 @@
                 [ngClass]="{
                   'bg-[#ecfdf5] text-[#065f46] border-[#a7f3d0]': l.candidature.statut === 'ADMIS3',
                   'bg-error-container/20 text-error border-transparent': l.candidature.statut === 'REJETE',
+                  'bg-blue-50 text-blue-800 border-blue-200': l.candidature.statut === 'LISTE_ATTENTE',
                   'bg-[#fffbeb] text-[#92400e] border-[#fde68a]': l.candidature.statut === 'ADMIS2'
                 }">
-            {{ l.candidature.statut === 'ADMIS3' ? 'Admis' : (l.candidature.statut === 'REJETE' ? 'Non retenu' : 'En attente') }}
+            {{ l.candidature.statut === 'ADMIS3' ? 'Admis'
+               : (l.candidature.statut === 'REJETE' ? 'Non retenu'
+               : (l.candidature.statut === 'LISTE_ATTENTE' ? 'Liste complémentaire' : 'En attente')) }}
           </span>
         </div>
-        <div class="col-span-1 flex justify-end gap-1" *ngIf="l.candidature.statut === 'ADMIS2'" (click)="$event.stopPropagation()">
+        <!-- Trois issues possibles après l'entretien (TDR §3.1.C) : admis, liste
+             complémentaire, non retenu. Un dossier déjà sur liste complémentaire garde
+             les deux issues restantes : une place peut se libérer, ou non. -->
+        <div class="col-span-1 flex justify-end gap-1" *ngIf="l.candidature.statut === 'ADMIS2' || l.candidature.statut === 'LISTE_ATTENTE'" (click)="$event.stopPropagation()">
           <button type="button" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Admettre">
             <span class="material-symbols-outlined text-[18px]">check</span>
+          </button>
+          <button type="button" *ngIf="l.candidature.statut === 'ADMIS2'" [disabled]="actionEnCours" (click)="placerEnListeAttente(l)" class="p-1.5 rounded text-on-surface-variant hover:text-blue-700 hover:bg-blue-50 transition-colors" title="Placer sur liste complémentaire">
+            <span class="material-symbols-outlined text-[18px]">hourglass_top</span>
           </button>
           <button type="button" [disabled]="actionEnCours" (click)="rejeter(l)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Rejeter">
             <span class="material-symbols-outlined text-[18px]">close</span>

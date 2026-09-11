@@ -50,6 +50,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -110,6 +111,13 @@ public class CandidatController {
      * de pièce d'identité tient largement dans 5 Mo.
      */
     private static final long TAILLE_MAX_PIECE_OCTETS = 5L * 1024 * 1024;
+
+    /**
+     * Le formulaire candidat plafonne à 3 années récentes, chacune pouvant compter jusqu'à
+     * 3 bulletins (ex: trimestres) : 9 est donc la borne réelle côté serveur, pas un chiffre
+     * arbitraire. Jamais un nombre illimité.
+     */
+    private static final int MAX_RELEVES_PAR_CANDIDATURE = 9;
 
     private final CandidatureService candidatureService;
     private final CandidatRepository candidatRepository;
@@ -198,7 +206,18 @@ public class CandidatController {
      * et la Candidature en statut SOUMIS directement.
      * Un visiteur ne peut avoir qu'une seule candidature active.
      */
+    /*
+     * @Transactional est indispensable ici, pas décoratif : avec open-in-view=false, la
+     * branche « redépôt » plus bas travaille sur une Candidature chargée par le dépôt puis
+     * détachée, et enregistrerReponsesCriteres() touche sa collection paresseuse
+     * reponsesCriteres. Sans session ouverte, cet accès levait une
+     * LazyInitializationException remontée en HTTP 500 : tout candidat possédant déjà un
+     * dossier actif se voyait refuser un nouveau dépôt. Le défaut ne se voyait pas sur un
+     * dossier REJETE, qui emprunte la branche « création » et construit une entité neuve
+     * dont la collection est déjà initialisée.
+     */
     @PostMapping("/candidature/soumettre")
+    @Transactional
     public ResponseEntity<?> soumettreCandidature(
             @RequestBody CandidatureRequest request,
             Authentication authentication) {
@@ -454,6 +473,7 @@ public class CandidatController {
             @PathVariable Long candidatureId,
             @RequestParam("file") MultipartFile file,
             @RequestParam("typeDocument") String typeDocumentStr,
+            @RequestParam(value = "moyenneDeclaree", required = false) Double moyenneDeclaree,
             Authentication authentication) {
 
         // Vérifier que le candidat est bien le propriétaire
@@ -488,6 +508,22 @@ public class CandidatController {
                     .body(java.util.Map.of("message", "Le fichier dépasse la taille maximale autorisée (5 Mo)."));
         }
 
+        // Un releve de notes n'est plus accepte sans limite : au plus 3 (une, deux ou
+        // trois annees recentes), verifie cote serveur pour ne pas dependre du seul
+        // formulaire candidat.
+        if (typeDocument == EnumTypeDocument.RELEVE_NOTES) {
+            long dejaDeposes = pieceJustificativeRepository.countByCandidatureIdAndTypeDocument(
+                    candidatureId, EnumTypeDocument.RELEVE_NOTES);
+            if (dejaDeposes >= MAX_RELEVES_PAR_CANDIDATURE) {
+                return ResponseEntity.badRequest().body(java.util.Map.of(
+                        "message", "Au plus " + MAX_RELEVES_PAR_CANDIDATURE + " relevés de notes peuvent être déposés."));
+            }
+            if (moyenneDeclaree != null && (moyenneDeclaree < 0 || moyenneDeclaree > 20)) {
+                return ResponseEntity.badRequest()
+                        .body(java.util.Map.of("message", "La moyenne déclarée doit être comprise entre 0 et 20."));
+            }
+        }
+
         // Enregistrer le fichier (extension, type MIME et chemin de destination validés)
         FichierStocke fichier = fichierStockeService.enregistrerFichier(file);
 
@@ -497,6 +533,7 @@ public class CandidatController {
         piece.setEstConforme(false);
         piece.setFichierStocke(fichier);
         piece.setCandidature(candidature);
+        piece.setMoyenneDeclaree(typeDocument == EnumTypeDocument.RELEVE_NOTES ? moyenneDeclaree : null);
         pieceJustificativeRepository.save(piece);
 
         return ResponseEntity.ok(java.util.Map.of(

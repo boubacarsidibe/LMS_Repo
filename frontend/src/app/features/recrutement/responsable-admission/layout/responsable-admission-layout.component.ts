@@ -4,6 +4,7 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Auth } from '../../../../core/auth/services/authService';
 import { RecrutementService, SessionCandidatureResponse } from '../../../../core/recrutement/services/recrutement.service';
+import { ClocheNotificationsService, NotificationCloche } from '../../../../shared/services/cloche-notifications.service';
 
 interface NavItem {
   label: string;
@@ -34,6 +35,9 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
   private sessionsBientotFermees: SessionCandidatureResponse[] = [];
   private paiementsEnAttente = 0;
 
+  /** Notifications réellement enregistrées en base pour ce compte (cloche serveur). */
+  notificationsPersistees: NotificationCloche[] = [];
+
   navItems: NavItem[] = [
     { label: "Vue d'ensemble", icon: 'dashboard', route: '/responsable-admission' },
     { label: 'Statistiques', icon: 'bar_chart', route: '/responsable-admission/statistiques' },
@@ -50,7 +54,8 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
   constructor(
     private router: Router,
     private auth: Auth,
-    private recrutementService: RecrutementService
+    private recrutementService: RecrutementService,
+    private cloche: ClocheNotificationsService
   ) {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
@@ -88,6 +93,29 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
       },
       error: () => {},
     });
+    this.chargerNotifications();
+  }
+
+  private chargerNotifications(): void {
+    this.cloche.lister().subscribe({
+      next: (data) => (this.notificationsPersistees = (data || []).filter((n) => !n.lu)),
+      error: () => {},
+    });
+  }
+
+  /**
+   * Ouvre la cible d'une notification et la marque lue. Sans ce marquage, la cloche
+   * répète indéfiniment un événement déjà traité.
+   */
+  ouvrirNotification(notification: NotificationCloche): void {
+    this.cloche.marquerLue(notification.id).subscribe({
+      next: () => (this.notificationsPersistees = this.notificationsPersistees.filter((n) => n.id !== notification.id)),
+      error: () => {},
+    });
+    this.closeAll();
+    if (notification.lien) {
+      this.router.navigateByUrl(notification.lien);
+    }
   }
 
   get alertes(): Alerte[] {

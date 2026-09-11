@@ -12,6 +12,7 @@ import {
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
 import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
 import { downloadBlob } from '../../../shared/utils/download-file';
+import { NotificationService } from '../../../shared/components/ui/notification.service';
 
 interface TimelineItem {
   label: string;
@@ -168,7 +169,7 @@ export class SuiviComponent implements OnInit {
     return tests.length > 0 ? tests[tests.length - 1] : null;
   }
 
-  constructor(private recrutementService: RecrutementService) {}
+  constructor(private recrutementService: RecrutementService, private notifications: NotificationService) {}
 
   ngOnInit(): void {
     this.recrutementService.getMesCandidatures().subscribe({
@@ -243,6 +244,10 @@ export class SuiviComponent implements OnInit {
     if (statut === this.STATUT_REJETE) {
       // Rejeté après paiement : la note insuffisante au test reste la cause la plus
       // fréquente, faute d'un champ dédié à l'étape exacte du rejet.
+      // `pending` doit retomber à false comme pour l'échec de présélection plus haut :
+      // une étape en échec est franchie, pas en attente. Sans cela le gabarit affichait
+      // à la fois le numéro d'étape et la croix, et l'étape était grisée au lieu de rouge.
+      items[3].pending = false;
       items[3].erreur = true;
       return items;
     }
@@ -371,7 +376,7 @@ export class SuiviComponent implements OnInit {
       },
       error: (err) => {
         this.actionEntretienEnCours = false;
-        alert(err.error?.message || 'Échec de la confirmation de présence.');
+        this.notifications.erreur(err.error?.message || 'Échec de la confirmation de présence.');
       },
     });
   }
@@ -387,11 +392,11 @@ export class SuiviComponent implements OnInit {
       next: () => {
         this.actionEntretienEnCours = false;
         this.rafraichirParcours();
-        alert('Votre demande de report a été transmise au service admission.');
+        this.notifications.succes('Votre demande de report a été transmise au service admission.');
       },
       error: (err) => {
         this.actionEntretienEnCours = false;
-        alert(err.error?.message || 'Échec de la demande de report.');
+        this.notifications.erreur(err.error?.message || 'Échec de la demande de report.');
       },
     });
   }
@@ -402,7 +407,7 @@ export class SuiviComponent implements OnInit {
     if (!ent) return;
     this.recrutementService.telechargerConvocationEntretien(ent.id).subscribe({
       next: (blob) => downloadBlob(blob, 'convocation-entretien.pdf'),
-      error: () => alert('Échec du téléchargement de la convocation.'),
+      error: () => this.notifications.erreur('Échec du téléchargement de la convocation.'),
     });
   }
 
@@ -411,7 +416,7 @@ export class SuiviComponent implements OnInit {
     if (!this.candidature?.id) return;
     this.recrutementService.telechargerLettreAdmission(this.candidature.id).subscribe({
       next: (blob) => downloadBlob(blob, 'lettre-admission.pdf'),
-      error: () => alert('Échec du téléchargement de la lettre.'),
+      error: () => this.notifications.erreur('Échec du téléchargement de la lettre.'),
     });
   }
 
@@ -423,8 +428,8 @@ export class SuiviComponent implements OnInit {
       return;
     }
     navigator.clipboard?.writeText(texte).then(
-      () => alert('Message copié dans le presse-papiers.'),
-      () => alert('Impossible de partager.'),
+      () => this.notifications.succes('Message copié dans le presse-papiers.'),
+      () => this.notifications.erreur('Impossible de partager.'),
     );
   }
 

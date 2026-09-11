@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CandidatureResponse, EtapeDossierResponse, PieceJustificativeResponse, RecrutementService } from '../../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../../shared/utils/download-file';
+import { NotificationService } from '../../../../../shared/components/ui/notification.service';
 
 interface TimelineItem {
   label: string;
@@ -105,6 +106,9 @@ export class CandidatureDetailComponent implements OnInit {
     items[2].pending = false; // paiement confirmé
 
     if (statut === this.STATUT_REJETE) {
+      // Comme pour l'échec de présélection plus haut : une étape en échec est franchie,
+      // pas en attente. Laisser `pending` à true faisait cohabiter deux états contraires.
+      items[3].pending = false;
       items[3].erreur = true;
       return items;
     }
@@ -134,6 +138,7 @@ export class CandidatureDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private recrutementService: RecrutementService,
+    private notifications: NotificationService,
   ) {}
 
   ngOnInit(): void {
@@ -282,7 +287,7 @@ export class CandidatureDetailComponent implements OnInit {
       },
       error: (err) => {
         this.actionEnCours = false;
-        alert(err.error?.message || "Échec de l'action sur la candidature.");
+        this.notifications.erreur(err.error?.message || "Échec de l'action sur la candidature.");
       },
     });
   }
@@ -313,7 +318,7 @@ export class CandidatureDetailComponent implements OnInit {
       },
       error: (err) => {
         this.actionEnCours = false;
-        alert(err.error?.message || "Échec de la finalisation de l'inscription.");
+        this.notifications.erreur(err.error?.message || "Échec de la finalisation de l'inscription.");
       },
     });
   }
@@ -322,7 +327,7 @@ export class CandidatureDetailComponent implements OnInit {
     const motif = window.prompt(`Motif de rejet pour le dossier ${c.numeroDossier} :`);
     if (motif === null) return; // annulé
     if (!motif.trim()) {
-      alert('Un motif de rejet est requis.');
+      this.notifications.erreur('Un motif de rejet est requis.');
       return;
     }
     this.executer(this.recrutementService.rejeterDossier(c.id, motif.trim()));
@@ -332,7 +337,7 @@ export class CandidatureDetailComponent implements OnInit {
     if (piece.fichierStockeId == null) return;
     this.recrutementService.telechargerPiece(piece.id).subscribe({
       next: (blob) => downloadBlob(blob, piece.fichierNomOriginal || `document_${piece.id}`),
-      error: () => alert('Échec du téléchargement du document.'),
+      error: () => this.notifications.erreur('Échec du téléchargement du document.'),
     });
   }
 
@@ -341,7 +346,7 @@ export class CandidatureDetailComponent implements OnInit {
     const nouvelEtat = !piece.estConforme;
     this.recrutementService.modifierConformitePiece(piece.id, nouvelEtat).subscribe({
       next: () => (piece.estConforme = nouvelEtat),
-      error: () => alert('Échec de la mise à jour de la conformité du document.'),
+      error: () => this.notifications.erreur('Échec de la mise à jour de la conformité du document.'),
     });
   }
 }

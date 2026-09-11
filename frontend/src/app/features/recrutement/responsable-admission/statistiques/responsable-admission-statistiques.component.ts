@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CandidatureResponse, RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 import { DashboardPreferences, DashboardPreferencesService } from '../services/dashboard-preferences.service';
 
 interface SegmentStatut {
@@ -30,7 +31,8 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
 
   constructor(
     private recrutementService: RecrutementService,
-    private prefsService: DashboardPreferencesService
+    private prefsService: DashboardPreferencesService,
+    private notifications: NotificationService
   ) {
     this.prefs = this.prefsService.charger();
   }
@@ -212,7 +214,7 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
       },
       error: () => {
         this.exporting = false;
-        alert("Échec de l'export Excel.");
+        this.notifications.erreur("Échec de l'export Excel.");
       },
     });
   }

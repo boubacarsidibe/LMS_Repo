@@ -137,7 +137,7 @@ public class SecurityConfig {
                 // la règle générale ci-dessous, qui sinon en exclurait le responsable
                 // pédagogique — l'ordre des règles décide, la plus précise doit venir d'abord.
                 .requestMatchers("/api/espace-etudiant/notifications/**", "/api/espace-etudiant/notifications")
-                    .hasAnyRole("ETUDIANT", "FORMATEUR", "RESPONSABLE_PEDAGOGIQUE")
+                    .hasAnyRole("ETUDIANT", "FORMATEUR", "RESPONSABLE_PEDAGOGIQUE", "RESPONSABLE_ADMISSION")
                 // Espace pédagogique : les opérations d'enseignant restent réservées aux formateurs.
                 .requestMatchers("/api/espace-etudiant/formateur/**").hasRole("FORMATEUR")
                 .requestMatchers("/api/espace-etudiant/**").hasAnyRole("ETUDIANT", "FORMATEUR")

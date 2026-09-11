@@ -21,8 +21,8 @@ import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
 /**
- * Cloche de notifications, commune à l'étudiant, au formateur et au responsable
- * pédagogique.
+ * Cloche de notifications, commune à l'étudiant, au formateur, au responsable
+ * pédagogique et au responsable admission.
  *
  * <p>Une cloche existait, mais liée au <strong>candidat</strong> et servie par
  * {@code /api/recrutement/candidat/notifications} : inutilisable ailleurs. Celle-ci
@@ -34,7 +34,7 @@ import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
  */
 @RestController
 @RequestMapping("/api/espace-etudiant/notifications")
-@PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR','RESPONSABLE_PEDAGOGIQUE')")
+@PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR','RESPONSABLE_PEDAGOGIQUE','RESPONSABLE_ADMISSION')")
 public class NotificationEspaceController {
 
     private final NotificationRepository notificationRepository;

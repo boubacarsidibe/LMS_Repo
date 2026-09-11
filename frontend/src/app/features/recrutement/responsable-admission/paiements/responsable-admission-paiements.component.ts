@@ -20,7 +20,7 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
   loading = false;
   errorMessage = '';
   recherche = '';
-  filtreStatut: 'TOUS' | 'EN_ATTENTE' | 'SUCCES' = 'TOUS';
+  filtreStatut: 'TOUS' | 'EN_ATTENTE' | 'SUCCES' | 'ECHEC' = 'TOUS';
   idEnCours: number | null = null;
 
   relanceEnCours = false;

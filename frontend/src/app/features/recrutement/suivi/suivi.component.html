@@ -35,17 +35,23 @@
           <!-- Stepper : mêmes données que la Timeline détaillée plus bas (timelineItems), pour ne jamais diverger -->
           <div class="flex items-start justify-between w-full pt-4">
             <div *ngFor="let item of timelineItems; let i = index" class="flex flex-col items-center gap-3 flex-1 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
+              <!-- L'échec prime sur tout le reste : les trois états sont exclusifs, sinon
+                   bg-surface et bg-error s'appliquaient ensemble et l'ordre de la feuille
+                   de style décidait — la pastille d'échec ressortait en gris. -->
               <div class="w-6 h-6 rounded-full flex items-center justify-center z-10 shadow-sm"
-                   [class.bg-secondary]="!item.pending && !item.erreur" [class.text-white]="!item.pending && !item.erreur"
-                   [class.bg-error]="item.erreur" [class.text-white]="item.erreur"
-                   [class.border]="item.pending || item.erreur" [class.border-outline-variant]="item.pending" [class.bg-surface]="item.pending && !item.erreur">
-                <span *ngIf="!item.pending && !item.active && !item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;font-weight:700;">check</span>
-                <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                <span *ngIf="item.pending && !item.active && !item.erreur" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+                   [ngClass]="item.erreur ? 'bg-error text-white'
+                              : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
                 <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
+                <ng-container *ngIf="!item.erreur">
+                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;font-weight:700;">check</span>
+                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                  <span *ngIf="item.pending && !item.active" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+                </ng-container>
               </div>
-              <span class="text-label-md font-semibold text-center" [class.text-secondary]="!item.pending" [class.text-error]="item.erreur" [class.text-on-surface-variant]="item.pending && !item.active">{{ item.label }}</span>
-              <div *ngIf="i < timelineItems.length - 1" class="absolute top-3 left-1/2 w-full h-[2px]" [class.bg-secondary]="!item.pending && !item.active && !item.erreur" [class.bg-outline-variant]="item.pending || item.active || item.erreur"></div>
+              <span class="text-label-md font-semibold text-center"
+                    [ngClass]="item.erreur ? 'text-error' : (item.pending && !item.active ? 'text-on-surface-variant' : 'text-secondary')">{{ item.label }}</span>
+              <div *ngIf="i < timelineItems.length - 1" class="absolute top-3 left-1/2 w-full h-[2px]"
+                   [ngClass]="item.erreur ? 'bg-error' : (!item.pending && !item.active ? 'bg-secondary' : 'bg-outline-variant')"></div>
             </div>
           </div>
         </div>
@@ -99,6 +105,7 @@
               <div class="flex items-center gap-3">
                 <span class="material-symbols-outlined text-on-surface-variant" style="font-variation-settings:'FILL' 0;">{{ getDocIcon(piece.typeDocument) }}</span>
                 <span class="text-label-sm truncate">{{ piece.fichierNomOriginal || getDocLabel(piece.typeDocument) }}</span>
+                <span *ngIf="piece.moyenneDeclaree !== null" class="text-body-sm text-on-surface-variant shrink-0">— Moyenne déclarée : {{ piece.moyenneDeclaree }}/20</span>
               </div>
               <span class="material-symbols-outlined text-emerald-600 text-sm" style="font-variation-settings:'FILL' 1;">check_circle</span>
             </div>
@@ -112,7 +119,6 @@
                 <option value="" disabled selected>Type de document…</option>
                 <option value="PIECE_IDENTITE">Pièce d'identité</option>
                 <option value="CV">CV</option>
-                <option value="LETTRE_MOTIVATION">Lettre de motivation</option>
                 <option value="RELEVE_NOTES">Relevé de notes</option>
                 <option value="DIPLOME">Diplôme</option>
               </select>
@@ -134,16 +140,17 @@
           <ul class="space-y-5">
             <li *ngFor="let item of timelineItems; let i = index" class="flex gap-4 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
               <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 relative z-10"
-                   [class.bg-secondary]="!item.pending && !item.erreur" [class.text-white]="!item.pending && !item.erreur"
-                   [class.border]="item.pending || item.erreur" [class.border-outline-variant]="item.pending || item.erreur"
-                   [class.bg-surface]="item.pending || item.erreur" [class.bg-error]="item.erreur" [class.text-white]="item.erreur">
-                <span *ngIf="!item.pending && !item.active && !item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;">check</span>
-                <span *ngIf="item.pending" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
-                <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                   [ngClass]="item.erreur ? 'bg-error text-white'
+                              : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
                 <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
+                <ng-container *ngIf="!item.erreur">
+                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;">check</span>
+                  <span *ngIf="item.pending" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                </ng-container>
               </div>
               <div>
-                <h4 class="text-label-md font-bold text-on-surface">{{ item.label }}</h4>
+                <h4 class="text-label-md font-bold" [class.text-error]="item.erreur" [class.text-on-surface]="!item.erreur">{{ item.label }}</h4>
                 <p *ngIf="item.desc" class="text-body-sm text-on-surface-variant">{{ item.desc }}</p>
                 <ng-container *ngIf="i === 2 && item.active">
                   <p *ngIf="paiementEnAttente" class="text-body-sm text-[#b7791f] mt-1">Paiement enregistré, en attente de confirmation par l'admission.</p>
@@ -223,16 +230,19 @@
           <div class="flex items-start justify-between w-full pt-6">
             <div *ngFor="let item of timelineItems; let i = index" class="flex flex-col items-center gap-3 flex-1 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
               <div class="w-6 h-6 rounded-full flex items-center justify-center z-10 shadow-sm"
-                   [class.bg-secondary]="!item.pending && !item.erreur" [class.text-white]="!item.pending && !item.erreur"
-                   [class.bg-error]="item.erreur" [class.text-white]="item.erreur"
-                   [class.border]="item.pending || item.erreur" [class.border-outline-variant]="item.pending" [class.bg-surface]="item.pending && !item.erreur">
-                <span *ngIf="!item.pending && !item.active && !item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span>
-                <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                <span *ngIf="item.pending && !item.active && !item.erreur" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+                   [ngClass]="item.erreur ? 'bg-error text-white'
+                              : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
                 <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">close</span>
+                <ng-container *ngIf="!item.erreur">
+                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span>
+                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                  <span *ngIf="item.pending && !item.active" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+                </ng-container>
               </div>
-              <span class="text-label-md font-bold text-center" [class.text-secondary]="!item.pending && !item.erreur" [class.text-error]="item.erreur" [class.text-on-surface-variant]="item.pending && !item.active">{{ item.label }}</span>
-              <div *ngIf="i < timelineItems.length - 1" class="absolute top-3 left-1/2 w-full h-[2px]" [class.bg-secondary]="!item.pending && !item.active && !item.erreur" [class.bg-error]="item.erreur" [class.bg-outline-variant]="item.pending || item.active"></div>
+              <span class="text-label-md font-bold text-center"
+                    [ngClass]="item.erreur ? 'text-error' : (item.pending && !item.active ? 'text-on-surface-variant' : 'text-secondary')">{{ item.label }}</span>
+              <div *ngIf="i < timelineItems.length - 1" class="absolute top-3 left-1/2 w-full h-[2px]"
+                   [ngClass]="item.erreur ? 'bg-error' : (!item.pending && !item.active ? 'bg-secondary' : 'bg-outline-variant')"></div>
             </div>
           </div>
         </div>
@@ -300,16 +310,19 @@
           <div class="flex items-start justify-between w-full pt-6">
             <div *ngFor="let item of timelineItems; let i = index" class="flex flex-col items-center gap-3 flex-1 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
               <div class="w-6 h-6 rounded-full flex items-center justify-center z-10 shadow-sm"
-                   [class.bg-secondary]="!item.pending && !item.erreur" [class.text-white]="!item.pending && !item.erreur"
-                   [class.bg-error]="item.erreur" [class.text-white]="item.erreur"
-                   [class.border]="item.pending || item.erreur" [class.border-outline-variant]="item.pending" [class.bg-surface]="item.pending && !item.erreur">
-                <span *ngIf="!item.pending && !item.active && !item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span>
-                <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                <span *ngIf="item.pending && !item.active && !item.erreur" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+                   [ngClass]="item.erreur ? 'bg-error text-white'
+                              : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
                 <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">close</span>
+                <ng-container *ngIf="!item.erreur">
+                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span>
+                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                  <span *ngIf="item.pending && !item.active" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+                </ng-container>
               </div>
-              <span class="text-label-md font-bold text-center" [class.text-secondary]="!item.pending && !item.erreur" [class.text-error]="item.erreur" [class.text-on-surface-variant]="item.pending && !item.active">{{ item.label }}</span>
-              <div *ngIf="i < timelineItems.length - 1" class="absolute top-3 left-1/2 w-full h-[2px]" [class.bg-secondary]="!item.pending && !item.active && !item.erreur" [class.bg-error]="item.erreur" [class.bg-outline-variant]="item.pending || item.active"></div>
+              <span class="text-label-md font-bold text-center"
+                    [ngClass]="item.erreur ? 'text-error' : (item.pending && !item.active ? 'text-on-surface-variant' : 'text-secondary')">{{ item.label }}</span>
+              <div *ngIf="i < timelineItems.length - 1" class="absolute top-3 left-1/2 w-full h-[2px]"
+                   [ngClass]="item.erreur ? 'bg-error' : (!item.pending && !item.active ? 'bg-secondary' : 'bg-outline-variant')"></div>
             </div>
           </div>
         </div>

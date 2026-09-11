@@ -19,4 +19,6 @@ public class PieceJustificativeResponse {
     private boolean estConforme;
     private Long fichierStockeId;
     private String fichierNomOriginal;
+    /** Moyenne declaree par le candidat pour un releve de notes (sur 20), null sinon. */
+    private Double moyenneDeclaree;
 }

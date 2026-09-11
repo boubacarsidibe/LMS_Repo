@@ -598,6 +598,30 @@ public class AdminRecrutementController {
     }
 
     /**
+     * Place un candidat sur liste complémentaire à l'issue de l'entretien (TDR §3.1.C,
+     * « saisie des listes retenus et en attente »).
+     *
+     * <p>Ni une admission ni un rejet : le candidat est retenu sur le fond, mais aucune
+     * place n'est disponible. Le frontend affichait déjà ce statut alors que rien ne
+     * permettait de l'attribuer — cette action comble ce manque. Le dossier n'en sort
+     * que par {@link #admettreFinal} (une place se libère) ou {@link #rejeterDossier}.
+     */
+    @PutMapping("/candidatures/{id}/liste-attente")
+    public ResponseEntity<CandidatureResponse> placerEnListeAttente(@PathVariable Long id,
+            Authentication authentication) {
+        CandidatureResponse response = candidatureService.changerStatut(id,
+                EnumStatutCandidature.LISTE_ATTENTE, null);
+        candidatureService.journaliser(id, EnumEtapeQms.SELECTION, response.getStatut(),
+                agentCourant(authentication), "Candidat placé sur liste complémentaire.");
+        if (response.getCandidatEmail() != null) {
+            notificationService.notifierListeAttente(response.getCandidatEmail(), response.getNumeroDossier());
+        }
+        notifierCandidatEnLigne(response, "Votre candidature n°" + response.getNumeroDossier()
+                + " est placée sur liste complémentaire : elle est retenue, en attente qu'une place se libère.");
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Étape 6 de la procédure QMS-009 : <strong>inscription et finalisation</strong>.
      * Ouvre l'accès étudiant au candidat admis, et consigne qui l'a fait.
      *
@@ -853,6 +877,13 @@ public class AdminRecrutementController {
     public ResponseEntity<EntretienResponse> modifierEntretien(@PathVariable Long id,
             @RequestBody EntretienRequest request) {
         return ResponseEntity.ok(entretienService.modifierEntretien(id, request));
+    }
+
+    /** Saisie rapide de la note seule, depuis la liste (grille de notation après entretien). */
+    @PutMapping("/entretiens/{id}/note")
+    public ResponseEntity<EntretienResponse> modifierNoteEntretien(@PathVariable Long id,
+            @RequestBody Map<String, Float> body) {
+        return ResponseEntity.ok(entretienService.modifierNote(id, body.get("noteEntretien")));
     }
 
     @DeleteMapping("/entretiens/{id}")

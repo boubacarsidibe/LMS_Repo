@@ -44,7 +44,7 @@
         <div class="w-10 h-10 rounded-lg bg-error-container flex items-center justify-center text-error group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">cancel</span></div>
       </div>
       <p class="font-label-md text-label-md text-on-surface-variant mb-1">Rejetés</p>
-      <h3 class="font-headline-lg text-headline-lg text-primary">{{ rejetes }}</h3>
+      <h3 class="font-headline-lg text-headline-lg" [class.text-error]="rejetes > 0" [class.text-primary]="rejetes === 0">{{ rejetes }}</h3>
     </a>
   </div>
 

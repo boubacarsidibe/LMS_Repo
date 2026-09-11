@@ -206,7 +206,10 @@ public class CandidatureService {
             throw new BusinessException(
                     "L'admission finale a déjà ouvert l'accès étudiant du candidat : son statut ne peut plus être modifié automatiquement.");
         }
-        if (actuel != EnumStatutCandidature.REJETE) {
+        // REJETE et LISTE_ATTENTE sortent du parcours linéaire : on autorise à les
+        // défaire vers n'importe quelle étape (« dé-rejeter », « dé-lister »), au-delà
+        // de la fenêtre d'annulation immédiate qu'offre annulerDerniereAction.
+        if (actuel != EnumStatutCandidature.REJETE && actuel != EnumStatutCandidature.LISTE_ATTENTE) {
             Integer rangActuel = rangParcours(actuel);
             if (rangActuel == null || rangParcours(cible) >= rangActuel) {
                 throw new BusinessException("On ne peut reculer que vers un statut antérieur dans le parcours.");
@@ -220,14 +223,20 @@ public class CandidatureService {
         return toResponse(candidatureRepository.save(candidature));
     }
 
-    /** Position dans le parcours normal, {@code null} pour un statut qui n'y a pas sa place comme cible de recul. */
+    /**
+     * Position dans le parcours normal, {@code null} pour un statut qui n'y a pas sa
+     * place comme cible de recul.
+     *
+     * <p>LISTE_ATTENTE est exclu des cibles : y placer un candidat est une décision de
+     * jury, pas un « retour en arrière » — elle passe par l'action dédiée.
+     */
     private Integer rangParcours(EnumStatutCandidature statut) {
         return switch (statut) {
             case SOUMIS -> 1;
             case EN_COURS_DE_PRESELECTION -> 2;
             case ADMIS1 -> 3;
             case ADMIS2 -> 4;
-            case BROUILLON, ADMIS3, REJETE -> null;
+            case BROUILLON, LISTE_ATTENTE, ADMIS3, REJETE -> null;
         };
     }
 
@@ -355,7 +364,14 @@ public class CandidatureService {
             case EN_COURS_DE_PRESELECTION ->
                 nouveau == EnumStatutCandidature.ADMIS1 || nouveau == EnumStatutCandidature.REJETE;
             case ADMIS1 -> nouveau == EnumStatutCandidature.ADMIS2 || nouveau == EnumStatutCandidature.REJETE;
-            case ADMIS2 -> nouveau == EnumStatutCandidature.ADMIS3 || nouveau == EnumStatutCandidature.REJETE;
+            // À l'issue de l'entretien : admis, placé en liste complémentaire, ou rejeté.
+            case ADMIS2 -> nouveau == EnumStatutCandidature.ADMIS3
+                    || nouveau == EnumStatutCandidature.LISTE_ATTENTE
+                    || nouveau == EnumStatutCandidature.REJETE;
+            // Liste complémentaire : on n'en sort que si une place se libère (ADMIS3)
+            // ou si la campagne se solde sans place (REJETE).
+            case LISTE_ATTENTE -> nouveau == EnumStatutCandidature.ADMIS3
+                    || nouveau == EnumStatutCandidature.REJETE;
             case ADMIS3, REJETE -> false; // État terminal
         };
     }
@@ -369,6 +385,7 @@ public class CandidatureService {
                         .fichierStockeId(p.getFichierStocke() != null ? p.getFichierStocke().getId() : null)
                         .fichierNomOriginal(
                                 p.getFichierStocke() != null ? p.getFichierStocke().getNomOriginal() : null)
+                        .moyenneDeclaree(p.getMoyenneDeclaree())
                         .build())
                 .collect(Collectors.toList());
 

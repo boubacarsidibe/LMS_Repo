@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../../core/auth/services/admin.service';
 import { User } from '../../../../core/auth/models/user.model';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 @Component({
   selector: 'app-responsable-users',
@@ -14,7 +15,7 @@ export class ResponsableUsersComponent implements OnInit {
   users: User[] = [];
   loading = false;
 
-  constructor(private admin: AdminService) {}
+  constructor(private admin: AdminService, private notifications: NotificationService) {}
 
   ngOnInit(): void {
     this.loadUsers();
@@ -31,7 +32,7 @@ export class ResponsableUsersComponent implements OnInit {
         }));
         this.loading = false;
       },
-      error: () => { this.loading = false; alert('Impossible de charger les utilisateurs'); }
+      error: () => { this.loading = false; this.notifications.erreur('Impossible de charger les utilisateurs'); }
     });
   }
 
@@ -44,7 +45,7 @@ export class ResponsableUsersComponent implements OnInit {
     const roles = newRoleCode ? [newRoleCode] : [];
     this.admin.changeRoles(user.id, roles).subscribe({
       next: (updated: any) => { user.roles = (updated.roles || []).map((r: any) => typeof r === 'string' ? r : r.code); },
-      error: () => { alert('Erreur lors de la mise à jour des rôles'); this.loadUsers(); }
+      error: () => { this.notifications.erreur('Erreur lors de la mise à jour des rôles'); this.loadUsers(); }
     });
   }
 }

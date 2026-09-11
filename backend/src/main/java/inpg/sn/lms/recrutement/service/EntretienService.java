@@ -1,6 +1,7 @@
 package inpg.sn.lms.recrutement.service;
 
 import org.springframework.security.access.AccessDeniedException;
+import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -82,6 +83,24 @@ public class EntretienService {
 
         Entretien saved = entretienRepository.save(entretien);
         return toResponse(saved);
+    }
+
+    /**
+     * Saisie de la seule note, sans toucher au reste de l'entretien.
+     *
+     * <p>Après une convocation groupée, les notes se saisissent en série dans la liste :
+     * passer par {@link #modifierEntretien} obligerait à renvoyer date, lieu et appréciation
+     * à chaque frappe, et les écraserait avec ce que le formulaire connaît — c'est-à-dire
+     * rien, dans une grille où seule la note est éditée.
+     */
+    public EntretienResponse modifierNote(Long id, Float note) {
+        Entretien entretien = entretienRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Entretien non trouvé avec l'ID: " + id));
+        if (note != null && (note < 0 || note > 20)) {
+            throw new BusinessException("La note d'entretien doit être comprise entre 0 et 20.");
+        }
+        entretien.setNoteEntretien(note);
+        return toResponse(entretienRepository.save(entretien));
     }
 
     public List<EntretienResponse> getEntretiensByCandidatId(Long candidatId) {

@@ -36,6 +36,11 @@ public class PieceJustificative {
     @Column(nullable = false)
     private boolean estConforme;
 
+    /** Moyenne declaree par le candidat pour ce releve (sur 20) : le PDF en est la preuve.
+     * Nul pour tout document qui n'est pas un releve de notes. */
+    @Column(name = "moyenne_declaree")
+    private Double moyenneDeclaree;
+
     @ManyToOne
     @JoinColumn(name = "candidature_id", nullable = false)
     private Candidature candidature;

@@ -6,6 +6,7 @@ import { RecrutementService, CandidatureResponse, PaiementResponse } from '../..
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
 import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { downloadBlob } from '../../../../shared/utils/download-file';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 @Component({
   selector: 'app-paiement',
@@ -44,11 +45,14 @@ export class PaiementComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private recrutementService: RecrutementService,
-    private router: Router
+    private router: Router,
+    private notifications: NotificationService
   ) { }
 
   get paiementReussi(): boolean {
-    return this.paiement?.statut === 'SUCCES' || this.paiement?.statut === 'CONFIRME';
+    // Seul SUCCES existe côté serveur (EnumStatutPaiement : EN_ATTENTE, SUCCES, ECHEC) ;
+    // le 'CONFIRME' qui figurait ici ne correspondait à aucune valeur émise.
+    return this.paiement?.statut === 'SUCCES';
   }
 
   /** Tentative enregistrée côté serveur, en attente de confirmation par l'admission. */
@@ -165,7 +169,7 @@ export class PaiementComponent implements OnInit {
         // La vue de confirmation ou d'attente s'affichera automatiquement selon le statut renvoyé.
       },
       error: (err) => {
-        alert('Erreur de paiement: ' + (err.error?.message || 'Erreur inconnue'));
+        this.notifications.erreur('Erreur de paiement: ' + (err.error?.message || 'Erreur inconnue'));
         this.loading = false;
       }
     });
@@ -183,7 +187,7 @@ export class PaiementComponent implements OnInit {
       },
       error: () => {
         this.telechargementRecu = false;
-        alert('Échec du téléchargement du reçu.');
+        this.notifications.erreur('Échec du téléchargement du reçu.');
       }
     });
   }

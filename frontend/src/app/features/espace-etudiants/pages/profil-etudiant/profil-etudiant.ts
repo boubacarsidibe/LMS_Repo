@@ -36,10 +36,33 @@ export class ProfilEtudiant implements OnInit {
   mesCours: Cours[] = [];
   nouvelleNoteCoursId: number | null = null;
   nouvelleNoteModule = '';
-  nouvelleNoteValeur: number | null = null;
+  /**
+   * Saisie conservée en texte, et non en {@code type="number"} lié à un nombre.
+   *
+   * <p>Sur un champ numérique, la spécification HTML impose de vider {@code value}
+   * dès que le contenu n'est pas un décimal <i>à point</i> : un « 15,5 » tapé au
+   * pavé numérique français y était lu comme vide, la note restait à {@code null},
+   * et le bouton « Ajouter la note » demeurait grisé sans qu'aucun message
+   * n'explique pourquoi. La virgule est désormais convertie avant analyse.
+   */
+  nouvelleNoteTexte = '';
   nouvelleNoteCommentaire = '';
   isSavingNote = false;
   noteErrorMessage = '';
+
+  /** Note saisie, ou {@code null} si elle n'est pas encore exploitable. */
+  get nouvelleNoteValeur(): number | null {
+    const brut = this.nouvelleNoteTexte.trim().replace(',', '.');
+    if (brut === '' || !/^\d+(\.\d+)?$/.test(brut)) return null;
+    const valeur = Number(brut);
+    return valeur >= 0 && valeur <= 20 ? valeur : null;
+  }
+
+  /** Explique le refus plutôt que de laisser le bouton grisé sans raison. */
+  get messageNoteSaisie(): string {
+    if (this.nouvelleNoteTexte.trim() === '' || this.nouvelleNoteValeur !== null) return '';
+    return 'Entrez une note comprise entre 0 et 20 (la virgule est acceptée).';
+  }
 
   presences: PresenceHistorique[] = [];
 
@@ -145,7 +168,7 @@ export class ProfilEtudiant implements OnInit {
           this.notes = [note, ...this.notes];
           this.nouvelleNoteCoursId = null;
           this.nouvelleNoteModule = '';
-          this.nouvelleNoteValeur = null;
+          this.nouvelleNoteTexte = '';
           this.nouvelleNoteCommentaire = '';
           this.rafraichirNoteMoyenne();
         },

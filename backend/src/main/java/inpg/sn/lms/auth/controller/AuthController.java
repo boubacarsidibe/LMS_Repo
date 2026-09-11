@@ -54,6 +54,32 @@ public class AuthController {
         this.formateurService = formateurService;
     }
 
+    /**
+     * Création de compte publique (le seul point d'entrée anonyme avec /login).
+     *
+     * <p>Vivait dans un contrôleur à part, {@code CrudControlleur}, aux côtés de cinq
+     * endpoints qu'aucun écran n'appelait et qui sérialisaient les entités JPA brutes.
+     * Ces cinq-là ont été retirés ; l'inscription rejoint ici la connexion, dont elle
+     * est le pendant.
+     */
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody inpg.sn.lms.auth.dto.UserDto userDto) {
+        try {
+            User newUser = userService.createUser(userDto);
+            UserDetails userDetails = userService.loadUserByUsername(newUser.getUsername());
+            String token = jwtUtils.generateToken(userDetails);
+            Map<String, Object> user = Map.of(
+                    "id", newUser.getId(),
+                    "username", newUser.getUsername(),
+                    "email", newUser.getEmail(),
+                    "roles", newUser.getRoles().stream().map(role -> role.getCode()).toList(),
+                    "typeInscription", newUser.getTypeInscription().name());
+            return ResponseEntity.ok(Map.of("token", token, "user", user));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request) {
         String email = request.get("email");

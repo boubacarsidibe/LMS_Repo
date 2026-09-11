@@ -8,6 +8,7 @@ import {
   SessionCandidatureResponse,
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 
 @Component({
@@ -45,7 +46,8 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   private dernierIndexClique: number | null = null;
   suppressionGroupeeEnCours = false;
 
-  constructor(private recrutementService: RecrutementService, private router: Router) {}
+  constructor(private recrutementService: RecrutementService, private router: Router,
+              private notifications: NotificationService) {}
 
   ngOnInit(): void {
     this.chargerSessions();
@@ -132,7 +134,7 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
     if (!confirm(`Supprimer définitivement la session "${session.libelle}" ?`)) return;
     this.recrutementService.supprimerSession(session.id).subscribe({
       next: () => this.chargerSessions(),
-      error: () => alert('Échec de la suppression de la session.'),
+      error: () => this.notifications.erreur('Échec de la suppression de la session.'),
     });
   }
 
@@ -186,7 +188,7 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
       },
       error: () => {
         this.suppressionGroupeeEnCours = false;
-        alert('Échec de la suppression groupée — certaines sessions ont peut-être tout de même été supprimées.');
+        this.notifications.erreur('Échec de la suppression groupée — certaines sessions ont peut-être tout de même été supprimées.');
         this.viderSelection();
         this.chargerSessions();
       },
@@ -202,7 +204,7 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
       },
       error: () => {
         this.exporting = false;
-        alert("Échec de l'export Excel.");
+        this.notifications.erreur("Échec de l'export Excel.");
       },
     });
   }

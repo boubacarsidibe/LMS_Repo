@@ -145,6 +145,40 @@ normalisent les fins de ligne et transforment un correctif de 20 lignes en diff 
 les migrations** pendant les tests, avant tout déploiement. En tenir compte avant de
 lancer la suite sur une base qui sert à une démonstration.
 
+### Les e-mails partent, mais n'arrivent pas — SPF d'`inpg.sn` contre Brevo
+
+Diagnostiqué le 2026-09-08 : le code d'envoi fonctionne (SMTP Brevo authentifié,
+aucune exception), mais `inpg.sn` a de vrais MX Microsoft 365 et un SPF terminé par
+`-all` qui **n'autorise pas Brevo**. Un message expédié via Brevo en se présentant
+comme `@inpg.sn` est donc rejeté ou mis en quarantaine chez le destinataire, sans
+que rien ne remonte côté serveur. Ne pas chercher le bug dans `NotificationService` :
+il n'y en a pas.
+
+Deux sorties, à trancher avant la production : autoriser Brevo dans le SPF/DKIM du
+DNS d'`inpg.sn`, ou renoncer à Brevo et pointer `MAIL_HOST` vers le SMTP Microsoft
+365 du domaine. En développement, `APP_MAIL_FROM` utilise une adresse d'un domaine
+vérifié chez Brevo — contournement inacceptable en production, où les candidats
+recevraient leurs convocations depuis une adresse personnelle.
+
+### Numéroter les nouvelles migrations par horodatage, pas par entier
+
+Les migrations `V1` à `V39` restent telles quelles — **ne jamais les renommer** : leur
+somme de contrôle est enregistrée dans `flyway_schema_history`, et un fichier renommé
+après application fait échouer la validation au démarrage.
+
+Toute **nouvelle** migration prend en revanche la forme `V<AAAAMMJJHHMM>__sujet.sql`
+(ex. `V202609081430__prix_par_session.sql`). Flyway compare les versions numériquement,
+donc un horodatage passe toujours après `V39`.
+
+La raison : deux branches (ou deux agents) qui travaillent en parallèle choisissent
+fatalement le même entier suivant. C'est arrivé le 2026-09-08 — `V32`/`V33` ont été
+renumérotées en `V38`/`V39` alors que la base les avait déjà appliquées sous leur
+ancien numéro. Résultat : validation Flyway en échec, backend qui refuse de démarrer,
+et réparation manuelle des lignes de `flyway_schema_history` (correction du champ
+`version`, checksums inchangés car le contenu des fichiers, lui, n'avait pas bougé)
+puis un démarrage ponctuel avec `spring.flyway.out-of-order=true` pour rattraper les
+migrations restées en attente. Un horodatage rend la collision impossible.
+
 ---
 
 ## 3. Décisions d'architecture à ne pas défaire

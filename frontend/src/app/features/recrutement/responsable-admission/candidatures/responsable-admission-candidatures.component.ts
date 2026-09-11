@@ -7,8 +7,9 @@ import { CandidatureResponse, FormatRapport, RecrutementService, ResultatRelance
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 import { ReportButtonComponent } from '../../../../shared/components/report-button/report-button.component';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
-type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 'ADMIS2' | 'ADMIS3' | 'REJETE' | 'BROUILLON';
+type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 'ADMIS2' | 'LISTE_ATTENTE' | 'ADMIS3' | 'REJETE' | 'BROUILLON';
 
 @Component({
   selector: 'app-responsable-admission-candidatures',
@@ -30,6 +31,60 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
    * infinie de rafraîchissement), notamment via le <select ngModel> des sessions. */
   sessionsDisponibles: { id: number; libelle: string }[] = [];
   candidaturesFiltrees: CandidatureResponse[] = [];
+
+  /**
+   * Pagination de la liste. Faite côté navigateur : la liste complète est déjà chargée,
+   * et les onglets comme la recherche comptent sur l'ensemble des dossiers, pas sur la
+   * page affichée. Elle évite le mur de plusieurs centaines de lignes d'un seul tenant.
+   */
+  page = 1;
+  readonly taillePage = 10;
+
+  /** Onglets du parcours, dans l'ordre où un dossier les traverse. */
+  readonly onglets: { statut: StatutFiltre; libelle: string }[] = [
+    { statut: 'TOUS', libelle: 'Toutes' },
+    { statut: 'SOUMIS', libelle: 'Soumises' },
+    { statut: 'EN_COURS_DE_PRESELECTION', libelle: 'Présélection' },
+    { statut: 'ADMIS1', libelle: 'Test' },
+    { statut: 'ADMIS2', libelle: 'Entretien' },
+    { statut: 'LISTE_ATTENTE', libelle: 'Liste compl.' },
+    { statut: 'ADMIS3', libelle: 'Admises' },
+    { statut: 'REJETE', libelle: 'Rejetées' },
+  ];
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.candidaturesFiltrees.length / this.taillePage));
+  }
+
+  get candidaturesPage(): CandidatureResponse[] {
+    const debut = (this.page - 1) * this.taillePage;
+    return this.candidaturesFiltrees.slice(debut, debut + this.taillePage);
+  }
+
+  get premierAffiche(): number {
+    return this.candidaturesFiltrees.length === 0 ? 0 : (this.page - 1) * this.taillePage + 1;
+  }
+
+  get dernierAffiche(): number {
+    return Math.min(this.page * this.taillePage, this.candidaturesFiltrees.length);
+  }
+
+  /** Numéros de page à afficher, resserrés autour de la page courante au-delà de 7 pages. */
+  get pagesAffichees(): number[] {
+    const total = this.totalPages;
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const autour = [1, 2, this.page - 1, this.page, this.page + 1, total - 1, total]
+      .filter((p) => p >= 1 && p <= total);
+    return [...new Set(autour)].sort((a, b) => a - b);
+  }
+
+  allerPage(p: number): void {
+    if (p < 1 || p > this.totalPages) return;
+    this.page = p;
+    // L'ancre du Shift+clic désigne une ligne de l'ancienne page : la conserver
+    // ferait cocher un intervalle sans rapport avec ce que l'on voit.
+    this.dernierIndexClique = null;
+  }
 
   candidatureSelectionnee: CandidatureResponse | null = null;
   actionEnCours = false;
@@ -74,7 +129,8 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   ];
   readonly colonnesExportParDefaut = ['numeroDossier', 'nom', 'prenom', 'email', 'session', 'statut', 'dateSoumission', 'motifRejet'];
 
-  constructor(private recrutementService: RecrutementService, private route: ActivatedRoute, private router: Router) {}
+  constructor(private recrutementService: RecrutementService, private route: ActivatedRoute, private router: Router,
+              private notifications: NotificationService) {}
 
   ngOnInit(): void {
     const sessionParam = this.route.snapshot.queryParamMap.get('session');
@@ -140,6 +196,22 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
         (c.numeroDossier || '').toLowerCase().includes(q)
       );
     });
+    // Changer de filtre remet en page 1 : rester en page 5 d'une liste qui n'en compte
+    // plus que deux afficherait un tableau vide sans expliquer pourquoi.
+    this.page = 1;
+    this.dernierIndexClique = null;
+  }
+
+  /** Remet la liste à son état par défaut : tous les statuts, toutes les sessions, sans recherche. */
+  reinitialiserFiltres(): void {
+    this.recherche = '';
+    this.filtreStatut = 'TOUS';
+    this.filtreSessionId = null;
+    this.recalculerFiltres();
+  }
+
+  get filtresActifs(): boolean {
+    return this.recherche.trim() !== '' || this.filtreStatut !== 'TOUS' || this.filtreSessionId !== null;
   }
 
   setFiltreStatut(statut: StatutFiltre): void {
@@ -249,16 +321,33 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     return this.selection.has(id);
   }
 
+  /**
+   * La case d'en-tête porte sur la page affichée, pas sur la liste entière.
+   *
+   * <p>Elle couvrait auparavant les candidatures filtrées au complet : cliquer dessus
+   * au-dessus de dix lignes visibles en sélectionnait cent vingt-quatre, et cocher les
+   * dix lignes visibles ne la cochait pas. Une case au-dessus d'une colonne ne peut
+   * désigner que ce qu'elle surplombe.
+   */
   get toutesSelectionnees(): boolean {
-    return this.candidaturesFiltrees.length > 0 && this.candidaturesFiltrees.every((c) => this.selection.has(c.id));
+    const page = this.candidaturesPage;
+    return page.length > 0 && page.every((c) => this.selection.has(c.id));
   }
 
-  /** Coche/décoche une ligne ; Shift+clic étend la sélection depuis la dernière ligne cliquée. */
+  /**
+   * Coche/décoche une ligne ; Shift+clic étend la sélection depuis la dernière ligne cliquée.
+   *
+   * <p>L'index reçu est celui de la ligne <strong>dans la page</strong> : c'est la page qu'il
+   * faut parcourir. Indexer la liste filtrée entière faisait cocher, depuis la page 2, des
+   * candidats restés en page 1.
+   */
   basculerSelection(id: number, index: number, event: MouseEvent): void {
-    const liste = this.candidaturesFiltrees;
+    const page = this.candidaturesPage;
     if (event.shiftKey && this.dernierIndexClique !== null) {
       const [debut, fin] = [this.dernierIndexClique, index].sort((a, b) => a - b);
-      for (let i = debut; i <= fin; i++) this.selection.add(liste[i].id);
+      for (let i = debut; i <= fin; i++) {
+        if (page[i]) this.selection.add(page[i].id);
+      }
     } else if (this.selection.has(id)) {
       this.selection.delete(id);
     } else {
@@ -268,11 +357,22 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   }
 
   basculerToutSelectionner(): void {
+    const page = this.candidaturesPage;
     if (this.toutesSelectionnees) {
-      this.candidaturesFiltrees.forEach((c) => this.selection.delete(c.id));
+      page.forEach((c) => this.selection.delete(c.id));
     } else {
-      this.candidaturesFiltrees.forEach((c) => this.selection.add(c.id));
+      page.forEach((c) => this.selection.add(c.id));
     }
+  }
+
+  /** Sélectionne tous les dossiers filtrés, y compris ceux des autres pages — geste explicite. */
+  selectionnerTousLesResultats(): void {
+    this.candidaturesFiltrees.forEach((c) => this.selection.add(c.id));
+  }
+
+  /** Vrai quand la page entière est cochée mais que d'autres résultats restent hors page. */
+  get peutEtendreSelection(): boolean {
+    return this.toutesSelectionnees && this.selection.size < this.candidaturesFiltrees.length;
   }
 
   viderSelection(): void {
@@ -284,13 +384,13 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   rejeterSelection(): void {
     const cibles = this.candidatures.filter((c) => this.selection.has(c.id) && this.peutRejeter(c));
     if (cibles.length === 0) {
-      alert('Aucun dossier sélectionné ne peut être rejeté (déjà admis, déjà rejeté ou brouillon).');
+      this.notifications.erreur('Aucun dossier sélectionné ne peut être rejeté (déjà admis, déjà rejeté ou brouillon).');
       return;
     }
     const motif = window.prompt(`Motif de rejet pour ${cibles.length} dossier(s) :`);
     if (motif === null) return;
     if (!motif.trim()) {
-      alert('Un motif de rejet est requis.');
+      this.notifications.erreur('Un motif de rejet est requis.');
       return;
     }
     this.rejetGroupeEnCours = true;
@@ -302,7 +402,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       },
       error: (err) => {
         this.rejetGroupeEnCours = false;
-        alert(err.error?.message || 'Échec du rejet groupé — certains dossiers ont peut-être tout de même été rejetés.');
+        this.notifications.erreur(err.error?.message || 'Échec du rejet groupé — certains dossiers ont peut-être tout de même été rejetés.');
         this.viderSelection();
         this.chargerCandidatures();
       },
@@ -313,7 +413,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   annulerSelection(): void {
     const cibles = this.candidatures.filter((c) => this.selection.has(c.id) && this.peutAnnuler(c));
     if (cibles.length === 0) {
-      alert('Aucun dossier sélectionné ne peut être annulé (aucune décision récente, ou déjà admis définitivement).');
+      this.notifications.erreur('Aucun dossier sélectionné ne peut être annulé (aucune décision récente, ou déjà admis définitivement).');
       return;
     }
     this.rejetGroupeEnCours = true;
@@ -325,7 +425,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       },
       error: (err) => {
         this.rejetGroupeEnCours = false;
-        alert(err.error?.message || 'Échec de l\'annulation groupée — certains dossiers ont peut-être tout de même été modifiés.');
+        this.notifications.erreur(err.error?.message || 'Échec de l\'annulation groupée — certains dossiers ont peut-être tout de même été modifiés.');
         this.viderSelection();
         this.chargerCandidatures();
       },
@@ -336,7 +436,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   reculerSelectionVers(cible: string): void {
     const cibles = this.candidatures.filter((c) => this.selection.has(c.id) && this.peutReculerVers(c, cible));
     if (cibles.length === 0) {
-      alert('Aucun dossier sélectionné ne peut reculer vers ce statut.');
+      this.notifications.erreur('Aucun dossier sélectionné ne peut reculer vers ce statut.');
       return;
     }
     this.rejetGroupeEnCours = true;
@@ -348,7 +448,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       },
       error: (err) => {
         this.rejetGroupeEnCours = false;
-        alert(err.error?.message || 'Échec du recul groupé — certains dossiers ont peut-être tout de même été modifiés.');
+        this.notifications.erreur(err.error?.message || 'Échec du recul groupé — certains dossiers ont peut-être tout de même été modifiés.');
         this.viderSelection();
         this.chargerCandidatures();
       },
@@ -366,7 +466,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       },
       error: (err) => {
         this.actionEnCours = false;
-        alert(err.error?.message || "Échec de l'annulation.");
+        this.notifications.erreur(err.error?.message || "Échec de l'annulation.");
       },
     });
   }
@@ -380,7 +480,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       },
       error: (err) => {
         this.actionEnCours = false;
-        alert(err.error?.message || "Échec de l'action sur la candidature.");
+        this.notifications.erreur(err.error?.message || "Échec de l'action sur la candidature.");
       },
     });
   }
@@ -411,7 +511,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       },
       error: (err) => {
         this.actionEnCours = false;
-        alert(err.error?.message || "Échec de la finalisation de l'inscription.");
+        this.notifications.erreur(err.error?.message || "Échec de la finalisation de l'inscription.");
       },
     });
   }
@@ -420,7 +520,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     const motif = window.prompt(`Motif de rejet pour le dossier ${c.numeroDossier} :`);
     if (motif === null) return; // annulé
     if (!motif.trim()) {
-      alert('Un motif de rejet est requis.');
+      this.notifications.erreur('Un motif de rejet est requis.');
       return;
     }
     this.actionEnCours = true;
@@ -431,7 +531,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       },
       error: (err) => {
         this.actionEnCours = false;
-        alert(err.error?.message || 'Échec du rejet de la candidature.');
+        this.notifications.erreur(err.error?.message || 'Échec du rejet de la candidature.');
       },
     });
   }
@@ -446,7 +546,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       },
       error: () => {
         this.exporting = false;
-        alert("Échec de l'export Excel.");
+        this.notifications.erreur("Échec de l'export Excel.");
       },
     });
   }
@@ -480,7 +580,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       },
       error: (err) => {
         this.exportingDocuments = false;
-        alert(err.status === 400 ? "Aucun document à exporter pour cette sélection." : "Échec de l'export des documents.");
+        this.notifications.erreur(err.status === 400 ? "Aucun document à exporter pour cette sélection." : "Échec de l'export des documents.");
       },
     });
   }
@@ -495,7 +595,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       },
       error: () => {
         this.generatingRapport = false;
-        alert('Échec de la génération du rapport qualité.');
+        this.notifications.erreur('Échec de la génération du rapport qualité.');
       },
     });
   }
@@ -510,7 +610,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       },
       error: () => {
         this.generatingReport = false;
-        alert('Échec de la génération du rapport.');
+        this.notifications.erreur('Échec de la génération du rapport.');
       },
     });
   }

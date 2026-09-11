@@ -8,6 +8,7 @@ import {
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { DashboardPreferences, DashboardPreferencesService } from '../services/dashboard-preferences.service';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 @Component({
   selector: 'app-responsable-admission',
@@ -24,7 +25,8 @@ export class ResponsableAdmissionComponent implements OnInit {
 
   constructor(
     private recrutementService: RecrutementService,
-    private prefsService: DashboardPreferencesService
+    private prefsService: DashboardPreferencesService,
+    private notifications: NotificationService
   ) {
     this.prefs = this.prefsService.charger();
   }
@@ -123,7 +125,7 @@ export class ResponsableAdmissionComponent implements OnInit {
       },
       error: () => {
         this.exporting = false;
-        alert("Échec de l'export Excel.");
+        this.notifications.erreur("Échec de l'export Excel.");
       },
     });
   }

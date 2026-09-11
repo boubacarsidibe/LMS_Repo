@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { EnumTypeNotification, NotificationTemplate, RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 interface TemplateAffiche extends NotificationTemplate {
   label: string;
@@ -19,6 +20,7 @@ const LIBELLES: Record<EnumTypeNotification, string> = {
   ADMISSION_TEST: 'Admis au test académique',
   ADMISSION_ENTRETIEN: 'Admis à l\'entretien',
   ADMISSION_FINALE: 'Admission finale',
+  LISTE_ATTENTE: 'Liste complémentaire',
   NON_ADMISSION: 'Non-admission',
   DOCUMENT_CONFORME: 'Document validé',
   DOCUMENT_NON_CONFORME: 'Document non conforme',
@@ -26,20 +28,23 @@ const LIBELLES: Record<EnumTypeNotification, string> = {
   RAPPEL_PAIEMENT: 'Rappel : paiement en attente',
 };
 
+// « nomCandidat » est servi pour tous les types : le serveur le résout à partir de
+// l'adresse du destinataire, l'appelant n'a pas à le fournir.
 const PLACEHOLDERS: Record<EnumTypeNotification, string[]> = {
-  VALIDATION_DOSSIER: ['numeroDossier'],
-  REJET_DOSSIER: ['numeroDossier', 'motif'],
-  PAIEMENT_SUCCES: ['numeroDossier'],
-  CONVOCATION_TEST: ['nomEpreuve', 'date', 'lieuOuLien'],
-  CONVOCATION_ENTRETIEN: ['date', 'lieuOuLien'],
-  ADMISSION_TEST: ['numeroDossier'],
-  ADMISSION_ENTRETIEN: ['numeroDossier'],
-  ADMISSION_FINALE: ['numeroDossier'],
-  NON_ADMISSION: ['numeroDossier'],
-  DOCUMENT_CONFORME: ['numeroDossier', 'typeDocument'],
-  DOCUMENT_NON_CONFORME: ['numeroDossier', 'typeDocument'],
-  RAPPEL_DOSSIER_INCOMPLET: ['numeroDossier', 'piecesManquantes'],
-  RAPPEL_PAIEMENT: ['numeroDossier'],
+  VALIDATION_DOSSIER: ['nomCandidat', 'numeroDossier'],
+  REJET_DOSSIER: ['nomCandidat', 'numeroDossier', 'motif'],
+  PAIEMENT_SUCCES: ['nomCandidat', 'numeroDossier'],
+  CONVOCATION_TEST: ['nomCandidat', 'nomEpreuve', 'date', 'lieuOuLien'],
+  CONVOCATION_ENTRETIEN: ['nomCandidat', 'date', 'lieuOuLien'],
+  ADMISSION_TEST: ['nomCandidat', 'numeroDossier'],
+  ADMISSION_ENTRETIEN: ['nomCandidat', 'numeroDossier'],
+  ADMISSION_FINALE: ['nomCandidat', 'numeroDossier'],
+  LISTE_ATTENTE: ['nomCandidat', 'numeroDossier'],
+  NON_ADMISSION: ['nomCandidat', 'numeroDossier'],
+  DOCUMENT_CONFORME: ['nomCandidat', 'numeroDossier', 'typeDocument'],
+  DOCUMENT_NON_CONFORME: ['nomCandidat', 'numeroDossier', 'typeDocument'],
+  RAPPEL_DOSSIER_INCOMPLET: ['nomCandidat', 'numeroDossier', 'piecesManquantes'],
+  RAPPEL_PAIEMENT: ['nomCandidat', 'numeroDossier'],
 };
 
 @Component({
@@ -53,7 +58,7 @@ export class ResponsableAdmissionNotificationsComponent implements OnInit {
   loading = false;
   errorMessage = '';
 
-  constructor(private recrutementService: RecrutementService) {}
+  constructor(private recrutementService: RecrutementService, private notifications: NotificationService) {}
 
   ngOnInit(): void {
     this.charger();
@@ -91,7 +96,7 @@ export class ResponsableAdmissionNotificationsComponent implements OnInit {
       next: () => (template.enregistrement = false),
       error: () => {
         template.enregistrement = false;
-        alert("Échec de l'enregistrement du modèle.");
+        this.notifications.erreur("Échec de l'enregistrement du modèle.");
       },
     });
   }
