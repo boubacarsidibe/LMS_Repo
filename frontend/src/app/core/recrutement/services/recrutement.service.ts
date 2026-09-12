@@ -132,6 +132,7 @@ export interface PieceJustificativeResponse {
   id: number;
   typeDocument: string;
   estConforme: boolean;
+  description: string | null;
   fichierStockeId: number | null;
   fichierNomOriginal: string | null;
 }
@@ -475,10 +476,11 @@ export class RecrutementService {
     return this.http.post<CandidatureResponse>(`${this.baseUrl}/recrutement/candidat/candidature/soumettre`, request);
   }
 
-  televerserPiece(candidatureId: number, file: File, typeDocument: string): Observable<any> {
+  televerserPiece(candidatureId: number, file: File, typeDocument: string, description?: string): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('typeDocument', typeDocument);
+    if (description) formData.append('description', description);
     return this.http.post(`${this.baseUrl}/recrutement/candidat/candidature/${candidatureId}/pieces`, formData);
   }
 

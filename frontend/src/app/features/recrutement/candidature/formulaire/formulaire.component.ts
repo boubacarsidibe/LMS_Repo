@@ -48,6 +48,15 @@ export class FormulaireComponent implements OnInit {
   /** Stocke les vrais fichiers sélectionnés (pas juste leurs noms) */
   filesToUpload: Map<string, File[]> = new Map();
 
+  /**
+   * Diplômes/certificats ajoutés en nombre libre (à l'image d'un formulaire de
+   * candidature UNESCO où l'on ajoute autant de compétences que l'on veut) : un
+   * document + sa description, avec un bouton « + » qui n'apparaît qu'une fois la
+   * dernière entrée complète. Volontairement hors de `data` : les `File` ne
+   * survivent pas à la sérialisation JSON du brouillon.
+   */
+  diplomes: { file: File | null; description: string }[] = [{ file: null, description: '' }];
+
   etape = 1;
   readonly totalEtapes = 4;
 
@@ -367,6 +376,18 @@ export class FormulaireComponent implements OnInit {
         );
       });
     });
+    this.diplomes
+      .filter((d) => d.file && d.description.trim())
+      .forEach((d) => {
+        const upload$ = this.recrutementService.televerserPiece(candidatureId, d.file!, 'DIPLOME', d.description.trim());
+        uploads.push(
+          firstValueFrom(upload$).catch((err) => {
+            console.error(`[uploadAllFiles] Échec upload diplôme (${d.file!.name}):`, err);
+            return Promise.resolve(null);
+          })
+        );
+      });
+
     if (uploads.length > 0) {
       Promise.all(uploads).finally(() => this.onSubmitComplete());
     } else {
@@ -413,5 +434,34 @@ export class FormulaireComponent implements OnInit {
       else if (type === 'releves') this.data.fichierReleves = names;
       this.saveDraft();
     }
+  }
+
+  /** La dernière entrée doit être complète avant de pouvoir en ajouter une autre. */
+  get dernierDiplomeComplet(): boolean {
+    const dernier = this.diplomes[this.diplomes.length - 1];
+    return !!dernier?.file && dernier.description.trim().length > 0;
+  }
+
+  onDiplomeFileSelected(event: Event, index: number): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const MAX_SIZE_MO = 5;
+    if (file.size > MAX_SIZE_MO * 1024 * 1024) {
+      alert(`❌ Fichier trop volumineux (max ${MAX_SIZE_MO} Mo) : ${file.name}`);
+      input.value = '';
+      return;
+    }
+    this.diplomes[index].file = file;
+  }
+
+  ajouterDiplome(): void {
+    if (!this.dernierDiplomeComplet) return;
+    this.diplomes.push({ file: null, description: '' });
+  }
+
+  retirerDiplome(index: number): void {
+    this.diplomes.splice(index, 1);
+    if (this.diplomes.length === 0) this.diplomes.push({ file: null, description: '' });
   }
 }

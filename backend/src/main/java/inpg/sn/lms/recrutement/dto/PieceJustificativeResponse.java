@@ -17,6 +17,7 @@ public class PieceJustificativeResponse {
     private Long id;
     private EnumTypeDocument typeDocument;
     private boolean estConforme;
+    private String description;
     private Long fichierStockeId;
     private String fichierNomOriginal;
 }
