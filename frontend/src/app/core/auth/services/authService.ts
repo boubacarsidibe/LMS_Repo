@@ -55,6 +55,8 @@ export class Auth {
       return '/evaluateur-accreditation';
     } else if (roles.includes('ROLE_CANDIDAT')) {
       return '/recrutement/suivi';
+    } else if (roles.includes('ROLE_CANDIDAT_FORMATEUR')) {
+      return '/candidature-formateur';
     } else if (roles.includes('ROLE_ETUDIANT')) {
       return '/espace-etudiant/dashboard';
     } else if (roles.includes('ROLE_FORMATEUR')) {
