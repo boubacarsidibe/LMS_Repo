@@ -128,6 +128,7 @@ export interface PieceJustificativeResponse {
   id: number;
   typeDocument: string;
   estConforme: boolean;
+  description: string | null;
   fichierStockeId: number | null;
   fichierNomOriginal: string | null;
   /** Moyenne déclarée par le candidat pour un relevé de notes (sur 20), null sinon. */
@@ -469,10 +470,21 @@ export class RecrutementService {
     return this.http.post<CandidatureResponse>(`${this.baseUrl}/recrutement/candidat/candidature/soumettre`, request);
   }
 
-  televerserPiece(candidatureId: number, file: File, typeDocument: string, moyenneDeclaree?: number | null): Observable<any> {
+  televerserPiece(
+    candidatureId: number,
+    file: File,
+    typeDocument: string,
+    descriptionOuMoyenne?: string | number | null,
+    moyenneDeclaree?: number | null
+  ): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('typeDocument', typeDocument);
+    if (typeof descriptionOuMoyenne === 'number') {
+      formData.append('moyenneDeclaree', String(descriptionOuMoyenne));
+    } else if (typeof descriptionOuMoyenne === 'string') {
+      formData.append('description', descriptionOuMoyenne);
+    }
     if (moyenneDeclaree !== undefined && moyenneDeclaree !== null) {
       formData.append('moyenneDeclaree', String(moyenneDeclaree));
     }

@@ -473,6 +473,7 @@ public class CandidatController {
             @PathVariable Long candidatureId,
             @RequestParam("file") MultipartFile file,
             @RequestParam("typeDocument") String typeDocumentStr,
+            @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "moyenneDeclaree", required = false) Double moyenneDeclaree,
             Authentication authentication) {
 
@@ -495,6 +496,17 @@ public class CandidatController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(java.util.Map.of("message", "Type de document invalide: " + typeDocumentStr));
+        }
+
+        // Un diplôme/certificat s'ajoute en nombre libre : rien d'autre que cette
+        // description ne permet ensuite de savoir à quoi il correspond.
+        if (typeDocument == EnumTypeDocument.DIPLOME && (description == null || description.isBlank())) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("message", "Une description est requise pour un diplôme ou certificat."));
+        }
+        if (description != null && description.length() > 500) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("message", "La description ne doit pas dépasser 500 caractères."));
         }
 
         // Seule la taille est contrôlée ici : c'est la seule règle que
@@ -531,6 +543,7 @@ public class CandidatController {
         PieceJustificative piece = new PieceJustificative();
         piece.setTypeDocument(typeDocument);
         piece.setEstConforme(false);
+        piece.setDescription(description != null && !description.isBlank() ? description.trim() : null);
         piece.setFichierStocke(fichier);
         piece.setCandidature(candidature);
         piece.setMoyenneDeclaree(typeDocument == EnumTypeDocument.RELEVE_NOTES ? moyenneDeclaree : null);

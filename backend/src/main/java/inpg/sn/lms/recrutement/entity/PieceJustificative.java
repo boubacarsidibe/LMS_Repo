@@ -41,6 +41,12 @@ public class PieceJustificative {
     @Column(name = "moyenne_declaree")
     private Double moyenneDeclaree;
 
+    /** À quoi correspond ce document (obligatoire côté serveur pour un DIPLOME : plusieurs
+     * diplômes/certificats peuvent être ajoutés librement par le candidat, rien d'autre
+     * ne les distingue). */
+    @Column(length = 500)
+    private String description;
+
     @ManyToOne
     @JoinColumn(name = "candidature_id", nullable = false)
     private Candidature candidature;

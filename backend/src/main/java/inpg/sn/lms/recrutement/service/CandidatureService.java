@@ -382,6 +382,7 @@ public class CandidatureService {
                         .id(p.getId())
                         .typeDocument(p.getTypeDocument())
                         .estConforme(p.isEstConforme())
+                        .description(p.getDescription())
                         .fichierStockeId(p.getFichierStocke() != null ? p.getFichierStocke().getId() : null)
                         .fichierNomOriginal(
                                 p.getFichierStocke() != null ? p.getFichierStocke().getNomOriginal() : null)
