@@ -56,29 +56,6 @@
 
 <button *ngIf="menuActionsOuvert || menuRapportsOuvert" type="button" class="dashboard-menu-backdrop" aria-label="Fermer le menu" (click)="fermerMenus()"></button>
 
-<section class="summary-grid mb-stack-lg" aria-label="Indicateurs des candidatures">
-  <button type="button" (click)="setFiltreStatut('TOUS')" class="summary-card" [class.summary-card-active]="filtreStatut === 'TOUS'">
-    <span class="summary-card-icon"><span class="material-symbols-outlined">folder_shared</span></span>
-    <span class="summary-card-content"><small>Total des dossiers</small><strong>{{ compter('TOUS') }}</strong></span>
-    <span class="material-symbols-outlined summary-card-arrow">arrow_forward</span>
-  </button>
-  <button type="button" (click)="setFiltreStatut('SOUMIS')" class="summary-card" [class.summary-card-active]="filtreStatut === 'SOUMIS'">
-    <span class="summary-card-icon"><span class="material-symbols-outlined">inbox</span></span>
-    <span class="summary-card-content"><small>À examiner</small><strong>{{ compter('SOUMIS') }}</strong></span>
-    <span class="material-symbols-outlined summary-card-arrow">arrow_forward</span>
-  </button>
-  <button type="button" (click)="setFiltreStatut('EN_COURS_DE_PRESELECTION')" class="summary-card" [class.summary-card-active]="filtreStatut === 'EN_COURS_DE_PRESELECTION'">
-    <span class="summary-card-icon"><span class="material-symbols-outlined">manage_search</span></span>
-    <span class="summary-card-content"><small>En présélection</small><strong>{{ compter('EN_COURS_DE_PRESELECTION') }}</strong></span>
-    <span class="material-symbols-outlined summary-card-arrow">arrow_forward</span>
-  </button>
-  <button type="button" (click)="setFiltreStatut('ADMIS3')" class="summary-card" [class.summary-card-active]="filtreStatut === 'ADMIS3'">
-    <span class="summary-card-icon"><span class="material-symbols-outlined">verified</span></span>
-    <span class="summary-card-content"><small>Admissions finales</small><strong>{{ compter('ADMIS3') }}</strong></span>
-    <span class="material-symbols-outlined summary-card-arrow">arrow_forward</span>
-  </button>
-</section>
-
 <div *ngIf="relanceMessage" class="mb-stack-md p-4 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm text-body-sm">
   {{ relanceMessage }}
 </div>
@@ -140,7 +117,7 @@
 <div class="status-grid mb-stack-md" aria-label="Filtrer par étape du parcours">
   <button *ngFor="let o of onglets" type="button" (click)="setFiltreStatut(o.statut)"
           [attr.aria-pressed]="filtreStatut === o.statut"
-          class="status-tab flex items-center justify-between gap-2 px-3 h-11 rounded-lg font-label-md text-label-md transition-colors border"
+          class="status-tab flex items-center justify-between gap-1.5 px-2.5 h-9 rounded-lg font-label-sm text-label-sm transition-colors border"
           [class.bg-secondary]="filtreStatut === o.statut"
           [class.text-on-secondary]="filtreStatut === o.statut"
           [class.border-secondary]="filtreStatut === o.statut"
@@ -149,7 +126,7 @@
           [class.border-outline-variant]="filtreStatut !== o.statut"
           [class.hover:bg-surface-container-low]="filtreStatut !== o.statut">
     {{ o.libelle }}
-    <span class="shrink-0 min-w-6 px-1.5 py-0.5 rounded-full font-label-sm text-label-sm"
+    <span class="shrink-0 min-w-5 px-1 py-0.5 rounded-full text-[11px] font-semibold text-center"
           [class.bg-on-secondary/20]="filtreStatut === o.statut"
           [class.text-on-secondary]="filtreStatut === o.statut"
           [class.bg-surface-container]="filtreStatut !== o.statut"
