@@ -35,44 +35,24 @@
   {{ errorMessage }}
 </div>
 
-<!-- KPI Bento Grid -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter my-stack-lg">
-  <button type="button" (click)="filtreStatut = 'TOUTES'" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group">
-    <div class="flex items-center justify-between mb-4">
-      <p class="font-label-md text-label-md text-on-surface-variant">Total Sessions</p>
-      <span class="material-symbols-outlined text-on-surface-variant opacity-70">event</span>
-    </div>
-    <h3 class="font-headline-lg text-headline-lg text-primary">{{ totalSessions }} <span class="font-body-md text-body-md text-on-surface-variant font-normal">sessions</span></h3>
+<!-- Indicateurs compacts : ils restent utiles comme raccourcis sans repousser la liste. -->
+<div class="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest my-stack-lg overflow-hidden">
+  <button type="button" (click)="filtreStatut = 'TOUTES'" [attr.aria-pressed]="filtreStatut === 'TOUTES'" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="filtreStatut === 'TOUTES'">
+    <span class="material-symbols-outlined text-secondary text-[20px]">event</span>
+    <span class="min-w-0"><strong class="block font-headline-sm text-headline-sm text-primary leading-none">{{ totalSessions }}</strong><span class="font-label-sm text-label-sm text-on-surface-variant">Toutes les sessions</span></span>
   </button>
-  <button type="button" (click)="filtreStatut = 'OUVERTES'" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group">
-    <div class="flex items-center justify-between mb-4">
-      <p class="font-label-md text-label-md text-on-surface-variant">Sessions Ouvertes</p>
-      <span class="material-symbols-outlined text-on-surface-variant opacity-70">check_circle</span>
-    </div>
-    <div class="flex items-end gap-3">
-      <h3 class="font-headline-lg text-headline-lg text-primary">{{ nbOuvertes }}</h3>
-      <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-md mb-2">ouvertes</span>
-    </div>
+  <button type="button" (click)="filtreStatut = 'OUVERTES'" [attr.aria-pressed]="filtreStatut === 'OUVERTES'" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="filtreStatut === 'OUVERTES'">
+    <span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+    <span class="min-w-0"><strong class="block font-headline-sm text-headline-sm text-primary leading-none">{{ nbOuvertes }}</strong><span class="font-label-sm text-label-sm text-on-surface-variant">Ouvertes</span></span>
   </button>
-  <button type="button" (click)="filtreStatut = 'ACTIVES'" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group">
-    <div class="flex items-center justify-between mb-4">
-      <p class="font-label-md text-label-md text-on-surface-variant">Sessions Actives</p>
-      <span class="material-symbols-outlined text-on-surface-variant opacity-70">bolt</span>
-    </div>
-    <h3 class="font-headline-lg text-headline-lg text-primary">{{ nbActives }}</h3>
+  <button type="button" (click)="filtreStatut = 'ACTIVES'" [attr.aria-pressed]="filtreStatut === 'ACTIVES'" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="filtreStatut === 'ACTIVES'">
+    <span class="material-symbols-outlined text-secondary text-[20px]">bolt</span>
+    <span class="min-w-0"><strong class="block font-headline-sm text-headline-sm text-primary leading-none">{{ nbActives }}</strong><span class="font-label-sm text-label-sm text-on-surface-variant">Actives</span></span>
   </button>
-  <button type="button" [disabled]="!prochaineFermeture" (click)="prochaineFermeture && voirSession(prochaineFermeture)" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group disabled:hover:border-outline-variant disabled:cursor-default">
-    <div class="flex items-center justify-between mb-4">
-      <p class="font-label-md text-label-md text-on-surface-variant">Prochaine Clôture</p>
-      <span class="material-symbols-outlined text-on-surface-variant opacity-70">timer</span>
-    </div>
-    <div *ngIf="prochaineFermeture; else aucuneCloture">
-      <p class="font-headline-sm text-headline-sm md:font-headline-md md:text-headline-md text-primary">{{ prochaineFermeture.dateFermeture | date:'dd MMM yyyy' }}</p>
-      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ prochaineFermeture.libelle }}</p>
-    </div>
-    <ng-template #aucuneCloture>
-      <p class="font-body-sm text-body-sm text-on-surface-variant">Aucune session ouverte</p>
-    </ng-template>
+  <button type="button" [disabled]="!prochaineFermeture" (click)="prochaineFermeture && voirSession(prochaineFermeture)" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors disabled:cursor-default">
+    <span class="material-symbols-outlined text-outline text-[20px]">timer</span>
+    <span class="min-w-0" *ngIf="prochaineFermeture; else aucuneCloture"><strong class="block font-label-md text-label-md text-primary leading-none">{{ prochaineFermeture.dateFermeture | date:'dd MMM yyyy' }}</strong><span class="block font-label-sm text-label-sm text-on-surface-variant truncate mt-1">Prochaine clôture</span></span>
+    <ng-template #aucuneCloture><span class="font-label-sm text-label-sm text-on-surface-variant">Aucune clôture prévue</span></ng-template>
   </button>
 </div>
 

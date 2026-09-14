@@ -12,23 +12,11 @@
 <div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
 <div *ngIf="relanceMessage" class="mb-stack-md p-4 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm text-body-sm">{{ relanceMessage }}</div>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter mb-stack-lg">
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
-    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Total encaissé</span><span class="material-symbols-outlined text-secondary">payments</span></div>
-    <div class="font-headline-lg text-headline-lg text-primary">{{ montantTotal | number:'1.0-0' }} <span class="font-body-md text-body-md text-on-surface-variant font-normal">XOF</span></div>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
-    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Paiements réussis</span><span class="material-symbols-outlined text-secondary">check_circle</span></div>
-    <div class="font-headline-lg text-headline-lg text-primary">{{ nbReussis }}</div>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
-    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">En attente</span><span class="material-symbols-outlined text-outline">hourglass_empty</span></div>
-    <div class="font-headline-lg text-headline-lg text-primary">{{ nbEnAttente }}</div>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border shadow-sm" [class.border-error]="candidaturesImpayees.length > 0" [class.border-outline-variant]="candidaturesImpayees.length === 0">
-    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Dossiers validés impayés</span><span class="material-symbols-outlined" [class.text-error]="candidaturesImpayees.length > 0" [class.text-on-surface-variant]="candidaturesImpayees.length === 0">priority_high</span></div>
-    <div class="font-headline-lg text-headline-lg" [class.text-error]="candidaturesImpayees.length > 0" [class.text-primary]="candidaturesImpayees.length === 0">{{ candidaturesImpayees.length }}</div>
-  </div>
+<div class="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest mb-stack-md overflow-hidden">
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-secondary text-[20px]">payments</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ montantTotal | number:'1.0-0' }} <span class="font-label-sm text-label-sm text-on-surface-variant font-normal">XOF</span></div><div class="font-label-sm text-label-sm text-on-surface-variant">Total encaissé</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbReussis }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">Réussis</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-outline text-[20px]">hourglass_empty</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbEnAttente }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">En attente</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-[20px]" [class.text-error]="candidaturesImpayees.length > 0" [class.text-outline]="candidaturesImpayees.length === 0">priority_high</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm leading-none" [class.text-error]="candidaturesImpayees.length > 0" [class.text-primary]="candidaturesImpayees.length === 0">{{ candidaturesImpayees.length }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">Impayés</div></div></div>
 </div>
 
 <!-- Dossiers validés sans paiement réussi : jamais tentés (invisibles de l'historique ci-dessous) ou tentative en attente/échouée. -->
@@ -74,12 +62,12 @@
 </div>
 
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
-  <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-4">
-    <div class="flex items-center gap-2">
-      <button type="button" (click)="filtreStatut = 'TOUS'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'TOUS'" [class.border-b-2]="filtreStatut === 'TOUS'" [class.border-secondary]="filtreStatut === 'TOUS'" [class.font-bold]="filtreStatut === 'TOUS'" [class.text-on-surface-variant]="filtreStatut !== 'TOUS'">Tous</button>
-      <button type="button" (click)="filtreStatut = 'SUCCES'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'SUCCES'" [class.border-b-2]="filtreStatut === 'SUCCES'" [class.border-secondary]="filtreStatut === 'SUCCES'" [class.font-bold]="filtreStatut === 'SUCCES'" [class.text-on-surface-variant]="filtreStatut !== 'SUCCES'">Réussis</button>
-      <button type="button" (click)="filtreStatut = 'EN_ATTENTE'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'EN_ATTENTE'" [class.border-b-2]="filtreStatut === 'EN_ATTENTE'" [class.border-secondary]="filtreStatut === 'EN_ATTENTE'" [class.font-bold]="filtreStatut === 'EN_ATTENTE'" [class.text-on-surface-variant]="filtreStatut !== 'EN_ATTENTE'">En attente</button>
-      <button type="button" (click)="filtreStatut = 'ECHEC'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-error]="filtreStatut === 'ECHEC'" [class.border-b-2]="filtreStatut === 'ECHEC'" [class.border-error]="filtreStatut === 'ECHEC'" [class.font-bold]="filtreStatut === 'ECHEC'" [class.text-on-surface-variant]="filtreStatut !== 'ECHEC'">Échecs</button>
+  <div class="p-3 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-3">
+    <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto" aria-label="Filtrer les paiements">
+      <button type="button" (click)="filtreStatut = 'TOUS'" [attr.aria-pressed]="filtreStatut === 'TOUS'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtreStatut === 'TOUS'" [class.text-on-secondary]="filtreStatut === 'TOUS'" [class.border-secondary]="filtreStatut === 'TOUS'" [class.bg-surface-container-lowest]="filtreStatut !== 'TOUS'" [class.text-on-surface-variant]="filtreStatut !== 'TOUS'" [class.border-outline-variant]="filtreStatut !== 'TOUS'">Tous</button>
+      <button type="button" (click)="filtreStatut = 'SUCCES'" [attr.aria-pressed]="filtreStatut === 'SUCCES'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtreStatut === 'SUCCES'" [class.text-on-secondary]="filtreStatut === 'SUCCES'" [class.border-secondary]="filtreStatut === 'SUCCES'" [class.bg-surface-container-lowest]="filtreStatut !== 'SUCCES'" [class.text-on-surface-variant]="filtreStatut !== 'SUCCES'" [class.border-outline-variant]="filtreStatut !== 'SUCCES'">Réussis</button>
+      <button type="button" (click)="filtreStatut = 'EN_ATTENTE'" [attr.aria-pressed]="filtreStatut === 'EN_ATTENTE'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtreStatut === 'EN_ATTENTE'" [class.text-on-secondary]="filtreStatut === 'EN_ATTENTE'" [class.border-secondary]="filtreStatut === 'EN_ATTENTE'" [class.bg-surface-container-lowest]="filtreStatut !== 'EN_ATTENTE'" [class.text-on-surface-variant]="filtreStatut !== 'EN_ATTENTE'" [class.border-outline-variant]="filtreStatut !== 'EN_ATTENTE'">En attente</button>
+      <button type="button" (click)="filtreStatut = 'ECHEC'" [attr.aria-pressed]="filtreStatut === 'ECHEC'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-error]="filtreStatut === 'ECHEC'" [class.text-on-error]="filtreStatut === 'ECHEC'" [class.border-error]="filtreStatut === 'ECHEC'" [class.bg-surface-container-lowest]="filtreStatut !== 'ECHEC'" [class.text-on-surface-variant]="filtreStatut !== 'ECHEC'" [class.border-outline-variant]="filtreStatut !== 'ECHEC'">Échecs</button>
     </div>
     <div class="relative w-full sm:w-64">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
