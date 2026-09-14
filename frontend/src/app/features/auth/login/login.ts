@@ -38,6 +38,13 @@ export class Login {
 
   resendCountdown = 0;
 
+  /**
+   * Page demandée avant d'être renvoyé ici faute de session (ex. « Postuler »
+   * depuis la vitrine publique des offres de formateur). Sans elle, l'utilisateur
+   * repart vers l'accueil de son rôle et perd ce qu'il était en train de faire.
+   */
+  returnUrl: string | null = null;
+
   constructor(
     private formBuilder: FormBuilder,
     private authService: Auth,
@@ -50,6 +57,8 @@ export class Login {
     if (this.route.snapshot.queryParamMap.has('expired')) {
       this.errorMessage = 'Votre session a expiré. Merci de vous reconnecter.';
     }
+
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
 
     this.form = this.formBuilder.group({
 
@@ -108,7 +117,7 @@ export class Login {
       )
       .subscribe({
         next: () => {
-            this.authService.redirectByRole(this.router);
+            this.apresConnexion();
         },
         error: () => {
           this.errorMessage = 'Une erreur inattendue est survenue.';
@@ -189,7 +198,7 @@ export class Login {
             return;
           }
           // Le token est déjà stocké via setSession() dans onSubmit()
-          this.authService.redirectByRole(this.router);
+          this.apresConnexion();
         },
         error: () => {
           this.errorMessage = 'Une erreur inattendue est survenue lors de la vérification.';
@@ -198,5 +207,19 @@ export class Login {
         }
       });
 
+  }
+
+  /**
+   * Reprend le parcours interrompu s'il y en avait un, sinon envoie vers
+   * l'espace du rôle. Seules les URL internes sont suivies : une valeur
+   * commençant par « // » désignerait un autre site (redirection ouverte).
+   */
+  private apresConnexion(): void {
+    const cible = this.returnUrl;
+    if (cible && cible.startsWith('/') && !cible.startsWith('//')) {
+      this.router.navigateByUrl(cible);
+      return;
+    }
+    this.authService.redirectByRole(this.router);
   }
 }

@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth } from '../../../core/auth/services/authService';
 
 @Component({
@@ -20,6 +20,14 @@ export class Register {
   private fb = inject(FormBuilder);
   private authService = inject(Auth);
   private router = inject(Router);
+
+  /**
+   * Parcours interrompu à reprendre après l'inscription (transmis par la page de
+   * connexion, elle-même appelée depuis « Postuler » sur la vitrine des offres).
+   * Prioritaire sur la redirection par {@link typeInscription}, qui ne connaît
+   * que les trois parcours historiques.
+   */
+  private readonly returnUrl = inject(ActivatedRoute).snapshot.queryParamMap.get('returnUrl');
 
   errorMessage: string = '';
   isLoading: boolean = false;
@@ -98,7 +106,10 @@ export class Register {
     this.authService.register(username, email, password, this.typeInscription).subscribe({
       next: () => {
         this.isLoading = false;
-        if (this.typeInscription === 'ECOLE') {
+        // Une URL interne seulement : « // » désignerait un autre site.
+        if (this.returnUrl && this.returnUrl.startsWith('/') && !this.returnUrl.startsWith('//')) {
+          this.router.navigateByUrl(this.returnUrl);
+        } else if (this.typeInscription === 'ECOLE') {
           this.router.navigate(['/accreditation']);
         } else if (this.typeInscription === 'ENTREPRISE') {
           this.router.navigate(['/espace-entreprise']);
