@@ -102,7 +102,7 @@ export class Auth {
     }
   }
 
-  register(username: string, email: string, password: string, typeInscription: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' = 'CANDIDAT'): Observable<AuthResponse> {
+  register(username: string, email: string, password: string, typeInscription: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' | 'FORMATEUR' = 'CANDIDAT'): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, { username, email, password, typeInscription })
       .pipe(
         tap((resp) => this.setSession(resp))

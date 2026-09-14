@@ -39,7 +39,7 @@ export class Register {
    * futur candidat qu'un représentant d'école vers l'accueil générique, sans
    * aucune indication sur la suite à donner.
    */
-  typeInscription: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' = 'CANDIDAT';
+  typeInscription: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' | 'FORMATEUR' = 'CANDIDAT';
 
   /**
    * École et entreprise s'inscrivent au nom d'une organisation, pas d'une
@@ -66,7 +66,7 @@ export class Register {
     confirmPassword: ['', Validators.required]
   });
 
-  choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE'): void {
+  choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' | 'FORMATEUR'): void {
     this.typeInscription = type;
     const prenom = this.registerForm.get('prenom')!;
     const nom = this.registerForm.get('nom')!;
@@ -113,6 +113,10 @@ export class Register {
           this.router.navigate(['/accreditation']);
         } else if (this.typeInscription === 'ENTREPRISE') {
           this.router.navigate(['/espace-entreprise']);
+        } else if (this.typeInscription === 'FORMATEUR') {
+          // Pas d'offre déjà choisie (sinon returnUrl l'aurait emportée ci-dessus) :
+          // direction la vitrine pour en sélectionner une.
+          this.router.navigate(['/offres-formateurs']);
         } else {
           this.router.navigate(['/recrutement/sessions']);
         }
