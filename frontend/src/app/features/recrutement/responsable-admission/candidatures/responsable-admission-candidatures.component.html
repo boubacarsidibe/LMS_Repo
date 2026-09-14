@@ -1,25 +1,29 @@
 <!-- ==================== CONTENU SEUL ==================== -->
-<div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-stack-lg gap-4">
-  <div>
+<div class="review-header flex flex-col xl:flex-row justify-between items-start xl:items-end mb-stack-lg gap-5">
+  <div class="max-w-2xl">
     <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">INPG — Institut National du Pétrole et du Gaz</p>
     <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Revue des candidatures</h2>
-    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Consultez et gérez toutes les candidatures aux différentes sessions.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Suivez les dossiers, de la soumission jusqu’à l’admission.</p>
   </div>
-  <div class="flex items-center gap-2">
-    <button type="button" [disabled]="relanceEnCours || nombreDossiersIncomplets === 0" (click)="relancerDossiersIncomplets()" [title]="relanceEnCours ? 'Relance en cours…' : 'Relancer les dossiers incomplets (' + nombreDossiersIncomplets + ')'" class="relative flex items-center justify-center w-10 h-10 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors disabled:opacity-60">
+  <div class="review-actions flex flex-wrap items-center gap-2" aria-label="Actions sur les candidatures">
+    <button type="button" [disabled]="relanceEnCours || nombreDossiersIncomplets === 0" (click)="relancerDossiersIncomplets()" [title]="relanceEnCours ? 'Relance en cours…' : 'Relancer les dossiers incomplets (' + nombreDossiersIncomplets + ')'" class="review-action relative flex items-center gap-2 h-10 px-3 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors disabled:opacity-60">
       <span class="material-symbols-outlined text-[20px]">mark_email_unread</span>
+      <span class="action-label font-label-sm text-label-sm">Relancer</span>
       <span *ngIf="nombreDossiersIncomplets > 0 && !relanceEnCours" class="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-surface-container-lowest">{{ nombreDossiersIncomplets }}</span>
     </button>
-    <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" [title]="exporting ? 'Export en cours…' : 'Exporter la liste'" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-primary shadow-sm disabled:opacity-60">
+    <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" [title]="exporting ? 'Export en cours…' : 'Exporter la liste'" class="review-action flex items-center gap-2 h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-primary shadow-sm disabled:opacity-60">
       <span class="material-symbols-outlined text-[20px]">download</span>
+      <span class="action-label font-label-sm text-label-sm">Exporter</span>
     </button>
-    <button type="button" [disabled]="exportingDocuments" (click)="exporterDocuments()" [title]="exportingDocuments ? 'Archive en cours…' : 'Télécharge les documents (pièces justificatives) des candidatures actuellement filtrées, en une archive .zip'" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-primary shadow-sm disabled:opacity-60">
+    <button type="button" [disabled]="exportingDocuments" (click)="exporterDocuments()" [title]="exportingDocuments ? 'Archive en cours…' : 'Télécharger les pièces justificatives filtrées'" class="review-action flex items-center gap-2 h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-primary shadow-sm disabled:opacity-60">
       <span class="material-symbols-outlined text-[20px]">folder_zip</span>
+      <span class="action-label font-label-sm text-label-sm">Documents</span>
     </button>
-    <button type="button" [disabled]="generatingRapport" (click)="genererRapportQualite()" title="Génère un rapport PDF : nombre de candidats par étape du workflow (présélection, admis test, admis entretien, admis final, rejetés), avec la liste nominative de chaque étape — toutes sessions confondues" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md disabled:opacity-60">
-      <span class="material-symbols-outlined text-sm">summarize</span> {{ generatingRapport ? 'Génération en cours…' : 'Rapport qualité (PDF)' }}
+    <span class="action-separator hidden md:block" aria-hidden="true"></span>
+    <button type="button" [disabled]="generatingRapport" (click)="genererRapportQualite()" title="Générer le rapport qualité PDF, toutes sessions confondues" class="review-action flex items-center gap-2 h-10 px-4 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md disabled:opacity-60">
+      <span class="material-symbols-outlined text-[19px]">summarize</span> {{ generatingRapport ? 'Génération…' : 'Rapport qualité' }}
     </button>
-    <app-report-button label="Rapport statistiques" [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button>
+    <app-report-button label="Statistiques" [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button>
   </div>
 </div>
 
@@ -41,18 +45,31 @@
 </div>
 
 <!-- Barre de filtres réunie dans un bloc, au lieu de contrôles épars au-dessus du tableau. -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 mb-stack-md">
-  <div class="flex flex-col lg:flex-row gap-3 lg:items-end">
+<div class="filter-card bg-surface-container-lowest border border-outline-variant rounded-xl p-4 mb-stack-md">
+  <div class="flex items-center justify-between gap-3 mb-3">
+    <div class="flex items-center gap-2 text-on-surface">
+      <span class="material-symbols-outlined text-[20px] text-primary">filter_alt</span>
+      <span class="font-label-md text-label-md font-semibold">Filtrer les candidatures</span>
+    </div>
+    <span *ngIf="filtresActifs" class="px-2 py-1 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm">
+      {{ nombreFiltresActifs }} filtre{{ nombreFiltresActifs > 1 ? 's' : '' }} actif{{ nombreFiltresActifs > 1 ? 's' : '' }}
+    </span>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_18rem_auto] gap-3 items-end">
     <div class="flex-1 min-w-0">
       <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Rechercher</label>
       <div class="relative">
         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
         <input [(ngModel)]="recherche" (ngModelChange)="recalculerFiltres()"
-               class="w-full h-10 pl-10 pr-4 bg-surface border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none font-body-md text-body-md"
+               class="w-full h-10 pl-10 pr-10 bg-surface border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none font-body-md text-body-md"
                placeholder="Nom, prénom, email ou n° de dossier…" type="text"/>
+        <button *ngIf="recherche" type="button" (click)="effacerRecherche()" title="Effacer la recherche" aria-label="Effacer la recherche"
+                class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-md text-on-surface-variant hover:bg-surface-container-high transition-colors">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
       </div>
     </div>
-    <div class="w-full lg:w-72">
+    <div class="w-full">
       <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Session</label>
       <select [(ngModel)]="filtreSessionId" (ngModelChange)="recalculerFiltres()" aria-label="Filtrer par session"
               class="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-on-surface font-body-sm text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
@@ -67,12 +84,11 @@
   </div>
 </div>
 
-<!-- Onglets de statut -->
-<!-- Onglets en pastilles : l'étape courante se lit d'un coup d'œil, et son effectif
-     est porté par un compteur plutôt que noyé entre parenthèses dans le libellé. -->
-<div class="flex overflow-x-auto pb-2 mb-stack-md gap-2 hide-scrollbar">
+<!-- Étapes du parcours : grille responsive sans barre de défilement horizontale. -->
+<div class="status-grid mb-stack-md" aria-label="Filtrer par étape du parcours">
   <button *ngFor="let o of onglets" type="button" (click)="setFiltreStatut(o.statut)"
-          class="flex items-center gap-2 whitespace-nowrap px-4 h-10 rounded-lg font-label-md text-label-md transition-colors border"
+          [attr.aria-pressed]="filtreStatut === o.statut"
+          class="status-tab flex items-center justify-between gap-2 px-3 h-11 rounded-lg font-label-md text-label-md transition-colors border"
           [class.bg-secondary]="filtreStatut === o.statut"
           [class.text-on-secondary]="filtreStatut === o.statut"
           [class.border-secondary]="filtreStatut === o.statut"
@@ -90,12 +106,24 @@
 </div>
 
 <!-- Loading -->
-<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des candidatures…</div>
+<div *ngIf="loading" class="loading-state p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant" role="status" aria-live="polite">
+  <span class="loading-spinner block mx-auto mb-3" aria-hidden="true"></span>
+  <p class="font-body-md text-body-md text-on-surface-variant">Chargement des candidatures…</p>
+</div>
 
 <!-- Empty state -->
-<div *ngIf="!loading && candidaturesFiltrees.length === 0" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
-  <span class="material-symbols-outlined text-4xl text-outline mb-2 block">folder_off</span>
-  <p class="font-body-md text-body-md text-on-surface-variant">Aucune candidature ne correspond à ces critères.</p>
+<div *ngIf="!loading && candidaturesFiltrees.length === 0" class="empty-state px-6 py-12 text-center bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
+  <div class="empty-state-icon w-14 h-14 mx-auto mb-4 rounded-full bg-primary-container flex items-center justify-center">
+    <span class="material-symbols-outlined text-[28px] text-on-primary-container">folder_open</span>
+  </div>
+  <h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Aucune candidature trouvée</h3>
+  <p class="font-body-md text-body-md text-on-surface-variant max-w-md mx-auto">
+    {{ filtresActifs ? 'Modifiez la recherche, la session ou l’étape sélectionnée pour élargir les résultats.' : 'Les nouvelles candidatures apparaîtront ici dès leur soumission.' }}
+  </p>
+  <button *ngIf="filtresActifs" type="button" (click)="reinitialiserFiltres()" class="inline-flex items-center gap-2 mt-5 px-4 h-10 rounded-lg bg-secondary text-on-secondary hover:opacity-90 transition-colors font-label-md text-label-md">
+    <span class="material-symbols-outlined text-[19px]">restart_alt</span>
+    Effacer les filtres
+  </button>
 </div>
 
 <div *ngIf="!loading && candidaturesFiltrees.length > 0" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden relative">

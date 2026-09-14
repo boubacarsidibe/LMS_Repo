@@ -16,6 +16,7 @@ type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, ExportColumnsModalComponent, ReportButtonComponent],
   templateUrl: './responsable-admission-candidatures.component.html',
+  styleUrl: './responsable-admission-candidatures.component.css',
 })
 export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   candidatures: CandidatureResponse[] = [];
@@ -47,7 +48,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     { statut: 'EN_COURS_DE_PRESELECTION', libelle: 'Présélection' },
     { statut: 'ADMIS1', libelle: 'Test' },
     { statut: 'ADMIS2', libelle: 'Entretien' },
-    { statut: 'LISTE_ATTENTE', libelle: 'Liste compl.' },
+    { statut: 'LISTE_ATTENTE', libelle: 'Liste complémentaire' },
     { statut: 'ADMIS3', libelle: 'Admises' },
     { statut: 'REJETE', libelle: 'Rejetées' },
   ];
@@ -143,7 +144,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   }
 
   private readonly STATUTS_VALIDES: StatutFiltre[] = [
-    'TOUS', 'SOUMIS', 'EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 'ADMIS3', 'REJETE', 'BROUILLON',
+    'TOUS', 'SOUMIS', 'EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 'LISTE_ATTENTE', 'ADMIS3', 'REJETE', 'BROUILLON',
   ];
 
   private chargerCandidatures(): void {
@@ -212,6 +213,17 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
 
   get filtresActifs(): boolean {
     return this.recherche.trim() !== '' || this.filtreStatut !== 'TOUS' || this.filtreSessionId !== null;
+  }
+
+  get nombreFiltresActifs(): number {
+    return Number(this.recherche.trim() !== '')
+      + Number(this.filtreStatut !== 'TOUS')
+      + Number(this.filtreSessionId !== null);
+  }
+
+  effacerRecherche(): void {
+    this.recherche = '';
+    this.recalculerFiltres();
   }
 
   setFiltreStatut(statut: StatutFiltre): void {
