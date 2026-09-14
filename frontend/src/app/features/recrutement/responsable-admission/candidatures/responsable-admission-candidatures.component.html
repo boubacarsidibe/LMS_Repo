@@ -117,7 +117,7 @@
 <div class="status-grid mb-stack-md" aria-label="Filtrer par étape du parcours">
   <button *ngFor="let o of onglets" type="button" (click)="setFiltreStatut(o.statut)"
           [attr.aria-pressed]="filtreStatut === o.statut"
-          class="status-tab flex items-center justify-between gap-1.5 px-2.5 h-9 rounded-lg font-label-sm text-label-sm transition-colors border"
+          class="status-tab flex items-center justify-between gap-1.5 px-2 h-8 rounded-md text-[11px] font-semibold transition-colors border"
           [class.bg-secondary]="filtreStatut === o.statut"
           [class.text-on-secondary]="filtreStatut === o.statut"
           [class.border-secondary]="filtreStatut === o.statut"
@@ -126,7 +126,7 @@
           [class.border-outline-variant]="filtreStatut !== o.statut"
           [class.hover:bg-surface-container-low]="filtreStatut !== o.statut">
     {{ o.libelle }}
-    <span class="shrink-0 min-w-5 px-1 py-0.5 rounded-full text-[11px] font-semibold text-center"
+    <span class="shrink-0 min-w-4 h-4 px-1 rounded-full text-[10px] leading-4 font-semibold text-center"
           [class.bg-on-secondary/20]="filtreStatut === o.statut"
           [class.text-on-secondary]="filtreStatut === o.statut"
           [class.bg-surface-container]="filtreStatut !== o.statut"
