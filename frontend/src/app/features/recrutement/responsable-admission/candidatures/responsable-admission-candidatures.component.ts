@@ -6,7 +6,6 @@ import { forkJoin, Observable } from 'rxjs';
 import { CandidatureResponse, FormatRapport, RecrutementService, ResultatRelance } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
-import { ReportButtonComponent } from '../../../../shared/components/report-button/report-button.component';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 'ADMIS2' | 'LISTE_ATTENTE' | 'ADMIS3' | 'REJETE' | 'BROUILLON';
@@ -14,7 +13,7 @@ type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 
 @Component({
   selector: 'app-responsable-admission-candidatures',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ExportColumnsModalComponent, ReportButtonComponent],
+  imports: [CommonModule, RouterModule, FormsModule, ExportColumnsModalComponent],
   templateUrl: './responsable-admission-candidatures.component.html',
   styleUrl: './responsable-admission-candidatures.component.css',
 })
@@ -96,6 +95,8 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   generatingReport = false;
   relanceEnCours = false;
   relanceMessage = '';
+  menuActionsOuvert = false;
+  menuRapportsOuvert = false;
 
   /** Dossiers ADMIS3 dont l'inscription (étape 6, QMS-009) reste à finaliser. */
   idsEnAttenteInscription = new Set<number>();
@@ -224,6 +225,21 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   effacerRecherche(): void {
     this.recherche = '';
     this.recalculerFiltres();
+  }
+
+  basculerMenuActions(): void {
+    this.menuActionsOuvert = !this.menuActionsOuvert;
+    this.menuRapportsOuvert = false;
+  }
+
+  basculerMenuRapports(): void {
+    this.menuRapportsOuvert = !this.menuRapportsOuvert;
+    this.menuActionsOuvert = false;
+  }
+
+  fermerMenus(): void {
+    this.menuActionsOuvert = false;
+    this.menuRapportsOuvert = false;
   }
 
   setFiltreStatut(statut: StatutFiltre): void {

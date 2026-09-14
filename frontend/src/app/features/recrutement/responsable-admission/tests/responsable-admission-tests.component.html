@@ -1,12 +1,13 @@
-<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-stack-lg">
-  <div>
+<div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5 mb-stack-lg">
+  <div class="max-w-3xl">
     <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Tests Académiques</h1>
     <p class="font-body-md text-body-md text-on-surface-variant mt-2">Convoquez plusieurs candidats à la même épreuve, puis cliquez directement sur une note pour la saisir.</p>
   </div>
-  <div class="flex gap-3">
+  <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
     <app-report-button [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button>
-    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center justify-center w-10 h-10 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis au test académique pour le moment' : 'Convoquer au test (un ou plusieurs candidats)'">
+    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center justify-center gap-2 h-10 px-4 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50 font-label-md text-label-md" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis au test académique pour le moment' : 'Convoquer au test (un ou plusieurs candidats)'">
       <span class="material-symbols-outlined text-[20px]">groups</span>
+      Convoquer un groupe
     </button>
   </div>
 </div>
@@ -18,7 +19,7 @@
   plus bas. Ils tenaient auparavant sur trois grandes cartes (32 px pour un chiffre à
   un digit) qui repoussaient la grille sous la ligne de flottaison.
 -->
-<div class="grid grid-cols-3 divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest mb-stack-md">
+<div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest mb-stack-md">
   <div class="flex items-center gap-3 px-4 py-3">
     <span class="material-symbols-outlined text-secondary text-[20px]">quiz</span>
     <div class="min-w-0">

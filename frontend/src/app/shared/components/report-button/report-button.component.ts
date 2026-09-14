@@ -17,7 +17,9 @@ import { FormatRapport } from '../../../core/recrutement/services/recrutement.se
         type="button"
         [disabled]="generationEnCours"
         (click)="toggleMenu()"
-        class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-primary hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
+        aria-haspopup="menu"
+        [attr.aria-expanded]="menuOuvert"
+        class="flex items-center gap-2 h-10 px-4 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-primary hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60 whitespace-nowrap">
         <span class="material-symbols-outlined text-[18px]">description</span>
         {{ generationEnCours ? 'Génération…' : label }}
         <span class="material-symbols-outlined text-[18px]">{{ menuOuvert ? 'expand_less' : 'expand_more' }}</span>
@@ -25,12 +27,12 @@ import { FormatRapport } from '../../../core/recrutement/services/recrutement.se
 
       <div *ngIf="menuOuvert" class="fixed inset-0 z-10" (click)="menuOuvert = false"></div>
 
-      <div *ngIf="menuOuvert" class="absolute right-0 mt-2 w-44 bg-surface border border-outline-variant rounded-lg shadow-lg z-20 py-1 origin-top-right">
-        <button type="button" (click)="choisir('pdf')" class="w-full flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors">
+      <div *ngIf="menuOuvert" role="menu" class="absolute right-0 mt-2 w-48 bg-surface border border-outline-variant rounded-lg shadow-lg z-20 py-1 origin-top-right">
+        <button type="button" role="menuitem" (click)="choisir('pdf')" class="w-full flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors">
           <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
           PDF
         </button>
-        <button type="button" (click)="choisir('xlsx')" class="w-full flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors">
+        <button type="button" role="menuitem" (click)="choisir('xlsx')" class="w-full flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors">
           <span class="material-symbols-outlined text-[18px]">table_chart</span>
           Excel
         </button>
@@ -39,7 +41,7 @@ import { FormatRapport } from '../../../core/recrutement/services/recrutement.se
   `,
 })
 export class ReportButtonComponent {
-  @Input() label = 'Rapport';
+  @Input() label = 'Rapports';
   @Input() generationEnCours = false;
   @Output() genererRapport = new EventEmitter<FormatRapport>();
 

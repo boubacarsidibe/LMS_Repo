@@ -1,31 +1,83 @@
 <!-- ==================== CONTENU SEUL ==================== -->
-<div class="review-header flex flex-col xl:flex-row justify-between items-start xl:items-end mb-stack-lg gap-5">
+<div class="relative z-30 flex flex-col xl:flex-row justify-between items-start xl:items-end mb-stack-lg gap-5">
   <div class="max-w-2xl">
     <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">INPG — Institut National du Pétrole et du Gaz</p>
     <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Revue des candidatures</h2>
     <p class="font-body-md text-body-md text-on-surface-variant mt-1">Suivez les dossiers, de la soumission jusqu’à l’admission.</p>
   </div>
   <div class="review-actions flex flex-wrap items-center gap-2" aria-label="Actions sur les candidatures">
-    <button type="button" [disabled]="relanceEnCours || nombreDossiersIncomplets === 0" (click)="relancerDossiersIncomplets()" [title]="relanceEnCours ? 'Relance en cours…' : 'Relancer les dossiers incomplets (' + nombreDossiersIncomplets + ')'" class="review-action relative flex items-center gap-2 h-10 px-3 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors disabled:opacity-60">
-      <span class="material-symbols-outlined text-[20px]">mark_email_unread</span>
-      <span class="action-label font-label-sm text-label-sm">Relancer</span>
-      <span *ngIf="nombreDossiersIncomplets > 0 && !relanceEnCours" class="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-surface-container-lowest">{{ nombreDossiersIncomplets }}</span>
-    </button>
-    <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" [title]="exporting ? 'Export en cours…' : 'Exporter la liste'" class="review-action flex items-center gap-2 h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-primary shadow-sm disabled:opacity-60">
-      <span class="material-symbols-outlined text-[20px]">download</span>
-      <span class="action-label font-label-sm text-label-sm">Exporter</span>
-    </button>
-    <button type="button" [disabled]="exportingDocuments" (click)="exporterDocuments()" [title]="exportingDocuments ? 'Archive en cours…' : 'Télécharger les pièces justificatives filtrées'" class="review-action flex items-center gap-2 h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-primary shadow-sm disabled:opacity-60">
-      <span class="material-symbols-outlined text-[20px]">folder_zip</span>
-      <span class="action-label font-label-sm text-label-sm">Documents</span>
-    </button>
-    <span class="action-separator hidden md:block" aria-hidden="true"></span>
-    <button type="button" [disabled]="generatingRapport" (click)="genererRapportQualite()" title="Générer le rapport qualité PDF, toutes sessions confondues" class="review-action flex items-center gap-2 h-10 px-4 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md disabled:opacity-60">
-      <span class="material-symbols-outlined text-[19px]">summarize</span> {{ generatingRapport ? 'Génération…' : 'Rapport qualité' }}
-    </button>
-    <app-report-button label="Statistiques" [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button>
+    <div class="dashboard-menu-wrap">
+      <button type="button" (click)="basculerMenuActions()" [attr.aria-expanded]="menuActionsOuvert" class="dashboard-menu-trigger dashboard-menu-trigger-secondary">
+        <span class="material-symbols-outlined text-[19px]">bolt</span>
+        Actions
+        <span class="material-symbols-outlined text-[18px]">{{ menuActionsOuvert ? 'expand_less' : 'expand_more' }}</span>
+      </button>
+      <div *ngIf="menuActionsOuvert" class="dashboard-menu" role="menu">
+        <p class="dashboard-menu-label">Gestion des dossiers</p>
+        <button type="button" role="menuitem" [disabled]="relanceEnCours || nombreDossiersIncomplets === 0" (click)="fermerMenus(); relancerDossiersIncomplets()" class="dashboard-menu-item">
+          <span class="dashboard-menu-icon"><span class="material-symbols-outlined text-[19px]">mark_email_unread</span></span>
+          <span><strong>Relancer les dossiers</strong><small>{{ nombreDossiersIncomplets }} dossier{{ nombreDossiersIncomplets > 1 ? 's' : '' }} incomplet{{ nombreDossiersIncomplets > 1 ? 's' : '' }}</small></span>
+        </button>
+        <button type="button" role="menuitem" [disabled]="exporting" (click)="fermerMenus(); exportModalOpen = true" class="dashboard-menu-item">
+          <span class="dashboard-menu-icon"><span class="material-symbols-outlined text-[19px]">download</span></span>
+          <span><strong>Exporter la liste</strong><small>Choisir les colonnes du fichier</small></span>
+        </button>
+        <button type="button" role="menuitem" [disabled]="exportingDocuments" (click)="fermerMenus(); exporterDocuments()" class="dashboard-menu-item">
+          <span class="dashboard-menu-icon"><span class="material-symbols-outlined text-[19px]">folder_zip</span></span>
+          <span><strong>Télécharger les documents</strong><small>Archive des pièces filtrées</small></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="dashboard-menu-wrap">
+      <button type="button" (click)="basculerMenuRapports()" [attr.aria-expanded]="menuRapportsOuvert" class="dashboard-menu-trigger dashboard-menu-trigger-primary">
+        <span class="material-symbols-outlined text-[19px]">analytics</span>
+        Rapports
+        <span class="material-symbols-outlined text-[18px]">{{ menuRapportsOuvert ? 'expand_less' : 'expand_more' }}</span>
+      </button>
+      <div *ngIf="menuRapportsOuvert" class="dashboard-menu dashboard-menu-right" role="menu">
+        <p class="dashboard-menu-label">Documents de pilotage</p>
+        <button type="button" role="menuitem" [disabled]="generatingRapport" (click)="fermerMenus(); genererRapportQualite()" class="dashboard-menu-item">
+          <span class="dashboard-menu-icon"><span class="material-symbols-outlined text-[19px]">summarize</span></span>
+          <span><strong>Rapport qualité</strong><small>PDF nominatif par étape</small></span>
+        </button>
+        <button type="button" role="menuitem" [disabled]="generatingReport" (click)="fermerMenus(); genererRapport('pdf')" class="dashboard-menu-item">
+          <span class="dashboard-menu-icon"><span class="material-symbols-outlined text-[19px]">picture_as_pdf</span></span>
+          <span><strong>Statistiques PDF</strong><small>Rapport prêt à partager</small></span>
+        </button>
+        <button type="button" role="menuitem" [disabled]="generatingReport" (click)="fermerMenus(); genererRapport('xlsx')" class="dashboard-menu-item">
+          <span class="dashboard-menu-icon"><span class="material-symbols-outlined text-[19px]">table_chart</span></span>
+          <span><strong>Statistiques Excel</strong><small>Données exploitables</small></span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
+
+<button *ngIf="menuActionsOuvert || menuRapportsOuvert" type="button" class="dashboard-menu-backdrop" aria-label="Fermer le menu" (click)="fermerMenus()"></button>
+
+<section class="summary-grid mb-stack-lg" aria-label="Indicateurs des candidatures">
+  <button type="button" (click)="setFiltreStatut('TOUS')" class="summary-card" [class.summary-card-active]="filtreStatut === 'TOUS'">
+    <span class="summary-card-icon"><span class="material-symbols-outlined">folder_shared</span></span>
+    <span class="summary-card-content"><small>Total des dossiers</small><strong>{{ compter('TOUS') }}</strong></span>
+    <span class="material-symbols-outlined summary-card-arrow">arrow_forward</span>
+  </button>
+  <button type="button" (click)="setFiltreStatut('SOUMIS')" class="summary-card" [class.summary-card-active]="filtreStatut === 'SOUMIS'">
+    <span class="summary-card-icon"><span class="material-symbols-outlined">inbox</span></span>
+    <span class="summary-card-content"><small>À examiner</small><strong>{{ compter('SOUMIS') }}</strong></span>
+    <span class="material-symbols-outlined summary-card-arrow">arrow_forward</span>
+  </button>
+  <button type="button" (click)="setFiltreStatut('EN_COURS_DE_PRESELECTION')" class="summary-card" [class.summary-card-active]="filtreStatut === 'EN_COURS_DE_PRESELECTION'">
+    <span class="summary-card-icon"><span class="material-symbols-outlined">manage_search</span></span>
+    <span class="summary-card-content"><small>En présélection</small><strong>{{ compter('EN_COURS_DE_PRESELECTION') }}</strong></span>
+    <span class="material-symbols-outlined summary-card-arrow">arrow_forward</span>
+  </button>
+  <button type="button" (click)="setFiltreStatut('ADMIS3')" class="summary-card" [class.summary-card-active]="filtreStatut === 'ADMIS3'">
+    <span class="summary-card-icon"><span class="material-symbols-outlined">verified</span></span>
+    <span class="summary-card-content"><small>Admissions finales</small><strong>{{ compter('ADMIS3') }}</strong></span>
+    <span class="material-symbols-outlined summary-card-arrow">arrow_forward</span>
+  </button>
+</section>
 
 <div *ngIf="relanceMessage" class="mb-stack-md p-4 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm text-body-sm">
   {{ relanceMessage }}
@@ -45,7 +97,7 @@
 </div>
 
 <!-- Barre de filtres réunie dans un bloc, au lieu de contrôles épars au-dessus du tableau. -->
-<div class="filter-card bg-surface-container-lowest border border-outline-variant rounded-xl p-4 mb-stack-md">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 mb-stack-md shadow-sm">
   <div class="flex items-center justify-between gap-3 mb-3">
     <div class="flex items-center gap-2 text-on-surface">
       <span class="material-symbols-outlined text-[20px] text-primary">filter_alt</span>
@@ -97,7 +149,7 @@
           [class.border-outline-variant]="filtreStatut !== o.statut"
           [class.hover:bg-surface-container-low]="filtreStatut !== o.statut">
     {{ o.libelle }}
-    <span class="min-w-6 px-1.5 py-0.5 rounded-full font-label-sm text-label-sm"
+    <span class="shrink-0 min-w-6 px-1.5 py-0.5 rounded-full font-label-sm text-label-sm"
           [class.bg-on-secondary/20]="filtreStatut === o.statut"
           [class.text-on-secondary]="filtreStatut === o.statut"
           [class.bg-surface-container]="filtreStatut !== o.statut"

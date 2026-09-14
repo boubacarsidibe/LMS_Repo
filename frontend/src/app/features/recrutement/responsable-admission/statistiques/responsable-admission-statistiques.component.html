@@ -1,15 +1,17 @@
 <!-- ==================== CONTENU SEUL ==================== -->
-<div class="mb-stack-lg flex flex-col md:flex-row md:items-end justify-between gap-4">
-  <div>
+<div class="mb-stack-lg flex flex-col xl:flex-row xl:items-end justify-between gap-5">
+  <div class="max-w-3xl">
     <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1">Statistiques</h2>
     <p class="font-body-md text-body-md text-on-surface-variant">Indicateurs et répartition des candidatures, toutes sessions confondues.</p>
   </div>
-  <div class="flex gap-3">
-    <button type="button" routerLink="/responsable-admission/parametres" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary hover:bg-surface-container-low transition-colors shadow-sm" title="Personnaliser — choisir les widgets affichés">
+  <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+    <button type="button" routerLink="/responsable-admission/parametres" class="flex items-center justify-center gap-2 h-10 px-4 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary hover:bg-surface-container-low transition-colors shadow-sm font-label-md text-label-md" title="Personnaliser — choisir les widgets affichés">
       <span class="material-symbols-outlined text-[18px]">tune</span>
+      Personnaliser
     </button>
-    <button type="button" [disabled]="exporting" (click)="exporter()" [title]="exporting ? 'Export en cours…' : 'Exporter les candidatures'" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
+    <button type="button" [disabled]="exporting" (click)="exporter()" [title]="exporting ? 'Export en cours…' : 'Exporter les candidatures'" class="flex items-center justify-center gap-2 h-10 px-4 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors shadow-sm disabled:opacity-60 font-label-md text-label-md">
       <span class="material-symbols-outlined text-[18px]">download</span>
+      {{ exporting ? 'Export…' : 'Exporter' }}
     </button>
   </div>
 </div>
