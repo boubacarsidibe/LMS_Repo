@@ -3,6 +3,7 @@ package inpg.sn.lms.recrutementformateur.controller;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,15 +32,28 @@ import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 import inpg.sn.lms.recrutement.entity.FichierStocke;
 import inpg.sn.lms.recrutement.service.FichierStockeService;
 import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurCreateRequest;
+import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurCreateRequest.CertificationRequest;
+import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurCreateRequest.ExperienceRequest;
+import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurCreateRequest.FormationRequest;
+import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurCreateRequest.LangueRequest;
 import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurDto;
 import inpg.sn.lms.recrutementformateur.dto.PieceCandidatureFormateurDto;
 import inpg.sn.lms.recrutementformateur.entity.CandidatureFormateur;
+import inpg.sn.lms.recrutementformateur.entity.CertificationCandidatureFormateur;
+import inpg.sn.lms.recrutementformateur.entity.ExperienceCandidatureFormateur;
+import inpg.sn.lms.recrutementformateur.entity.FormationCandidatureFormateur;
+import inpg.sn.lms.recrutementformateur.entity.LangueCandidatureFormateur;
 import inpg.sn.lms.recrutementformateur.entity.OffreRecrutementFormateur;
 import inpg.sn.lms.recrutementformateur.entity.PieceCandidatureFormateur;
+import inpg.sn.lms.recrutementformateur.enums.EnumNiveauLangue;
 import inpg.sn.lms.recrutementformateur.enums.EnumStatutCandidatureFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumStatutOffreFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumTypeDocumentCandidatureFormateur;
 import inpg.sn.lms.recrutementformateur.repository.CandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.CertificationCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.ExperienceCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.FormationCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.LangueCandidatureFormateurRepository;
 import inpg.sn.lms.recrutementformateur.repository.OffreRecrutementFormateurRepository;
 import inpg.sn.lms.recrutementformateur.repository.PieceCandidatureFormateurRepository;
 import inpg.sn.lms.recrutementformateur.service.RecrutementFormateurNotificationService;
@@ -65,6 +79,10 @@ public class CandidatFormateurController {
     private final OffreRecrutementFormateurRepository offreRepository;
     private final CandidatureFormateurRepository candidatureRepository;
     private final PieceCandidatureFormateurRepository pieceRepository;
+    private final FormationCandidatureFormateurRepository formationRepository;
+    private final ExperienceCandidatureFormateurRepository experienceRepository;
+    private final LangueCandidatureFormateurRepository langueRepository;
+    private final CertificationCandidatureFormateurRepository certificationRepository;
     private final RoleRepository roleRepository;
     private final FichierStockeService fichierStockeService;
     private final UtilisateurCourantService utilisateurCourant;
@@ -72,12 +90,20 @@ public class CandidatFormateurController {
 
     public CandidatFormateurController(OffreRecrutementFormateurRepository offreRepository,
             CandidatureFormateurRepository candidatureRepository, PieceCandidatureFormateurRepository pieceRepository,
+            FormationCandidatureFormateurRepository formationRepository,
+            ExperienceCandidatureFormateurRepository experienceRepository,
+            LangueCandidatureFormateurRepository langueRepository,
+            CertificationCandidatureFormateurRepository certificationRepository,
             RoleRepository roleRepository, FichierStockeService fichierStockeService,
             UtilisateurCourantService utilisateurCourant,
             RecrutementFormateurNotificationService notificationService) {
         this.offreRepository = offreRepository;
         this.candidatureRepository = candidatureRepository;
         this.pieceRepository = pieceRepository;
+        this.formationRepository = formationRepository;
+        this.experienceRepository = experienceRepository;
+        this.langueRepository = langueRepository;
+        this.certificationRepository = certificationRepository;
         this.roleRepository = roleRepository;
         this.fichierStockeService = fichierStockeService;
         this.utilisateurCourant = utilisateurCourant;
@@ -137,7 +163,31 @@ public class CandidatFormateurController {
         candidature.setDiplomePrincipal(vide(requete.diplomePrincipal()));
         candidature.setAnneesExperience(requete.anneesExperience());
         candidature.setLettreMotivation(vide(requete.lettreMotivation()));
+
+        candidature.setCivilite(vide(requete.civilite()));
+        candidature.setGenre(vide(requete.genre()));
+        candidature.setDateNaissance(parseDate(requete.dateNaissance()));
+        candidature.setPaysNaissance(vide(requete.paysNaissance()));
+        candidature.setLieuNaissance(vide(requete.lieuNaissance()));
+        candidature.setNationalite(vide(requete.nationalite()));
+        candidature.setNationaliteSecondaire(vide(requete.nationaliteSecondaire()));
+        candidature.setNiveauEtude(vide(requete.niveauEtude()));
+        candidature.setTelephoneSecondaire(vide(requete.telephoneSecondaire()));
+        candidature.setEmailAlternatif(vide(requete.emailAlternatif()));
+        candidature.setAdresseLigne1(vide(requete.adresseLigne1()));
+        candidature.setAdresseLigne2(vide(requete.adresseLigne2()));
+        candidature.setVille(vide(requete.ville()));
+        candidature.setPaysResidence(vide(requete.paysResidence()));
+        if (requete.domainesExpertise() != null) {
+            for (String d : requete.domainesExpertise()) {
+                if (d != null && !d.isBlank()) {
+                    candidature.getDomainesExpertise().add(d.trim());
+                }
+            }
+        }
+
         candidature = candidatureRepository.save(candidature);
+        enregistrerDossierEnrichi(candidature, requete);
 
         garantirRoleCandidatFormateur(user);
         notificationService.notifierNouvelleCandidature(offre.getIntitule());
@@ -301,9 +351,72 @@ public class CandidatFormateurController {
         return candidature;
     }
 
+    /** Persiste les blocs répétables du dossier enrichi (formations, expériences, langues, certifications). */
+    private void enregistrerDossierEnrichi(CandidatureFormateur candidature, CandidatureFormateurCreateRequest requete) {
+        if (requete.formations() != null) {
+            for (FormationRequest f : requete.formations()) {
+                if (f == null) {
+                    continue;
+                }
+                formationRepository.save(new FormationCandidatureFormateur(candidature, vide(f.niveauEtude()),
+                        vide(f.pays()), vide(f.ville()), vide(f.etablissement()), vide(f.intituleDiplome()),
+                        vide(f.matierePrincipale()), parseDate(f.dateDebut()), parseDate(f.dateObtention())));
+            }
+        }
+        if (requete.experiences() != null) {
+            for (ExperienceRequest e : requete.experiences()) {
+                if (e == null) {
+                    continue;
+                }
+                experienceRepository.save(new ExperienceCandidatureFormateur(candidature, vide(e.employeur()),
+                        vide(e.pays()), vide(e.ville()), e.posteActuel(), vide(e.intitulePoste()),
+                        parseDate(e.dateDebut()), parseDate(e.dateFin()), vide(e.nomSuperviseur()),
+                        vide(e.titreSuperviseur()), vide(e.telephoneSuperviseur()), vide(e.emailSuperviseur()),
+                        e.contactAutorise(), vide(e.motifNonContact()), vide(e.motifDepart())));
+            }
+        }
+        if (requete.langues() != null) {
+            for (LangueRequest l : requete.langues()) {
+                if (l == null || estVide(l.langue()) || estVide(l.niveau())) {
+                    continue;
+                }
+                try {
+                    langueRepository.save(new LangueCandidatureFormateur(candidature, l.langue().trim(),
+                            EnumNiveauLangue.valueOf(l.niveau())));
+                } catch (IllegalArgumentException niveauInvalide) {
+                    // Niveau inconnu : ligne ignorée plutôt que de faire échouer tout le dépôt.
+                }
+            }
+        }
+        if (requete.certifications() != null) {
+            for (CertificationRequest c : requete.certifications()) {
+                if (c == null || estVide(c.intitule())) {
+                    continue;
+                }
+                certificationRepository.save(new CertificationCandidatureFormateur(candidature, c.intitule().trim(),
+                        vide(c.organisme()), parseDate(c.dateObtention()), parseDate(c.dateExpiration())));
+            }
+        }
+    }
+
+    private LocalDate parseDate(String v) {
+        if (v == null || v.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(v.trim());
+        } catch (DateTimeParseException invalide) {
+            return null;
+        }
+    }
+
     CandidatureFormateurDto toDto(CandidatureFormateur c) {
         return AdminRecrutementFormateurController.candidatureDto(c,
-                pieceRepository.findByCandidatureId(c.getId()));
+                pieceRepository.findByCandidatureId(c.getId()),
+                formationRepository.findByCandidatureId(c.getId()),
+                experienceRepository.findByCandidatureId(c.getId()),
+                langueRepository.findByCandidatureId(c.getId()),
+                certificationRepository.findByCandidatureId(c.getId()));
     }
 
     private PieceCandidatureFormateurDto toPieceDto(PieceCandidatureFormateur piece) {

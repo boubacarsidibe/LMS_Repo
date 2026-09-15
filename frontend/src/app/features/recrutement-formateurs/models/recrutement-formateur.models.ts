@@ -48,6 +48,64 @@ export const TYPES_DOCUMENT_RECOMMANDES: TypeDocumentCandidatureFormateur[] = [
   'PIECE_IDENTITE',
 ];
 
+export type NiveauLangue = 'DEBUTANT' | 'INTERMEDIAIRE' | 'AVANCE' | 'COURANT' | 'LANGUE_MATERNELLE';
+
+export const LIBELLES_NIVEAU_LANGUE: Record<NiveauLangue, string> = {
+  DEBUTANT: 'Débutant',
+  INTERMEDIAIRE: 'Intermédiaire',
+  AVANCE: 'Avancé',
+  COURANT: 'Courant',
+  LANGUE_MATERNELLE: 'Langue maternelle',
+};
+
+/** Une formation suivie, déclarée dans le dossier (bloc répétable). */
+export interface FormationCandidat {
+  id?: number;
+  niveauEtude: string | null;
+  pays: string | null;
+  ville: string | null;
+  etablissement: string | null;
+  intituleDiplome: string | null;
+  matierePrincipale: string | null;
+  dateDebut: string | null;
+  dateObtention: string | null;
+}
+
+/** Une expérience professionnelle déclarée, avec sa référence (bloc répétable). */
+export interface ExperienceProfessionnelle {
+  id?: number;
+  employeur: string | null;
+  pays: string | null;
+  ville: string | null;
+  posteActuel: boolean;
+  intitulePoste: string | null;
+  dateDebut: string | null;
+  dateFin: string | null;
+  nomSuperviseur: string | null;
+  titreSuperviseur: string | null;
+  telephoneSuperviseur: string | null;
+  emailSuperviseur: string | null;
+  contactAutorise: boolean | null;
+  motifNonContact: string | null;
+  motifDepart: string | null;
+}
+
+/** Une compétence linguistique déclarée (bloc répétable). */
+export interface CompetenceLinguistique {
+  id?: number;
+  langue: string;
+  niveau: NiveauLangue;
+}
+
+/** Une certification déclarée (bloc répétable). */
+export interface Certification {
+  id?: number;
+  intitule: string;
+  organisme: string | null;
+  dateObtention: string | null;
+  dateExpiration: string | null;
+}
+
 export interface OffreFormateur {
   id: number;
   intitule: string;
@@ -91,6 +149,27 @@ export interface CandidatureFormateur {
   dateDecision: string | null;
   formateurCree: boolean;
   pieces: PieceCandidatureFormateur[];
+
+  civilite: string | null;
+  genre: string | null;
+  dateNaissance: string | null;
+  paysNaissance: string | null;
+  lieuNaissance: string | null;
+  nationalite: string | null;
+  nationaliteSecondaire: string | null;
+  niveauEtude: string | null;
+  telephoneSecondaire: string | null;
+  emailAlternatif: string | null;
+  adresseLigne1: string | null;
+  adresseLigne2: string | null;
+  ville: string | null;
+  paysResidence: string | null;
+
+  formations: FormationCandidat[];
+  experiences: ExperienceProfessionnelle[];
+  langues: CompetenceLinguistique[];
+  certifications: Certification[];
+  domainesExpertise: string[];
 }
 
 export interface CandidatureFormateurSaisie {
@@ -101,6 +180,27 @@ export interface CandidatureFormateurSaisie {
   diplomePrincipal: string | null;
   anneesExperience: number | null;
   lettreMotivation: string | null;
+
+  civilite: string | null;
+  genre: string | null;
+  dateNaissance: string | null;
+  paysNaissance: string | null;
+  lieuNaissance: string | null;
+  nationalite: string | null;
+  nationaliteSecondaire: string | null;
+  niveauEtude: string | null;
+  telephoneSecondaire: string | null;
+  emailAlternatif: string | null;
+  adresseLigne1: string | null;
+  adresseLigne2: string | null;
+  ville: string | null;
+  paysResidence: string | null;
+
+  formations: FormationCandidat[];
+  experiences: ExperienceProfessionnelle[];
+  langues: CompetenceLinguistique[];
+  certifications: Certification[];
+  domainesExpertise: string[];
 }
 
 /** Création / modification d'une offre par le responsable admission. */

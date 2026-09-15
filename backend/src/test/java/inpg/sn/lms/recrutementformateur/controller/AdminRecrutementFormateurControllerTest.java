@@ -36,6 +36,10 @@ import inpg.sn.lms.recrutementformateur.enums.EnumStatutCandidatureFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumStatutOffreFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumTypeContratFormateur;
 import inpg.sn.lms.recrutementformateur.repository.CandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.CertificationCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.ExperienceCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.FormationCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.LangueCandidatureFormateurRepository;
 import inpg.sn.lms.recrutementformateur.repository.OffreRecrutementFormateurRepository;
 import inpg.sn.lms.recrutementformateur.repository.PieceCandidatureFormateurRepository;
 import inpg.sn.lms.recrutementformateur.service.RecrutementFormateurNotificationService;
@@ -50,6 +54,10 @@ class AdminRecrutementFormateurControllerTest {
     @Mock private OffreRecrutementFormateurRepository offreRepository;
     @Mock private CandidatureFormateurRepository candidatureRepository;
     @Mock private PieceCandidatureFormateurRepository pieceRepository;
+    @Mock private FormationCandidatureFormateurRepository formationCandidatureRepository;
+    @Mock private ExperienceCandidatureFormateurRepository experienceRepository;
+    @Mock private LangueCandidatureFormateurRepository langueRepository;
+    @Mock private CertificationCandidatureFormateurRepository certificationRepository;
     @Mock private FormationRepository formationRepository;
     @Mock private FormateurRepository formateurRepository;
     @Mock private RoleRepository roleRepository;
@@ -63,6 +71,7 @@ class AdminRecrutementFormateurControllerTest {
     @BeforeEach
     void setUp() {
         controller = new AdminRecrutementFormateurController(offreRepository, candidatureRepository, pieceRepository,
+                formationCandidatureRepository, experienceRepository, langueRepository, certificationRepository,
                 formationRepository, formateurRepository, roleRepository, userService, utilisateurCourant,
                 notificationService);
     }

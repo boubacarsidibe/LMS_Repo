@@ -315,6 +315,7 @@ boutons plats `bg-secondary text-on-secondary`, conteneur
 | **P3** | Front — candidat | Vitrine offres + espace candidat formateur (layout, formulaire + checklist pièces, suivi 3 étapes) | `ng build` |
 | **P4** | Front — admission | Onglet « Formateurs » : pages offres (CRUD + publier/clôturer) + page candidatures (statut + décision + création compte) | `ng build` |
 | **P5** | Recette + doc | Parcours complet sur Docker ; entrée `LOG_BLOQUANT.md` ; `docs/daily_logs/` | end-to-end |
+| **P6** | Dossier enrichi | Migration `V39` (état civil, adresse, formation/expérience/langues/certifications répétables, domaines d'expertise) ; formulaire à sections rétractables ; panneau admission étendu — inspiré d'un portail SAP SuccessFactors, cf. `LOG_BLOQUANT.md` §68 | `mvnw -o test` ciblé, `ng build`, end-to-end |
 
 ---
 
