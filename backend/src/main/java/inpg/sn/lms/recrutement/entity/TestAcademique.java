@@ -37,6 +37,10 @@ public class TestAcademique {
     @Column
     private Float noteObtenue;
 
+    /** Valeur d'avant la dernière saisie — permet d'annuler une correction de note. */
+    @Column(name = "note_obtenue_precedente")
+    private Float noteObtenuePrecedente;
+
     @Column
     private LocalDateTime dateEpreuve;
 

@@ -1788,7 +1788,8 @@ besoin réel). Roadmap détaillée : `docs/roadmap-recrutement-formateurs.md`.
 
 **Nouveau paquet `inpg.sn.lms.recrutementformateur`** (sibling de `recrutement`,
 pas une greffe : ce dernier est trop couplé aux étudiants — promotions, frais de
-dossier, tests académiques). Migration **V38** :
+dossier, tests académiques). Migration **V38** (renommée **V42** au point 68,
+conflit de numérotation avec `develop`) :
 `offres_recrutement_formateur`, `candidatures_formateur` (index unique partiel :
 une candidature active par `(offre, candidat)` tant que `statut <> 'TERMINE'`),
 `pieces_candidature_formateur` (réutilise `fichiers_stockes` +
@@ -1844,13 +1845,14 @@ champs propres à l'ONU comme « Grade for UN staff »), et dériver le domaine
 d'expertise du catalogue déjà utilisé par les offres/formations plutôt que
 d'inventer une nouvelle liste à maintenir.
 
-**Migration V39** : colonnes scalaires sur `candidatures_formateur` (civilité,
+**Migration V39** (renommée **V43** au moment de fusionner avec `develop`, cf.
+plus bas) : colonnes scalaires sur `candidatures_formateur` (civilité,
 genre, naissance, nationalités, niveau d'étude, adresse — toutes VARCHAR
 libres et nullable, même parti pris que `InfosPersonnellesDto` : pas de liste
 déroulante fermée façon SuccessFactors). Quatre tables répétables
 (`formations_candidature_formateur`, `experiences_candidature_formateur`,
 `langues_candidature_formateur`, `certifications_candidature_formateur`),
-patron exact de `pieces_candidature_formateur` (V38) : FK `ON DELETE CASCADE`,
+patron exact de `pieces_candidature_formateur` (V38, devenue V42) : FK `ON DELETE CASCADE`,
 une entité par table, `@OneToMany(cascade = ALL, orphanRemoval = true)` sur
 `CandidatureFormateur`. Seul le niveau de langue est un enum
 (`EnumNiveauLangue`) — seul champ du lot assez borné pour le justifier. Les
@@ -1881,3 +1883,22 @@ intacte côté candidat et côté admission. `ng build` OK, chaînes du nouveau
 formulaire retrouvées dans le bundle déployé. 18 tests unitaires ciblés verts
 (1 nouveau sur `CandidatFormateurControllerTest`, couvrant la persistance d'un
 bloc répétable).
+
+**Renumérotation V38/V39 → V42/V43 à la fusion avec `develop` (2026-09-15)** :
+ce lot avait été développé sur une branche restée isolée pendant qu'un autre
+lot prenait sur `develop` les numéros **V38 à V41** (annulation de décisions,
+prix par session, relevé de moyenne déclarée, description des pièces
+justificatives — module recrutement étudiant, sans rapport). `git merge` ne
+signale aucun conflit texte sur ces fichiers (noms différents), mais Flyway
+aurait refusé de démarrer avec deux migrations portant le même numéro. Les
+deux fichiers de ce lot ont donc été renommés (`V38__recrutement_formateurs.sql`
+→ `V42__…`, `V39__profil_candidature_formateur.sql` → `V43__…`, contenu SQL
+inchangé) et les deux lignes correspondantes de `flyway_schema_history` sur la
+base locale corrigées à la main (`version` et `script`, le `checksum` ne
+change pas puisqu'il porte sur le contenu du fichier). `out-of-order=true`
+étant déjà actif (`application.properties`), les migrations V38-V41 de
+`develop` se sont ensuite appliquées sans heurt malgré leur numéro inférieur à
+des migrations déjà marquées appliquées. Piège à retenir : une collision de
+version Flyway entre deux branches ne remonte **jamais** comme un conflit git
+— seuls les noms de fichiers diffèrent — il faut la chercher à la main
+(`ls db/migration | sort -V`) à chaque fusion touchant ce dossier.

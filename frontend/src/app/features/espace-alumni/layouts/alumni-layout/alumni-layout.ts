@@ -25,6 +25,7 @@ interface EntreeNavigation {
 export class AlumniLayout implements OnInit {
   profil: AlumniProfil | null = null;
   chargement = true;
+  sidebarMobileOpen = false;
 
   readonly navigation: EntreeNavigation[] = [
     { libelle: 'Mon profil', lien: 'mon-profil', icone: 'account_circle' },
@@ -70,5 +71,9 @@ export class AlumniLayout implements OnInit {
       next: () => this.router.navigate(['/accueil']),
       error: () => this.router.navigate(['/accueil']),
     });
+  }
+
+  toggleSidebarMobile(): void {
+    this.sidebarMobileOpen = !this.sidebarMobileOpen;
   }
 }

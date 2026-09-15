@@ -5,11 +5,19 @@
     <p class="font-body-md text-body-md text-on-surface-variant mt-2">Planification et suivi des entretiens des candidats admis à cette étape.</p>
   </div>
   <div class="flex gap-3">
-    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : ''">
-      <span class="material-symbols-outlined text-[20px]">groups</span> Convocation groupée
+    <app-report-button [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button>
+    <!--
+      Convoquer plusieurs candidats est le geste courant à cette étape ; le faire un par un
+      est l'exception. L'action groupée était pourtant une icône seule, sans libellé, qu'on ne
+      trouvait qu'en survolant — d'où des entretiens planifiés candidat par candidat.
+    -->
+    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center gap-2 px-4 h-10 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg font-label-md text-label-md transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50 whitespace-nowrap" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : 'Convoquer plusieurs candidats à la fois'">
+      <span class="material-symbols-outlined text-[20px]">groups</span>
+      Convoquer un groupe
     </button>
-    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="openDrawer()" class="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg font-label-md text-label-md transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : ''">
-      <span class="material-symbols-outlined text-[20px]">add</span> Nouvel Entretien
+    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="openDrawer()" class="flex items-center gap-2 px-4 h-10 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-on-surface font-label-md text-label-md disabled:opacity-50 whitespace-nowrap" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis à l’entretien pour le moment' : 'Planifier l’entretien d’un seul candidat'">
+      <span class="material-symbols-outlined text-[20px]">person_add</span>
+      Un seul candidat
     </button>
   </div>
 </div>
@@ -26,13 +34,13 @@
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
   <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-4">
     <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
-      <button type="button" (click)="filtre = 'TOUS'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'TOUS'" [class.text-on-secondary]="filtre === 'TOUS'" [class.text-on-surface-variant]="filtre !== 'TOUS'">Tous ({{ totalEntretiens }})</button>
-      <button type="button" (click)="filtre = 'A_VENIR'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'A_VENIR'" [class.text-on-secondary]="filtre === 'A_VENIR'" [class.text-on-surface-variant]="filtre !== 'A_VENIR'">À venir ({{ nbAVenir }})</button>
-      <button type="button" (click)="filtre = 'PASSES'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtre === 'PASSES'" [class.text-on-secondary]="filtre === 'PASSES'" [class.text-on-surface-variant]="filtre !== 'PASSES'">Effectués ({{ nbEffectues }})</button>
+      <button type="button" (click)="filtre = 'TOUS'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtre === 'TOUS'" [class.border-b-2]="filtre === 'TOUS'" [class.border-secondary]="filtre === 'TOUS'" [class.font-bold]="filtre === 'TOUS'" [class.text-on-surface-variant]="filtre !== 'TOUS'">Tous ({{ totalEntretiens }})</button>
+      <button type="button" (click)="filtre = 'A_VENIR'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtre === 'A_VENIR'" [class.border-b-2]="filtre === 'A_VENIR'" [class.border-secondary]="filtre === 'A_VENIR'" [class.font-bold]="filtre === 'A_VENIR'" [class.text-on-surface-variant]="filtre !== 'A_VENIR'">À venir ({{ nbAVenir }})</button>
+      <button type="button" (click)="filtre = 'PASSES'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtre === 'PASSES'" [class.border-b-2]="filtre === 'PASSES'" [class.border-secondary]="filtre === 'PASSES'" [class.font-bold]="filtre === 'PASSES'" [class.text-on-surface-variant]="filtre !== 'PASSES'">Effectués ({{ nbEffectues }})</button>
     </div>
     <div class="relative w-full sm:w-64">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-      <input [(ngModel)]="recherche" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher..." type="text">
+      <input #rechercheBox [value]="recherche" (keyup.enter)="recherche = rechercheBox.value" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher... (Entrée)" type="text">
     </div>
   </div>
 
@@ -64,7 +72,14 @@
           </td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ e.lieuOuLien }}</td>
           <td class="p-4 font-body-sm text-body-sm text-primary">{{ e.dateHeure | date:'dd MMM yyyy, HH:mm' }}</td>
-          <td class="p-4 font-body-sm text-body-sm text-primary">{{ e.noteEntretien ?? '—' }}</td>
+          <!-- Note saisissable sur place : après un entretien groupé, on note en série
+               sans rouvrir la fiche de chaque candidat. -->
+          <td class="p-4" (click)="$event.stopPropagation()">
+            <app-ui-note [valeur]="e.noteEntretien"
+                         [contexte]="e"
+                         [enregistrer]="enregistrerNoteEntretien"
+                         [etiquette]="'Note sur 20 de ' + e.candidatPrenom + ' ' + e.candidatNom"></app-ui-note>
+          </td>
           <td class="p-4">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                   [ngClass]="estPasse(e.dateHeure) ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-primary-fixed text-on-primary-fixed-variant'">

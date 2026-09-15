@@ -20,6 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
+import inpg.sn.lms.auth.entity.User;
+import inpg.sn.lms.auth.repository.UserRepository;
+import inpg.sn.lms.espace_etudiant.entity.Notification;
+import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.recrutement.dto.PaiementRequest;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
@@ -35,11 +39,16 @@ public class PaiementService {
 
     private static final Logger log = LoggerFactory.getLogger(PaiementService.class);
 
+    /** Rôles destinataires de l'alerte « paiement à valider » dans la cloche. */
+    private static final List<String> ROLES_ADMISSION = List.of("ROLE_RESPONSABLE_ADMISSION");
+
     private final PaiementRepository paiementRepository;
     private final CandidatureRepository candidatureRepository;
     private final NotificationService notificationService;
     private final NotificationCandidatService notificationCandidatService;
     private final RecuPaiementService recuPaiementService;
+    private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
 
     @Value("${app.admission.email:admin@inpg.sn}")
     private String emailAdmission;
@@ -55,12 +64,16 @@ public class PaiementService {
             CandidatureRepository candidatureRepository,
             NotificationService notificationService,
             NotificationCandidatService notificationCandidatService,
-            RecuPaiementService recuPaiementService) {
+            RecuPaiementService recuPaiementService,
+            UserRepository userRepository,
+            NotificationRepository notificationRepository) {
         this.paiementRepository = paiementRepository;
         this.candidatureRepository = candidatureRepository;
         this.notificationService = notificationService;
         this.notificationCandidatService = notificationCandidatService;
         this.recuPaiementService = recuPaiementService;
+        this.userRepository = userRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     /**
@@ -84,6 +97,7 @@ public class PaiementService {
                         "Candidature non trouvée avec l'ID: " + request.getCandidatureId()));
 
         Optional<Paiement> existant = paiementRepository.findByCandidatureId(request.getCandidatureId());
+        Paiement saved;
         if (existant.isPresent()) {
             Paiement precedent = existant.get();
             if (precedent.getStatut() == EnumStatutPaiement.SUCCES) {
@@ -96,25 +110,73 @@ public class PaiementService {
             precedent.setStatut(EnumStatutPaiement.EN_ATTENTE);
             precedent.setDatePaiement(null);
             precedent.setMethodePaiement(methodeOuDefaut(request));
-            return toResponse(paiementRepository.save(precedent));
+            saved = paiementRepository.save(precedent);
+        } else {
+            Paiement paiement = new Paiement();
+            paiement.setReferenceTransaction(genererReference());
+            // Tarif et devise proviennent de la session (ou du repli global), jamais de la requête.
+            paiement.setMontant(montantPour(candidature));
+            paiement.setDevise(deviseFraisDossier);
+            paiement.setStatut(EnumStatutPaiement.EN_ATTENTE);
+            paiement.setMethodePaiement(methodeOuDefaut(request));
+            paiement.setCandidature(candidature);
+            saved = paiementRepository.save(paiement);
         }
 
-        Paiement paiement = new Paiement();
-        paiement.setReferenceTransaction(genererReference());
-        // Tarif et devise proviennent de la configuration, jamais de la requête.
-        paiement.setMontant(new BigDecimal(fraisDossier));
-        paiement.setDevise(deviseFraisDossier);
-        paiement.setStatut(EnumStatutPaiement.EN_ATTENTE);
-        paiement.setMethodePaiement(methodeOuDefaut(request));
-        paiement.setCandidature(candidature);
-
-        Paiement saved = paiementRepository.save(paiement);
+        notifierAdmissionPaiementAValider(candidature, saved);
         return toResponse(saved);
+    }
+
+    /**
+     * Alerte le responsable admission qu'un candidat vient de déclarer un règlement —
+     * jusqu'ici l'admission ne l'apprenait qu'en consultant elle-même le tableau de bord
+     * des paiements, sans aucune sollicitation active à sa création.
+     */
+    private void notifierAdmissionPaiementAValider(Candidature candidature, Paiement paiement) {
+        String identiteCandidat = candidature.getCandidat().getPrenom() + " " + candidature.getCandidat().getNom();
+        String detail = paiement.getMontant() + " " + paiement.getDevise() + ", " + paiement.getMethodePaiement();
+
+        try {
+            notificationService.envoyerEmail(emailAdmission,
+                    "Paiement à valider",
+                    "Le candidat du dossier n°" + candidature.getNumeroDossier() + " (" + identiteCandidat
+                            + ") déclare avoir réglé les frais de dossier (" + detail
+                            + "). Merci de vérifier et valider ce règlement.");
+        } catch (Exception e) {
+            log.error("Échec de l'envoi de l'email d'alerte paiement à valider à {} : {}", emailAdmission,
+                    e.getMessage(), e);
+        }
+
+        // Cloche in-app en plus du courriel : l'email part vers une boîte partagée
+        // (app.admission.email) que personne ne relève forcément, alors que la cloche
+        // est adossée à chaque compte responsable admission réellement connecté.
+        try {
+            for (User destinataire : userRepository.findDistinctByRoles_CodeInOrderByUsernameAsc(ROLES_ADMISSION)) {
+                notificationRepository.save(new Notification(destinataire,
+                        "Paiement à valider — dossier n°" + candidature.getNumeroDossier() + " (" + identiteCandidat
+                                + ", " + detail + ")",
+                        Notification.PAIEMENT_A_VALIDER,
+                        "/responsable-admission/paiements"));
+            }
+        } catch (Exception e) {
+            log.error("Échec de la création des notifications « paiement à valider » : {}", e.getMessage(), e);
+        }
     }
 
     /** Référence de transaction, unique en base : deux tentatives ne doivent jamais la partager. */
     private String genererReference() {
         return "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    /**
+     * Frais de dossier applicables à cette candidature : le tarif propre à sa session
+     * s'il a été fixé par le responsable admission, sinon le tarif global de repli.
+     */
+    private BigDecimal montantPour(Candidature candidature) {
+        BigDecimal montantSession = candidature.getSessionCandidature() != null
+                ? candidature.getSessionCandidature().getMontantFraisDossier()
+                : null;
+        return montantSession != null ? montantSession : new BigDecimal(fraisDossier);
     }
 
     private String methodeOuDefaut(PaiementRequest request) {
@@ -215,7 +277,7 @@ public class PaiementService {
         } else {
             paiement = new Paiement();
             paiement.setReferenceTransaction(genererReference());
-            paiement.setMontant(new BigDecimal(fraisDossier));
+            paiement.setMontant(montantPour(candidature));
             paiement.setDevise(deviseFraisDossier);
             paiement.setCandidature(candidature);
         }

@@ -3,6 +3,7 @@ package inpg.sn.lms.recrutement.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +14,21 @@ import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 
 @Repository
 public interface CandidatureRepository extends JpaRepository<Candidature, Long> {
+
+    /**
+     * Associations chargées d'office avec chaque dossier, parce que la DTO les lit
+     * toutes ({@code CandidatureService#toResponse}) : sans elles, lister N dossiers
+     * déclenchait 4×N requêtes supplémentaires.
+     *
+     * <p>Seules les associations « vers-un » figurent ici. Ajouter les deux
+     * collections ({@code piecesJustificatives}, {@code reponsesCriteres}) ferait
+     * échouer Hibernate au démarrage (MultipleBagFetchException, deux List dans le
+     * même graphe) ; elles sont couvertes par {@code hibernate.default_batch_fetch_size},
+     * réglé dans application.properties.
+     */
+    @Override
+    @EntityGraph(attributePaths = { "candidat", "candidat.user", "sessionCandidature", "paiement" })
+    List<Candidature> findAll();
 
     Optional<Candidature> findByNumeroDossier(String numeroDossier);
 

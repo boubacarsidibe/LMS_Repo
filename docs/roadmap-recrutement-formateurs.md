@@ -57,9 +57,11 @@
 
 ---
 
-## 2. Modèle de données — migration `V38__recrutement_formateurs.sql`
+## 2. Modèle de données — migration `V42__recrutement_formateurs.sql`
 
-> Dernière migration à ce jour : V37 (journal détapes QMS-009). La prochaine est **V38**.
+> Dernière migration à ce jour : V37 (journal détapes QMS-009). La prochaine était **V38**,
+> mais un conflit de numérotation avec `develop` (V38-V41 déjà pris par un autre lot) a
+> forcé un renommage en **V42** lors de la fusion — cf. `LOG_BLOQUANT.md` §68.
 
 ### 2.1 `offres_recrutement_formateur` — la fiche de poste (QMS-007 §1)
 
@@ -310,19 +312,35 @@ boutons plats `bg-secondary text-on-secondary`, conteneur
 
 | # | Bloc | Contenu | Vérif |
 |---|---|---|---|
-| **P1** | Back — socle | Migration `V38` ; `ROLE_CANDIDAT_FORMATEUR` dans `DataInitializer` ; enums + entités + repos + DTOs ; `RecrutementFormateurNotificationService` | `mvnw -o compile` |
+| **P1** | Back — socle | Migration `V38` (renommée **V42** lors de la fusion avec `develop`, cf. §6bis) ; `ROLE_CANDIDAT_FORMATEUR` dans `DataInitializer` ; enums + entités + repos + DTOs ; `RecrutementFormateurNotificationService` | `mvnw -o compile` |
 | **P2** | Back — API | 3 contrôleurs (public / candidat / admin) + règle `SecurityConfig` + réutilisation `FichierStockeService`/`FormateurService` | `mvnw -o test` ciblé, `curl` |
 | **P3** | Front — candidat | Vitrine offres + espace candidat formateur (layout, formulaire + checklist pièces, suivi 3 étapes) | `ng build` |
 | **P4** | Front — admission | Onglet « Formateurs » : pages offres (CRUD + publier/clôturer) + page candidatures (statut + décision + création compte) | `ng build` |
 | **P5** | Recette + doc | Parcours complet sur Docker ; entrée `LOG_BLOQUANT.md` ; `docs/daily_logs/` | end-to-end |
-| **P6** | Dossier enrichi | Migration `V39` (état civil, adresse, formation/expérience/langues/certifications répétables, domaines d'expertise) ; formulaire à sections rétractables ; panneau admission étendu — inspiré d'un portail SAP SuccessFactors, cf. `LOG_BLOQUANT.md` §68 | `mvnw -o test` ciblé, `ng build`, end-to-end |
+| **P6** | Dossier enrichi | Migration `V39` (renommée **V43**, même fusion) : état civil, adresse, formation/expérience/langues/certifications répétables, domaines d'expertise ; formulaire à sections rétractables ; panneau admission étendu — inspiré d'un portail SAP SuccessFactors, cf. `LOG_BLOQUANT.md` §68 | `mvnw -o test` ciblé, `ng build`, end-to-end |
+
+### 6bis. Renumérotation V38/V39 → V42/V43 (fusion avec `develop`, 2026-09-15)
+
+Ce lot a été développé sur une branche restée isolée pendant qu'un autre lot
+prenait sur `develop` les numéros **V38 à V41** (annulation de décisions,
+prix par session, relevé, description des pièces justificatives — module
+recrutement étudiant, sans lien avec le recrutement formateur). À la fusion,
+les deux migrations de ce lot (`V38__recrutement_formateurs.sql` et
+`V39__profil_candidature_formateur.sql`) ont donc été renommées
+`V42__recrutement_formateurs.sql` et `V43__profil_candidature_formateur.sql`
+(contenu SQL inchangé — seul le préfixe de version change, `out-of-order=true`
+étant déjà actif dans `application.properties`). Toute base déjà migrée avec
+les anciens numéros doit voir ses deux lignes `flyway_schema_history`
+corrigées à la main (`version`/`script`, le `checksum` reste identique car il
+porte sur le contenu du fichier, pas sur son nom).
 
 ---
 
 ## 7. Vérification end-to-end (stack Docker locale, `:4200`)
 
-1. `docker compose up -d --build backend` → log Flyway **`V38`** ; amorçage du
-   rôle `ROLE_CANDIDAT_FORMATEUR`. Puis `--build frontend`.
+1. `docker compose up -d --build backend` → log Flyway **`V42`** (`V38` à l'origine,
+   renommée en V42 — cf. §6bis) ; amorçage du rôle `ROLE_CANDIDAT_FORMATEUR`.
+   Puis `--build frontend`.
 2. **Admission** (`test.admission@inpg.sn` / `Test@2026`) : onglet Formateurs →
    créer une offre → **Publier**. `GET /api/recrutement-formateurs/public/offres`
    la renvoie.

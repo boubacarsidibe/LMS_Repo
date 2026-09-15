@@ -76,7 +76,13 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <!-- Alertes : calculées sur les vraies candidatures/sessions, pas des notifications stockées -->
+        <!--
+          Deux sources distinctes dans la même cloche :
+          - les notifications enregistrées en base pour ce compte (événements datés,
+            qui restent jusqu'à ce qu'on les ouvre) ;
+          - les alertes recalculées à chaque chargement sur les vraies candidatures
+            et sessions (états permanents, sans notion de « lu »).
+        -->
         <div class="relative">
           <button
             id="notification-btn"
@@ -88,10 +94,10 @@
           >
             <span class="material-symbols-outlined">notifications</span>
             <span
-              *ngIf="alertes.length > 0"
+              *ngIf="alertes.length + notificationsPersistees.length > 0"
               class="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-error text-on-error text-[10px] font-bold rounded-full ring-2 ring-surface"
             >
-              {{ alertes.length }}
+              {{ alertes.length + notificationsPersistees.length }}
             </span>
           </button>
           <div
@@ -103,10 +109,19 @@
               <p class="font-label-md text-label-md text-on-surface">Alertes</p>
             </div>
             <div class="max-h-80 overflow-y-auto">
-              <div *ngIf="alertes.length === 0" class="px-4 py-8 text-center">
+              <div *ngIf="alertes.length + notificationsPersistees.length === 0" class="px-4 py-8 text-center">
                 <span class="material-symbols-outlined text-3xl text-outline mb-1 block">check_circle</span>
                 <p class="font-body-sm text-body-sm text-on-surface-variant">Rien à signaler.</p>
               </div>
+              <button
+                *ngFor="let n of notificationsPersistees"
+                type="button"
+                (click)="ouvrirNotification(n)"
+                class="w-full text-left flex items-start gap-3 px-4 py-3 border-b border-outline-variant last:border-0 hover:bg-surface-container transition-colors cursor-pointer"
+              >
+                <span class="material-symbols-outlined text-[18px] text-secondary mt-0.5">notifications_active</span>
+                <span class="font-body-sm text-body-sm text-on-surface">{{ n.message }}</span>
+              </button>
               <a
                 *ngFor="let a of alertes"
                 [routerLink]="a.route"

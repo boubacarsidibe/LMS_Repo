@@ -19,6 +19,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   dropdownOpen = false;
   notifDropdownOpen = false;
+  mobileMenuOpen = false;
   userReady = false;
   hasCandidature = false;
   candidatureUrl = '/recrutement/sessions';
@@ -34,6 +35,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       if (!user) {
         this.dropdownOpen = false;
         this.notifDropdownOpen = false;
+        this.mobileMenuOpen = false;
       }
     });
   }
@@ -101,11 +103,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return roles.includes('ROLE_CANDIDAT');
   }
 
-  /** Unique lien de retour vers l'espace du rôle connecté (null tant qu'aucun rôle n'est acquis). */
-  get monEspaceUrl(): string | null {
-    return this.isLoggedIn ? this.auth.getHomeUrl() : null;
-  }
-
   get userInitials(): string {
     const user = this.auth.currentUser();
     if (!user) return '';
@@ -170,12 +167,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   toggleDropdown(): void {
     this.notifDropdownOpen = false;
+    this.mobileMenuOpen = false;
     this.dropdownOpen = !this.dropdownOpen;
   }
 
   toggleNotifDropdown(): void {
     this.dropdownOpen = false;
+    this.mobileMenuOpen = false;
     this.notifDropdownOpen = !this.notifDropdownOpen;
+  }
+
+  toggleMobileMenu(): void {
+    this.dropdownOpen = false;
+    this.notifDropdownOpen = false;
+    this.mobileMenuOpen = !this.mobileMenuOpen;
   }
 
   closeDropdown(): void {
@@ -184,6 +189,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   closeNotifDropdown(): void {
     this.notifDropdownOpen = false;
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen = false;
   }
 
   onNotificationClick(notif: NotificationCandidatResponse): void {

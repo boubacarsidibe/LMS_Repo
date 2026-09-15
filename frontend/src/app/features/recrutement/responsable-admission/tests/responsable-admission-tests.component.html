@@ -1,31 +1,59 @@
 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-stack-lg">
   <div>
     <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Tests Académiques</h1>
-    <p class="font-body-md text-body-md text-on-surface-variant mt-2">Planification des épreuves et saisie des notes des candidats admis à cette étape.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-2">Convoquez plusieurs candidats à la même épreuve, puis cliquez directement sur une note pour la saisir.</p>
   </div>
   <div class="flex gap-3">
-    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis au test académique pour le moment' : ''">
-      <span class="material-symbols-outlined text-[20px]">groups</span> Convocation groupée
-    </button>
-    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="nouveauTest()" class="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg font-label-md text-label-md transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis au test académique pour le moment' : ''">
-      <span class="material-symbols-outlined text-[20px]">add</span> Nouveau Test
+    <app-report-button [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button>
+    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center justify-center w-10 h-10 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis au test académique pour le moment' : 'Convoquer au test (un ou plusieurs candidats)'">
+      <span class="material-symbols-outlined text-[20px]">groups</span>
     </button>
   </div>
 </div>
 
 <div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
 
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-gutter mb-stack-lg">
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Total Tests</span><span class="material-symbols-outlined text-secondary">quiz</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ totalTests }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Programmés</div></div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Notés</span><span class="material-symbols-outlined text-secondary">edit_note</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbNotes }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Notes saisies</div></div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Admissibles</span><span class="material-symbols-outlined text-outline">check_circle</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbAdmissibles }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Note ≥ 10/20</div></div>
+<!--
+  Compteurs de contexte, pas le sujet de la page : le sujet est la grille de notation
+  plus bas. Ils tenaient auparavant sur trois grandes cartes (32 px pour un chiffre à
+  un digit) qui repoussaient la grille sous la ligne de flottaison.
+-->
+<div class="grid grid-cols-3 divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest mb-stack-md">
+  <div class="flex items-center gap-3 px-4 py-3">
+    <span class="material-symbols-outlined text-secondary text-[20px]">quiz</span>
+    <div class="min-w-0">
+      <div class="font-headline-sm text-headline-sm text-primary leading-none">{{ totalTests }}</div>
+      <div class="font-label-sm text-label-sm text-on-surface-variant truncate">Tests programmés</div>
+    </div>
+  </div>
+  <div class="flex items-center gap-3 px-4 py-3">
+    <span class="material-symbols-outlined text-secondary text-[20px]">edit_note</span>
+    <div class="min-w-0">
+      <div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbNotes }}</div>
+      <div class="font-label-sm text-label-sm text-on-surface-variant truncate">Notes saisies</div>
+    </div>
+  </div>
+  <div class="flex items-center gap-3 px-4 py-3">
+    <span class="material-symbols-outlined text-outline text-[20px]">check_circle</span>
+    <div class="min-w-0">
+      <div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbAdmissibles }}</div>
+      <div class="font-label-sm text-label-sm text-on-surface-variant truncate">Admissibles (≥ 10/20)</div>
+    </div>
+  </div>
 </div>
 
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
-  <div class="p-4 border-b border-outline-variant bg-surface flex justify-end">
+  <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-3">
+    <div class="flex items-center gap-2">
+      <button type="button" (click)="evaluationDirecte = !evaluationDirecte" role="switch" [attr.aria-checked]="evaluationDirecte" title="Si activé, une note insuffisante propose immédiatement le rejet du dossier — sinon, le badge Résultat reste cliquable pour évaluer plus tard"
+              class="relative w-11 h-6 rounded-full transition-colors shrink-0" [class.bg-secondary]="evaluationDirecte" [class.bg-outline-variant]="!evaluationDirecte">
+        <span class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform" [class.translate-x-5]="evaluationDirecte"></span>
+      </button>
+      <span class="font-label-sm text-label-sm text-on-surface-variant">Évaluation immédiate</span>
+    </div>
     <div class="relative w-full sm:w-64">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-      <input [(ngModel)]="recherche" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher..." type="text">
+      <input #rechercheBox [value]="recherche" (keyup.enter)="recherche = rechercheBox.value" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher... (Entrée)" type="text">
     </div>
   </div>
 
@@ -61,16 +89,34 @@
           <td class="p-4 font-body-sm text-body-sm text-primary">{{ t.dateEpreuve | date:'dd MMM yyyy, HH:mm' }}</td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ t.lieuOuLien || '—' }}</td>
           <td class="p-4 font-body-sm text-body-sm text-primary">{{ t.coefficient }}</td>
-          <td class="p-4 font-body-sm text-body-sm text-primary">{{ t.noteObtenue ?? '—' }}</td>
-          <td class="p-4">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  [ngClass]="{
-                    'bg-[#ecfdf5] text-[#065f46]': resultat(t) === 'ADMISSIBLE',
-                    'bg-error-container/40 text-error': resultat(t) === 'INSUFFISANT',
-                    'bg-surface-container text-on-surface-variant': resultat(t) === 'EN_ATTENTE'
-                  }">
-              {{ resultat(t) === 'ADMISSIBLE' ? 'Admissible' : resultat(t) === 'INSUFFISANT' ? 'Insuffisant' : 'En attente' }}
-            </span>
+          <td class="p-4" (click)="$event.stopPropagation()">
+            <div class="flex items-center gap-1">
+              <app-ui-note [valeur]="t.noteObtenue"
+                           [contexte]="t"
+                           [enregistrer]="enregistrerNote"
+                           [desactive]="noteEnCoursId === t.id"
+                           [etiquette]="'Note sur 20 de ' + t.candidatPrenom + ' ' + t.candidatNom"></app-ui-note>
+              <button *ngIf="t.noteObtenuePrecedente != null" type="button" [disabled]="noteEnCoursId === t.id" (click)="annulerNote(t)" [title]="'Annuler : revenir à ' + t.noteObtenuePrecedente" class="p-1 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors">
+                <span class="material-symbols-outlined text-[18px]">undo</span>
+              </button>
+            </div>
+          </td>
+          <td class="p-4" (click)="$event.stopPropagation()">
+            <button *ngIf="resultat(t) === 'INSUFFISANT'; else resultatSimple" type="button" (click)="evaluerMaintenant(t)"
+                    title="Évaluer maintenant — proposer le rejet du dossier"
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-error-container/40 text-error hover:bg-error-container/70 transition-colors cursor-pointer">
+              Insuffisant
+              <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+            </button>
+            <ng-template #resultatSimple>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    [ngClass]="{
+                      'bg-[#ecfdf5] text-[#065f46]': resultat(t) === 'ADMISSIBLE',
+                      'bg-surface-container text-on-surface-variant': resultat(t) === 'EN_ATTENTE'
+                    }">
+                {{ resultat(t) === 'ADMISSIBLE' ? 'Admissible' : 'En attente' }}
+              </span>
+            </ng-template>
           </td>
           <td class="p-4 text-right" (click)="$event.stopPropagation()">
             <div class="flex justify-end gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
@@ -120,7 +166,8 @@
         <div class="border border-outline-variant rounded-lg max-h-56 overflow-y-auto divide-y divide-outline-variant">
           <label *ngFor="let c of candidatsEligibles" class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-surface-container-low">
             <input type="checkbox" [checked]="selectionCandidatIds.has(c.candidatId)" (change)="basculerSelection(c.candidatId)" class="w-4 h-4 accent-secondary">
-            <span class="font-body-sm text-body-sm text-on-surface">{{ c.candidatPrenom }} {{ c.candidatNom }} — {{ c.numeroDossier }}</span>
+            <span class="font-body-sm text-body-sm text-on-surface flex-1">{{ c.candidatPrenom }} {{ c.candidatNom }} — {{ c.numeroDossier }}</span>
+            <span *ngIf="c.paiement?.statut !== 'SUCCES'" class="text-[10px] font-bold text-error uppercase tracking-wide shrink-0" title="Frais de dossier non réglés">Non payé</span>
           </label>
         </div>
       </div>

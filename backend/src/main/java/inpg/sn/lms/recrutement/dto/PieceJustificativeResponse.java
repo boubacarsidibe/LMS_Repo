@@ -17,6 +17,9 @@ public class PieceJustificativeResponse {
     private Long id;
     private EnumTypeDocument typeDocument;
     private boolean estConforme;
+    private String description;
     private Long fichierStockeId;
     private String fichierNomOriginal;
+    /** Moyenne declaree par le candidat pour un releve de notes (sur 20), null sinon. */
+    private Double moyenneDeclaree;
 }

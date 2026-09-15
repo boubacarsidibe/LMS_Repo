@@ -2,13 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { Observable, map, tap } from 'rxjs';
 import {
   CandidatureResponse,
   ConvocationTestGroupeeRequest,
+  FormatRapport,
   RecrutementService,
   SessionCandidatureResponse,
   TestAcademiqueResponse,
 } from '../../../../core/recrutement/services/recrutement.service';
+import { downloadBlob } from '../../../../shared/utils/download-file';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { ReportButtonComponent } from '../../../../shared/components/report-button/report-button.component';
+import { UiNoteComponent } from '../../../../shared/components/ui/ui-note.component';
 
 interface TestAffiche extends TestAcademiqueResponse {
   candidatNom: string;
@@ -22,7 +28,7 @@ const SEUIL_ADMISSIBILITE_DEFAUT = 10;
 @Component({
   selector: 'app-responsable-admission-tests',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, ReportButtonComponent, UiNoteComponent],
   templateUrl: './responsable-admission-tests.component.html',
 })
 export class ResponsableAdmissionTestsComponent implements OnInit {
@@ -31,9 +37,22 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
   sessions: SessionCandidatureResponse[] = [];
   loading = false;
   errorMessage = '';
+  generatingReport = false;
   private chargementsEnCours = 0;
 
   recherche = '';
+  /** Id du test dont la note est en cours d'enregistrement (grille de notation). */
+  noteEnCoursId: number | null = null;
+  /**
+   * Désactivée par défaut : lors d'une saisie en série (clic, écriture, tabulation,
+   * clic suivant...), interrompre chaque note insuffisante par une boîte de
+   * confirmation casse le rythme et force une décision avant même d'avoir vu
+   * l'ensemble des résultats. Notes enregistrées silencieusement ; le badge
+   * Résultat (déjà recalculé pour chaque ligne) reste cliquable pour évaluer une
+   * fois toute la saisie terminée. Activable pour qui préfère traiter chaque rejet
+   * au fil de l'eau.
+   */
+  evaluationDirecte = false;
 
   convocationGroupeeOpen = false;
   selectionCandidatIds = new Set<number>();
@@ -41,7 +60,8 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
   envoiGroupeEnCours = false;
   convocationFormError = '';
 
-  constructor(private recrutementService: RecrutementService, private fb: FormBuilder, private router: Router) {
+  constructor(private recrutementService: RecrutementService, private fb: FormBuilder, private router: Router,
+              private notifications: NotificationService) {
     this.convocationForm = this.fb.group({
       nomEpreuve: ['', Validators.required],
       coefficient: [1, [Validators.required, Validators.min(0.1)]],
@@ -143,19 +163,99 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
     return t.noteObtenue >= this.seuilPour(t.candidatId) ? 'ADMISSIBLE' : 'INSUFFISANT';
   }
 
-  nouveauTest(): void {
-    this.router.navigate(['/responsable-admission/tests/nouveau']);
-  }
-
   voirTest(test: TestAcademiqueResponse): void {
     this.router.navigate(['/responsable-admission/tests', test.id]);
+  }
+
+  /**
+   * Saisie de note en ligne, directement dans le tableau — clic sur la cellule, on
+   * tape la note, elle s'enregistre au blur. Volontairement en input non contrôlé
+   * ([value] + (blur), pas [(ngModel)]) : {@link testsAffiches}/{@link testsFiltres}
+   * renvoient des copies (spread) recalculées à chaque cycle de détection, un
+   * ngModel s'y écrirait dans le vide et l'input se réinitialiserait sous la saisie.
+   */
+  /**
+   * Enregistrement d'une note de la grille, confié à {@code app-ui-note} — qui gère
+   * la saisie (virgule décimale, plage autorisée, restauration après refus) et
+   * l'affichage de l'état.
+   *
+   * <p>Propriété fléchée et non méthode : le gabarit la passe en entrée du champ,
+   * et une fonction recréée à chaque cycle de détection y relancerait un
+   * enregistrement en boucle.
+   */
+  readonly enregistrerNote = (note: number | null, contexte: unknown): Observable<number | null> => {
+    const test = contexte as TestAffiche;
+    return this.recrutementService.modifierNoteTest(test.id, note).pipe(
+      tap((maj) => {
+        const original = this.tests.find((t) => t.id === test.id);
+        if (original) {
+          original.noteObtenue = maj.noteObtenue;
+          // Recopié aussi : sans lui, le bouton « annuler » de la ligne gardait
+          // l'état d'avant la saisie et ne proposait pas de revenir en arrière.
+          original.noteObtenuePrecedente = maj.noteObtenuePrecedente;
+        }
+
+        // Note en dessous du seuil : par défaut on n'interrompt pas la saisie en
+        // série (voir evaluationDirecte) — le badge Résultat, déjà recalculé,
+        // reste cliquable pour évaluer une fois la série terminée.
+        if (
+          this.evaluationDirecte &&
+          maj.noteObtenue !== null &&
+          maj.noteObtenue < this.seuilPour(test.candidatId)
+        ) {
+          this.proposerRejetSousSeuil(test.candidatId, maj.noteObtenue);
+        }
+      }),
+      map((maj) => maj.noteObtenue),
+    );
+  };
+
+  /** Annule la dernière saisie de note (à tout moment, pas seulement juste après). */
+  annulerNote(test: TestAffiche): void {
+    this.noteEnCoursId = test.id;
+    this.recrutementService.annulerNoteTest(test.id).subscribe({
+      next: (maj) => {
+        const original = this.tests.find((t) => t.id === test.id);
+        if (original) {
+          original.noteObtenue = maj.noteObtenue;
+          original.noteObtenuePrecedente = maj.noteObtenuePrecedente;
+        }
+        this.noteEnCoursId = null;
+      },
+      error: () => {
+        this.noteEnCoursId = null;
+        this.notifications.erreur("Échec de l'annulation de la note.");
+      },
+    });
+  }
+
+  /** Évaluation à la demande — clic sur le badge « Insuffisant » d'une ligne déjà notée. */
+  evaluerMaintenant(test: TestAffiche): void {
+    if (test.noteObtenue == null) return;
+    this.proposerRejetSousSeuil(test.candidatId, test.noteObtenue);
+  }
+
+  private proposerRejetSousSeuil(candidatId: number, note: number): void {
+    const candidature = this.candidatureDe(candidatId);
+    if (!candidature || candidature.statut === 'REJETE') return;
+    const seuil = this.seuilPour(candidatId);
+    const confirme = confirm(
+      `${candidature.candidatPrenom} ${candidature.candidatNom} obtient ${note}/20, en dessous du seuil de réussite (${seuil}/20).\n\n` +
+      `Rejeter automatiquement son dossier et l'en informer par email ?`
+    );
+    if (!confirme) return;
+    this.recrutementService.rejeterDossier(candidature.id, `Note insuffisante au test académique (${note}/20, seuil requis : ${seuil}/20).`)
+      .subscribe({
+        next: () => this.charger(),
+        error: () => this.notifications.erreur('Échec du rejet automatique du dossier.'),
+      });
   }
 
   supprimer(test: TestAffiche): void {
     if (!confirm(`Supprimer le test "${test.nomEpreuve}" de ${test.candidatPrenom} ${test.candidatNom} ?`)) return;
     this.recrutementService.supprimerTest(test.id).subscribe({
       next: () => this.charger(),
-      error: () => alert('Échec de la suppression du test.'),
+      error: () => this.notifications.erreur('Échec de la suppression du test.'),
     });
   }
 
@@ -213,6 +313,20 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
       error: (err) => {
         this.envoiGroupeEnCours = false;
         this.convocationFormError = err.error?.message || "Échec de l'envoi des convocations.";
+      },
+    });
+  }
+
+  genererRapport(format: FormatRapport): void {
+    this.generatingReport = true;
+    this.recrutementService.genererRapportTests(format).subscribe({
+      next: (blob) => {
+        downloadBlob(blob, `rapport_tests_${new Date().toISOString().slice(0, 10)}.${format}`);
+        this.generatingReport = false;
+      },
+      error: () => {
+        this.generatingReport = false;
+        this.notifications.erreur('Échec de la génération du rapport.');
       },
     });
   }

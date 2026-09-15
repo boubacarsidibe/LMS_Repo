@@ -53,7 +53,9 @@
             <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ c.numeroDossier }}</div>
           </td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.statut }}</td>
-          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</td>
+          <td class="p-4 font-body-sm text-body-sm"
+              [class.text-error]="c.paiement?.statut === 'ECHEC'"
+              [class.text-on-surface-variant]="c.paiement?.statut !== 'ECHEC'">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</td>
           <td class="p-4 text-right" (click)="$event.stopPropagation()">
             <button
               type="button"
@@ -74,13 +76,14 @@
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
   <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-4">
     <div class="flex items-center gap-2">
-      <button type="button" (click)="filtreStatut = 'TOUS'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtreStatut === 'TOUS'" [class.text-on-secondary]="filtreStatut === 'TOUS'" [class.text-on-surface-variant]="filtreStatut !== 'TOUS'">Tous</button>
-      <button type="button" (click)="filtreStatut = 'SUCCES'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtreStatut === 'SUCCES'" [class.text-on-secondary]="filtreStatut === 'SUCCES'" [class.text-on-surface-variant]="filtreStatut !== 'SUCCES'">Réussis</button>
-      <button type="button" (click)="filtreStatut = 'EN_ATTENTE'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtreStatut === 'EN_ATTENTE'" [class.text-on-secondary]="filtreStatut === 'EN_ATTENTE'" [class.text-on-surface-variant]="filtreStatut !== 'EN_ATTENTE'">En attente</button>
+      <button type="button" (click)="filtreStatut = 'TOUS'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'TOUS'" [class.border-b-2]="filtreStatut === 'TOUS'" [class.border-secondary]="filtreStatut === 'TOUS'" [class.font-bold]="filtreStatut === 'TOUS'" [class.text-on-surface-variant]="filtreStatut !== 'TOUS'">Tous</button>
+      <button type="button" (click)="filtreStatut = 'SUCCES'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'SUCCES'" [class.border-b-2]="filtreStatut === 'SUCCES'" [class.border-secondary]="filtreStatut === 'SUCCES'" [class.font-bold]="filtreStatut === 'SUCCES'" [class.text-on-surface-variant]="filtreStatut !== 'SUCCES'">Réussis</button>
+      <button type="button" (click)="filtreStatut = 'EN_ATTENTE'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'EN_ATTENTE'" [class.border-b-2]="filtreStatut === 'EN_ATTENTE'" [class.border-secondary]="filtreStatut === 'EN_ATTENTE'" [class.font-bold]="filtreStatut === 'EN_ATTENTE'" [class.text-on-surface-variant]="filtreStatut !== 'EN_ATTENTE'">En attente</button>
+      <button type="button" (click)="filtreStatut = 'ECHEC'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-error]="filtreStatut === 'ECHEC'" [class.border-b-2]="filtreStatut === 'ECHEC'" [class.border-error]="filtreStatut === 'ECHEC'" [class.font-bold]="filtreStatut === 'ECHEC'" [class.text-on-surface-variant]="filtreStatut !== 'ECHEC'">Échecs</button>
     </div>
     <div class="relative w-full sm:w-64">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-      <input [(ngModel)]="recherche" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Nom, dossier, référence..." type="text">
+      <input #rechercheBox [value]="recherche" (keyup.enter)="recherche = rechercheBox.value" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Nom, dossier, référence... (Entrée)" type="text">
     </div>
   </div>
 
@@ -109,9 +112,13 @@
           <td class="p-4 font-body-sm text-body-sm text-primary">{{ p.montant | number:'1.0-0' }} {{ p.devise }}</td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ p.datePaiement ? (p.datePaiement | date:'dd MMM yyyy, HH:mm') : '—' }}</td>
           <td class="p-4">
+            <!-- Trois statuts existent côté serveur (EN_ATTENTE, SUCCES, ECHEC). Le badge
+                 n'en connaissait que deux : un paiement en échec s'affichait « En attente »
+                 en gris, c'est-à-dire l'inverse de ce qu'il fallait lire. -->
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-surface-container text-on-surface-variant'">
-              {{ p.statut === 'SUCCES' ? 'Réussi' : 'En attente' }}
+                  [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]'
+                             : (p.statut === 'ECHEC' ? 'bg-error-container/30 text-error' : 'bg-surface-container text-on-surface-variant')">
+              {{ p.statut === 'SUCCES' ? 'Réussi' : (p.statut === 'ECHEC' ? 'Échec' : 'En attente') }}
             </span>
           </td>
           <td class="p-4" (click)="$event.stopPropagation()">

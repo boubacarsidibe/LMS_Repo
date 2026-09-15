@@ -10,6 +10,7 @@ import {
   TestAcademiqueResponse,
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 interface LigneDeliberation {
   candidature: CandidatureResponse;
@@ -33,11 +34,11 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
   private chargementsEnCours = 0;
 
   recherche = '';
-  filtre: 'TOUS' | 'EN_ATTENTE' | 'ADMIS' | 'REJETES' = 'EN_ATTENTE';
+  filtre: 'TOUS' | 'EN_ATTENTE' | 'ADMIS' | 'LISTE_ATTENTE' | 'REJETES' = 'EN_ATTENTE';
   actionEnCours = false;
   exporting = false;
 
-  constructor(private recrutementService: RecrutementService) {}
+  constructor(private recrutementService: RecrutementService, private notifications: NotificationService) {}
 
   ngOnInit(): void {
     this.charger();
@@ -116,6 +117,7 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
       switch (this.filtre) {
         case 'EN_ATTENTE': return l.candidature.statut === 'ADMIS2';
         case 'ADMIS': return l.candidature.statut === 'ADMIS3';
+        case 'LISTE_ATTENTE': return l.candidature.statut === 'LISTE_ATTENTE';
         case 'REJETES': return l.candidature.statut === 'REJETE';
         default: return true;
       }
@@ -134,6 +136,25 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
     return this.lignes.filter((l) => l.candidature.statut === 'REJETE').length;
   }
 
+  get nbListeAttente(): number {
+    return this.lignes.filter((l) => l.candidature.statut === 'LISTE_ATTENTE').length;
+  }
+
+  /** Retenu par le jury mais sans place disponible (TDR §3.1.C) : ni admis, ni rejeté. */
+  placerEnListeAttente(l: LigneDeliberation): void {
+    this.actionEnCours = true;
+    this.recrutementService.placerEnListeAttente(l.candidature.id).subscribe({
+      next: () => {
+        this.actionEnCours = false;
+        this.charger();
+      },
+      error: (err) => {
+        this.actionEnCours = false;
+        this.notifications.erreur(err.error?.message || 'Échec du placement en liste complémentaire.');
+      },
+    });
+  }
+
   admettreFinal(l: LigneDeliberation): void {
     this.actionEnCours = true;
     this.recrutementService.admettreFinal(l.candidature.id).subscribe({
@@ -143,7 +164,7 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
       },
       error: (err) => {
         this.actionEnCours = false;
-        alert(err.error?.message || "Échec de l'admission finale.");
+        this.notifications.erreur(err.error?.message || "Échec de l'admission finale.");
       },
     });
   }
@@ -152,7 +173,7 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
     const motif = window.prompt(`Motif de rejet pour ${l.candidature.numeroDossier} :`);
     if (motif === null) return;
     if (!motif.trim()) {
-      alert('Un motif de rejet est requis.');
+      this.notifications.erreur('Un motif de rejet est requis.');
       return;
     }
     this.actionEnCours = true;
@@ -163,7 +184,7 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
       },
       error: (err) => {
         this.actionEnCours = false;
-        alert(err.error?.message || 'Échec du rejet.');
+        this.notifications.erreur(err.error?.message || 'Échec du rejet.');
       },
     });
   }
@@ -177,7 +198,7 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
       },
       error: () => {
         this.exporting = false;
-        alert("Échec de l'export Excel.");
+        this.notifications.erreur("Échec de l'export Excel.");
       },
     });
   }

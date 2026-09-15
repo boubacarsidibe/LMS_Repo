@@ -6,6 +6,7 @@ import {
   RecrutementService,
   SessionCandidatureResponse,
 } from '../../../../../core/recrutement/services/recrutement.service';
+import { NotificationService } from '../../../../../shared/components/ui/notification.service';
 
 /**
  * Page dédiée à la liste des critères personnalisés d'une session. Seuls les
@@ -36,6 +37,7 @@ export class SessionCriteresComponent implements OnInit {
     private recrutementService: RecrutementService,
     private route: ActivatedRoute,
     private router: Router,
+    private notifications: NotificationService,
   ) {}
 
   ngOnInit(): void {
@@ -83,14 +85,14 @@ export class SessionCriteresComponent implements OnInit {
     if (!confirm(`Retirer le critère « ${critere.libelle} » du formulaire de candidature ?`)) return;
     this.recrutementService.retirerCritere(critere.id).subscribe({
       next: () => this.charger(),
-      error: () => alert('Échec du retrait du critère.'),
+      error: () => this.notifications.erreur('Échec du retrait du critère.'),
     });
   }
 
   reactiver(critere: CritereAdmissionResponse): void {
     this.recrutementService.reactiverCritere(critere.id).subscribe({
       next: () => this.charger(),
-      error: () => alert('Échec de la réactivation du critère.'),
+      error: () => this.notifications.erreur('Échec de la réactivation du critère.'),
     });
   }
 
@@ -105,7 +107,8 @@ export class SessionCriteresComponent implements OnInit {
     this.recrutementService.appliquerFiltreCriteres(this.sessionId).subscribe({
       next: (resultat) => {
         this.filtreEnCours = false;
-        this.filtreMessage = `${resultat.total} dossier(s) évalué(s) : ${resultat.preselectionnes} en présélection, ${resultat.rejetes} rejeté(s).`;
+        this.filtreMessage = `${resultat.total} dossier(s) évalué(s) : ${resultat.preselectionnes} en présélection, ${resultat.rejetes} rejeté(s)`
+          + (resultat.dossiersVides > 0 ? `, ${resultat.dossiersVides} laissé(s) de côté (aucune pièce jointe).` : '.');
       },
       error: (err) => {
         this.filtreEnCours = false;

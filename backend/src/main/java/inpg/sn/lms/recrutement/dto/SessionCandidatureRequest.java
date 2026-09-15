@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
@@ -27,4 +28,5 @@ public class SessionCandidatureRequest {
     private String infoFraisScolarite;
     private String infoCarteEtudiante;
     private String infoRentree;
+    private BigDecimal montantFraisDossier;
 }

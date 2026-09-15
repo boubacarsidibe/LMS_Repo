@@ -2,13 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { Observable, map, tap } from 'rxjs';
 import {
   CandidatureResponse,
   ConvocationEntretienGroupeeRequest,
   EntretienRequest,
   EntretienResponse,
+  FormatRapport,
   RecrutementService,
 } from '../../../../core/recrutement/services/recrutement.service';
+import { downloadBlob } from '../../../../shared/utils/download-file';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { ReportButtonComponent } from '../../../../shared/components/report-button/report-button.component';
+import { UiNoteComponent } from '../../../../shared/components/ui/ui-note.component';
 
 interface EntretienAffiche extends EntretienResponse {
   candidatNom: string;
@@ -19,7 +25,7 @@ interface EntretienAffiche extends EntretienResponse {
 @Component({
   selector: 'app-responsable-admission-entretiens',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, ReportButtonComponent, UiNoteComponent],
   templateUrl: './responsable-admission-entretiens.component.html',
 })
 export class ResponsableAdmissionEntretiensComponent implements OnInit {
@@ -27,6 +33,7 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
   candidatures: CandidatureResponse[] = [];
   loading = false;
   errorMessage = '';
+  generatingReport = false;
   private chargementsEnCours = 0;
 
   recherche = '';
@@ -44,7 +51,8 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
   envoiGroupeEnCours = false;
   convocationFormError = '';
 
-  constructor(private recrutementService: RecrutementService, private fb: FormBuilder) {
+  constructor(private recrutementService: RecrutementService, private fb: FormBuilder,
+              private notifications: NotificationService) {
     this.entretienForm = this.fb.group({
       candidatId: ['', Validators.required],
       dateHeure: ['', Validators.required],
@@ -218,9 +226,32 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
     if (!confirm(`Annuler l'entretien de ${entretien.candidatPrenom} ${entretien.candidatNom} ?`)) return;
     this.recrutementService.supprimerEntretien(entretien.id).subscribe({
       next: () => this.charger(),
-      error: () => alert("Échec de l'annulation de l'entretien."),
+      error: () => this.notifications.erreur("Échec de l'annulation de l'entretien."),
     });
   }
+
+  /**
+   * Saisie de la note directement dans la liste, après un entretien groupé —
+   * confiée à {@code app-ui-note}, comme la grille des tests académiques, pour que
+   * les deux ne redivergent pas.
+   *
+   * <p>Propriété fléchée et non méthode : le gabarit la passe en entrée du champ,
+   * et une fonction recréée à chaque cycle de détection y relancerait un
+   * enregistrement en boucle.
+   */
+  readonly enregistrerNoteEntretien = (
+    note: number | null,
+    contexte: unknown,
+  ): Observable<number | null> => {
+    const entretien = contexte as EntretienAffiche;
+    return this.recrutementService.modifierNoteEntretien(entretien.id, note).pipe(
+      tap((maj) => {
+        const original = this.entretiens.find((e) => e.id === entretien.id);
+        if (original) original.noteEntretien = maj.noteEntretien;
+      }),
+      map((maj) => maj.noteEntretien),
+    );
+  };
 
   // ===================== Convocation groupée =====================
 
@@ -274,6 +305,20 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
       error: (err) => {
         this.envoiGroupeEnCours = false;
         this.convocationFormError = err.error?.message || "Échec de l'envoi des convocations.";
+      },
+    });
+  }
+
+  genererRapport(format: FormatRapport): void {
+    this.generatingReport = true;
+    this.recrutementService.genererRapportEntretiens(format).subscribe({
+      next: (blob) => {
+        downloadBlob(blob, `rapport_entretiens_${new Date().toISOString().slice(0, 10)}.${format}`);
+        this.generatingReport = false;
+      },
+      error: () => {
+        this.generatingReport = false;
+        this.notifications.erreur('Échec de la génération du rapport.');
       },
     });
   }

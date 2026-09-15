@@ -10,6 +10,8 @@ public enum EnumTypeNotification {
     ADMISSION_TEST,
     ADMISSION_ENTRETIEN,
     ADMISSION_FINALE,
+    /** Liste complémentaire à l'issue de l'entretien (TDR §3.1.C). */
+    LISTE_ATTENTE,
     NON_ADMISSION,
     DOCUMENT_CONFORME,
     DOCUMENT_NON_CONFORME,

@@ -5,11 +5,11 @@
     <p class="font-body-md text-body-md text-on-surface-variant">Indicateurs et répartition des candidatures, toutes sessions confondues.</p>
   </div>
   <div class="flex gap-3">
-    <button type="button" routerLink="/responsable-admission/parametres" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm" title="Choisir les widgets affichés">
-      <span class="material-symbols-outlined text-[18px]">tune</span> Personnaliser
+    <button type="button" routerLink="/responsable-admission/parametres" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary hover:bg-surface-container-low transition-colors shadow-sm" title="Personnaliser — choisir les widgets affichés">
+      <span class="material-symbols-outlined text-[18px]">tune</span>
     </button>
-    <button type="button" [disabled]="exporting" (click)="exporter()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
-      <span class="material-symbols-outlined text-[18px]">download</span> {{ exporting ? 'Export en cours…' : 'Exporter les candidatures' }}
+    <button type="button" [disabled]="exporting" (click)="exporter()" [title]="exporting ? 'Export en cours…' : 'Exporter les candidatures'" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
+      <span class="material-symbols-outlined text-[18px]">download</span>
     </button>
   </div>
 </div>
@@ -44,7 +44,7 @@
         <div class="w-10 h-10 rounded-lg bg-error-container flex items-center justify-center text-error group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">cancel</span></div>
       </div>
       <p class="font-label-md text-label-md text-on-surface-variant mb-1">Rejetés</p>
-      <h3 class="font-headline-lg text-headline-lg text-primary">{{ rejetes }}</h3>
+      <h3 class="font-headline-lg text-headline-lg" [class.text-error]="rejetes > 0" [class.text-primary]="rejetes === 0">{{ rejetes }}</h3>
     </a>
   </div>
 

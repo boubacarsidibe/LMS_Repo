@@ -1,23 +1,25 @@
 <!-- ==================== CONTENU SEUL ==================== -->
 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-stack-lg gap-4">
   <div>
-    <h2 class="font-headline-lg text-headline-lg text-on-surface">Revue des Candidatures</h2>
-    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Gérez et évaluez les candidatures soumises, toutes sessions confondues.</p>
+    <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">INPG — Institut National du Pétrole et du Gaz</p>
+    <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Revue des candidatures</h2>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Consultez et gérez toutes les candidatures aux différentes sessions.</p>
   </div>
-  <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-    <button type="button" [disabled]="relanceEnCours || nombreDossiersIncomplets === 0" (click)="relancerDossiersIncomplets()" title="Envoie un email et une notification aux candidats dont le dossier est incomplet" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md disabled:opacity-60">
-      <span class="material-symbols-outlined text-sm">mark_email_unread</span>
-      {{ relanceEnCours ? 'Relance en cours…' : 'Relancer les dossiers incomplets (' + nombreDossiersIncomplets + ')' }}
+  <div class="flex items-center gap-2">
+    <button type="button" [disabled]="relanceEnCours || nombreDossiersIncomplets === 0" (click)="relancerDossiersIncomplets()" [title]="relanceEnCours ? 'Relance en cours…' : 'Relancer les dossiers incomplets (' + nombreDossiersIncomplets + ')'" class="relative flex items-center justify-center w-10 h-10 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors disabled:opacity-60">
+      <span class="material-symbols-outlined text-[20px]">mark_email_unread</span>
+      <span *ngIf="nombreDossiersIncomplets > 0 && !relanceEnCours" class="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-surface-container-lowest">{{ nombreDossiersIncomplets }}</span>
     </button>
-    <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface disabled:opacity-60">
-      <span class="material-symbols-outlined text-sm">download</span> {{ exporting ? 'Export en cours…' : 'Exporter la liste' }}
+    <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" [title]="exporting ? 'Export en cours…' : 'Exporter la liste'" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-primary shadow-sm disabled:opacity-60">
+      <span class="material-symbols-outlined text-[20px]">download</span>
     </button>
-    <button type="button" [disabled]="exportingDocuments" (click)="exporterDocuments()" title="Télécharge les documents (pièces justificatives) des candidatures actuellement filtrées, en une archive .zip" class="flex items-center gap-2 px-4 py-2 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md text-label-md text-on-surface disabled:opacity-60">
-      <span class="material-symbols-outlined text-sm">folder_zip</span> {{ exportingDocuments ? 'Archive en cours…' : 'Exporter les documents' }}
+    <button type="button" [disabled]="exportingDocuments" (click)="exporterDocuments()" [title]="exportingDocuments ? 'Archive en cours…' : 'Télécharge les documents (pièces justificatives) des candidatures actuellement filtrées, en une archive .zip'" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-primary shadow-sm disabled:opacity-60">
+      <span class="material-symbols-outlined text-[20px]">folder_zip</span>
     </button>
     <button type="button" [disabled]="generatingRapport" (click)="genererRapportQualite()" title="Génère un rapport PDF : nombre de candidats par étape du workflow (présélection, admis test, admis entretien, admis final, rejetés), avec la liste nominative de chaque étape — toutes sessions confondues" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md disabled:opacity-60">
       <span class="material-symbols-outlined text-sm">summarize</span> {{ generatingRapport ? 'Génération en cours…' : 'Rapport qualité (PDF)' }}
     </button>
+    <app-report-button label="Rapport statistiques" [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button>
   </div>
 </div>
 
@@ -38,40 +40,52 @@
   {{ errorMessage }}
 </div>
 
-<!-- Recherche + filtre session -->
-<div class="flex flex-col sm:flex-row gap-3 mb-stack-md">
-  <div class="relative max-w-md flex-1">
-    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-    <input [(ngModel)]="recherche" (ngModelChange)="recalculerFiltres()" class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none text-body-md" placeholder="Nom, prénom, email ou n° dossier..." type="text"/>
+<!-- Barre de filtres réunie dans un bloc, au lieu de contrôles épars au-dessus du tableau. -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 mb-stack-md">
+  <div class="flex flex-col lg:flex-row gap-3 lg:items-end">
+    <div class="flex-1 min-w-0">
+      <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Rechercher</label>
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+        <input [(ngModel)]="recherche" (ngModelChange)="recalculerFiltres()"
+               class="w-full h-10 pl-10 pr-4 bg-surface border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none font-body-md text-body-md"
+               placeholder="Nom, prénom, email ou n° de dossier…" type="text"/>
+      </div>
+    </div>
+    <div class="w-full lg:w-72">
+      <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Session</label>
+      <select [(ngModel)]="filtreSessionId" (ngModelChange)="recalculerFiltres()" aria-label="Filtrer par session"
+              class="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-on-surface font-body-sm text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
+        <option [ngValue]="null">Toutes les sessions</option>
+        <option *ngFor="let s of sessionsDisponibles" [ngValue]="s.id">{{ s.libelle }}</option>
+      </select>
+    </div>
+    <button type="button" (click)="reinitialiserFiltres()" [disabled]="!filtresActifs"
+            class="flex items-center gap-2 px-4 h-10 bg-surface border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-on-surface font-label-md text-label-md disabled:opacity-50 whitespace-nowrap">
+      <span class="material-symbols-outlined text-[20px]">refresh</span> Réinitialiser
+    </button>
   </div>
-  <select [(ngModel)]="filtreSessionId" (ngModelChange)="recalculerFiltres()" aria-label="Filtrer par session" class="px-4 py-2 bg-surface border border-outline-variant rounded-lg text-on-surface-variant font-body-sm text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
-    <option [ngValue]="null">Toutes les sessions</option>
-    <option *ngFor="let s of sessionsDisponibles" [ngValue]="s.id">{{ s.libelle }}</option>
-  </select>
 </div>
 
 <!-- Onglets de statut -->
-<div class="flex overflow-x-auto pb-2 mb-stack-md gap-2 hide-scrollbar border-b border-outline-variant">
-  <button type="button" (click)="setFiltreStatut('TOUS')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'TOUS'" [class.border-b-2]="filtreStatut === 'TOUS'" [class.border-secondary]="filtreStatut === 'TOUS'" [class.font-bold]="filtreStatut === 'TOUS'" [class.text-on-surface-variant]="filtreStatut !== 'TOUS'">
-    Tous ({{ compter('TOUS') }})
-  </button>
-  <button type="button" (click)="setFiltreStatut('SOUMIS')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'SOUMIS'" [class.border-b-2]="filtreStatut === 'SOUMIS'" [class.border-secondary]="filtreStatut === 'SOUMIS'" [class.font-bold]="filtreStatut === 'SOUMIS'" [class.text-on-surface-variant]="filtreStatut !== 'SOUMIS'">
-    Soumis ({{ compter('SOUMIS') }})
-  </button>
-  <button type="button" (click)="setFiltreStatut('EN_COURS_DE_PRESELECTION')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.border-b-2]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.border-secondary]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.font-bold]="filtreStatut === 'EN_COURS_DE_PRESELECTION'" [class.text-on-surface-variant]="filtreStatut !== 'EN_COURS_DE_PRESELECTION'">
-    En présélection ({{ compter('EN_COURS_DE_PRESELECTION') }})
-  </button>
-  <button type="button" (click)="setFiltreStatut('ADMIS1')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'ADMIS1'" [class.border-b-2]="filtreStatut === 'ADMIS1'" [class.border-secondary]="filtreStatut === 'ADMIS1'" [class.font-bold]="filtreStatut === 'ADMIS1'" [class.text-on-surface-variant]="filtreStatut !== 'ADMIS1'">
-    Admis au test ({{ compter('ADMIS1') }})
-  </button>
-  <button type="button" (click)="setFiltreStatut('ADMIS2')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'ADMIS2'" [class.border-b-2]="filtreStatut === 'ADMIS2'" [class.border-secondary]="filtreStatut === 'ADMIS2'" [class.font-bold]="filtreStatut === 'ADMIS2'" [class.text-on-surface-variant]="filtreStatut !== 'ADMIS2'">
-    Admis entretien ({{ compter('ADMIS2') }})
-  </button>
-  <button type="button" (click)="setFiltreStatut('ADMIS3')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'ADMIS3'" [class.border-b-2]="filtreStatut === 'ADMIS3'" [class.border-secondary]="filtreStatut === 'ADMIS3'" [class.font-bold]="filtreStatut === 'ADMIS3'" [class.text-on-surface-variant]="filtreStatut !== 'ADMIS3'">
-    Admis final ({{ compter('ADMIS3') }})
-  </button>
-  <button type="button" (click)="setFiltreStatut('REJETE')" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtreStatut === 'REJETE'" [class.border-b-2]="filtreStatut === 'REJETE'" [class.border-secondary]="filtreStatut === 'REJETE'" [class.font-bold]="filtreStatut === 'REJETE'" [class.text-on-surface-variant]="filtreStatut !== 'REJETE'">
-    Rejetés ({{ compter('REJETE') }})
+<!-- Onglets en pastilles : l'étape courante se lit d'un coup d'œil, et son effectif
+     est porté par un compteur plutôt que noyé entre parenthèses dans le libellé. -->
+<div class="flex overflow-x-auto pb-2 mb-stack-md gap-2 hide-scrollbar">
+  <button *ngFor="let o of onglets" type="button" (click)="setFiltreStatut(o.statut)"
+          class="flex items-center gap-2 whitespace-nowrap px-4 h-10 rounded-lg font-label-md text-label-md transition-colors border"
+          [class.bg-secondary]="filtreStatut === o.statut"
+          [class.text-on-secondary]="filtreStatut === o.statut"
+          [class.border-secondary]="filtreStatut === o.statut"
+          [class.bg-surface]="filtreStatut !== o.statut"
+          [class.text-on-surface-variant]="filtreStatut !== o.statut"
+          [class.border-outline-variant]="filtreStatut !== o.statut"
+          [class.hover:bg-surface-container-low]="filtreStatut !== o.statut">
+    {{ o.libelle }}
+    <span class="min-w-6 px-1.5 py-0.5 rounded-full font-label-sm text-label-sm"
+          [class.bg-on-secondary/20]="filtreStatut === o.statut"
+          [class.text-on-secondary]="filtreStatut === o.statut"
+          [class.bg-surface-container]="filtreStatut !== o.statut"
+          [class.text-on-surface-variant]="filtreStatut !== o.statut">{{ compter(o.statut) }}</span>
   </button>
 </div>
 
@@ -79,27 +93,46 @@
 <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des candidatures…</div>
 
 <!-- Empty state -->
-<div *ngIf="!loading && candidaturesFiltrees.length === 0" class="p-10 text-center bg-surface rounded-xl border border-outline-variant">
+<div *ngIf="!loading && candidaturesFiltrees.length === 0" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
   <span class="material-symbols-outlined text-4xl text-outline mb-2 block">folder_off</span>
   <p class="font-body-md text-body-md text-on-surface-variant">Aucune candidature ne correspond à ces critères.</p>
 </div>
 
-<div *ngIf="!loading && candidaturesFiltrees.length > 0" class="bg-surface rounded-xl border border-outline-variant overflow-hidden flex flex-col md:flex-row relative">
-  <div class="w-full md:w-2/3 lg:w-3/4 overflow-x-auto" [class.border-r]="candidatureSelectionnee" [class.border-outline-variant]="candidatureSelectionnee">
+<div *ngIf="!loading && candidaturesFiltrees.length > 0" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden relative">
+  <div class="w-full overflow-x-auto">
     <table class="w-full text-left border-collapse min-w-[800px]">
       <thead>
         <tr class="bg-surface-container-low border-b border-outline-variant">
+          <th class="p-4 w-10">
+            <input type="checkbox" [checked]="toutesSelectionnees" (click)="basculerToutSelectionner()" (dblclick)="$event.stopPropagation()" aria-label="Tout sélectionner" class="w-4 h-4 accent-secondary cursor-pointer">
+          </th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">N° Dossier</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Session</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Déposée le</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut</th>
           <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
         </tr>
       </thead>
+      <!-- Toute la page est cochée mais d'autres résultats existent hors écran : la case
+           d'en-tête ne pouvant désigner que la page, l'extension devient un geste explicite. -->
+      <tbody *ngIf="peutEtendreSelection" class="border-b border-outline-variant">
+        <tr>
+          <td colspan="7" class="px-4 py-2 bg-secondary-fixed text-center font-body-sm text-body-sm text-on-surface">
+            Les {{ candidaturesPage.length }} dossiers de cette page sont sélectionnés.
+            <button type="button" (click)="selectionnerTousLesResultats()" class="ml-1 font-medium text-secondary hover:underline">
+              Sélectionner les {{ candidaturesFiltrees.length }} dossiers filtrés
+            </button>
+          </td>
+        </tr>
+      </tbody>
       <tbody class="divide-y divide-outline-variant">
-        <tr *ngFor="let c of candidaturesFiltrees" (click)="voirDetail(c)"
-            class="hover:bg-surface-container-lowest transition-colors group cursor-pointer"
-            [class.bg-secondary-container]="candidatureSelectionnee?.id === c.id">
+        <tr *ngFor="let c of candidaturesPage; let i = index" (click)="voirDetail(c)"
+            class="hover:bg-surface-container-low transition-colors group cursor-pointer"
+            [class.bg-secondary-container]="estSelectionne(c.id)">
+          <td class="p-4" (click)="$event.stopPropagation()">
+            <input type="checkbox" [checked]="estSelectionne(c.id)" (click)="basculerSelection(c.id, i, $event)" [attr.aria-label]="'Sélectionner ' + c.candidatPrenom + ' ' + c.candidatNom" class="w-4 h-4 accent-secondary cursor-pointer">
+          </td>
           <td class="p-4">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-full flex items-center justify-center bg-primary-container text-on-primary-container font-bold text-xs">
@@ -113,6 +146,10 @@
           </td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.numeroDossier }}</td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.sessionCandidatureLibelle }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">
+            {{ c.dateSoumission ? (c.dateSoumission | date:'dd MMM yyyy') : '—' }}
+            <span *ngIf="c.dateSoumission" class="block text-on-surface-variant/70">{{ c.dateSoumission | date:'HH:mm' }}</span>
+          </td>
           <td class="p-4">
             <span class="inline-flex items-center px-2 py-1 rounded-md font-label-sm text-label-sm" [ngClass]="classeStatut(c.statut)">
               {{ libelleStatut(c.statut) }}
@@ -123,11 +160,17 @@
           </td>
           <td class="p-4 text-right" (click)="$event.stopPropagation()">
             <div class="flex justify-end gap-1" [class.opacity-40]="actionEnCours">
-              <button *ngIf="actionSuivante(c)" type="button" [disabled]="actionEnCours" (click)="actionSuivante(c)!.action()" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" [title]="actionSuivante(c)!.libelle">
+              <button *ngIf="actionSuivante(c) && !(c.statut === 'SOUMIS' && dossierVide(c))" type="button" [disabled]="actionEnCours" (click)="actionSuivante(c)!.action()" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" [title]="actionSuivante(c)!.libelle">
                 <span class="material-symbols-outlined text-[20px]">check</span>
               </button>
+              <span *ngIf="actionSuivante(c) && c.statut === 'SOUMIS' && dossierVide(c)" class="p-1.5 text-error" title="Aucune pièce jointe : présélection impossible">
+                <span class="material-symbols-outlined text-[20px]">error</span>
+              </span>
               <button *ngIf="peutRejeter(c)" type="button" [disabled]="actionEnCours" (click)="rejeter(c)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Rejeter">
                 <span class="material-symbols-outlined text-[20px]">close</span>
+              </button>
+              <button *ngIf="peutAnnuler(c)" type="button" [disabled]="actionEnCours" (click)="annuler(c)" [title]="'Annuler : revenir à ' + libelleStatut(c.statutPrecedent!)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors">
+                <span class="material-symbols-outlined text-[20px]">undo</span>
               </button>
             </div>
           </td>
@@ -136,73 +179,53 @@
     </table>
   </div>
 
-  <!-- Panneau de détail -->
-  <div *ngIf="candidatureSelectionnee as sel" class="hidden md:flex md:w-1/3 lg:w-1/4 flex-col bg-surface-container-lowest max-h-[600px] overflow-y-auto">
-    <div class="p-6 border-b border-outline-variant sticky top-0 bg-surface-container-lowest z-10 flex justify-between items-start">
-      <div class="flex flex-col gap-1">
-        <span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Dossier</span>
-        <h3 class="font-headline-sm text-headline-sm text-on-surface">{{ sel.candidatPrenom }} {{ sel.candidatNom }}</h3>
-        <span class="font-body-sm text-body-sm text-on-surface-variant">{{ sel.numeroDossier }}</span>
-      </div>
-      <button type="button" (click)="fermerDetail()" class="text-on-surface-variant hover:bg-surface-container-low p-1 rounded transition-colors"><span class="material-symbols-outlined">close</span></button>
-    </div>
-    <div class="p-6 flex flex-col gap-6">
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant">
-          <div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Statut</div>
-          <div class="font-label-md text-label-md font-bold" [ngClass]="classeStatut(sel.statut)">{{ libelleStatut(sel.statut) }}</div>
-        </div>
-        <div class="bg-surface-container-low p-3 rounded-lg border border-outline-variant">
-          <div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Paiement</div>
-          <div class="font-headline-sm text-headline-sm text-on-surface font-bold">{{ sel.paiement?.statut || 'Aucun' }}</div>
-        </div>
-      </div>
-
-      <div>
-        <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Pièces justificatives</div>
-        <div class="space-y-2" *ngIf="sel.piecesJustificatives.length; else aucunePiece">
-          <div *ngFor="let p of sel.piecesJustificatives" class="flex items-center justify-between text-body-sm">
-            <span class="text-on-surface">{{ p.typeDocument }}</span>
-            <div class="flex items-center gap-2">
-              <button type="button" *ngIf="p.fichierStockeId" (click)="telechargerPiece(p)" class="p-1 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Télécharger le document">
-                <span class="material-symbols-outlined text-[18px]">download</span>
-              </button>
-              <button type="button" (click)="basculerConformitePiece(p)" class="p-1 rounded hover:bg-surface-container-low transition-colors" [title]="p.estConforme ? 'Conforme — cliquer pour annuler' : 'Non vérifié — cliquer pour marquer conforme'">
-                <span class="material-symbols-outlined text-[18px]" [class.text-secondary]="p.estConforme" [class.text-outline]="!p.estConforme">
-                  {{ p.estConforme ? 'check_circle' : 'radio_button_unchecked' }}
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-        <ng-template #aucunePiece>
-          <p class="text-body-sm text-on-surface-variant">Aucune pièce téléversée.</p>
-        </ng-template>
-      </div>
-
-      <div *ngIf="sel.motifRejet">
-        <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Motif de rejet</div>
-        <p class="text-body-sm text-error">{{ sel.motifRejet }}</p>
-      </div>
-
-      <div>
-        <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Historique du dossier (QMS-009)</div>
-        <p *ngIf="journalChargement" class="text-body-sm text-on-surface-variant">Chargement…</p>
-        <p *ngIf="!journalChargement && journalSelection.length === 0" class="text-body-sm text-on-surface-variant">Aucune étape consignée.</p>
-        <ol class="space-y-3" *ngIf="!journalChargement && journalSelection.length">
-          <li *ngFor="let etape of journalSelection" class="border-l-2 border-outline-variant pl-3">
-            <div class="font-label-sm text-label-sm text-on-surface font-semibold">{{ libelleEtapeQms(etape.etape) }}</div>
-            <div class="text-body-sm text-on-surface-variant">{{ etape.auteurNom }} — {{ etape.dateEtape | date:'dd/MM/yyyy HH:mm' }}</div>
-            <div *ngIf="etape.commentaire" class="text-body-sm text-on-surface-variant italic">{{ etape.commentaire }}</div>
-          </li>
-        </ol>
-      </div>
-    </div>
-    <div class="mt-auto p-4 border-t border-outline-variant bg-surface-container-lowest sticky bottom-0 z-10 flex gap-2">
-      <button type="button" class="flex-1 py-2 px-4 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors text-center" (click)="fermerDetail()">Fermer</button>
-      <button *ngIf="actionSuivante(sel)" type="button" [disabled]="actionEnCours" (click)="actionSuivante(sel)!.action()" class="flex-[2] py-2 px-4 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg shadow-sm hover:bg-secondary/90 transition-colors text-center flex items-center justify-center gap-2 disabled:opacity-60">
-        <span class="material-symbols-outlined text-[18px]">how_to_reg</span> {{ actionSuivante(sel)!.libelle }}
+  <!-- Pagination : la liste entière reste chargée (les onglets et la recherche comptent
+       sur l'ensemble), seule la portion affichée change. -->
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-outline-variant bg-surface-container-low">
+    <p class="font-body-sm text-body-sm text-on-surface-variant">
+      Affichage de {{ premierAffiche }} à {{ dernierAffiche }} sur {{ candidaturesFiltrees.length }} candidature{{ candidaturesFiltrees.length > 1 ? 's' : '' }}
+    </p>
+    <div *ngIf="totalPages > 1" class="flex items-center gap-1">
+      <button type="button" (click)="allerPage(page - 1)" [disabled]="page === 1" aria-label="Page précédente"
+              class="w-9 h-9 flex items-center justify-center rounded-lg border border-outline-variant bg-surface text-on-surface-variant hover:bg-surface-container-low transition-colors disabled:opacity-40">
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+      </button>
+      <button *ngFor="let p of pagesAffichees" type="button" (click)="allerPage(p)"
+              class="min-w-9 h-9 px-2 flex items-center justify-center rounded-lg border font-label-md text-label-md transition-colors"
+              [class.bg-secondary]="p === page" [class.text-on-secondary]="p === page" [class.border-secondary]="p === page"
+              [class.bg-surface]="p !== page" [class.text-on-surface-variant]="p !== page" [class.border-outline-variant]="p !== page"
+              [class.hover:bg-surface-container-low]="p !== page">{{ p }}</button>
+      <button type="button" (click)="allerPage(page + 1)" [disabled]="page === totalPages" aria-label="Page suivante"
+              class="w-9 h-9 flex items-center justify-center rounded-lg border border-outline-variant bg-surface text-on-surface-variant hover:bg-surface-container-low transition-colors disabled:opacity-40">
+        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
       </button>
     </div>
   </div>
+</div>
+
+<!-- Barre d'actions groupées : apparaît dès qu'une ligne est cochée, comme dans un explorateur de fichiers -->
+<div *ngIf="selection.size > 0" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 bg-inverse-surface text-inverse-on-surface pl-5 pr-3 py-2.5 rounded-full shadow-lg">
+  <span class="font-label-md text-label-md">{{ selection.size }} sélectionné{{ selection.size > 1 ? 's' : '' }}</span>
+  <div class="h-5 w-px bg-white/20"></div>
+  <button type="button" [disabled]="rejetGroupeEnCours" (click)="rejeterSelection()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors font-label-sm text-label-sm disabled:opacity-50">
+    <span class="material-symbols-outlined text-[18px]">close</span>
+    {{ rejetGroupeEnCours ? 'Rejet en cours…' : 'Rejeter la sélection' }}
+  </button>
+  <button type="button" [disabled]="rejetGroupeEnCours" (click)="annulerSelection()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors font-label-sm text-label-sm disabled:opacity-50">
+    <span class="material-symbols-outlined text-[18px]">undo</span>
+    {{ rejetGroupeEnCours ? 'Traitement…' : 'Annuler la dernière décision' }}
+  </button>
+  <div class="h-5 w-px bg-white/20"></div>
+  <div class="flex items-center gap-1.5">
+    <select #cibleReculer class="bg-transparent border border-white/30 rounded-full px-3 py-1.5 font-label-sm text-label-sm outline-none" [disabled]="rejetGroupeEnCours">
+      <option *ngFor="let cible of ciblesReculer" [value]="cible.valeur" class="text-on-surface">{{ cible.libelle }}</option>
+    </select>
+    <button type="button" [disabled]="rejetGroupeEnCours" (click)="reculerSelectionVers(cibleReculer.value)" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors font-label-sm text-label-sm disabled:opacity-50" title="Faire reculer les dossiers sélectionnés vers ce statut">
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+      Reculer vers
+    </button>
+  </div>
+  <button type="button" (click)="viderSelection()" class="p-1.5 rounded-full hover:bg-white/10 transition-colors" title="Désélectionner tout">
+    <span class="material-symbols-outlined text-[18px]">close</span>
+  </button>
 </div>

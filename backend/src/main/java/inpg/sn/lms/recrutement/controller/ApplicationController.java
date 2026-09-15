@@ -1,38 +1,40 @@
 package inpg.sn.lms.recrutement.controller;
 
-import inpg.sn.lms.exception.ResourceNotFoundException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import inpg.sn.lms.recrutement.entity.PieceJustificative;
+import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
+import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import inpg.sn.lms.recrutement.entity.Candidature;
-import inpg.sn.lms.recrutement.enums.EnumStatutPaiement;
-import inpg.sn.lms.recrutement.entity.Paiement;
-import inpg.sn.lms.recrutement.entity.PieceJustificative;
-import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
 import inpg.sn.lms.recrutement.service.NotificationCandidatService;
 import inpg.sn.lms.recrutement.service.NotificationService;
 
+/**
+ * Relance des dossiers incomplets.
+ *
+ * <p>Ce contrôleur exposait aussi {@code GET /kpis}, {@code GET /}, {@code GET /{id}},
+ * {@code PATCH /{id}/documents/status} et {@code GET /export} : cinq endpoints qu'aucun
+ * écran n'appelait. Le {@code PATCH} faisait doublon avec
+ * {@code PUT /api/admin/recrutement/pieces/{id}/conformite}, seul utilisé — deux chemins
+ * concurrents vers le même champ {@code estConforme}, celui qui décide justement quels
+ * dossiers sont relancés ici. Ils ont été retirés plutôt que maintenus à l'aveugle.
+ */
 @RestController
 @RequestMapping("/api/applications")
 public class ApplicationController {
@@ -50,43 +52,6 @@ public class ApplicationController {
         this.notificationCandidatService = notificationCandidatService;
     }
 
-    // ==============================================
-    // GET /api/applications/kpis
-    // ==============================================
-    @Transactional(readOnly = true)
-    @GetMapping("/kpis")
-    @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    public ResponseEntity<Map<String, Object>> getKpis(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long programId,
-            @RequestParam(required = false) Long sessionId) {
-        List<Candidature> all = candidatureRepo.findAll();
-        // Apply filters
-        if (status != null && !status.isEmpty()) {
-            all = all.stream().filter(c -> c.getStatut().name().equalsIgnoreCase(status)).collect(Collectors.toList());
-        }
-        if (sessionId != null) {
-            all = all.stream().filter(c -> c.getSessionCandidature() != null
-                    && c.getSessionCandidature().getId().equals(sessionId)).collect(Collectors.toList());
-        }
-        long total = all.size();
-        long aVerifier = all.stream().filter(c -> hasDocumentsEnAttente(c)).count();
-        long conformes = all.stream().filter(c -> isDossierComplet(c)).count();
-        long incomplets = all.stream().filter(c -> isDossierIncomplet(c)).count();
-
-        Map<String, Object> kpis = new HashMap<>();
-        kpis.put("totalCandidatures", total);
-        kpis.put("aVerifier", aVerifier);
-        kpis.put("conformes", conformes);
-        kpis.put("incomplets", incomplets);
-        // Nombre de relances à faire = incomplets
-        kpis.put("relancesPotentielles", incomplets);
-        return ResponseEntity.ok(kpis);
-    }
-
-    // ==============================================
-    // POST /api/applications/reminder-incomplets
-    // ==============================================
     /**
      * Relance réellement les candidats dont le dossier est incomplet (email + notification
      * in-app), en nommant les pièces manquantes ou non conformes — jusqu'ici l'endpoint ne
@@ -96,9 +61,10 @@ public class ApplicationController {
      */
     @PostMapping("/reminder-incomplets")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    @Transactional(readOnly = true)
+    @Transactional
     public ResponseEntity<Map<String, Object>> sendReminder() {
         List<Candidature> incomplets = candidatureRepo.findAll().stream()
+                .filter(c -> STATUTS_RELANCABLES.contains(c.getStatut()))
                 .filter(this::isDossierIncomplet)
                 .toList();
 
@@ -127,207 +93,74 @@ public class ApplicationController {
         return ResponseEntity.ok(Map.of("envoyes", envoyes, "echecs", echecs));
     }
 
-    /** Pièces manquantes ou non conformes d'un dossier, listées en français pour l'email de relance. */
-    private String piecesManquantes(Candidature c) {
-        if (c.getPiecesJustificatives().isEmpty()) {
-            return "aucune pièce déposée";
-        }
-        String libelles = c.getPiecesJustificatives().stream()
-                .filter(p -> !p.isEstConforme())
-                .map(p -> p.getTypeDocument() != null ? p.getTypeDocument().libelle() : "Document")
-                .collect(Collectors.joining(", "));
-        return libelles.isEmpty() ? "aucune pièce déposée" : libelles;
-    }
-
-    // ==============================================
-    // GET /api/applications (list + filtres)
-    // ==============================================
-    @Transactional(readOnly = true)
-    @GetMapping
-    @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    public ResponseEntity<List<Map<String, Object>>> listApplications(
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long programId,
-            @RequestParam(required = false) Long sessionId) {
-        List<Candidature> all = candidatureRepo.findAll();
-        if (search != null && !search.isEmpty()) {
-            String q = search.toLowerCase();
-            all = all.stream().filter(c -> c.getNumeroDossier().toLowerCase().contains(q)
-                    || (c.getCandidat() != null && c.getCandidat().getNom() != null
-                            && c.getCandidat().getNom().toLowerCase().contains(q))
-                    || (c.getCandidat() != null && c.getCandidat().getPrenom() != null
-                            && c.getCandidat().getPrenom().toLowerCase().contains(q))
-                    || (c.getCandidat() != null && c.getCandidat().getUser() != null
-                            && c.getCandidat().getUser().getEmail() != null
-                            && c.getCandidat().getUser().getEmail().toLowerCase().contains(q)))
-                    .collect(Collectors.toList());
-        }
-        if (status != null && !status.isEmpty()) {
-            all = all.stream().filter(c -> c.getStatut().name().equalsIgnoreCase(status))
-                    .collect(Collectors.toList());
-        }
-        if (sessionId != null) {
-            all = all.stream().filter(c -> c.getSessionCandidature() != null
-                    && c.getSessionCandidature().getId().equals(sessionId)).collect(Collectors.toList());
-        }
-        return ResponseEntity.ok(all.stream().map(this::toApplicationMap).collect(Collectors.toList()));
-    }
-
-    // ==============================================
-    // GET /api/applications/:id
-    // ==============================================
-    @Transactional(readOnly = true)
-    @GetMapping("/{id}")
-    @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    public ResponseEntity<Map<String, Object>> getApplication(@PathVariable Long id) {
-        Candidature c = candidatureRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Candidature introuvable"));
-        return ResponseEntity.ok(toApplicationDetailMap(c));
-    }
-
-    // ==============================================
-    // PATCH /api/applications/:id/documents/status
-    // ==============================================
-    @PatchMapping("/{id}/documents/status")
-    @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    public ResponseEntity<Map<String, Object>> updateDocumentStatus(@PathVariable Long id,
-                                                                     @RequestBody Map<String, Object> body) {
-        Candidature c = candidatureRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Candidature introuvable"));
-        Long pieceId = body.get("pieceId") != null ? ((Number) body.get("pieceId")).longValue() : null;
-        Boolean valide = body.get("valide") != null ? (Boolean) body.get("valide") : null;
-        if (pieceId != null && valide != null) {
-            for (PieceJustificative p : c.getPiecesJustificatives()) {
-                if (p.getId().equals(pieceId)) {
-                    p.setEstConforme(valide);
-                }
-            }
-        }
-        candidatureRepo.save(c);
-        return ResponseEntity.ok(toApplicationDetailMap(c));
-    }
-
-    // ==============================================
-    // GET /api/applications/export
-    // ==============================================
-    @Transactional(readOnly = true)
-    @GetMapping("/export")
-    @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    public ResponseEntity<byte[]> exportApplications() {
-        List<Candidature> all = candidatureRepo.findAll();
-        StringBuilder csv = new StringBuilder();
-        csv.append("Numéro,Nom,Prénom,Email,Statut,Session,Date Soumission,Pièces,Paiement\n");
-        for (Candidature c : all) {
-            String nom = c.getCandidat() != null && c.getCandidat().getNom() != null ? c.getCandidat().getNom() : "";
-            String prenom = c.getCandidat() != null && c.getCandidat().getPrenom() != null ? c.getCandidat().getPrenom() : "";
-            String email = c.getCandidat() != null && c.getCandidat().getUser() != null ? c.getCandidat().getUser().getEmail() : "";
-            String pieces = allDocsValid(c) ? "VALIDÉ" : isDossierIncomplet(c) ? "INCOMPLET" : "EN ATTENTE";
-            String paiement = estPaye(c) ? "PAYÉ" : "NON PAYÉ";
-            String session = c.getSessionCandidature() != null ? c.getSessionCandidature().getLibelle() : "";
-            String dateSoumission = c.getDateSoumission() != null ? c.getDateSoumission().toString() : "";
-            // L'en-tête annonce neuf colonnes ; le gabarit n'en produisait que huit, pour sept
-            // valeurs — d'où un IllegalFormatException à chaque appel. « Session » et « Date
-            // Soumission » n'étaient jamais écrites, et nom et prénom se retrouvaient fusionnés
-            // dans une seule cellule. Cet export n'a donc jamais abouti.
-            csv.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s%n",
-                    cellule(c.getNumeroDossier()), cellule(nom), cellule(prenom), cellule(email),
-                    cellule(String.valueOf(c.getStatut())), cellule(session), cellule(dateSoumission),
-                    cellule(pieces), cellule(paiement)));
-        }
-        byte[] bytes = csv.toString().getBytes();
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=candidatures_export.csv")
-                .contentType(MediaType.parseMediaType("text/csv"))
-                .body(bytes);
-    }
-
-    // ==============================================
-    // Helpers
-    // ==============================================
-    private boolean hasDocumentsEnAttente(Candidature c) {
-        return c.getPiecesJustificatives().stream().anyMatch(p -> !p.isEstConforme());
-    }
-
-    private boolean isDossierComplet(Candidature c) {
-        return !c.getPiecesJustificatives().isEmpty() && c.getPiecesJustificatives().stream().allMatch(PieceJustificative::isEstConforme);
-    }
-
-    private boolean isDossierIncomplet(Candidature c) {
-        return c.getPiecesJustificatives().isEmpty() || c.getPiecesJustificatives().stream().anyMatch(p -> !p.isEstConforme());
-    }
-
-    private boolean allDocsValid(Candidature c) {
-        return !c.getPiecesJustificatives().isEmpty() && c.getPiecesJustificatives().stream().allMatch(PieceJustificative::isEstConforme);
-    }
-
-    private Map<String, Object> toApplicationMap(Candidature c) {
-        Map<String, Object> m = new HashMap<>();
-        m.put("id", c.getId());
-        m.put("numeroDossier", c.getNumeroDossier());
-        m.put("statut", c.getStatut().name());
-        m.put("dateSoumission", c.getDateSoumission() != null ? c.getDateSoumission().toString() : null);
-        m.put("documentStatus", allDocsValid(c) ? "VALIDÉ" : (isDossierIncomplet(c) ? "INCOMPLET" : "EN ATTENTE"));
-        m.put("paymentStatus", estPaye(c) ? "PAYÉ" : "NON PAYÉ");
-        if (c.getCandidat() != null) {
-            m.put("candidatNom", c.getCandidat().getNom() != null ? c.getCandidat().getNom() : "");
-            m.put("candidatPrenom", c.getCandidat().getPrenom() != null ? c.getCandidat().getPrenom() : "");
-            m.put("candidatEmail", c.getCandidat().getUser() != null ? c.getCandidat().getUser().getEmail() : "");
-            m.put("candidatNationalite", c.getCandidat().getNationalite() != null ? c.getCandidat().getNationalite() : "");
-            m.put("candidatTelephone", c.getCandidat().getTelephone() != null ? c.getCandidat().getTelephone() : "");
-        }
-        if (c.getSessionCandidature() != null) {
-            m.put("sessionLibelle", c.getSessionCandidature().getLibelle());
-            Map<String, Object> prog = new HashMap<>();
-            if (c.getSessionCandidature().getProgram() != null) {
-                prog.put("id", c.getSessionCandidature().getProgram().getId());
-                prog.put("title", c.getSessionCandidature().getProgram().getTitle());
-                prog.put("level", c.getSessionCandidature().getProgram().getLevel());
-            }
-            m.put("program", prog);
-        }
-        return m;
-    }
-
-    private Map<String, Object> toApplicationDetailMap(Candidature c) {
-        Map<String, Object> m = toApplicationMap(c);
-        m.put("pieces", c.getPiecesJustificatives().stream().map(p -> {
-            Map<String, Object> pm = new HashMap<>();
-            pm.put("id", p.getId());
-            pm.put("typeDocument", p.getTypeDocument());
-            pm.put("estConforme", p.isEstConforme());
-            pm.put("fichierNom", p.getFichierStocke() != null ? p.getFichierStocke().getNomOriginal() : "");
-            return pm;
-        }).collect(Collectors.toList()));
-        if (c.getPaiement() != null) {
-            Map<String, Object> pm = new HashMap<>();
-            pm.put("id", c.getPaiement().getId());
-            pm.put("montant", c.getPaiement().getMontant());
-            pm.put("statut", c.getPaiement().getStatut());
-            pm.put("reference", c.getPaiement().getReferenceTransaction());
-            m.put("paiement", pm);
-        }
-        return m;
-    }
-
     /**
-     * Un dossier est paye lorsque son paiement est au statut SUCCES.
+     * Pièces exigées de tout candidat, dans l'ordre où le formulaire les demande.
      *
-     * <p>Le test etait ecrit {@code "SUCCESS".equalsIgnoreCase(statut.name())}, avec deux S :
-     * l'enumeration vaut SUCCES. La comparaison etait donc TOUJOURS fausse, et tout dossier
-     * regle s'affichait « NON PAYE » dans la fiche et dans l'export CSV. Comparer l'enumeration
-     * a elle-meme rend la faute impossible : le compilateur refuserait une constante inexistante.
+     * <p>Le diplôme n'y figure pas : il reste facultatif, ajoutable après coup depuis
+     * l'espace candidat. La lettre de motivation non plus, elle n'est plus collectée.
      */
-    private boolean estPaye(Candidature c) {
-        return c.getPaiement() != null && c.getPaiement().getStatut() == EnumStatutPaiement.SUCCES;
+    private static final List<EnumTypeDocument> PIECES_REQUISES = List.of(
+            EnumTypeDocument.PIECE_IDENTITE,
+            EnumTypeDocument.CV,
+            EnumTypeDocument.RELEVE_NOTES);
+
+    /**
+     * Statuts pour lesquels réclamer une pièce a encore un sens.
+     *
+     * <p>Sans ce filtre, durcir la définition d'un dossier incomplet enverrait un rappel
+     * « votre dossier est incomplet » à des candidats déjà admis ou déjà rejetés, pour un
+     * document qui ne changera plus rien à leur situation.
+     */
+    private static final Set<EnumStatutCandidature> STATUTS_RELANCABLES = EnumSet.of(
+            EnumStatutCandidature.SOUMIS,
+            EnumStatutCandidature.EN_COURS_DE_PRESELECTION);
+
+    /**
+     * Ce qu'il reste exactement à fournir, nommé pièce par pièce.
+     *
+     * <p>Deux manques distincts, que la relance ne confondait pas seulement : elle en ignorait
+     * un. Elle ne listait que les pièces <em>déposées puis jugées non conformes</em>, et
+     * répondait « aucune pièce déposée » dès qu'il n'y en avait pas — y compris à un candidat
+     * ayant déposé un CV conforme mais aucune pièce d'identité. Il recevait donc un rappel qui
+     * lui donnait tort et ne lui disait pas quoi faire.
+     */
+    private String piecesManquantes(Candidature c) {
+        return String.join(", ", manques(c));
     }
 
     /**
-     * Encadre une valeur pour le CSV. Un nom de famille contenant une virgule, ou un motif
-     * de rejet contenant un guillemet, decalerait sinon toutes les colonnes suivantes du
-     * fichier — la convention veut qu'un guillemet interne soit double.
+     * Un dossier est incomplet dès qu'il reste quelque chose à fournir ou à remplacer.
+     *
+     * <p>Le contrôle portait auparavant sur la seule conformité des pièces présentes : un
+     * dossier auquel il manquait une pièce requise passait pour complet et n'était jamais
+     * relancé.
      */
-    private String cellule(String valeur) {
-        String contenu = valeur != null ? valeur : "";
-        return "\"" + contenu.replace("\"", "\"\"") + "\"";
+    private boolean isDossierIncomplet(Candidature c) {
+        return !manques(c).isEmpty();
     }
 
+    /** Une entrée par pièce à fournir ou à remplacer, prête à être lue par le candidat. */
+    private List<String> manques(Candidature c) {
+        Map<EnumTypeDocument, List<PieceJustificative>> parType = c.getPiecesJustificatives().stream()
+                .filter(p -> p.getTypeDocument() != null)
+                .collect(Collectors.groupingBy(PieceJustificative::getTypeDocument));
+
+        List<String> manques = new ArrayList<>();
+        for (EnumTypeDocument requis : PIECES_REQUISES) {
+            List<PieceJustificative> deposees = parType.get(requis);
+            if (deposees == null || deposees.isEmpty()) {
+                manques.add(requis.libelle() + " (non fournie)");
+            } else if (deposees.stream().noneMatch(PieceJustificative::isEstConforme)) {
+                manques.add(requis.libelle() + " (à remplacer : non conforme)");
+            }
+        }
+        // Une pièce facultative déposée puis refusée se signale aussi : le candidat l'a
+        // fournie, elle n'est pas exploitable, il doit le savoir.
+        parType.forEach((type, deposees) -> {
+            if (!PIECES_REQUISES.contains(type) && deposees.stream().noneMatch(PieceJustificative::isEstConforme)) {
+                manques.add(type.libelle() + " (à remplacer : non conforme)");
+            }
+        });
+        return manques;
+    }
 }

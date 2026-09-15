@@ -105,7 +105,7 @@ public class CandidatureFormateur {
     @Column(name = "formateur_cree", nullable = false)
     private boolean formateurCree = false;
 
-    // ===================== État civil et adresse (V39) =====================
+    // ===================== État civil et adresse (V43) =====================
     // Chaînes libres, jamais de liste déroulante fermée — même convention que
     // recrutement.dto.InfosPersonnellesDto. Toutes facultatives.
 
@@ -151,7 +151,7 @@ public class CandidatureFormateur {
     @Column(name = "pays_residence", length = 100)
     private String paysResidence;
 
-    // ===================== Collections répétables (V39) =====================
+    // ===================== Collections répétables (V43) =====================
 
     @OneToMany(mappedBy = "candidature", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

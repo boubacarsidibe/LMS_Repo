@@ -17,4 +17,6 @@ public class FiltreCriteresResponse {
     private int total;
     private int preselectionnes;
     private int rejetes;
+    /** Dossiers SOUMIS sans aucune pièce justificative, exclus du filtre : ils restent SOUMIS. */
+    private int dossiersVides;
 }
