@@ -56,7 +56,6 @@ import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.dto.PieceJustificativeResponse;
 import inpg.sn.lms.recrutement.dto.ModifierConformitePieceRequest;
 import inpg.sn.lms.recrutement.dto.RapportRecrutementDto;
-import inpg.sn.lms.recrutement.dto.RapportStatistiqueDto;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureRequest;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureResponse;
 import inpg.sn.lms.recrutement.dto.TestAcademiqueRequest;
@@ -82,7 +81,6 @@ import inpg.sn.lms.recrutement.service.NotificationService;
 import inpg.sn.lms.recrutement.service.NotificationTemplateService;
 import inpg.sn.lms.recrutement.service.PaiementService;
 import inpg.sn.lms.recrutement.service.RapportRecrutementPdfService;
-import inpg.sn.lms.recrutement.service.RapportStatistiquePdfService;
 import inpg.sn.lms.recrutement.service.SessionCandidatureService;
 import inpg.sn.lms.recrutement.service.TestAcademiqueService;
 
@@ -119,7 +117,6 @@ public class AdminRecrutementController {
     private final NotificationTemplateService notificationTemplateService;
     private final JournalEtapeService journalEtapeService;
     private final RapportRecrutementPdfService rapportRecrutementPdfService;
-    private final RapportStatistiquePdfService rapportStatistiquePdfService;
 
     public AdminRecrutementController(SessionCandidatureService sessionService,
             CandidatureService candidatureService,
@@ -137,8 +134,7 @@ public class AdminRecrutementController {
             CandidatRepository candidatRepository,
             NotificationTemplateService notificationTemplateService,
             JournalEtapeService journalEtapeService,
-            RapportRecrutementPdfService rapportRecrutementPdfService,
-            RapportStatistiquePdfService rapportStatistiquePdfService) {
+            RapportRecrutementPdfService rapportRecrutementPdfService) {
         this.journalEtapeService = journalEtapeService;
         this.sessionService = sessionService;
         this.candidatureService = candidatureService;
@@ -156,7 +152,6 @@ public class AdminRecrutementController {
         this.candidatRepository = candidatRepository;
         this.notificationTemplateService = notificationTemplateService;
         this.rapportRecrutementPdfService = rapportRecrutementPdfService;
-        this.rapportStatistiquePdfService = rapportStatistiquePdfService;
     }
 
     private ResponseEntity<byte[]> telechargerXlsx(byte[] contenu, String nomFichier) {
@@ -447,18 +442,6 @@ public class AdminRecrutementController {
         RapportRecrutementDto rapport = candidatureService.genererRapportParEtape();
         byte[] pdf = rapportRecrutementPdfService.genererRapport(rapport);
         return telechargerPdf(pdf, "rapport_qualite_recrutement_" + LocalDate.now() + ".pdf");
-    }
-
-    /**
-     * Rapport statistique recrutement (demande responsable admission) : mêmes
-     * agrégats que la page Statistiques du portail (étapes, taux d'admission,
-     * profil démographique).
-     */
-    @GetMapping("/candidatures/rapport-statistique/pdf")
-    public ResponseEntity<byte[]> genererRapportStatistiqueRecrutement() {
-        RapportStatistiqueDto rapport = candidatureService.genererRapportStatistique();
-        byte[] pdf = rapportStatistiquePdfService.genererRapport(rapport);
-        return telechargerPdf(pdf, "rapport_statistique_recrutement_" + LocalDate.now() + ".pdf");
     }
 
     /** Nom de dossier sûr (sans caractères interdits dans un chemin de fichier) pour l'archive de documents. */
