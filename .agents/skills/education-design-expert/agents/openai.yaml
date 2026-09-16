@@ -1,0 +1,4 @@
+interface:
+  display_name: "Expert design éducation"
+  short_description: "Améliore les interfaces éducatives sans rompre la charte INPG."
+  default_prompt: "Analyse cet écran du LMS INPG et améliore son design, ses boutons et ses états tout en conservant les composants et la charte existants."

@@ -96,14 +96,13 @@ public class RelevePdfService {
                             nn(ligne.getCoursCode()),
                             nn(ligne.getCoursTitre()),
                             nombre(ligne.getCoefficient()),
-                            ligne.getMoyenne() == null ? "-" : nombre(ligne.getMoyenne()) + " / 20");
+                            formatNote(ligne.getMoyenne()));
                 }
             }
             ctx.espace(14);
 
             ctx.sousTitre("Synthèse");
-            String moyenne = releve.getMoyenneGenerale() == null ? "-"
-                    : nombre(releve.getMoyenneGenerale()) + " / 20";
+            String moyenne = formatNote(releve.getMoyenneGenerale());
             ctx.ligneKpi("Moyenne générale (pondérée par les coefficients)", moyenne);
             ctx.ligneKpi("Nombre de notes prises en compte", String.valueOf(releve.getNombreNotes()));
             String mention = mention(releve.getMoyenneGenerale());
@@ -149,20 +148,25 @@ public class RelevePdfService {
         ctx.colonnes(code, titre, coef, moyenne, ctx.normal);
     }
 
-    private String mention(Double moyenneSur20) {
-        if (moyenneSur20 == null) {
+    private String mention(Double moyenneSur100) {
+        if (moyenneSur100 == null) {
             return null;
         }
-        if (moyenneSur20 >= 16) {
+        if (moyenneSur100 >= 80) {
             return "Très bien";
         }
-        if (moyenneSur20 >= 14) {
+        if (moyenneSur100 >= 70) {
             return "Bien";
         }
-        if (moyenneSur20 >= 12) {
+        if (moyenneSur100 >= 60) {
             return "Assez bien";
         }
-        return moyenneSur20 >= 10 ? "Passable" : "Insuffisant";
+        return moyenneSur100 >= 50 ? "Passable" : "Insuffisant";
+    }
+
+    private static String formatNote(Double valeurSur100) {
+        return valeurSur100 == null ? "-"
+                : nombre(valeurSur100) + " / 100 (" + nombre(valeurSur100 / 5) + " / 20)";
     }
 
     private static String nombre(double valeur) {

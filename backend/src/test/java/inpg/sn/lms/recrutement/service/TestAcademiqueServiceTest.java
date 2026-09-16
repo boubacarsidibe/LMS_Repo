@@ -2,8 +2,12 @@ package inpg.sn.lms.recrutement.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -18,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.auth.repository.CandidatRepository;
+import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.recrutement.dto.TestAcademiqueRequest;
 import inpg.sn.lms.recrutement.dto.TestAcademiqueResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
@@ -105,5 +110,74 @@ class TestAcademiqueServiceTest {
 
         assertNull(reponse.getSessionCandidatureId());
         assertNull(reponse.getSessionCandidatureLibelle());
+    }
+
+    // ===================== Plage de notes =====================
+    // La borne 0–20 n'existait que dans l'attribut `max` du champ HTML, c'est-à-dire
+    // nulle part : un appel direct enregistrait 999, et cette note entrait ensuite
+    // dans le classement de délibération face à des notes d'entretien, elles,
+    // contrôlées par EntretienService.
+
+    @Test
+    void une_note_au_dessus_de_vingt_est_refusee() {
+        when(testAcademiqueRepository.findById(7L)).thenReturn(Optional.of(testExistant(11.25f)));
+
+        BusinessException erreur =
+                assertThrows(BusinessException.class, () -> service.modifierNote(7L, 999f));
+
+        assertTrue(erreur.getMessage().contains("0 et 20"));
+        verify(testAcademiqueRepository, never()).save(any());
+    }
+
+    @Test
+    void une_note_negative_est_refusee() {
+        when(testAcademiqueRepository.findById(7L)).thenReturn(Optional.of(testExistant(11.25f)));
+
+        assertThrows(BusinessException.class, () -> service.modifierNote(7L, -5f));
+
+        verify(testAcademiqueRepository, never()).save(any());
+    }
+
+    @Test
+    void les_bornes_zero_et_vingt_restent_acceptees() {
+        when(testAcademiqueRepository.findById(7L)).thenReturn(Optional.of(testExistant(11.25f)));
+
+        assertEquals(0f, service.modifierNote(7L, 0f).getNoteObtenue());
+        assertEquals(20f, service.modifierNote(7L, 20f).getNoteObtenue());
+    }
+
+    /** {@code null} reste admis : c'est ainsi qu'on efface une note saisie par erreur. */
+    @Test
+    void effacer_une_note_reste_possible() {
+        when(testAcademiqueRepository.findById(7L)).thenReturn(Optional.of(testExistant(11.25f)));
+
+        TestAcademiqueResponse reponse = service.modifierNote(7L, null);
+
+        assertNull(reponse.getNoteObtenue());
+        assertEquals(11.25f, reponse.getNoteObtenuePrecedente());
+    }
+
+    @Test
+    void le_formulaire_complet_applique_la_meme_borne() {
+        when(testAcademiqueRepository.findById(7L)).thenReturn(Optional.of(testExistant(11.25f)));
+
+        TestAcademiqueRequest request = new TestAcademiqueRequest();
+        request.setNomEpreuve("Test de maths");
+        request.setCoefficient(1f);
+        request.setNoteObtenue(45f);
+
+        assertThrows(BusinessException.class, () -> service.modifierTest(7L, request));
+
+        verify(testAcademiqueRepository, never()).save(any());
+    }
+
+    private TestAcademique testExistant(Float note) {
+        TestAcademique test = new TestAcademique();
+        test.setId(7L);
+        test.setNomEpreuve("Test de maths");
+        test.setCoefficient(1f);
+        test.setNoteObtenue(note);
+        test.setCandidat(candidat);
+        return test;
     }
 }

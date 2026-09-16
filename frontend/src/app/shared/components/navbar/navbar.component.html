@@ -15,11 +15,19 @@
       <a routerLink="/recrutement/sessions" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Sessions ouvertes</a>
       <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
       <a routerLink="/contact" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Contact</a>
-      <a *ngIf="monEspaceUrl" [routerLink]="monEspaceUrl" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Mon espace</a>
     </nav>
 
     <!-- Actions (Desktop) -->
     <div class="flex items-center gap-3">
+      <!-- Bouton menu (mobile uniquement) -->
+      <button
+        type="button"
+        (click)="toggleMobileMenu()"
+        class="md:hidden p-2 rounded-full hover:bg-surface-container-low transition-colors cursor-pointer border-0 bg-transparent"
+        aria-label="Ouvrir le menu">
+        <span class="material-symbols-outlined text-on-surface-variant text-[24px]">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
+      </button>
+
       <!-- Non connecté : boutons Connexion / Inscription -->
       <ng-container *ngIf="!isLoggedIn">
         <a routerLink="/auth/login" class="hidden md:inline-flex items-center px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg transition-all duration-200 no-underline">
@@ -138,6 +146,18 @@
       </ng-container>
     </div>
   </div>
+
+  <!-- Menu de navigation (mobile uniquement) -->
+  <nav *ngIf="mobileMenuOpen" class="md:hidden border-t border-outline-variant/40 bg-white px-4 py-3 space-y-1" aria-label="Navigation">
+    <a routerLink="/recrutement/catalogue" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Formations</a>
+    <a routerLink="/recrutement/sessions" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Sessions ouvertes</a>
+    <a routerLink="/institut" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Institut</a>
+    <a routerLink="/contact" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Contact</a>
+    <ng-container *ngIf="!isLoggedIn">
+      <hr class="my-2 border-outline-variant/40">
+      <a routerLink="/auth/login" (click)="closeMobileMenu()" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Se connecter</a>
+    </ng-container>
+  </nav>
 </header>
 <!-- Spacer for fixed navbar -->
 <div class="h-[72px]"></div>
@@ -145,6 +165,7 @@
 <!-- Backdrops for closing dropdowns on outside click -->
 <div *ngIf="dropdownOpen" class="fixed inset-0 z-40" (click)="closeDropdown()"></div>
 <div *ngIf="notifDropdownOpen" class="fixed inset-0 z-40" (click)="closeNotifDropdown()"></div>
+<div *ngIf="mobileMenuOpen" class="fixed inset-0 z-40" (click)="closeMobileMenu()"></div>
 
 <!-- Bouton flottant : suivi de candidature (visible dès que le rôle Candidat est acquis) -->
 <a *ngIf="isLoggedIn && isCandidatRole"

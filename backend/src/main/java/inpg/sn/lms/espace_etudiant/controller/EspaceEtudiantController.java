@@ -1,6 +1,8 @@
 package inpg.sn.lms.espace_etudiant.controller;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -71,6 +73,7 @@ import inpg.sn.lms.espace_etudiant.dto.PresenceHistoriqueDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportDetailDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportDto;
+import inpg.sn.lms.espace_etudiant.dto.SupportLienCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.SeanceDto;
 import inpg.sn.lms.espace_etudiant.dto.SeanceRequest;
 import inpg.sn.lms.espace_etudiant.dto.RelanceCollectiveRequest;
@@ -185,7 +188,10 @@ public class EspaceEtudiantController {
      * retour du repository et la lecture de la collection lève une
      * LazyInitializationException.
      */
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    // Le formateur dispose de /formateur/cohortes, filtre par les cours qui lui
+    // sont attribués. Cette route générale ne doit pas exposer le référentiel de
+    // toutes les promotions à un formateur.
+    @PreAuthorize("hasRole('ETUDIANT')")
     @GetMapping("/favorites")
     @Transactional(readOnly = true)
     public ResponseEntity<List<Long>> getFavorites(Authentication authentication) {
@@ -303,7 +309,7 @@ public class EspaceEtudiantController {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @PreAuthorize("hasRole('ETUDIANT')")
     @Transactional(readOnly = true)
     @GetMapping("/formations")
     public ResponseEntity<List<FormationDto>> listFormations() {
@@ -313,14 +319,17 @@ public class EspaceEtudiantController {
         return ResponseEntity.ok(list);
     }
 
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @PreAuthorize("hasRole('ETUDIANT')")
     @Transactional(readOnly = true)
     @GetMapping("/cours")
     public ResponseEntity<List<CoursDto>> listCours() {
         return ResponseEntity.ok(toCoursDtoList(coursService.getAll()));
     }
 
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    // Le formateur dispose de /formateur/cohortes, filtre par les cours qui lui
+    // sont attribués. Cette route générale ne doit pas exposer le référentiel de
+    // toutes les promotions à un formateur.
+    @PreAuthorize("hasRole('ETUDIANT')")
     @Transactional(readOnly = true)
     @GetMapping("/cohortes")
     public ResponseEntity<List<PromotionDto>> listPromotions() {
@@ -350,20 +359,14 @@ public class EspaceEtudiantController {
         return perimetreFormateurService.cohorteIdsVisiblesPour(user);
     }
 
-    /**
-     * Un formateur voit tous les certificats émis ; un étudiant ne voit que
-     * les siens (l'émission reste réservée au formateur, cf TDR §B).
-     */
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    /** Un étudiant consulte uniquement ses propres certificats émis. */
+    @PreAuthorize("hasRole('ETUDIANT')")
     @Transactional(readOnly = true)
     @GetMapping("/certificats")
     public ResponseEntity<?> listCertificats(Authentication authentication) {
         User user = findAuthenticatedUser(authentication);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        if (formateurRepository.findByUserId(user.getId()).isPresent()) {
-            return ResponseEntity.ok(certificatService.getAll().stream().map(this::toCertificatDto).toList());
         }
         Etudiant etudiant = etudiantRepository.findByUserId(user.getId()).orElse(null);
         if (etudiant == null) {
@@ -535,7 +538,7 @@ public class EspaceEtudiantController {
      * Les endpoints /formateur/cours/{id}/supports existants sont réservés au
      * propriétaire du cours et ne conviennent donc pas ici.
      */
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @PreAuthorize("hasRole('ETUDIANT')")
     @Transactional(readOnly = true)
     @GetMapping("/cours/{id}")
     public ResponseEntity<?> getCours(@PathVariable Long id) {
@@ -544,7 +547,7 @@ public class EspaceEtudiantController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @PreAuthorize("hasRole('ETUDIANT')")
     @Transactional(readOnly = true)
     @GetMapping("/cours/{id}/supports")
     public ResponseEntity<List<SupportDetailDto>> listSupportsOfCours(@PathVariable Long id) {
@@ -556,7 +559,7 @@ public class EspaceEtudiantController {
                 .toList());
     }
 
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @PreAuthorize("hasRole('ETUDIANT')")
     @Transactional(readOnly = true)
     @GetMapping("/supports")
     public ResponseEntity<List<SupportDto>> listAllSupports(Authentication authentication) {
@@ -574,7 +577,7 @@ public class EspaceEtudiantController {
         return ResponseEntity.ok(supports);
     }
 
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @PreAuthorize("hasRole('ETUDIANT')")
     @Transactional(readOnly = true)
     @GetMapping("/supports/cours")
     public ResponseEntity<List<SupportDto>> listCourseSupports(Authentication authentication) {
@@ -588,7 +591,7 @@ public class EspaceEtudiantController {
                 .toList());
     }
 
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @PreAuthorize("hasRole('ETUDIANT')")
     @Transactional(readOnly = true)
     @GetMapping("/supports/pedagogiques")
     public ResponseEntity<List<SupportDto>> listPedagogicalSupports() {
@@ -597,7 +600,7 @@ public class EspaceEtudiantController {
                 .toList());
     }
 
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @PreAuthorize("hasRole('ETUDIANT')")
     @Transactional(readOnly = true)
     @GetMapping("/supports/pedagogiques/{id}")
     public ResponseEntity<SupportDto> getPedagogicalSupport(@PathVariable UUID id) {
@@ -643,7 +646,7 @@ public class EspaceEtudiantController {
                 .body(resource);
     }
 
-    @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
+    @PreAuthorize("hasRole('ETUDIANT')")
     @Transactional(readOnly = true)
     @GetMapping("/certificats/{id}/pdf")
     public ResponseEntity<?> telechargerCertificat(@PathVariable Long id, Authentication authentication) {
@@ -656,10 +659,9 @@ public class EspaceEtudiantController {
             return ResponseEntity.notFound().build();
         }
 
-        boolean estFormateur = formateurRepository.findByUserId(user.getId()).isPresent();
         boolean estProprietaire = certificat.getEtudiant().getUser() != null
                 && certificat.getEtudiant().getUser().getId().equals(user.getId());
-        if (!estFormateur && !estProprietaire) {
+        if (!estProprietaire) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Vous n'avez pas accès à ce certificat."));
         }
@@ -823,7 +825,10 @@ public class EspaceEtudiantController {
         return ResponseEntity.ok(toCoursDtoList(coursService.getByFormateurId(formateur.getId())));
     }
 
-    @PreAuthorize("hasRole('FORMATEUR')")
+    // Création, édition, suppression et affectation des promotions relèvent du
+    // responsable pédagogique. Ces anciennes routes formateur sont conservées
+    // temporairement pour répondre explicitement par 403 aux clients obsolètes.
+    @PreAuthorize("denyAll()")
     @Transactional
     @PostMapping("/formateur/cours")
     public ResponseEntity<?> createCourse(
@@ -871,7 +876,7 @@ public class EspaceEtudiantController {
         return cours == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(toCoursDto(cours));
     }
 
-    @PreAuthorize("hasRole('FORMATEUR')")
+    @PreAuthorize("denyAll()")
     @Transactional
     @PutMapping("/formateur/cours/{id}")
     public ResponseEntity<?> updateCourse(
@@ -897,7 +902,7 @@ public class EspaceEtudiantController {
         return ResponseEntity.ok(toCoursDto(coursService.save(cours)));
     }
 
-    @PreAuthorize("hasRole('FORMATEUR')")
+    @PreAuthorize("denyAll()")
     @DeleteMapping("/formateur/cours/{id}")
     @Transactional
     public ResponseEntity<?> deleteCourse(@PathVariable Long id, Authentication authentication) {
@@ -913,7 +918,7 @@ public class EspaceEtudiantController {
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasRole('FORMATEUR')")
+    @PreAuthorize("denyAll()")
     @Transactional
     @PatchMapping("/formateur/cours/{id}/cohortes")
     public ResponseEntity<?> updateCoursCohortes(
@@ -994,7 +999,48 @@ public class EspaceEtudiantController {
         }
     }
 
+    /** Publie un lien HTTP(S) dans un cours du formateur connecté. */
     @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
+    @PostMapping("/formateur/supports/lien")
+    public ResponseEntity<?> publierLienExterne(@RequestBody SupportLienCreateRequest request,
+            Authentication authentication) {
+        Formateur formateur = findAuthenticatedFormateur(authentication);
+        if (formateur == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Profil formateur introuvable."));
+        }
+        if (request.coursId() == null || isBlank(request.titre()) || isBlank(request.url())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Le cours, le titre et le lien sont requis."));
+        }
+        if (!estLienHttpValide(request.url())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Le lien doit commencer par http:// ou https:// et désigner une adresse valide."));
+        }
+
+        LocalDate publicationDate;
+        try {
+            publicationDate = isBlank(request.datePublication()) ? LocalDate.now() : LocalDate.parse(request.datePublication());
+        } catch (java.time.format.DateTimeParseException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", "La date de publication est invalide."));
+        }
+
+        Cours cours = coursService.getByFormateurId(formateur.getId()).stream()
+                .filter(item -> item.getId().equals(request.coursId()))
+                .findFirst()
+                .orElse(null);
+        if (cours == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Vous ne pouvez pas publier dans ce cours."));
+        }
+
+        SupportCours support = supportCoursStorageService.publierLien(cours, request.titre().trim(),
+                request.url().trim(), publicationDate);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toSupportDto(support));
+    }
+
+    @PreAuthorize("denyAll()")
     @Transactional
     @PostMapping(value = "/formateur/cours/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadCourseImage(
@@ -1187,8 +1233,8 @@ public class EspaceEtudiantController {
         if (isBlank(request.module())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le nom du module est requis."));
         }
-        if (request.note() < 0 || request.note() > 20) {
-            return ResponseEntity.badRequest().body(Map.of("message", "La note doit être comprise entre 0 et 20."));
+        if (request.note() < 0 || request.note() > 100) {
+            return ResponseEntity.badRequest().body(Map.of("message", "La note doit être comprise entre 0 et 100."));
         }
         Cours cours = coursService.getByFormateurId(formateur.getId()).stream()
                 .filter(c -> c.getId().equals(request.coursId()))
@@ -1474,7 +1520,7 @@ public class EspaceEtudiantController {
         return ResponseEntity.ok(Map.of("envoyes", envoyes, "echecs", echecs));
     }
 
-    @PreAuthorize("hasRole('FORMATEUR')")
+    @PreAuthorize("denyAll()")
     @Transactional
     @PostMapping("/formateur/etudiants/{id}/cohorte")
     public ResponseEntity<?> assignerCohorte(
@@ -1704,6 +1750,16 @@ public class EspaceEtudiantController {
                 perimetreFormateurService.supportEstProgramme(support),
                 cours != null ? cours.getId() : null,
                 cours != null ? cours.getNom() : null);
+    }
+
+    private boolean estLienHttpValide(String valeur) {
+        try {
+            URI uri = new URI(valeur.trim());
+            return ("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
+                    && uri.getHost() != null;
+        } catch (URISyntaxException exception) {
+            return false;
+        }
     }
 
     private SupportDetailDto toSupportDetailDto(SupportCours support) {

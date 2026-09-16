@@ -4,6 +4,7 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Auth } from '../../../../core/auth/services/authService';
 import { RecrutementService, SessionCandidatureResponse } from '../../../../core/recrutement/services/recrutement.service';
+import { ClocheNotificationsService, NotificationCloche } from '../../../../shared/services/cloche-notifications.service';
 
 interface NavItem {
   label: string;
@@ -32,6 +33,10 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
 
   private candidaturesSoumises = 0;
   private sessionsBientotFermees: SessionCandidatureResponse[] = [];
+  private paiementsEnAttente = 0;
+
+  /** Notifications réellement enregistrées en base pour ce compte (cloche serveur). */
+  notificationsPersistees: NotificationCloche[] = [];
 
   navItems: NavItem[] = [
     { label: "Vue d'ensemble", icon: 'dashboard', route: '/responsable-admission' },
@@ -49,7 +54,8 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
   constructor(
     private router: Router,
     private auth: Auth,
-    private recrutementService: RecrutementService
+    private recrutementService: RecrutementService,
+    private cloche: ClocheNotificationsService
   ) {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
@@ -81,6 +87,35 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
       },
       error: () => {},
     });
+    this.recrutementService.getAllPaiements().subscribe({
+      next: (data) => {
+        this.paiementsEnAttente = (data || []).filter((p) => p.statut === 'EN_ATTENTE').length;
+      },
+      error: () => {},
+    });
+    this.chargerNotifications();
+  }
+
+  private chargerNotifications(): void {
+    this.cloche.lister().subscribe({
+      next: (data) => (this.notificationsPersistees = (data || []).filter((n) => !n.lu)),
+      error: () => {},
+    });
+  }
+
+  /**
+   * Ouvre la cible d'une notification et la marque lue. Sans ce marquage, la cloche
+   * répète indéfiniment un événement déjà traité.
+   */
+  ouvrirNotification(notification: NotificationCloche): void {
+    this.cloche.marquerLue(notification.id).subscribe({
+      next: () => (this.notificationsPersistees = this.notificationsPersistees.filter((n) => n.id !== notification.id)),
+      error: () => {},
+    });
+    this.closeAll();
+    if (notification.lien) {
+      this.router.navigateByUrl(notification.lien);
+    }
   }
 
   get alertes(): Alerte[] {
@@ -90,6 +125,13 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
         icone: 'inbox',
         message: `${this.candidaturesSoumises} candidature(s) en attente de traitement`,
         route: '/responsable-admission/candidatures',
+      });
+    }
+    if (this.paiementsEnAttente > 0) {
+      items.push({
+        icone: 'payments',
+        message: `${this.paiementsEnAttente} paiement(s) à valider`,
+        route: '/responsable-admission/paiements',
       });
     }
     for (const s of this.sessionsBientotFermees) {

@@ -1,69 +1,24 @@
-<!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
-
 <div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm mb-2">
-  <a routerLink="/responsable-admission/tests" class="hover:underline">Admissions</a>
-  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <a routerLink="/responsable-admission/tests" class="hover:underline">Tests Académiques</a>
-  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <span class="font-medium text-on-surface">{{ testId ? 'Modifier' : 'Planifier un test' }}</span>
+  <a routerLink="/responsable-admission/tests" class="hover:underline">Admissions</a><span class="material-symbols-outlined text-[16px]">chevron_right</span>
+  <a routerLink="/responsable-admission/tests" class="hover:underline">Tests académiques</a><span class="material-symbols-outlined text-[16px]">chevron_right</span>
+  <span class="font-medium text-on-surface">{{ creation ? 'Nouvelle épreuve' : 'Modifier' }}</span>
 </div>
-
-<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-stack-lg">
-  {{ testId ? 'Modifier le test' : 'Planifier un test' }}
-</h2>
-
-<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement…</div>
-
-<form *ngIf="!loading" [formGroup]="testForm" (ngSubmit)="enregistrer()" class="max-w-2xl">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-stack-lg">{{ creation ? 'Planifier une épreuve' : 'Modifier l’épreuve' }}</h1>
+<div *ngIf="loading" class="p-10 text-center text-on-surface-variant">Chargement…</div>
+<form *ngIf="!loading" [formGroup]="testForm" (ngSubmit)="enregistrer()" class="max-w-3xl">
   <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 space-y-5">
-    <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ formError }}</div>
-
-    <div>
-      <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Candidat (admis au test)</label>
-      <select formControlName="candidatId" aria-label="Candidat" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
-        <option value="" disabled>Sélectionner un candidat</option>
-        <option *ngFor="let c of candidatsEligibles" [value]="c.candidatId">{{ c.candidatPrenom }} {{ c.candidatNom }} — {{ c.numeroDossier }}</option>
-      </select>
-      <p *ngIf="sessionAffichee" class="mt-1.5 flex items-center gap-1.5 font-body-sm text-body-sm text-on-surface-variant">
-        <span class="material-symbols-outlined text-[16px]">event</span>
-        Session : <span class="font-medium text-on-surface">{{ sessionAffichee }}</span>
-      </p>
-    </div>
-
-    <div>
-      <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Nom de l'épreuve</label>
-      <input formControlName="nomEpreuve" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Test de mathématiques" type="text"/>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date</label>
-        <input formControlName="dateEpreuve" aria-label="Date et heure" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="datetime-local"/>
-        <p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">Date et heure combinées.</p>
+    <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg">{{ formError }}</div>
+    <ng-container *ngIf="creation; else candidatUnique">
+      <div><label class="block font-label-md text-label-md text-on-surface-variant mb-1" for="session">Session</label>
+        <select id="session" formControlName="sessionId" (change)="changerSession()" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface"><option [ngValue]="null">Choisir une session</option><option *ngFor="let session of sessions" [ngValue]="session.id">{{ session.libelle }}</option></select></div>
+      <div class="border border-outline-variant rounded-lg p-4"><div class="flex items-center justify-between gap-3 mb-3"><div><p class="font-label-md text-label-md text-on-surface">Candidats admissibles ({{ candidatsEligibles.length }})</p><p class="font-body-sm text-body-sm text-on-surface-variant">Sélectionnez les candidats à convoquer.</p></div><button type="button" (click)="toutSelectionner()" [disabled]="candidatsEligibles.length === 0" class="text-secondary hover:underline disabled:opacity-50">Tout sélectionner</button></div>
+        <p *ngIf="candidatsEligibles.length === 0" class="text-on-surface-variant text-sm">Aucun candidat ADMIS1 pour cette session.</p>
+        <label *ngFor="let candidat of candidatsEligibles" class="flex items-center gap-3 py-2 border-t border-outline-variant cursor-pointer"><input type="checkbox" [checked]="selectionCandidatIds.has(candidat.candidatId)" (change)="basculerSelection(candidat.candidatId)" class="w-4 h-4 accent-secondary" /><span>{{ candidat.candidatPrenom }} {{ candidat.candidatNom }} — {{ candidat.numeroDossier }}</span></label>
       </div>
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu / Lien</label>
-        <input formControlName="lieuOuLien" aria-label="Lieu ou lien de connexion" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B12, campus Dakar / lien visio" type="text"/>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Coefficient</label>
-        <input formControlName="coefficient" aria-label="Coefficient" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0.1" step="0.5"/>
-      </div>
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Note obtenue /20</label>
-        <input formControlName="noteObtenue" aria-label="Note sur 20" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0" max="20" step="0.25"/>
-        <p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">À laisser vide tant que l'épreuve n'est pas corrigée.</p>
-      </div>
-    </div>
+    </ng-container>
+    <ng-template #candidatUnique><div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant"><div class="text-sm text-on-surface-variant">Candidat</div><div>{{ candidatAffiche }}</div><div *ngIf="sessionAffichee" class="text-sm text-on-surface-variant">{{ sessionAffichee }}</div></div></ng-template>
+    <div><label class="block mb-1">Nom de l’épreuve</label><input formControlName="nomEpreuve" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface" placeholder="Ex. Test de mathématiques" type="text" /></div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4"><div><label class="block mb-1">Date et heure</label><input formControlName="dateEpreuve" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface" type="datetime-local" /></div><div><label class="block mb-1">Lieu ou lien</label><input formControlName="lieuOuLien" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface" placeholder="Salle B12 ou visio" type="text" /></div><div><label class="block mb-1">Coefficient</label><input formControlName="coefficient" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface" type="number" min="0.1" step="0.5" /></div></div>
   </div>
-
-  <div class="flex justify-end gap-3 mt-stack-lg">
-    <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="annuler()">Annuler</button>
-    <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
-      {{ isSubmitting ? 'Enregistrement…' : (testId ? 'Enregistrer' : 'Planifier') }}
-    </button>
-  </div>
+  <div class="flex justify-end gap-3 mt-stack-lg"><button type="button" (click)="annuler()" class="px-4 py-2 border border-outline-variant rounded-lg">Annuler</button><button type="submit" [disabled]="isSubmitting" class="px-4 py-2 bg-secondary text-on-secondary rounded-lg disabled:opacity-60">{{ isSubmitting ? 'Enregistrement…' : (creation ? 'Créer et convoquer' : 'Enregistrer') }}</button></div>
 </form>

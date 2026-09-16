@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.auth.entity.User;
@@ -81,7 +84,15 @@ public class CandidatureService {
 
         int preselectionnes = 0;
         int rejetes = 0;
+        int dossiersVides = 0;
         for (Candidature candidature : soumis) {
+            if (candidature.getPiecesJustificatives().isEmpty()) {
+                // Dossier vide : exclu du filtre, reste SOUMIS pour que le candidat puisse
+                // encore joindre ses pièces (TDR 3.1.A : "dossier incomplet peut revenir
+                // plus tard pour le finaliser").
+                dossiersVides++;
+                continue;
+            }
             Map<Long, String> reponses = candidature.getReponsesCriteres().stream()
                     .collect(Collectors.toMap(r -> r.getCritere().getId(), ReponseCritereCandidature::getValeur));
             String resultat;
@@ -104,6 +115,7 @@ public class CandidatureService {
                 .total(soumis.size())
                 .preselectionnes(preselectionnes)
                 .rejetes(rejetes)
+                .dossiersVides(dossiersVides)
                 .build();
     }
 
@@ -127,7 +139,13 @@ public class CandidatureService {
             throw new BusinessException("Transition de statut non autorisée: "
                     + candidature.getStatut() + " → " + nouveauStatut);
         }
+        if (nouveauStatut == EnumStatutCandidature.EN_COURS_DE_PRESELECTION
+                && candidature.getPiecesJustificatives().isEmpty()) {
+            throw new BusinessException(
+                    "Ce dossier ne contient aucune pièce justificative : impossible de le présélectionner.");
+        }
 
+        candidature.setStatutPrecedent(candidature.getStatut());
         candidature.setStatut(nouveauStatut);
         if (nouveauStatut == EnumStatutCandidature.REJETE && motif != null) {
             candidature.setMotifRejet(motif);
@@ -135,6 +153,95 @@ public class CandidatureService {
 
         Candidature saved = candidatureRepository.save(candidature);
         return toResponse(saved);
+    }
+
+    /**
+     * Annule la dernière décision prise sur cette candidature (retour au statut
+     * précédent). Un seul niveau — pas d'historique complet : annuler une deuxième
+     * fois sans nouvelle décision entre-temps n'a plus d'effet, ce qui correspond au
+     * comportement attendu d'un « annuler ma dernière action ».
+     */
+    public CandidatureResponse annulerDerniereAction(Long candidatureId) {
+        Candidature candidature = candidatureRepository.findById(candidatureId)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Candidature non trouvée avec l'ID: " + candidatureId));
+
+        if (candidature.getStatut() == EnumStatutCandidature.ADMIS3) {
+            throw new BusinessException(
+                    "L'admission finale a déjà ouvert l'accès étudiant du candidat : ce statut ne peut plus être annulé automatiquement.");
+        }
+        if (candidature.getStatutPrecedent() == null) {
+            throw new BusinessException("Aucune décision récente à annuler pour ce dossier.");
+        }
+
+        candidature.setStatut(candidature.getStatutPrecedent());
+        candidature.setStatutPrecedent(null);
+        if (candidature.getStatut() != EnumStatutCandidature.REJETE) {
+            candidature.setMotifRejet(null);
+        }
+
+        return toResponse(candidatureRepository.save(candidature));
+    }
+
+    /**
+     * Fait reculer explicitement une candidature vers une étape antérieure du
+     * parcours, à tout moment (pas seulement juste après la décision à défaire).
+     * Contrairement à {@link #annulerDerniereAction}, ne dépend d'aucun historique :
+     * la cible doit juste être strictement antérieure au statut actuel dans l'ordre
+     * du parcours, ou le statut actuel doit être REJETE (« dé-rejeter »).
+     *
+     * <p>BROUILLON est exclu des cibles : voir le commentaire plus haut sur
+     * estTransitionValide, ce statut n'est jamais atteint par une vraie
+     * {@link Candidature} (le brouillon réel est {@link inpg.sn.lms.recrutement.entity.BrouillonCandidature}).
+     * ADMIS3 et REJETE sont exclus des cibles : ce sont des décisions dédiées
+     * (admission finale, rejet motivé) avec leurs propres effets de bord.
+     */
+    public CandidatureResponse reculerStatut(Long candidatureId, EnumStatutCandidature cible) {
+        Candidature candidature = candidatureRepository.findById(candidatureId)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Candidature non trouvée avec l'ID: " + candidatureId));
+
+        if (rangParcours(cible) == null) {
+            throw new BusinessException(
+                    "Impossible de reculer vers " + cible + " — utiliser l'action dédiée pour ce statut.");
+        }
+        EnumStatutCandidature actuel = candidature.getStatut();
+        if (actuel == EnumStatutCandidature.ADMIS3) {
+            throw new BusinessException(
+                    "L'admission finale a déjà ouvert l'accès étudiant du candidat : son statut ne peut plus être modifié automatiquement.");
+        }
+        // REJETE et LISTE_ATTENTE sortent du parcours linéaire : on autorise à les
+        // défaire vers n'importe quelle étape (« dé-rejeter », « dé-lister »), au-delà
+        // de la fenêtre d'annulation immédiate qu'offre annulerDerniereAction.
+        if (actuel != EnumStatutCandidature.REJETE && actuel != EnumStatutCandidature.LISTE_ATTENTE) {
+            Integer rangActuel = rangParcours(actuel);
+            if (rangActuel == null || rangParcours(cible) >= rangActuel) {
+                throw new BusinessException("On ne peut reculer que vers un statut antérieur dans le parcours.");
+            }
+        }
+
+        candidature.setStatut(cible);
+        candidature.setStatutPrecedent(null);
+        candidature.setMotifRejet(null);
+
+        return toResponse(candidatureRepository.save(candidature));
+    }
+
+    /**
+     * Position dans le parcours normal, {@code null} pour un statut qui n'y a pas sa
+     * place comme cible de recul.
+     *
+     * <p>LISTE_ATTENTE est exclu des cibles : y placer un candidat est une décision de
+     * jury, pas un « retour en arrière » — elle passe par l'action dédiée.
+     */
+    private Integer rangParcours(EnumStatutCandidature statut) {
+        return switch (statut) {
+            case SOUMIS -> 1;
+            case EN_COURS_DE_PRESELECTION -> 2;
+            case ADMIS1 -> 3;
+            case ADMIS2 -> 4;
+            case BROUILLON, LISTE_ATTENTE, ADMIS3, REJETE -> null;
+        };
     }
 
     /**
@@ -194,6 +301,16 @@ public class CandidatureService {
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    /** Page de dossiers triée par dépôt récent pour les tableaux d'administration. */
+    @Transactional(readOnly = true)
+    public Page<CandidatureResponse> getCandidaturesPage(int page, int taille) {
+        int pageSecurisee = Math.max(0, page);
+        int tailleSecurisee = Math.min(100, Math.max(1, taille));
+        return candidatureRepository.findAllBy(PageRequest.of(pageSecurisee, tailleSecurisee,
+                Sort.by(Sort.Direction.DESC, "dateSoumission")))
+                .map(this::toResponse);
     }
 
     private static final List<EnumStatutCandidature> ETAPES_WORKFLOW = List.of(
@@ -375,7 +492,14 @@ public class CandidatureService {
             case EN_COURS_DE_PRESELECTION ->
                 nouveau == EnumStatutCandidature.ADMIS1 || nouveau == EnumStatutCandidature.REJETE;
             case ADMIS1 -> nouveau == EnumStatutCandidature.ADMIS2 || nouveau == EnumStatutCandidature.REJETE;
-            case ADMIS2 -> nouveau == EnumStatutCandidature.ADMIS3 || nouveau == EnumStatutCandidature.REJETE;
+            // À l'issue de l'entretien : admis, placé en liste complémentaire, ou rejeté.
+            case ADMIS2 -> nouveau == EnumStatutCandidature.ADMIS3
+                    || nouveau == EnumStatutCandidature.LISTE_ATTENTE
+                    || nouveau == EnumStatutCandidature.REJETE;
+            // Liste complémentaire : on n'en sort que si une place se libère (ADMIS3)
+            // ou si la campagne se solde sans place (REJETE).
+            case LISTE_ATTENTE -> nouveau == EnumStatutCandidature.ADMIS3
+                    || nouveau == EnumStatutCandidature.REJETE;
             case ADMIS3, REJETE -> false; // État terminal
         };
     }
@@ -386,10 +510,14 @@ public class CandidatureService {
                         .id(p.getId())
                         .typeDocument(p.getTypeDocument())
                         .estConforme(p.isEstConforme())
+                        .statutVerification(p.getStatutVerification())
+                        .motifNonConformite(p.getMotifNonConformite())
+                        .dateVerification(p.getDateVerification())
                         .description(p.getDescription())
                         .fichierStockeId(p.getFichierStocke() != null ? p.getFichierStocke().getId() : null)
                         .fichierNomOriginal(
                                 p.getFichierStocke() != null ? p.getFichierStocke().getNomOriginal() : null)
+                        .moyenneDeclaree(p.getMoyenneDeclaree())
                         .build())
                 .collect(Collectors.toList());
 
@@ -410,6 +538,7 @@ public class CandidatureService {
                 .id(c.getId())
                 .numeroDossier(c.getNumeroDossier())
                 .statut(c.getStatut())
+                .statutPrecedent(c.getStatutPrecedent())
                 .dateSoumission(c.getDateSoumission())
                 .motifRejet(c.getMotifRejet())
                 .candidatId(c.getCandidat().getId())

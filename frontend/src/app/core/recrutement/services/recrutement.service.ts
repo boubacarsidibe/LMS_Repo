@@ -2,19 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export interface FormationOption {
-  id: number;
-  code: string;
-  intitule: string;
-}
-
 export interface SessionCandidatureResponse {
   id: number;
   libelle: string;
-  formationId: number | null;
-  formationCode: string | null;
-  formationIntitule: string | null;
-  formationNiveau: string | null;
   dateOuverture: string;
   dateFermeture: string;
   estOuverte: boolean;
@@ -31,11 +21,16 @@ export interface SessionCandidatureResponse {
   infoFraisScolarite: string | null;
   infoCarteEtudiante: string | null;
   infoRentree: string | null;
+  /** Frais de dossier propres à cette session ; null = tarif global appliqué en repli. */
+  montantFraisDossier: number | null;
   /** Critères ajoutés librement par le responsable admission, en plus des critères de base ci-dessus. */
   criteresPersonnalises: CritereAdmissionResponse[];
 }
 
 export type EnumTypeCritere = 'NUMERIQUE' | 'TEXTE' | 'BOOLEEN' | 'CHOIX';
+
+/** Format au choix pour un rapport de synthèse téléchargeable (Candidatures, Tests, Entretiens). */
+export type FormatRapport = 'pdf' | 'xlsx';
 
 export interface CritereAdmissionResponse {
   id: number;
@@ -64,6 +59,7 @@ export interface FiltreCriteresResponse {
   total: number;
   preselectionnes: number;
   rejetes: number;
+  dossiersVides: number;
 }
 
 export type EnumEtapeQms = 'RECEPTION' | 'FILTRE_INITIAL' | 'EVALUATION' | 'SELECTION' | 'INSCRIPTION' | 'PUBLICATION';
@@ -132,9 +128,14 @@ export interface PieceJustificativeResponse {
   id: number;
   typeDocument: string;
   estConforme: boolean;
+  statutVerification: 'A_VERIFIER' | 'CONFORME' | 'A_REMPLACER';
+  motifNonConformite: string | null;
+  dateVerification: string | null;
   description: string | null;
   fichierStockeId: number | null;
   fichierNomOriginal: string | null;
+  /** Moyenne déclarée par le candidat pour un relevé de notes (sur 20), null sinon. */
+  moyenneDeclaree: number | null;
 }
 
 export interface PaiementResponse {
@@ -164,7 +165,6 @@ export interface PaiementRequest {
 
 export interface SessionCandidatureRequest {
   libelle: string;
-  formationId: number | null;
   dateOuverture: string;
   dateFermeture: string;
   estOuverte: boolean;
@@ -178,13 +178,15 @@ export interface SessionCandidatureRequest {
   infoFraisScolarite: string | null;
   infoCarteEtudiante: string | null;
   infoRentree: string | null;
+  montantFraisDossier: number | null;
 }
 
 export type EnumTypeNotification =
   | 'VALIDATION_DOSSIER' | 'REJET_DOSSIER' | 'PAIEMENT_SUCCES'
   | 'CONVOCATION_TEST' | 'CONVOCATION_ENTRETIEN'
-  | 'ADMISSION_TEST' | 'ADMISSION_ENTRETIEN' | 'ADMISSION_FINALE' | 'NON_ADMISSION'
-  | 'DOCUMENT_CONFORME' | 'DOCUMENT_NON_CONFORME';
+  | 'ADMISSION_TEST' | 'ADMISSION_ENTRETIEN' | 'ADMISSION_FINALE' | 'LISTE_ATTENTE' | 'NON_ADMISSION'
+  | 'DOCUMENT_CONFORME' | 'DOCUMENT_NON_CONFORME'
+  | 'RAPPEL_DOSSIER_INCOMPLET' | 'RAPPEL_PAIEMENT';
 
 export interface NotificationTemplate {
   type: EnumTypeNotification;
@@ -221,6 +223,8 @@ export interface TestAcademiqueResponse {
   nomEpreuve: string;
   coefficient: number;
   noteObtenue: number | null;
+  /** Non nul si la dernière saisie de note peut être annulée. */
+  noteObtenuePrecedente: number | null;
   dateEpreuve: string;
   lieuOuLien: string | null;
   candidatId: number;
@@ -372,6 +376,24 @@ export class RecrutementService {
     return this.http.get(`${this.baseUrl}/analytics/export-report?annee=${annee}`, { responseType: 'blob' });
   }
 
+  /** Rapport de synthèse Candidatures (indicateurs + répartitions), toutes sessions confondues. */
+  genererRapportCandidatures(format: FormatRapport): Observable<Blob> {
+    const params = new HttpParams().set('format', format);
+    return this.http.get(`${this.baseUrl}/analytics/rapport-candidatures`, { responseType: 'blob', params });
+  }
+
+  /** Rapport de synthèse Tests académiques (indicateurs + répartitions). */
+  genererRapportTests(format: FormatRapport): Observable<Blob> {
+    const params = new HttpParams().set('format', format);
+    return this.http.get(`${this.baseUrl}/analytics/rapport-tests`, { responseType: 'blob', params });
+  }
+
+  /** Rapport de synthèse Entretiens (indicateurs + répartitions). */
+  genererRapportEntretiens(format: FormatRapport): Observable<Blob> {
+    const params = new HttpParams().set('format', format);
+    return this.http.get(`${this.baseUrl}/analytics/rapport-entretiens`, { responseType: 'blob', params });
+  }
+
   // ===================== INTERVIEWS =====================
 
   getInterviewKpis(): Observable<any> {
@@ -405,33 +427,8 @@ export class RecrutementService {
 
   // ===================== APPLICATIONS =====================
 
-  getApplicationKpis(filters?: { status?: string; sessionId?: number }): Observable<any> {
-    const params = new URLSearchParams();
-    if (filters?.status) params.set('status', filters.status);
-    if (filters?.sessionId) params.set('sessionId', String(filters.sessionId));
-    const qs = params.toString();
-    return this.http.get<any>(`${this.baseUrl}/applications/kpis${qs ? '?' + qs : ''}`);
-  }
-
-  listApplications(filters?: { search?: string; status?: string; programId?: number; sessionId?: number }): Observable<any[]> {
-    const params = new URLSearchParams();
-    if (filters?.search) params.set('search', filters.search);
-    if (filters?.status) params.set('status', filters.status);
-    if (filters?.sessionId) params.set('sessionId', String(filters.sessionId));
-    const qs = params.toString();
-    return this.http.get<any[]>(`${this.baseUrl}/applications${qs ? '?' + qs : ''}`);
-  }
-
   sendReminder(): Observable<ResultatRelance> {
     return this.http.post<ResultatRelance>(`${this.baseUrl}/applications/reminder-incomplets`, {});
-  }
-
-  exportApplications(): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/applications/export`, { responseType: 'blob' });
-  }
-
-  updateDocumentStatus(applicationId: number, pieceId: number, valide: boolean): Observable<any> {
-    return this.http.patch<any>(`${this.baseUrl}/applications/${applicationId}/documents/status`, { pieceId, valide });
   }
 
 
@@ -476,11 +473,24 @@ export class RecrutementService {
     return this.http.post<CandidatureResponse>(`${this.baseUrl}/recrutement/candidat/candidature/soumettre`, request);
   }
 
-  televerserPiece(candidatureId: number, file: File, typeDocument: string, description?: string): Observable<any> {
+  televerserPiece(
+    candidatureId: number,
+    file: File,
+    typeDocument: string,
+    descriptionOuMoyenne?: string | number | null,
+    moyenneDeclaree?: number | null
+  ): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('typeDocument', typeDocument);
-    if (description) formData.append('description', description);
+    if (typeof descriptionOuMoyenne === 'number') {
+      formData.append('moyenneDeclaree', String(descriptionOuMoyenne));
+    } else if (typeof descriptionOuMoyenne === 'string') {
+      formData.append('description', descriptionOuMoyenne);
+    }
+    if (moyenneDeclaree !== undefined && moyenneDeclaree !== null) {
+      formData.append('moyenneDeclaree', String(moyenneDeclaree));
+    }
     return this.http.post(`${this.baseUrl}/recrutement/candidat/candidature/${candidatureId}/pieces`, formData);
   }
 
@@ -543,11 +553,6 @@ export class RecrutementService {
   // Sessions
   getAllSessions(): Observable<SessionCandidatureResponse[]> {
     return this.http.get<SessionCandidatureResponse[]>(`${this.baseUrl}/admin/recrutement/sessions`);
-  }
-
-  /** Formations proposables pour l'ouverture d'une session. */
-  getFormationsDisponibles(): Observable<FormationOption[]> {
-    return this.http.get<FormationOption[]>(`${this.baseUrl}/admin/recrutement/formations`);
   }
 
   getSession(id: number): Observable<SessionCandidatureResponse> {
@@ -648,9 +653,13 @@ export class RecrutementService {
     return this.http.get(`${this.baseUrl}/admin/recrutement/pieces/${pieceId}/telecharger`, { responseType: 'blob' });
   }
 
-  modifierConformitePiece(pieceId: number, estConforme: boolean): Observable<{ id: number; estConforme: boolean }> {
-    return this.http.put<{ id: number; estConforme: boolean }>(
-      `${this.baseUrl}/admin/recrutement/pieces/${pieceId}/conformite`, { estConforme });
+  modifierConformitePiece(
+    pieceId: number,
+    estConforme: boolean,
+    motifNonConformite?: string,
+  ): Observable<PieceJustificativeResponse> {
+    return this.http.put<PieceJustificativeResponse>(
+      `${this.baseUrl}/admin/recrutement/pieces/${pieceId}/conformite`, { estConforme, motifNonConformite });
   }
 
   annulerDerniereAction(id: number): Observable<CandidatureResponse> {
@@ -687,6 +696,11 @@ export class RecrutementService {
 
   admettreFinal(id: number): Observable<CandidatureResponse> {
     return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/admettre-final`, {});
+  }
+
+  /** Liste complémentaire (TDR §3.1.C) : retenu par le jury, en attente qu'une place se libère. */
+  placerEnListeAttente(id: number): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/liste-attente`, {});
   }
 
   /**
@@ -751,6 +765,15 @@ export class RecrutementService {
     return this.http.delete(`${this.baseUrl}/admin/recrutement/tests/${id}`);
   }
 
+  /** Saisie rapide d'une note seule (grille de notation) — n'écrase pas les autres champs de l'épreuve. */
+  modifierNoteTest(id: number, noteObtenue: number | null): Observable<TestAcademiqueResponse> {
+    return this.http.put<TestAcademiqueResponse>(`${this.baseUrl}/admin/recrutement/tests/${id}/note`, { noteObtenue });
+  }
+
+  annulerNoteTest(id: number): Observable<TestAcademiqueResponse> {
+    return this.http.put<TestAcademiqueResponse>(`${this.baseUrl}/admin/recrutement/tests/${id}/annuler-note`, {});
+  }
+
   convoquerTestsGroupe(request: ConvocationTestGroupeeRequest): Observable<TestAcademiqueResponse[]> {
     return this.http.post<TestAcademiqueResponse[]>(`${this.baseUrl}/admin/recrutement/tests/convocation-groupee`, request);
   }
@@ -774,6 +797,12 @@ export class RecrutementService {
 
   convoquerEntretiensGroupe(request: ConvocationEntretienGroupeeRequest): Observable<EntretienResponse[]> {
     return this.http.post<EntretienResponse[]>(`${this.baseUrl}/admin/recrutement/entretiens/convocation-groupee`, request);
+  }
+
+  /** Saisie de la note seule depuis la liste — n'écrase pas date, lieu ni appréciation. */
+  modifierNoteEntretien(id: number, noteEntretien: number | null): Observable<EntretienResponse> {
+    return this.http.put<EntretienResponse>(
+      `${this.baseUrl}/admin/recrutement/entretiens/${id}/note`, { noteEntretien });
   }
 
   // Modèles de notifications

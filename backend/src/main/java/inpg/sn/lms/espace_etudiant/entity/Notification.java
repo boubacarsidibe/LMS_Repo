@@ -50,6 +50,15 @@ public class Notification {
     /** Réponse (acceptation, refus ou contre-proposition) à une demande de rendez-vous (TDR §J). */
     public static final String RENDEZ_VOUS_REPONSE = "RENDEZ_VOUS_REPONSE";
 
+    /** Un devoir ou une évaluation vient d'être publié dans un cours suivi. */
+    public static final String ACTIVITE_COURS = "ACTIVITE_COURS";
+
+    /** Une correction est disponible pour une remise de devoir ou d'évaluation. */
+    public static final String ACTIVITE_CORRIGEE = "ACTIVITE_CORRIGEE";
+
+    /** Un candidat déclare avoir réglé ses frais de dossier : le règlement attend la validation de l'admission. */
+    public static final String PAIEMENT_A_VALIDER = "PAIEMENT_A_VALIDER";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

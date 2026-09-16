@@ -36,10 +36,33 @@ export class ProfilEtudiant implements OnInit {
   mesCours: Cours[] = [];
   nouvelleNoteCoursId: number | null = null;
   nouvelleNoteModule = '';
-  nouvelleNoteValeur: number | null = null;
+  /**
+   * Saisie conservée en texte, et non en {@code type="number"} lié à un nombre.
+   *
+   * <p>Sur un champ numérique, la spécification HTML impose de vider {@code value}
+   * dès que le contenu n'est pas un décimal <i>à point</i> : un « 15,5 » tapé au
+   * pavé numérique français y était lu comme vide, la note restait à {@code null},
+   * et le bouton « Ajouter la note » demeurait grisé sans qu'aucun message
+   * n'explique pourquoi. La virgule est désormais convertie avant analyse.
+   */
+  nouvelleNoteTexte = '';
   nouvelleNoteCommentaire = '';
   isSavingNote = false;
   noteErrorMessage = '';
+
+  /** Note saisie, ou {@code null} si elle n'est pas encore exploitable. */
+  get nouvelleNoteValeur(): number | null {
+    const brut = this.nouvelleNoteTexte.trim().replace(',', '.');
+    if (brut === '' || !/^\d+(\.\d+)?$/.test(brut)) return null;
+    const valeur = Number(brut);
+    return valeur >= 0 && valeur <= 100 ? valeur : null;
+  }
+
+  /** Explique le refus plutôt que de laisser le bouton grisé sans raison. */
+  get messageNoteSaisie(): string {
+    if (this.nouvelleNoteTexte.trim() === '' || this.nouvelleNoteValeur !== null) return '';
+    return 'Entrez une note comprise entre 0 et 100 (la virgule est acceptée).';
+  }
 
   presences: PresenceHistorique[] = [];
 
@@ -97,7 +120,7 @@ export class ProfilEtudiant implements OnInit {
       date: this.parseDateFr(n.dateEvaluation),
       dateAffichee: n.dateEvaluation,
       titre: `Note ajoutée — ${n.module}`,
-      detail: `${n.note}/20 · ${n.coursCode}`,
+      detail: `${n.note}/100 (${n.note / 5}/20) · ${n.coursCode}`,
     }));
     const itemsPresences: ActiviteItem[] = this.presences.map(p => ({
       type: 'presence',
@@ -145,7 +168,7 @@ export class ProfilEtudiant implements OnInit {
           this.notes = [note, ...this.notes];
           this.nouvelleNoteCoursId = null;
           this.nouvelleNoteModule = '';
-          this.nouvelleNoteValeur = null;
+          this.nouvelleNoteTexte = '';
           this.nouvelleNoteCommentaire = '';
           this.rafraichirNoteMoyenne();
         },
@@ -159,7 +182,7 @@ export class ProfilEtudiant implements OnInit {
   supprimerNote(note: NoteModule) {
     this.confirmation.demander({
       titre: 'Supprimer la note',
-      message: `La note de ${note.note}/20 en « ${note.module} » sera supprimée et la moyenne recalculée.`,
+      message: `La note de ${note.note}/100 (${note.note / 5}/20) en « ${note.module} » sera supprimée et la moyenne recalculée.`,
       libelleConfirmer: 'Supprimer',
       destructif: true,
     }).subscribe((confirme) => {

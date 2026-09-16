@@ -7,11 +7,19 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class OtpService {
+
+    private static final int NOMBRE_MAX_ESSAIS = 5;
+    private static final int DELAI_RENVOI_SECONDES = 60;
+    private static final SecureRandom RANDOM = new SecureRandom();
     
     private final JavaMailSender mailSender;
 
@@ -21,10 +29,13 @@ public class OtpService {
     private static class OtpData {
         String code;
         LocalDateTime expiryTime;
+        LocalDateTime prochainEnvoiAutorise;
+        int essais;
 
-        OtpData(String code, LocalDateTime expiryTime) {
+        OtpData(String code, LocalDateTime expiryTime, LocalDateTime prochainEnvoiAutorise) {
             this.code = code;
             this.expiryTime = expiryTime;
+            this.prochainEnvoiAutorise = prochainEnvoiAutorise;
         }
     }
 
@@ -36,13 +47,17 @@ public class OtpService {
 
     // 1. Génération d'un code à 6 chiffres
     public String generateOtp(String email) {
-        SecureRandom random = new SecureRandom();
-        int code = 100000 + random.nextInt(900000);
-        String otpCode = String.valueOf(code);
-
-        // Expiration dans 5 minutes
-        otpCache.put(email, new OtpData(otpCode, LocalDateTime.now().plusMinutes(5)));
-        return otpCode;
+        LocalDateTime maintenant = LocalDateTime.now();
+        AtomicReference<String> codeGenere = new AtomicReference<>();
+        otpCache.compute(email, (cle, precedent) -> {
+            if (precedent != null && maintenant.isBefore(precedent.prochainEnvoiAutorise)) {
+                throw new IllegalStateException("Un code a déjà été envoyé. Veuillez patienter avant de réessayer.");
+            }
+            String code = String.valueOf(100000 + RANDOM.nextInt(900000));
+            codeGenere.set(code);
+            return new OtpData(code, maintenant.plusMinutes(5), maintenant.plusSeconds(DELAI_RENVOI_SECONDES));
+        });
+        return codeGenere.get();
     }
 
     /** Retire un code du cache, par exemple lorsque son envoi par e-mail a échoué. */
@@ -65,22 +80,22 @@ public class OtpService {
 
     // 3. Validation de l'OTP saisi par l'utilisateur
     public boolean validateOtp(String email, String inputCode) {
-        OtpData data = otpCache.get(email);
+        AtomicBoolean valide = new AtomicBoolean(false);
+        otpCache.computeIfPresent(email, (cle, data) -> {
+            if (LocalDateTime.now().isAfter(data.expiryTime) || data.essais >= NOMBRE_MAX_ESSAIS) {
+                return null;
+            }
 
-        if (data == null) {
-            return false; // Pas d'OTP généré pour cet e-mail
-        }
+            byte[] attendu = data.code.getBytes(StandardCharsets.US_ASCII);
+            byte[] recu = inputCode == null ? new byte[0] : inputCode.getBytes(StandardCharsets.US_ASCII);
+            if (MessageDigest.isEqual(attendu, recu)) {
+                valide.set(true);
+                return null;
+            }
 
-        if (LocalDateTime.now().isAfter(data.expiryTime)) {
-            otpCache.remove(email); // Expiré
-            return false;
-        }
-
-        if (data.code.equals(inputCode)) {
-            otpCache.remove(email); // Code valide, on le consomme
-            return true;
-        }
-
-        return false;
+            data.essais++;
+            return data.essais >= NOMBRE_MAX_ESSAIS ? null : data;
+        });
+        return valide.get();
     }
 }

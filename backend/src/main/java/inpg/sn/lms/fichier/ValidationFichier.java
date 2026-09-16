@@ -1,6 +1,8 @@
 package inpg.sn.lms.fichier;
 
 import java.nio.file.Path;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Locale;
 import java.util.Set;
 
@@ -105,6 +107,14 @@ public final class ValidationFichier {
                         "Format de fichier non autorisé. Formats acceptés : " + formatsLisibles + ".");
             }
         }
+
+        // Les pièces d'admission sont les fichiers les plus exposés à un contenu
+        // renommé. On vérifie leur signature binaire, sans prétendre remplacer un
+        // antivirus ou un service de désarmement documentaire.
+        if (extensionsAutorisees.equals(EXTENSIONS_DOCUMENT_CANDIDAT)
+                && !contenuCorrespondALaSignature(fichier, extension)) {
+            throw new IllegalArgumentException("Le contenu du fichier ne correspond pas au format annoncé.");
+        }
     }
 
     /**
@@ -142,5 +152,41 @@ public final class ValidationFichier {
             return "";
         }
         return nom.substring(point + 1).toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean contenuCorrespondALaSignature(MultipartFile fichier, String extension) {
+        byte[] entete = new byte[16];
+        int lus;
+        try (InputStream contenu = fichier.getInputStream()) {
+            lus = contenu.read(entete);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Le fichier ne peut pas être lu.", e);
+        }
+        if (lus < 4) {
+            return false;
+        }
+        return switch (extension) {
+            case "pdf" -> commencePar(entete, lus, "%PDF-".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+            case "jpg", "jpeg" -> commencePar(entete, lus, new byte[] { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF });
+            case "png" -> commencePar(entete, lus,
+                    new byte[] { (byte) 0x89, 'P', 'N', 'G', '\r', '\n', (byte) 0x1A, '\n' });
+            case "gif" -> commencePar(entete, lus, "GIF87a".getBytes(java.nio.charset.StandardCharsets.US_ASCII))
+                    || commencePar(entete, lus, "GIF89a".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+            case "webp" -> commencePar(entete, lus, "RIFF".getBytes(java.nio.charset.StandardCharsets.US_ASCII))
+                    && lus >= 12 && entete[8] == 'W' && entete[9] == 'E' && entete[10] == 'B' && entete[11] == 'P';
+            default -> false;
+        };
+    }
+
+    private static boolean commencePar(byte[] contenu, int taille, byte[] signature) {
+        if (taille < signature.length) {
+            return false;
+        }
+        for (int i = 0; i < signature.length; i++) {
+            if (contenu[i] != signature[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }

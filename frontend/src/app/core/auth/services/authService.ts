@@ -37,9 +37,8 @@ export class Auth {
 
   /**
    * URL de l'espace propre au rôle de l'utilisateur connecté, ou null s'il n'a
-   * encore aucun rôle métier (compte tout juste créé). Centralise la même
-   * correspondance que redirectByRole pour que le lien « Mon espace » de la
-   * navbar publique et la redirection post-connexion ne divergent jamais.
+   * encore aucun rôle métier (compte tout juste créé). Utilisée par
+   * redirectByRole pour la redirection post-connexion.
    */
   getHomeUrl(): string | null {
     const roles = this.getUserRoles();
@@ -107,20 +106,8 @@ export class Auth {
       );
   }
 
-  verifyOtp(email: string, code: string): Observable<boolean> {
-    const payload = { email, code };
-
-    return this.http.post<{ message: string }>(`${this.apiUrl}/verify-otp`, payload).pipe(
-      map(() => true),
-      catchError((error) => {
-        console.warn('Vérification OTP échouée :', error.error?.message || error.message);
-        return of(false);
-      })
-    );
-  }
-
-  getOtp(email: string): Observable<boolean> {
-    return this.http.post<boolean>(`${this.apiUrl}/send-otp`, { email });
+  getOtp(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/send-otp`, { email });
   }
 
   checkToken(): Observable<boolean> {

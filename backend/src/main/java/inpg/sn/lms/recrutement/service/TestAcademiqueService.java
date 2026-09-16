@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.service;
 
+import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -82,14 +83,58 @@ public class TestAcademiqueService {
         TestAcademique test = testAcademiqueRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Test non trouvé avec l'ID: " + id));
 
+        verifierNote(request.getNoteObtenue());
         test.setNomEpreuve(request.getNomEpreuve());
         test.setCoefficient(request.getCoefficient());
+        test.setNoteObtenuePrecedente(test.getNoteObtenue());
         test.setNoteObtenue(request.getNoteObtenue());
         test.setDateEpreuve(request.getDateEpreuve());
         test.setLieuOuLien(request.getLieuOuLien());
 
         TestAcademique saved = testAcademiqueRepository.save(test);
         return toResponse(saved);
+    }
+
+    /**
+     * Saisie rapide d'une note seule, sans repasser par le formulaire complet de
+     * l'épreuve (nom, date, lieu, coefficient) — {@link #modifierTest} écrase tous ces
+     * champs avec ce que le client envoie, donc l'utiliser pour ne changer que la note
+     * les aurait effacés si le client ne les renvoyait pas.
+     */
+    public TestAcademiqueResponse modifierNote(Long id, Float noteObtenue) {
+        TestAcademique test = testAcademiqueRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Test non trouvé avec l'ID: " + id));
+        verifierNote(noteObtenue);
+        test.setNoteObtenuePrecedente(test.getNoteObtenue());
+        test.setNoteObtenue(noteObtenue);
+        return toResponse(testAcademiqueRepository.save(test));
+    }
+
+    /**
+     * La plage de notes n'était contrôlée que par l'attribut {@code max} du champ HTML,
+     * c'est-à-dire nulle part : un appel direct enregistrait 999 ou -5, et cette note
+     * entrait ensuite dans le classement de délibération. {@code EntretienService}
+     * appliquait déjà cette règle de son côté ; les deux notes se comparent, elles
+     * doivent se contrôler pareil.
+     *
+     * <p>{@code null} reste admis — c'est ainsi qu'on efface une note saisie par erreur.
+     */
+    private void verifierNote(Float note) {
+        if (note != null && (note < 0 || note > 20)) {
+            throw new BusinessException("La note du test doit être comprise entre 0 et 20.");
+        }
+    }
+
+    /** Annule la dernière saisie de note (un seul niveau, pas d'historique complet). */
+    public TestAcademiqueResponse annulerNote(Long id) {
+        TestAcademique test = testAcademiqueRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Test non trouvé avec l'ID: " + id));
+        if (test.getNoteObtenuePrecedente() == null) {
+            throw new BusinessException("Aucune saisie récente à annuler pour ce test.");
+        }
+        test.setNoteObtenue(test.getNoteObtenuePrecedente());
+        test.setNoteObtenuePrecedente(null);
+        return toResponse(testAcademiqueRepository.save(test));
     }
 
     public TestAcademiqueResponse getTestById(Long id) {
@@ -130,6 +175,7 @@ public class TestAcademiqueService {
                 .id(t.getId())
                 .nomEpreuve(t.getNomEpreuve())
                 .coefficient(t.getCoefficient())
+                .noteObtenuePrecedente(t.getNoteObtenuePrecedente())
                 .noteObtenue(t.getNoteObtenue())
                 .dateEpreuve(t.getDateEpreuve())
                 .lieuOuLien(t.getLieuOuLien())

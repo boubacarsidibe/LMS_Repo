@@ -1,5 +1,6 @@
 package inpg.sn.lms.recrutement.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -33,5 +34,6 @@ public class SessionCandidatureResponse {
     private String infoFraisScolarite;
     private String infoCarteEtudiante;
     private String infoRentree;
+    private BigDecimal montantFraisDossier;
     private List<CritereAdmissionResponse> criteresPersonnalises;
 }

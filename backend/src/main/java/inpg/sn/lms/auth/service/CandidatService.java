@@ -37,6 +37,7 @@ public class CandidatService {
     public Candidat createCandidat(CandidatDto candidatDto) {
         User user = userService.findByUsername(candidatDto.getUsername());
         if (user == null) {
+            PasswordPolicy.exigerMotDePasseRobuste(candidatDto.getPassword());
             user = new User(candidatDto.getUsername(), passwordEncoder.encode(candidatDto.getPassword()), candidatDto.getEmail());
         }
         user.addRole(roleService.findByCode("ROLE_CANDIDAT"));

@@ -22,6 +22,8 @@ import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
+import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
+import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
 import inpg.sn.lms.recrutement.service.NotificationCandidatService;
@@ -54,20 +56,38 @@ class ApplicationControllerTest {
         c.setNumeroDossier("INPG-TEST" + id);
         c.setCandidat(candidat);
         c.setPiecesJustificatives(pieces);
+        // Seuls les dossiers encore en cours d'instruction sont relançables.
+        c.setStatut(EnumStatutCandidature.SOUMIS);
         return c;
+    }
+
+    /** Les trois pièces exigées de tout candidat, toutes conformes : un dossier complet. */
+    private List<PieceJustificative> dossierComplet() {
+        return List.of(
+                piece(EnumTypeDocument.PIECE_IDENTITE, true),
+                piece(EnumTypeDocument.CV, true),
+                piece(EnumTypeDocument.RELEVE_NOTES, true));
     }
 
     private PieceJustificative piece(EnumTypeDocument type, boolean conforme) {
         PieceJustificative p = new PieceJustificative();
         p.setTypeDocument(type);
         p.setEstConforme(conforme);
+        p.setStatutVerification(conforme
+                ? EnumStatutVerificationPiece.CONFORME
+                : EnumStatutVerificationPiece.A_REMPLACER);
         return p;
     }
 
     @Test
-    void un_dossier_complet_nest_pas_relance() {
-        when(candidatureRepo.findAll()).thenReturn(List.of(
-                candidature(1L, "a@example.sn", List.of(piece(EnumTypeDocument.CV, true)))));
+    void une_piece_en_attente_de_verification_ne_declenche_pas_de_relance_candidat() {
+        PieceJustificative identite = piece(EnumTypeDocument.PIECE_IDENTITE, false);
+        identite.setStatutVerification(EnumStatutVerificationPiece.A_VERIFIER);
+        PieceJustificative cv = piece(EnumTypeDocument.CV, false);
+        cv.setStatutVerification(EnumStatutVerificationPiece.A_VERIFIER);
+        PieceJustificative releve = piece(EnumTypeDocument.RELEVE_NOTES, false);
+        releve.setStatutVerification(EnumStatutVerificationPiece.A_VERIFIER);
+        when(candidatureRepo.findAll()).thenReturn(List.of(candidature(1L, "a@example.sn", List.of(identite, cv, releve))));
 
         ResponseEntity<Map<String, Object>> reponse = controller.sendReminder();
 
@@ -76,25 +96,77 @@ class ApplicationControllerTest {
     }
 
     @Test
-    void un_dossier_sans_aucune_piece_est_relance() {
+    void un_dossier_complet_nest_pas_relance() {
+        when(candidatureRepo.findAll()).thenReturn(List.of(
+                candidature(1L, "a@example.sn", dossierComplet())));
+
+        ResponseEntity<Map<String, Object>> reponse = controller.sendReminder();
+
+        assertThat(reponse.getBody().get("envoyes")).isEqualTo(0);
+        verify(notificationService, never()).notifierRappelDossierIncomplet(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void un_dossier_sans_aucune_piece_reclame_les_trois_pieces_requises() {
         when(candidatureRepo.findAll()).thenReturn(List.of(candidature(1L, "a@example.sn", List.of())));
 
         ResponseEntity<Map<String, Object>> reponse = controller.sendReminder();
 
         assertThat(reponse.getBody().get("envoyes")).isEqualTo(1);
-        verify(notificationService).notifierRappelDossierIncomplet("a@example.sn", "INPG-TEST1", "aucune pièce déposée");
+        verify(notificationService).notifierRappelDossierIncomplet("a@example.sn", "INPG-TEST1",
+                "Pièce d'identité (non fournie), CV (non fournie), Relevé de notes (non fournie)");
         verify(notificationCandidatService).creerNotification(anyLong(), anyString(), anyString(), anyString());
     }
 
     @Test
-    void un_dossier_avec_une_piece_non_conforme_nomme_la_piece_dans_la_relance() {
+    void une_piece_requise_absente_est_nommee_meme_si_les_autres_sont_conformes() {
         when(candidatureRepo.findAll()).thenReturn(List.of(candidature(1L, "a@example.sn", List.of(
                 piece(EnumTypeDocument.CV, true),
-                piece(EnumTypeDocument.DIPLOME, false)))));
+                piece(EnumTypeDocument.RELEVE_NOTES, true)))));
 
         controller.sendReminder();
 
-        verify(notificationService).notifierRappelDossierIncomplet("a@example.sn", "INPG-TEST1", "Diplôme");
+        // Le CV conforme suffisait auparavant à faire passer le dossier pour complet : le
+        // candidat n'était jamais prévenu qu'il manquait sa pièce d'identité.
+        verify(notificationService).notifierRappelDossierIncomplet("a@example.sn", "INPG-TEST1",
+                "Pièce d'identité (non fournie)");
+    }
+
+    @Test
+    void une_piece_requise_non_conforme_est_a_remplacer() {
+        when(candidatureRepo.findAll()).thenReturn(List.of(candidature(1L, "a@example.sn", List.of(
+                piece(EnumTypeDocument.PIECE_IDENTITE, true),
+                piece(EnumTypeDocument.CV, false),
+                piece(EnumTypeDocument.RELEVE_NOTES, true)))));
+
+        controller.sendReminder();
+
+        verify(notificationService).notifierRappelDossierIncomplet("a@example.sn", "INPG-TEST1",
+                "CV (à remplacer : non conforme)");
+    }
+
+    @Test
+    void une_piece_facultative_refusee_est_signalee_aussi() {
+        List<PieceJustificative> pieces = new java.util.ArrayList<>(dossierComplet());
+        pieces.add(piece(EnumTypeDocument.DIPLOME, false));
+        when(candidatureRepo.findAll()).thenReturn(List.of(candidature(1L, "a@example.sn", pieces)));
+
+        controller.sendReminder();
+
+        verify(notificationService).notifierRappelDossierIncomplet("a@example.sn", "INPG-TEST1",
+                "Diplôme (à remplacer : non conforme)");
+    }
+
+    @Test
+    void un_dossier_deja_admis_nest_jamais_relance() {
+        Candidature admis = candidature(1L, "a@example.sn", List.of());
+        admis.setStatut(EnumStatutCandidature.ADMIS3);
+        when(candidatureRepo.findAll()).thenReturn(List.of(admis));
+
+        ResponseEntity<Map<String, Object>> reponse = controller.sendReminder();
+
+        assertThat(reponse.getBody().get("envoyes")).isEqualTo(0);
+        verify(notificationService, never()).notifierRappelDossierIncomplet(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -115,7 +187,7 @@ class ApplicationControllerTest {
         when(candidatureRepo.findAll()).thenReturn(List.of(
                 candidature(1L, "a@example.sn", List.of()),
                 candidature(2L, "b@example.sn", List.of(piece(EnumTypeDocument.CV, false))),
-                candidature(3L, "c@example.sn", List.of(piece(EnumTypeDocument.CV, true)))));
+                candidature(3L, "c@example.sn", dossierComplet())));
 
         ResponseEntity<Map<String, Object>> reponse = controller.sendReminder();
 

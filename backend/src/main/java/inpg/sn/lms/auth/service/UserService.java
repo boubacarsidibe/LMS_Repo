@@ -51,9 +51,11 @@ public class UserService implements UserDetailsService {
             throw new IllegalArgumentException("Le nom d'utilisateur, l'e-mail et le mot de passe sont requis.");
         }
 
+        PasswordPolicy.exigerMotDePasseRobuste(userDto.getPassword());
+
         String email = userDto.getEmail().trim().toLowerCase();
         if (userRepository.findByEmail(email) != null) {
-            throw new RuntimeException("Cet email est déjà utilisé.");
+            throw new IllegalArgumentException("Cet e-mail est déjà utilisé.");
         }
         String baseUsername = userDto.getUsername().trim();
         String username = baseUsername;
@@ -117,7 +119,7 @@ public class UserService implements UserDetailsService {
     }
 
     public User findByEmail(String email) {
-        return userRepository.findByEmail(email);
+        return email == null ? null : userRepository.findByEmail(email.trim().toLowerCase());
     }
 
     public boolean hasRole(User user, String roleCode) {
@@ -141,13 +143,26 @@ public class UserService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
     }
 
-    public User ChangePassword(String email, String newPassword) {
-        User user = userRepository.findByEmail(email);
+    @Transactional
+    public User changePassword(String email, String newPassword) {
+        PasswordPolicy.exigerMotDePasseRobuste(newPassword);
+        User user = findByEmail(email);
         if (user != null) {
             user.setPassword(passwordEncoder.encode(newPassword));
-            return userRepository.save(user);
+            return invaliderSessions(user);
         }
         return null;
+    }
+
+    /**
+     * Révoque tous les JWT déjà émis pour l'utilisateur. Le jeton embarque cette
+     * version et {@code JwtUtils} la compare à la valeur persistée à chaque
+     * requête authentifiée.
+     */
+    @Transactional
+    public User invaliderSessions(User user) {
+        user.incrementSessionVersion();
+        return userRepository.save(user);
     }
 
     public User save(User user) {

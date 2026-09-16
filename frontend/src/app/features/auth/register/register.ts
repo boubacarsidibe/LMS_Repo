@@ -54,7 +54,7 @@ export class Register {
     nom: ['', Validators.required],
     nomOrganisation: [''],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    password: ['', [Validators.required, Validators.minLength(12)]],
     confirmPassword: ['', Validators.required]
   });
 

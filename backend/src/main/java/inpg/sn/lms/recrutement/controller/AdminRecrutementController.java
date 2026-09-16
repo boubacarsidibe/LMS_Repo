@@ -1,10 +1,12 @@
 package inpg.sn.lms.recrutement.controller;
 
+import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,8 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,6 +54,7 @@ import inpg.sn.lms.recrutement.dto.EtapeDossierResponse;
 import inpg.sn.lms.recrutement.dto.FiltreCriteresResponse;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.dto.PieceJustificativeResponse;
+import inpg.sn.lms.recrutement.dto.ModifierConformitePieceRequest;
 import inpg.sn.lms.recrutement.dto.RapportRecrutementDto;
 import inpg.sn.lms.recrutement.dto.RapportStatistiqueDto;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureRequest;
@@ -62,6 +67,8 @@ import inpg.sn.lms.recrutement.entity.NotificationTemplate;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.enums.EnumEtapeQms;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
+import inpg.sn.lms.recrutement.enums.EnumStatutPaiement;
+import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.enums.EnumTypeNotification;
 import inpg.sn.lms.recrutement.repository.PieceJustificativeRepository;
@@ -310,6 +317,13 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(candidatureService.getAllCandidatures());
     }
 
+    @GetMapping("/candidatures/page")
+    public ResponseEntity<Page<CandidatureResponse>> getCandidaturesPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int taille) {
+        return ResponseEntity.ok(candidatureService.getCandidaturesPage(page, taille));
+    }
+
     @GetMapping("/candidatures/{id}")
     public ResponseEntity<CandidatureResponse> getCandidature(@PathVariable Long id) {
         return ResponseEntity.ok(candidatureService.getCandidatureById(id));
@@ -548,6 +562,15 @@ public class AdminRecrutementController {
     @PutMapping("/candidatures/{id}/admettre-test")
     public ResponseEntity<CandidatureResponse> admettreTestAcademique(@PathVariable Long id,
             Authentication authentication) {
+        // TDR : les frais de dossier doivent être réglés avant le passage du test — un
+        // candidat qui n'a pas payé ne doit pas pouvoir être convoqué.
+        CandidatureResponse existante = candidatureService.getCandidatureById(id);
+        PaiementResponse paiement = existante.getPaiement();
+        if (paiement == null || paiement.getStatut() != EnumStatutPaiement.SUCCES) {
+            throw new BusinessException(
+                    "Les frais de dossier doivent être réglés et confirmés avant d'admettre ce candidat au test académique.");
+        }
+
         CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS1,
                 null);
         candidatureService.journaliser(id, EnumEtapeQms.EVALUATION, response.getStatut(),
@@ -604,6 +627,30 @@ public class AdminRecrutementController {
     }
 
     /**
+     * Place un candidat sur liste complémentaire à l'issue de l'entretien (TDR §3.1.C,
+     * « saisie des listes retenus et en attente »).
+     *
+     * <p>Ni une admission ni un rejet : le candidat est retenu sur le fond, mais aucune
+     * place n'est disponible. Le frontend affichait déjà ce statut alors que rien ne
+     * permettait de l'attribuer — cette action comble ce manque. Le dossier n'en sort
+     * que par {@link #admettreFinal} (une place se libère) ou {@link #rejeterDossier}.
+     */
+    @PutMapping("/candidatures/{id}/liste-attente")
+    public ResponseEntity<CandidatureResponse> placerEnListeAttente(@PathVariable Long id,
+            Authentication authentication) {
+        CandidatureResponse response = candidatureService.changerStatut(id,
+                EnumStatutCandidature.LISTE_ATTENTE, null);
+        candidatureService.journaliser(id, EnumEtapeQms.SELECTION, response.getStatut(),
+                agentCourant(authentication), "Candidat placé sur liste complémentaire.");
+        if (response.getCandidatEmail() != null) {
+            notificationService.notifierListeAttente(response.getCandidatEmail(), response.getNumeroDossier());
+        }
+        notifierCandidatEnLigne(response, "Votre candidature n°" + response.getNumeroDossier()
+                + " est placée sur liste complémentaire : elle est retenue, en attente qu'une place se libère.");
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Étape 6 de la procédure QMS-009 : <strong>inscription et finalisation</strong>.
      * Ouvre l'accès étudiant au candidat admis, et consigne qui l'a fait.
      *
@@ -645,6 +692,29 @@ public class AdminRecrutementController {
     @GetMapping("/candidatures/{id}/journal")
     public ResponseEntity<List<EtapeDossierResponse>> journalDuDossier(@PathVariable Long id) {
         return ResponseEntity.ok(journalEtapeService.journalDe(id));
+    }
+
+    /**
+     * Annule la dernière décision prise sur cette candidature (retour au statut
+     * précédent). Correction administrative, pas une nouvelle décision : ni email ni
+     * notification cloche envoyés, pour ne pas contredire sans explication la
+     * notification déjà reçue par le candidat pour la décision qu'on vient d'annuler.
+     */
+    @PutMapping("/candidatures/{id}/annuler")
+    public ResponseEntity<CandidatureResponse> annulerDerniereAction(@PathVariable Long id) {
+        return ResponseEntity.ok(candidatureService.annulerDerniereAction(id));
+    }
+
+    /**
+     * Fait reculer explicitement une candidature vers une étape antérieure choisie,
+     * à tout moment — pas seulement juste après la décision à défaire. Même absence
+     * de notification que {@link #annulerDerniereAction} : correction administrative.
+     */
+    @PutMapping("/candidatures/{id}/reculer-statut")
+    public ResponseEntity<CandidatureResponse> reculerStatut(@PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        EnumStatutCandidature cible = EnumStatutCandidature.valueOf(body.get("statut").toUpperCase());
+        return ResponseEntity.ok(candidatureService.reculerStatut(id, cible));
     }
 
     /**
@@ -783,6 +853,19 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(testAcademiqueService.modifierTest(id, request));
     }
 
+    /** Saisie rapide de la note seule — utilisé par la grille de notation (édition en ligne). */
+    @PutMapping("/tests/{id}/note")
+    public ResponseEntity<TestAcademiqueResponse> modifierNoteTest(@PathVariable Long id,
+            @RequestBody Map<String, Float> body) {
+        return ResponseEntity.ok(testAcademiqueService.modifierNote(id, body.get("noteObtenue")));
+    }
+
+    /** Annule la dernière saisie de note d'un test. */
+    @PutMapping("/tests/{id}/annuler-note")
+    public ResponseEntity<TestAcademiqueResponse> annulerNoteTest(@PathVariable Long id) {
+        return ResponseEntity.ok(testAcademiqueService.annulerNote(id));
+    }
+
     @DeleteMapping("/tests/{id}")
     public ResponseEntity<Map<String, String>> supprimerTest(@PathVariable Long id) {
         testAcademiqueService.supprimerTest(id);
@@ -825,6 +908,13 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(entretienService.modifierEntretien(id, request));
     }
 
+    /** Saisie rapide de la note seule, depuis la liste (grille de notation après entretien). */
+    @PutMapping("/entretiens/{id}/note")
+    public ResponseEntity<EntretienResponse> modifierNoteEntretien(@PathVariable Long id,
+            @RequestBody Map<String, Float> body) {
+        return ResponseEntity.ok(entretienService.modifierNote(id, body.get("noteEntretien")));
+    }
+
     @DeleteMapping("/entretiens/{id}")
     public ResponseEntity<Map<String, String>> supprimerEntretien(@PathVariable Long id) {
         entretienService.supprimerEntretien(id);
@@ -863,11 +953,22 @@ public class AdminRecrutementController {
     // ===================== PIÈCES JUSTIFICATIVES (consultation admin) =====================
 
     @PutMapping("/pieces/{id}/conformite")
-    public ResponseEntity<?> modifierConformitePiece(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
+    public ResponseEntity<?> modifierConformitePiece(@PathVariable Long id,
+            @Validated @RequestBody ModifierConformitePieceRequest body) {
         PieceJustificative piece = pieceJustificativeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pièce justificative non trouvée avec l'ID: " + id));
-        boolean conforme = Boolean.TRUE.equals(body.get("estConforme"));
+        boolean conforme = Boolean.TRUE.equals(body.getEstConforme());
+        String motif = body.getMotifNonConformite() != null ? body.getMotifNonConformite().trim() : null;
+        if (!conforme && (motif == null || motif.isBlank())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Un motif est requis pour demander le remplacement d'un document."));
+        }
         piece.setEstConforme(conforme);
+        piece.setStatutVerification(conforme
+                ? EnumStatutVerificationPiece.CONFORME
+                : EnumStatutVerificationPiece.A_REMPLACER);
+        piece.setMotifNonConformite(conforme ? null : motif);
+        piece.setDateVerification(LocalDateTime.now());
         pieceJustificativeRepository.save(piece);
 
         Candidature candidature = piece.getCandidature();
@@ -892,11 +993,22 @@ public class AdminRecrutementController {
             notificationCandidatService.creerNotification(candidature.getCandidat().getId(),
                     conforme
                             ? "Votre document \"" + libelleType + "\" a été vérifié et validé."
-                            : "Votre document \"" + libelleType + "\" n'est pas conforme, merci de le remplacer.",
+                            : "Votre document \"" + libelleType + "\" doit être remplacé : " + motif,
                     "DOCUMENT", "/recrutement/suivi");
         }
 
-        return ResponseEntity.ok(Map.of("id", piece.getId(), "estConforme", piece.isEstConforme()));
+        return ResponseEntity.ok(PieceJustificativeResponse.builder()
+                .id(piece.getId())
+                .typeDocument(piece.getTypeDocument())
+                .estConforme(piece.isEstConforme())
+                .statutVerification(piece.getStatutVerification())
+                .motifNonConformite(piece.getMotifNonConformite())
+                .dateVerification(piece.getDateVerification())
+                .description(piece.getDescription())
+                .fichierStockeId(piece.getFichierStocke() != null ? piece.getFichierStocke().getId() : null)
+                .fichierNomOriginal(piece.getFichierStocke() != null ? piece.getFichierStocke().getNomOriginal() : null)
+                .moyenneDeclaree(piece.getMoyenneDeclaree())
+                .build());
     }
 
     @GetMapping("/pieces/{id}/telecharger")

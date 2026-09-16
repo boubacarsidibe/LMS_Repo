@@ -64,6 +64,17 @@ public class SupportCoursStorageService {
         return supportService.saveCourseSupport(enregistre);
     }
 
+    /** Enregistre une ressource web : elle ne possède volontairement aucun fichier local. */
+    public SupportCours publierLien(Cours cours, String titre, String url, LocalDate datePublication) {
+        SupportCours support = new SupportCours();
+        support.setCours(cours);
+        support.setTitre(titre);
+        support.setTypeRessource("lien");
+        support.setUrl(url);
+        support.setDatePublication(datePublication);
+        return supportService.saveCourseSupport(support);
+    }
+
     /** Ne conserve que le nom du fichier : un chemin fourni par le client ne doit pas être suivi. */
     private String nomDeFichier(MultipartFile fichier) {
         String original = fichier.getOriginalFilename() == null ? "ressource" : fichier.getOriginalFilename();

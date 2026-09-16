@@ -212,6 +212,13 @@ export const routes: Routes = [
           ).then((m) => m.ResponsableAdmissionCandidaturesComponent),
       },
       {
+        path: 'candidatures/:id',
+        loadComponent: () =>
+          import(
+            './features/recrutement/responsable-admission/candidatures/candidature-detail/candidature-detail.component'
+          ).then((m) => m.CandidatureDetailComponent),
+      },
+      {
         path: 'tests',
         loadComponent: () =>
           import('./features/recrutement/responsable-admission/tests/responsable-admission-tests.component').then(
@@ -219,7 +226,6 @@ export const routes: Routes = [
           ),
       },
       {
-        // Route littérale avant 'tests/:id' : sinon Angular la capturerait comme un id de test.
         path: 'tests/nouveau',
         loadComponent: () =>
           import('./features/recrutement/responsable-admission/tests/test-form/test-form.component').then(

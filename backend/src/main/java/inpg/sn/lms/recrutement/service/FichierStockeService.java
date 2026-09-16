@@ -11,6 +11,9 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import inpg.sn.lms.fichier.ValidationFichier;
@@ -53,6 +56,20 @@ public class FichierStockeService {
             throw new RuntimeException("Échec de l'enregistrement du fichier: " + nomOriginal, e);
         }
 
+        // Le disque ne participe pas à la transaction SQL. Lorsque l'appelant
+        // annule la création de la pièce, cette compensation supprime le fichier
+        // qui aurait autrement survécu sans ligne de base associée.
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCompletion(int status) {
+                    if (status == TransactionSynchronization.STATUS_ROLLED_BACK) {
+                        supprimerSilencieusement(cheminFichier);
+                    }
+                }
+            });
+        }
+
         FichierStocke fichier = new FichierStocke();
         fichier.setNomOriginal(nomOriginal);
         fichier.setCheminStockage(cheminFichier.toString());
@@ -60,7 +77,12 @@ public class FichierStockeService {
         fichier.setTailleOctets(file.getSize());
         fichier.setDateUpload(LocalDateTime.now());
 
-        return fichierStockeRepository.save(fichier);
+        try {
+            return fichierStockeRepository.save(fichier);
+        } catch (RuntimeException e) {
+            supprimerSilencieusement(cheminFichier);
+            throw e;
+        }
     }
 
     public FichierStocke trouverParId(Long id) {
@@ -76,13 +98,34 @@ public class FichierStockeService {
         }
     }
 
+    @Transactional
     public void supprimerFichier(Long id) {
         FichierStocke fichier = trouverParId(id);
-        try {
-            Files.deleteIfExists(Paths.get(fichier.getCheminStockage()));
-        } catch (IOException e) {
-            // Log l'erreur mais ne pas bloquer
-        }
         fichierStockeRepository.deleteById(id);
+
+        Path chemin = Paths.get(fichier.getCheminStockage());
+        // Supprimer le fichier seulement après un commit effectif : dans l'ordre
+        // inverse, une erreur SQL laisserait une ligne pointant vers un fichier
+        // déjà disparu. Un échec disque après commit produit au pire un orphelin,
+        // récupérable par une tâche de réconciliation.
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    supprimerSilencieusement(chemin);
+                }
+            });
+        } else {
+            supprimerSilencieusement(chemin);
+        }
+    }
+
+    private void supprimerSilencieusement(Path chemin) {
+        try {
+            Files.deleteIfExists(chemin);
+        } catch (IOException e) {
+            // La suppression est rejouable par le contrôle d'exploitation ; elle
+            // ne doit pas masquer l'erreur métier initiale.
+        }
     }
 }

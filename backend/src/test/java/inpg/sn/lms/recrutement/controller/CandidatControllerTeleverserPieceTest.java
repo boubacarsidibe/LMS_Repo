@@ -117,7 +117,7 @@ class CandidatControllerTeleverserPieceTest {
     @Test
     void un_diplome_sans_description_est_refuse() {
         ResponseEntity<?> reponse = controller.televerserPiece(
-                ID_CANDIDATURE, fichier, "DIPLOME", null, authentication);
+                ID_CANDIDATURE, fichier, "DIPLOME", null, null, authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verify(pieceJustificativeRepository, never()).save(any());
@@ -126,7 +126,7 @@ class CandidatControllerTeleverserPieceTest {
     @Test
     void un_diplome_avec_description_uniquement_faite_d_espaces_est_refuse() {
         ResponseEntity<?> reponse = controller.televerserPiece(
-                ID_CANDIDATURE, fichier, "DIPLOME", "   ", authentication);
+                ID_CANDIDATURE, fichier, "DIPLOME", "   ", null, authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verify(pieceJustificativeRepository, never()).save(any());
@@ -135,7 +135,7 @@ class CandidatControllerTeleverserPieceTest {
     @Test
     void un_diplome_avec_description_est_accepte_et_la_description_est_enregistree() {
         ResponseEntity<?> reponse = controller.televerserPiece(
-                ID_CANDIDATURE, fichier, "DIPLOME", "Licence en Informatique, 2022", authentication);
+                ID_CANDIDATURE, fichier, "DIPLOME", "Licence en Informatique, 2022", null, authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         ArgumentCaptor<PieceJustificative> captor = ArgumentCaptor.forClass(PieceJustificative.class);
@@ -146,7 +146,7 @@ class CandidatControllerTeleverserPieceTest {
     @Test
     void un_cv_sans_description_reste_accepte() {
         ResponseEntity<?> reponse = controller.televerserPiece(
-                ID_CANDIDATURE, fichier, "CV", null, authentication);
+                ID_CANDIDATURE, fichier, "CV", null, null, authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         ArgumentCaptor<PieceJustificative> captor = ArgumentCaptor.forClass(PieceJustificative.class);
@@ -159,7 +159,7 @@ class CandidatControllerTeleverserPieceTest {
         String tropLongue = "x".repeat(501);
 
         ResponseEntity<?> reponse = controller.televerserPiece(
-                ID_CANDIDATURE, fichier, "CV", tropLongue, authentication);
+                ID_CANDIDATURE, fichier, "CV", tropLongue, null, authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verify(pieceJustificativeRepository, never()).save(any());

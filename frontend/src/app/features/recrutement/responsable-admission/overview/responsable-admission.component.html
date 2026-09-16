@@ -1,16 +1,18 @@
 <!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
 
-<div class="mb-stack-lg flex flex-col md:flex-row md:items-end justify-between gap-4">
-  <div>
+<div class="mb-stack-lg flex flex-col xl:flex-row xl:items-end justify-between gap-5">
+  <div class="max-w-3xl">
     <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1">Vue d'ensemble</h2>
     <p class="font-body-md text-body-md text-on-surface-variant">Suivi des sessions en cours. Pour les indicateurs et graphiques, voir <a routerLink="/responsable-admission/statistiques" class="text-secondary hover:underline">Statistiques</a>.</p>
   </div>
-  <div class="flex gap-3">
-    <button type="button" routerLink="/responsable-admission/statistiques" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm">
-      <span class="material-symbols-outlined text-[18px]">bar_chart</span> Statistiques
+  <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+    <button type="button" routerLink="/responsable-admission/statistiques" title="Statistiques" class="flex items-center justify-center gap-2 h-10 px-4 bg-secondary text-on-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md">
+      <span class="material-symbols-outlined text-[18px]">bar_chart</span>
+      Statistiques
     </button>
-    <button type="button" [disabled]="exporting" (click)="exporterSessions()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
-      <span class="material-symbols-outlined text-[18px]">download</span> {{ exporting ? 'Export en cours…' : 'Rapport (Sessions)' }}
+    <button type="button" [disabled]="exporting" (click)="exporterSessions()" [title]="exporting ? 'Export en cours…' : 'Rapport (Sessions)'" class="flex items-center justify-center gap-2 h-10 px-4 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60 font-label-md text-label-md">
+      <span class="material-symbols-outlined text-[18px]">download</span>
+      {{ exporting ? 'Export…' : 'Exporter les sessions' }}
     </button>
   </div>
 </div>

@@ -1,5 +1,5 @@
 <div class="min-h-screen flex flex-col bg-[#F8FAFC]">
-  <app-candidat-navbar></app-candidat-navbar>
+  <app-navbar></app-navbar>
 
   <!-- Loader de vérification initiale -->
   <main *ngIf="verifierCandidatureExistante" class="flex-grow flex items-center justify-center py-20">
@@ -131,7 +131,7 @@
                 </select>
               </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Genre <span class="text-[#ba1a1a]">*</span></label>
                 <select [(ngModel)]="data.genre" (ngModelChange)="saveDraft()"
@@ -144,6 +144,19 @@
                 </select>
                 <p *ngIf="showErrors && genreInvalide" class="text-xs text-[#ba1a1a]">Le genre est obligatoire.</p>
               </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Êtes-vous actuellement en activité professionnelle ?</label>
+                <div class="flex gap-2">
+                  <label *ngFor="let v of ['Oui', 'Non']" class="cursor-pointer">
+                    <input type="radio" name="estProfessionnel" [value]="v" [(ngModel)]="data.estProfessionnel" (ngModelChange)="onEstProfessionnelChange()" class="sr-only peer">
+                    <span class="peer-checked:bg-[#30609a] peer-checked:text-white px-4 py-2 rounded border border-[#c7c5d0] text-sm font-medium text-[#46464e] hover:bg-[#f2f4f6] transition-colors inline-block">
+                      {{ v }}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="data.estProfessionnel === 'Oui'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Profession actuelle</label>
                 <input [(ngModel)]="data.profession" (ngModelChange)="saveDraft()" type="text" placeholder="Ex: Ingénieur, Étudiant..."
@@ -167,7 +180,7 @@
           </div>
         </ng-container>
 
-        <!-- === ÉTAPE 2 : FORMATION === -->
+        <!-- === ÉTAPE 2 : FORMATION & PARCOURS === -->
         <ng-container *ngIf="etape === 2">
           <h2 class="text-xl leading-7 font-semibold text-[#000002] mb-6 border-l-4 border-[#30609a] pl-3">
             Choix de la Formation
@@ -195,45 +208,6 @@
                 </ul>
                 <p>Vous pouvez tout de même soumettre votre dossier ; la décision finale revient à l'INPG.</p>
               </div>
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Type de Formation</label>
-              <select [(ngModel)]="data.typeFormation" (ngModelChange)="saveDraft()" class="w-full px-3 py-2.5 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
-                <option value="">-- Sélectionner --</option>
-                <option value="emba">Executive MBA en Management du Pétrole et du Gaz</option>
-                <option value="m2_ing">Master 2 Ingénierie Pétrolière</option>
-                <option value="m2_eco">Master 2 Économie et Gestion de l'Énergie</option>
-                <option value="hse">Certification en HSE</option>
-                <option value="initiale">Formation Initiale</option>
-                <option value="continue">Formation Continue</option>
-              </select>
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Niveau d'études visé</label>
-              <div class="flex flex-wrap gap-2">
-                <label *ngFor="let n of ['Baccalauréat','Licence (L3)','Master 1 (M1)','Master 2 (M2)']" class="cursor-pointer">
-                  <input type="radio" name="niveauVise" [value]="n" [(ngModel)]="data.niveauVise" (ngModelChange)="saveDraft()" class="sr-only peer">
-                  <span class="peer-checked:bg-[#30609a] peer-checked:text-white px-4 py-2 rounded border border-[#c7c5d0] text-sm font-medium text-[#46464e] hover:bg-[#f2f4f6] transition-colors inline-block">
-                    {{ n }}
-                  </span>
-                </label>
-              </div>
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Programme souhaité <span class="text-[#ba1a1a]">*</span></label>
-              <input [(ngModel)]="data.programme" (ngModelChange)="saveDraft()" type="text" placeholder="Ex: MBA Économie et Management"
-                     [class.border-[#ba1a1a]]="showErrors && !data.programme.trim()"
-                     class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
-              <p *ngIf="showErrors && !data.programme.trim()" class="text-xs text-[#ba1a1a]">Le programme souhaité est obligatoire.</p>
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Campus de préférence</label>
-              <select [(ngModel)]="data.campus" (ngModelChange)="saveDraft()" class="w-full px-3 py-2.5 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
-                <option value="">-- Sélectionner --</option>
-                <option value="dakar">Dakar - Point E</option>
-                <option value="thies">Thiès</option>
-                <option value="stlouis">Saint-Louis</option>
-              </select>
             </div>
 
             <div *ngIf="criteresPersonnalises.length > 0" class="flex flex-col gap-5 pt-2 border-t border-[#c7c5d0]">
@@ -272,16 +246,13 @@
               </div>
             </div>
           </div>
-        </ng-container>
 
-        <!-- === ÉTAPE 3 : PARCOURS === -->
-        <ng-container *ngIf="etape === 3">
-          <h2 class="text-xl leading-7 font-semibold text-[#000002] mb-6 border-l-4 border-[#30609a] pl-3">
+          <h2 class="text-xl leading-7 font-semibold text-[#000002] mb-6 mt-8 border-l-4 border-[#30609a] pl-3">
             Votre Parcours Académique
           </h2>
           <div class="space-y-5">
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Niveau d'études actuel</label>
+              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Niveau d'études actuel <span class="text-[#ba1a1a]">*</span></label>
               <div class="flex flex-wrap gap-2">
                 <label *ngFor="let n of ['Baccalauréat','Licence (L3)','Master 1 (M1)','Master 2 (M2)','Autre']" class="cursor-pointer">
                   <input type="radio" name="niveauActuel" [value]="n" [(ngModel)]="data.niveauActuel" (ngModelChange)="saveDraft()" class="sr-only peer">
@@ -290,6 +261,7 @@
                   </span>
                 </label>
               </div>
+              <p *ngIf="showErrors && niveauActuelInvalide" class="text-xs text-[#ba1a1a]">Le niveau d'études actuel est obligatoire.</p>
             </div>
             <div class="flex flex-col gap-1.5">
               <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Dernier établissement fréquenté</label>
@@ -305,17 +277,62 @@
               </div>
               <div class="flex flex-col gap-1.5">
                 <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Année d'obtention</label>
-                <select [(ngModel)]="data.anneeObtention" (ngModelChange)="saveDraft()" class="w-full px-3 py-2.5 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
-                  <option value="">Sélectionner</option>
-                  <option>2025</option><option>2024</option><option>2023</option><option>2022</option><option>2021</option><option>2020</option>
-                </select>
+                <input [(ngModel)]="data.anneeObtention" (ngModelChange)="saveDraft()" type="number" [min]="1950" [max]="anneeCourante" placeholder="Ex: 2019"
+                       class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
               </div>
+            </div>
+
+            <!-- Formations déjà suivies -->
+            <div class="pt-4 border-t border-[#c7c5d0]">
+              <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Formations suivies</label>
+              <p class="text-xs text-[#77767f] mt-1 mb-3">Facultatif — listez les autres formations que vous avez déjà suivies.</p>
+
+              <div *ngFor="let f of data.formationsSuivies; let i = index" class="p-4 mb-3 rounded-lg border border-[#c7c5d0] bg-[#f7f9fb]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Nom de la formation</label>
+                    <input [(ngModel)]="f.nom" [name]="'formationNom' + i" (ngModelChange)="saveDraft()" type="text" placeholder="Ex: Licence de Gestion"
+                           class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Établissement</label>
+                    <input [(ngModel)]="f.etablissement" [name]="'formationEtablissement' + i" (ngModelChange)="saveDraft()" type="text" placeholder="Ex: Université de Dakar"
+                           class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Diplôme obtenu</label>
+                    <input [(ngModel)]="f.diplome" [name]="'formationDiplome' + i" (ngModelChange)="saveDraft()" type="text" placeholder="Ex: Licence de Gestion"
+                           class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Année d'obtention</label>
+                    <input [(ngModel)]="f.anneeObtention" [name]="'formationAnnee' + i" (ngModelChange)="saveDraft()" type="number" [min]="1950" [max]="anneeCourante" placeholder="Ex: 2019"
+                           class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Pays</label>
+                    <input [(ngModel)]="f.pays" [name]="'formationPays' + i" (ngModelChange)="saveDraft()" type="text" placeholder="Ex: Sénégal"
+                           class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                  </div>
+                </div>
+                <div class="flex justify-end mt-3">
+                  <button type="button" (click)="retirerFormationSuivie(i)" class="flex items-center gap-1 text-xs text-[#ba1a1a] hover:underline cursor-pointer">
+                    <span class="material-symbols-outlined text-[16px]">delete</span> Retirer
+                  </button>
+                </div>
+              </div>
+
+              <button type="button" (click)="ajouterFormationSuivie()" class="flex items-center gap-1.5 text-sm font-medium text-[#30609a] hover:underline cursor-pointer">
+                <span class="material-symbols-outlined text-[18px]">add_circle</span> Ajouter une formation suivie
+              </button>
             </div>
           </div>
         </ng-container>
 
-        <!-- === ÉTAPE 4 : DOCUMENTS === -->
-        <ng-container *ngIf="etape === 4">
+        <!-- === ÉTAPE 3 : DOCUMENTS === -->
+        <ng-container *ngIf="etape === 3">
           <div class="mb-6">
             <h2 class="text-xl leading-7 font-semibold text-[#000002] mb-2 border-l-4 border-[#30609a] pl-3">
               Documents justificatifs
@@ -330,12 +347,14 @@
                 <h3 class="text-sm font-semibold text-[#000002]">Pièce d'identité</h3>
                 <span class="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-xs tracking-[0.05em] font-semibold ml-auto">Requis</span>
               </div>
-              <label class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#c7c5d0] rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors">
+              <label class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors"
+                     [class.border-[#c7c5d0]]="!(showErrors && !data.fichierIdentite)" [class.border-[#ba1a1a]]="showErrors && !data.fichierIdentite">
                 <span class="material-symbols-outlined text-[#77767f] text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">cloud_upload</span>
                 <span class="text-xs text-[#77767f]">PDF, JPG, PNG (Max 2 Mo)</span>
                 <input type="file" accept=".pdf,.jpg,.png" class="hidden" multiple (change)="onFileSelected($event, 'identite')">
               </label>
               <p *ngIf="data.fichierIdentite" class="text-xs text-[#30609a] truncate">{{ data.fichierIdentite }}</p>
+              <p *ngIf="showErrors && !data.fichierIdentite" class="text-xs text-[#ba1a1a]">Ce document est obligatoire.</p>
             </div>
             <!-- CV -->
             <div class="bg-[#f2f4f6] border border-[#c7c5d0] p-4 rounded-lg flex flex-col gap-2">
@@ -344,41 +363,68 @@
                 <h3 class="text-sm font-semibold text-[#000002]">Curriculum Vitae</h3>
                 <span class="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-xs tracking-[0.05em] font-semibold ml-auto">Requis</span>
               </div>
-              <label class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#c7c5d0] rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors">
+              <label class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors"
+                     [class.border-[#c7c5d0]]="!(showErrors && !data.fichierCV)" [class.border-[#ba1a1a]]="showErrors && !data.fichierCV">
                 <span class="material-symbols-outlined text-[#77767f] text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">cloud_upload</span>
                 <span class="text-xs text-[#77767f]">PDF uniquement (Max 3 Mo)</span>
                 <input type="file" accept=".pdf" class="hidden" multiple (change)="onFileSelected($event, 'cv')">
               </label>
               <p *ngIf="data.fichierCV" class="text-xs text-[#30609a] truncate">{{ data.fichierCV }}</p>
+              <p *ngIf="showErrors && !data.fichierCV" class="text-xs text-[#ba1a1a]">Ce document est obligatoire.</p>
             </div>
-            <!-- Lettre de motivation -->
-            <div class="bg-[#f2f4f6] border border-[#c7c5d0] p-4 rounded-lg flex flex-col gap-2">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">edit_note</span>
-                <h3 class="text-sm font-semibold text-[#000002]">Lettre de motivation</h3>
-                <span class="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-xs tracking-[0.05em] font-semibold ml-auto">Requis</span>
+          </div>
+
+          <!-- Relevés de notes : au plus MAX_ANNEES années, chacune avec au plus MAX_BULLETINS_PAR_ANNEE bulletins -->
+          <div class="bg-[#f2f4f6] border border-[#c7c5d0] p-4 rounded-lg mb-6">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">school</span>
+              <h3 class="text-sm font-semibold text-[#000002]">Relevés de notes</h3>
+              <span class="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-xs tracking-[0.05em] font-semibold ml-auto">Requis</span>
+            </div>
+            <p class="text-xs text-[#77767f] mb-3">Une à trois dernières années. Pour chaque année, ajoutez le ou les bulletins (ex: trimestres) avec la moyenne obtenue et le PDF qui la prouve.</p>
+
+            <div *ngFor="let annee of data.bulletinsParAnnee; let ai = index" class="p-3 mb-3 rounded-lg border border-[#c7c5d0] bg-white">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-sm font-semibold text-[#191c1e]">Année {{ ai + 1 }}</h4>
+                <button type="button" *ngIf="data.bulletinsParAnnee.length > 1" (click)="retirerAnnee(ai)" class="flex items-center gap-1 text-xs text-[#ba1a1a] hover:underline cursor-pointer">
+                  <span class="material-symbols-outlined text-[16px]">delete</span> Retirer cette année
+                </button>
               </div>
-              <label class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#c7c5d0] rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors">
-                <span class="material-symbols-outlined text-[#77767f] text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">cloud_upload</span>
-                <span class="text-xs text-[#77767f]">PDF uniquement (Max 2 Mo)</span>
-                <input type="file" accept=".pdf" class="hidden" multiple (change)="onFileSelected($event, 'motivation')">
-              </label>
-              <p *ngIf="data.fichierMotivation" class="text-xs text-[#30609a] truncate">{{ data.fichierMotivation }}</p>
-            </div>
-            <!-- Relevés de notes -->
-            <div class="bg-[#f2f4f6] border border-[#c7c5d0] p-4 rounded-lg flex flex-col gap-2">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">school</span>
-                <h3 class="text-sm font-semibold text-[#000002]">Relevés de notes</h3>
-                <span class="px-2 py-0.5 rounded-full bg-[#ffdad6] text-[#93000a] text-xs tracking-[0.05em] font-semibold ml-auto">Requis</span>
+
+              <div *ngFor="let b of annee.bulletins; let bi = index" class="p-3 mb-2 rounded-lg border bg-[#f7f9fb]"
+                   [class.border-[#c7c5d0]]="!(showErrors && (b.moyenne === null || b.moyenne < 0 || b.moyenne > 20 || !bulletinFiles[ai]?.[bi]))"
+                   [class.border-[#ba1a1a]]="showErrors && (b.moyenne === null || b.moyenne < 0 || b.moyenne > 20 || !bulletinFiles[ai]?.[bi])">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Moyenne obtenue (sur 20) <span class="text-[#ba1a1a]">*</span></label>
+                    <input [(ngModel)]="b.moyenne" [name]="'bulletinMoyenne' + ai + '_' + bi" (ngModelChange)="saveDraft()" type="number" min="0" max="20" step="0.01" placeholder="Ex: 14.5"
+                           class="w-full px-3 py-2 rounded border border-[#c7c5d0] bg-white text-[#191c1e] focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 outline-none transition-all text-sm">
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e]">Bulletin PDF (preuve) <span class="text-[#ba1a1a]">*</span></label>
+                    <label class="relative flex items-center gap-2 w-full px-3 py-2 border-2 border-dashed border-[#c7c5d0] rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors">
+                      <span class="material-symbols-outlined text-[#77767f] text-xl" style="font-variation-settings: 'FILL' 0;">cloud_upload</span>
+                      <span class="text-xs text-[#77767f] truncate">{{ b.fichierNom || 'PDF uniquement (Max 5 Mo)' }}</span>
+                      <input type="file" accept=".pdf" class="hidden" (change)="onBulletinFileSelected($event, ai, bi)">
+                    </label>
+                  </div>
+                </div>
+                <div class="flex justify-end mt-2" *ngIf="annee.bulletins.length > 1">
+                  <button type="button" (click)="retirerBulletin(ai, bi)" class="flex items-center gap-1 text-xs text-[#ba1a1a] hover:underline cursor-pointer">
+                    <span class="material-symbols-outlined text-[16px]">delete</span> Retirer ce bulletin
+                  </button>
+                </div>
               </div>
-              <label class="relative flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#c7c5d0] rounded-lg cursor-pointer hover:bg-[#e6e8ea] transition-colors">
-                <span class="material-symbols-outlined text-[#77767f] text-2xl mb-1" style="font-variation-settings: 'FILL' 0;">cloud_upload</span>
-                <span class="text-xs text-[#77767f]">PDF uniquement (Max 5 Mo)</span>
-                <input type="file" accept=".pdf" class="hidden" multiple (change)="onFileSelected($event, 'releves')">
-              </label>
-              <p *ngIf="data.fichierReleves" class="text-xs text-[#30609a] truncate">{{ data.fichierReleves }}</p>
+
+              <button type="button" *ngIf="annee.bulletins.length < MAX_BULLETINS_PAR_ANNEE" (click)="ajouterBulletin(ai)" class="flex items-center gap-1.5 text-xs font-medium text-[#30609a] hover:underline cursor-pointer">
+                <span class="material-symbols-outlined text-[16px]">add_circle</span> Ajouter un bulletin pour cette année (ex: trimestre suivant)
+              </button>
             </div>
+
+            <button type="button" *ngIf="data.bulletinsParAnnee.length < MAX_ANNEES" (click)="ajouterAnnee()" class="flex items-center gap-1.5 text-sm font-medium text-[#30609a] hover:underline cursor-pointer">
+              <span class="material-symbols-outlined text-[18px]">add_circle</span> Ajouter une autre année
+            </button>
+            <p *ngIf="showErrors && bulletinsIncomplets" class="text-xs text-[#ba1a1a] mt-2">Chaque bulletin doit indiquer sa moyenne (0 à 20) et joindre le PDF correspondant.</p>
           </div>
 
           <!-- Diplômes / certificats : nombre libre, avec description obligatoire -->
@@ -426,13 +472,15 @@
           </div>
 
           <!-- Consentement -->
-          <div class="bg-[#f2f4f6] p-4 rounded-lg border border-[#c7c5d0] mb-4">
+          <div class="bg-[#f2f4f6] p-4 rounded-lg border mb-4"
+               [class.border-[#c7c5d0]]="!(showErrors && !data.consentement)" [class.border-[#ba1a1a]]="showErrors && !data.consentement">
             <label class="flex gap-3 cursor-pointer">
               <input type="checkbox" [(ngModel)]="data.consentement" (ngModelChange)="saveDraft()" class="w-5 h-5 mt-0.5 text-[#30609a] border-[#c7c5d0] rounded focus:ring-[#30609a]">
               <span class="text-sm text-[#46464e]">
                 Je certifie sur l'honneur que toutes les informations fournies dans ce formulaire et les documents joints sont exactes et sincères. Je comprends que toute fausse déclaration pourra entraîner l'annulation de ma candidature.
               </span>
             </label>
+            <p *ngIf="showErrors && !data.consentement" class="text-xs text-[#ba1a1a] mt-2">Vous devez accepter les conditions pour soumettre votre candidature.</p>
           </div>
 
           <!-- Bouton de soumission finale -->

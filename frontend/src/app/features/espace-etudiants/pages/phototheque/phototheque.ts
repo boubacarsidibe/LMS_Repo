@@ -58,7 +58,7 @@ export class Phototheque implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.charger();
-    this.promotionService.getAll().subscribe({
+    this.promotionService.getMesPromotionsFormateur().subscribe({
       next: (liste) => (this.promotions = liste || []),
       error: () => (this.promotions = []),
     });

@@ -109,7 +109,7 @@ class PaiementServiceWorkflowTest {
     /** Le tarif est une donnée métier : il ne doit jamais provenir de la requête. */
     @Test
     void le_montant_vient_de_la_configuration_pas_du_client() {
-        when(candidatureRepository.findById(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+        when(candidatureRepository.findByIdForPayment(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
         when(paiementRepository.findByCandidatureId(ID_CANDIDATURE)).thenReturn(Optional.empty());
 
         PaiementResponse reponse = paiementService.initierPaiement(requete);
@@ -122,7 +122,7 @@ class PaiementServiceWorkflowTest {
 
     @Test
     void un_dossier_deja_regle_ne_peut_pas_etre_repaye() {
-        when(candidatureRepository.findById(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+        when(candidatureRepository.findByIdForPayment(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
         when(paiementRepository.findByCandidatureId(ID_CANDIDATURE))
                 .thenReturn(Optional.of(paiement(EnumStatutPaiement.SUCCES)));
 
@@ -137,7 +137,7 @@ class PaiementServiceWorkflowTest {
     @Test
     void une_tentative_en_echec_peut_etre_rejouee() {
         Paiement echoue = paiement(EnumStatutPaiement.ECHEC);
-        when(candidatureRepository.findById(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+        when(candidatureRepository.findByIdForPayment(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
         when(paiementRepository.findByCandidatureId(ID_CANDIDATURE)).thenReturn(Optional.of(echoue));
 
         PaiementResponse reponse = paiementService.initierPaiement(requete);
@@ -150,7 +150,7 @@ class PaiementServiceWorkflowTest {
 
     @Test
     void une_tentative_restee_en_attente_peut_etre_relancee() {
-        when(candidatureRepository.findById(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+        when(candidatureRepository.findByIdForPayment(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
         when(paiementRepository.findByCandidatureId(ID_CANDIDATURE))
                 .thenReturn(Optional.of(paiement(EnumStatutPaiement.EN_ATTENTE)));
 

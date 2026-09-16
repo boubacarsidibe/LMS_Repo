@@ -112,6 +112,14 @@ public class SessionCandidature {
     @Column(name = "info_frais_scolarite", length = 255)
     private String infoFraisScolarite;
 
+    /**
+     * Frais de dossier propres à cette session, fixés par le responsable admission.
+     * {@code null} = pas de tarif spécifique : {@link inpg.sn.lms.recrutement.service.PaiementService}
+     * retombe alors sur le tarif global de configuration.
+     */
+    @Column(name = "montant_frais_dossier", precision = 38, scale = 2)
+    private java.math.BigDecimal montantFraisDossier;
+
     @Column(name = "info_carte_etudiante", length = 255)
     private String infoCarteEtudiante;
 

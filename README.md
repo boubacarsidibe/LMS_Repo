@@ -38,8 +38,9 @@ démarrer sans elles :
 docker compose up -d --build
 ```
 
-Au premier démarrage, Flyway crée le schéma et les `DataInitializer` insèrent les données de
-démonstration. Comptez une à deux minutes.
+Au premier démarrage, Flyway crée le schéma. Compose active explicitement les données de
+démonstration pour le poste local ; elles restent désactivées par défaut dans tout autre
+environnement. Comptez une à deux minutes.
 
 | Service | URL |
 |---|---|
@@ -73,9 +74,10 @@ Un compte par rôle, pour tester chaque espace sans effet de bord.
 | `test.admission@inpg.sn` | Responsable Admission | Back-office recrutement |
 | `test.pedago@inpg.sn` | Responsable Pédagogique | Offre de cours |
 
-### Comptes de démonstration
+### Comptes de démonstration locaux
 
-Créés automatiquement au démarrage, avec des mots de passe **différents par rôle** :
+Créés uniquement lorsque `APP_DEMO_DATA_ENABLED=true` (valeur activée par
+`docker-compose.yml`), avec des mots de passe **différents par rôle** :
 
 | Identifiant | Mot de passe |
 |---|---|
@@ -129,7 +131,7 @@ Le `Dockerfile` construit l'image avec `-DskipTests` pour aller plus vite — **
 dire qu'il n'y a pas de tests.** Pour les lancer :
 
 ```bash
-cd backend && mvn -o test
+cd backend && ./mvnw test
 ```
 
 Les tests sont des tests unitaires Mockito, sans contexte Spring : ils s'exécutent en quelques

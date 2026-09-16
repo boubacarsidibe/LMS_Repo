@@ -32,8 +32,8 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/mes-cours/mes-cours').then(m => m.MesCours)
             },
             {
-                path: 'creer-cours',
-                loadComponent: () => import('./pages/creer-cours/creer-cours').then(m => m.CreerCours)
+                path: 'mes-cours/:id',
+                loadComponent: () => import('./pages/cours-detail-formateur/cours-detail-formateur').then(m => m.CoursDetailFormateur)
             },
             {
                 path: 'suivi-etudiants',
@@ -77,10 +77,6 @@ export const routes: Routes = [
             {
                 path: 'phototheque',
                 loadComponent: () => import('./pages/phototheque/phototheque').then(m => m.Phototheque)
-            },
-            {
-                path: 'certificats',
-                loadComponent: () => import('./pages/certificats/certificats').then(m => m.Certificats)
             },
             {
                 path: 'rendez-vous',
