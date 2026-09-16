@@ -128,6 +128,9 @@ export interface PieceJustificativeResponse {
   id: number;
   typeDocument: string;
   estConforme: boolean;
+  statutVerification: 'A_VERIFIER' | 'CONFORME' | 'A_REMPLACER';
+  motifNonConformite: string | null;
+  dateVerification: string | null;
   description: string | null;
   fichierStockeId: number | null;
   fichierNomOriginal: string | null;
@@ -645,9 +648,13 @@ export class RecrutementService {
     return this.http.get(`${this.baseUrl}/admin/recrutement/pieces/${pieceId}/telecharger`, { responseType: 'blob' });
   }
 
-  modifierConformitePiece(pieceId: number, estConforme: boolean): Observable<{ id: number; estConforme: boolean }> {
-    return this.http.put<{ id: number; estConforme: boolean }>(
-      `${this.baseUrl}/admin/recrutement/pieces/${pieceId}/conformite`, { estConforme });
+  modifierConformitePiece(
+    pieceId: number,
+    estConforme: boolean,
+    motifNonConformite?: string,
+  ): Observable<PieceJustificativeResponse> {
+    return this.http.put<PieceJustificativeResponse>(
+      `${this.baseUrl}/admin/recrutement/pieces/${pieceId}/conformite`, { estConforme, motifNonConformite });
   }
 
   annulerDerniereAction(id: number): Observable<CandidatureResponse> {

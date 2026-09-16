@@ -5,6 +5,10 @@
   </div>
   <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
     <app-report-button [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button>
+    <a routerLink="/responsable-admission/tests/nouveau" class="flex items-center justify-center gap-2 h-10 px-4 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-primary rounded-lg transition-all shadow-sm font-label-md text-label-md">
+      <span class="material-symbols-outlined text-[20px]">add</span>
+      Nouveau test
+    </a>
     <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center justify-center gap-2 h-10 px-4 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50 font-label-md text-label-md" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis au test académique pour le moment' : 'Convoquer au test (un ou plusieurs candidats)'">
       <span class="material-symbols-outlined text-[20px]">groups</span>
       Convoquer un groupe
@@ -61,7 +65,36 @@
   <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des tests…</div>
   <div *ngIf="!loading && testsFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Aucun test ne correspond à ces critères.</div>
 
-  <div class="overflow-x-auto" *ngIf="!loading && testsFiltres.length > 0">
+  <div class="md:hidden divide-y divide-outline-variant" *ngIf="!loading && testsFiltres.length > 0">
+    <article *ngFor="let t of testsFiltres" (click)="voirTest(t)" class="p-4 cursor-pointer hover:bg-surface-container-low transition-colors">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs shrink-0">{{ t.candidatPrenom | slice:0:1 }}{{ t.candidatNom | slice:0:1 }}</div>
+          <div class="min-w-0"><h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ t.candidatPrenom }} {{ t.candidatNom }}</h3><p class="text-[11px] text-on-surface-variant truncate">{{ t.numeroDossier }}</p></div>
+        </div>
+        <div (click)="$event.stopPropagation()" class="shrink-0">
+          <button *ngIf="resultat(t) === 'INSUFFISANT'; else resultatMobileSimple" type="button" (click)="evaluerMaintenant(t)" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-error-container/40 text-error">Insuffisant<span class="material-symbols-outlined text-[12px]">chevron_right</span></button>
+          <ng-template #resultatMobileSimple><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold" [ngClass]="resultat(t) === 'ADMISSIBLE' ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-surface-container text-on-surface-variant'">{{ resultat(t) === 'ADMISSIBLE' ? 'Admissible' : 'En attente' }}</span></ng-template>
+        </div>
+      </div>
+
+      <div class="mt-3 rounded-lg bg-surface-container-low p-3">
+        <p class="font-label-sm text-label-sm text-primary font-semibold">{{ t.nomEpreuve }}</p>
+        <div class="grid grid-cols-2 gap-x-3 gap-y-2 mt-2 text-[11px]">
+          <div><span class="block text-[10px] text-on-surface-variant">Date</span><span class="text-primary">{{ t.dateEpreuve | date:'dd MMM yyyy, HH:mm' }}</span></div>
+          <div><span class="block text-[10px] text-on-surface-variant">Coefficient</span><span class="text-primary">{{ t.coefficient }}</span></div>
+          <div class="col-span-2"><span class="block text-[10px] text-on-surface-variant">Lieu ou lien</span><span class="text-primary break-all">{{ t.lieuOuLien || '—' }}</span></div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-outline-variant" (click)="$event.stopPropagation()">
+        <div class="flex items-center gap-1"><span class="text-[10px] text-on-surface-variant">Note /20</span><app-ui-note [valeur]="t.noteObtenue" [contexte]="t" [enregistrer]="enregistrerNote" [desactive]="noteEnCoursId === t.id" [etiquette]="'Note sur 20 de ' + t.candidatPrenom + ' ' + t.candidatNom"></app-ui-note><button *ngIf="t.noteObtenuePrecedente != null" type="button" [disabled]="noteEnCoursId === t.id" (click)="annulerNote(t)" [title]="'Annuler : revenir à ' + t.noteObtenuePrecedente" class="p-1 rounded text-on-surface-variant hover:text-secondary"><span class="material-symbols-outlined text-[16px]">undo</span></button></div>
+        <div class="flex gap-1"><button type="button" (click)="voirTest(t)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button><button type="button" (click)="supprimer(t)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container" title="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button></div>
+      </div>
+    </article>
+  </div>
+
+  <div class="hidden md:block overflow-x-auto" *ngIf="!loading && testsFiltres.length > 0">
     <table class="w-full text-left border-collapse">
       <thead>
         <tr class="bg-surface-container-low border-b border-outline-variant">

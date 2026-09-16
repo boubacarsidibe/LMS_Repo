@@ -12,10 +12,6 @@
         <h1 class="font-display text-headline-lg text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
         <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos promotions en temps réel.</p>
       </div>
-      <button routerLink="/espace-etudiant/formateur/creer-cours" class="group flex items-center gap-3 bg-secondary text-on-secondary px-6 py-4 rounded-xl font-label-md text-label-md hover:bg-on-secondary-container transition-all">
-        <span class="material-symbols-outlined">add_circle</span>
-        Créer un nouveau cours / module
-      </button>
     </div>
   </section>
 
@@ -50,7 +46,10 @@
 
     <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-gutter items-start">
       <div *ngFor="let c of coursFiltres" [id]="'cours-' + c.id"
-           class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden border"
+           role="link" tabindex="0"
+           (click)="ouvrirCours(c)"
+           (keydown.enter)="ouvrirCours(c)"
+           class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden border cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
            [ngClass]="coursMisEnAvantId === c.id
                         ? 'border-secondary ring-2 ring-secondary/30'
                         : 'border-outline-variant/30'">
@@ -62,10 +61,8 @@
           <div class="flex justify-between items-start mb-4">
             <span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full font-label-sm text-label-sm uppercase tracking-tighter">{{ c.code }}</span>
             <div class="flex items-center gap-1">
-              <button (click)="preRemplirDepot(c)" title="Déposer une ressource" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">upload_file</span></button>
-              <button (click)="ouvrirGestionPromotions(c)" title="Gérer les promotions" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">groups</span></button>
-              <button (click)="ouvrirEditionCours(c)" title="Modifier le cours" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">edit</span></button>
-              <button (click)="supprimerCours(c)" [disabled]="suppressionCoursEnCoursId === c.id" title="Supprimer le cours" class="text-outline hover:text-error disabled:opacity-40"><span class="material-symbols-outlined">delete</span></button>
+              <span *ngIf="coursMisEnAvantId === c.id" class="px-2 py-1 bg-secondary-container text-on-secondary-container rounded-full font-label-sm text-label-sm">Sélectionné</span>
+              <button type="button" (click)="$event.stopPropagation(); preRemplirDepot(c)" title="Déposer une ressource" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">upload_file</span></button>
             </div>
           </div>
           <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2 group-hover:text-secondary transition-colors">{{ c.titre }}</h3>
@@ -84,7 +81,7 @@
                n'en montre que l'historique. -->
           <button
             type="button"
-            (click)="ouvrirPresence(c)"
+            (click)="$event.stopPropagation(); ouvrirPresence(c)"
             class="mt-auto flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md leading-none hover:border-secondary hover:text-secondary transition-colors">
             <span class="material-symbols-outlined text-[20px] leading-none">checklist</span>
             Faire l'appel
@@ -151,64 +148,86 @@
           </div>
           <h3 class="font-headline-sm text-headline-sm text-on-surface">Dépôt Rapide</h3>
         </div>
-        <div class="space-y-stack-md">
-          <div (click)="ouvrirExplorateur()" class="border-2 border-dashed border-outline-variant rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-surface-container-low/50 hover:bg-secondary/5 hover:border-secondary transition-all cursor-pointer group">
-            <span class="material-symbols-outlined text-[48px] text-outline group-hover:text-secondary transition-colors">cloud_upload</span>
-            <div class="text-center">
-              <p class="font-label-md text-label-md text-on-surface">Glissez vos fichiers ici</p>
-              <p class="text-body-sm text-outline">PDF, PPTX ou ZIP (Max. 50MB)</p>
-            </div>
-            <input #fileInput class="hidden" type="file" (change)="onFichierSelectionne($event)">
-          </div>
-        </div>
-        <p *ngIf="fichierSelectionne" class="text-body-sm text-secondary font-medium">
-          Fichier sélectionné : {{ fichierSelectionne.name }}
-        </p>
         <form [formGroup]="depotForm" (ngSubmit)="onSubmit()" class="space-y-stack-md">
+          <section class="space-y-base">
+            <div class="flex items-center gap-2">
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">1</span>
+              <label class="font-label-md text-label-md text-on-surface" for="cours-cible">Cours concerné</label>
+            </div>
+            <select *ngIf="cours.length" id="cours-cible" formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-xl border border-outline-variant/40 outline-none font-body-sm text-body-sm text-on-surface focus:border-secondary">
+              <option value="">Choisissez le cours auquel ajouter cette ressource</option>
+              <option *ngFor="let c of cours" [value]="c.id">{{ c.code }} — {{ c.titre }}</option>
+            </select>
+            <div *ngIf="!cours.length" class="p-3 bg-surface-container-low rounded-xl space-y-2">
+              <p class="font-body-sm text-body-sm text-on-surface-variant">Vous n'avez encore aucun cours attribué : contactez le responsable pédagogique.</p>
+            </div>
+            <p *ngIf="cours.length && depotForm.get('coursCible')?.invalid && depotForm.get('coursCible')?.touched" class="text-body-sm text-error">Choisissez le cours avant de publier.</p>
+          </section>
+
           <div class="space-y-base">
-            <label class="font-label-md text-label-md text-on-surface-variant">Type de ressource</label>
+            <div class="flex items-center gap-2">
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">2</span>
+              <label class="font-label-md text-label-md text-on-surface">Contenu à publier</label>
+            </div>
+            <p class="text-body-sm text-on-surface-variant">Choisissez le format avant d'ajouter le fichier ou le lien.</p>
             <div class="grid grid-cols-1 gap-2">
-              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                <input formControlName="typeRessource" value="pdf" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
+              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer border transition-colors" [class.border-secondary]="typeRessource === 'pdf'" [class.bg-secondary-container]="typeRessource === 'pdf'" [class.border-transparent]="typeRessource !== 'pdf'">
+                <input formControlName="typeRessource" value="pdf" (change)="changerTypeRessource('pdf')" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
                 <span class="material-symbols-outlined text-on-surface-variant">description</span>
-                <span class="font-body-sm text-body-sm text-on-surface">Support de cours (PDF)</span>
+                <span class="font-body-sm text-body-sm text-on-surface">Document pédagogique</span>
               </label>
-              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                <input formControlName="typeRessource" value="lien" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
+              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer border transition-colors" [class.border-secondary]="typeRessource === 'lien'" [class.bg-secondary-container]="typeRessource === 'lien'" [class.border-transparent]="typeRessource !== 'lien'">
+                <input formControlName="typeRessource" value="lien" (change)="changerTypeRessource('lien')" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
                 <span class="material-symbols-outlined text-on-surface-variant">link</span>
                 <span class="font-body-sm text-body-sm text-on-surface">Lien externe</span>
               </label>
-              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                <input formControlName="typeRessource" value="video" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
+              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer border transition-colors" [class.border-secondary]="typeRessource === 'video'" [class.bg-secondary-container]="typeRessource === 'video'" [class.border-transparent]="typeRessource !== 'video'">
+                <input formControlName="typeRessource" value="video" (change)="changerTypeRessource('video')" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
                 <span class="material-symbols-outlined text-on-surface-variant">videocam</span>
-                <span class="font-body-sm text-body-sm text-on-surface">Visioconférence / Vidéo</span>
+                <span class="font-body-sm text-body-sm text-on-surface">Vidéo (MP4)</span>
               </label>
             </div>
           </div>
 
-            <div class="space-y-base">
-                <label class="font-label-md text-label-md text-on-surface-variant">Cours cible</label>
-                <select *ngIf="cours.length" formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
-                <option value="">Sélectionnez un cours...</option>
-                <option *ngFor="let c of cours" [value]="c.id">{{ c.code }} - {{ c.titre }}</option>
-                </select>
-                <!-- Sans cours, un menu vide ressemble a une panne : on explique et on oriente. -->
-                <div *ngIf="!cours.length" class="p-3 bg-surface-container-low rounded-xl space-y-2">
-                <p class="font-body-sm text-body-sm text-on-surface-variant">
-                    Vous n'avez encore aucun cours : impossible d'y rattacher une ressource.
-                </p>
-                <a routerLink="/espace-etudiant/formateur/creer-cours" class="inline-flex items-center gap-1 text-label-sm font-bold text-secondary hover:underline">
-                    Créer mon premier cours
-                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </a>
-                </div>
-                <p *ngIf="cours.length && depotForm.get('coursCible')?.invalid && depotForm.get('coursCible')?.touched" class="text-body-sm text-error">
-                Veuillez sélectionner un cours.
-                </p>
+          <section *ngIf="!estDepotLien" class="space-y-base">
+            <div class="flex items-center gap-2">
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">3</span>
+              <span class="font-label-md text-label-md text-on-surface">Fichier à déposer</span>
             </div>
+            <div *ngIf="!fichierSelectionne" (click)="ouvrirExplorateur()" (dragover)="$event.preventDefault(); survolDepot = true" (dragleave)="survolDepot = false" (drop)="onFichierDepose($event)"
+                 class="border-2 border-dashed border-outline-variant rounded-2xl p-6 flex flex-col items-center justify-center gap-2 bg-surface-container-low/50 hover:bg-secondary/5 hover:border-secondary transition-all cursor-pointer group"
+                 [class.border-secondary]="survolDepot" [ngClass]="{ 'bg-secondary/5': survolDepot }" role="button" tabindex="0" (keydown.enter)="ouvrirExplorateur()" aria-label="Choisir un fichier à déposer">
+              <span class="material-symbols-outlined text-[36px] text-outline group-hover:text-secondary transition-colors">cloud_upload</span>
+              <p class="font-label-md text-label-md text-on-surface text-center">Glissez le fichier ici ou cliquez pour le choisir</p>
+              <p class="text-body-sm text-outline text-center">{{ aideFichier }}</p>
+              <input #fileInput class="hidden" type="file" [accept]="acceptFichier" (change)="onFichierSelectionne($event)">
+            </div>
+            <div *ngIf="fichierSelectionne" class="flex items-center gap-3 rounded-xl border border-secondary/30 bg-secondary-container/20 p-3">
+              <span class="material-symbols-outlined text-secondary">description</span>
+              <div class="min-w-0 flex-1"><p class="truncate font-label-md text-label-md text-on-surface">{{ fichierSelectionne.name }}</p><p class="text-body-sm text-on-surface-variant">Prêt à être publié</p></div>
+              <button type="button" (click)="retirerFichier()" class="rounded-lg p-2 text-on-surface-variant hover:bg-surface-container" title="Choisir un autre fichier"><span class="material-symbols-outlined">close</span></button>
+            </div>
+          </section>
+
+          <div *ngIf="estDepotLien" class="space-y-stack-md rounded-xl border border-secondary/20 bg-secondary-container/10 p-4">
+            <div class="flex items-center gap-2 text-secondary">
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">3</span>
+              <p class="font-label-md text-label-md">Informations du lien externe</p>
+            </div>
+            <div class="space-y-base">
+              <label class="font-label-md text-label-md text-on-surface-variant" for="titre-lien">Titre affiché</label>
+              <input id="titre-lien" formControlName="titreLien" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex. Replay du cours 1" type="text" maxlength="150">
+              <p *ngIf="depotForm.get('titreLien')?.invalid && depotForm.get('titreLien')?.touched" class="text-body-sm text-error">Un titre est requis (150 caractères maximum).</p>
+            </div>
+            <div class="space-y-base">
+              <label class="font-label-md text-label-md text-on-surface-variant" for="url-lien">Adresse du lien</label>
+              <input id="url-lien" formControlName="urlLien" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="https://…" type="url" inputmode="url">
+              <p *ngIf="depotForm.get('urlLien')?.invalid && depotForm.get('urlLien')?.touched" class="text-body-sm text-error">Saisissez une adresse qui commence par http:// ou https://.</p>
+            </div>
+          </div>
 
             <div class="space-y-base">
-                <label class="font-label-md text-label-md text-on-surface-variant">Date de publication</label>
+                <div class="flex items-center gap-2"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">4</span><label class="font-label-md text-label-md text-on-surface">Visibilité</label></div>
                 <input formControlName="datePublication" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
                 <p *ngIf="!publicationDifferee" class="text-body-sm text-on-surface-variant">
                 Publication immédiate. Choisissez une date future pour programmer la mise en ligne.
@@ -219,14 +238,14 @@
                 </p>
             </div>
 
-            <p *ngIf="!fichierSelectionne && depotForm.touched" class="text-body-sm text-error">
+            <p *ngIf="!estDepotLien && !fichierSelectionne && depotForm.touched" class="text-body-sm text-error">
                 Veuillez sélectionner un fichier.
             </p>
 
             <p *ngIf="uploadMessage" class="text-body-sm text-secondary font-medium">{{ uploadMessage }}</p>
             <p *ngIf="uploadError" class="text-body-sm text-error">{{ uploadError }}</p>
             <button [disabled]="isUploading || !cours.length" class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all mt-4 disabled:opacity-60 disabled:cursor-not-allowed" type="submit">
-                {{ isUploading ? 'Publication…' : 'Publier la ressource' }}
+                {{ isUploading ? 'Publication…' : publicationDifferee ? 'Programmer la publication' : 'Publier maintenant' }}
             </button>
             </form>
         </div>
@@ -239,9 +258,7 @@
         <p class="text-body-sm text-on-surface-variant">
           Pensez à structurer vos fichiers par modules pour une meilleure lisibilité côté étudiant.
         </p>
-        <a routerLink="/espace-etudiant/formateur/creer-cours" class="text-label-sm text-secondary hover:underline flex items-center gap-1">
-          Voir la documentation <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
-        </a>
+        <p class="text-label-sm text-on-surface-variant">Le responsable pédagogique attribue vos cours et les étudiants associés.</p>
       </div>
     </aside>
   </section>

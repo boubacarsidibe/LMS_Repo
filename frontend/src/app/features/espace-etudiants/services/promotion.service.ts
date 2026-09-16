@@ -18,4 +18,9 @@ export class PromotionService {
   getAll(): Observable<Promotion[]> {
     return this.http.get<Promotion[]>(`${this.api}/cohortes`);
   }
+
+  /** Promotions accessibles à partir des cours attribués au formateur connecté. */
+  getMesPromotionsFormateur(): Observable<Promotion[]> {
+    return this.http.get<Promotion[]>(`${this.api}/formateur/cohortes`);
+  }
 }

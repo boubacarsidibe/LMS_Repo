@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,8 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,6 +54,7 @@ import inpg.sn.lms.recrutement.dto.EtapeDossierResponse;
 import inpg.sn.lms.recrutement.dto.FiltreCriteresResponse;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.dto.PieceJustificativeResponse;
+import inpg.sn.lms.recrutement.dto.ModifierConformitePieceRequest;
 import inpg.sn.lms.recrutement.dto.RapportRecrutementDto;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureRequest;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureResponse;
@@ -63,6 +67,7 @@ import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.enums.EnumEtapeQms;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.enums.EnumStatutPaiement;
+import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.enums.EnumTypeNotification;
 import inpg.sn.lms.recrutement.repository.PieceJustificativeRepository;
@@ -305,6 +310,13 @@ public class AdminRecrutementController {
     @GetMapping("/candidatures")
     public ResponseEntity<List<CandidatureResponse>> getAllCandidatures() {
         return ResponseEntity.ok(candidatureService.getAllCandidatures());
+    }
+
+    @GetMapping("/candidatures/page")
+    public ResponseEntity<Page<CandidatureResponse>> getCandidaturesPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int taille) {
+        return ResponseEntity.ok(candidatureService.getCandidaturesPage(page, taille));
     }
 
     @GetMapping("/candidatures/{id}")
@@ -924,11 +936,22 @@ public class AdminRecrutementController {
     // ===================== PIÈCES JUSTIFICATIVES (consultation admin) =====================
 
     @PutMapping("/pieces/{id}/conformite")
-    public ResponseEntity<?> modifierConformitePiece(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
+    public ResponseEntity<?> modifierConformitePiece(@PathVariable Long id,
+            @Validated @RequestBody ModifierConformitePieceRequest body) {
         PieceJustificative piece = pieceJustificativeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pièce justificative non trouvée avec l'ID: " + id));
-        boolean conforme = Boolean.TRUE.equals(body.get("estConforme"));
+        boolean conforme = Boolean.TRUE.equals(body.getEstConforme());
+        String motif = body.getMotifNonConformite() != null ? body.getMotifNonConformite().trim() : null;
+        if (!conforme && (motif == null || motif.isBlank())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Un motif est requis pour demander le remplacement d'un document."));
+        }
         piece.setEstConforme(conforme);
+        piece.setStatutVerification(conforme
+                ? EnumStatutVerificationPiece.CONFORME
+                : EnumStatutVerificationPiece.A_REMPLACER);
+        piece.setMotifNonConformite(conforme ? null : motif);
+        piece.setDateVerification(LocalDateTime.now());
         pieceJustificativeRepository.save(piece);
 
         Candidature candidature = piece.getCandidature();
@@ -953,11 +976,22 @@ public class AdminRecrutementController {
             notificationCandidatService.creerNotification(candidature.getCandidat().getId(),
                     conforme
                             ? "Votre document \"" + libelleType + "\" a été vérifié et validé."
-                            : "Votre document \"" + libelleType + "\" n'est pas conforme, merci de le remplacer.",
+                            : "Votre document \"" + libelleType + "\" doit être remplacé : " + motif,
                     "DOCUMENT", "/recrutement/suivi");
         }
 
-        return ResponseEntity.ok(Map.of("id", piece.getId(), "estConforme", piece.isEstConforme()));
+        return ResponseEntity.ok(PieceJustificativeResponse.builder()
+                .id(piece.getId())
+                .typeDocument(piece.getTypeDocument())
+                .estConforme(piece.isEstConforme())
+                .statutVerification(piece.getStatutVerification())
+                .motifNonConformite(piece.getMotifNonConformite())
+                .dateVerification(piece.getDateVerification())
+                .description(piece.getDescription())
+                .fichierStockeId(piece.getFichierStocke() != null ? piece.getFichierStocke().getId() : null)
+                .fichierNomOriginal(piece.getFichierStocke() != null ? piece.getFichierStocke().getNomOriginal() : null)
+                .moyenneDeclaree(piece.getMoyenneDeclaree())
+                .build());
     }
 
     @GetMapping("/pieces/{id}/telecharger")

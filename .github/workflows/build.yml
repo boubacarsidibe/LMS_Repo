@@ -62,6 +62,11 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: lms_password
           SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
           SPRING_JPA_HIBERNATE_DDL_AUTO: update
+          JWT_SECRET: ci_only_jwt_secret_must_be_at_least_thirty_two_bytes_long_2026
+          MAIL_USERNAME: ci@example.test
+          MAIL_PASSWORD: ci-password
+          APP_MAIL_FROM: no-reply@example.test
+          APP_DEMO_DATA_ENABLED: "false"
 
       - name: Upload JAR Artifact
         uses: actions/upload-artifact@v4
@@ -69,12 +74,40 @@ jobs:
           name: spring-boot-app
           path: backend/target/*.jar
 
+  frontend-quality:
+    name: Build & Test (Angular)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Angular
+        run: npm run build -- --configuration production
+
+      - name: Run Angular tests
+        run: npm test -- --watch=false
+
   # -------------------------------------------------------------
   # JOB 2 : AUTO-MERGE DE DEVELOP VERS PREPROD (Si le Build réussit)
   # -------------------------------------------------------------
   promote-to-preprod:
     name: Sync Develop -> Preprod
-    needs: build-and-test
+    needs: [build-and-test, frontend-quality]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
 
@@ -97,7 +130,7 @@ jobs:
   # -------------------------------------------------------------
   deploy-preprod:
     name: Deploy to Pre-production
-    needs: build-and-test
+    needs: [build-and-test, frontend-quality]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/preprod'
 
@@ -115,7 +148,7 @@ jobs:
   # -------------------------------------------------------------
   deploy-production:
     name: Deploy to Production
-    needs: build-and-test
+    needs: [build-and-test, frontend-quality]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: production # <-- Nécessite votre approbation dans GitHub Settings

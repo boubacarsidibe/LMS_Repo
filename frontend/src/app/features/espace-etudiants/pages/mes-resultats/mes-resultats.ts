@@ -134,12 +134,12 @@ import { ScolariteService } from '../../services/scolarite.service';
                 </div>
                 <p
                   class="font-headline-sm text-headline-sm tabular-nums shrink-0"
-                  [class.text-error]="note.note < 10"
-                  [class.text-on-surface]="note.note >= 10"
+                  [class.text-error]="note.note < 50"
+                  [class.text-on-surface]="note.note >= 50"
                 >
                   {{ note.note | number: '1.0-2' }}<span
                     class="font-body-sm text-body-sm text-on-surface-variant"
-                    >/20</span
+                    >/100 ({{ note.note / 5 | number: '1.0-2' }}/20)</span
                   >
                 </p>
               </li>

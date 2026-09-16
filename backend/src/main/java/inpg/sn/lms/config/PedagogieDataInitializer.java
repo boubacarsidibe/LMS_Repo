@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -51,6 +52,7 @@ public class PedagogieDataInitializer {
     private static final String CODE_PROMOTION = "MPG-2026";
 
     @Bean
+    @ConditionalOnProperty(name = "app.demo-data.enabled", havingValue = "true")
     @Order(2)
     CommandLineRunner initPedagogie(
             FormationRepository formationRepository,

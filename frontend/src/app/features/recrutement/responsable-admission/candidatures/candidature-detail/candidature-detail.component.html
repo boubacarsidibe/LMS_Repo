@@ -82,16 +82,21 @@
     <div class="mb-stack-lg">
       <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Pièces justificatives</div>
       <div class="space-y-2" *ngIf="sel.piecesJustificatives.length; else aucunePiece">
-        <div *ngFor="let p of sel.piecesJustificatives" class="flex items-center justify-between py-2 border-b border-outline-variant last:border-0 text-body-sm">
-          <span class="text-on-surface">{{ p.typeDocument }}<span *ngIf="p.moyenneDeclaree !== null" class="text-on-surface-variant"> — Moyenne déclarée : {{ p.moyenneDeclaree }}/20</span></span>
-          <div class="flex items-center gap-2">
+        <div *ngFor="let p of sel.piecesJustificatives" class="py-3 border-b border-outline-variant last:border-0 text-body-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-on-surface">{{ p.typeDocument }}<span *ngIf="p.moyenneDeclaree !== null" class="text-on-surface-variant"> — Moyenne déclarée : {{ p.moyenneDeclaree }}/20</span></span>
+            <span class="px-2 py-1 rounded-full text-label-sm" [ngClass]="p.statutVerification === 'CONFORME' ? 'bg-emerald-100 text-emerald-700' : (p.statutVerification === 'A_REMPLACER' ? 'bg-error-container text-on-error-container' : 'bg-amber-100 text-amber-800')">{{ libelleVerificationPiece(p) }}</span>
+          </div>
+          <p *ngIf="p.motifNonConformite" class="mt-2 text-error">Motif communiqué au candidat : {{ p.motifNonConformite }}</p>
+          <div class="mt-2 flex items-center justify-end gap-2">
             <button type="button" *ngIf="p.fichierStockeId" (click)="telechargerPiece(p)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Télécharger le document">
               <span class="material-symbols-outlined text-[18px]">download</span>
             </button>
-            <button type="button" (click)="basculerConformitePiece(p)" class="p-1.5 rounded hover:bg-surface-container-low transition-colors" [title]="p.estConforme ? 'Conforme — cliquer pour annuler' : 'Non vérifié — cliquer pour marquer conforme'">
-              <span class="material-symbols-outlined text-[18px]" [class.text-secondary]="p.estConforme" [class.text-outline]="!p.estConforme">
-                {{ p.estConforme ? 'check_circle' : 'radio_button_unchecked' }}
-              </span>
+            <button type="button" *ngIf="p.statutVerification !== 'CONFORME'" (click)="marquerPieceConforme(p)" class="px-3 py-1.5 rounded border border-secondary text-secondary hover:bg-secondary-fixed transition-colors" title="Valider ce document">
+              Valider
+            </button>
+            <button type="button" (click)="ouvrirRefusPiece(p)" class="px-3 py-1.5 rounded border border-error text-error hover:bg-error-container transition-colors" title="Demander un remplacement avec un motif">
+              Demander remplacement
             </button>
           </div>
         </div>
@@ -140,5 +145,19 @@
         <span class="material-symbols-outlined text-[18px]">how_to_reg</span> {{ actionSuivante(sel)!.libelle }}
       </button>
     </div>
+  </div>
+
+  <div *ngIf="pieceARefuser" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
+    <section role="dialog" aria-modal="true" aria-labelledby="titre-remplacement-piece" class="w-full max-w-lg rounded-xl bg-surface-container-lowest shadow-xl p-6">
+      <h2 id="titre-remplacement-piece" class="text-xl font-semibold text-on-surface">Demander le remplacement du document</h2>
+      <p class="mt-2 text-body-sm text-on-surface-variant">Le candidat recevra ce motif dans son espace et par notification.</p>
+      <label class="block mt-5 font-label-md text-label-md text-on-surface" for="motif-remplacement-piece">Motif <span aria-hidden="true">*</span></label>
+      <textarea id="motif-remplacement-piece" [(ngModel)]="motifNonConformite" maxlength="500" rows="4" class="mt-2 w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-on-surface outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Ex. Le document est illisible ou incomplet."></textarea>
+      <div class="mt-2 text-right text-label-sm text-on-surface-variant">{{ motifNonConformite.length }}/500</div>
+      <div class="mt-5 flex justify-end gap-3">
+        <button type="button" (click)="annulerRefusPiece()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-low disabled:opacity-60">Annuler</button>
+        <button type="button" (click)="confirmerRefusPiece()" [disabled]="actionEnCours || !motifNonConformite.trim()" class="px-4 py-2 rounded-lg bg-error text-on-error hover:opacity-90 disabled:opacity-60">{{ actionEnCours ? 'Envoi…' : 'Demander le remplacement' }}</button>
+      </div>
+    </section>
   </div>
 </ng-container>

@@ -23,6 +23,7 @@ import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
+import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
 import inpg.sn.lms.recrutement.service.NotificationCandidatService;
@@ -72,7 +73,26 @@ class ApplicationControllerTest {
         PieceJustificative p = new PieceJustificative();
         p.setTypeDocument(type);
         p.setEstConforme(conforme);
+        p.setStatutVerification(conforme
+                ? EnumStatutVerificationPiece.CONFORME
+                : EnumStatutVerificationPiece.A_REMPLACER);
         return p;
+    }
+
+    @Test
+    void une_piece_en_attente_de_verification_ne_declenche_pas_de_relance_candidat() {
+        PieceJustificative identite = piece(EnumTypeDocument.PIECE_IDENTITE, false);
+        identite.setStatutVerification(EnumStatutVerificationPiece.A_VERIFIER);
+        PieceJustificative cv = piece(EnumTypeDocument.CV, false);
+        cv.setStatutVerification(EnumStatutVerificationPiece.A_VERIFIER);
+        PieceJustificative releve = piece(EnumTypeDocument.RELEVE_NOTES, false);
+        releve.setStatutVerification(EnumStatutVerificationPiece.A_VERIFIER);
+        when(candidatureRepo.findAll()).thenReturn(List.of(candidature(1L, "a@example.sn", List.of(identite, cv, releve))));
+
+        ResponseEntity<Map<String, Object>> reponse = controller.sendReminder();
+
+        assertThat(reponse.getBody().get("envoyes")).isEqualTo(0);
+        verify(notificationService, never()).notifierRappelDossierIncomplet(anyString(), anyString(), anyString());
     }
 
     @Test

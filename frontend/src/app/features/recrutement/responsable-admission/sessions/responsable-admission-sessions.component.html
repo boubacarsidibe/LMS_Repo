@@ -82,7 +82,37 @@
 </div>
 
 <!-- Data Table -->
-<div *ngIf="!loading && sessionsFiltrees.length > 0" class="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
+<div *ngIf="!loading && sessionsFiltrees.length > 0" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+  <div class="md:hidden divide-y divide-outline-variant">
+    <article *ngFor="let s of sessionsFiltrees; let i = index" (click)="voirSession(s)" class="p-4 cursor-pointer hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="estSelectionne(s.id)">
+      <div class="flex items-start gap-3">
+        <input type="checkbox" [checked]="estSelectionne(s.id)" (click)="basculerSelection(s.id, i, $event)" [attr.aria-label]="'Sélectionner ' + s.libelle" class="w-4 h-4 mt-1 accent-secondary cursor-pointer shrink-0">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ s.libelle }}</h3>
+              <div class="flex flex-wrap items-center gap-1 mt-1">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold" [ngClass]="s.estOuverte ? 'bg-green-100 text-green-800' : 'bg-surface-container text-on-surface-variant'">{{ s.estOuverte ? 'Ouverte' : 'Fermée' }}</span>
+                <span *ngIf="s.estActive" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary-fixed text-secondary">Active</span>
+                <span *ngIf="s.criteresActifs" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary-container text-on-primary-container"><span class="material-symbols-outlined text-[12px]">filter_alt</span>Filtre</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-0.5 shrink-0" (click)="$event.stopPropagation()">
+              <button type="button" (click)="voirSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+              <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded" title="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+            </div>
+          </div>
+          <dl class="grid grid-cols-2 gap-2 mt-3 text-xs">
+            <div><dt class="text-[10px] text-on-surface-variant">Ouverture</dt><dd class="text-primary mt-0.5">{{ s.dateOuverture | date:'dd MMM yyyy' }}</dd></div>
+            <div><dt class="text-[10px] text-on-surface-variant">Fermeture</dt><dd class="text-primary mt-0.5">{{ s.dateFermeture | date:'dd MMM yyyy' }}</dd></div>
+          </dl>
+          <a [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ session: s.id }" (click)="$event.stopPropagation()" class="inline-flex items-center gap-1 mt-3 text-[11px] font-semibold text-secondary hover:underline"><span class="material-symbols-outlined text-[15px]">folder_shared</span>{{ s.nbCandidatures }} candidature(s)</a>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div class="hidden md:block overflow-x-auto">
   <table class="w-full text-left border-collapse">
     <thead>
       <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
@@ -141,4 +171,5 @@
       </tr>
     </tbody>
   </table>
+  </div>
 </div>

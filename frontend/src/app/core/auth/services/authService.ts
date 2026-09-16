@@ -106,20 +106,8 @@ export class Auth {
       );
   }
 
-  verifyOtp(email: string, code: string): Observable<boolean> {
-    const payload = { email, code };
-
-    return this.http.post<{ message: string }>(`${this.apiUrl}/verify-otp`, payload).pipe(
-      map(() => true),
-      catchError((error) => {
-        console.warn('Vérification OTP échouée :', error.error?.message || error.message);
-        return of(false);
-      })
-    );
-  }
-
-  getOtp(email: string): Observable<boolean> {
-    return this.http.post<boolean>(`${this.apiUrl}/send-otp`, { email });
+  getOtp(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/send-otp`, { email });
   }
 
   checkToken(): Observable<boolean> {

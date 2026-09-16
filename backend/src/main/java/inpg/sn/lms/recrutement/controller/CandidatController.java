@@ -24,6 +24,7 @@ import inpg.sn.lms.recrutement.entity.ReponseCritereCandidature;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
 import inpg.sn.lms.recrutement.enums.EnumEtapeQms;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
+import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.repository.BrouillonCandidatureRepository;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
@@ -50,6 +51,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -469,6 +471,7 @@ public class CandidatController {
      * Téléverser une pièce justificative pour une candidature
      */
     @PostMapping("/candidature/{candidatureId}/pieces")
+    @Transactional
     public ResponseEntity<?> televerserPiece(
             @PathVariable Long candidatureId,
             @RequestParam("file") MultipartFile file,
@@ -487,6 +490,16 @@ public class CandidatController {
 
         if (!candidature.getCandidat().getId().equals(candidat.getId())) {
             return ResponseEntity.status(403).body(java.util.Map.of("message", "Accès non autorisé"));
+        }
+
+        // Une pièce est figée dès que le dossier a atteint une décision de sélection.
+        // Un éventuel complément suit alors une réouverture tracée par le service admission,
+        // plutôt que de modifier silencieusement le dossier examiné.
+        if (candidature.getStatut() != EnumStatutCandidature.SOUMIS
+                && candidature.getStatut() != EnumStatutCandidature.EN_COURS_DE_PRESELECTION) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(
+                    "message", "Vous ne pouvez plus ajouter de document à cette étape du dossier. "
+                            + "Contactez le service admission si un complément est nécessaire."));
         }
 
         // Valider le type de document
@@ -543,6 +556,7 @@ public class CandidatController {
         PieceJustificative piece = new PieceJustificative();
         piece.setTypeDocument(typeDocument);
         piece.setEstConforme(false);
+        piece.setStatutVerification(EnumStatutVerificationPiece.A_VERIFIER);
         piece.setDescription(description != null && !description.isBlank() ? description.trim() : null);
         piece.setFichierStocke(fichier);
         piece.setCandidature(candidature);

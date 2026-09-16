@@ -55,13 +55,13 @@ export class ProfilEtudiant implements OnInit {
     const brut = this.nouvelleNoteTexte.trim().replace(',', '.');
     if (brut === '' || !/^\d+(\.\d+)?$/.test(brut)) return null;
     const valeur = Number(brut);
-    return valeur >= 0 && valeur <= 20 ? valeur : null;
+    return valeur >= 0 && valeur <= 100 ? valeur : null;
   }
 
   /** Explique le refus plutôt que de laisser le bouton grisé sans raison. */
   get messageNoteSaisie(): string {
     if (this.nouvelleNoteTexte.trim() === '' || this.nouvelleNoteValeur !== null) return '';
-    return 'Entrez une note comprise entre 0 et 20 (la virgule est acceptée).';
+    return 'Entrez une note comprise entre 0 et 100 (la virgule est acceptée).';
   }
 
   presences: PresenceHistorique[] = [];
@@ -120,7 +120,7 @@ export class ProfilEtudiant implements OnInit {
       date: this.parseDateFr(n.dateEvaluation),
       dateAffichee: n.dateEvaluation,
       titre: `Note ajoutée — ${n.module}`,
-      detail: `${n.note}/20 · ${n.coursCode}`,
+      detail: `${n.note}/100 (${n.note / 5}/20) · ${n.coursCode}`,
     }));
     const itemsPresences: ActiviteItem[] = this.presences.map(p => ({
       type: 'presence',
@@ -182,7 +182,7 @@ export class ProfilEtudiant implements OnInit {
   supprimerNote(note: NoteModule) {
     this.confirmation.demander({
       titre: 'Supprimer la note',
-      message: `La note de ${note.note}/20 en « ${note.module} » sera supprimée et la moyenne recalculée.`,
+      message: `La note de ${note.note}/100 (${note.note / 5}/20) en « ${note.module} » sera supprimée et la moyenne recalculée.`,
       libelleConfirmer: 'Supprimer',
       destructif: true,
     }).subscribe((confirme) => {

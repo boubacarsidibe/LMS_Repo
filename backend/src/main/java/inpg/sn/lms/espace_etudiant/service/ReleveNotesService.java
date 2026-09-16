@@ -134,7 +134,7 @@ public class ReleveNotesService {
         if (moyenne == null) {
             return "À surveiller";
         }
-        return moyenne >= 12 ? "Actif" : "À risque";
+        return moyenne >= 60 ? "Actif" : "À risque";
     }
 
     /** Moyenne d'un cours, {@code null} si la liste est vide. */

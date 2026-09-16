@@ -55,7 +55,7 @@ public class CertificatPdfService {
     }
 
     /**
-     * @param moyenneGenerale moyenne générale de l'étudiant sur 20, pour porter
+     * @param moyenneGenerale moyenne générale de l'étudiant sur 100, pour porter
      *        une mention sur le document ; {@code null} pour l'omettre.
      */
     public byte[] genererPdf(Certificat certificat, Double moyenneGenerale) {
@@ -210,18 +210,18 @@ public class CertificatPdfService {
         content.endText();
     }
 
-    /** Mention académique à partir de la moyenne /20, ou {@code null} si non disponible. */
-    private String mention(Double moyenneSur20) {
-        if (moyenneSur20 == null) {
+    /** Mention académique à partir de la moyenne /100, ou {@code null} si non disponible. */
+    private String mention(Double moyenneSur100) {
+        if (moyenneSur100 == null) {
             return null;
         }
-        if (moyenneSur20 >= 16) {
+        if (moyenneSur100 >= 80) {
             return "Très bien";
         }
-        if (moyenneSur20 >= 14) {
+        if (moyenneSur100 >= 70) {
             return "Bien";
         }
-        if (moyenneSur20 >= 12) {
+        if (moyenneSur100 >= 60) {
             return "Assez bien";
         }
         return "Passable";

@@ -339,6 +339,58 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     return this.rangParcours[cible] < this.rangParcours[c.statut];
   }
 
+  /** Dossiers actuellement cochés, centralisés pour que le panneau d'actions décrive la sélection réelle. */
+  get candidaturesSelectionnees(): CandidatureResponse[] {
+    return this.candidatures.filter((c) => this.selection.has(c.id));
+  }
+
+  get nombreRejetablesSelection(): number {
+    return this.candidaturesSelectionnees.filter((c) => this.peutRejeter(c)).length;
+  }
+
+  get nombreAnnulablesSelection(): number {
+    return this.candidaturesSelectionnees.filter((c) => this.peutAnnuler(c)).length;
+  }
+
+  /** Étapes réellement accessibles depuis au moins un dossier coché, avec leur nombre de dossiers concernés. */
+  get ciblesReculerSelection(): Array<{ valeur: StatutFiltre; libelle: string; count: number }> {
+    return this.ciblesReculer
+      .map((cible) => ({
+        ...cible,
+        count: this.candidaturesSelectionnees.filter((c) => this.peutReculerVers(c, cible.valeur)).length,
+      }))
+      .filter((cible) => cible.count > 0);
+  }
+
+  /** Résumé court des statuts sélectionnés, utile pour vérifier le contexte avant une action groupée. */
+  get resumeStatutsSelection(): string {
+    const groupes = new Map<string, number>();
+    for (const candidature of this.candidaturesSelectionnees) {
+      const label = this.libelleStatut(candidature.statut);
+      groupes.set(label, (groupes.get(label) || 0) + 1);
+    }
+    return Array.from(groupes.entries())
+      .map(([label, count]) => count > 1 ? `${label} (${count})` : label)
+      .join(' · ');
+  }
+
+  /** Phrase affichée dans le panneau afin d'expliquer immédiatement ce qui est faisable. */
+  get resumeActionsSelection(): string {
+    const possibilites: string[] = [];
+    if (this.nombreRejetablesSelection) {
+      possibilites.push(`rejet de ${this.nombreRejetablesSelection} dossier${this.nombreRejetablesSelection > 1 ? 's' : ''}`);
+    }
+    if (this.nombreAnnulablesSelection) {
+      possibilites.push(`annulation de ${this.nombreAnnulablesSelection} décision${this.nombreAnnulablesSelection > 1 ? 's' : ''}`);
+    }
+    if (this.ciblesReculerSelection.length) {
+      possibilites.push('retour à une étape antérieure');
+    }
+    return possibilites.length
+      ? `Actions disponibles : ${possibilites.join(' · ')}.`
+      : 'Aucune action de statut n’est disponible pour cette sélection.';
+  }
+
   voirDetail(c: CandidatureResponse): void {
     this.router.navigate(['/responsable-admission/candidatures', c.id]);
   }

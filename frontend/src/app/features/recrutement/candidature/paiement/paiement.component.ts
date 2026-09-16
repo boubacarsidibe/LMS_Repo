@@ -28,12 +28,6 @@ export class PaiementComponent implements OnInit {
   // Méthode de paiement
   paymentMethod = 'mobile_money';
   selectedOperator = 'wave';
-  phonePrefix = '+221';
-  phoneNumber = '';
-  cardHolder = '';
-  cardNumber = '';
-  cardExpiry = '';
-  cardCvc = '';
 
   mobileOperators = [
     { code: 'wave', name: 'Wave', logo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCu5Fx6MGPwXW1O6nXZUIge8lJW5ETKGegBrzOxfjTArVgilG1l6cVQzr73utkVc2reBbvFe1yzClqxmu0utfk8CrZd0HvguvXgRa1U8Yr5CArrl1dlgQoJHVOv0Om_iY78aycE8tjPh__lfbRhx93Z7JeYR8r9vmBWdbTsqgbQUgJlDVlPT30k1dKoma5woDthMs9XhYRylfBt94rrYtZOfPZlL5PWSyMQnhgPez76zbbE9aoieDMN' },
@@ -84,7 +78,6 @@ export class PaiementComponent implements OnInit {
 
   /** Libellé lisible du moyen de paiement actuellement sélectionné dans le formulaire. */
   private get methodeSelectionnee(): string {
-    if (this.paymentMethod === 'card') return 'Carte Bancaire';
     if (this.paymentMethod === 'transfer') return 'Virement Bancaire';
     return this.mobileOperators.find(op => op.code === this.selectedOperator)?.name || 'Mobile Money';
   }

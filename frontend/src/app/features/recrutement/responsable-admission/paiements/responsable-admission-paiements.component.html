@@ -24,7 +24,20 @@
   <div class="p-4 border-b border-outline-variant bg-surface">
     <span class="font-label-md text-label-md text-on-surface">Dossiers validés en attente de paiement</span>
   </div>
-  <div class="overflow-x-auto">
+  <div class="md:hidden divide-y divide-outline-variant">
+    <article *ngFor="let c of candidaturesImpayees" [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ dossier: c.numeroDossier }" class="p-4 cursor-pointer hover:bg-surface-container-low transition-colors">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0"><h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ c.candidatPrenom }} {{ c.candidatNom }}</h3><p class="text-[11px] text-on-surface-variant truncate">{{ c.numeroDossier }}</p></div>
+        <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-error-container/30 text-error whitespace-nowrap">Paiement requis</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mt-3 rounded-lg bg-surface-container-low p-3 text-[11px]">
+        <div><span class="block text-[10px] text-on-surface-variant">Dossier</span><span class="text-primary">{{ c.statut }}</span></div>
+        <div><span class="block text-[10px] text-on-surface-variant">Dernière tentative</span><span [class.text-error]="c.paiement?.statut === 'ECHEC'" [class.text-on-surface-variant]="c.paiement?.statut !== 'ECHEC'">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</span></div>
+      </div>
+      <div class="mt-3" (click)="$event.stopPropagation()"><button type="button" (click)="confirmerDossier(c)" [disabled]="idEnCours === c.id" class="h-8 px-3 rounded-md bg-secondary text-on-secondary text-[11px] font-semibold disabled:opacity-50">{{ idEnCours === c.id ? 'Confirmation…' : 'Confirmer le paiement' }}</button></div>
+    </article>
+  </div>
+  <div class="hidden md:block overflow-x-auto">
     <table class="w-full text-left border-collapse">
       <thead>
         <tr class="bg-surface-container-low border-b border-outline-variant">
@@ -78,7 +91,25 @@
   <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement…</div>
   <div *ngIf="!loading && paiementsFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Aucun paiement ne correspond à ces critères.</div>
 
-  <div class="overflow-x-auto" *ngIf="!loading && paiementsFiltres.length > 0">
+  <div class="md:hidden divide-y divide-outline-variant" *ngIf="!loading && paiementsFiltres.length > 0">
+    <article *ngFor="let p of paiementsFiltres" [routerLink]="p.numeroDossier ? ['/responsable-admission/candidatures'] : null" [queryParams]="p.numeroDossier ? { dossier: p.numeroDossier } : null" [class.cursor-pointer]="p.numeroDossier" class="p-4 hover:bg-surface-container-low transition-colors">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0"><h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ p.candidatPrenom }} {{ p.candidatNom }}</h3><p class="text-[11px] text-on-surface-variant truncate">{{ p.numeroDossier || p.referenceTransaction }}</p></div>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap" [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]' : (p.statut === 'ECHEC' ? 'bg-error-container/30 text-error' : 'bg-surface-container text-on-surface-variant')">{{ p.statut === 'SUCCES' ? 'Réussi' : (p.statut === 'ECHEC' ? 'Échec' : 'En attente') }}</span>
+      </div>
+      <dl class="grid grid-cols-2 gap-2 mt-3 rounded-lg bg-surface-container-low p-3 text-[11px]">
+        <div><dt class="text-[10px] text-on-surface-variant">Montant</dt><dd class="font-semibold text-primary mt-0.5">{{ p.montant | number:'1.0-0' }} {{ p.devise }}</dd></div>
+        <div><dt class="text-[10px] text-on-surface-variant">Date</dt><dd class="text-primary mt-0.5">{{ p.datePaiement ? (p.datePaiement | date:'dd MMM yyyy, HH:mm') : '—' }}</dd></div>
+        <div class="col-span-2"><dt class="text-[10px] text-on-surface-variant">Référence</dt><dd class="text-primary mt-0.5 break-all">{{ p.referenceTransaction || '—' }}</dd></div>
+      </dl>
+      <div class="flex gap-1.5 mt-3 pt-3 border-t border-outline-variant" *ngIf="p.statut === 'EN_ATTENTE'" (click)="$event.stopPropagation()">
+        <button type="button" (click)="valider(p)" [disabled]="idEnCours === p.id" class="h-8 px-3 rounded-md bg-secondary text-on-secondary text-[11px] font-semibold disabled:opacity-50">Valider</button>
+        <button type="button" (click)="rejeter(p)" [disabled]="idEnCours === p.id" class="h-8 px-3 rounded-md border border-outline-variant text-error bg-surface text-[11px] font-semibold disabled:opacity-50">Rejeter</button>
+      </div>
+    </article>
+  </div>
+
+  <div class="hidden md:block overflow-x-auto" *ngIf="!loading && paiementsFiltres.length > 0">
     <table class="w-full text-left border-collapse">
       <thead>
         <tr class="bg-surface-container-low border-b border-outline-variant">

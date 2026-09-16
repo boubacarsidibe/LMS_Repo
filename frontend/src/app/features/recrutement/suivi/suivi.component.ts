@@ -7,6 +7,7 @@ import {
   CandidatureResponse,
   ParcoursCandidature,
   EntretienCandidat,
+  PieceJustificativeResponse,
   TestCandidat,
 } from '../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
@@ -20,6 +21,15 @@ interface TimelineItem {
   pending: boolean;
   active: boolean;
   erreur: boolean;
+}
+
+interface DocumentChecklistItem {
+  type: string;
+  label: string;
+  statut: 'A_FOURNIR' | 'A_VERIFIER' | 'CONFORME' | 'A_REMPLACER';
+  fichierNomOriginal: string | null;
+  moyenneDeclaree: number | null;
+  motifNonConformite: string | null;
 }
 
 @Component({
@@ -40,6 +50,44 @@ export class SuiviComponent implements OnInit {
   readonly STATUT_ADMIS2 = 'ADMIS2';
   readonly STATUT_ADMIS3 = 'ADMIS3';
   readonly STATUT_LISTE_ATTENTE = 'LISTE_ATTENTE';
+
+  /** Même liste que la relance serveur : aucun document requis n'est caché au candidat. */
+  private readonly documentsRequis = [
+    { type: 'PIECE_IDENTITE', label: "Pièce d'identité" },
+    { type: 'CV', label: 'CV' },
+    { type: 'RELEVE_NOTES', label: 'Relevé de notes' },
+  ];
+
+  /**
+   * Une pièce déposée ne signifie pas « validée ». La checklist présente une action
+   * claire : fournir, attendre le contrôle, ou remplacer avec le motif de l'agent.
+   */
+  get checklistDocuments(): DocumentChecklistItem[] {
+    const pieces = this.candidature?.piecesJustificatives ?? [];
+    return this.documentsRequis.map((document) => {
+      const duType = pieces.filter((piece) => piece.typeDocument === document.type);
+      const conforme = duType.find((piece) => piece.statutVerification === 'CONFORME');
+      const aVerifier = duType.find((piece) => piece.statutVerification === 'A_VERIFIER');
+      const aRemplacer = duType.find((piece) => piece.statutVerification === 'A_REMPLACER');
+      const piece = conforme ?? aVerifier ?? aRemplacer;
+      const statut = conforme
+        ? 'CONFORME'
+        : aVerifier
+          ? 'A_VERIFIER'
+          : aRemplacer
+            ? 'A_REMPLACER'
+            : 'A_FOURNIR';
+
+      return {
+        type: document.type,
+        label: document.label,
+        statut,
+        fichierNomOriginal: piece?.fichierNomOriginal ?? null,
+        moyenneDeclaree: piece?.moyenneDeclaree ?? null,
+        motifNonConformite: statut === 'A_REMPLACER' ? piece?.motifNonConformite ?? null : null,
+      };
+    });
+  }
 
   /**
    * Interlocuteur affiché. Aucun nom de personne n'est inventé : le dossier n'est
@@ -293,6 +341,33 @@ export class SuiviComponent implements OnInit {
       case 'RELEVE_NOTES': return 'Relevé de notes';
       case 'DIPLOME': return 'Diplôme';
       default: return type;
+    }
+  }
+
+  libelleEtatPiece(statut: DocumentChecklistItem['statut']): string {
+    switch (statut) {
+      case 'CONFORME': return 'Validé';
+      case 'A_VERIFIER': return 'À vérifier';
+      case 'A_REMPLACER': return 'À remplacer';
+      default: return 'À fournir';
+    }
+  }
+
+  classeEtatPiece(statut: DocumentChecklistItem['statut']): string {
+    switch (statut) {
+      case 'CONFORME': return 'bg-emerald-100 text-emerald-700';
+      case 'A_VERIFIER': return 'bg-amber-100 text-amber-800';
+      case 'A_REMPLACER': return 'bg-error-container text-on-error-container';
+      default: return 'bg-surface-container-high text-on-surface-variant';
+    }
+  }
+
+  iconeEtatPiece(statut: DocumentChecklistItem['statut']): string {
+    switch (statut) {
+      case 'CONFORME': return 'check_circle';
+      case 'A_VERIFIER': return 'hourglass_top';
+      case 'A_REMPLACER': return 'error';
+      default: return 'upload_file';
     }
   }
 
