@@ -4,12 +4,12 @@
       <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Espace Alumni</span>
       <h1 class="font-display text-display text-on-surface leading-none -ml-1">Parcours professionnel</h1>
       <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
-        L'historique des postes que vous avez occupés depuis votre sortie de l'INPG.
+        Votre parcours depuis votre sortie de l'INPG : postes occupés, recherche d'emploi, poursuite d'études…
       </p>
     </div>
     <button type="button" (click)="ouvrirAjout()"
             class="flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors shrink-0">
-      <span class="material-symbols-outlined">add</span>Ajouter un poste
+      <span class="material-symbols-outlined">add</span>Ajouter une étape
     </button>
   </header>
 
@@ -19,7 +19,7 @@
 
   <ng-container *ngIf="!chargement">
     <div *ngIf="situations.length === 0" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg text-center">
-      <p class="font-body-md text-body-md text-on-surface-variant">Aucun poste renseigné pour l'instant.</p>
+      <p class="font-body-md text-body-md text-on-surface-variant">Aucune étape renseignée pour l'instant.</p>
     </div>
 
     <ol class="space-y-stack-md">
@@ -27,15 +27,15 @@
           class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg flex items-start justify-between gap-stack-md flex-wrap">
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
-            <p class="font-label-md text-label-md text-on-surface">{{ s.intitulePoste }}</p>
+            <p class="font-label-md text-label-md text-on-surface">{{ s.intitulePoste || libelleStatutEmploi(s.statutEmploi) }}</p>
             <span *ngIf="!s.dateFin" class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-label-sm">
-              Poste actuel
+              En cours
             </span>
             <span class="px-2 py-0.5 rounded-full bg-primary-container text-on-primary-container text-[11px] font-label-sm">
               {{ libelleStatutEmploi(s.statutEmploi) }}
             </span>
           </div>
-          <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ s.entreprise }}</p>
+          <p *ngIf="s.entreprise" class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ s.entreprise }}</p>
           <p class="font-body-sm text-body-sm text-on-surface-variant">
             {{ s.dateDebut | date: 'MM/yyyy' }} — {{ s.dateFin ? (s.dateFin | date: 'MM/yyyy') : 'aujourd\'hui' }}
           </p>
@@ -61,7 +61,7 @@
     <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant">
       <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary">work_history</span>
-        {{ idEnEdition ? 'Modifier le poste' : 'Ajouter un poste' }}
+        {{ idEnEdition ? 'Modifier l\'étape' : 'Ajouter une étape' }}
       </h2>
       <button type="button" (click)="formulaireOuvert = false" aria-label="Fermer" class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
         <span class="material-symbols-outlined">close</span>
@@ -69,11 +69,17 @@
     </header>
     <div class="p-stack-lg space-y-stack-md">
       <label class="flex flex-col gap-1">
-        <span class="font-label-sm text-label-sm text-on-surface-variant">Intitulé du poste</span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Statut</span>
+        <select [(ngModel)]="saisie.statutEmploi" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+          <option *ngFor="let option of optionsStatutEmploi" [value]="option[0]">{{ option[1] }}</option>
+        </select>
+      </label>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Intitulé du poste{{ posteRequis ? '' : ' (facultatif)' }}</span>
         <input type="text" [(ngModel)]="saisie.intitulePoste" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
       </label>
       <label class="flex flex-col gap-1">
-        <span class="font-label-sm text-label-sm text-on-surface-variant">Entreprise</span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Entreprise{{ posteRequis ? '' : ' (facultatif)' }}</span>
         <input type="text" [(ngModel)]="saisie.entreprise" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
       </label>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-md">
@@ -86,12 +92,6 @@
           <input type="date" [(ngModel)]="saisie.dateFin" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
         </label>
       </div>
-      <label class="flex flex-col gap-1">
-        <span class="font-label-sm text-label-sm text-on-surface-variant">Statut</span>
-        <select [(ngModel)]="saisie.statutEmploi" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
-          <option *ngFor="let option of optionsStatutEmploi" [value]="option[0]">{{ option[1] }}</option>
-        </select>
-      </label>
       <div class="flex gap-stack-md pt-2">
         <button type="button" (click)="formulaireOuvert = false" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Annuler</button>
         <button type="button" [disabled]="!saisieValide || enregistrement" (click)="enregistrer()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
