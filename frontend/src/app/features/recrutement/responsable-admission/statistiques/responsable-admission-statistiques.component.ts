@@ -26,6 +26,7 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
   candidatures: CandidatureResponse[] = [];
   loading = false;
   exporting = false;
+  generatingRapport = false;
   prefs: DashboardPreferences;
 
   constructor(
@@ -213,6 +214,20 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
       error: () => {
         this.exporting = false;
         alert("Échec de l'export Excel.");
+      },
+    });
+  }
+
+  genererRapportStatistique(): void {
+    this.generatingRapport = true;
+    this.recrutementService.genererRapportStatistiqueRecrutement().subscribe({
+      next: (blob) => {
+        downloadBlob(blob, `rapport_statistique_recrutement_${new Date().toISOString().slice(0, 10)}.pdf`);
+        this.generatingRapport = false;
+      },
+      error: () => {
+        this.generatingRapport = false;
+        alert('Échec de la génération du rapport statistique.');
       },
     });
   }

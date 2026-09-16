@@ -68,6 +68,11 @@ export class PedagogieService {
     return this.http.get<FormateurDetail>(`${this.api}/formateurs/${id}`);
   }
 
+  /** Rapport de l'effectif formateurs (PDF) : coordonnées, cours affectés, formateurs sans cours signalés. */
+  telechargerRapportFormateurs(): Observable<Blob> {
+    return this.http.get(`${this.api}/formateurs/rapport/pdf`, { responseType: 'blob' });
+  }
+
   /**
    * Refusée (409) s'il est seul titulaire d'un cours, s'il a un dossier de
    * candidature ou un historique alumni, ou s'il a publié dans le forum.

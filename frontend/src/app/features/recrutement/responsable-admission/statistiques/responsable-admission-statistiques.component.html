@@ -11,6 +11,9 @@
     <button type="button" [disabled]="exporting" (click)="exporter()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
       <span class="material-symbols-outlined text-[18px]">download</span> {{ exporting ? 'Export en cours…' : 'Exporter les candidatures' }}
     </button>
+    <button type="button" [disabled]="generatingRapport" (click)="genererRapportStatistique()" title="Génère un rapport PDF reprenant les chiffres de cette page : répartition par étape, taux d'admission et profil démographique" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md shadow-sm disabled:opacity-60">
+      <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span> {{ generatingRapport ? 'Génération en cours…' : 'Rapport statistique (PDF)' }}
+    </button>
   </div>
 </div>
 

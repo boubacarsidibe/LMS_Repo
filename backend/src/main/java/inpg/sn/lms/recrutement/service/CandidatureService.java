@@ -20,6 +20,7 @@ import inpg.sn.lms.recrutement.dto.FiltreCriteresResponse;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.dto.PieceJustificativeResponse;
 import inpg.sn.lms.recrutement.dto.RapportRecrutementDto;
+import inpg.sn.lms.recrutement.dto.RapportStatistiqueDto;
 import inpg.sn.lms.recrutement.dto.ReponseCritereResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.ReponseCritereCandidature;
@@ -244,6 +245,120 @@ public class CandidatureService {
                 .toList();
 
         return new RapportRecrutementDto(toutes.size(), etapes);
+    }
+
+    /**
+     * Rapport statistique recrutement (demande responsable admission) : mêmes
+     * agrégats que la page Statistiques du portail (répartition par étape, taux
+     * d'admission, profil démographique) — recalculés ici à l'identique pour que
+     * le PDF téléchargé corresponde à ce que l'écran affiche.
+     */
+    public RapportStatistiqueDto genererRapportStatistique() {
+        List<CandidatureResponse> toutes = getAllCandidatures();
+        int total = toutes.size();
+
+        int validationEnCours = compterStatut(toutes, EnumStatutCandidature.SOUMIS);
+        int preselectionnes = (int) toutes.stream()
+                .filter(c -> c.getStatut() == EnumStatutCandidature.EN_COURS_DE_PRESELECTION
+                        || c.getStatut() == EnumStatutCandidature.ADMIS1
+                        || c.getStatut() == EnumStatutCandidature.ADMIS2)
+                .count();
+        int rejetes = compterStatut(toutes, EnumStatutCandidature.REJETE);
+
+        List<RapportStatistiqueDto.Segment> repartitionStatuts = ETAPES_WORKFLOW.stream()
+                .map(statut -> segment(LIBELLES_ETAPES.get(statut), compterStatut(toutes, statut), total))
+                .toList();
+
+        int candidaturesDecidees = (int) toutes.stream()
+                .filter(c -> c.getStatut() == EnumStatutCandidature.ADMIS3 || c.getStatut() == EnumStatutCandidature.REJETE)
+                .count();
+        int admis = compterStatut(toutes, EnumStatutCandidature.ADMIS3);
+        int tauxAdmission = candidaturesDecidees == 0 ? 0 : Math.round(100f * admis / candidaturesDecidees);
+
+        List<RapportStatistiqueDto.Segment> repartitionGenre = repartitionGenre(toutes, total);
+        List<RapportStatistiqueDto.Segment> repartitionAge = repartitionAge(toutes, total);
+        List<RapportStatistiqueDto.Segment> topProfessions = topGroupes(toutes,
+                c -> c.getCandidatProfession() == null ? "" : c.getCandidatProfession().trim(),
+                true, total);
+        int nbSansProfession = (int) toutes.stream()
+                .filter(c -> c.getCandidatProfession() == null || c.getCandidatProfession().trim().isEmpty())
+                .count();
+        List<RapportStatistiqueDto.Segment> topNationalites = topGroupes(toutes,
+                c -> c.getCandidatNationalite() == null ? "" : c.getCandidatNationalite().trim(),
+                false, total);
+
+        return new RapportStatistiqueDto(total, validationEnCours, preselectionnes, rejetes,
+                repartitionStatuts, tauxAdmission, candidaturesDecidees,
+                repartitionGenre, repartitionAge, topProfessions, nbSansProfession, topNationalites);
+    }
+
+    private int compterStatut(List<CandidatureResponse> toutes, EnumStatutCandidature statut) {
+        return (int) toutes.stream().filter(c -> c.getStatut() == statut).count();
+    }
+
+    private RapportStatistiqueDto.Segment segment(String label, int count, int total) {
+        int pourcentage = total == 0 ? 0 : Math.round(100f * count / total);
+        return new RapportStatistiqueDto.Segment(label, count, pourcentage);
+    }
+
+    private List<RapportStatistiqueDto.Segment> repartitionGenre(List<CandidatureResponse> toutes, int total) {
+        List<RapportStatistiqueDto.Segment> segments = new java.util.ArrayList<>();
+        for (String genre : List.of("Homme", "Femme", "Autre")) {
+            int count = (int) toutes.stream().filter(c -> genre.equals(c.getCandidatGenre())).count();
+            segments.add(segment(genre, count, total));
+        }
+        int nonRenseigne = (int) toutes.stream().filter(c -> c.getCandidatGenre() == null || c.getCandidatGenre().isBlank()).count();
+        if (nonRenseigne > 0) {
+            segments.add(segment("Non renseigné", nonRenseigne, total));
+        }
+        return segments;
+    }
+
+    private List<RapportStatistiqueDto.Segment> repartitionAge(List<CandidatureResponse> toutes, int total) {
+        List<Integer> ages = toutes.stream()
+                .map(CandidatureResponse::getCandidatDateNaissance)
+                .filter(java.util.Objects::nonNull)
+                .map(naissance -> java.time.Period.between(naissance, java.time.LocalDate.now()).getYears())
+                .toList();
+        record Tranche(String libelle, java.util.function.IntPredicate test) {
+        }
+        List<Tranche> tranches = List.of(
+                new Tranche("< 20 ans", a -> a < 20),
+                new Tranche("20-25 ans", a -> a >= 20 && a <= 25),
+                new Tranche("26-30 ans", a -> a >= 26 && a <= 30),
+                new Tranche("31-40 ans", a -> a >= 31 && a <= 40),
+                new Tranche("> 40 ans", a -> a > 40));
+        return tranches.stream()
+                .map(t -> segment(t.libelle(), (int) ages.stream().filter(a -> t.test().test(a)).count(), total))
+                .toList();
+    }
+
+    /**
+     * Regroupements les plus fréquents (top 6) d'une valeur déclarative libre —
+     * profession ou nationalité. {@code normaliserCasse} reproduit exactement le
+     * comportement de la page Statistiques : la profession est regroupée sans
+     * tenir compte de la casse puis réaffichée avec une seule majuscule initiale
+     * (perdant la casse d'origine) ; la nationalité, elle, vient d'une liste
+     * fermée déjà correctement casée et n'est jamais transformée.
+     */
+    private List<RapportStatistiqueDto.Segment> topGroupes(List<CandidatureResponse> toutes,
+            java.util.function.Function<CandidatureResponse, String> extracteur, boolean normaliserCasse, int total) {
+        Map<String, Integer> comptes = new java.util.LinkedHashMap<>();
+        for (CandidatureResponse c : toutes) {
+            String valeur = extracteur.apply(c);
+            if (valeur == null || valeur.isBlank()) {
+                continue;
+            }
+            String cle = normaliserCasse ? valeur.toLowerCase() : valeur;
+            comptes.merge(cle, 1, Integer::sum);
+        }
+        return comptes.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(6)
+                .map(e -> segment(
+                        normaliserCasse ? Character.toUpperCase(e.getKey().charAt(0)) + e.getKey().substring(1) : e.getKey(),
+                        e.getValue(), total))
+                .toList();
     }
 
     // --- Méthodes privées ---

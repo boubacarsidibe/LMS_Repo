@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FormateurBref, FormateurDetail, FormateurSaisie, PedagogieService } from '../../services/pedagogie.service';
+import { downloadBlob } from '../../../../shared/utils/download-file';
 
 /**
  * Ouverture des comptes formateurs par la pédagogie.
@@ -37,8 +38,24 @@ export class PedagogieFormateursComponent implements OnInit {
   messageErreur = '';
   messageSucces = '';
 
+  generatingRapport = false;
+
   ngOnInit(): void {
     this.charger();
+  }
+
+  genererRapportFormateurs(): void {
+    this.generatingRapport = true;
+    this.pedagogie.telechargerRapportFormateurs().subscribe({
+      next: (blob) => {
+        downloadBlob(blob, `rapport_formateurs_${new Date().toISOString().slice(0, 10)}.pdf`);
+        this.generatingRapport = false;
+      },
+      error: () => {
+        this.generatingRapport = false;
+        this.messageErreur = 'Échec de la génération du rapport formateurs.';
+      },
+    });
   }
 
   ouvrirDetail(formateur: FormateurBref): void {

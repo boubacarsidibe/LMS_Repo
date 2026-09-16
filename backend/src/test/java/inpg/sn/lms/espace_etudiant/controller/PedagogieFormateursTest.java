@@ -33,6 +33,7 @@ import inpg.sn.lms.espace_etudiant.service.CoursService;
 import inpg.sn.lms.espace_etudiant.service.FormateurSuppressionService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
+import inpg.sn.lms.espace_etudiant.service.RapportFormateursPdfService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
 import inpg.sn.lms.recrutement.service.NotificationService;
 
@@ -75,6 +76,8 @@ class PedagogieFormateursTest {
     private NoteModuleRepository noteModuleRepository;
     @Mock
     private RetourEvaluationRepository retourEvaluationRepository;
+    @Mock
+    private RapportFormateursPdfService rapportFormateursPdfService;
 
     private PedagogieController controller;
 
@@ -84,7 +87,7 @@ class PedagogieFormateursTest {
                 formateurRepository, formateurService, formateurSuppressionService, notificationService,
                 presenceRepository, seanceRepository,
                 forumMentionRepository, forumMessageRepository, forumSujetRepository, noteModuleRepository,
-                retourEvaluationRepository);
+                retourEvaluationRepository, rapportFormateursPdfService);
     }
 
     private FormateurDto requeteValide(String password) {

@@ -639,6 +639,11 @@ export class RecrutementService {
     return this.http.get(`${this.baseUrl}/admin/recrutement/candidatures/rapport/pdf`, { responseType: 'blob' });
   }
 
+  /** Rapport statistique recrutement : mêmes chiffres que la page Statistiques, en PDF. */
+  genererRapportStatistiqueRecrutement(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/admin/recrutement/candidatures/rapport-statistique/pdf`, { responseType: 'blob' });
+  }
+
   telechargerPiece(pieceId: number): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/admin/recrutement/pieces/${pieceId}/telecharger`, { responseType: 'blob' });
   }

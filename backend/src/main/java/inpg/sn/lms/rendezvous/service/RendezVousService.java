@@ -76,6 +76,16 @@ public class RendezVousService {
         return user.getRoles().stream().anyMatch(r -> "ROLE_RESPONSABLE_PEDAGOGIQUE".equals(r.getCode()));
     }
 
+    /**
+     * Vrai si l'utilisateur est un membre du personnel INPG (formateur,
+     * responsable pédagogique ou responsable admission). Le personnel ne demande
+     * jamais de rendez-vous : il ne fait que gérer ses créneaux et répondre aux
+     * demandes reçues — c'est lui l'interlocuteur, jamais le demandeur.
+     */
+    public boolean estPersonnel(User user) {
+        return user.getRoles().stream().anyMatch(r -> ROLES_PERSONNEL.contains(r.getCode()));
+    }
+
     public List<CreneauDto> creneauxLibres(Long personnelId) {
         return creneauRepository
                 .findByPersonnelIdAndReserveFalseAndDateHeureDebutAfterOrderByDateHeureDebutAsc(
