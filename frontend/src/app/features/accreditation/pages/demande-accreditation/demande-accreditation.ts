@@ -179,9 +179,15 @@ import { AccreditationService } from '../../services/accreditation.service';
 
       <!-- Demande existante : suivi + pièces -->
       <ng-container *ngIf="!chargement && demande">
-        <!-- Progression du dossier -->
-        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg" *ngIf="demande.statut !== 'REJETE'">
-          <ol class="flex items-center w-full">
+        <!-- Bandeau narratif, à l'image du suivi de candidature : le statut se lit d'abord comme une phrase, pas comme un badge technique -->
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+          <div class="flex flex-col gap-2">
+            <span class="px-3 py-1 rounded-full text-label-sm w-fit" [ngClass]="heroClasses">{{ heroPill }}</span>
+            <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">{{ heroTitre }}</h2>
+            <p class="text-lg text-on-surface-variant max-w-2xl">{{ heroParagraphe }}</p>
+          </div>
+
+          <ol class="flex items-center w-full mt-6" *ngIf="demande.statut !== 'REJETE'">
             <li *ngFor="let etape of etapes; let i = index" class="flex items-center" [class.flex-1]="i < etapes.length - 1">
               <div class="flex flex-col items-center gap-1 shrink-0">
                 <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
@@ -481,6 +487,60 @@ export class DemandeAccreditationComponent implements OnInit {
     const statut = this.demande.statut === 'ACCREDITE_SOUS_RESERVE' ? 'ACCREDITE' : this.demande.statut;
     const index = this.etapes.findIndex((e) => e.statut === statut);
     return index === -1 ? 0 : index;
+  }
+
+  /** Bandeau narratif façon suivi de candidature — un mot par statut, pas un badge d'état brut. */
+  private static readonly HERO: Record<string, { pill: string; titre: string; paragraphe: string; classes: string }> = {
+    SOUMISE: {
+      pill: 'Dossier déposé',
+      titre: 'Votre dossier a bien été déposé.',
+      paragraphe: "Merci d'avoir soumis votre demande d'accréditation. Notre équipe l'examinera prochainement — vous serez notifié dès le début de l'évaluation.",
+      classes: 'bg-surface-container text-on-surface-variant',
+    },
+    EN_COURS_EVALUATION: {
+      pill: "En cours d'évaluation",
+      titre: 'Votre dossier est en cours d\'évaluation.',
+      paragraphe: "Un évaluateur de l'INPG examine actuellement votre programme et vos pièces justificatives. Ce processus garantit la qualité du référentiel DRCQ.",
+      classes: 'bg-secondary-container text-on-secondary-container',
+    },
+    ACCREDITE: {
+      pill: 'Accréditée',
+      titre: 'Félicitations, votre programme est accrédité !',
+      paragraphe: "Toute l'équipe de l'INPG vous félicite pour la qualité de votre dossier et de votre programme.",
+      classes: 'bg-success/15 text-success',
+    },
+    ACCREDITE_SOUS_RESERVE: {
+      pill: 'Accréditation conditionnelle',
+      titre: 'Votre programme est accrédité sous réserve.',
+      paragraphe: "Votre programme est accrédité, sous réserve de la mise en œuvre du plan d'actions détaillé ci-dessous.",
+      classes: 'bg-warning/15 text-warning',
+    },
+    REJETE: {
+      pill: 'Dossier rejeté',
+      titre: "Votre demande n'a pas été retenue.",
+      paragraphe: 'Le motif de cette décision est détaillé ci-dessous. Vous pouvez déposer une nouvelle demande à tout moment.',
+      classes: 'bg-error-container text-on-error-container',
+    },
+  };
+
+  private get hero() {
+    return this.demande ? DemandeAccreditationComponent.HERO[this.demande.statut] : undefined;
+  }
+
+  get heroPill(): string {
+    return this.hero?.pill ?? '';
+  }
+
+  get heroTitre(): string {
+    return this.hero?.titre ?? '';
+  }
+
+  get heroParagraphe(): string {
+    return this.hero?.paragraphe ?? '';
+  }
+
+  get heroClasses(): string {
+    return this.hero?.classes ?? '';
   }
 
   ngOnInit(): void {
