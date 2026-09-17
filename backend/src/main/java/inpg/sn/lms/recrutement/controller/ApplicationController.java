@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
+import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 
 import org.slf4j.Logger;
@@ -150,14 +151,16 @@ public class ApplicationController {
             List<PieceJustificative> deposees = parType.get(requis);
             if (deposees == null || deposees.isEmpty()) {
                 manques.add(requis.libelle() + " (non fournie)");
-            } else if (deposees.stream().noneMatch(PieceJustificative::isEstConforme)) {
+            } else if (deposees.stream().anyMatch(
+                    p -> p.getStatutVerification() == EnumStatutVerificationPiece.A_REMPLACER)) {
                 manques.add(requis.libelle() + " (à remplacer : non conforme)");
             }
         }
         // Une pièce facultative déposée puis refusée se signale aussi : le candidat l'a
         // fournie, elle n'est pas exploitable, il doit le savoir.
         parType.forEach((type, deposees) -> {
-            if (!PIECES_REQUISES.contains(type) && deposees.stream().noneMatch(PieceJustificative::isEstConforme)) {
+            if (!PIECES_REQUISES.contains(type) && deposees.stream().anyMatch(
+                    p -> p.getStatutVerification() == EnumStatutVerificationPiece.A_REMPLACER)) {
                 manques.add(type.libelle() + " (à remplacer : non conforme)");
             }
         });

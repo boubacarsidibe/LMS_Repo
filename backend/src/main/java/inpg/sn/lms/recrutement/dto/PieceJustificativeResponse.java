@@ -1,5 +1,8 @@
 package inpg.sn.lms.recrutement.dto;
 
+import java.time.LocalDateTime;
+
+import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +20,9 @@ public class PieceJustificativeResponse {
     private Long id;
     private EnumTypeDocument typeDocument;
     private boolean estConforme;
+    private EnumStatutVerificationPiece statutVerification;
+    private String motifNonConformite;
+    private LocalDateTime dateVerification;
     private String description;
     private Long fichierStockeId;
     private String fichierNomOriginal;

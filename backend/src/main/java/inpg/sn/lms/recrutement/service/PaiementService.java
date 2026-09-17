@@ -92,7 +92,7 @@ public class PaiementService {
      * régler ses frais.
      */
     public PaiementResponse initierPaiement(PaiementRequest request) {
-        Candidature candidature = candidatureRepository.findById(request.getCandidatureId())
+        Candidature candidature = candidatureRepository.findByIdForPayment(request.getCandidatureId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Candidature non trouvée avec l'ID: " + request.getCandidatureId()));
 

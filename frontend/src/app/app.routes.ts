@@ -302,6 +302,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'tests/nouveau',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/tests/test-form/test-form.component').then(
+            (m) => m.TestFormComponent
+          ),
+      },
+      {
         path: 'tests/:id',
         loadComponent: () =>
           import('./features/recrutement/responsable-admission/tests/test-form/test-form.component').then(

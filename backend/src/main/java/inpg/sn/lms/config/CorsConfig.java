@@ -32,7 +32,7 @@ public class CorsConfig {
      * générique est impossible ici, puisque les requêtes portent des identifiants
      * avec allowCredentials) ; APP_CORS_ORIGINS reste prioritaire si défini.
      */
-    @Value("${app.cors.origins:http://localhost:4200,https://frontend-one-smoky-33.vercel.app}")
+    @Value("${app.cors.origins:http://localhost:4200,http://127.0.0.1:4200,https://frontend-one-smoky-33.vercel.app}")
     private String origines;
 
     @Bean

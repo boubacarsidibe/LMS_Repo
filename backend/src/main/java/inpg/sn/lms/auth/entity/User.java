@@ -71,6 +71,14 @@ public class User {
     @Column(name = "date_creation", nullable = false)
     private LocalDateTime dateCreation = LocalDateTime.now();
 
+    /**
+     * Version des sessions émises pour ce compte. Elle augmente après un
+     * changement de mot de passe pour rendre immédiatement les JWT précédents
+     * inutilisables.
+     */
+    @Column(name = "session_version", nullable = false)
+    private long sessionVersion = 0;
+
     // @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     // private Candidat candidat;
     // @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
@@ -104,6 +112,10 @@ public class User {
 
     public void addRole(Role role) {
         this.roles.add(role);
+    }
+
+    public void incrementSessionVersion() {
+        this.sessionVersion++;
     }
 
     public Set<inpg.sn.lms.espace_etudiant.entity.Formation> getFavorites() {

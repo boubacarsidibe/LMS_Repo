@@ -1,8 +1,8 @@
 <!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
 
 <!-- Page Header -->
-<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
-  <div>
+<div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5">
+  <div class="max-w-3xl">
     <div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm mb-2">
       <span>Admissions</span>
       <span class="material-symbols-outlined text-[16px]">chevron_right</span>
@@ -11,9 +11,10 @@
     <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1">Gestion des Sessions de recrutement</h2>
     <p class="font-body-md text-body-md text-on-surface-variant mt-1">Planification, suivi des quotas et ouverture des appels à candidatures.</p>
   </div>
-  <div class="flex items-center gap-3">
-    <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" [title]="exporting ? 'Export en cours…' : 'Exporter la liste'" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
+  <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+    <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" [title]="exporting ? 'Export en cours…' : 'Exporter la liste'" class="flex items-center justify-center gap-2 h-10 px-4 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60 font-label-md text-label-md">
       <span class="material-symbols-outlined text-[18px]">download</span>
+      {{ exporting ? 'Export…' : 'Exporter' }}
     </button>
     <app-export-columns-modal
       [open]="exportModalOpen"
@@ -22,8 +23,9 @@
       (openChange)="exportModalOpen = $event"
       (exporter)="exporter($event)">
     </app-export-columns-modal>
-    <button type="button" title="Nouvelle Session" class="flex items-center justify-center w-10 h-10 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm" (click)="nouvelleSession()">
+    <button type="button" title="Nouvelle Session" class="flex items-center justify-center gap-2 h-10 px-4 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md" (click)="nouvelleSession()">
       <span class="material-symbols-outlined text-[18px]">add</span>
+      Nouvelle session
     </button>
   </div>
 </div>
@@ -33,44 +35,24 @@
   {{ errorMessage }}
 </div>
 
-<!-- KPI Bento Grid -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter my-stack-lg">
-  <button type="button" (click)="filtreStatut = 'TOUTES'" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group">
-    <div class="flex items-center justify-between mb-4">
-      <p class="font-label-md text-label-md text-on-surface-variant">Total Sessions</p>
-      <span class="material-symbols-outlined text-on-surface-variant opacity-70">event</span>
-    </div>
-    <h3 class="font-headline-lg text-headline-lg text-primary">{{ totalSessions }} <span class="font-body-md text-body-md text-on-surface-variant font-normal">sessions</span></h3>
+<!-- Indicateurs compacts : ils restent utiles comme raccourcis sans repousser la liste. -->
+<div class="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest my-stack-lg overflow-hidden">
+  <button type="button" (click)="filtreStatut = 'TOUTES'" [attr.aria-pressed]="filtreStatut === 'TOUTES'" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="filtreStatut === 'TOUTES'">
+    <span class="material-symbols-outlined text-secondary text-[20px]">event</span>
+    <span class="min-w-0"><strong class="block font-headline-sm text-headline-sm text-primary leading-none">{{ totalSessions }}</strong><span class="font-label-sm text-label-sm text-on-surface-variant">Toutes les sessions</span></span>
   </button>
-  <button type="button" (click)="filtreStatut = 'OUVERTES'" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group">
-    <div class="flex items-center justify-between mb-4">
-      <p class="font-label-md text-label-md text-on-surface-variant">Sessions Ouvertes</p>
-      <span class="material-symbols-outlined text-on-surface-variant opacity-70">check_circle</span>
-    </div>
-    <div class="flex items-end gap-3">
-      <h3 class="font-headline-lg text-headline-lg text-primary">{{ nbOuvertes }}</h3>
-      <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-md mb-2">ouvertes</span>
-    </div>
+  <button type="button" (click)="filtreStatut = 'OUVERTES'" [attr.aria-pressed]="filtreStatut === 'OUVERTES'" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="filtreStatut === 'OUVERTES'">
+    <span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
+    <span class="min-w-0"><strong class="block font-headline-sm text-headline-sm text-primary leading-none">{{ nbOuvertes }}</strong><span class="font-label-sm text-label-sm text-on-surface-variant">Ouvertes</span></span>
   </button>
-  <button type="button" (click)="filtreStatut = 'ACTIVES'" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group">
-    <div class="flex items-center justify-between mb-4">
-      <p class="font-label-md text-label-md text-on-surface-variant">Sessions Actives</p>
-      <span class="material-symbols-outlined text-on-surface-variant opacity-70">bolt</span>
-    </div>
-    <h3 class="font-headline-lg text-headline-lg text-primary">{{ nbActives }}</h3>
+  <button type="button" (click)="filtreStatut = 'ACTIVES'" [attr.aria-pressed]="filtreStatut === 'ACTIVES'" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="filtreStatut === 'ACTIVES'">
+    <span class="material-symbols-outlined text-secondary text-[20px]">bolt</span>
+    <span class="min-w-0"><strong class="block font-headline-sm text-headline-sm text-primary leading-none">{{ nbActives }}</strong><span class="font-label-sm text-label-sm text-on-surface-variant">Actives</span></span>
   </button>
-  <button type="button" [disabled]="!prochaineFermeture" (click)="prochaineFermeture && voirSession(prochaineFermeture)" class="text-left bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group disabled:hover:border-outline-variant disabled:cursor-default">
-    <div class="flex items-center justify-between mb-4">
-      <p class="font-label-md text-label-md text-on-surface-variant">Prochaine Clôture</p>
-      <span class="material-symbols-outlined text-on-surface-variant opacity-70">timer</span>
-    </div>
-    <div *ngIf="prochaineFermeture; else aucuneCloture">
-      <p class="font-headline-sm text-headline-sm md:font-headline-md md:text-headline-md text-primary">{{ prochaineFermeture.dateFermeture | date:'dd MMM yyyy' }}</p>
-      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ prochaineFermeture.libelle }}</p>
-    </div>
-    <ng-template #aucuneCloture>
-      <p class="font-body-sm text-body-sm text-on-surface-variant">Aucune session ouverte</p>
-    </ng-template>
+  <button type="button" [disabled]="!prochaineFermeture" (click)="prochaineFermeture && voirSession(prochaineFermeture)" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors disabled:cursor-default">
+    <span class="material-symbols-outlined text-outline text-[20px]">timer</span>
+    <span class="min-w-0" *ngIf="prochaineFermeture; else aucuneCloture"><strong class="block font-label-md text-label-md text-primary leading-none">{{ prochaineFermeture.dateFermeture | date:'dd MMM yyyy' }}</strong><span class="block font-label-sm text-label-sm text-on-surface-variant truncate mt-1">Prochaine clôture</span></span>
+    <ng-template #aucuneCloture><span class="font-label-sm text-label-sm text-on-surface-variant">Aucune clôture prévue</span></ng-template>
   </button>
 </div>
 
@@ -100,7 +82,37 @@
 </div>
 
 <!-- Data Table -->
-<div *ngIf="!loading && sessionsFiltrees.length > 0" class="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
+<div *ngIf="!loading && sessionsFiltrees.length > 0" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+  <div class="md:hidden divide-y divide-outline-variant">
+    <article *ngFor="let s of sessionsFiltrees; let i = index" (click)="voirSession(s)" class="p-4 cursor-pointer hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="estSelectionne(s.id)">
+      <div class="flex items-start gap-3">
+        <input type="checkbox" [checked]="estSelectionne(s.id)" (click)="basculerSelection(s.id, i, $event)" [attr.aria-label]="'Sélectionner ' + s.libelle" class="w-4 h-4 mt-1 accent-secondary cursor-pointer shrink-0">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ s.libelle }}</h3>
+              <div class="flex flex-wrap items-center gap-1 mt-1">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold" [ngClass]="s.estOuverte ? 'bg-green-100 text-green-800' : 'bg-surface-container text-on-surface-variant'">{{ s.estOuverte ? 'Ouverte' : 'Fermée' }}</span>
+                <span *ngIf="s.estActive" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary-fixed text-secondary">Active</span>
+                <span *ngIf="s.criteresActifs" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary-container text-on-primary-container"><span class="material-symbols-outlined text-[12px]">filter_alt</span>Filtre</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-0.5 shrink-0" (click)="$event.stopPropagation()">
+              <button type="button" (click)="voirSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+              <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded" title="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+            </div>
+          </div>
+          <dl class="grid grid-cols-2 gap-2 mt-3 text-xs">
+            <div><dt class="text-[10px] text-on-surface-variant">Ouverture</dt><dd class="text-primary mt-0.5">{{ s.dateOuverture | date:'dd MMM yyyy' }}</dd></div>
+            <div><dt class="text-[10px] text-on-surface-variant">Fermeture</dt><dd class="text-primary mt-0.5">{{ s.dateFermeture | date:'dd MMM yyyy' }}</dd></div>
+          </dl>
+          <a [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ session: s.id }" (click)="$event.stopPropagation()" class="inline-flex items-center gap-1 mt-3 text-[11px] font-semibold text-secondary hover:underline"><span class="material-symbols-outlined text-[15px]">folder_shared</span>{{ s.nbCandidatures }} candidature(s)</a>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div class="hidden md:block overflow-x-auto">
   <table class="w-full text-left border-collapse">
     <thead>
       <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
@@ -159,4 +171,5 @@
       </tr>
     </tbody>
   </table>
+  </div>
 </div>

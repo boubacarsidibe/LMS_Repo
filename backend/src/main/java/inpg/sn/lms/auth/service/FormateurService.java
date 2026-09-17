@@ -51,6 +51,7 @@ public class FormateurService {
         if (formateurDto.getPassword() == null || formateurDto.getPassword().isBlank()) {
             formateurDto.setPassword(passwordGeneratorService.generer());
         }
+        PasswordPolicy.exigerMotDePasseRobuste(formateurDto.getPassword());
         if (userService.findByUsername(formateurDto.getUsername()) != null) {
             throw new IllegalStateException(
                     "Ce nom d'utilisateur est déjà pris. Pour donner le rôle formateur à un compte existant, utilisez la gestion des rôles.");

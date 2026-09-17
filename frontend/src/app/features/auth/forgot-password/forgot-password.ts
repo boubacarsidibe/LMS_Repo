@@ -28,7 +28,7 @@ export class ForgotPassword {
   // Étape 2 : code reçu + nouveau mot de passe
   resetForm = this.fb.group({
     code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    password: ['', [Validators.required, Validators.minLength(12)]],
     confirmPassword: ['', [Validators.required]],
   });
 

@@ -6,7 +6,6 @@ import { forkJoin, Observable } from 'rxjs';
 import { CandidatureResponse, FormatRapport, RecrutementService, ResultatRelance } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
-import { ReportButtonComponent } from '../../../../shared/components/report-button/report-button.component';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 'ADMIS2' | 'LISTE_ATTENTE' | 'ADMIS3' | 'REJETE' | 'BROUILLON';
@@ -14,8 +13,9 @@ type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 
 @Component({
   selector: 'app-responsable-admission-candidatures',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ExportColumnsModalComponent, ReportButtonComponent],
+  imports: [CommonModule, RouterModule, FormsModule, ExportColumnsModalComponent],
   templateUrl: './responsable-admission-candidatures.component.html',
+  styleUrl: './responsable-admission-candidatures.component.css',
 })
 export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   candidatures: CandidatureResponse[] = [];
@@ -47,7 +47,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     { statut: 'EN_COURS_DE_PRESELECTION', libelle: 'Présélection' },
     { statut: 'ADMIS1', libelle: 'Test' },
     { statut: 'ADMIS2', libelle: 'Entretien' },
-    { statut: 'LISTE_ATTENTE', libelle: 'Liste compl.' },
+    { statut: 'LISTE_ATTENTE', libelle: 'Liste complémentaire' },
     { statut: 'ADMIS3', libelle: 'Admises' },
     { statut: 'REJETE', libelle: 'Rejetées' },
   ];
@@ -95,6 +95,8 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   generatingReport = false;
   relanceEnCours = false;
   relanceMessage = '';
+  menuActionsOuvert = false;
+  menuRapportsOuvert = false;
 
   /** Dossiers ADMIS3 dont l'inscription (étape 6, QMS-009) reste à finaliser. */
   idsEnAttenteInscription = new Set<number>();
@@ -143,7 +145,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   }
 
   private readonly STATUTS_VALIDES: StatutFiltre[] = [
-    'TOUS', 'SOUMIS', 'EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 'ADMIS3', 'REJETE', 'BROUILLON',
+    'TOUS', 'SOUMIS', 'EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 'LISTE_ATTENTE', 'ADMIS3', 'REJETE', 'BROUILLON',
   ];
 
   private chargerCandidatures(): void {
@@ -212,6 +214,32 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
 
   get filtresActifs(): boolean {
     return this.recherche.trim() !== '' || this.filtreStatut !== 'TOUS' || this.filtreSessionId !== null;
+  }
+
+  get nombreFiltresActifs(): number {
+    return Number(this.recherche.trim() !== '')
+      + Number(this.filtreStatut !== 'TOUS')
+      + Number(this.filtreSessionId !== null);
+  }
+
+  effacerRecherche(): void {
+    this.recherche = '';
+    this.recalculerFiltres();
+  }
+
+  basculerMenuActions(): void {
+    this.menuActionsOuvert = !this.menuActionsOuvert;
+    this.menuRapportsOuvert = false;
+  }
+
+  basculerMenuRapports(): void {
+    this.menuRapportsOuvert = !this.menuRapportsOuvert;
+    this.menuActionsOuvert = false;
+  }
+
+  fermerMenus(): void {
+    this.menuActionsOuvert = false;
+    this.menuRapportsOuvert = false;
   }
 
   setFiltreStatut(statut: StatutFiltre): void {
@@ -309,6 +337,58 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     if (c.statut === 'ADMIS3') return false;
     if (c.statut === 'REJETE') return true;
     return this.rangParcours[cible] < this.rangParcours[c.statut];
+  }
+
+  /** Dossiers actuellement cochés, centralisés pour que le panneau d'actions décrive la sélection réelle. */
+  get candidaturesSelectionnees(): CandidatureResponse[] {
+    return this.candidatures.filter((c) => this.selection.has(c.id));
+  }
+
+  get nombreRejetablesSelection(): number {
+    return this.candidaturesSelectionnees.filter((c) => this.peutRejeter(c)).length;
+  }
+
+  get nombreAnnulablesSelection(): number {
+    return this.candidaturesSelectionnees.filter((c) => this.peutAnnuler(c)).length;
+  }
+
+  /** Étapes réellement accessibles depuis au moins un dossier coché, avec leur nombre de dossiers concernés. */
+  get ciblesReculerSelection(): Array<{ valeur: StatutFiltre; libelle: string; count: number }> {
+    return this.ciblesReculer
+      .map((cible) => ({
+        ...cible,
+        count: this.candidaturesSelectionnees.filter((c) => this.peutReculerVers(c, cible.valeur)).length,
+      }))
+      .filter((cible) => cible.count > 0);
+  }
+
+  /** Résumé court des statuts sélectionnés, utile pour vérifier le contexte avant une action groupée. */
+  get resumeStatutsSelection(): string {
+    const groupes = new Map<string, number>();
+    for (const candidature of this.candidaturesSelectionnees) {
+      const label = this.libelleStatut(candidature.statut);
+      groupes.set(label, (groupes.get(label) || 0) + 1);
+    }
+    return Array.from(groupes.entries())
+      .map(([label, count]) => count > 1 ? `${label} (${count})` : label)
+      .join(' · ');
+  }
+
+  /** Phrase affichée dans le panneau afin d'expliquer immédiatement ce qui est faisable. */
+  get resumeActionsSelection(): string {
+    const possibilites: string[] = [];
+    if (this.nombreRejetablesSelection) {
+      possibilites.push(`rejet de ${this.nombreRejetablesSelection} dossier${this.nombreRejetablesSelection > 1 ? 's' : ''}`);
+    }
+    if (this.nombreAnnulablesSelection) {
+      possibilites.push(`annulation de ${this.nombreAnnulablesSelection} décision${this.nombreAnnulablesSelection > 1 ? 's' : ''}`);
+    }
+    if (this.ciblesReculerSelection.length) {
+      possibilites.push('retour à une étape antérieure');
+    }
+    return possibilites.length
+      ? `Actions disponibles : ${possibilites.join(' · ')}.`
+      : 'Aucune action de statut n’est disponible pour cette sélection.';
   }
 
   voirDetail(c: CandidatureResponse): void {

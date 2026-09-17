@@ -51,6 +51,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.io.ByteArrayOutputStream;
@@ -78,6 +79,7 @@ public class DataInitializer {
     private static final LocalDateTime DATE_CREATION_COMPTES_DEMO = LocalDateTime.of(2020, 1, 1, 0, 0);
 
     @Bean
+    @ConditionalOnProperty(name = "app.demo-data.enabled", havingValue = "true")
     @Order(1) // Doit précéder PedagogieDataInitializer, qui s'appuie sur les rôles créés ici.
     CommandLineRunner initData(
             SessionCandidatureRepository sessionRepository,

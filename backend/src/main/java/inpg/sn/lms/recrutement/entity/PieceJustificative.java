@@ -1,5 +1,8 @@
 package inpg.sn.lms.recrutement.entity;
 
+import java.time.LocalDateTime;
+
+import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,6 +38,18 @@ public class PieceJustificative {
 
     @Column(nullable = false)
     private boolean estConforme;
+
+    /** Évite de confondre une pièce en attente de contrôle avec une pièce refusée. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut_verification", nullable = false, length = 20)
+    private EnumStatutVerificationPiece statutVerification = EnumStatutVerificationPiece.A_VERIFIER;
+
+    /** Explication transmise au candidat uniquement lorsqu'un remplacement est demandé. */
+    @Column(name = "motif_non_conformite", length = 500)
+    private String motifNonConformite;
+
+    @Column(name = "date_verification")
+    private LocalDateTime dateVerification;
 
     /** Moyenne declaree par le candidat pour ce releve (sur 20) : le PDF en est la preuve.
      * Nul pour tout document qui n'est pas un releve de notes. */

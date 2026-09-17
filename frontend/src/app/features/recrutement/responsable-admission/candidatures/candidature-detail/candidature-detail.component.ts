@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CandidatureResponse, EtapeDossierResponse, PieceJustificativeResponse, RecrutementService } from '../../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../../shared/utils/download-file';
@@ -23,7 +24,7 @@ interface TimelineItem {
 @Component({
   selector: 'app-candidature-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './candidature-detail.component.html',
 })
 export class CandidatureDetailComponent implements OnInit {
@@ -31,6 +32,10 @@ export class CandidatureDetailComponent implements OnInit {
   loading = true;
   errorMessage = '';
   actionEnCours = false;
+
+  /** Pièce et motif affichés dans la modale de demande de remplacement. */
+  pieceARefuser: PieceJustificativeResponse | null = null;
+  motifNonConformite = '';
 
   /** Historique du dossier (procédure QMS-009). */
   journal: EtapeDossierResponse[] = [];
@@ -341,12 +346,51 @@ export class CandidatureDetailComponent implements OnInit {
     });
   }
 
-  /** Marque/démarque une pièce comme conforme, une fois l'admin l'a consultée. */
-  basculerConformitePiece(piece: PieceJustificativeResponse): void {
-    const nouvelEtat = !piece.estConforme;
-    this.recrutementService.modifierConformitePiece(piece.id, nouvelEtat).subscribe({
-      next: () => (piece.estConforme = nouvelEtat),
+  marquerPieceConforme(piece: PieceJustificativeResponse): void {
+    this.recrutementService.modifierConformitePiece(piece.id, true).subscribe({
+      next: (miseAJour) => Object.assign(piece, miseAJour),
       error: () => this.notifications.erreur('Échec de la mise à jour de la conformité du document.'),
     });
+  }
+
+  ouvrirRefusPiece(piece: PieceJustificativeResponse): void {
+    this.pieceARefuser = piece;
+    this.motifNonConformite = piece.motifNonConformite || '';
+  }
+
+  annulerRefusPiece(): void {
+    this.pieceARefuser = null;
+    this.motifNonConformite = '';
+  }
+
+  confirmerRefusPiece(): void {
+    const piece = this.pieceARefuser;
+    const motif = this.motifNonConformite.trim();
+    if (!piece) return;
+    if (!motif) {
+      this.notifications.erreur('Le motif de remplacement est requis.');
+      return;
+    }
+    this.actionEnCours = true;
+    this.recrutementService.modifierConformitePiece(piece.id, false, motif).subscribe({
+      next: (miseAJour) => {
+        Object.assign(piece, miseAJour);
+        this.actionEnCours = false;
+        this.annulerRefusPiece();
+        this.notifications.succes('Le candidat a été informé du document à remplacer.');
+      },
+      error: (err) => {
+        this.actionEnCours = false;
+        this.notifications.erreur(err.error?.message || 'Échec de la demande de remplacement.');
+      },
+    });
+  }
+
+  libelleVerificationPiece(piece: PieceJustificativeResponse): string {
+    switch (piece.statutVerification) {
+      case 'CONFORME': return 'Conforme';
+      case 'A_REMPLACER': return 'À remplacer';
+      default: return 'À vérifier';
+    }
   }
 }

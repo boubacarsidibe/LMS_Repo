@@ -3,17 +3,24 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { Auth } from '../services/authService';
+import { environment } from '../../../../environments/environment';
 
 /**
  * Intercepteur fonctionnel Angular 21 qui attache le token JWT à toutes les
- * requêtes HTTP sortantes, et gère la session expirée/invalide de façon centralisée.
+ * requêtes destinées à l'API INPG, et gère la session expirée/invalide de façon centralisée.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(Auth);
   const router = inject(Router);
   const token = auth.getToken();
 
-  const authReq = token
+  const apiUrl = new URL(environment.apiUrl, window.location.origin);
+  const requestUrl = new URL(req.url, window.location.origin);
+  const apiPath = apiUrl.pathname.replace(/\/$/, '');
+  const cibleApi = requestUrl.origin === apiUrl.origin
+    && (requestUrl.pathname === apiPath || requestUrl.pathname.startsWith(`${apiPath}/`));
+
+  const authReq = token && cibleApi
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
 

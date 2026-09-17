@@ -38,7 +38,7 @@ export class CreerCours implements OnInit {
   }
 
   ngOnInit(): void {
-    this.promotionService.getAll().subscribe({
+    this.promotionService.getMesPromotionsFormateur().subscribe({
       next: (data) => (this.promotions = data || []),
       error: () => (this.promotions = [])
     });

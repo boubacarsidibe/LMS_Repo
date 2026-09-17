@@ -94,7 +94,9 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
   get lignes(): LigneDeliberation[] {
     // Seules les candidatures ayant atteint l'étape entretien (ADMIS2), ou déjà décidées
     // à cette étape (ADMIS3 / REJETE), ont leur place en délibération.
-    const eligibles = this.candidatures.filter((c) => c.statut === 'ADMIS2' || c.statut === 'ADMIS3' || c.statut === 'REJETE');
+    const eligibles = this.candidatures.filter((c) =>
+      c.statut === 'ADMIS2' || c.statut === 'ADMIS3' || c.statut === 'LISTE_ATTENTE' || c.statut === 'REJETE'
+    );
 
     return eligibles
       .map((c) => {

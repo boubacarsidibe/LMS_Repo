@@ -80,7 +80,6 @@ public class SecurityConfig {
                         "/api/auth/login",
                         "/api/auth/register",
                         "/api/auth/send-otp",
-                        "/api/auth/verify-otp",
                         "/api/auth/reset-password").permitAll()
                 .requestMatchers("/api/recrutement/public/**", "/api/recrutement-formateurs/public/**",
                         "/", "/error", "/login", "/uploads/**").permitAll()

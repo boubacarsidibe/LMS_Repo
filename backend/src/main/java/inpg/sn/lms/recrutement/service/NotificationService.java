@@ -42,7 +42,7 @@ public class NotificationService {
     // metier (validation/rejet de dossier, convocations, decisions d'admission,
     // relances...). Une panne SMTP ne doit jamais faire echouer l'action qui
     // declenche la notification.
-    public void envoyerEmail(String destinataire, String sujet, String contenu) {
+    public boolean envoyerEmail(String destinataire, String sujet, String contenu) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(expediteur);
         message.setTo(destinataire);
@@ -50,8 +50,10 @@ public class NotificationService {
         message.setText(contenu);
         try {
             mailSender.send(message);
+            return true;
         } catch (Exception e) {
             log.error("Échec de l'envoi de l'email de recrutement à {} : {}", destinataire, e.getMessage(), e);
+            return false;
         }
     }
 

@@ -5,9 +5,9 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+
+import inpg.sn.lms.auth.entity.User;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -31,16 +31,16 @@ public class JwtUtils {
     }
 
     // 1. Générer un Token pour l'utilisateur
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-        // Optionnel : Ajouter les rôles dans le Payload du JWT
-        claims.put("roles", userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
+        claims.put("roles", user.getRoles().stream()
+                .map(role -> role.getCode())
                 .collect(Collectors.toList()));
+        claims.put("sessionVersion", user.getSessionVersion());
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(user.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(getSigningKey())
@@ -76,8 +76,12 @@ public class JwtUtils {
     }
 
     // 5. Valider le Token avec les détails de l'utilisateur
-    public Boolean validateToken(String token, UserDetails userDetails) {
+    public Boolean validateToken(String token, User user) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        Number versionJeton = extractAllClaims(token).get("sessionVersion", Number.class);
+        return username.equals(user.getUsername())
+                && versionJeton != null
+                && versionJeton.longValue() == user.getSessionVersion()
+                && !isTokenExpired(token);
     }
 }

@@ -135,7 +135,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.2.0</version>
+            <version>3.1.1</version>
         </dependency>
 
         <!-- Export Excel (.xlsx) pour le back-office recrutement -->

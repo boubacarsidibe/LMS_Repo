@@ -57,11 +57,16 @@
 
 ---
 
-## 2. Modèle de données — migration `V42__recrutement_formateurs.sql`
+## 2. Modèle de données — migration `V202609171200__recrutement_formateurs.sql`
 
 > Dernière migration à ce jour : V37 (journal détapes QMS-009). La prochaine était **V38**,
 > mais un conflit de numérotation avec `develop` (V38-V41 déjà pris par un autre lot) a
-> forcé un renommage en **V42** lors de la fusion — cf. `LOG_BLOQUANT.md` §68.
+> forcé un renommage en **V42** lors de la fusion — cf. `LOG_BLOQUANT.md` §68. Un second
+> conflit est survenu à la fusion du 17/09 (`develop` avait entre-temps pris V42 à V47
+> pour un lot sans rapport) : cette fois renommées en horodatage
+> (`V202609171200`/`V202609171201`), conformément à la règle du `CLAUDE.md` — un entier
+> séquentiel choisi par une branche isolée finit toujours par retomber sur un numéro pris
+> ailleurs.
 
 ### 2.1 `offres_recrutement_formateur` — la fiche de poste (QMS-007 §1)
 
@@ -334,13 +339,22 @@ les anciens numéros doit voir ses deux lignes `flyway_schema_history`
 corrigées à la main (`version`/`script`, le `checksum` reste identique car il
 porte sur le contenu du fichier, pas sur son nom).
 
+**Rebelote à la fusion du 17/09** : `develop` avait entre-temps posé ses propres
+`V42` à `V47` (statut de vérification des pièces, sessions et rôles initialisés,
+notes sur 100, activités de cours). Même collision, cette fois définitivement
+évitée en renommant en horodatage plutôt qu'en entier :
+`V202609171200__recrutement_formateurs.sql` et
+`V202609171201__profil_candidature_formateur.sql`. Ces deux migrations n'avaient
+jamais été appliquées à une base partagée sous leurs anciens noms `V42`/`V43` —
+aucune correction de `flyway_schema_history` n'était donc nécessaire cette fois.
+
 ---
 
 ## 7. Vérification end-to-end (stack Docker locale, `:4200`)
 
-1. `docker compose up -d --build backend` → log Flyway **`V42`** (`V38` à l'origine,
-   renommée en V42 — cf. §6bis) ; amorçage du rôle `ROLE_CANDIDAT_FORMATEUR`.
-   Puis `--build frontend`.
+1. `docker compose up -d --build backend` → log Flyway **`V202609171200`** (`V38` à
+   l'origine, renommée en V42 puis en horodatage — cf. §6bis) ; amorçage du rôle
+   `ROLE_CANDIDAT_FORMATEUR`. Puis `--build frontend`.
 2. **Admission** (`test.admission@inpg.sn` / `Test@2026`) : onglet Formateurs →
    créer une offre → **Publier**. `GET /api/recrutement-formateurs/public/offres`
    la renvoie.

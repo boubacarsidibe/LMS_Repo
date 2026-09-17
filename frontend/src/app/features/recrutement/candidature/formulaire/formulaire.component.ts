@@ -7,6 +7,7 @@ import { RecrutementService, SessionCandidatureResponse, CandidatureRequest, Can
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
 import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { Auth } from '../../../../core/auth/services/authService';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 const STORAGE_KEY = 'candidature_brouillon';
 
@@ -111,7 +112,8 @@ export class FormulaireComponent implements OnInit {
     private recrutementService: RecrutementService,
     private router: Router,
     private route: ActivatedRoute,
-    private auth: Auth
+    private auth: Auth,
+    private notifications: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -398,7 +400,7 @@ export class FormulaireComponent implements OnInit {
       const file = input.files[0];
       const MAX_SIZE_MO = 5;
       if (file.size > MAX_SIZE_MO * 1024 * 1024) {
-        alert(`❌ Fichier trop volumineux (max ${MAX_SIZE_MO} Mo) : ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} Mo)`);
+        this.notifications.erreur(`Fichier trop volumineux (max ${MAX_SIZE_MO} Mo) : ${file.name}.`);
         input.value = '';
         return;
       }
@@ -493,7 +495,7 @@ export class FormulaireComponent implements OnInit {
       error: (err) => {
         this.loading = false;
         const msg = err.error?.message || err.message || 'Erreur inconnue';
-        alert('Erreur lors de la soumission : ' + msg);
+        this.notifications.erreur('Erreur lors de la soumission : ' + msg);
       }
     });
   }
@@ -548,6 +550,7 @@ export class FormulaireComponent implements OnInit {
         uploads.push(
           firstValueFrom(upload$).catch((err) => {
             console.error(`[uploadAllFiles] Échec upload diplôme (${d.file!.name}):`, err);
+            echecs.push(`Diplôme ou certification (${d.file!.name})`);
             return Promise.resolve(null);
           })
         );
@@ -564,10 +567,9 @@ export class FormulaireComponent implements OnInit {
     this.loading = false;
     const numero = this.candidature?.numeroDossier || '';
     if (echecsUpload.length > 0) {
-      alert(
-        `Votre candidature n°${numero} a bien été enregistrée, mais ${echecsUpload.length} document(s) n'ont pas pu être transmis :\n\n`
-        + echecsUpload.join('\n')
-        + `\n\nVous pourrez les ajouter depuis votre espace candidat (page Suivi), rubrique « Dossier soumis ».`
+      this.notifications.erreur(
+        `Candidature n°${numero} enregistrée, mais ${echecsUpload.length} document(s) n'ont pas été transmis : `
+        + `${echecsUpload.join(', ')}. Vous pourrez les ajouter depuis l'espace candidat.`
       );
       this.successMessage = '';
     } else {
@@ -596,7 +598,7 @@ export class FormulaireComponent implements OnInit {
       const oversized = allFiles.filter(f => f.size > MAX_SIZE_BYTES);
       if (oversized.length > 0) {
         const names = oversized.map(f => `${f.name} (${(f.size / (1024 * 1024)).toFixed(1)} Mo)`).join(', ');
-        alert(`❌ Fichier(s) trop volumineux (max ${MAX_SIZE_MO} Mo) :\n${names}`);
+        this.notifications.erreur(`Fichier(s) trop volumineux (max ${MAX_SIZE_MO} Mo) : ${names}.`);
         input.value = '';
         return;
       }
@@ -621,7 +623,7 @@ export class FormulaireComponent implements OnInit {
     const file = input.files[0];
     const MAX_SIZE_MO = 5;
     if (file.size > MAX_SIZE_MO * 1024 * 1024) {
-      alert(`❌ Fichier trop volumineux (max ${MAX_SIZE_MO} Mo) : ${file.name}`);
+      this.notifications.erreur(`Fichier trop volumineux (max ${MAX_SIZE_MO} Mo) : ${file.name}.`);
       input.value = '';
       return;
     }

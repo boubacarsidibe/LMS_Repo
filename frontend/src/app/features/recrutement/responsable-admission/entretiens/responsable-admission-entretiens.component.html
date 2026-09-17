@@ -1,10 +1,10 @@
 <!-- ==================== CONTENU SEUL ==================== -->
-<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-stack-lg">
-  <div>
+<div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5 mb-stack-lg">
+  <div class="max-w-3xl">
     <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Gestion des Entretiens</h1>
     <p class="font-body-md text-body-md text-on-surface-variant mt-2">Planification et suivi des entretiens des candidats admis à cette étape.</p>
   </div>
-  <div class="flex gap-3">
+  <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto">
     <app-report-button [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button>
     <!--
       Convoquer plusieurs candidats est le geste courant à cette étape ; le faire un par un
@@ -24,19 +24,19 @@
 
 <div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Total Entretiens</span><span class="material-symbols-outlined text-secondary">event</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ totalEntretiens }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Programmés</div></div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Effectués</span><span class="material-symbols-outlined text-secondary">check_circle</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbEffectues }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Terminés</div></div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Aujourd'hui</span><span class="material-symbols-outlined text-outline">today</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbAujourdhui }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Programmés ce jour</div></div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm"><div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">À venir</span><span class="material-symbols-outlined text-outline">hourglass_empty</span></div><div class="font-headline-lg text-headline-lg text-primary">{{ nbAVenir }}</div><div class="font-label-sm text-label-sm text-on-surface-variant mt-2">Non encore effectués</div></div>
+<div class="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest mb-stack-md overflow-hidden">
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-secondary text-[20px]">event</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ totalEntretiens }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">Programmés</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbEffectues }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">Effectués</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-outline text-[20px]">today</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbAujourdhui }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">Aujourd'hui</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-outline text-[20px]">hourglass_empty</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbAVenir }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">À venir</div></div></div>
 </div>
 
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
-  <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-4">
-    <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
-      <button type="button" (click)="filtre = 'TOUS'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtre === 'TOUS'" [class.border-b-2]="filtre === 'TOUS'" [class.border-secondary]="filtre === 'TOUS'" [class.font-bold]="filtre === 'TOUS'" [class.text-on-surface-variant]="filtre !== 'TOUS'">Tous ({{ totalEntretiens }})</button>
-      <button type="button" (click)="filtre = 'A_VENIR'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtre === 'A_VENIR'" [class.border-b-2]="filtre === 'A_VENIR'" [class.border-secondary]="filtre === 'A_VENIR'" [class.font-bold]="filtre === 'A_VENIR'" [class.text-on-surface-variant]="filtre !== 'A_VENIR'">À venir ({{ nbAVenir }})</button>
-      <button type="button" (click)="filtre = 'PASSES'" class="whitespace-nowrap px-4 py-2 font-label-md text-label-md transition-colors" [class.text-secondary]="filtre === 'PASSES'" [class.border-b-2]="filtre === 'PASSES'" [class.border-secondary]="filtre === 'PASSES'" [class.font-bold]="filtre === 'PASSES'" [class.text-on-surface-variant]="filtre !== 'PASSES'">Effectués ({{ nbEffectues }})</button>
+  <div class="p-3 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-3">
+    <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto" aria-label="Filtrer les entretiens">
+      <button type="button" (click)="filtre = 'TOUS'" [attr.aria-pressed]="filtre === 'TOUS'" class="inline-flex items-center gap-1.5 whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtre === 'TOUS'" [class.text-on-secondary]="filtre === 'TOUS'" [class.border-secondary]="filtre === 'TOUS'" [class.bg-surface-container-lowest]="filtre !== 'TOUS'" [class.text-on-surface-variant]="filtre !== 'TOUS'" [class.border-outline-variant]="filtre !== 'TOUS'">Tous <span class="min-w-4 h-4 px-1 rounded-full text-[10px] leading-4 text-center" [class.bg-on-secondary/20]="filtre === 'TOUS'" [class.bg-surface-container]="filtre !== 'TOUS'">{{ totalEntretiens }}</span></button>
+      <button type="button" (click)="filtre = 'A_VENIR'" [attr.aria-pressed]="filtre === 'A_VENIR'" class="inline-flex items-center gap-1.5 whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtre === 'A_VENIR'" [class.text-on-secondary]="filtre === 'A_VENIR'" [class.border-secondary]="filtre === 'A_VENIR'" [class.bg-surface-container-lowest]="filtre !== 'A_VENIR'" [class.text-on-surface-variant]="filtre !== 'A_VENIR'" [class.border-outline-variant]="filtre !== 'A_VENIR'">À venir <span class="min-w-4 h-4 px-1 rounded-full text-[10px] leading-4 text-center" [class.bg-on-secondary/20]="filtre === 'A_VENIR'" [class.bg-surface-container]="filtre !== 'A_VENIR'">{{ nbAVenir }}</span></button>
+      <button type="button" (click)="filtre = 'PASSES'" [attr.aria-pressed]="filtre === 'PASSES'" class="inline-flex items-center gap-1.5 whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtre === 'PASSES'" [class.text-on-secondary]="filtre === 'PASSES'" [class.border-secondary]="filtre === 'PASSES'" [class.bg-surface-container-lowest]="filtre !== 'PASSES'" [class.text-on-surface-variant]="filtre !== 'PASSES'" [class.border-outline-variant]="filtre !== 'PASSES'">Effectués <span class="min-w-4 h-4 px-1 rounded-full text-[10px] leading-4 text-center" [class.bg-on-secondary/20]="filtre === 'PASSES'" [class.bg-surface-container]="filtre !== 'PASSES'">{{ nbEffectues }}</span></button>
     </div>
     <div class="relative w-full sm:w-64">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
@@ -47,7 +47,29 @@
   <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des entretiens…</div>
   <div *ngIf="!loading && entretiensFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Aucun entretien ne correspond à ces critères.</div>
 
-  <div class="overflow-x-auto" *ngIf="!loading && entretiensFiltres.length > 0">
+  <div class="md:hidden divide-y divide-outline-variant" *ngIf="!loading && entretiensFiltres.length > 0">
+    <article *ngFor="let e of entretiensFiltres" (click)="openDrawer(e)" class="p-4 cursor-pointer hover:bg-surface-container-low transition-colors">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs shrink-0">{{ e.candidatPrenom | slice:0:1 }}{{ e.candidatNom | slice:0:1 }}</div>
+          <div class="min-w-0"><h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ e.candidatPrenom }} {{ e.candidatNom }}</h3><p class="text-[11px] text-on-surface-variant truncate">{{ e.numeroDossier }}</p></div>
+        </div>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap" [ngClass]="estPasse(e.dateHeure) ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-primary-fixed text-on-primary-fixed-variant'">{{ estPasse(e.dateHeure) ? 'Effectué' : 'Planifié' }}</span>
+      </div>
+
+      <div class="grid grid-cols-1 gap-2 mt-3 rounded-lg bg-surface-container-low p-3 text-[11px]">
+        <div class="flex items-start gap-2"><span class="material-symbols-outlined text-[16px] text-on-surface-variant">event</span><div><span class="block text-[10px] text-on-surface-variant">Date et heure</span><span class="text-primary">{{ e.dateHeure | date:'dd MMM yyyy, HH:mm' }}</span></div></div>
+        <div class="flex items-start gap-2"><span class="material-symbols-outlined text-[16px] text-on-surface-variant">location_on</span><div class="min-w-0"><span class="block text-[10px] text-on-surface-variant">Lieu ou lien</span><span class="text-primary break-all">{{ e.lieuOuLien || '—' }}</span></div></div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-outline-variant" (click)="$event.stopPropagation()">
+        <div class="flex items-center gap-1.5"><span class="text-[10px] text-on-surface-variant">Note /20</span><app-ui-note [valeur]="e.noteEntretien" [contexte]="e" [enregistrer]="enregistrerNoteEntretien" [etiquette]="'Note sur 20 de ' + e.candidatPrenom + ' ' + e.candidatNom"></app-ui-note></div>
+        <div class="flex gap-1"><button type="button" (click)="openDrawer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button><button type="button" (click)="supprimer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container" title="Annuler"><span class="material-symbols-outlined text-[18px]">cancel</span></button></div>
+      </div>
+    </article>
+  </div>
+
+  <div class="hidden md:block overflow-x-auto" *ngIf="!loading && entretiensFiltres.length > 0">
     <table class="w-full text-left border-collapse">
       <thead>
         <tr class="bg-surface-container-low border-b border-outline-variant">

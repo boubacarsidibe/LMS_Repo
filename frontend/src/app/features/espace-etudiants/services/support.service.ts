@@ -44,4 +44,13 @@ export class SupportService {
     payload.append('fichier', fichier);
     return this.http.post<Support>(`${this.api}/formateur/supports`, payload);
   }
+
+  publierLienExterne(coursId: number, titre: string, url: string, datePublication: string): Observable<Support> {
+    return this.http.post<Support>(`${this.api}/formateur/supports/lien`, {
+      coursId,
+      titre,
+      url,
+      datePublication,
+    });
+  }
 }

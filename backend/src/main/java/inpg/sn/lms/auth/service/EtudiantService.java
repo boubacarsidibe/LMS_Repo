@@ -45,6 +45,7 @@ public class EtudiantService {
         }
         User user = userService.findByUsername(etudiantDto.getUsername());
         if (user == null) {
+            PasswordPolicy.exigerMotDePasseRobuste(etudiantDto.getPassword());
             user = new User(etudiantDto.getUsername(), passwordEncoder.encode(etudiantDto.getPassword()),
                     etudiantDto.getEmail());
         }

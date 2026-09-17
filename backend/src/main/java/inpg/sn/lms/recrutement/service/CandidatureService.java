@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.auth.entity.User;
@@ -299,6 +302,16 @@ public class CandidatureService {
                 .collect(Collectors.toList());
     }
 
+    /** Page de dossiers triée par dépôt récent pour les tableaux d'administration. */
+    @Transactional(readOnly = true)
+    public Page<CandidatureResponse> getCandidaturesPage(int page, int taille) {
+        int pageSecurisee = Math.max(0, page);
+        int tailleSecurisee = Math.min(100, Math.max(1, taille));
+        return candidatureRepository.findAllBy(PageRequest.of(pageSecurisee, tailleSecurisee,
+                Sort.by(Sort.Direction.DESC, "dateSoumission")))
+                .map(this::toResponse);
+    }
+
     private static final List<EnumStatutCandidature> ETAPES_WORKFLOW = List.of(
             EnumStatutCandidature.SOUMIS,
             EnumStatutCandidature.EN_COURS_DE_PRESELECTION,
@@ -382,6 +395,9 @@ public class CandidatureService {
                         .id(p.getId())
                         .typeDocument(p.getTypeDocument())
                         .estConforme(p.isEstConforme())
+                        .statutVerification(p.getStatutVerification())
+                        .motifNonConformite(p.getMotifNonConformite())
+                        .dateVerification(p.getDateVerification())
                         .description(p.getDescription())
                         .fichierStockeId(p.getFichierStocke() != null ? p.getFichierStocke().getId() : null)
                         .fichierNomOriginal(
