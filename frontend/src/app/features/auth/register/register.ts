@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth } from '../../../core/auth/services/authService';
@@ -64,7 +64,23 @@ export class Register {
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(12)]],
     confirmPassword: ['', Validators.required]
-  });
+  }, { validators: Register.motsDePasseIdentiques });
+
+  /**
+   * Validateur de groupe (et non du seul champ confirmPassword) : comparer deux
+   * contrôles exige de lire les deux, ce qu'un validateur de champ isolé ne peut
+   * pas faire. Avant ce correctif, confirmPassword n'était comparé à rien — un
+   * mot de passe et sa confirmation pouvaient diverger sans que le formulaire
+   * ne s'en aperçoive, ni côté validation ni côté envoi (le champ n'était même
+   * pas transmis au backend).
+   */
+  private static motsDePasseIdentiques(group: AbstractControl): ValidationErrors | null {
+    const password = group.get('password')?.value;
+    const confirmPassword = group.get('confirmPassword')?.value;
+    return password && confirmPassword && password !== confirmPassword
+      ? { motsDePasseDifferents: true }
+      : null;
+  }
 
   choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' | 'FORMATEUR'): void {
     this.typeInscription = type;

@@ -95,7 +95,10 @@
           type="text"
           formControlName="prenom"
           class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
-          required />
+          [class.border-error]="registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched" />
+        <p *ngIf="registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched" class="mt-1 text-xs text-error">
+          Le prénom est requis.
+        </p>
       </div>
       <div>
         <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-nom">Nom</label>
@@ -104,7 +107,10 @@
           type="text"
           formControlName="nom"
           class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
-          required />
+          [class.border-error]="registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched" />
+        <p *ngIf="registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched" class="mt-1 text-xs text-error">
+          Le nom est requis.
+        </p>
       </div>
     </div>
 
@@ -116,7 +122,10 @@
         type="text"
         formControlName="nomOrganisation"
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
-        required />
+        [class.border-error]="registerForm.get('nomOrganisation')?.invalid && registerForm.get('nomOrganisation')?.touched" />
+      <p *ngIf="registerForm.get('nomOrganisation')?.invalid && registerForm.get('nomOrganisation')?.touched" class="mt-1 text-xs text-error">
+        {{ libelleNomOrganisation }} est requis.
+      </p>
       <p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
         Les autres informations (description, secteur, adresse…) seront demandées à l'étape suivante.
       </p>
@@ -124,44 +133,66 @@
 
     <div>
       <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-email">Email institutionnel</label>
-      <input 
+      <input
         id="reg-email"
-        type="email" 
+        type="email"
         formControlName="email"
         placeholder="nom@institution.edu"
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
-        required />
-      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Au moins 12 caractères.</p>
+        [class.border-error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" />
+      <p *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="mt-1 text-xs text-error">
+        Veuillez entrer une adresse e-mail valide.
+      </p>
     </div>
 
     <div>
       <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-password">Mot de passe</label>
-      <input 
+      <input
         id="reg-password"
-        type="password" 
+        type="password"
         formControlName="password"
         placeholder="••••••••"
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
-        required />
+        [class.border-error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" />
+      <p *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" class="mt-1 text-xs text-error">
+        Le mot de passe doit contenir au moins 12 caractères.
+      </p>
+      <p *ngIf="registerForm.get('password')?.valid || !registerForm.get('password')?.touched" class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
+        Au moins 12 caractères.
+      </p>
     </div>
 
     <div>
       <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-confirm">Confirmation du mot de passe</label>
-      <input 
+      <input
         id="reg-confirm"
-        type="password" 
+        type="password"
         formControlName="confirmPassword"
         placeholder="••••••••"
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
-        required />
+        [class.border-error]="(registerForm.get('confirmPassword')?.invalid || registerForm.hasError('motsDePasseDifferents')) && registerForm.get('confirmPassword')?.touched" />
+      <p *ngIf="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched" class="mt-1 text-xs text-error">
+        La confirmation du mot de passe est requise.
+      </p>
+      <p *ngIf="registerForm.get('confirmPassword')?.valid && registerForm.hasError('motsDePasseDifferents') && registerForm.get('confirmPassword')?.touched" class="mt-1 text-xs text-error">
+        Les deux mots de passe ne correspondent pas.
+      </p>
     </div>
 
-    <button 
-      type="submit" 
+    <button
+      type="submit"
       [disabled]="isLoading"
       class="w-full bg-secondary text-on-secondary font-label-md text-label-md py-3 px-4 rounded-lg hover:bg-opacity-90 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] disabled:opacity-50 cursor-pointer">
       {{ isLoading ? 'Création en cours...' : 'Créer un compte' }}
     </button>
+
+    <!-- Sans ce message, un clic avec un formulaire invalide ne produisait aucun
+         retour visible : markAllAsTouched() fait bien apparaître les erreurs de
+         chaque champ, mais rien n'attirait l'œil vers le haut du formulaire si
+         le champ fautif était hors écran. -->
+    <p *ngIf="registerForm.invalid && registerForm.touched" class="text-center text-xs text-error -mt-2">
+      Le formulaire contient des champs invalides. Veuillez les corriger ci-dessus.
+    </p>
 
     <p class="text-center font-body-sm text-body-sm text-on-surface-variant mt-4">
       En vous inscrivant, vous acceptez nos <a routerLink="/terms-and-conditions" class="text-secondary hover:underline">Conditions d'utilisation</a>.
