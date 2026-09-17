@@ -243,8 +243,11 @@ public class RelevePdfService {
             assurerEspace(22);
             content.setStrokingColor(BLEU_NUIT);
             content.setLineWidth(1f);
-            content.moveTo(MARGE, y + 4);
-            content.lineTo(MARGE + largeurUtile, y + 4);
+            // Sous la ligne de base (et non au-dessus) : au-dessus, à cette distance,
+            // le trait traverse l'x-height du texte au lieu de le souligner (constaté
+            // en rendu réel - toutes les intertitres apparaissaient barrées).
+            content.moveTo(MARGE, y - 4);
+            content.lineTo(MARGE + largeurUtile, y - 4);
             content.stroke();
             ecrire(gras, 13, texte, 0f);
         }
