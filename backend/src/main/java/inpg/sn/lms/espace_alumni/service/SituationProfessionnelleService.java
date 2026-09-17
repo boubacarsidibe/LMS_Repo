@@ -28,7 +28,7 @@ public class SituationProfessionnelleService {
 
     public SituationProfessionnelleDto creer(AlumniProfil profil, SituationProfessionnelleRequest requete) {
         SituationProfessionnelle situation = new SituationProfessionnelle(profil,
-                requete.intitulePoste().trim(), requete.entreprise().trim(), requete.dateDebut(), requete.dateFin(),
+                nettoyer(requete.intitulePoste()), nettoyer(requete.entreprise()), requete.dateDebut(), requete.dateFin(),
                 requete.statutEmploi());
         return toDto(repository.save(situation));
     }
@@ -39,8 +39,8 @@ public class SituationProfessionnelleService {
         if (situation == null) {
             return null;
         }
-        situation.setIntitulePoste(requete.intitulePoste().trim());
-        situation.setEntreprise(requete.entreprise().trim());
+        situation.setIntitulePoste(nettoyer(requete.intitulePoste()));
+        situation.setEntreprise(nettoyer(requete.entreprise()));
         situation.setDateDebut(requete.dateDebut());
         situation.setDateFin(requete.dateFin());
         situation.setStatutEmploi(requete.statutEmploi() == null ? EnumStatutEmploi.EN_EMPLOI : requete.statutEmploi());
@@ -55,6 +55,11 @@ public class SituationProfessionnelleService {
         }
         repository.delete(situation);
         return true;
+    }
+
+    /** Nul pour une situation sans poste (en recherche d'emploi, poursuite d'études, autre) — {@link String#trim()} planterait sur null. */
+    private String nettoyer(String valeur) {
+        return valeur == null ? null : valeur.trim();
     }
 
     private SituationProfessionnelle trouverAppartenant(Long id, AlumniProfil profil) {
