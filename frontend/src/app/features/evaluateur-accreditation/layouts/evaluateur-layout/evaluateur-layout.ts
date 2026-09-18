@@ -95,6 +95,7 @@ export class EvaluateurLayout {
   sidebarMobileOpen = false;
 
   readonly navigation: EntreeNavigation[] = [
+    { libelle: 'Tableau de bord', lien: 'tableau-de-bord', icone: 'dashboard' },
     { libelle: 'Demandes', lien: 'demandes', icone: 'fact_check' },
     { libelle: 'Référentiel', lien: 'criteres', icone: 'checklist' },
     { libelle: 'Rendez-vous', lien: 'rendez-vous', icone: 'event' },
