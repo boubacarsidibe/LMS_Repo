@@ -9,7 +9,7 @@
           <span class="w-8 h-[1px] bg-secondary"></span>
           Espace Enseignant
         </div>
-        <h1 class="font-display text-headline-lg text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
+        <h1 class="font-display text-display text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
         <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos promotions en temps réel.</p>
       </div>
     </div>
@@ -151,7 +151,7 @@
         <form [formGroup]="depotForm" (ngSubmit)="onSubmit()" class="space-y-stack-md">
           <section class="space-y-base">
             <div class="flex items-center gap-2">
-              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">1</span>
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">1</span>
               <label class="font-label-md text-label-md text-on-surface" for="cours-cible">Cours concerné</label>
             </div>
             <select *ngIf="cours.length" id="cours-cible" formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-xl border border-outline-variant/40 outline-none font-body-sm text-body-sm text-on-surface focus:border-secondary">
@@ -166,7 +166,7 @@
 
           <div class="space-y-base">
             <div class="flex items-center gap-2">
-              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">2</span>
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">2</span>
               <label class="font-label-md text-label-md text-on-surface">Contenu à publier</label>
             </div>
             <p class="text-body-sm text-on-surface-variant">Choisissez le format avant d'ajouter le fichier ou le lien.</p>
@@ -191,7 +191,7 @@
 
           <section *ngIf="!estDepotLien" class="space-y-base">
             <div class="flex items-center gap-2">
-              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">3</span>
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">3</span>
               <span class="font-label-md text-label-md text-on-surface">Fichier à déposer</span>
             </div>
             <div *ngIf="!fichierSelectionne" (click)="ouvrirExplorateur()" (dragover)="$event.preventDefault(); survolDepot = true" (dragleave)="survolDepot = false" (drop)="onFichierDepose($event)"
@@ -211,7 +211,7 @@
 
           <div *ngIf="estDepotLien" class="space-y-stack-md rounded-xl border border-secondary/20 bg-secondary-container/10 p-4">
             <div class="flex items-center gap-2 text-secondary">
-              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">3</span>
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">3</span>
               <p class="font-label-md text-label-md">Informations du lien externe</p>
             </div>
             <div class="space-y-base">
@@ -227,7 +227,7 @@
           </div>
 
             <div class="space-y-base">
-                <div class="flex items-center gap-2"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">4</span><label class="font-label-md text-label-md text-on-surface">Visibilité</label></div>
+                <div class="flex items-center gap-2"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">4</span><label class="font-label-md text-label-md text-on-surface">Visibilité</label></div>
                 <input formControlName="datePublication" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
                 <p *ngIf="!publicationDifferee" class="text-body-sm text-on-surface-variant">
                 Publication immédiate. Choisissez une date future pour programmer la mise en ligne.
