@@ -18,7 +18,7 @@
       <h3 class="title text-lg font-bold text-slate-900 leading-snug line-clamp-2">
         {{ formation.intitule }}
       </h3>
-      <button class="fav text-slate-400 hover:text-red-500 transition-colors p-1 -mr-1 -mt-1 flex-shrink-0" (click)="toggleFavorite($event)" [attr.aria-label]="formation.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+      <button class="fav text-outline hover:text-error transition-colors p-1 -mr-1 -mt-1 flex-shrink-0" (click)="toggleFavorite($event)" [attr.aria-label]="formation.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'">
         <span class="material-symbols-outlined text-xl">
           {{ formation.favorite ? 'favorite' : 'favorite_border' }}
         </span>
