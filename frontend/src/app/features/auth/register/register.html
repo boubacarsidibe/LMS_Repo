@@ -25,7 +25,7 @@
   </div>
 
   <!-- Formulaire Inscription -->
-  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-6">
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-6" novalidate>
     <!-- Type de compte : oriente la redirection après inscription (aucun rôle métier
          n'est encore attribué à ce stade, il ne l'est qu'à la soumission réelle). -->
     <div>
@@ -81,8 +81,10 @@
           id="reg-prenom"
           type="text"
           formControlName="prenom"
+          [class.border-error]="champEnErreur('prenom')"
           class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
           required />
+        <p *ngIf="champEnErreur('prenom')" class="font-body-sm text-body-sm text-error mt-1.5">Le prénom est requis.</p>
       </div>
       <div>
         <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-nom">Nom</label>
@@ -90,8 +92,10 @@
           id="reg-nom"
           type="text"
           formControlName="nom"
+          [class.border-error]="champEnErreur('nom')"
           class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
           required />
+        <p *ngIf="champEnErreur('nom')" class="font-body-sm text-body-sm text-error mt-1.5">Le nom est requis.</p>
       </div>
     </div>
 
@@ -102,8 +106,10 @@
         id="reg-nom-organisation"
         type="text"
         formControlName="nomOrganisation"
+        [class.border-error]="champEnErreur('nomOrganisation')"
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
         required />
+      <p *ngIf="champEnErreur('nomOrganisation')" class="font-body-sm text-body-sm text-error mt-1.5">{{ libelleNomOrganisation }} est requis.</p>
       <p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
         Les autres informations (description, secteur, adresse…) seront demandées à l'étape suivante.
       </p>
@@ -111,36 +117,46 @@
 
     <div>
       <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-email">Email institutionnel</label>
-      <input 
+      <input
         id="reg-email"
-        type="email" 
+        type="email"
         formControlName="email"
         placeholder="nom@institution.edu"
+        [class.border-error]="champEnErreur('email')"
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
         required />
-      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Au moins 12 caractères.</p>
+      <p *ngIf="champEnErreur('email') && registerForm.get('email')?.hasError('required')" class="font-body-sm text-body-sm text-error mt-1.5">L'email est requis.</p>
+      <p *ngIf="champEnErreur('email') && registerForm.get('email')?.hasError('email')" class="font-body-sm text-body-sm text-error mt-1.5">Le format de l'email est invalide.</p>
     </div>
 
     <div>
       <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-password">Mot de passe</label>
-      <input 
+      <input
         id="reg-password"
-        type="password" 
+        type="password"
         formControlName="password"
         placeholder="••••••••"
+        minlength="12"
+        [class.border-error]="champEnErreur('password')"
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
         required />
+      <p *ngIf="champEnErreur('password') && registerForm.get('password')?.hasError('required')" class="font-body-sm text-body-sm text-error mt-1.5">Le mot de passe est requis.</p>
+      <p *ngIf="champEnErreur('password') && registerForm.get('password')?.hasError('minlength')" class="font-body-sm text-body-sm text-error mt-1.5">Le mot de passe doit compter au moins 12 caractères.</p>
+      <p *ngIf="!champEnErreur('password')" class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Au moins 12 caractères.</p>
     </div>
 
     <div>
       <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-confirm">Confirmation du mot de passe</label>
-      <input 
+      <input
         id="reg-confirm"
-        type="password" 
+        type="password"
         formControlName="confirmPassword"
         placeholder="••••••••"
+        [class.border-error]="champEnErreur('confirmPassword') || (registerForm.hasError('motsDePasseDifferents') && (registerForm.get('confirmPassword')?.touched || false))"
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
         required />
+      <p *ngIf="champEnErreur('confirmPassword')" class="font-body-sm text-body-sm text-error mt-1.5">La confirmation du mot de passe est requise.</p>
+      <p *ngIf="!champEnErreur('confirmPassword') && registerForm.hasError('motsDePasseDifferents') && (registerForm.get('confirmPassword')?.touched || tentativeEnvoi)" class="font-body-sm text-body-sm text-error mt-1.5">Les mots de passe ne correspondent pas.</p>
     </div>
 
     <button 
