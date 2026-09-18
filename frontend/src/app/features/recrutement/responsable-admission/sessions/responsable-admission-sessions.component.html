@@ -98,8 +98,8 @@
               </div>
             </div>
             <div class="flex items-center gap-0.5 shrink-0" (click)="$event.stopPropagation()">
-              <button type="button" (click)="voirSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
-              <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded" title="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+              <button type="button" (click)="voirSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded" title="Modifier" aria-label="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+              <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded" title="Supprimer" aria-label="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button>
             </div>
           </div>
           <dl class="grid grid-cols-2 gap-2 mt-3 text-xs">
@@ -161,10 +161,10 @@
           </div>
         </td>
         <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
-          <button type="button" (click)="voirSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors" title="Modifier">
+          <button type="button" (click)="voirSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors" title="Modifier" aria-label="Modifier">
             <span class="material-symbols-outlined text-[20px]">edit</span>
           </button>
-          <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded transition-colors" title="Supprimer">
+          <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded transition-colors" title="Supprimer" aria-label="Supprimer">
             <span class="material-symbols-outlined text-[20px]">delete</span>
           </button>
         </td>

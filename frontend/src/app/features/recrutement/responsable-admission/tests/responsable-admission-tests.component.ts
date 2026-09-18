@@ -13,6 +13,7 @@ import {
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { ReportButtonComponent } from '../../../../shared/components/report-button/report-button.component';
 import { UiNoteComponent } from '../../../../shared/components/ui/ui-note.component';
 
@@ -61,7 +62,7 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
   convocationFormError = '';
 
   constructor(private recrutementService: RecrutementService, private fb: FormBuilder, private router: Router,
-              private notifications: NotificationService) {
+              private notifications: NotificationService, private confirmation: ConfirmationService) {
     this.convocationForm = this.fb.group({
       nomEpreuve: ['', Validators.required],
       coefficient: [1, [Validators.required, Validators.min(0.1)]],
@@ -239,23 +240,34 @@ export class ResponsableAdmissionTestsComponent implements OnInit {
     const candidature = this.candidatureDe(candidatId);
     if (!candidature || candidature.statut === 'REJETE') return;
     const seuil = this.seuilPour(candidatId);
-    const confirme = confirm(
-      `${candidature.candidatPrenom} ${candidature.candidatNom} obtient ${note}/20, en dessous du seuil de réussite (${seuil}/20).\n\n` +
-      `Rejeter automatiquement son dossier et l'en informer par email ?`
-    );
-    if (!confirme) return;
-    this.recrutementService.rejeterDossier(candidature.id, `Note insuffisante au test académique (${note}/20, seuil requis : ${seuil}/20).`)
-      .subscribe({
-        next: () => this.charger(),
-        error: () => this.notifications.erreur('Échec du rejet automatique du dossier.'),
-      });
+    this.confirmation.demander({
+      titre: 'Rejeter le dossier',
+      message: `${candidature.candidatPrenom} ${candidature.candidatNom} obtient ${note}/20, en dessous du seuil de réussite (${seuil}/20).\n\n`
+        + `Rejeter automatiquement son dossier et l'en informer par email ?`,
+      libelleConfirmer: 'Rejeter le dossier',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.recrutementService.rejeterDossier(candidature.id, `Note insuffisante au test académique (${note}/20, seuil requis : ${seuil}/20).`)
+        .subscribe({
+          next: () => this.charger(),
+          error: () => this.notifications.erreur('Échec du rejet automatique du dossier.'),
+        });
+    });
   }
 
   supprimer(test: TestAffiche): void {
-    if (!confirm(`Supprimer le test "${test.nomEpreuve}" de ${test.candidatPrenom} ${test.candidatNom} ?`)) return;
-    this.recrutementService.supprimerTest(test.id).subscribe({
-      next: () => this.charger(),
-      error: () => this.notifications.erreur('Échec de la suppression du test.'),
+    this.confirmation.demander({
+      titre: 'Supprimer le test',
+      message: `Supprimer le test "${test.nomEpreuve}" de ${test.candidatPrenom} ${test.candidatNom} ?`,
+      libelleConfirmer: 'Supprimer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.recrutementService.supprimerTest(test.id).subscribe({
+        next: () => this.charger(),
+        error: () => this.notifications.erreur('Échec de la suppression du test.'),
+      });
     });
   }
 

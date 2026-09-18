@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { CandidatureResponse, PaiementResponse, RecrutementService, ResultatRelance } from '../../../../core/recrutement/services/recrutement.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 /** Statuts à partir desquels le dossier est validé et le paiement des frais attendu. */
 const STATUTS_DOSSIER_VALIDE = ['EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 'ADMIS3'];
@@ -26,7 +27,7 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
   relanceEnCours = false;
   relanceMessage = '';
 
-  constructor(private recrutementService: RecrutementService) {}
+  constructor(private recrutementService: RecrutementService, private confirmation: ConfirmationService) {}
 
   ngOnInit(): void {
     this.charger();
@@ -115,18 +116,24 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
    */
   confirmerDossier(c: CandidatureResponse): void {
     if (this.idEnCours) return;
-    if (!confirm(`Confirmer le paiement des frais de dossier de ${c.candidatPrenom} ${c.candidatNom} (${c.numeroDossier}) ?`)) return;
-    this.idEnCours = c.id;
-    this.errorMessage = '';
-    this.recrutementService.enregistrerPaiementHorsLigne(c.id).subscribe({
-      next: () => {
-        this.idEnCours = null;
-        this.charger();
-      },
-      error: (e) => {
-        this.idEnCours = null;
-        this.errorMessage = e?.error?.message || 'Échec de la confirmation du paiement.';
-      },
+    this.confirmation.demander({
+      titre: 'Confirmer le paiement',
+      message: `Confirmer le paiement des frais de dossier de ${c.candidatPrenom} ${c.candidatNom} (${c.numeroDossier}) ?`,
+      libelleConfirmer: 'Confirmer le paiement',
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.idEnCours = c.id;
+      this.errorMessage = '';
+      this.recrutementService.enregistrerPaiementHorsLigne(c.id).subscribe({
+        next: () => {
+          this.idEnCours = null;
+          this.charger();
+        },
+        error: (e) => {
+          this.idEnCours = null;
+          this.errorMessage = e?.error?.message || 'Échec de la confirmation du paiement.';
+        },
+      });
     });
   }
 

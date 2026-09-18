@@ -6,7 +6,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./layouts/evaluateur-layout/evaluateur-layout').then((m) => m.EvaluateurLayout),
     children: [
-      { path: '', redirectTo: 'demandes', pathMatch: 'full' },
+      { path: '', redirectTo: 'tableau-de-bord', pathMatch: 'full' },
+      {
+        path: 'tableau-de-bord',
+        loadComponent: () =>
+          import('./pages/tableau-de-bord/tableau-de-bord').then((m) => m.EvaluateurTableauDeBordComponent),
+      },
       {
         path: 'demandes',
         loadComponent: () => import('./pages/demandes/demandes').then((m) => m.EvaluateurDemandesComponent),

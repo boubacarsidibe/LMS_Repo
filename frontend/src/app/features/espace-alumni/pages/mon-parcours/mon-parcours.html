@@ -28,10 +28,10 @@
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <p class="font-label-md text-label-md text-on-surface">{{ s.intitulePoste || libelleStatutEmploi(s.statutEmploi) }}</p>
-            <span *ngIf="!s.dateFin" class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-label-sm">
+            <span *ngIf="!s.dateFin" class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
               En cours
             </span>
-            <span class="px-2 py-0.5 rounded-full bg-primary-container text-on-primary-container text-[11px] font-label-sm">
+            <span class="px-2 py-0.5 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm">
               {{ libelleStatutEmploi(s.statutEmploi) }}
             </span>
           </div>

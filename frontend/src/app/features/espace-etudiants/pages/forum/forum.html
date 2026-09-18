@@ -66,7 +66,7 @@
               <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold" [ngClass]="[s.couleurAvatar, s.couleurTexte]">{{ s.initiales }}</div>
               <div>
                 <h3 class="font-label-md text-label-md text-on-surface">{{ s.auteur }}</h3>
-                <p class="text-[10px] font-label-sm text-secondary uppercase tracking-tighter">{{ s.cours }}</p>
+                <p class="font-label-sm text-label-sm text-secondary uppercase tracking-tighter">{{ s.cours }}</p>
               </div>
             </div>
             <span class="text-label-sm text-outline">{{ s.date }}</span>
@@ -107,7 +107,7 @@
             <span class="material-symbols-outlined">flag</span>
           </button>
           <div class="relative">
-            <button id="options-sujet-btn" (click)="toggleOptions()" class="p-2 text-outline hover:text-on-surface transition-colors" title="Plus d'options">
+            <button id="options-sujet-btn" (click)="toggleOptions()" class="p-2 text-outline hover:text-on-surface transition-colors" title="Plus d'options" aria-label="Plus d'options">
               <span class="material-symbols-outlined">more_vert</span>
             </button>
             <div *ngIf="optionsOuvertes" id="options-sujet-dropdown" class="absolute right-0 mt-2 w-56 bg-surface border border-outline-variant rounded-xl shadow-lg py-1 z-20">
@@ -151,18 +151,18 @@
       <div class="p-stack-lg bg-surface-container-lowest border-t border-outline-variant shadow-sm">
         <div class="max-w-4xl mx-auto bg-surface-container-low rounded-xl border border-outline-variant shadow-inner overflow-hidden">
           <div class="flex items-center gap-1 p-2 bg-surface-container-high/50 border-b border-outline-variant">
-            <button type="button" (click)="appliquerFormat('**', '**', 'gras', messageTextarea)" class="p-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Gras (**texte**)"><span class="material-symbols-outlined text-[20px]">format_bold</span></button>
-            <button type="button" (click)="appliquerFormat('*', '*', 'italique', messageTextarea)" class="p-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Italique (*texte*)"><span class="material-symbols-outlined text-[20px]">format_italic</span></button>
-            <button type="button" (click)="insererLien(messageTextarea)" class="p-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Lien ([texte](url))"><span class="material-symbols-outlined text-[20px]">link</span></button>
-            <button type="button" (click)="insererListe(messageTextarea)" class="p-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Liste à puces (- élément)"><span class="material-symbols-outlined text-[20px]">format_list_bulleted</span></button>
+            <button type="button" (click)="appliquerFormat('**', '**', 'gras', messageTextarea)" class="p-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Gras (**texte**)" aria-label="Gras"><span class="material-symbols-outlined text-[20px]">format_bold</span></button>
+            <button type="button" (click)="appliquerFormat('*', '*', 'italique', messageTextarea)" class="p-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Italique (*texte*)" aria-label="Italique"><span class="material-symbols-outlined text-[20px]">format_italic</span></button>
+            <button type="button" (click)="insererLien(messageTextarea)" class="p-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Lien ([texte](url))" aria-label="Insérer un lien"><span class="material-symbols-outlined text-[20px]">link</span></button>
+            <button type="button" (click)="insererListe(messageTextarea)" class="p-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Liste à puces (- élément)" aria-label="Liste à puces"><span class="material-symbols-outlined text-[20px]">format_list_bulleted</span></button>
             <div class="h-6 w-[1px] bg-outline-variant mx-1"></div>
-            <button type="button" (click)="appliquerFormat(caractereCode, caractereCode, 'code', messageTextarea)" class="p-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Code (texte entre apostrophes inverses)"><span class="material-symbols-outlined text-[20px]">code</span></button>
+            <button type="button" (click)="appliquerFormat(caractereCode, caractereCode, 'code', messageTextarea)" class="p-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors" title="Code (texte entre apostrophes inverses)" aria-label="Code"><span class="material-symbols-outlined text-[20px]">code</span></button>
           </div>
           <textarea #messageTextarea [(ngModel)]="nouveauMessage" (keydown.control.enter)="envoyerReponse()" class="w-full min-h-[120px] p-4 bg-transparent border-none outline-none font-body-md text-body-md text-on-surface resize-none focus:ring-0" placeholder="Rédigez votre réponse pédagogique ici..."></textarea>
           <div *ngIf="fichierSelectionne" class="flex items-center gap-2 px-4 py-2 bg-secondary-container/20 border-t border-outline-variant/30">
             <span class="material-symbols-outlined text-[18px] text-secondary">attach_file</span>
             <span class="font-label-sm text-label-sm text-on-surface truncate max-w-xs">{{ fichierSelectionne.name }}</span>
-            <button (click)="retirerFichier()" class="ml-auto p-1 text-outline hover:text-error transition-colors" title="Retirer le fichier">
+            <button (click)="retirerFichier()" class="ml-auto p-1 text-outline hover:text-error transition-colors" title="Retirer le fichier" aria-label="Retirer le fichier">
               <span class="material-symbols-outlined text-[16px]">close</span>
             </button>
           </div>

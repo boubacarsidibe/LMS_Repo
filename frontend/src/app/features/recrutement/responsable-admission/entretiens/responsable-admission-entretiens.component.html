@@ -64,7 +64,7 @@
 
       <div class="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-outline-variant" (click)="$event.stopPropagation()">
         <div class="flex items-center gap-1.5"><span class="text-[10px] text-on-surface-variant">Note /20</span><app-ui-note [valeur]="e.noteEntretien" [contexte]="e" [enregistrer]="enregistrerNoteEntretien" [etiquette]="'Note sur 20 de ' + e.candidatPrenom + ' ' + e.candidatNom"></app-ui-note></div>
-        <div class="flex gap-1"><button type="button" (click)="openDrawer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button><button type="button" (click)="supprimer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container" title="Annuler"><span class="material-symbols-outlined text-[18px]">cancel</span></button></div>
+        <div class="flex gap-1"><button type="button" (click)="openDrawer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed" title="Modifier" aria-label="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button><button type="button" (click)="supprimer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container" title="Annuler" aria-label="Annuler"><span class="material-symbols-outlined text-[18px]">cancel</span></button></div>
       </div>
     </article>
   </div>
@@ -110,8 +110,8 @@
           </td>
           <td class="p-4 text-right" (click)="$event.stopPropagation()">
             <div class="flex justify-end gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
-              <button type="button" (click)="openDrawer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
-              <button type="button" (click)="supprimer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Annuler"><span class="material-symbols-outlined text-[18px]">cancel</span></button>
+              <button type="button" (click)="openDrawer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Modifier" aria-label="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+              <button type="button" (click)="supprimer(e)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Annuler" aria-label="Annuler"><span class="material-symbols-outlined text-[18px]">cancel</span></button>
             </div>
           </td>
         </tr>
@@ -125,7 +125,7 @@
 <aside class="fixed top-0 right-0 h-full w-full max-w-md bg-surface shadow-[0_12px_32px_rgba(19,23,65,0.1)] z-50 transform transition-transform duration-300 ease-in-out flex flex-col border-l border-outline-variant" [class.translate-x-full]="!drawerOpen" [class.translate-x-0]="drawerOpen">
   <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
     <h2 class="font-headline-sm text-headline-sm text-primary">{{ entretienEnEdition ? 'Modifier l\'entretien' : 'Planifier un entretien' }}</h2>
-    <button type="button" class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" (click)="closeDrawer()"><span class="material-symbols-outlined">close</span></button>
+    <button type="button" class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" (click)="closeDrawer()" aria-label="Fermer"><span class="material-symbols-outlined">close</span></button>
   </div>
   <form [formGroup]="entretienForm" (ngSubmit)="enregistrer()" class="flex-1 flex flex-col overflow-y-auto">
     <div class="flex-1 overflow-y-auto p-6 space-y-4">
@@ -145,8 +145,8 @@
         <input formControlName="dateHeure" aria-label="Date et heure" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="datetime-local"/>
       </div>
       <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu ou lien visio</label>
-        <input formControlName="lieuOuLien" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B204 ou lien Teams" type="text"/>
+        <label for="entretien-lieu" class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu ou lien visio</label>
+        <input id="entretien-lieu" formControlName="lieuOuLien" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B204 ou lien Teams" type="text"/>
       </div>
       <div>
         <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Note (sur 20, une fois l'entretien effectué)</label>
@@ -171,7 +171,7 @@
   <div class="bg-surface rounded-xl shadow-lg w-full max-w-lg border border-outline-variant max-h-[85vh] flex flex-col" (click)="$event.stopPropagation()">
     <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
       <h3 class="font-headline-sm text-headline-sm text-primary">Convocation groupée à l'entretien</h3>
-      <button type="button" (click)="fermerConvocationGroupee()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors"><span class="material-symbols-outlined">close</span></button>
+      <button type="button" (click)="fermerConvocationGroupee()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" aria-label="Fermer"><span class="material-symbols-outlined">close</span></button>
     </div>
     <form [formGroup]="convocationForm" (ngSubmit)="envoyerConvocationGroupee()" class="flex-1 overflow-y-auto p-6 space-y-4">
       <div *ngIf="convocationFormError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ convocationFormError }}</div>
@@ -181,8 +181,8 @@
           <input formControlName="dateHeure" aria-label="Date et heure" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="datetime-local"/>
         </div>
         <div>
-          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu ou lien visio</label>
-          <input formControlName="lieuOuLien" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B204" type="text"/>
+          <label for="convocation-lieu" class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu ou lien visio</label>
+          <input id="convocation-lieu" formControlName="lieuOuLien" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B204" type="text"/>
         </div>
       </div>
 

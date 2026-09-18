@@ -112,7 +112,7 @@
               {{ libelleStatut(d.statut) }}
             </span>
             <button *ngIf="d.statut === 'EN_ATTENTE'" type="button" (click)="annulerDemande(d)"
-                    class="text-outline hover:text-error transition-colors" title="Annuler la demande">
+                    class="text-outline hover:text-error transition-colors" title="Annuler la demande" aria-label="Annuler la demande">
               <span class="material-symbols-outlined text-[20px]">close</span>
             </button>
             <ng-container *ngIf="d.statut === 'PROPOSITION_AUTRE_DATE'">
@@ -176,7 +176,7 @@
                   [ngClass]="c.reserve ? 'bg-primary-fixed text-on-primary-fixed-variant' : 'bg-secondary-container text-on-secondary-container'">
               {{ c.reserve ? 'Réservé' : 'Libre' }}
             </span>
-            <button *ngIf="!c.reserve" type="button" (click)="supprimerCreneau(c)" title="Retirer ce créneau"
+            <button *ngIf="!c.reserve" type="button" (click)="supprimerCreneau(c)" title="Retirer ce créneau" aria-label="Retirer ce créneau"
                     class="text-outline hover:text-error transition-colors">
               <span class="material-symbols-outlined text-[20px]">delete</span>
             </button>

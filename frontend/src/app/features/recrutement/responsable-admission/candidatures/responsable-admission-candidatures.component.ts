@@ -7,6 +7,7 @@ import { CandidatureResponse, FormatRapport, RecrutementService, ResultatRelance
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 'ADMIS2' | 'LISTE_ATTENTE' | 'ADMIS3' | 'REJETE' | 'BROUILLON';
 
@@ -132,7 +133,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   readonly colonnesExportParDefaut = ['numeroDossier', 'nom', 'prenom', 'email', 'session', 'statut', 'dateSoumission', 'motifRejet'];
 
   constructor(private recrutementService: RecrutementService, private route: ActivatedRoute, private router: Router,
-              private notifications: NotificationService) {}
+              private notifications: NotificationService, private confirmation: ConfirmationService) {}
 
   ngOnInit(): void {
     const sessionParam = this.route.snapshot.queryParamMap.get('session');
@@ -537,17 +538,24 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
 
   annuler(c: CandidatureResponse): void {
     if (!c.statutPrecedent) return;
-    if (!confirm(`Annuler la dernière décision du dossier ${c.numeroDossier} ? Il reviendra à : ${this.libelleStatut(c.statutPrecedent)}.`)) return;
-    this.actionEnCours = true;
-    this.recrutementService.annulerDerniereAction(c.id).subscribe({
-      next: () => {
-        this.actionEnCours = false;
-        this.chargerCandidatures();
-      },
-      error: (err) => {
-        this.actionEnCours = false;
-        this.notifications.erreur(err.error?.message || "Échec de l'annulation.");
-      },
+    this.confirmation.demander({
+      titre: 'Annuler la décision',
+      message: `Annuler la dernière décision du dossier ${c.numeroDossier} ? Il reviendra à : ${this.libelleStatut(c.statutPrecedent)}.`,
+      libelleConfirmer: 'Annuler la décision',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.actionEnCours = true;
+      this.recrutementService.annulerDerniereAction(c.id).subscribe({
+        next: () => {
+          this.actionEnCours = false;
+          this.chargerCandidatures();
+        },
+        error: (err) => {
+          this.actionEnCours = false;
+          this.notifications.erreur(err.error?.message || "Échec de l'annulation.");
+        },
+      });
     });
   }
 

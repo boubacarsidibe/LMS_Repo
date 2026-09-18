@@ -4,13 +4,25 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth } from '../../../core/auth/services/authService';
 
+/**
+ * confirmPassword n'avait jusqu'ici que Validators.required : un mot de passe
+ * de confirmation différent du premier passait la validation sans le
+ * moindre avertissement (relevé lors d'un audit externe). Validateur de
+ * groupe plutôt que de champ, car il doit lire les deux contrôles à la fois.
+ */
+function motsDePasseIdentiques(groupe: AbstractControl): ValidationErrors | null {
+  const motDePasse = groupe.get('password')?.value;
+  const confirmation = groupe.get('confirmPassword')?.value;
+  return !confirmation || motDePasse === confirmation ? null : { motsDePasseDifferents: true };
+}
+
 @Component({
   selector: 'app-register',
   standalone: true,
   imports: [
-    CommonModule, 
-    ReactiveFormsModule, 
-    RouterLink, 
+    CommonModule,
+    ReactiveFormsModule,
+    RouterLink,
     RouterLinkActive
   ],
   templateUrl: './register.html',
@@ -64,22 +76,15 @@ export class Register {
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(12)]],
     confirmPassword: ['', Validators.required]
-  }, { validators: Register.motsDePasseIdentiques });
+  }, { validators: motsDePasseIdentiques });
 
-  /**
-   * Validateur de groupe (et non du seul champ confirmPassword) : comparer deux
-   * contrôles exige de lire les deux, ce qu'un validateur de champ isolé ne peut
-   * pas faire. Avant ce correctif, confirmPassword n'était comparé à rien — un
-   * mot de passe et sa confirmation pouvaient diverger sans que le formulaire
-   * ne s'en aperçoive, ni côté validation ni côté envoi (le champ n'était même
-   * pas transmis au backend).
-   */
-  private static motsDePasseIdentiques(group: AbstractControl): ValidationErrors | null {
-    const password = group.get('password')?.value;
-    const confirmPassword = group.get('confirmPassword')?.value;
-    return password && confirmPassword && password !== confirmPassword
-      ? { motsDePasseDifferents: true }
-      : null;
+  /** Lu depuis le template (comparaison des mots de passe) : pas de modificateur d'accès. */
+  tentativeEnvoi = false;
+
+  /** Un champ n'affiche son erreur qu'une fois que l'utilisateur l'a quitté ou après une tentative d'envoi. */
+  champEnErreur(nom: string): boolean {
+    const controle = this.registerForm.get(nom);
+    return !!controle && controle.invalid && (controle.touched || this.tentativeEnvoi);
   }
 
   choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' | 'FORMATEUR'): void {
@@ -103,6 +108,7 @@ export class Register {
   }
 
   onSubmit(): void {
+    this.tentativeEnvoi = true;
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;

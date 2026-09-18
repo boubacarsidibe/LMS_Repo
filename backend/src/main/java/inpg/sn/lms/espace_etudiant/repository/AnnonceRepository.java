@@ -32,4 +32,6 @@ public interface AnnonceRepository extends JpaRepository<Annonce, Long> {
     List<Annonce> findGenerales();
 
     List<Annonce> findAllByOrderByEpingleeDescDatePublicationDesc();
+
+    boolean existsByPromotion_Id(Long promotionId);
 }

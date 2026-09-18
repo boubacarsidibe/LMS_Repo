@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { MediaProtegeService } from '../../../espace-etudiants/services/media-protege.service';
 import {
   DemandeAccreditation,
@@ -416,6 +417,7 @@ import { AccreditationService } from '../../services/accreditation.service';
 export class DemandeAccreditationComponent implements OnInit {
   private accreditationService = inject(AccreditationService);
   private mediaProtege = inject(MediaProtegeService);
+  private confirmation = inject(ConfirmationService);
 
   @ViewChild('champFichier') champFichier?: ElementRef<HTMLInputElement>;
 
@@ -645,13 +647,21 @@ export class DemandeAccreditationComponent implements OnInit {
   }
 
   supprimerPiece(pieceId: number): void {
-    if (!this.demande || !confirm('Retirer cette pièce du dossier ?')) {
+    if (!this.demande) {
       return;
     }
-    this.erreurPiece = '';
-    this.accreditationService.supprimerPiece(this.demande.id, pieceId).subscribe({
-      next: () => (this.demande!.pieces = this.demande!.pieces.filter((p) => p.id !== pieceId)),
-      error: (e) => (this.erreurPiece = e?.error?.message || 'La suppression a échoué.'),
+    this.confirmation.demander({
+      titre: 'Retirer la pièce',
+      message: 'Retirer cette pièce du dossier ?',
+      libelleConfirmer: 'Retirer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.erreurPiece = '';
+      this.accreditationService.supprimerPiece(this.demande!.id, pieceId).subscribe({
+        next: () => (this.demande!.pieces = this.demande!.pieces.filter((p) => p.id !== pieceId)),
+        error: (e) => (this.erreurPiece = e?.error?.message || 'La suppression a échoué.'),
+      });
     });
   }
 }

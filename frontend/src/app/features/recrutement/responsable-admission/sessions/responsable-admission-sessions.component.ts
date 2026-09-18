@@ -9,6 +9,7 @@ import {
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 
 @Component({
@@ -47,7 +48,7 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   suppressionGroupeeEnCours = false;
 
   constructor(private recrutementService: RecrutementService, private router: Router,
-              private notifications: NotificationService) {}
+              private notifications: NotificationService, private confirmation: ConfirmationService) {}
 
   ngOnInit(): void {
     this.chargerSessions();
@@ -131,10 +132,17 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   }
 
   supprimer(session: SessionCandidatureResponse): void {
-    if (!confirm(`Supprimer définitivement la session "${session.libelle}" ?`)) return;
-    this.recrutementService.supprimerSession(session.id).subscribe({
-      next: () => this.chargerSessions(),
-      error: () => this.notifications.erreur('Échec de la suppression de la session.'),
+    this.confirmation.demander({
+      titre: 'Supprimer la session',
+      message: `Supprimer définitivement la session "${session.libelle}" ?`,
+      libelleConfirmer: 'Supprimer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.recrutementService.supprimerSession(session.id).subscribe({
+        next: () => this.chargerSessions(),
+        error: () => this.notifications.erreur('Échec de la suppression de la session.'),
+      });
     });
   }
 
@@ -178,20 +186,27 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   supprimerSelection(): void {
     if (this.selection.size === 0) return;
     const noms = this.sessions.filter((s) => this.selection.has(s.id)).map((s) => s.libelle);
-    if (!confirm(`Supprimer définitivement ${noms.length} session(s) ?\n\n${noms.join('\n')}`)) return;
-    this.suppressionGroupeeEnCours = true;
-    forkJoin(Array.from(this.selection).map((id) => this.recrutementService.supprimerSession(id))).subscribe({
-      next: () => {
-        this.suppressionGroupeeEnCours = false;
-        this.viderSelection();
-        this.chargerSessions();
-      },
-      error: () => {
-        this.suppressionGroupeeEnCours = false;
-        this.notifications.erreur('Échec de la suppression groupée — certaines sessions ont peut-être tout de même été supprimées.');
-        this.viderSelection();
-        this.chargerSessions();
-      },
+    this.confirmation.demander({
+      titre: 'Supprimer les sessions',
+      message: `Supprimer définitivement ${noms.length} session(s) ?\n\n${noms.join('\n')}`,
+      libelleConfirmer: 'Supprimer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.suppressionGroupeeEnCours = true;
+      forkJoin(Array.from(this.selection).map((id) => this.recrutementService.supprimerSession(id))).subscribe({
+        next: () => {
+          this.suppressionGroupeeEnCours = false;
+          this.viderSelection();
+          this.chargerSessions();
+        },
+        error: () => {
+          this.suppressionGroupeeEnCours = false;
+          this.notifications.erreur('Échec de la suppression groupée — certaines sessions ont peut-être tout de même été supprimées.');
+          this.viderSelection();
+          this.chargerSessions();
+        },
+      });
     });
   }
 
