@@ -13,6 +13,7 @@ import {
   StatutRendezVous,
 } from '../../models/rendez-vous.models';
 import { RendezVousService } from '../../services/rendez-vous.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 const ROLES_PERSONNEL = ['ROLE_FORMATEUR', 'ROLE_RESPONSABLE_PEDAGOGIQUE', 'ROLE_RESPONSABLE_ADMISSION'];
 const ROLES_EXTERNE = ['ROLE_ECOLE_FORMATION', 'ROLE_ENTREPRISE'];
@@ -53,6 +54,7 @@ const ROLES_EXTERNE = ['ROLE_ECOLE_FORMATION', 'ROLE_ENTREPRISE'];
 export class RendezVousComponent implements OnInit {
   private rendezVousService = inject(RendezVousService);
   private auth = inject(Auth);
+  private confirmation = inject(ConfirmationService);
 
   libellesModalite = LIBELLES_MODALITE;
   libellesStatut = LIBELLES_STATUT;
@@ -220,13 +222,18 @@ export class RendezVousComponent implements OnInit {
   }
 
   annulerDemande(rdv: RendezVous): void {
-    if (!confirm('Annuler cette demande de rendez-vous ?')) {
-      return;
-    }
-    this.reinitialiserMessages();
-    this.rendezVousService.annulerDemande(rdv.id).subscribe({
-      next: () => this.chargerMesDemandes(),
-      error: (erreur) => (this.messageErreur = erreur.error?.message || "L'annulation a échoué."),
+    this.confirmation.demander({
+      titre: 'Annuler la demande',
+      message: 'Annuler cette demande de rendez-vous ?',
+      libelleConfirmer: 'Annuler la demande',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.reinitialiserMessages();
+      this.rendezVousService.annulerDemande(rdv.id).subscribe({
+        next: () => this.chargerMesDemandes(),
+        error: (erreur) => (this.messageErreur = erreur.error?.message || "L'annulation a échoué."),
+      });
     });
   }
 
@@ -280,14 +287,19 @@ export class RendezVousComponent implements OnInit {
   }
 
   supprimerCreneau(c: Creneau): void {
-    if (!confirm('Retirer ce créneau ?')) {
-      return;
-    }
-    this.reinitialiserMessages();
-    this.rendezVousService.supprimerCreneau(c.id).subscribe({
-      next: () => this.chargerAgenda(),
-      error: (erreur) =>
-        (this.messageErreur = erreur.error?.message || 'Ce créneau fait l’objet d’une demande, il ne peut pas être retiré.'),
+    this.confirmation.demander({
+      titre: 'Retirer le créneau',
+      message: 'Retirer ce créneau ?',
+      libelleConfirmer: 'Retirer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.reinitialiserMessages();
+      this.rendezVousService.supprimerCreneau(c.id).subscribe({
+        next: () => this.chargerAgenda(),
+        error: (erreur) =>
+          (this.messageErreur = erreur.error?.message || 'Ce créneau fait l’objet d’une demande, il ne peut pas être retiré.'),
+      });
     });
   }
 

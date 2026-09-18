@@ -9,6 +9,7 @@ import {
   PedagogieService,
   PromotionDetail,
 } from '../../services/pedagogie.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 /**
  * Répertoire des étudiants : recherche, ouverture de compte, affectation à une
@@ -25,6 +26,7 @@ import {
 })
 export class PedagogieEtudiantsComponent implements OnInit {
   private pedagogie = inject(PedagogieService);
+  private confirmation = inject(ConfirmationService);
 
   @ViewChild('champCsv') champCsv?: ElementRef<HTMLInputElement>;
 
@@ -235,23 +237,28 @@ export class PedagogieEtudiantsComponent implements OnInit {
     if (!etudiant || this.suppressionEnCours) {
       return;
     }
-    if (!confirm(`Supprimer définitivement le compte de ${etudiant.prenom} ${etudiant.nom} ?`)) {
-      return;
-    }
-    this.suppressionEnCours = true;
-    this.reinitialiserMessages();
-    this.pedagogie.supprimerEtudiant(etudiant.id).subscribe({
-      next: () => {
-        this.suppressionEnCours = false;
-        this.detailOuvert = false;
-        this.etudiantDetail = null;
-        this.messageSucces = `Le compte de ${etudiant.prenom} ${etudiant.nom} a été supprimé.`;
-        this.charger();
-      },
-      error: (erreur) => {
-        this.suppressionEnCours = false;
-        this.messageErreur = erreur.error?.message || 'La suppression a échoué.';
-      },
+    this.confirmation.demander({
+      titre: 'Supprimer le compte étudiant',
+      message: `Supprimer définitivement le compte de ${etudiant.prenom} ${etudiant.nom} ?`,
+      libelleConfirmer: 'Supprimer le compte',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.suppressionEnCours = true;
+      this.reinitialiserMessages();
+      this.pedagogie.supprimerEtudiant(etudiant.id).subscribe({
+        next: () => {
+          this.suppressionEnCours = false;
+          this.detailOuvert = false;
+          this.etudiantDetail = null;
+          this.messageSucces = `Le compte de ${etudiant.prenom} ${etudiant.nom} a été supprimé.`;
+          this.charger();
+        },
+        error: (erreur) => {
+          this.suppressionEnCours = false;
+          this.messageErreur = erreur.error?.message || 'La suppression a échoué.';
+        },
+      });
     });
   }
 

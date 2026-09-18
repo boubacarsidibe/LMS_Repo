@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CandidatureResponse, EtapeDossierResponse, PieceJustificativeResponse, RecrutementService } from '../../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../../shared/components/ui/notification.service';
+import { ConfirmationService } from '../../../../../shared/components/ui/confirmation.service';
 
 interface TimelineItem {
   label: string;
@@ -144,6 +145,7 @@ export class CandidatureDetailComponent implements OnInit {
     private router: Router,
     private recrutementService: RecrutementService,
     private notifications: NotificationService,
+    private confirmation: ConfirmationService,
   ) {}
 
   ngOnInit(): void {
@@ -273,14 +275,28 @@ export class CandidatureDetailComponent implements OnInit {
 
   annuler(c: CandidatureResponse): void {
     if (!c.statutPrecedent) return;
-    if (!confirm(`Annuler la dernière décision de ce dossier ? Il reviendra à : ${this.libelleStatut(c.statutPrecedent)}.`)) return;
-    this.executer(this.recrutementService.annulerDerniereAction(c.id));
+    this.confirmation.demander({
+      titre: 'Annuler la décision',
+      message: `Annuler la dernière décision de ce dossier ? Il reviendra à : ${this.libelleStatut(c.statutPrecedent)}.`,
+      libelleConfirmer: 'Annuler la décision',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.executer(this.recrutementService.annulerDerniereAction(c.id));
+    });
   }
 
   reculerVers(c: CandidatureResponse, cible: string): void {
     if (!cible || !this.peutReculerVers(c, cible)) return;
-    if (!confirm(`Faire reculer ce dossier vers : ${this.libelleStatut(cible)} ?`)) return;
-    this.executer(this.recrutementService.reculerStatut(c.id, cible));
+    this.confirmation.demander({
+      titre: 'Faire reculer le dossier',
+      message: `Faire reculer ce dossier vers : ${this.libelleStatut(cible)} ?`,
+      libelleConfirmer: 'Faire reculer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.executer(this.recrutementService.reculerStatut(c.id, cible));
+    });
   }
 
   private executer(obs: import('rxjs').Observable<CandidatureResponse>): void {

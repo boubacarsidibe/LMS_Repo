@@ -29,7 +29,7 @@ import { ConfirmationService } from './confirmation.service';
             <h2 id="confirmation-titre" class="font-headline-sm text-headline-sm text-on-surface">
               {{ demande.titre }}
             </h2>
-            <p id="confirmation-message" class="font-body-md text-body-md text-on-surface-variant">
+            <p id="confirmation-message" class="font-body-md text-body-md text-on-surface-variant whitespace-pre-line">
               {{ demande.message }}
             </p>
           </div>

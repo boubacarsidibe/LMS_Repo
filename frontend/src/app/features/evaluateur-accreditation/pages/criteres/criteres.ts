@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CritereAccreditation } from '../../../accreditation/models/accreditation.models';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { EvaluateurAccreditationService } from '../../services/evaluateur-accreditation.service';
 
 interface SectionReferentiel {
@@ -189,6 +190,7 @@ interface SectionReferentiel {
 })
 export class EvaluateurCriteresComponent implements OnInit {
   private evaluateurService = inject(EvaluateurAccreditationService);
+  private confirmation = inject(ConfirmationService);
 
   criteres: CritereAccreditation[] = [];
   chargement = true;
@@ -292,11 +294,16 @@ export class EvaluateurCriteresComponent implements OnInit {
   }
 
   supprimer(critere: CritereAccreditation): void {
-    if (!confirm(`Supprimer définitivement la condition « ${critere.code || critere.libelle} » ?`)) {
-      return;
-    }
-    this.evaluateurService.supprimerCritere(critere.id).subscribe({
-      next: () => (this.criteres = this.criteres.filter((c) => c.id !== critere.id)),
+    this.confirmation.demander({
+      titre: 'Supprimer la condition',
+      message: `Supprimer définitivement la condition « ${critere.code || critere.libelle} » ?`,
+      libelleConfirmer: 'Supprimer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.evaluateurService.supprimerCritere(critere.id).subscribe({
+        next: () => (this.criteres = this.criteres.filter((c) => c.id !== critere.id)),
+      });
     });
   }
 }

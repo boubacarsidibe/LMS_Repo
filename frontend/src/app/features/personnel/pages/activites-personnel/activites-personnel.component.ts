@@ -11,6 +11,7 @@ import {
   TypeActivite,
 } from '../../models/personnel.models';
 import { PersonnelService } from '../../services/personnel.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 const MOIS_LIBELLES = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -39,6 +40,7 @@ const MOIS_LIBELLES = [
 export class ActivitesPersonnelComponent implements OnInit {
   private personnelService = inject(PersonnelService);
   private auth = inject(Auth);
+  private confirmation = inject(ConfirmationService);
 
   telechargementRapport = false;
 
@@ -137,14 +139,19 @@ export class ActivitesPersonnelComponent implements OnInit {
   }
 
   supprimer(activite: Activite): void {
-    if (!confirm(`Retirer l'activité « ${activite.titre} » ?`)) {
-      return;
-    }
-    this.reinitialiserMessages();
-    this.personnelService.supprimerActivite(activite.id).subscribe({
-      next: () => this.charger(),
-      error: (erreur) =>
-        (this.messageErreur = erreur.error?.message || 'Seul l’auteur ou la direction peut retirer cette activité.'),
+    this.confirmation.demander({
+      titre: "Retirer l'activité",
+      message: `Retirer l'activité « ${activite.titre} » ?`,
+      libelleConfirmer: 'Retirer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.reinitialiserMessages();
+      this.personnelService.supprimerActivite(activite.id).subscribe({
+        next: () => this.charger(),
+        error: (erreur) =>
+          (this.messageErreur = erreur.error?.message || 'Seul l’auteur ou la direction peut retirer cette activité.'),
+      });
     });
   }
 
