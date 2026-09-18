@@ -88,8 +88,8 @@
       </div>
 
       <div class="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-outline-variant" (click)="$event.stopPropagation()">
-        <div class="flex items-center gap-1"><span class="text-[10px] text-on-surface-variant">Note /20</span><app-ui-note [valeur]="t.noteObtenue" [contexte]="t" [enregistrer]="enregistrerNote" [desactive]="noteEnCoursId === t.id" [etiquette]="'Note sur 20 de ' + t.candidatPrenom + ' ' + t.candidatNom"></app-ui-note><button *ngIf="t.noteObtenuePrecedente != null" type="button" [disabled]="noteEnCoursId === t.id" (click)="annulerNote(t)" [title]="'Annuler : revenir à ' + t.noteObtenuePrecedente" class="p-1 rounded text-on-surface-variant hover:text-secondary"><span class="material-symbols-outlined text-[16px]">undo</span></button></div>
-        <div class="flex gap-1"><button type="button" (click)="voirTest(t)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button><button type="button" (click)="supprimer(t)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container" title="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button></div>
+        <div class="flex items-center gap-1"><span class="text-[10px] text-on-surface-variant">Note /20</span><app-ui-note [valeur]="t.noteObtenue" [contexte]="t" [enregistrer]="enregistrerNote" [desactive]="noteEnCoursId === t.id" [etiquette]="'Note sur 20 de ' + t.candidatPrenom + ' ' + t.candidatNom"></app-ui-note><button *ngIf="t.noteObtenuePrecedente != null" type="button" [disabled]="noteEnCoursId === t.id" (click)="annulerNote(t)" [title]="'Annuler : revenir à ' + t.noteObtenuePrecedente" [attr.aria-label]="'Annuler : revenir à ' + t.noteObtenuePrecedente" class="p-1 rounded text-on-surface-variant hover:text-secondary"><span class="material-symbols-outlined text-[16px]">undo</span></button></div>
+        <div class="flex gap-1"><button type="button" (click)="voirTest(t)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed" title="Modifier" aria-label="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button><button type="button" (click)="supprimer(t)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container" title="Supprimer" aria-label="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button></div>
       </div>
     </article>
   </div>
@@ -130,7 +130,7 @@
                            [enregistrer]="enregistrerNote"
                            [desactive]="noteEnCoursId === t.id"
                            [etiquette]="'Note sur 20 de ' + t.candidatPrenom + ' ' + t.candidatNom"></app-ui-note>
-              <button *ngIf="t.noteObtenuePrecedente != null" type="button" [disabled]="noteEnCoursId === t.id" (click)="annulerNote(t)" [title]="'Annuler : revenir à ' + t.noteObtenuePrecedente" class="p-1 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors">
+              <button *ngIf="t.noteObtenuePrecedente != null" type="button" [disabled]="noteEnCoursId === t.id" (click)="annulerNote(t)" [title]="'Annuler : revenir à ' + t.noteObtenuePrecedente" [attr.aria-label]="'Annuler : revenir à ' + t.noteObtenuePrecedente" class="p-1 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors">
                 <span class="material-symbols-outlined text-[18px]">undo</span>
               </button>
             </div>
@@ -154,8 +154,8 @@
           </td>
           <td class="p-4 text-right" (click)="$event.stopPropagation()">
             <div class="flex justify-end gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
-              <button type="button" (click)="voirTest(t)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
-              <button type="button" (click)="supprimer(t)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+              <button type="button" (click)="voirTest(t)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Modifier" aria-label="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+              <button type="button" (click)="supprimer(t)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Supprimer" aria-label="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button>
             </div>
           </td>
         </tr>
@@ -169,27 +169,27 @@
   <div class="bg-surface rounded-xl shadow-lg w-full max-w-lg border border-outline-variant max-h-[85vh] flex flex-col" (click)="$event.stopPropagation()">
     <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
       <h3 class="font-headline-sm text-headline-sm text-primary">Convocation groupée au test</h3>
-      <button type="button" (click)="fermerConvocationGroupee()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors"><span class="material-symbols-outlined">close</span></button>
+      <button type="button" (click)="fermerConvocationGroupee()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" aria-label="Fermer"><span class="material-symbols-outlined">close</span></button>
     </div>
     <form [formGroup]="convocationForm" (ngSubmit)="envoyerConvocationGroupee()" class="flex-1 overflow-y-auto p-6 space-y-4">
       <div *ngIf="convocationFormError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ convocationFormError }}</div>
       <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Nom de l'épreuve</label>
-        <input formControlName="nomEpreuve" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Test de mathématiques" type="text"/>
+        <label for="tests-nom-epreuve" class="block font-label-md text-label-md text-on-surface-variant mb-1">Nom de l'épreuve</label>
+        <input id="tests-nom-epreuve" formControlName="nomEpreuve" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Test de mathématiques" type="text"/>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date et heure</label>
-          <input formControlName="dateEpreuve" aria-label="Date et heure" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="datetime-local"/>
+          <label for="tests-date-epreuve" class="block font-label-md text-label-md text-on-surface-variant mb-1">Date et heure</label>
+          <input id="tests-date-epreuve" formControlName="dateEpreuve" aria-label="Date et heure" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="datetime-local"/>
         </div>
         <div>
-          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Coefficient</label>
-          <input formControlName="coefficient" aria-label="Coefficient" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0.1" step="0.5"/>
+          <label for="tests-coefficient" class="block font-label-md text-label-md text-on-surface-variant mb-1">Coefficient</label>
+          <input id="tests-coefficient" formControlName="coefficient" aria-label="Coefficient" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0.1" step="0.5"/>
         </div>
       </div>
       <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu / Lien</label>
-        <input formControlName="lieuOuLien" aria-label="Lieu ou lien de connexion" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B12, campus Dakar / lien visio" type="text"/>
+        <label for="tests-lieu" class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu / Lien</label>
+        <input id="tests-lieu" formControlName="lieuOuLien" aria-label="Lieu ou lien de connexion" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B12, campus Dakar / lien visio" type="text"/>
       </div>
 
       <div>

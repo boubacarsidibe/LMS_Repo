@@ -23,15 +23,15 @@
     <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ formError }}</div>
 
     <div>
-      <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Nom du critère</label>
-      <input formControlName="libelle" placeholder="Ex : Diplôme en ingénierie" aria-label="Nom du critère"
+      <label for="critere-libelle" class="block font-label-md text-label-md text-on-surface-variant mb-1">Nom du critère</label>
+      <input id="critere-libelle" formControlName="libelle" placeholder="Ex : Diplôme en ingénierie" aria-label="Nom du critère"
              class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="text"/>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Type de réponse</label>
-        <select formControlName="type" aria-label="Type de critère"
+        <label for="critere-type" class="block font-label-md text-label-md text-on-surface-variant mb-1">Type de réponse</label>
+        <select id="critere-type" formControlName="type" aria-label="Type de critère"
                 class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
           <option *ngFor="let t of typesCritere" [value]="t.valeur">{{ t.libelle }}</option>
         </select>
@@ -45,8 +45,8 @@
     </div>
 
     <div *ngIf="critereForm.value.type === 'CHOIX'">
-      <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Options proposées</label>
-      <input formControlName="options" placeholder="Ex : Dakar, Thiès, Saint-Louis" aria-label="Options, séparées par une virgule"
+      <label for="critere-options" class="block font-label-md text-label-md text-on-surface-variant mb-1">Options proposées</label>
+      <input id="critere-options" formControlName="options" placeholder="Ex : Dakar, Thiès, Saint-Louis" aria-label="Options, séparées par une virgule"
              class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="text"/>
       <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Séparées par une virgule.</p>
     </div>
@@ -59,21 +59,21 @@
       </p>
 
       <div *ngIf="critereForm.value.type === 'NUMERIQUE'">
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Valeur minimale exigée</label>
-        <input formControlName="valeurMinimale" type="number" placeholder="Ex : 12" aria-label="Valeur minimale exigée"
+        <label for="critere-valeur-min" class="block font-label-md text-label-md text-on-surface-variant mb-1">Valeur minimale exigée</label>
+        <input id="critere-valeur-min" formControlName="valeurMinimale" type="number" placeholder="Ex : 12" aria-label="Valeur minimale exigée"
                class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
       </div>
 
       <div *ngIf="critereForm.value.type !== 'NUMERIQUE'">
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Réponse attendue</label>
-        <input formControlName="valeurAttendue" type="text" placeholder="Ex : Oui" aria-label="Réponse attendue"
+        <label for="critere-valeur-attendue" class="block font-label-md text-label-md text-on-surface-variant mb-1">Réponse attendue</label>
+        <input id="critere-valeur-attendue" formControlName="valeurAttendue" type="text" placeholder="Ex : Oui" aria-label="Réponse attendue"
                class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
       </div>
     </div>
 
     <div class="border-t border-outline-variant pt-4">
-      <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Ordre d'affichage sur le formulaire</label>
-      <input formControlName="ordre" type="number" min="0" class="w-32 h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+      <label for="critere-ordre" class="block font-label-md text-label-md text-on-surface-variant mb-1">Ordre d'affichage sur le formulaire</label>
+      <input id="critere-ordre" formControlName="ordre" type="number" min="0" class="w-32 h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
     </div>
   </div>
 

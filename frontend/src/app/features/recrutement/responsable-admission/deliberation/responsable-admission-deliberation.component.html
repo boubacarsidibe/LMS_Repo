@@ -118,13 +118,13 @@
              complémentaire, non retenu. Un dossier déjà sur liste complémentaire garde
              les deux issues restantes : une place peut se libérer, ou non. -->
         <div class="col-span-1 flex justify-end gap-1" *ngIf="l.candidature.statut === 'ADMIS2' || l.candidature.statut === 'LISTE_ATTENTE'" (click)="$event.stopPropagation()">
-          <button type="button" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Admettre">
+          <button type="button" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Admettre" aria-label="Admettre">
             <span class="material-symbols-outlined text-[18px]">check</span>
           </button>
-          <button type="button" *ngIf="l.candidature.statut === 'ADMIS2'" [disabled]="actionEnCours" (click)="placerEnListeAttente(l)" class="p-1.5 rounded text-on-surface-variant hover:text-blue-700 hover:bg-blue-50 transition-colors" title="Placer sur liste complémentaire">
+          <button type="button" *ngIf="l.candidature.statut === 'ADMIS2'" [disabled]="actionEnCours" (click)="placerEnListeAttente(l)" class="p-1.5 rounded text-on-surface-variant hover:text-blue-700 hover:bg-blue-50 transition-colors" title="Placer sur liste complémentaire" aria-label="Placer sur liste complémentaire">
             <span class="material-symbols-outlined text-[18px]">hourglass_top</span>
           </button>
-          <button type="button" [disabled]="actionEnCours" (click)="rejeter(l)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Rejeter">
+          <button type="button" [disabled]="actionEnCours" (click)="rejeter(l)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Rejeter" aria-label="Rejeter">
             <span class="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>

@@ -43,10 +43,10 @@
         <p *ngIf="c.valeurAttendue" class="font-body-sm text-body-sm text-on-surface-variant">Réponse attendue : « {{ c.valeurAttendue }} »</p>
       </div>
       <div class="flex items-center gap-1 shrink-0">
-        <button type="button" (click)="modifierCritere(c)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded-full transition-colors" title="Modifier">
+        <button type="button" (click)="modifierCritere(c)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded-full transition-colors" title="Modifier" aria-label="Modifier">
           <span class="material-symbols-outlined text-[20px]">edit</span>
         </button>
-        <button type="button" (click)="retirer(c)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded-full transition-colors" title="Retirer">
+        <button type="button" (click)="retirer(c)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded-full transition-colors" title="Retirer" aria-label="Retirer">
           <span class="material-symbols-outlined text-[20px]">delete</span>
         </button>
       </div>
@@ -65,7 +65,7 @@
           <p class="font-label-md text-label-md text-on-surface truncate">{{ c.libelle }}</p>
           <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ c.type }} · retiré</p>
         </div>
-        <button type="button" (click)="reactiver(c)" class="p-1.5 text-secondary hover:bg-secondary/10 rounded-full transition-colors shrink-0" title="Réactiver">
+        <button type="button" (click)="reactiver(c)" class="p-1.5 text-secondary hover:bg-secondary/10 rounded-full transition-colors shrink-0" title="Réactiver" aria-label="Réactiver">
           <span class="material-symbols-outlined text-[20px]">restore</span>
         </button>
       </div>
