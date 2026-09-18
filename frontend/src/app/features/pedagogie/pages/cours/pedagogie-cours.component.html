@@ -212,15 +212,15 @@
             </td>
             <td class="py-3 pr-4 text-body-md text-on-surface-variant">{{ c.nbRessources }}</td>
             <td class="py-3 text-right whitespace-nowrap" (click)="$event.stopPropagation()">
-              <a [routerLink]="['/pedagogie/cours', c.id]" title="Gérer les supports"
+              <a [routerLink]="['/pedagogie/cours', c.id]" title="Gérer les supports" aria-label="Gérer les supports"
                  class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-secondary hover:bg-surface-container transition-colors no-underline">
                 <span class="material-symbols-outlined text-[20px]">folder_open</span>
               </a>
-              <button type="button" (click)="ouvrirEdition(c)" title="Modifier"
+              <button type="button" (click)="ouvrirEdition(c)" title="Modifier" aria-label="Modifier"
                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors border-0 bg-transparent cursor-pointer">
                 <span class="material-symbols-outlined text-[20px]">edit</span>
               </button>
-              <button type="button" (click)="supprimer(c)" title="Supprimer"
+              <button type="button" (click)="supprimer(c)" title="Supprimer" aria-label="Supprimer"
                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-error hover:bg-error-container transition-colors border-0 bg-transparent cursor-pointer">
                 <span class="material-symbols-outlined text-[20px]">delete</span>
               </button>

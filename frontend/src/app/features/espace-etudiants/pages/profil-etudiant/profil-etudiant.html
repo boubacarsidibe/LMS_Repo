@@ -115,7 +115,7 @@
           </div>
           <div class="flex items-center gap-stack-sm">
             <span class="font-headline-sm text-headline-sm text-primary">{{ n.note }}/100 <small class="text-body-sm text-on-surface-variant">({{ n.note / 5 }}/20)</small></span>
-            <button (click)="supprimerNote(n)" class="p-1.5 text-outline hover:text-error transition-colors" title="Supprimer cette note">
+            <button (click)="supprimerNote(n)" class="p-1.5 text-outline hover:text-error transition-colors" title="Supprimer cette note" aria-label="Supprimer cette note">
               <span class="material-symbols-outlined text-[18px]">delete</span>
             </button>
           </div>

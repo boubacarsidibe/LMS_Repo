@@ -180,7 +180,7 @@
                 {{ libellesType[type] }}
                 <span *ngIf="pieceDeType(type) as p" class="text-on-surface-variant">— {{ p.nomFichierOriginal }}</span>
               </span>
-              <button *ngIf="pieceDeType(type) as p" type="button" (click)="consulterPiece(p.id)" title="Consulter"
+              <button *ngIf="pieceDeType(type) as p" type="button" (click)="consulterPiece(p.id)" title="Consulter" aria-label="Consulter"
                       class="shrink-0 text-outline hover:text-secondary">
                 <span class="material-symbols-outlined text-[18px]">visibility</span>
               </button>
@@ -197,7 +197,7 @@
                 {{ libellesType[type] }}
                 <span *ngIf="pieceDeType(type) as p" class="text-on-surface-variant">— {{ p.nomFichierOriginal }}</span>
               </span>
-              <button *ngIf="pieceDeType(type) as p" type="button" (click)="consulterPiece(p.id)" title="Consulter"
+              <button *ngIf="pieceDeType(type) as p" type="button" (click)="consulterPiece(p.id)" title="Consulter" aria-label="Consulter"
                       class="shrink-0 text-outline hover:text-secondary">
                 <span class="material-symbols-outlined text-[18px]">visibility</span>
               </button>
@@ -207,7 +207,7 @@
               <span class="flex-1 min-w-0 truncate text-on-surface">
                 {{ libellesType['AUTRE'] }} — {{ p.nomFichierOriginal }}
               </span>
-              <button type="button" (click)="consulterPiece(p.id)" title="Consulter"
+              <button type="button" (click)="consulterPiece(p.id)" title="Consulter" aria-label="Consulter"
                       class="shrink-0 text-outline hover:text-secondary">
                 <span class="material-symbols-outlined text-[18px]">visibility</span>
               </button>
@@ -273,6 +273,7 @@
                   [(ngModel)]="grilleCommentaires[c.id]"
                   (blur)="sauverObservation(c.id)"
                   placeholder="Observation (facultative)"
+                  [attr.aria-label]="'Observation sur le critère ' + c.libelle"
                   class="w-full p-2 rounded-lg bg-surface-container-lowest border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors"
                 />
               </div>
@@ -365,8 +366,9 @@
               </p>
 
               <div *ngIf="decisionCible === 'ACCREDITE_SOUS_RESERVE'">
-                <label class="font-label-sm text-label-sm text-on-surface">Plan d'actions transmis à l'école (obligatoire)</label>
+                <label for="decision-plan-actions" class="font-label-sm text-label-sm text-on-surface">Plan d'actions transmis à l'école (obligatoire)</label>
                 <textarea
+                  id="decision-plan-actions"
                   [(ngModel)]="planActionsDecision"
                   name="planActionsDecision"
                   rows="4"
@@ -375,10 +377,11 @@
                 ></textarea>
               </div>
 
-              <label class="font-label-sm text-label-sm text-on-surface">
+              <label for="decision-synthese" class="font-label-sm text-label-sm text-on-surface">
                 {{ decisionCible === 'REJETE' ? 'Motif du refus (obligatoire)' : 'Synthèse transmise à l\'école (facultative)' }}
               </label>
               <textarea
+                id="decision-synthese"
                 [(ngModel)]="syntheseDecision"
                 name="syntheseDecision"
                 rows="3"
