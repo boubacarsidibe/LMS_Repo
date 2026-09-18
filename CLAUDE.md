@@ -30,6 +30,21 @@ la graisse viennent de `text-<échelle>`, une classe **distincte**.
 s'affichaient en 16 px au lieu de 48. Vérifier systématiquement que les deux classes
 sont présentes.
 
+**Poser `text-<échelle>` ne suffit pas si une troisième classe de taille traîne déjà
+sur l'élément** (`text-[11px]`, `text-sm`…) — piège trouvé le 2026-09-18 en corrigeant
+19 occurrences de ce même oubli. `text-<échelle>` et `text-[Npx]`/`text-sm` ciblent la
+même propriété CSS avec la même spécificité (une seule classe) ; Tailwind les déclare
+dans l'ordre où elles sont *rencontrées à la compilation*, pas dans l'ordre des classes
+posées dans le HTML — et dans ce projet, les classes arbitraires (`text-[11px]`) et les
+utilitaires par défaut (`text-sm`) sont émises **après** les échelles du thème dans
+`styles.css`, donc elles l'emportent silencieusement. Un badge qui portait déjà
+`text-[11px]` avant qu'on lui ajoute `font-label-sm text-label-sm` continuait de
+s'afficher en 11 px : le correctif était posé mais sans le moindre effet visible tant
+que `text-[11px]` restait sur l'élément. Vérifier en cas de doute dans le CSS compilé
+(`grep`/byte offset des deux règles) — ou, plus simple, retirer la classe de taille
+concurrente : c'est presque toujours elle l'ancien pis-aller que `text-<échelle>`
+remplace.
+
 ### Règles à appliquer
 
 | Élément | Classes |
@@ -96,19 +111,61 @@ Google avec la réponse moderne (`@font-face` seul, sans classe de secours) — 
 seule règle `.material-symbols-outlined` restante dans le bundle est la nôtre,
 correctement dans `@layer base`. Vérifié par inspection du CSS compilé (une
 seule occurrence de la règle, dans `@layer base`, avant la couche `utilities`) —
-non vérifié par rendu visuel réel, cet environnement n'ayant pas de navigateur.
+non vérifié par rendu visuel réel à l'époque (voir §2, un navigateur réel est en
+fait disponible via Docker).
 
 ---
 
 ## 2. Pièges de l'environnement
 
-### Le cache de build fige certains modules
+### Un navigateur réel est disponible malgré les apparences
 
-Quand une modification du frontend semble ne pas s'appliquer, le suspect n'est pas le
-navigateur mais **`frontend/.angular/cache`**. Le conteneur monte le dossier local
-(`./frontend:/app`), ce cache est donc partagé, et il peut servir des modules périmés
-**pour certains fichiers seulement** — symptôme observé : la barre latérale se mettait
-à jour, les pages chargées à la demande non.
+Aucun navigateur dans le shell de ce Codespace, mais **Playwright tourne très bien en
+conteneur** et permet une vérification visuelle réelle plutôt qu'une simple lecture de
+code :
+
+```bash
+docker run --rm --network host -v <dossier-scripts>:/scratchpad -w /scratchpad \
+  mcr.microsoft.com/playwright:v1.48.0-jammy bash -c "node script.js"
+```
+
+`--network host` donne accès direct à `localhost:4200`/`:8080` — inutile de résoudre
+`host.docker.internal` (il n'est pas résolvable avec ce réseau). Utilisé avec succès
+pour capturer des captures d'écran et lire du `getComputedStyle` réel (par exemple
+pour confirmer qu'un `text-<échelle>` l'emportait bien sur une classe de taille
+concurrente après correctif — voir le piège de cascade en §1).
+
+### Ce Codespace ne sert pas le frontend en mode dev — vérifier avant d'accuser le cache
+
+Le paragraphe suivant décrit le montage `./frontend:/app` défini dans
+`docker-compose.yml`. **Il ne s'applique pas forcément** : un `docker-compose.override.yml`
+(présent dans ce Codespace, ignoré par git — donc à vérifier sur chaque nouvelle
+machine plutôt que supposé absent) remplace le service `frontend` par une image de
+production statique (`Dockerfile.local` : `ng build --configuration development` puis
+Nginx, sans le moindre volume monté). Symptôme si on l'ignore : vider
+`frontend/.angular/cache` et relancer `docker compose up -d frontend` ne change
+strictement rien, parce que ce cache n'est même pas dans le conteneur. Vérifier lequel
+des deux cas s'applique avant d'agir :
+
+```bash
+docker inspect demo-frontend --format '{{json .Mounts}}'   # [] → pas de montage, voir ci-dessous
+```
+
+Si `Mounts` est vide, la seule façon de pousser une modification est de reconstruire
+l'image (même logique que pour le backend) :
+
+```bash
+docker compose up -d --build frontend        # ~10-30 s, PAS ~90 s : ce n'est pas le dev-server
+```
+
+### Le cache de build fige certains modules (setup dev-server avec volume monté)
+
+Quand une modification du frontend semble ne pas s'appliquer **et que `docker-compose.override.yml`
+ne détourne pas déjà le service vers une image statique** (voir ci-dessus), le suspect
+n'est pas le navigateur mais **`frontend/.angular/cache`**. Le conteneur monte le
+dossier local (`./frontend:/app`), ce cache est donc partagé, et il peut servir des
+modules périmés **pour certains fichiers seulement** — symptôme observé : la barre
+latérale se mettait à jour, les pages chargées à la demande non.
 
 ```bash
 docker compose stop frontend
