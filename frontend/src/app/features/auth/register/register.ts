@@ -78,13 +78,34 @@ export class Register {
     confirmPassword: ['', Validators.required]
   }, { validators: motsDePasseIdentiques });
 
-  /** Lu depuis le template (comparaison des mots de passe) : pas de modificateur d'accès. */
-  tentativeEnvoi = false;
+  /**
+   * Champs dans leur ordre d'apparition à l'écran, avec l'identifiant de
+   * l'élément correspondant : sert à désigner le premier champ qui bloque
+   * l'envoi et à y placer le curseur.
+   */
+  private static readonly CHAMPS: ReadonlyArray<{ nom: string; id: string; libelle: string }> = [
+    { nom: 'prenom', id: 'reg-prenom', libelle: 'Prénom' },
+    { nom: 'nom', id: 'reg-nom', libelle: 'Nom' },
+    { nom: 'nomOrganisation', id: 'reg-nom-organisation', libelle: "Nom de l'organisation" },
+    { nom: 'email', id: 'reg-email', libelle: 'Email institutionnel' },
+    { nom: 'password', id: 'reg-password', libelle: 'Mot de passe' },
+    { nom: 'confirmPassword', id: 'reg-confirm', libelle: 'Confirmation du mot de passe' }
+  ];
 
-  /** Un champ n'affiche son erreur qu'une fois que l'utilisateur l'a quitté ou après une tentative d'envoi. */
+  /**
+   * Un champ n'affiche son erreur qu'une fois que l'utilisateur l'a quitté —
+   * jamais avant qu'il ait eu l'occasion d'y saisir quoi que ce soit.
+   *
+   * <p>Un indicateur « une tentative d'envoi a eu lieu » couvrait auparavant
+   * cette condition : au premier clic sur « Créer un compte », les cinq champs
+   * du formulaire vide viraient au rouge d'un coup, y compris ceux que
+   * l'utilisateur n'avait jamais touchés. Un mur de messages ne désigne aucun
+   * responsable : c'est {@link onSubmit} qui signale désormais le premier
+   * champ bloquant, un à la fois.
+   */
   champEnErreur(nom: string): boolean {
     const controle = this.registerForm.get(nom);
-    return !!controle && controle.invalid && (controle.touched || this.tentativeEnvoi);
+    return !!controle && controle.invalid && controle.touched;
   }
 
   choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' | 'FORMATEUR'): void {
@@ -107,10 +128,44 @@ export class Register {
     nomOrganisation.updateValueAndValidity();
   }
 
+  /**
+   * Réponse au clic lorsque le formulaire n'est pas envoyable : désigne le
+   * premier champ qui bloque, affiche son message et y place le curseur.
+   *
+   * <p>Sans cela, le clic ne produisait rien d'utile — l'envoi était refusé en
+   * silence, et le seul retour visible était l'ensemble des champs virant au
+   * rouge simultanément. Un champ à la fois, celui sur lequel agir, avec le
+   * curseur déjà dedans.
+   */
+  private signalerPremierChampBloquant(): void {
+    const bloquant = Register.CHAMPS.find(champ => this.registerForm.get(champ.nom)?.invalid)
+      // Erreur portée par le groupe et non par un champ : les deux mots de
+      // passe diffèrent. C'est la confirmation qu'il faut corriger.
+      ?? (this.registerForm.hasError('motsDePasseDifferents')
+        ? Register.CHAMPS.find(champ => champ.nom === 'confirmPassword')
+        : undefined);
+
+    if (!bloquant) {
+      return;
+    }
+
+    const libelle = bloquant.nom === 'nomOrganisation' ? this.libelleNomOrganisation : bloquant.libelle;
+    this.registerForm.get(bloquant.nom)!.markAsTouched();
+    this.errorMessage = `Le formulaire n'est pas complet : commencez par « ${libelle} ».`;
+
+    // Le message et le champ marqué sont l'essentiel ; amener le champ à
+    // l'écran et y poser le curseur n'est que du confort. Appels optionnels
+    // donc : ces deux API ne sont pas garanties partout (jsdom, par exemple,
+    // ne fournit pas scrollIntoView), et une exception ici priverait
+    // l'utilisateur du seul retour utile au clic.
+    const element = document.getElementById(bloquant.id);
+    element?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+    element?.focus?.({ preventScroll: true });
+  }
+
   onSubmit(): void {
-    this.tentativeEnvoi = true;
     if (this.registerForm.invalid) {
-      this.registerForm.markAllAsTouched();
+      this.signalerPremierChampBloquant();
       return;
     }
 

@@ -42,7 +42,7 @@ describe('Register', () => {
     expect(component.registerForm.hasError('motsDePasseDifferents')).toBe(false);
   });
 
-  it('champEnErreur ignore un champ invalide tant que ni touché ni tentative d\'envoi', () => {
+  it("champEnErreur ignore un champ invalide tant que l'utilisateur ne l'a pas quitté", () => {
     expect(component.registerForm.get('email')?.invalid).toBe(true);
     expect(component.champEnErreur('email')).toBe(false);
   });
@@ -53,11 +53,53 @@ describe('Register', () => {
     expect(component.champEnErreur('email')).toBe(true);
   });
 
-  it('onSubmit sans avoir touché les champs déclenche quand même leur affichage (tentativeEnvoi)', () => {
+  /**
+   * Un indicateur « tentative d'envoi » forçait auparavant l'affichage de TOUS
+   * les champs invalides au premier clic : un formulaire vierge se couvrait de
+   * cinq messages rouges d'un coup, pour des champs où l'utilisateur n'avait
+   * rien saisi et donc commis aucune erreur. Signalé en recette comme un clic
+   * « qui ne fait rien » — il ne créait pas de compte et n'affichait qu'un mur
+   * de rouge, sans désigner par quoi commencer.
+   */
+  it('un clic sur formulaire vierge ne signale que le premier champ bloquant', () => {
     component.onSubmit();
 
-    expect(component.tentativeEnvoi).toBe(true);
     expect(component.champEnErreur('prenom')).toBe(true);
+    expect(component.champEnErreur('nom')).toBe(false);
+    expect(component.champEnErreur('email')).toBe(false);
+    expect(component.champEnErreur('password')).toBe(false);
+    expect(component.champEnErreur('confirmPassword')).toBe(false);
+  });
+
+  it('le clic nomme le champ bloquant, pour que le bouton ne paraisse pas inerte', () => {
+    component.onSubmit();
+
+    expect(component.errorMessage).toContain('Prénom');
+  });
+
+  it('une fois le champ bloquant renseigné, le clic suivant désigne le suivant', () => {
+    component.registerForm.patchValue({ prenom: 'Awa' });
+
+    component.onSubmit();
+
+    expect(component.champEnErreur('nom')).toBe(true);
+    expect(component.errorMessage).toContain('Nom');
+    expect(component.champEnErreur('email')).toBe(false);
+  });
+
+  it('désigne la confirmation quand seuls les deux mots de passe diffèrent', () => {
+    component.registerForm.patchValue({
+      prenom: 'Awa',
+      nom: 'Diop',
+      email: 'awa.diop@test.inpg.sn',
+      password: 'MotDePasse2026!',
+      confirmPassword: 'Different2026!'
+    });
+
+    component.onSubmit();
+
+    expect(component.errorMessage).toContain('Confirmation');
+    expect(component.registerForm.get('confirmPassword')?.touched).toBe(true);
   });
 
   it('rejette un mot de passe de moins de 12 caractères', () => {
