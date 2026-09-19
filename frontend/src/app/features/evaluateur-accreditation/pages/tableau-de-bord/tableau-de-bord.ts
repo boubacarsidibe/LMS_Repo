@@ -123,7 +123,21 @@ export class EvaluateurTableauDeBordComponent implements OnInit {
 
   demandes: DemandeAccreditationEvaluateur[] = [];
   chargement = true;
-  libellesStatut = LIBELLES_STATUT_DEMANDE;
+
+  /**
+   * Getter plutôt que champ : `libellesStatut = LIBELLES_STATUT_DEMANDE;`
+   * s'initialisait à `undefined` dans ce fichier précis (constaté par un
+   * garde-fou de test — 3 échecs sur ce composant, jamais en production où
+   * la construction du composant emprunte un autre chemin de compilation).
+   * `demandes`/`chargement` juste au-dessus, initialisés par un littéral, ne
+   * sont pas touchés ; seule la valeur qui référence un import s'est
+   * retrouvée non affectée, cause non identifiée avec certitude (suspect :
+   * l'énorme template en ligne du même fichier). Un getter contourne le
+   * problème en calculant la valeur à l'usage plutôt qu'à la construction.
+   */
+  get libellesStatut(): Record<string, string> {
+    return LIBELLES_STATUT_DEMANDE;
+  }
 
   ngOnInit(): void {
     this.evaluateurService.getDemandes(undefined).subscribe({
