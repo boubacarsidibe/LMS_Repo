@@ -26,9 +26,13 @@ import { Auth } from '../../../../core/auth/services/authService';
           INPG<span class="text-brand"> LMS</span>
         </a>
 
+        <!-- « Accueil » plutôt que « Ma demande » (2026-09-20, retour explicite) : cette
+             page EST déjà la page d'accueil de l'espace (route racine) ; ajouter un
+             second onglet menant au même endroit aurait été redondant. Même renommage
+             pour le repli mobile ci-dessous. -->
         <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
           <a routerLink="/accreditation" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary border-b-2 border-primary"
-             class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Ma demande</a>
+             class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Accueil</a>
           <a routerLink="/accreditation/rendez-vous" routerLinkActive="text-primary border-b-2 border-primary"
              class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Rendez-vous</a>
         </nav>
@@ -75,7 +79,7 @@ import { Auth } from '../../../../core/auth/services/authService';
 
       <nav *ngIf="mobileMenuOpen" class="md:hidden border-t border-outline-variant/40 bg-white px-4 py-3 space-y-1" aria-label="Navigation">
         <a routerLink="/accreditation" (click)="mobileMenuOpen = false" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary bg-surface-container-low"
-           class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Ma demande</a>
+           class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Accueil</a>
         <a routerLink="/accreditation/rendez-vous" (click)="mobileMenuOpen = false" routerLinkActive="text-primary bg-surface-container-low"
            class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Rendez-vous</a>
       </nav>

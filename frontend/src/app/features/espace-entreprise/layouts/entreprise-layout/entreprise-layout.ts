@@ -29,8 +29,14 @@ export class EntrepriseLayout implements OnInit {
   dropdownOpen = false;
   mobileMenuOpen = false;
 
+  /**
+   * « Accueil » plutôt que « Mes demandes » (2026-09-20, retour explicite) :
+   * cette page EST déjà la page d'accueil de l'espace (route racine, ''
+   * redirige vers elle) ; ajouter un second onglet menant au même endroit
+   * aurait été redondant.
+   */
   readonly navigation: EntreeNavigation[] = [
-    { libelle: 'Mes demandes', lien: 'nouvelle-demande' },
+    { libelle: 'Accueil', lien: 'nouvelle-demande' },
     { libelle: 'Catalogue des formations', lien: 'catalogue' },
     { libelle: 'Messagerie', lien: 'messagerie' },
     { libelle: 'Rendez-vous', lien: 'rendez-vous' },
