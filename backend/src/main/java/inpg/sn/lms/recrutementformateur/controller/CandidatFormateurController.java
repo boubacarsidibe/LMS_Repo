@@ -162,7 +162,6 @@ public class CandidatFormateurController {
                 requete.prenom().trim(), user.getEmail(), requete.telephone().trim());
         candidature.setDiplomePrincipal(vide(requete.diplomePrincipal()));
         candidature.setAnneesExperience(requete.anneesExperience());
-        candidature.setLettreMotivation(vide(requete.lettreMotivation()));
 
         candidature.setCivilite(vide(requete.civilite()));
         candidature.setGenre(vide(requete.genre()));

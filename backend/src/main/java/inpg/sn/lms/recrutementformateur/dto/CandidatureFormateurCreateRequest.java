@@ -20,7 +20,6 @@ public record CandidatureFormateurCreateRequest(
         String telephone,
         String diplomePrincipal,
         Integer anneesExperience,
-        String lettreMotivation,
 
         String civilite,
         String genre,

@@ -422,7 +422,7 @@ public class AdminRecrutementFormateurController {
                 o != null ? o.getIntitule() : null,
                 o != null && o.getTypeContrat() != null ? o.getTypeContrat().name() : null,
                 c.getNom(), c.getPrenom(), c.getEmail(), c.getTelephone(),
-                c.getDiplomePrincipal(), c.getAnneesExperience(), c.getLettreMotivation(),
+                c.getDiplomePrincipal(), c.getAnneesExperience(),
                 c.getStatut().name(),
                 c.getDecision() != null ? c.getDecision().name() : null,
                 c.getMotifDecision(),

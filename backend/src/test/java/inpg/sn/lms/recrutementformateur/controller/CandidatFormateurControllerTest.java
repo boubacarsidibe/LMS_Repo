@@ -85,7 +85,7 @@ class CandidatFormateurControllerTest {
 
     private static CandidatureFormateurCreateRequest requete(Long offreId) {
         return new CandidatureFormateurCreateRequest(offreId, "Diallo", "Awa", "770000000",
-                "Ingénieur pétrole", 8, "Lettre de motivation",
+                "Ingénieur pétrole", 8,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null);
     }
@@ -180,7 +180,7 @@ class CandidatFormateurControllerTest {
         when(roleRepository.findByCode("ROLE_CANDIDAT_FORMATEUR"))
                 .thenReturn(new Role(9, "ROLE_CANDIDAT_FORMATEUR", "Candidat formateur", null));
         CandidatureFormateurCreateRequest requete = new CandidatureFormateurCreateRequest(1L, "Diallo", "Awa",
-                "770000000", "Ingénieur pétrole", 8, "Lettre de motivation",
+                "770000000", "Ingénieur pétrole", 8,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, List.of(new LangueRequest("Anglais", "COURANT")), null, null);
 

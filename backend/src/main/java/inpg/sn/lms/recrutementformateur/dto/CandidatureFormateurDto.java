@@ -22,7 +22,6 @@ public record CandidatureFormateurDto(
         String telephone,
         String diplomePrincipal,
         Integer anneesExperience,
-        String lettreMotivation,
         String statut,
         String decision,
         String motifDecision,

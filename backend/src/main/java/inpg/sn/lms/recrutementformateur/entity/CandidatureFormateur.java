@@ -78,9 +78,6 @@ public class CandidatureFormateur {
     @Column(name = "annees_experience")
     private Integer anneesExperience;
 
-    @Column(name = "lettre_motivation", length = 4000)
-    private String lettreMotivation;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private EnumStatutCandidatureFormateur statut = EnumStatutCandidatureFormateur.DOSSIER_RECU;

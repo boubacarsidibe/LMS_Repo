@@ -421,12 +421,6 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
           </div>
         </div>
 
-        <div>
-          <label for="lettreMotivation" class="font-label-md text-label-md text-on-surface">Lettre de motivation (facultatif)</label>
-          <textarea id="lettreMotivation" [(ngModel)]="lettreMotivation" name="lettreMotivation" rows="4"
-            class="mt-1 w-full p-3 rounded-lg bg-surface-container-low border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors resize-y"></textarea>
-        </div>
-
         <p *ngIf="erreur" class="font-body-sm text-body-sm text-error">{{ erreur }}</p>
         <button type="submit" [disabled]="!formulaireValide || envoiEnCours"
           class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50">
@@ -636,7 +630,6 @@ export class MaCandidatureComponent implements OnInit {
   telephone = '';
   diplomePrincipal = '';
   anneesExperience: number | null = null;
-  lettreMotivation = '';
   envoiEnCours = false;
   erreur = '';
 
@@ -811,7 +804,6 @@ export class MaCandidatureComponent implements OnInit {
         telephone: this.telephone.trim(),
         diplomePrincipal: this.diplomePrincipal.trim() || null,
         anneesExperience: this.anneesExperience ? Number(this.anneesExperience) : null,
-        lettreMotivation: this.lettreMotivation.trim() || null,
         civilite: this.civilite.trim() || null,
         genre: this.genre.trim() || null,
         dateNaissance: this.dateNaissance || null,

@@ -29,6 +29,7 @@ export type TypeDocumentCandidatureFormateur =
   | 'DIPLOME'
   | 'ATTESTATION_EXPERIENCE'
   | 'PIECE_IDENTITE'
+  | 'LETTRE_MOTIVATION'
   | 'AUTRE';
 
 export const LIBELLES_TYPE_DOCUMENT: Record<TypeDocumentCandidatureFormateur, string> = {
@@ -36,16 +37,23 @@ export const LIBELLES_TYPE_DOCUMENT: Record<TypeDocumentCandidatureFormateur, st
   DIPLOME: 'Diplôme',
   ATTESTATION_EXPERIENCE: "Attestation d'expérience",
   PIECE_IDENTITE: "Pièce d'identité",
+  LETTRE_MOTIVATION: 'Lettre de motivation',
   AUTRE: 'Autre document',
 };
 
 /** Pièces exigées de tout dossier. */
 export const TYPES_DOCUMENT_REQUIS: TypeDocumentCandidatureFormateur[] = ['CV', 'DIPLOME'];
 
-/** Pièces recommandées, non bloquantes au dépôt. */
+/**
+ * Pièces recommandées, non bloquantes au dépôt. LETTRE_MOTIVATION y figure
+ * (2026-09-20) plutôt que dans TYPES_DOCUMENT_REQUIS : elle était déjà
+ * facultative sous forme de texte libre, ce correctif change son support
+ * (fichier joint plutôt que saisi à la main), pas son caractère facultatif.
+ */
 export const TYPES_DOCUMENT_RECOMMANDES: TypeDocumentCandidatureFormateur[] = [
   'ATTESTATION_EXPERIENCE',
   'PIECE_IDENTITE',
+  'LETTRE_MOTIVATION',
 ];
 
 export type NiveauLangue = 'DEBUTANT' | 'INTERMEDIAIRE' | 'AVANCE' | 'COURANT' | 'LANGUE_MATERNELLE';
@@ -141,7 +149,6 @@ export interface CandidatureFormateur {
   telephone: string;
   diplomePrincipal: string | null;
   anneesExperience: number | null;
-  lettreMotivation: string | null;
   statut: StatutCandidatureFormateur;
   decision: DecisionCandidatureFormateur | null;
   motifDecision: string | null;
@@ -179,7 +186,6 @@ export interface CandidatureFormateurSaisie {
   telephone: string;
   diplomePrincipal: string | null;
   anneesExperience: number | null;
-  lettreMotivation: string | null;
 
   civilite: string | null;
   genre: string | null;

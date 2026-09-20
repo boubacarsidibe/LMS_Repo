@@ -100,11 +100,6 @@ import { AdminRecrutementFormateurService } from '../../services/admin-recruteme
               <dd class="text-on-surface">{{ selection.anneesExperience != null ? selection.anneesExperience + ' an(s)' : '—' }}</dd></div>
           </dl>
 
-          <div *ngIf="selection.lettreMotivation">
-            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Lettre de motivation</p>
-            <p class="font-body-sm text-body-sm text-on-surface whitespace-pre-line mt-1">{{ selection.lettreMotivation }}</p>
-          </div>
-
           <!-- État civil et adresse -->
           <div *ngIf="civilRenseigne(selection)">
             <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">État civil et adresse</p>
