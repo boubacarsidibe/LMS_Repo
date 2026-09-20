@@ -3,7 +3,7 @@ package inpg.sn.lms.auth.service;
 /** Règle unique appliquée à tous les mots de passe choisis par un utilisateur. */
 public final class PasswordPolicy {
 
-    public static final int LONGUEUR_MINIMALE = 12;
+    public static final int LONGUEUR_MINIMALE = 8;
 
     private PasswordPolicy() {
     }
