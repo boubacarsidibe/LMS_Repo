@@ -3,7 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Auth } from '../../../../core/auth/services/authService';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
+import { ContexteNavbarService } from '../../../../shared/components/navbar/contexte-navbar.service';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
 import { LIBELLES_TYPE_CONTRAT, OffreFormateur } from '../../models/recrutement-formateur.models';
@@ -16,17 +16,15 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
  * sur n'importe quel site d'offres d'emploi (l'endpoint est déjà permitAll).
  * Seul « Postuler » exige la connexion — un visiteur anonyme est alors envoyé
  * vers la connexion avec un {@code returnUrl}, qui le ramène sur l'offre qu'il
- * avait choisie. Elle porte donc la navbar et le pied de page publics, comme
- * les autres pages de la vitrine.
+ * avait choisie. Le navbar public vient du layout parent (PublicNavbarLayoutComponent) :
+ * cette page ne fait plus que signaler son contexte au service partagé.
  */
 @Component({
   selector: 'app-offres-formateurs',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, FooterComponent, UiSpinnerComponent, UiEmptyStateComponent],
+  imports: [CommonModule, FooterComponent, UiSpinnerComponent, UiEmptyStateComponent],
   template: `
     <div class="min-h-screen flex flex-col bg-background">
-      <app-navbar contexte="formateur"></app-navbar>
-
       <main class="flex-grow w-full p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
         <header>
           <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
@@ -103,12 +101,14 @@ export class OffresPubliquesComponent implements OnInit {
   private service = inject(RecrutementFormateurService);
   private auth = inject(Auth);
   private router = inject(Router);
+  private contexteNavbar = inject(ContexteNavbarService);
 
   offres: OffreFormateur[] = [];
   chargement = true;
   libellesContrat = LIBELLES_TYPE_CONTRAT;
 
   ngOnInit(): void {
+    this.contexteNavbar.contexte.set('formateur');
     this.service.getOffres().subscribe({
       next: (offres) => {
         this.offres = offres;

@@ -1,10 +1,11 @@
-import { Component, Input, OnInit, OnDestroy, effect, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
 import { switchMap, startWith } from 'rxjs/operators';
 import { Auth } from '../../../core/auth/services/authService';
 import { RecrutementService, CandidatureResponse, NotificationCandidatResponse } from '../../../core/recrutement/services/recrutement.service';
+import { ContexteNavbarService } from './contexte-navbar.service';
 
 @Component({
   selector: 'app-navbar',
@@ -16,17 +17,23 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private auth = inject(Auth);
   private router = inject(Router);
   private recrutementService = inject(RecrutementService);
+  private contexteService = inject(ContexteNavbarService);
 
   /**
    * Ce navbar est partagé par le catalogue de formations (recrutement étudiant)
    * ET par la vitrine publique des offres de recrutement formateur — deux
-   * publics différents. Par défaut ('etudiant'), le lien central mène aux
-   * sessions d'admission étudiantes ; passé à 'formateur' (offres-publiques.ts),
-   * il mène aux offres de recrutement formateur à la place. Avant ce correctif,
-   * un formateur consultant les offres voyait « Sessions ouvertes » renvoyer
-   * vers l'admission des étudiants — sans rapport avec sa démarche.
+   * publics différents. Lu depuis {@link ContexteNavbarService} plutôt qu'un
+   * @Input() désormais : /institut et /contact sont des destinations
+   * communes aux deux parcours, où aucune page ne sait par elle-même
+   * "repasser" la bonne valeur à ce composant qui, avant le passage à un
+   * layout persistant, se recréait de toute façon à chaque navigation.
+   * 'etudiant' par défaut ; 'formateur' tant qu'un formateur candidat
+   * reste dans son parcours (mis à jour par offres-publiques.ts et par
+   * les pages étudiantes qui ramènent la valeur inverse).
    */
-  @Input() contexte: 'etudiant' | 'formateur' = 'etudiant';
+  get contexte(): 'etudiant' | 'formateur' {
+    return this.contexteService.contexte();
+  }
 
   dropdownOpen = false;
   notifDropdownOpen = false;

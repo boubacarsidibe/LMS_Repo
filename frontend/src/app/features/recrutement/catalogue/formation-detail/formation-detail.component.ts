@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
 
 export interface FormationDetailData {
@@ -29,7 +28,7 @@ export interface FormationDetailData {
 @Component({
   selector: 'app-formation-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, RouterModule, FooterComponent],
   templateUrl: './formation-detail.component.html',
 })
 export class FormationDetailComponent implements OnInit {

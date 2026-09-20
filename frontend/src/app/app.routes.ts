@@ -16,22 +16,56 @@ export const routes: Routes = [
       ),
   },
 
-  // Contact
+  // Contact, Institut, offres formateurs, et tout /recrutement/* : regroupés
+  // sous un même layout (PublicNavbarLayoutComponent) portant UN SEUL
+  // app-navbar persistant. Avant ce regroupement, chacune de ces pages
+  // embarquait son propre app-navbar : naviguer de l'une à l'autre détruisait
+  // et recréait le composant à chaque clic (relançant notifications et
+  // vérification de candidature à chaque fois) — signalé en recette comme un
+  // navbar qui « clignote », alors même que son CSS `position: fixed` le
+  // gardait immobile pendant un défilement (deux choses différentes). Les
+  // chemins ('contact', 'institut'...) restent inchangés : ce parent ne porte
+  // pas de segment d'URL propre (`path: ''`), donc aucune route existante ne
+  // bouge.
   {
-    path: 'contact',
+    path: '',
     loadComponent: () =>
-      import('./features/recrutement/catalogue/contact/contact.component').then(
-        (m) => m.ContactComponent
+      import('./shared/components/navbar/public-navbar-layout.component').then(
+        (m) => m.PublicNavbarLayoutComponent
       ),
-  },
-
-  // Institut (À propos)
-  {
-    path: 'institut',
-    loadComponent: () =>
-      import('./features/recrutement/catalogue/institut/institut.component').then(
-        (m) => m.InstitutComponent
-      ),
+    children: [
+      {
+        path: 'contact',
+        loadComponent: () =>
+          import('./features/recrutement/catalogue/contact/contact.component').then(
+            (m) => m.ContactComponent
+          ),
+      },
+      {
+        path: 'institut',
+        loadComponent: () =>
+          import('./features/recrutement/catalogue/institut/institut.component').then(
+            (m) => m.InstitutComponent
+          ),
+      },
+      // Recrutement des formateurs (procédure QMS-007). La LISTE des offres
+      // est publique — sans compte, comme n'importe quel site d'offres
+      // d'emploi : l'endpoint correspondant est déjà permitAll
+      // (RecrutementFormateurPublicController). Seul « Postuler » exige la
+      // connexion, le composant renvoyant alors vers /auth/login avec un
+      // returnUrl pour revenir sur l'offre choisie.
+      {
+        path: 'offres-formateurs',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/pages/offres-publiques/offres-publiques').then(
+            (m) => m.OffresPubliquesComponent
+          ),
+      },
+      {
+        path: 'recrutement',
+        loadChildren: () => import('./features/recrutement/recrutement.routes').then(m => m.RECRUTEMENT_ROUTES),
+      },
+    ],
   },
 
   // Vérification publique d'un certificat (page vers laquelle pointe le QR code
@@ -136,20 +170,12 @@ export const routes: Routes = [
     ],
   },
 
-  // Recrutement des formateurs (procédure QMS-007).
-  // La LISTE des offres est publique — sans compte, comme n'importe quel site
-  // d'offres d'emploi : l'endpoint correspondant est déjà permitAll
-  // (RecrutementFormateurPublicController). Seul « Postuler » exige la connexion,
-  // le composant renvoyant alors vers /auth/login avec un returnUrl pour revenir
-  // sur l'offre choisie. Le rôle ROLE_CANDIDAT_FORMATEUR n'est accordé qu'au
-  // premier dépôt (cf. CandidatFormateurController).
-  {
-    path: 'offres-formateurs',
-    loadComponent: () =>
-      import('./features/recrutement-formateurs/pages/offres-publiques/offres-publiques').then(
-        (m) => m.OffresPubliquesComponent
-      ),
-  },
+  // Recrutement des formateurs (procédure QMS-007) : « Postuler » exige la
+  // connexion, le composant renvoyant alors vers /auth/login avec un
+  // returnUrl pour revenir sur l'offre choisie. Le rôle ROLE_CANDIDAT_FORMATEUR
+  // n'est accordé qu'au premier dépôt (cf. CandidatFormateurController).
+  // La vitrine publique elle-même (/offres-formateurs) est déclarée plus haut,
+  // sous PublicNavbarLayoutComponent.
   {
     path: 'candidature-formateur',
     canActivate: [authGuard],
@@ -399,11 +425,8 @@ export const routes: Routes = [
       import('./core/staticPages/terms-and-conditions/terms-and-conditions').then((m) => m.TermsAndConditions),
   },
 
-  // Module Recrutement & Candidatures (lazy-loaded)
-  {
-    path: 'recrutement',
-    loadChildren: () => import('./features/recrutement/recrutement.routes').then(m => m.RECRUTEMENT_ROUTES)
-  },
+  // Module Recrutement & Candidatures : déclaré plus haut, sous
+  // PublicNavbarLayoutComponent (avec /contact, /institut, /offres-formateurs).
 
   // Redirection de sécurité si l'URL saisie n'existe pas
   { path: '**', redirectTo: 'auth/login' },

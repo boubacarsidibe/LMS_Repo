@@ -11,7 +11,6 @@ import {
   TestCandidat,
 } from '../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
 import { downloadBlob } from '../../../shared/utils/download-file';
 import { NotificationService } from '../../../shared/components/ui/notification.service';
 
@@ -35,7 +34,7 @@ interface DocumentChecklistItem {
 @Component({
   selector: 'app-suivi',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent],
   templateUrl: './suivi.component.html'
 })
 export class SuiviComponent implements OnInit {

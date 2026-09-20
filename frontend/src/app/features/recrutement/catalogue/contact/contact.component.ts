@@ -3,13 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule, NgForm } from '@angular/forms';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
 
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, RouterModule, FormsModule, FooterComponent],
   templateUrl: './contact.component.html',
 })
 export class ContactComponent {

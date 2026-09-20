@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
 import { RendezVousComponent } from '../../rendez-vous/pages/rendez-vous/rendez-vous.component';
 
@@ -17,10 +16,9 @@ import { RendezVousComponent } from '../../rendez-vous/pages/rendez-vous/rendez-
 @Component({
   selector: 'app-candidat-rendez-vous',
   standalone: true,
-  imports: [NavbarComponent, FooterComponent, RendezVousComponent],
+  imports: [FooterComponent, RendezVousComponent],
   template: `
     <div class="min-h-screen flex flex-col bg-surface">
-      <app-navbar></app-navbar>
       <main class="flex-grow">
         <app-rendez-vous></app-rendez-vous>
       </main>
