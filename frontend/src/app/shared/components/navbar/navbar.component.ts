@@ -32,7 +32,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
    * les pages étudiantes qui ramènent la valeur inverse).
    */
   get contexte(): 'etudiant' | 'formateur' {
-    return this.contexteService.contexte();
+    // Un compte candidat formateur garde les onglets « formateur » quelle que
+    // soit la page d'arrivée (rechargement direct sur /institut, par exemple).
+    return this.estCandidatFormateur ? 'formateur' : this.contexteService.contexte();
+  }
+
+  get estCandidatFormateur(): boolean {
+    return this.auth.getUserRoles().includes('ROLE_CANDIDAT_FORMATEUR');
   }
 
   dropdownOpen = false;
@@ -66,8 +72,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.auth.clearSession();
           }
           this.userReady = true;
-          this.checkCandidatures();
-          this.startNotificationPolling();
+          // Notifications et candidatures étudiantes : sans objet pour un
+          // candidat formateur (autre parcours, autres endpoints).
+          if (!this.estCandidatFormateur && this.contexteService.contexte() !== 'formateur') {
+            this.checkCandidatures();
+            this.startNotificationPolling();
+          }
         },
         error: () => {
           this.auth.clearSession();
@@ -149,6 +159,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       case 'ROLE_CANDIDAT': return 'CANDIDAT';
       case 'ROLE_ETUDIANT': return 'ETUDIANT';
       case 'ROLE_FORMATEUR': return 'FORMATEUR';
+      case 'ROLE_CANDIDAT_FORMATEUR': return 'CANDIDAT FORMATEUR';
       case 'ROLE_ECOLE_FORMATION': return 'ÉCOLE DE FORMATION';
       case 'ROLE_ENTREPRISE': return 'ENTREPRISE';
       case 'ROLE_EVALUATEUR_ACCREDITATION': return 'ÉVALUATEUR ACCRÉDITATION';
@@ -255,7 +266,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   goToDashboard(): void {
     this.dropdownOpen = false;
-    this.router.navigate(['/recrutement/catalogue']);
+    this.router.navigate([this.contexte === 'formateur' ? '/candidature-formateur' : '/recrutement/catalogue']);
   }
 
   goToMesCandidatures(): void {

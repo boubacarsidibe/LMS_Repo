@@ -131,11 +131,19 @@
             <div class="px-4 py-3 border-b border-outline-variant/40">
               <p class="text-sm font-semibold text-[#000002] capitalize">{{ userDisplayName }}</p>
             </div>
-            <a (click)="goToDashboard()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
+            <a *ngIf="contexte === 'formateur'" routerLink="/candidature-formateur" (click)="closeDropdown()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors no-underline">
+              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">assignment_ind</span>
+              Ma candidature
+            </a>
+            <a *ngIf="contexte === 'formateur'" routerLink="/candidature-formateur/mon-profil" (click)="closeDropdown()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors no-underline">
+              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+              Mon profil
+            </a>
+            <a *ngIf="contexte === 'etudiant'" (click)="goToDashboard()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
               <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">dashboard</span>
               Tableau de bord
             </a>
-            <a (click)="goToMesCandidatures()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
+            <a *ngIf="contexte === 'etudiant'" (click)="goToMesCandidatures()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
               <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">description</span>
               Mes candidatures
             </a>

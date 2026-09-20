@@ -522,7 +522,8 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
               <div class="flex-1 min-w-0">
                 <p class="font-label-md text-label-md text-on-surface">{{ libellesType[type] }}</p>
                 <p *ngIf="pieceDeType(type) as p" class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ p.nomFichierOriginal }}</p>
-                <p *ngIf="!pieceDeType(type)" class="font-body-sm text-body-sm text-on-surface-variant">Non fournie</p>
+                <p *ngIf="televersementEnCours && typeEnCours === type" class="font-body-sm text-body-sm text-secondary">Envoi en cours…</p>
+                <p *ngIf="!pieceDeType(type) && !(televersementEnCours && typeEnCours === type)" class="font-body-sm text-body-sm text-on-surface-variant">Non fournie</p>
               </div>
               <div class="flex items-center gap-1 shrink-0">
                 <button *ngIf="pieceDeType(type) as p" type="button" (click)="consulterPiece(p.id)" title="Consulter"
@@ -532,7 +533,8 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
                 <button *ngIf="modifiable" type="button" (click)="ajouterPiece(type)" [disabled]="televersementEnCours"
                         [title]="pieceDeType(type) ? 'Remplacer' : 'Ajouter'"
                         class="p-2 text-outline hover:text-secondary rounded-full transition-colors disabled:opacity-40">
-                  <span class="material-symbols-outlined text-[20px]">{{ pieceDeType(type) ? 'sync' : 'upload' }}</span>
+                  <span *ngIf="!(televersementEnCours && typeEnCours === type)" class="material-symbols-outlined text-[20px]">{{ pieceDeType(type) ? 'sync' : 'upload' }}</span>
+                  <span *ngIf="televersementEnCours && typeEnCours === type" class="inline-block w-5 h-5 border-2 border-secondary border-t-transparent rounded-full animate-spin" role="status" aria-label="Envoi en cours"></span>
                 </button>
                 <button *ngIf="modifiable && pieceDeType(type) as p" type="button" (click)="supprimerPiece(p.id)" title="Supprimer"
                         class="p-2 text-outline hover:text-error rounded-full transition-colors">
@@ -554,7 +556,8 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
                 <div class="flex-1 min-w-0">
                   <p class="font-label-md text-label-md text-on-surface">{{ libellesType[type] }}</p>
                   <p *ngIf="pieceDeType(type) as p" class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ p.nomFichierOriginal }}</p>
-                  <p *ngIf="!pieceDeType(type)" class="font-body-sm text-body-sm text-on-surface-variant">Non fournie</p>
+                  <p *ngIf="televersementEnCours && typeEnCours === type" class="font-body-sm text-body-sm text-secondary">Envoi en cours…</p>
+                <p *ngIf="!pieceDeType(type) && !(televersementEnCours && typeEnCours === type)" class="font-body-sm text-body-sm text-on-surface-variant">Non fournie</p>
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
                   <button *ngIf="pieceDeType(type) as p" type="button" (click)="consulterPiece(p.id)" title="Consulter"
@@ -564,7 +567,8 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
                   <button *ngIf="modifiable" type="button" (click)="ajouterPiece(type)" [disabled]="televersementEnCours"
                           [title]="pieceDeType(type) ? 'Remplacer' : 'Ajouter'"
                           class="p-2 text-outline hover:text-secondary rounded-full transition-colors disabled:opacity-40">
-                    <span class="material-symbols-outlined text-[20px]">{{ pieceDeType(type) ? 'sync' : 'upload' }}</span>
+                    <span *ngIf="!(televersementEnCours && typeEnCours === type)" class="material-symbols-outlined text-[20px]">{{ pieceDeType(type) ? 'sync' : 'upload' }}</span>
+                  <span *ngIf="televersementEnCours && typeEnCours === type" class="inline-block w-5 h-5 border-2 border-secondary border-t-transparent rounded-full animate-spin" role="status" aria-label="Envoi en cours"></span>
                   </button>
                   <button *ngIf="modifiable && pieceDeType(type) as p" type="button" (click)="supprimerPiece(p.id)" title="Supprimer"
                           class="p-2 text-outline hover:text-error rounded-full transition-colors">
@@ -580,7 +584,7 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
               <p class="font-label-md text-label-md text-on-surface">Autres documents (facultatif)</p>
               <button *ngIf="modifiable" type="button" (click)="ajouterPiece('AUTRE')" [disabled]="televersementEnCours"
                       class="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-outline-variant font-label-sm text-label-sm text-on-surface-variant hover:border-secondary hover:text-secondary transition-colors disabled:opacity-40">
-                <span class="material-symbols-outlined text-[18px]">add</span>Ajouter
+                <span *ngIf="!(televersementEnCours && typeEnCours === 'AUTRE')" class="material-symbols-outlined text-[18px]">add</span><span *ngIf="televersementEnCours && typeEnCours === 'AUTRE'" class="inline-block w-4 h-4 border-2 border-secondary border-t-transparent rounded-full animate-spin"></span>{{ televersementEnCours && typeEnCours === 'AUTRE' ? 'Envoi…' : 'Ajouter' }}
               </button>
             </div>
             <ul *ngIf="piecesAutres.length > 0" class="space-y-2">
@@ -670,7 +674,7 @@ export class MaCandidatureComponent implements OnInit {
   };
 
   // Téléversement
-  private typeEnCours: TypeDocumentCandidatureFormateur = 'CV';
+  typeEnCours: TypeDocumentCandidatureFormateur = 'CV';
   televersementEnCours = false;
   erreurPiece = '';
 
