@@ -25,7 +25,7 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
   imports: [CommonModule, NavbarComponent, FooterComponent, UiSpinnerComponent, UiEmptyStateComponent],
   template: `
     <div class="min-h-screen flex flex-col bg-background">
-      <app-navbar></app-navbar>
+      <app-navbar contexte="formateur"></app-navbar>
 
       <main class="flex-grow w-full p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
         <header>

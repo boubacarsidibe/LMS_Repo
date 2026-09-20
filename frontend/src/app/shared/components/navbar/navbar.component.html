@@ -9,11 +9,14 @@
     <!-- Navigation Links (Desktop) - centered. Volontairement limitée à 4-5 entrées
          (demande du 2026-08-25) : le logo mène déjà à /accueil (pas besoin d'un lien
          "Accueil" redondant), et un compte connecté n'a besoin que d'UN lien de
-         retour vers son espace, pas d'un lien par sous-page de ce dernier. -->
+         retour vers son espace, pas d'un lien par sous-page de ce dernier.
+         Institut en premier : c'est l'entrée la plus pertinente pour un premier
+         visiteur, qu'il découvre l'offre de formations ou de recrutement. -->
     <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
-      <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
-      <a routerLink="/recrutement/sessions" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Sessions ouvertes</a>
       <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
+      <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
+      <a *ngIf="contexte === 'etudiant'" routerLink="/recrutement/sessions" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Sessions ouvertes</a>
+      <a *ngIf="contexte === 'formateur'" routerLink="/offres-formateurs" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Offres de recrutement</a>
       <a routerLink="/contact" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Contact</a>
     </nav>
 
@@ -149,9 +152,10 @@
 
   <!-- Menu de navigation (mobile uniquement) -->
   <nav *ngIf="mobileMenuOpen" class="md:hidden border-t border-outline-variant/40 bg-white px-4 py-3 space-y-1" aria-label="Navigation">
-    <a routerLink="/recrutement/catalogue" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Formations</a>
-    <a routerLink="/recrutement/sessions" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Sessions ouvertes</a>
     <a routerLink="/institut" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Institut</a>
+    <a routerLink="/recrutement/catalogue" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Formations</a>
+    <a *ngIf="contexte === 'etudiant'" routerLink="/recrutement/sessions" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Sessions ouvertes</a>
+    <a *ngIf="contexte === 'formateur'" routerLink="/offres-formateurs" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Offres de recrutement</a>
     <a routerLink="/contact" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Contact</a>
     <ng-container *ngIf="!isLoggedIn">
       <hr class="my-2 border-outline-variant/40">

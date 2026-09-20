@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, effect, inject } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
@@ -16,6 +16,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private auth = inject(Auth);
   private router = inject(Router);
   private recrutementService = inject(RecrutementService);
+
+  /**
+   * Ce navbar est partagé par le catalogue de formations (recrutement étudiant)
+   * ET par la vitrine publique des offres de recrutement formateur — deux
+   * publics différents. Par défaut ('etudiant'), le lien central mène aux
+   * sessions d'admission étudiantes ; passé à 'formateur' (offres-publiques.ts),
+   * il mène aux offres de recrutement formateur à la place. Avant ce correctif,
+   * un formateur consultant les offres voyait « Sessions ouvertes » renvoyer
+   * vers l'admission des étudiants — sans rapport avec sa démarche.
+   */
+  @Input() contexte: 'etudiant' | 'formateur' = 'etudiant';
 
   dropdownOpen = false;
   notifDropdownOpen = false;
