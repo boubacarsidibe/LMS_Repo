@@ -29,7 +29,16 @@ export function noRoleGuard(...excludedRoles: string[]): CanActivateFn {
       }
       const userRoles = user.roles || [];
       if (excludedRoles.some((role) => userRoles.includes(role))) {
-        router.navigate([auth.getHomeUrl() ?? '/accueil']);
+        const espace = auth.getHomeUrl() ?? '/accueil';
+        // Un compte qui cumule école ET entreprise (possible avant ce guard) a
+        // pour espace l'un des deux — que l'autre route exclut : le renvoyer
+        // vers son propre espace le ferait rebondir indéfiniment sur la même
+        // URL. Chez soi, on laisse passer.
+        const chemin = state.url.split(/[?#]/)[0];
+        if (chemin === espace || chemin.startsWith(espace + '/')) {
+          return true;
+        }
+        router.navigate([espace]);
         return false;
       }
       return true;

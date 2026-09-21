@@ -113,6 +113,13 @@ export class EcolesAccrediteesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // authGuard vérifie le jeton mais ne charge pas le compte : après un
+    // rechargement de la page, le lien « Retour à mon espace » ignorait donc
+    // l'espace de l'utilisateur et menait toujours à l'accueil.
+    if (!this.auth.currentUser()) {
+      this.auth.getCurrentUser().subscribe();
+    }
+
     this.accreditationService.getEcolesAccreditees().subscribe({
       next: (ecoles) => {
         this.ecoles = ecoles;
