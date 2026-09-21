@@ -108,15 +108,39 @@ describe('NavbarComponent', () => {
     });
   });
 
+  describe('cloche de notifications', () => {
+    const cloche = () => fixture.nativeElement.querySelector('#notif-btn');
+
+    it("absente pour une école, une entreprise ou un candidat formateur : c'est celle des candidats", () => {
+      localStorage.setItem('token', 'jeton-test');
+      for (const type of ['ECOLE', 'ENTREPRISE', 'FORMATEUR'] as const) {
+        connecter([], type);
+        fixture.detectChanges();
+        expect(cloche()).toBeNull();
+      }
+    });
+
+    it('présente pour un candidat étudiant', () => {
+      localStorage.setItem('token', 'jeton-test');
+      connecter(['ROLE_CANDIDAT'], 'CANDIDAT');
+      fixture.detectChanges();
+      expect(cloche()).not.toBeNull();
+    });
+  });
+
   describe('menu du cercle de profil', () => {
     it('école : son espace et son profil, pas « Mes candidatures »', () => {
       connecter([], 'ECOLE');
       expect(liensDuMenu()).toEqual(['/accreditation', '/accreditation/mon-profil']);
     });
 
-    it('entreprise : son espace et son profil', () => {
+    it('entreprise : son espace, sa messagerie et son profil', () => {
       connecter([], 'ENTREPRISE');
-      expect(liensDuMenu()).toEqual(['/espace-entreprise', '/espace-entreprise/mon-profil']);
+      expect(liensDuMenu()).toEqual([
+        '/espace-entreprise',
+        '/espace-entreprise/messagerie',
+        '/espace-entreprise/mon-profil',
+      ]);
     });
 
     it('candidat formateur : sa candidature et son profil', () => {

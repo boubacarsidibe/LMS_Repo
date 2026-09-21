@@ -1,25 +1,22 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ContexteNavbarService } from '../../../../shared/components/navbar/contexte-navbar.service';
-import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 
 /**
- * Cadre de l'espace Candidat formateur (procédure QMS-007 §3).
+ * Cadre de l'espace Candidat formateur (procédure QMS-007 §3) : le fond de page.
  *
- * <p>Réutilise le navbar partagé (`app-navbar`, contexte « formateur ») au
- * lieu d'une barre propre : retour de recette — le candidat formateur ne
- * voyait plus que « Accueil » et « Offres de recrutement » une fois dans
- * son espace, alors que les onglets doivent rester identiques tout au long
- * de son parcours (Institut, Formations, Offres de recrutement, Contact),
- * comme pour l'étudiant qui candidate. Le menu utilisateur du navbar mène à
- * « Ma candidature » et « Mon profil ».
+ * <p>Cet espace est déclaré sous `PublicNavbarLayoutComponent` (voir
+ * app.routes.ts) : le même `app-navbar` reste en place quand on passe de la
+ * vitrine des offres à « Ma candidature » — mêmes onglets (Institut, Formations,
+ * Offres de recrutement, Contact) tout au long du parcours, comme pour l'étudiant
+ * qui candidate. Le menu du cercle de profil mène à « Ma candidature » et
+ * « Mon profil ».
  */
 @Component({
   selector: 'app-candidat-formateur-layout',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent],
+  imports: [RouterOutlet],
   template: `
-    <app-navbar></app-navbar>
     <main class="min-h-screen bg-background">
       <router-outlet></router-outlet>
     </main>

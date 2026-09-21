@@ -36,6 +36,7 @@ const MENU_PAR_PROFIL: Record<ProfilCompte, EntreeNavigation[]> = {
   ],
   entreprise: [
     { libelle: 'Mon espace', icone: 'business_center', lien: '/espace-entreprise' },
+    { libelle: 'Messagerie', icone: 'forum', lien: '/espace-entreprise/messagerie' },
     { libelle: 'Mon profil', icone: 'account_circle', lien: '/espace-entreprise/mon-profil' },
   ],
   formateur: [

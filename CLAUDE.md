@@ -331,6 +331,12 @@ d'après son type. `getHomeUrl()` s'appuie dessus en dernier recours (école →
 comme l'inscription). Le navbar public partagé (onglet propre, libellé, menu du cercle de
 profil) et les boutons du héros de `/accueil` suivent ce profil : **le compte prime sur la
 page** — `ContexteNavbarService` ne pilote plus que les visiteurs non connectés.
+**Un seul navbar pour tout le parcours** : les espaces École, Entreprise et Candidat
+formateur sont des enfants de `PublicNavbarLayoutComponent` (`app.routes.ts`), donc
+l'`app-navbar` n'est jamais recréé en passant d'« Institut » à « Espace entreprise ». Leurs
+layouts ne portent plus que le fond de page — ne pas leur redonner une barre propre : les
+onglets changeaient d'un coup à chaque passage (retour du 2026-09-21). Pas de cloche de
+notifications pour ces trois profils : c'est celle des candidats, elle resterait vide.
 `auth.spec.ts`, `navbar.component.spec.ts`, `landing.component.spec.ts` et
 `AuthControllerTest` figent ce comportement.
 

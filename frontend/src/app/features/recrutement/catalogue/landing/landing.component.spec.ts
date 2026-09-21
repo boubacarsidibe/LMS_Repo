@@ -60,12 +60,12 @@ describe('LandingComponent (accueil)', () => {
     expect(fixture.nativeElement.textContent).toContain('Espace école de formation');
   });
 
-  it('entreprise connectée : déposer une demande, catalogue, messagerie, rendez-vous', () => {
+  it('entreprise connectée : déposer une demande, messagerie, rendez-vous (plus de catalogue)', () => {
     connecter([], 'ENTREPRISE');
     fixture.detectChanges();
     const boutons = boutonsDuHero();
     expect(boutons['/espace-entreprise/nouvelle-demande']).toContain('Déposer une demande');
-    expect(boutons['/espace-entreprise/catalogue']).toContain('Catalogue des formations');
+    expect(Object.keys(boutons)).not.toContain('/espace-entreprise/catalogue');
     expect(boutons['/espace-entreprise/messagerie']).toContain('Messagerie');
     expect(boutons['/espace-entreprise/rendez-vous']).toContain('Rendez-vous');
     expect(Object.keys(boutons)).not.toContain('/recrutement/sessions');

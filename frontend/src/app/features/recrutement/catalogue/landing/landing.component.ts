@@ -43,7 +43,6 @@ const ACCUEIL_PAR_PROFIL: Record<ProfilCompte, AccueilProfil> = {
     accroche: "Exprimez vos besoins de formation, demandez un devis sur mesure et échangez avec l'équipe pédagogique.",
     actions: [
       { libelle: 'Déposer une demande', icone: 'request_quote', lien: '/espace-entreprise/nouvelle-demande' },
-      { libelle: 'Catalogue des formations', icone: 'menu_book', lien: '/espace-entreprise/catalogue' },
       { libelle: 'Messagerie', icone: 'forum', lien: '/espace-entreprise/messagerie' },
       { libelle: 'Rendez-vous', icone: 'event', lien: '/espace-entreprise/rendez-vous' },
     ],
