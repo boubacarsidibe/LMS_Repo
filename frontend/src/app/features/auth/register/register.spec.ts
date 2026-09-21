@@ -42,33 +42,48 @@ describe('Register', () => {
     expect(component.registerForm.hasError('motsDePasseDifferents')).toBe(false);
   });
 
-  it("champEnErreur ignore un champ invalide tant que l'utilisateur ne l'a pas quitté", () => {
+  it("champEnErreur ignore un champ vide, même quitté, tant qu'aucun envoi n'a été tenté", () => {
     expect(component.registerForm.get('email')?.invalid).toBe(true);
+    component.registerForm.get('email')?.markAsTouched();
+
     expect(component.champEnErreur('email')).toBe(false);
   });
 
-  it('champEnErreur signale un champ invalide une fois touché', () => {
-    component.registerForm.get('email')?.markAsTouched();
+  it("champEnErreur signale un champ invalide dès qu'un caractère est saisi, sans attendre le clic", () => {
+    component.registerForm.patchValue({ email: 'a' });
 
+    expect(component.tentativeEnvoi).toBe(false);
     expect(component.champEnErreur('email')).toBe(true);
   });
 
+  it("l'erreur disparaît quand l'utilisateur vide le champ avant tout clic", () => {
+    component.registerForm.patchValue({ email: 'a' });
+    component.registerForm.patchValue({ email: '' });
+
+    expect(component.champEnErreur('email')).toBe(false);
+  });
+
+  it('un mot de passe trop court est signalé dès le premier caractère', () => {
+    component.registerForm.patchValue({ password: 'a' });
+
+    expect(component.champEnErreur('password')).toBe(true);
+    expect(component.registerForm.get('password')?.hasError('minlength')).toBe(true);
+  });
+
   /**
-   * Un indicateur « tentative d'envoi » forçait auparavant l'affichage de TOUS
-   * les champs invalides au premier clic : un formulaire vierge se couvrait de
-   * cinq messages rouges d'un coup, pour des champs où l'utilisateur n'avait
-   * rien saisi et donc commis aucune erreur. Signalé en recette comme un clic
-   * « qui ne fait rien » — il ne créait pas de compte et n'affichait qu'un mur
-   * de rouge, sans désigner par quoi commencer.
+   * Le clic ne créait aucun compte et ne montrait rien d'utile — signalé en
+   * recette comme un bouton « qui ne fait rien ». Il affiche désormais l'erreur
+   * de tous les champs invalides (même vides) ET nomme par quoi commencer.
    */
-  it('un clic sur formulaire vierge ne signale que le premier champ bloquant', () => {
+  it('un clic sur formulaire vierge signale tous les champs bloquants', () => {
     component.onSubmit();
 
+    expect(component.tentativeEnvoi).toBe(true);
     expect(component.champEnErreur('prenom')).toBe(true);
-    expect(component.champEnErreur('nom')).toBe(false);
-    expect(component.champEnErreur('email')).toBe(false);
-    expect(component.champEnErreur('password')).toBe(false);
-    expect(component.champEnErreur('confirmPassword')).toBe(false);
+    expect(component.champEnErreur('nom')).toBe(true);
+    expect(component.champEnErreur('email')).toBe(true);
+    expect(component.champEnErreur('password')).toBe(true);
+    expect(component.champEnErreur('confirmPassword')).toBe(true);
   });
 
   it('le clic nomme le champ bloquant, pour que le bouton ne paraisse pas inerte', () => {
@@ -82,9 +97,23 @@ describe('Register', () => {
 
     component.onSubmit();
 
+    expect(component.champEnErreur('prenom')).toBe(false);
     expect(component.champEnErreur('nom')).toBe(true);
     expect(component.errorMessage).toContain('Nom');
-    expect(component.champEnErreur('email')).toBe(false);
+  });
+
+  it("affiche « les mots de passe ne correspondent pas » dès qu'un caractère de confirmation est saisi", () => {
+    component.registerForm.patchValue({ password: 'motdepasse1234', confirmPassword: 'm' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Les mots de passe ne correspondent pas');
+  });
+
+  it("n'affiche pas cette erreur tant que la confirmation est vide", () => {
+    component.registerForm.patchValue({ password: 'motdepasse1234', confirmPassword: '' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Les mots de passe ne correspondent pas');
   });
 
   it('désigne la confirmation quand seuls les deux mots de passe diffèrent', () => {

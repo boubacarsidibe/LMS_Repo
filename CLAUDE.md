@@ -334,6 +334,16 @@ page** — `ContexteNavbarService` ne pilote plus que les visiteurs non connect�
 `auth.spec.ts`, `navbar.component.spec.ts`, `landing.component.spec.ts` et
 `AuthControllerTest` figent ce comportement.
 
+**L'erreur d'un champ s'affiche dès le premier caractère invalide, ou après le clic sur
+le bouton d'envoi — jamais sur un champ vide qu'on a seulement quitté.** Une seule règle,
+`erreurVisible()` (`shared/utils/erreur-champ.ts`), pour la connexion, l'inscription et le
+contact. Elle a été réécrite trois fois : « au blur » (un champ vide rougissait dès qu'on le
+quittait, et le bouton de connexion, désactivé tant que le formulaire était invalide,
+interdisait tout clic), puis « après le clic seulement » (une saisie fausse restait muette),
+puis celle-ci. Ne pas rebrancher `touched` dans ces formulaires. À l'inscription, le clic
+ajoute un bandeau qui nomme le premier champ bloquant et y place le curseur. « Mot de passe
+oublié » garde sa propre règle.
+
 **Un relevé délivré fige ses valeurs, il ne les recalcule pas** (migration `V9`).
 `releve_ligne` recopie code, titre, coefficient et moyenne du cours ; elle n'a
 volontairement **aucune clé étrangère** vers `cours`. Sans cela, un document remis en

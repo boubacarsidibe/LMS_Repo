@@ -6,6 +6,7 @@ import { EMPTY } from 'rxjs';
 import { finalize, tap, catchError } from 'rxjs/operators';
 import { Auth } from '../../../core/auth/services/authService';
 import { AuthResponse } from '../../../core/auth/models/auth-response';
+import { erreurVisible } from '../../../shared/utils/erreur-champ';
 
 @Component({
   selector: 'app-login',
@@ -35,7 +36,7 @@ export class Login {
    */
   returnUrl: string | null = null;
 
-  /** Les erreurs de champ ne s'affichent qu'après une tentative de connexion — pas au survol/blur. */
+  /** Une tentative de connexion a eu lieu : les champs invalides, même vides, affichent leur erreur. */
   tentativeEnvoi = false;
 
   constructor(
@@ -72,10 +73,9 @@ export class Login {
 
   }
 
-  /** Un champ n'affiche son erreur qu'après une tentative de connexion, jamais avant. */
+  /** Erreur d'un champ : dès un caractère saisi, ou après le clic sur « Se connecter » (voir erreurVisible). */
   champEnErreur(nom: string): boolean {
-    const controle = this.form.get(nom);
-    return !!controle && controle.invalid && this.tentativeEnvoi;
+    return erreurVisible(this.form.get(nom), this.tentativeEnvoi);
   }
 
   onSubmit(): void {

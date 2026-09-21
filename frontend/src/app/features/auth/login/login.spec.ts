@@ -38,6 +38,14 @@ describe('Login', () => {
     expect(component.champEnErreur('email')).toBe(false);
   });
 
+  it("champEnErreur signale un e-mail invalide dès qu'un caractère est saisi, avant toute tentative", () => {
+    component.form.patchValue({ email: 'a' });
+
+    expect(component.tentativeEnvoi).toBe(false);
+    expect(component.champEnErreur('email')).toBe(true);
+    expect(component.champEnErreur('password')).toBe(false);
+  });
+
   it("champEnErreur signale un champ invalide après une tentative de connexion (clic sur Se connecter)", () => {
     component.onSubmit();
 

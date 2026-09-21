@@ -3,6 +3,7 @@ import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators, 
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth } from '../../../core/auth/services/authService';
+import { erreurVisible } from '../../../shared/utils/erreur-champ';
 
 /**
  * confirmPassword n'avait jusqu'ici que Validators.required : un mot de passe
@@ -92,20 +93,16 @@ export class Register {
     { nom: 'confirmPassword', id: 'reg-confirm', libelle: 'Confirmation du mot de passe' }
   ];
 
+  /** Un clic sur « Créer un compte » a eu lieu : les champs invalides, même vides, affichent leur erreur. */
+  tentativeEnvoi = false;
+
   /**
-   * Un champ n'affiche son erreur qu'une fois que l'utilisateur l'a quitté —
-   * jamais avant qu'il ait eu l'occasion d'y saisir quoi que ce soit.
-   *
-   * <p>Un indicateur « une tentative d'envoi a eu lieu » couvrait auparavant
-   * cette condition : au premier clic sur « Créer un compte », les cinq champs
-   * du formulaire vide viraient au rouge d'un coup, y compris ceux que
-   * l'utilisateur n'avait jamais touchés. Un mur de messages ne désigne aucun
-   * responsable : c'est {@link onSubmit} qui signale désormais le premier
-   * champ bloquant, un à la fois.
+   * Erreur d'un champ : dès qu'un caractère est saisi et invalide, ou après le
+   * clic sur « Créer un compte » (voir erreurVisible). Un champ vide, même
+   * quitté, ne rougit pas avant le clic.
    */
   champEnErreur(nom: string): boolean {
-    const controle = this.registerForm.get(nom);
-    return !!controle && controle.invalid && controle.touched;
+    return erreurVisible(this.registerForm.get(nom), this.tentativeEnvoi);
   }
 
   choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' | 'FORMATEUR'): void {
@@ -129,13 +126,12 @@ export class Register {
   }
 
   /**
-   * Réponse au clic lorsque le formulaire n'est pas envoyable : désigne le
-   * premier champ qui bloque, affiche son message et y place le curseur.
+   * Réponse au clic lorsque le formulaire n'est pas envoyable : en plus des
+   * erreurs affichées sur les champs, désigne le premier champ qui bloque dans
+   * un bandeau et y place le curseur.
    *
-   * <p>Sans cela, le clic ne produisait rien d'utile — l'envoi était refusé en
-   * silence, et le seul retour visible était l'ensemble des champs virant au
-   * rouge simultanément. Un champ à la fois, celui sur lequel agir, avec le
-   * curseur déjà dedans.
+   * <p>Sans cela, l'ensemble des champs virant au rouge ne disait pas par quoi
+   * commencer : le clic paraissait ne rien faire d'utile.
    */
   private signalerPremierChampBloquant(): void {
     const bloquant = Register.CHAMPS.find(champ => this.registerForm.get(champ.nom)?.invalid)
@@ -164,6 +160,8 @@ export class Register {
   }
 
   onSubmit(): void {
+    this.tentativeEnvoi = true;
+
     if (this.registerForm.invalid) {
       this.signalerPremierChampBloquant();
       return;
