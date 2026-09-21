@@ -73,10 +73,10 @@ export class Register {
   /** Lu depuis le template (comparaison des mots de passe) : pas de modificateur d'accès. */
   tentativeEnvoi = false;
 
-  /** Un champ n'affiche son erreur qu'une fois que l'utilisateur l'a quitté ou après une tentative d'envoi. */
+  /** Un champ n'affiche son erreur qu'après une tentative d'envoi, jamais avant (même en quittant le champ). */
   champEnErreur(nom: string): boolean {
     const controle = this.registerForm.get(nom);
-    return !!controle && controle.invalid && (controle.touched || this.tentativeEnvoi);
+    return !!controle && controle.invalid && this.tentativeEnvoi;
   }
 
   choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE'): void {

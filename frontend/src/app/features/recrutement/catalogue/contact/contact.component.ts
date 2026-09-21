@@ -33,10 +33,10 @@ export class ContactComponent {
 
   constructor(private recrutementService: RecrutementService) {}
 
-  /** Un champ n'affiche son erreur qu'une fois quitté, ou après une tentative d'envoi. */
+  /** Un champ n'affiche son erreur qu'après une tentative d'envoi, jamais avant (même en le quittant). */
   champEnErreur(form: NgForm, nom: string): boolean {
     const controle = form.controls[nom];
-    return !!controle && controle.invalid && (controle.touched || this.envoiTente);
+    return !!controle && controle.invalid && this.envoiTente;
   }
 
   /**

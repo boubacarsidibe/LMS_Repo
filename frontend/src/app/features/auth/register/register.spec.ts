@@ -42,13 +42,15 @@ describe('Register', () => {
     expect(component.registerForm.hasError('motsDePasseDifferents')).toBe(false);
   });
 
-  it('champEnErreur ignore un champ invalide tant que ni touché ni tentative d\'envoi', () => {
+  it("champEnErreur ignore un champ invalide même touché, tant qu'aucun envoi n'a été tenté", () => {
     expect(component.registerForm.get('email')?.invalid).toBe(true);
+    component.registerForm.get('email')?.markAsTouched();
+
     expect(component.champEnErreur('email')).toBe(false);
   });
 
-  it('champEnErreur signale un champ invalide une fois touché', () => {
-    component.registerForm.get('email')?.markAsTouched();
+  it("champEnErreur ne signale un champ invalide qu'après une tentative d'envoi (pas au blur seul)", () => {
+    component.tentativeEnvoi = true;
 
     expect(component.champEnErreur('email')).toBe(true);
   });

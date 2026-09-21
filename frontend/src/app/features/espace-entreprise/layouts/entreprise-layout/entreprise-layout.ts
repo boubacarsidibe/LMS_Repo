@@ -33,7 +33,6 @@ export class EntrepriseLayout implements OnInit {
     { libelle: 'Mes demandes', lien: 'nouvelle-demande' },
     { libelle: 'Catalogue des formations', lien: 'catalogue' },
     { libelle: 'Messagerie', lien: 'messagerie' },
-    { libelle: 'Rendez-vous', lien: 'rendez-vous' },
   ];
 
   /** Le signal `currentUser` n'est pas toujours déjà peuplé à l'arrivée sur ce layout. */
