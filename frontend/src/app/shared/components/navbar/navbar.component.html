@@ -15,8 +15,9 @@
     <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
       <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
       <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
-      <a *ngIf="contexte === 'etudiant'" routerLink="/recrutement/sessions" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Sessions ouvertes</a>
-      <a *ngIf="contexte === 'formateur'" routerLink="/offres-formateurs" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Offres de recrutement</a>
+      <!-- Le seul onglet qui change selon le public : sessions d'admission (étudiant),
+           offres de recrutement (formateur), accréditation (école), espace entreprise. -->
+      <a [routerLink]="ongletSpecifique.lien" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">{{ ongletSpecifique.libelle }}</a>
       <a routerLink="/contact" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Contact</a>
     </nav>
 
@@ -131,21 +132,11 @@
             <div class="px-4 py-3 border-b border-outline-variant/40">
               <p class="text-sm font-semibold text-[#000002] capitalize">{{ userDisplayName }}</p>
             </div>
-            <a *ngIf="contexte === 'formateur'" routerLink="/candidature-formateur" (click)="closeDropdown()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors no-underline">
-              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">assignment_ind</span>
-              Ma candidature
-            </a>
-            <a *ngIf="contexte === 'formateur'" routerLink="/candidature-formateur/mon-profil" (click)="closeDropdown()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors no-underline">
-              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">account_circle</span>
-              Mon profil
-            </a>
-            <a *ngIf="contexte === 'etudiant'" (click)="goToDashboard()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
-              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">dashboard</span>
-              Tableau de bord
-            </a>
-            <a *ngIf="contexte === 'etudiant'" (click)="goToMesCandidatures()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
-              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">description</span>
-              Mes candidatures
+            <!-- Menu selon le type du compte (école, entreprise, candidat formateur,
+                 candidat/étudiant) : voir entreesMenu. -->
+            <a *ngFor="let entree of entreesMenu()" [routerLink]="entree.lien" (click)="closeDropdown()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors no-underline">
+              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">{{ entree.icone }}</span>
+              {{ entree.libelle }}
             </a>
             <hr class="my-1 border-outline-variant/40">
             <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
@@ -162,8 +153,7 @@
   <nav *ngIf="mobileMenuOpen" class="md:hidden border-t border-outline-variant/40 bg-white px-4 py-3 space-y-1" aria-label="Navigation">
     <a routerLink="/institut" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Institut</a>
     <a routerLink="/recrutement/catalogue" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Formations</a>
-    <a *ngIf="contexte === 'etudiant'" routerLink="/recrutement/sessions" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Sessions ouvertes</a>
-    <a *ngIf="contexte === 'formateur'" routerLink="/offres-formateurs" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Offres de recrutement</a>
+    <a [routerLink]="ongletSpecifique.lien" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">{{ ongletSpecifique.libelle }}</a>
     <a routerLink="/contact" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Contact</a>
     <ng-container *ngIf="!isLoggedIn">
       <hr class="my-2 border-outline-variant/40">
@@ -181,7 +171,7 @@
 
 <!-- Bouton flottant : suivi de candidature (visible dès que le rôle Candidat est acquis) -->
 <a *ngIf="isLoggedIn && isCandidatRole"
-   [routerLink]="candidatureUrl"
+   [routerLink]="candidatureUrl()"
    class="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-primary hover:bg-[#254d7d] active:scale-95 rounded-full shadow-lg shadow-primary/30 transition-all duration-200 no-underline">
   <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">description</span>
   <span class="hidden sm:inline">Suivre ma candidature</span>

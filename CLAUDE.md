@@ -314,6 +314,26 @@ d'une promotion, faite côté pédagogie, qui achève l'inscription et attribue 
 matricule. Le compte porte `origine = "Admission"` tant qu'un dossier de candidature
 existe derrière lui, pour distinguer un admis de la veille d'un compte oublié.
 
+**Le type d'inscription oriente, il n'autorise pas.** Les rôles métier
+(`ROLE_ECOLE_FORMATION`, `ROLE_ENTREPRISE`, `ROLE_CANDIDAT_FORMATEUR`, `ROLE_CANDIDAT`)
+ne sont accordés qu'à la **première soumission réelle** ; une école ou une entreprise
+qui s'est inscrite sans rien déposer n'a donc **aucun rôle**. Seul `typeInscription`
+(`CANDIDAT`/`ECOLE`/`ENTREPRISE`/`FORMATEUR`, colonne `users.type_inscription`) dit ce
+qu'elle est. Il doit voyager jusqu'au navigateur : `AuthController.toUserMap` en est
+l'**unique** fabrique (connexion, `/current-user`, inscription) — ces trois réponses
+avaient divergé, seule l'inscription le renvoyait, et une école qui se reconnectait le
+lendemain retombait sur l'accueil des candidats étudiants, sans le moindre lien vers son
+espace, ni erreur ni journal. Côté Angular, `Auth.getProfilCompte()` en tire le profil :
+**le rôle fait foi dès qu'il existe**, le type ne parle que quand la liste des rôles est
+vide, et un compte qui porte un autre rôle (étudiant, personnel) n'est jamais reclassé
+d'après son type. `getHomeUrl()` s'appuie dessus en dernier recours (école →
+`/accreditation`, entreprise → `/espace-entreprise`, formateur → `/offres-formateurs`,
+comme l'inscription). Le navbar public partagé (onglet propre, libellé, menu du cercle de
+profil) et les boutons du héros de `/accueil` suivent ce profil : **le compte prime sur la
+page** — `ContexteNavbarService` ne pilote plus que les visiteurs non connectés.
+`auth.spec.ts`, `navbar.component.spec.ts`, `landing.component.spec.ts` et
+`AuthControllerTest` figent ce comportement.
+
 **Un relevé délivré fige ses valeurs, il ne les recalcule pas** (migration `V9`).
 `releve_ligne` recopie code, titre, coefficient et moyenne du cours ; elle n'a
 volontairement **aucune clé étrangère** vers `cours`. Sans cela, un document remis en
@@ -392,6 +412,20 @@ docker exec -i demo-postgres psql -U admin -d myappdb < backend/db/seed-demo-cli
 
 Le second remplit les écrans qui sonnent creux en démonstration : progressions
 variées, photothèque, forum, tests et entretiens.
+
+**Aucun compte de recette n'est sans rôle** — tous en portent un, ce qui masque toute une
+famille de défauts propres au compte *fraîchement inscrit* (école, entreprise ou formateur
+n'ayant encore rien soumis : les rôles métier ne s'accordent qu'à la première soumission).
+Pour les reproduire, créer un compte jetable puis le retirer par un `DELETE` ciblé :
+
+```bash
+curl -s -X POST localhost:8080/api/auth/register -H 'Content-Type: application/json' \
+  -d '{"username":"verif_ecole","email":"verif.ecole@inpg.sn","password":"Verif@2026","typeInscription":"ECOLE"}'
+docker exec -i demo-postgres psql -U admin -d myappdb \
+  -c "DELETE FROM users WHERE email = 'verif.ecole@inpg.sn';"   # après l'essai
+```
+
+`typeInscription` vaut `CANDIDAT`, `ECOLE`, `ENTREPRISE` ou `FORMATEUR`.
 
 ---
 

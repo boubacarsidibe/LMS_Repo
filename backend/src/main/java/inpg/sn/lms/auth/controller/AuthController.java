@@ -4,6 +4,7 @@ import inpg.sn.lms.auth.dto.AuthRequest;
 import inpg.sn.lms.auth.dto.AuthResponse;
 import inpg.sn.lms.auth.dto.FormateurDto;
 import inpg.sn.lms.auth.entity.Formateur;
+import inpg.sn.lms.auth.enums.EnumTypeInscription;
 import inpg.sn.lms.auth.service.FormateurService;
 import inpg.sn.lms.auth.service.PasswordPolicy;
 import inpg.sn.lms.auth.entity.User;
@@ -64,13 +65,7 @@ public class AuthController {
         try {
             User newUser = userService.createUser(userDto);
             String token = jwtUtils.generateToken(newUser);
-            Map<String, Object> user = Map.of(
-                    "id", newUser.getId(),
-                    "username", newUser.getUsername(),
-                    "email", newUser.getEmail(),
-                    "roles", newUser.getRoles().stream().map(role -> role.getCode()).toList(),
-                    "typeInscription", newUser.getTypeInscription().name());
-            return ResponseEntity.ok(Map.of("token", token, "user", user));
+            return ResponseEntity.ok(Map.of("token", token, "user", toUserMap(newUser)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
@@ -165,19 +160,10 @@ public class AuthController {
             // 4. Génération du JWT
             String jwt = jwtUtils.generateToken(user);
 
-            // 5. Construction de l'objet utilisateur pour le frontend
-            Map<String, Object> userMap = Map.of(
-                    "id", user.getId(),
-                    "username", user.getUsername(),
-                    "email", user.getEmail(),
-                    "roles", user.getRoles().stream()
-                            .map(role -> role.getCode())
-                            .toList());
-
-            // 6. Renvoyer le token + l'utilisateur
+            // 5. Renvoyer le token + l'utilisateur (même carte que /current-user)
             return ResponseEntity.ok(Map.of(
                     "token", jwt,
-                    "user", userMap,
+                    "user", toUserMap(user),
                     "message", "Authentification réussie."));
 
         } catch (BadCredentialsException e) {
@@ -298,11 +284,26 @@ public class AuthController {
         return ResponseEntity.ok(formateurService.getAllFormateurs());
     }
 
+    /**
+     * Carte du compte renvoyée au navigateur par l'inscription, la connexion et
+     * {@code /current-user}. Une seule fabrique pour les trois : elles avaient déjà
+     * divergé (seule l'inscription renvoyait {@code typeInscription}).
+     *
+     * <p>{@code typeInscription} (candidat, école, entreprise, formateur) ne donne
+     * aucun droit : il sert uniquement à orienter un compte qui n'a encore aucun rôle
+     * métier — une école ou une entreprise inscrite mais n'ayant rien soumis — vers
+     * l'espace qui la concerne au lieu de l'accueil des candidats. Un compte sans
+     * type est traité comme un candidat, valeur par défaut de la colonne.
+     */
     private Map<String, Object> toUserMap(User user) {
+        EnumTypeInscription type = user.getTypeInscription() != null
+                ? user.getTypeInscription()
+                : EnumTypeInscription.CANDIDAT;
         return Map.of(
                 "id", user.getId(),
                 "username", user.getUsername(),
                 "email", user.getEmail(),
-                "roles", user.getRoles().stream().map(role -> role.getCode()).toList());
+                "roles", user.getRoles().stream().map(role -> role.getCode()).toList(),
+                "typeInscription", type.name());
     }
 }

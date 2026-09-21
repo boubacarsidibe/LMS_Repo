@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { Auth } from './authService';
+import { TypeInscription } from '../models/user.model';
 
 describe('Auth', () => {
   let service: Auth;
@@ -16,5 +17,75 @@ describe('Auth', () => {
 
   it('should be created', () => {
     expect(service).toBeTruthy();
+  });
+
+  /**
+   * Retour de recette : une école ou une entreprise inscrite mais n'ayant rien
+   * soumis n'a aucun rôle métier (ils ne sont accordés qu'à la première
+   * soumission). À la connexion, elle était traitée comme un candidat et
+   * atterrissait sur l'accueil des admissions étudiantes, sans rien qui mène à
+   * son espace. Le type d'inscription, désormais renvoyé par le serveur, comble
+   * ce vide — sans jamais primer sur un rôle qui existe.
+   */
+  describe('profil du compte et espace de destination', () => {
+    const connecter = (roles: string[], typeInscription?: TypeInscription) =>
+      service.currentUser.set({ id: 1, username: 'compte_test', email: 'compte@inpg.sn', roles, typeInscription });
+
+    it('un visiteur n\'a ni profil ni espace', () => {
+      expect(service.getProfilCompte()).toBeNull();
+      expect(service.getHomeUrl()).toBeNull();
+    });
+
+    it('une école sans rôle métier est reconnue par son type et menée à son espace', () => {
+      connecter([], 'ECOLE');
+      expect(service.getProfilCompte()).toBe('ecole');
+      expect(service.getHomeUrl()).toBe('/accreditation');
+    });
+
+    it('une entreprise sans rôle métier est reconnue par son type et menée à son espace', () => {
+      connecter([], 'ENTREPRISE');
+      expect(service.getProfilCompte()).toBe('entreprise');
+      expect(service.getHomeUrl()).toBe('/espace-entreprise');
+    });
+
+    it('un formateur sans candidature est mené aux offres, qu\'il doit choisir avant de candidater', () => {
+      connecter([], 'FORMATEUR');
+      expect(service.getProfilCompte()).toBe('formateur');
+      expect(service.getHomeUrl()).toBe('/offres-formateurs');
+    });
+
+    it('un candidat sans dossier n\'a pas d\'espace propre : il reste sur l\'accueil', () => {
+      connecter([], 'CANDIDAT');
+      expect(service.getProfilCompte()).toBeNull();
+      expect(service.getHomeUrl()).toBeNull();
+    });
+
+    it('un compte sans type (ancienne réponse du serveur) reste traité comme un candidat', () => {
+      connecter([]);
+      expect(service.getProfilCompte()).toBeNull();
+      expect(service.getHomeUrl()).toBeNull();
+    });
+
+    it('le rôle métier fait foi sur le type : une école dont le type vaut CANDIDAT (comptes de recette)', () => {
+      connecter(['ROLE_ECOLE_FORMATION'], 'CANDIDAT');
+      expect(service.getProfilCompte()).toBe('ecole');
+      expect(service.getHomeUrl()).toBe('/accreditation');
+    });
+
+    it('un candidat formateur ayant déjà soumis est mené à sa candidature, pas aux offres', () => {
+      connecter(['ROLE_CANDIDAT_FORMATEUR'], 'FORMATEUR');
+      expect(service.getProfilCompte()).toBe('formateur');
+      expect(service.getHomeUrl()).toBe('/candidature-formateur');
+    });
+
+    it('un compte qui porte un autre rôle n\'est jamais reclassé d\'après son type', () => {
+      connecter(['ROLE_ETUDIANT'], 'ECOLE');
+      expect(service.getProfilCompte()).toBeNull();
+      expect(service.getHomeUrl()).toBe('/espace-etudiant/dashboard');
+
+      connecter(['ROLE_RESPONSABLE_ADMISSION'], 'ENTREPRISE');
+      expect(service.getProfilCompte()).toBeNull();
+      expect(service.getHomeUrl()).toBe('/responsable-admission');
+    });
   });
 });

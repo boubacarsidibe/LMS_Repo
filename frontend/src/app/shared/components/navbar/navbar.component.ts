@@ -1,11 +1,48 @@
-import { Component, OnInit, OnDestroy, effect, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
 import { switchMap, startWith } from 'rxjs/operators';
 import { Auth } from '../../../core/auth/services/authService';
+import { ProfilCompte } from '../../../core/auth/models/user.model';
 import { RecrutementService, CandidatureResponse, NotificationCandidatResponse } from '../../../core/recrutement/services/recrutement.service';
 import { ContexteNavbarService } from './contexte-navbar.service';
+
+/** Une entrée du menu du cercle de profil (ou un onglet du centre du navbar). */
+interface EntreeNavigation {
+  libelle: string;
+  icone: string;
+  lien: string;
+}
+
+/**
+ * Le seul onglet qui change d'un public à l'autre, en troisième position (entre
+ * « Formations » et « Contact ») : celui qui mène à ce que le public vient
+ * chercher ici. Constantes, pas des objets recréés à chaque lecture : le
+ * gabarit les lit à chaque cycle de détection.
+ */
+const ONGLET_PAR_CONTEXTE: Record<ProfilCompte | 'etudiant', Omit<EntreeNavigation, 'icone'>> = {
+  etudiant: { libelle: 'Sessions ouvertes', lien: '/recrutement/sessions' },
+  formateur: { libelle: 'Offres de recrutement', lien: '/offres-formateurs' },
+  ecole: { libelle: 'Accréditation', lien: '/accreditation' },
+  entreprise: { libelle: 'Espace entreprise', lien: '/espace-entreprise' },
+};
+
+/** Menu du cercle de profil des comptes qui ont leur propre espace. */
+const MENU_PAR_PROFIL: Record<ProfilCompte, EntreeNavigation[]> = {
+  ecole: [
+    { libelle: 'Mon espace', icone: 'school', lien: '/accreditation' },
+    { libelle: 'Mon profil', icone: 'account_circle', lien: '/accreditation/mon-profil' },
+  ],
+  entreprise: [
+    { libelle: 'Mon espace', icone: 'business_center', lien: '/espace-entreprise' },
+    { libelle: 'Mon profil', icone: 'account_circle', lien: '/espace-entreprise/mon-profil' },
+  ],
+  formateur: [
+    { libelle: 'Ma candidature', icone: 'assignment_ind', lien: '/candidature-formateur' },
+    { libelle: 'Mon profil', icone: 'account_circle', lien: '/candidature-formateur/mon-profil' },
+  ],
+};
 
 @Component({
   selector: 'app-navbar',
@@ -27,26 +64,53 @@ export class NavbarComponent implements OnInit, OnDestroy {
    * communes aux deux parcours, où aucune page ne sait par elle-même
    * "repasser" la bonne valeur à ce composant qui, avant le passage à un
    * layout persistant, se recréait de toute façon à chaque navigation.
-   * 'etudiant' par défaut ; 'formateur' tant qu'un formateur candidat
-   * reste dans son parcours (mis à jour par offres-publiques.ts et par
-   * les pages étudiantes qui ramènent la valeur inverse).
+   * 'etudiant' par défaut ; 'formateur' tant qu'un visiteur consulte les
+   * offres de recrutement (mis à jour par offres-publiques.ts et par les
+   * pages étudiantes qui ramènent la valeur inverse).
+   *
+   * <p>Le type du compte prime sur la page : une école, une entreprise ou un
+   * candidat formateur garde ses onglets partout — rechargement direct sur
+   * /institut compris — et jamais ceux des admissions étudiantes, même tant
+   * qu'il n'a rien soumis (voir {@link Auth.getProfilCompte}).
    */
-  get contexte(): 'etudiant' | 'formateur' {
-    // Un compte candidat formateur garde les onglets « formateur » quelle que
-    // soit la page d'arrivée (rechargement direct sur /institut, par exemple).
-    return this.estCandidatFormateur ? 'formateur' : this.contexteService.contexte();
+  get contexte(): ProfilCompte | 'etudiant' {
+    return this.profil ?? this.contexteService.contexte();
   }
 
-  get estCandidatFormateur(): boolean {
-    return this.auth.getUserRoles().includes('ROLE_CANDIDAT_FORMATEUR');
+  /** Type du compte connecté ; null pour un candidat/étudiant, le personnel ou un visiteur. */
+  get profil(): ProfilCompte | null {
+    return this.auth.getProfilCompte();
   }
+
+  /** Onglet propre au public, en troisième position du centre du navbar. */
+  get ongletSpecifique(): Omit<EntreeNavigation, 'icone'> {
+    return ONGLET_PAR_CONTEXTE[this.contexte];
+  }
+
+  /**
+   * Menu du cercle de profil, selon le type du compte. Il suit le compte, pas la
+   * page : un étudiant qui consulte les offres de recrutement garde SON menu.
+   * `computed` plutôt qu'un getter : le tableau doit garder la même référence
+   * d'un cycle de détection à l'autre, sans quoi Angular signale, en mode
+   * développement, une valeur « modifiée après vérification ».
+   */
+  readonly entreesMenu = computed<EntreeNavigation[]>(() => {
+    const profil = this.auth.getProfilCompte();
+    if (profil) {
+      return MENU_PAR_PROFIL[profil];
+    }
+    return [
+      { libelle: 'Tableau de bord', icone: 'dashboard', lien: '/recrutement/catalogue' },
+      { libelle: 'Mes candidatures', icone: 'description', lien: this.candidatureUrl() },
+    ];
+  });
 
   dropdownOpen = false;
   notifDropdownOpen = false;
   mobileMenuOpen = false;
   userReady = false;
   hasCandidature = false;
-  candidatureUrl = '/recrutement/sessions';
+  candidatureUrl = signal('/recrutement/sessions');
 
   // Notifications
   notifications: NotificationCandidatResponse[] = [];
@@ -72,9 +136,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.auth.clearSession();
           }
           this.userReady = true;
-          // Notifications et candidatures étudiantes : sans objet pour un
-          // candidat formateur (autre parcours, autres endpoints).
-          if (!this.estCandidatFormateur && this.contexteService.contexte() !== 'formateur') {
+          // Notifications et candidatures étudiantes : sans objet pour une école,
+          // une entreprise ou un candidat formateur (autres parcours, autres endpoints).
+          if (!this.profil) {
             this.checkCandidatures();
             this.startNotificationPolling();
           }
@@ -100,11 +164,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.hasCandidature = soumises.length > 0;
         // Sans candidature existante, on ne peut pas postuler sans avoir d'abord choisi
         // une session : on renvoie vers la liste des sessions plutôt que le formulaire seul.
-        this.candidatureUrl = this.hasCandidature ? '/recrutement/suivi' : '/recrutement/sessions';
+        this.candidatureUrl.set(this.hasCandidature ? '/recrutement/suivi' : '/recrutement/sessions');
       },
       error: () => {
         this.hasCandidature = false;
-        this.candidatureUrl = '/recrutement/sessions';
+        this.candidatureUrl.set('/recrutement/sessions');
       }
     });
   }
@@ -150,6 +214,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   getUserRoleLabel(): string {
+    // Le type du compte d'abord : tant qu'aucun rôle métier n'est accordé (rien
+    // encore soumis), la liste des rôles est vide et le libellé restait vide.
+    switch (this.profil) {
+      case 'ecole': return 'ÉCOLE DE FORMATION';
+      case 'entreprise': return 'ENTREPRISE PARTENAIRE';
+      case 'formateur': return 'CANDIDAT FORMATEUR';
+    }
     const roles = this.auth.getUserRoles();
     if (!roles || roles.length === 0) return '';
     const r = roles[0];
@@ -159,9 +230,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       case 'ROLE_CANDIDAT': return 'CANDIDAT';
       case 'ROLE_ETUDIANT': return 'ETUDIANT';
       case 'ROLE_FORMATEUR': return 'FORMATEUR';
-      case 'ROLE_CANDIDAT_FORMATEUR': return 'CANDIDAT FORMATEUR';
-      case 'ROLE_ECOLE_FORMATION': return 'ÉCOLE DE FORMATION';
-      case 'ROLE_ENTREPRISE': return 'ENTREPRISE';
       case 'ROLE_EVALUATEUR_ACCREDITATION': return 'ÉVALUATEUR ACCRÉDITATION';
       default: return r.replace('ROLE_', '');
     }
@@ -262,15 +330,5 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.router.navigate(['/accueil']);
       },
     });
-  }
-
-  goToDashboard(): void {
-    this.dropdownOpen = false;
-    this.router.navigate([this.contexte === 'formateur' ? '/candidature-formateur' : '/recrutement/catalogue']);
-  }
-
-  goToMesCandidatures(): void {
-    this.dropdownOpen = false;
-    this.router.navigate([this.candidatureUrl]);
   }
 }
