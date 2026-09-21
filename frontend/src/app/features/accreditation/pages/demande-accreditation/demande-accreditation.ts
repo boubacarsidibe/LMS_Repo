@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { MediaProtegeService } from '../../../espace-etudiants/services/media-protege.service';
@@ -30,19 +31,28 @@ import { AccreditationService } from '../../services/accreditation.service';
 @Component({
   selector: 'app-demande-accreditation',
   standalone: true,
-  imports: [CommonModule, FormsModule, UiSpinnerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, UiSpinnerComponent],
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
-      <header>
-        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
-          Écoles de formation
-        </p>
-        <h1 class="font-display text-display text-on-surface leading-none -ml-1">Demande d'accréditation</h1>
-        <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
-          Soumettez votre demande d'accréditation pour dispenser des formations dans le domaine du
-          pétrole et du gaz, et suivez son évolution.
-        </p>
-      </header>
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <header>
+          <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
+            Écoles de formation
+          </p>
+          <h1 class="font-display text-display text-on-surface leading-none -ml-1">Demande d'accréditation</h1>
+          <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+            Soumettez votre demande d'accréditation pour dispenser des formations dans le domaine du
+            pétrole et du gaz, et suivez son évolution.
+          </p>
+        </header>
+        <!-- Bouton plutôt qu'un onglet permanent du navbar : une école ne prend
+             rendez-vous qu'à certains moments précis du dossier, pas en continu. -->
+        <a routerLink="rendez-vous"
+           class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity no-underline shrink-0 shadow-sm">
+          <span class="material-symbols-outlined text-[20px]">event</span>
+          Prendre rendez-vous
+        </a>
+      </div>
 
       <app-ui-spinner *ngIf="chargement" message="Chargement de votre dossier…"></app-ui-spinner>
 

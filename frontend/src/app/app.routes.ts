@@ -2,6 +2,21 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/guards/auth-guard';
 import { guestGuard } from './core/auth/guards/guest-guard';
 import { roleGuard } from './core/auth/guards/role-guard';
+import { noRoleGuard } from './core/auth/guards/no-role-guard';
+
+/**
+ * Rôles internes déjà établis (pas un nouveau compte candidat/école/entreprise
+ * en train de choisir son parcours) : exclus de /accreditation et
+ * /espace-entreprise, réservés au dépôt d'un dossier école ou entreprise.
+ */
+const ROLES_INTERNES_ETABLIS = [
+  'ROLE_FORMATEUR',
+  'ROLE_ETUDIANT',
+  'ROLE_RESPONSABLE_ADMISSION',
+  'ROLE_RESPONSABLE_PEDAGOGIQUE',
+  'ROLE_ALUMNI',
+  'ROLE_EVALUATEUR_ACCREDITATION',
+];
 
 export const routes: Routes = [
   // Redirection par défaut → Page d'accueil
@@ -118,7 +133,7 @@ export const routes: Routes = [
   // /accreditation, authGuard seul, pas de roleGuard.
   {
     path: 'espace-entreprise',
-    canActivate: [authGuard],
+    canActivate: [authGuard, noRoleGuard(...ROLES_INTERNES_ETABLIS, 'ROLE_ECOLE_FORMATION')],
     loadChildren: () => import('./features/espace-entreprise/espace-entreprise.routes').then(m => m.routes)
   },
 
@@ -142,7 +157,7 @@ export const routes: Routes = [
   // en-tête ni cercle de profil (LOG_BLOQUANT.md).
   {
     path: 'accreditation',
-    canActivate: [authGuard],
+    canActivate: [authGuard, noRoleGuard(...ROLES_INTERNES_ETABLIS, 'ROLE_ENTREPRISE')],
     loadComponent: () =>
       import('./features/accreditation/layouts/ecole-layout/ecole-layout').then((m) => m.EcoleLayout),
     children: [

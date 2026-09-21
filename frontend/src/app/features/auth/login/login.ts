@@ -35,6 +35,9 @@ export class Login {
    */
   returnUrl: string | null = null;
 
+  /** Les erreurs de champ ne s'affichent qu'après une tentative de connexion — pas au survol/blur. */
+  tentativeEnvoi = false;
+
   constructor(
     private formBuilder: FormBuilder,
     private authService: Auth,
@@ -69,7 +72,15 @@ export class Login {
 
   }
 
+  /** Un champ n'affiche son erreur qu'après une tentative de connexion, jamais avant. */
+  champEnErreur(nom: string): boolean {
+    const controle = this.form.get(nom);
+    return !!controle && controle.invalid && this.tentativeEnvoi;
+  }
+
   onSubmit(): void {
+    this.tentativeEnvoi = true;
+    this.cdr.markForCheck();
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();

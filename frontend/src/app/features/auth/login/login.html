@@ -25,7 +25,7 @@
     {{ errorMessage }}
   </div>
 
-  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6" novalidate>
 
     <!-- Email -->
     <div>
@@ -38,9 +38,9 @@
         formControlName="email"
         placeholder="alex.dupont@example.com"
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
-        [class.border-error]="form.get('email')?.invalid && form.get('email')?.touched"
+        [class.border-error]="champEnErreur('email')"
       />
-      <p *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="mt-1 text-xs text-error">
+      <p *ngIf="champEnErreur('email')" class="mt-1 text-xs text-error">
         Veuillez entrer une adresse e-mail valide.
       </p>
     </div>
@@ -61,9 +61,9 @@
         formControlName="password"
         placeholder="••••••••"
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
-        [class.border-error]="form.get('password')?.invalid && form.get('password')?.touched"
+        [class.border-error]="champEnErreur('password')"
       />
-      <p *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="mt-1 text-xs text-error">
+      <p *ngIf="champEnErreur('password')" class="mt-1 text-xs text-error">
         Le mot de passe est obligatoire.
       </p>
     </div>
@@ -71,7 +71,7 @@
     <!-- Bouton Connexion -->
     <button
       type="submit"
-      [disabled]="form.get('email')?.invalid || form.get('password')?.invalid || loginLoading"
+      [disabled]="loginLoading"
       class="flex w-full items-center justify-center gap-3 rounded-lg bg-secondary text-on-secondary py-3 font-label-md text-label-md hover:bg-opacity-90 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
       <svg *ngIf="loginLoading" class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-20"></circle>
