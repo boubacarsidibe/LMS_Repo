@@ -358,13 +358,30 @@ du centre restent groupés entre eux (`flex-1 justify-center` sur leur propre `<
 ne s'étalent pas sur toute la largeur.
 
 **Sous le seuil `md`, le nom cède sa place au bouton menu, à l'extrême gauche** (retour du
-2026-09-22) : `<a routerLink="/accueil">` porte `hidden md:inline` — **jamais**
-`md:inline-flex` : ça transforme le lien en conteneur flexbox, dont les enfants (le texte
-« INPG » et le `<span>` du suffixe) deviennent des items flex, ce qui **supprime l'espace
-entre les deux** (« INPGConnect » collé, repéré via `.innerText()` qui renvoie alors un
-saut de ligne entre les deux au lieu d'une espace). Le bouton `(click)="toggleMobileMenu()"`
-est déplacé en premier enfant du conteneur du navbar (visible seulement sous `md`, `-ml-2`
-pour compenser le padding) plutôt que dupliqué : un seul bouton, un seul `aria-label`.
+2026-09-22) : `<a routerLink="/accueil">` porte `hidden xl:inline` — **jamais**
+`xl:inline-flex`/`md:inline-flex` : ça transforme le lien en conteneur flexbox, dont les
+enfants (le texte « INPG » et le `<span>` du suffixe) deviennent des items flex, ce qui
+**supprime l'espace entre les deux** (« INPGConnect » collé, repéré via `.innerText()` qui
+renvoie alors un saut de ligne entre les deux au lieu d'une espace). Le bouton
+`(click)="toggleMobileMenu()"` est déplacé en premier enfant du conteneur du navbar
+(visible seulement sous `md`, `-ml-2` pour compenser le padding) plutôt que dupliqué : un
+seul bouton, un seul `aria-label`.
+
+**Le nom, le bloc nom/rôle du profil et le séparateur vertical restent masqués jusqu'à
+`xl` (1280 px), pas seulement `md`/`lg`** (retour tablette du 2026-09-22) : entre 768 et
+1024 px (iPad compris), la version pleine taille (logo + 4-5 onglets + cloche + nom/rôle +
+chevron) ne tenait déjà pas — mesuré au débordement réel, « INPG Connect » retombait sur
+deux lignes et le bloc nom/rôle de l'avatar se retrouvait coupé au milieu du rôle, sans
+chevron visible. **`lg` (1024 px) essayé en premier et insuffisant** : le même bug se
+reproduisait, juste décalé pile au seuil, parce que la version desktop pleine taille ne
+tient pas non plus à 1024 px tout court — `xl` (1280 px) est le premier seuil où tout
+rentre sur une ligne, trouvé par balayage réel 768→1440 (hauteur des onglets : 32 px
+partout jusqu'à 1279, 36 px à partir de 1280, aucun palier intermédiaire). Les onglets du
+centre portent `whitespace-nowrap` : sans lui, un libellé de deux mots (« Sessions
+ouvertes ») retombe sur deux lignes dès que le conteneur `flex` se resserre, au lieu de
+définir sa propre largeur minimale. Ne pas réintroduire `sm:flex`/`lg:flex` sur le bloc
+nom/rôle ni `sm:block`/`lg:block` sur le séparateur : revérifier dans un vrai navigateur
+sur toute la plage 768–1366, pas seulement à une largeur.
 
 **« Accueil » comme onglet explicite : seulement pour le candidat/étudiant, pas pour
 École/Entreprise/Formateur.** Décision du 2026-08-25 revenue en recette le 2026-09-22 :
