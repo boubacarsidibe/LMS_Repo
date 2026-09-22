@@ -375,13 +375,20 @@ deux lignes et le bloc nom/rôle de l'avatar se retrouvait coupé au milieu du r
 chevron visible. **`lg` (1024 px) essayé en premier et insuffisant** : le même bug se
 reproduisait, juste décalé pile au seuil, parce que la version desktop pleine taille ne
 tient pas non plus à 1024 px tout court — `xl` (1280 px) est le premier seuil où tout
-rentre sur une ligne, trouvé par balayage réel 768→1440 (hauteur des onglets : 32 px
-partout jusqu'à 1279, 36 px à partir de 1280, aucun palier intermédiaire). Les onglets du
-centre portent `whitespace-nowrap` : sans lui, un libellé de deux mots (« Sessions
-ouvertes ») retombe sur deux lignes dès que le conteneur `flex` se resserre, au lieu de
-définir sa propre largeur minimale. Ne pas réintroduire `sm:flex`/`lg:flex` sur le bloc
-nom/rôle ni `sm:block`/`lg:block` sur le séparateur : revérifier dans un vrai navigateur
-sur toute la plage 768–1366, pas seulement à une largeur.
+rentre sur une ligne, trouvé par balayage réel 768→1440. Les onglets du centre portent
+`whitespace-nowrap` : sans lui, un libellé de deux mots (« Sessions ouvertes ») retombe
+sur deux lignes dès que le conteneur `flex` se resserre, au lieu de définir sa propre
+largeur minimale. Ne pas réintroduire `sm:flex`/`lg:flex` sur le bloc nom/rôle ni
+`sm:block`/`lg:block` sur le séparateur : revérifier dans un vrai navigateur sur toute la
+plage 768–1366, pas seulement à une largeur.
+
+**La police du navbar public ne varie plus du tout selon l'écran — un seul `text-sm`,
+partout** (demande explicite du 2026-09-22, après un premier essai `text-xs` en dessous de
+`xl`). Le confort de lecture prime : la place manquante en tablette se gagne ailleurs
+(logo et bloc nom/rôle masqués, padding/`gap` resserrés jusqu'à `xl`, `whitespace-nowrap`),
+jamais en rapetissant le texte. Revérifié par balayage réel 768→1920 : hauteur des onglets
+constante à 36 px partout, aucun palier. Ne plus réintroduire de paire `text-xs …:text-sm`
+dans ce fichier.
 
 **« Accueil » comme onglet explicite : seulement pour le candidat/étudiant, pas pour
 École/Entreprise/Formateur.** Décision du 2026-08-25 revenue en recette le 2026-09-22 :

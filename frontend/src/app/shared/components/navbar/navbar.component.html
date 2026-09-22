@@ -39,25 +39,27 @@
          whitespace-nowrap sur chaque onglet : sans lui, un libellé de deux mots
          (« Sessions ouvertes ») retombe sur deux lignes dès que le conteneur flex se
          resserre, plutôt que de laisser le texte définir sa propre largeur minimale.
-         Police et espacement réduits jusqu'à xl (1280 px), restaurés au-delà. -->
+         La police reste text-sm à toutes les tailles (demande explicite du 2026-09-22 :
+         ne plus la faire varier selon l'écran) ; seuls le padding et l'espacement entre
+         onglets se resserrent jusqu'à xl (1280 px) pour compenser l'absence du logo. -->
     <nav class="hidden md:flex flex-1 justify-center items-center gap-1 xl:gap-6">
-      <a *ngIf="contexte === 'etudiant'" routerLink="/accueil" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-xs xl:text-sm font-medium text-on-surface-variant hover:text-primary">Accueil</a>
-      <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-xs xl:text-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
-      <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-xs xl:text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
+      <a *ngIf="contexte === 'etudiant'" routerLink="/accueil" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Accueil</a>
+      <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
+      <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
       <!-- Le seul onglet qui change selon le public : sessions d'admission (étudiant),
            offres de recrutement (formateur), accréditation (école), espace entreprise. -->
-      <a [routerLink]="ongletSpecifique.lien" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-xs xl:text-sm font-medium text-on-surface-variant hover:text-primary">{{ ongletSpecifique.libelle }}</a>
-      <a routerLink="/contact" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-xs xl:text-sm font-medium text-on-surface-variant hover:text-primary">Contact</a>
+      <a [routerLink]="ongletSpecifique.lien" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">{{ ongletSpecifique.libelle }}</a>
+      <a routerLink="/contact" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Contact</a>
     </nav>
 
     <!-- Actions (Desktop) -->
     <div class="flex items-center gap-3">
       <!-- Non connecté : boutons Connexion / Inscription -->
       <ng-container *ngIf="!isLoggedIn">
-        <a routerLink="/auth/login" class="hidden md:inline-flex items-center px-3 xl:px-4 py-2 text-xs xl:text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg transition-all duration-200 no-underline">
+        <a routerLink="/auth/login" class="hidden md:inline-flex items-center px-3 xl:px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg transition-all duration-200 no-underline">
           Se connecter
         </a>
-        <a routerLink="/auth/register" class="inline-flex items-center px-4 xl:px-5 py-2 xl:py-2.5 bg-primary text-white text-xs xl:text-sm font-semibold rounded-lg hover:bg-[#254d7d] active:scale-95 transition-all duration-200 shadow-sm shadow-primary/20 no-underline">
+        <a routerLink="/auth/register" class="inline-flex items-center px-4 xl:px-5 py-2 xl:py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-[#254d7d] active:scale-95 transition-all duration-200 shadow-sm shadow-primary/20 no-underline">
           S'inscrire
         </a>
       </ng-container>
