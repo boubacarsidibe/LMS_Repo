@@ -337,6 +337,16 @@ l'`app-navbar` n'est jamais recréé en passant d'« Institut » à « Espace en
 layouts ne portent plus que le fond de page — ne pas leur redonner une barre propre : les
 onglets changeaient d'un coup à chaque passage (retour du 2026-09-21). Pas de cloche de
 notifications pour ces trois profils : c'est celle des candidats, elle resterait vide.
+
+**« Accueil » comme onglet explicite : seulement pour le candidat/étudiant, pas pour
+École/Entreprise/Formateur.** Décision du 2026-08-25 revenue en recette le 2026-09-22 :
+compter sur le seul logo comme retour à l'accueil n'était pas assez visible pour ce
+public (`test.candidat@inpg.sn` et consorts). École, Entreprise et Candidat formateur
+n'ont **pas** ce même onglet : ils ont déjà un équivalent — leur onglet propre
+(« Accréditation », « Espace entreprise »…) mène à leur espace, et « Mon espace » du menu
+de profil y ramène aussi ; ajouter « Accueil » chez eux serait redondant, pas chez le
+candidat/étudiant qui n'a ni l'un ni l'autre. Le visiteur non connecté partage le même
+contexte `'etudiant'` que le candidat et voit donc aussi cet onglet.
 `auth.spec.ts`, `navbar.component.spec.ts`, `landing.component.spec.ts` et
 `AuthControllerTest` figent ce comportement.
 

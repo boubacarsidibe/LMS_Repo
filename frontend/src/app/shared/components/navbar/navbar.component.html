@@ -6,13 +6,14 @@
       INPG<span class="text-brand"> LMS</span>
     </a>
 
-    <!-- Navigation Links (Desktop) - centered. Volontairement limitée à 4-5 entrées
-         (demande du 2026-08-25) : le logo mène déjà à /accueil (pas besoin d'un lien
-         "Accueil" redondant), et un compte connecté n'a besoin que d'UN lien de
-         retour vers son espace, pas d'un lien par sous-page de ce dernier.
-         Institut en premier : c'est l'entrée la plus pertinente pour un premier
-         visiteur, qu'il découvre l'offre de formations ou de recrutement. -->
+    <!-- Navigation Links (Desktop) - centered. La règle du 2026-08-25 (pas de lien
+         "Accueil" séparé, le logo suffit) est revenue en recette côté candidat : le
+         logo comme seul retour à l'accueil n'était pas assez visible pour ce public.
+         École/Entreprise/Formateur gardent leur logo + leur onglet propre + « Mon
+         espace » du menu de profil, sans « Accueil » distinct — équivalent déjà
+         couvert autrement pour eux, contrairement au candidat/étudiant. -->
     <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
+      <a *ngIf="contexte === 'etudiant'" routerLink="/accueil" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Accueil</a>
       <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
       <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
       <!-- Le seul onglet qui change selon le public : sessions d'admission (étudiant),
@@ -153,6 +154,7 @@
 
   <!-- Menu de navigation (mobile uniquement) -->
   <nav *ngIf="mobileMenuOpen" class="md:hidden border-t border-outline-variant/40 bg-white px-4 py-3 space-y-1" aria-label="Navigation">
+    <a *ngIf="contexte === 'etudiant'" routerLink="/accueil" (click)="closeMobileMenu()" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Accueil</a>
     <a routerLink="/institut" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Institut</a>
     <a routerLink="/recrutement/catalogue" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Formations</a>
     <a [routerLink]="ongletSpecifique.lien" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">{{ ongletSpecifique.libelle }}</a>

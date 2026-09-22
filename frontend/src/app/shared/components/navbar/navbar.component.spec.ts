@@ -83,10 +83,29 @@ describe('NavbarComponent', () => {
       expect(component.ongletSpecifique.libelle).toBe('Accréditation');
     });
 
-    it('le navbar garde les mêmes onglets communs pour tous', () => {
+    it('le navbar garde les mêmes onglets communs pour tous, sans « Accueil » : école/entreprise/formateur l\'ont déjà via leur onglet propre et « Mon espace »', () => {
       connecter([], 'ENTREPRISE');
       fixture.detectChanges();
       expect(ongletsDuCentre()).toEqual(['Institut', 'Formations', 'Espace entreprise', 'Contact']);
+    });
+
+    /**
+     * Retour de recette : pour le candidat/étudiant, le logo seul comme retour à
+     * l'accueil n'était pas assez visible — contrairement à école/entreprise/
+     * formateur, qui ont déjà un équivalent (leur onglet propre + « Mon espace »
+     * du menu de profil). « Accueil » redevient donc un onglet explicite, mais
+     * seulement pour ce public — un candidat qui consulte les offres formateur
+     * (contexte 'etudiant' inchangé) le garde aussi.
+     */
+    it('candidat/étudiant : Accueil en premier onglet', () => {
+      connecter(['ROLE_CANDIDAT'], 'CANDIDAT');
+      fixture.detectChanges();
+      expect(ongletsDuCentre()).toEqual(['Accueil', 'Institut', 'Formations', 'Sessions ouvertes', 'Contact']);
+    });
+
+    it('visiteur non connecté : Accueil aussi, même contexte que le candidat', () => {
+      fixture.detectChanges();
+      expect(ongletsDuCentre()).toEqual(['Accueil', 'Institut', 'Formations', 'Sessions ouvertes', 'Contact']);
     });
   });
 
