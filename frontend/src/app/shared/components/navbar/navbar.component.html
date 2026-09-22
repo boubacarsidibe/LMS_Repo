@@ -6,9 +6,21 @@
        latérale (Admission, Pédagogie…) — retour de recette du 2026-09-22, mesuré à
        360 px de vide de chaque côté sur un écran de 1920 px avant ce correctif. -->
   <div class="flex justify-between items-center w-full px-4 md:px-10 h-[72px]">
-    <!-- Brand -->
-    <a routerLink="/accueil" class="text-2xl font-extrabold tracking-tight text-primary no-underline hover:opacity-80 transition-opacity">
-      INPG<span class="text-brand"> LMS</span>
+    <!-- Bouton menu (mobile uniquement), à l'extrême gauche : sur petit écran, le nom
+         cède sa place au menu plutôt que de cohabiter à l'étroit avec lui — retour de
+         recette du 2026-09-22. Le logo reste le premier élément visible en desktop
+         (md:hidden le masque à partir de md), donc rien ne change au-delà. -->
+    <button
+      type="button"
+      (click)="toggleMobileMenu()"
+      class="md:hidden p-2 -ml-2 rounded-full hover:bg-surface-container-low transition-colors cursor-pointer border-0 bg-transparent"
+      aria-label="Ouvrir le menu">
+      <span class="material-symbols-outlined text-on-surface-variant text-[24px]">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
+    </button>
+
+    <!-- Brand : masqué sur petit écran, remplacé par le bouton menu ci-dessus. -->
+    <a routerLink="/accueil" class="hidden md:inline text-2xl font-extrabold tracking-tight text-primary no-underline hover:opacity-80 transition-opacity">
+      INPG<span class="text-brand"> Connect</span>
     </a>
 
     <!-- Navigation Links (Desktop) - centered. La règle du 2026-08-25 (pas de lien
@@ -29,15 +41,6 @@
 
     <!-- Actions (Desktop) -->
     <div class="flex items-center gap-3">
-      <!-- Bouton menu (mobile uniquement) -->
-      <button
-        type="button"
-        (click)="toggleMobileMenu()"
-        class="md:hidden p-2 rounded-full hover:bg-surface-container-low transition-colors cursor-pointer border-0 bg-transparent"
-        aria-label="Ouvrir le menu">
-        <span class="material-symbols-outlined text-on-surface-variant text-[24px]">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
-      </button>
-
       <!-- Non connecté : boutons Connexion / Inscription -->
       <ng-container *ngIf="!isLoggedIn">
         <a routerLink="/auth/login" class="hidden md:inline-flex items-center px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg transition-all duration-200 no-underline">

@@ -68,11 +68,22 @@ confondent avec le fond clair et l'écran paraît plat.
 Identique dans tous les espaces :
 
 ```html
-<span class="text-2xl font-extrabold tracking-tight text-primary">INPG<span class="text-brand"> LMS</span></span>
+<span class="text-2xl font-extrabold tracking-tight text-primary">INPG<span class="text-brand"> Connect</span></span>
 ```
 
 Pas de badge ni d'icône. Le jeton `brand` (`#131741`) est le bleu nuit du suffixe.
 Dans l'espace pédagogique, le suffixe est « Pédagogie » — même traitement.
+
+**Renommé « INPG LMS » → « INPG Connect » le 2026-09-22** : le sigle LMS (Learning
+Management System) restreignait un produit qui dépasse largement la formation en ligne
+(admission, accréditation d'écoles partenaires, espace entreprise, alumni, évaluation
+d'accréditation). Le suffixe « Pédagogie » de l'espace pédagogique n'est **pas** concerné
+— ce n'était déjà pas « LMS » avant, c'est une variante délibérée, pas un oubli. Si un
+nouvel espace ajoute son propre logo, chercher `INPG<span class="text-brand">` pour
+retrouver tous les endroits à traiter ensemble — neuf occurrences y sont passées en une
+fois (navbar public, six espaces à barre latérale, bandeau de la liste des écoles
+accréditées, pied de page, panneau de la page de connexion), plus un intitulé de sujet de
+formulaire de contact (« Support Technique LMS » → « Support Technique »).
 
 ### Contraste : le piège des jetons jumeaux
 
@@ -337,6 +348,23 @@ l'`app-navbar` n'est jamais recréé en passant d'« Institut » à « Espace en
 layouts ne portent plus que le fond de page — ne pas leur redonner une barre propre : les
 onglets changeaient d'un coup à chaque passage (retour du 2026-09-21). Pas de cloche de
 notifications pour ces trois profils : c'est celle des candidats, elle resterait vide.
+
+**Le navbar public est pleine largeur, pas centré à 1280 px comme le contenu des pages**
+(retour du 2026-09-22) : sur un grand écran, le logo et le cercle de profil restaient à
+360 px du bord réel sur un écran de 1920 px, parce que la ligne du navbar reprenait
+`max-w-container-max mx-auto` — pertinent pour le contenu, pas pour une barre qui doit
+toucher les bords comme celles des espaces à sidebar (Admission, Pédagogie…). Les onglets
+du centre restent groupés entre eux (`flex-1 justify-center` sur leur propre `<nav>`), ils
+ne s'étalent pas sur toute la largeur.
+
+**Sous le seuil `md`, le nom cède sa place au bouton menu, à l'extrême gauche** (retour du
+2026-09-22) : `<a routerLink="/accueil">` porte `hidden md:inline` — **jamais**
+`md:inline-flex` : ça transforme le lien en conteneur flexbox, dont les enfants (le texte
+« INPG » et le `<span>` du suffixe) deviennent des items flex, ce qui **supprime l'espace
+entre les deux** (« INPGConnect » collé, repéré via `.innerText()` qui renvoie alors un
+saut de ligne entre les deux au lieu d'une espace). Le bouton `(click)="toggleMobileMenu()"`
+est déplacé en premier enfant du conteneur du navbar (visible seulement sous `md`, `-ml-2`
+pour compenser le padding) plutôt que dupliqué : un seul bouton, un seul `aria-label`.
 
 **« Accueil » comme onglet explicite : seulement pour le candidat/étudiant, pas pour
 École/Entreprise/Formateur.** Décision du 2026-08-25 revenue en recette le 2026-09-22 :
