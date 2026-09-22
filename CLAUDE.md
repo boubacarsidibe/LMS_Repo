@@ -357,38 +357,44 @@ toucher les bords comme celles des espaces à sidebar (Admission, Pédagogie…)
 du centre restent groupés entre eux (`flex-1 justify-center` sur leur propre `<nav>`), ils
 ne s'étalent pas sur toute la largeur.
 
-**Sous le seuil `md`, le nom cède sa place au bouton menu, à l'extrême gauche** (retour du
-2026-09-22) : `<a routerLink="/accueil">` porte `hidden xl:inline` — **jamais**
-`xl:inline-flex`/`md:inline-flex` : ça transforme le lien en conteneur flexbox, dont les
-enfants (le texte « INPG » et le `<span>` du suffixe) deviennent des items flex, ce qui
-**supprime l'espace entre les deux** (« INPGConnect » collé, repéré via `.innerText()` qui
-renvoie alors un saut de ligne entre les deux au lieu d'une espace). Le bouton
-`(click)="toggleMobileMenu()"` est déplacé en premier enfant du conteneur du navbar
-(visible seulement sous `md`, `-ml-2` pour compenser le padding) plutôt que dupliqué : un
-seul bouton, un seul `aria-label`.
+**Le navbar public a trois seuils de réapparition distincts, pas un seul « mobile vs
+desktop »** — chaque élément ne revient que quand il tient vraiment, trouvé par balayage
+réel (`scrollWidth` **et** la hauteur des éléments eux-mêmes : un retour à la ligne interne
+ne crée pas forcément de barre de défilement, `scrollWidth` seul l'a laissé passer une
+fois). Les trois essais qui ont précédé cet état sont volontairement gardés ci-dessous :
+un futur réglage de ce navbar tombera probablement sur le même piège dans l'autre sens.
 
-**Le nom, le bloc nom/rôle du profil et le séparateur vertical restent masqués jusqu'à
-`xl` (1280 px), pas seulement `md`/`lg`** (retour tablette du 2026-09-22) : entre 768 et
-1024 px (iPad compris), la version pleine taille (logo + 4-5 onglets + cloche + nom/rôle +
-chevron) ne tenait déjà pas — mesuré au débordement réel, « INPG Connect » retombait sur
-deux lignes et le bloc nom/rôle de l'avatar se retrouvait coupé au milieu du rôle, sans
-chevron visible. **`lg` (1024 px) essayé en premier et insuffisant** : le même bug se
-reproduisait, juste décalé pile au seuil, parce que la version desktop pleine taille ne
-tient pas non plus à 1024 px tout court — `xl` (1280 px) est le premier seuil où tout
-rentre sur une ligne, trouvé par balayage réel 768→1440. Les onglets du centre portent
-`whitespace-nowrap` : sans lui, un libellé de deux mots (« Sessions ouvertes ») retombe
-sur deux lignes dès que le conteneur `flex` se resserre, au lieu de définir sa propre
-largeur minimale. Ne pas réintroduire `sm:flex`/`lg:flex` sur le bloc nom/rôle ni
-`sm:block`/`lg:block` sur le séparateur : revérifier dans un vrai navigateur sur toute la
-plage 768–1366, pas seulement à une largeur.
+- **Bouton menu (mobile uniquement)**, à l'extrême gauche, `md:hidden` (donc < 768 px) :
+  déplacé en premier enfant du conteneur plutôt que dupliqué — un seul bouton, un seul
+  `aria-label`. Sous ce seuil, le nom lui cède sa place plutôt que de cohabiter à l'étroit.
 
-**La police du navbar public ne varie plus du tout selon l'écran — un seul `text-sm`,
-partout** (demande explicite du 2026-09-22, après un premier essai `text-xs` en dessous de
-`xl`). Le confort de lecture prime : la place manquante en tablette se gagne ailleurs
-(logo et bloc nom/rôle masqués, padding/`gap` resserrés jusqu'à `xl`, `whitespace-nowrap`),
-jamais en rapetissant le texte. Revérifié par balayage réel 768→1920 : hauteur des onglets
-constante à 36 px partout, aucun palier. Ne plus réintroduire de paire `text-xs …:text-sm`
-dans ce fichier.
+- **Logo (« INPG Connect »)**, `hidden lg:inline` (revient dès 1024 px). Trois essais :
+  masqué seulement < `md` (768) → repassait sur deux lignes entre 768 et 800 px (rien ne
+  protège ce texte d'un `whitespace-nowrap`, contrairement aux onglets) ; masqué jusqu'à
+  `xl` comme le bloc nom/rôle ci-dessous → repéré en recette comme « disparaît trop tôt »
+  en redimensionnant, le vide entre le bouton menu et le retour du logo se sentait trop
+  long ; `lg` (1024 px) est le premier seuil sûr, vérifié par balayage 375→1920 (une seule
+  ligne dès 1024, aucun débordement en dessous). **Jamais `inline-flex`** à la place
+  d'`inline` : ça transforme le lien en conteneur flexbox, dont les enfants (le texte
+  « INPG » et le `<span>` du suffixe) deviennent des items flex, ce qui **supprime l'espace
+  entre les deux** (« INPGConnect » collé, repéré via `.innerText()` qui renvoie alors un
+  saut de ligne entre les deux au lieu d'une espace).
+
+- **Bloc nom/rôle du profil et séparateur vertical**, `hidden xl:flex`/`xl:block` (revient
+  à 1280 px, un palier après le logo). `lg` (1024 px, comme le logo) essayé d'abord et
+  insuffisant : entre 768 et 1024 px, logo + 4-5 onglets + cloche + nom/rôle + chevron ne
+  tenaient déjà pas ensemble — mesuré au débordement réel, ce bloc se retrouvait coupé au
+  milieu du rôle, chevron invisible. `xl` (1280 px) est le premier seuil où tout rentre sur
+  une ligne. Ne pas aligner ce seuil sur celui du logo sans revérifier les deux ensemble.
+
+- **Police des onglets du centre : un seul `text-sm`, à toutes les tailles** (demande
+  explicite du 2026-09-22, après un premier essai `text-xs` en dessous de `xl`). Le confort
+  de lecture prime ; la place manquante se gagne ailleurs (les trois seuils ci-dessus,
+  padding/`gap` resserrés jusqu'à `xl`, `whitespace-nowrap` sur chaque onglet — sans lui, un
+  libellé de deux mots comme « Sessions ouvertes » retombe sur deux lignes dès que le
+  conteneur `flex` se resserre). Ne plus réintroduire de paire `text-xs …:text-sm` dans ce
+  fichier ; revérifier tout changement de seuil dans un vrai navigateur sur toute la plage
+  375–1920, pas seulement à une largeur.
 
 **« Accueil » comme onglet explicite : seulement pour le candidat/étudiant, pas pour
 École/Entreprise/Formateur.** Décision du 2026-08-25 revenue en recette le 2026-09-22 :

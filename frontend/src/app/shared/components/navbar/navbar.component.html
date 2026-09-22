@@ -18,15 +18,15 @@
       <span class="material-symbols-outlined text-on-surface-variant text-[24px]">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
     </button>
 
-    <!-- Brand : masqué en mobile ET en tablette (< xl, donc jusqu'à 1279 px inclus), pas
-         seulement < md. Retour de recette du 2026-09-22 : entre 768 et 1024 px (iPad
-         compris), les 4-5 onglets + la cloche + le nom/rôle du profil ne tenaient déjà
-         pas sans lui — mesuré au débordement, « INPG Connect » lui-même retombait sur
-         deux lignes. lg (1024 px) essayé d'abord : encore trop tôt pour restaurer la
-         taille pleine, même bug juste décalé au seuil — xl (1280 px) est le premier où
-         tout tient sur une ligne, mesuré par balayage 768→1440. Le menu (mobile) et les
-         onglets (tablette) suffisent pour naviguer, nul besoin du nom en plus. -->
-    <a routerLink="/accueil" class="hidden xl:inline text-2xl font-extrabold tracking-tight text-primary no-underline hover:opacity-80 transition-opacity">
+    <!-- Brand : masqué jusqu'à lg (1024 px, donc en mobile ET sur la première moitié de
+         la tablette), pas jusqu'à xl comme le bloc nom/rôle juste plus bas. Deux essais
+         avant celui-ci : caché seulement < md (768) → repassait sur deux lignes entre 768
+         et 800 px (rien ne protège ce texte-ci d'un whitespace-nowrap, contrairement aux
+         onglets) ; caché jusqu'à xl comme le nom/rôle → « disparaît trop tôt » en recette,
+         le vide entre le menu (mobile) et le retour du logo se sentait trop long en
+         redimensionnant. lg (1024 px) est le premier seuil sûr, vérifié par balayage
+         375→1920 : logo sur une seule ligne dès 1024, aucun débordement en dessous. -->
+    <a routerLink="/accueil" class="hidden lg:inline text-2xl font-extrabold tracking-tight text-primary no-underline hover:opacity-80 transition-opacity">
       INPG<span class="text-brand"> Connect</span>
     </a>
 
