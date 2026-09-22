@@ -1,6 +1,11 @@
 <!-- TopNavBar -->
 <header class="bg-white/95 backdrop-blur-sm border-b border-outline-variant/40 fixed top-0 left-0 right-0 z-50">
-  <div class="flex justify-between items-center w-full max-w-[1280px] mx-auto px-4 md:px-10 h-[72px]">
+  <!-- Pleine largeur, pas de max-w-container-max ici (contrairement au contenu des
+       pages) : sur un grand écran (vidéoprojecteur…), le logo et le cercle de profil
+       doivent toucher les bords réels de la fenêtre, comme dans les espaces à barre
+       latérale (Admission, Pédagogie…) — retour de recette du 2026-09-22, mesuré à
+       360 px de vide de chaque côté sur un écran de 1920 px avant ce correctif. -->
+  <div class="flex justify-between items-center w-full px-4 md:px-10 h-[72px]">
     <!-- Brand -->
     <a routerLink="/accueil" class="text-2xl font-extrabold tracking-tight text-primary no-underline hover:opacity-80 transition-opacity">
       INPG<span class="text-brand"> LMS</span>
