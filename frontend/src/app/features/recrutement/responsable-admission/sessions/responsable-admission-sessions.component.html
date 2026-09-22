@@ -35,27 +35,6 @@
   {{ errorMessage }}
 </div>
 
-<!-- Indicateurs compacts : ils restent utiles comme raccourcis sans repousser la liste. -->
-<div class="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest my-stack-lg overflow-hidden">
-  <button type="button" (click)="filtreStatut = 'TOUTES'" [attr.aria-pressed]="filtreStatut === 'TOUTES'" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="filtreStatut === 'TOUTES'">
-    <span class="material-symbols-outlined text-secondary text-[20px]">event</span>
-    <span class="min-w-0"><strong class="block font-headline-sm text-headline-sm text-primary leading-none">{{ totalSessions }}</strong><span class="font-label-sm text-label-sm text-on-surface-variant">Toutes les sessions</span></span>
-  </button>
-  <button type="button" (click)="filtreStatut = 'OUVERTES'" [attr.aria-pressed]="filtreStatut === 'OUVERTES'" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="filtreStatut === 'OUVERTES'">
-    <span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span>
-    <span class="min-w-0"><strong class="block font-headline-sm text-headline-sm text-primary leading-none">{{ nbOuvertes }}</strong><span class="font-label-sm text-label-sm text-on-surface-variant">Ouvertes</span></span>
-  </button>
-  <button type="button" (click)="filtreStatut = 'ACTIVES'" [attr.aria-pressed]="filtreStatut === 'ACTIVES'" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="filtreStatut === 'ACTIVES'">
-    <span class="material-symbols-outlined text-secondary text-[20px]">bolt</span>
-    <span class="min-w-0"><strong class="block font-headline-sm text-headline-sm text-primary leading-none">{{ nbActives }}</strong><span class="font-label-sm text-label-sm text-on-surface-variant">Actives</span></span>
-  </button>
-  <button type="button" [disabled]="!prochaineFermeture" (click)="prochaineFermeture && voirSession(prochaineFermeture)" class="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-container-low transition-colors disabled:cursor-default">
-    <span class="material-symbols-outlined text-outline text-[20px]">timer</span>
-    <span class="min-w-0" *ngIf="prochaineFermeture; else aucuneCloture"><strong class="block font-label-md text-label-md text-primary leading-none">{{ prochaineFermeture.dateFermeture | date:'dd MMM yyyy' }}</strong><span class="block font-label-sm text-label-sm text-on-surface-variant truncate mt-1">Prochaine clôture</span></span>
-    <ng-template #aucuneCloture><span class="font-label-sm text-label-sm text-on-surface-variant">Aucune clôture prévue</span></ng-template>
-  </button>
-</div>
-
 <!-- Filters -->
 <div class="flex flex-col md:flex-row gap-4 mb-stack-lg">
   <div class="relative flex-1">
@@ -81,12 +60,41 @@
   <p class="font-body-md text-body-md text-on-surface-variant">Aucune session ne correspond à votre recherche.</p>
 </div>
 
+
+<!-- Détail de la session sélectionnée -->
+<section *ngIf="sessionSelectionnee as sessionDetail" class="mb-stack-lg bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4 p-5 border-b border-outline-variant bg-surface-container-low">
+    <div class="min-w-0">
+      <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Session sélectionnée</p>
+      <h3 class="font-headline-sm text-headline-sm text-primary truncate">{{ sessionDetail.libelle }}</h3>
+      <div class="flex flex-wrap items-center gap-2 mt-3">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [ngClass]="sessionDetail.estOuverte ? 'bg-green-100 text-green-800' : 'bg-surface-container text-on-surface-variant'">{{ sessionDetail.estOuverte ? 'Ouverte' : 'Fermée' }}</span>
+        <span *ngIf="sessionDetail.estActive" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-fixed text-secondary">Active</span>
+        <span *ngIf="sessionDetail.criteresActifs" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-container text-on-primary-container"><span class="material-symbols-outlined text-[14px]">filter_alt</span> Filtre automatique</span>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 shrink-0">
+      <button type="button" (click)="modifierSession(sessionDetail)" class="inline-flex items-center justify-center gap-2 h-10 px-4 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">edit</span>Modifier</button>
+      <button type="button" (click)="supprimer(sessionDetail)" class="inline-flex items-center justify-center gap-2 h-10 px-4 bg-error text-on-primary rounded-lg hover:bg-error/90 transition-colors shadow-sm font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">delete</span>Supprimer</button>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 p-5">
+    <div class="rounded-lg border border-outline-variant p-4"><dt class="font-label-sm text-label-sm text-on-surface-variant">Ouverture</dt><dd class="font-label-md text-label-md text-primary font-semibold mt-1">{{ sessionDetail.dateOuverture | date:'dd MMM yyyy' }}</dd></div>
+    <div class="rounded-lg border border-outline-variant p-4"><dt class="font-label-sm text-label-sm text-on-surface-variant">Fermeture</dt><dd class="font-label-md text-label-md text-primary font-semibold mt-1">{{ sessionDetail.dateFermeture | date:'dd MMM yyyy' }}</dd></div>
+    <div class="rounded-lg border border-outline-variant p-4"><dt class="font-label-sm text-label-sm text-on-surface-variant">Candidatures</dt><dd class="mt-1"><a [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ session: sessionDetail.id }" class="font-label-md text-label-md text-secondary font-semibold hover:underline">{{ sessionDetail.nbCandidatures }} dossier(s)</a></dd></div>
+    <div class="rounded-lg border border-outline-variant p-4"><dt class="font-label-sm text-label-sm text-on-surface-variant">Seuil test</dt><dd class="font-label-md text-label-md text-primary font-semibold mt-1">{{ sessionDetail.seuilReussiteTest }}</dd></div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 px-5 pb-5">
+    <div class="rounded-lg bg-surface-container-low p-4"><h4 class="font-label-md text-label-md text-primary mb-2">Frais de scolarité</h4><p class="font-body-sm text-body-sm text-on-surface-variant">{{ sessionDetail.infoFraisScolarite || 'Aucune information renseignée.' }}</p></div>
+    <div class="rounded-lg bg-surface-container-low p-4"><h4 class="font-label-md text-label-md text-primary mb-2">Carte étudiante</h4><p class="font-body-sm text-body-sm text-on-surface-variant">{{ sessionDetail.infoCarteEtudiante || 'Aucune information renseignée.' }}</p></div>
+    <div class="rounded-lg bg-surface-container-low p-4"><h4 class="font-label-md text-label-md text-primary mb-2">Rentrée</h4><p class="font-body-sm text-body-sm text-on-surface-variant">{{ sessionDetail.infoRentree || 'Aucune information renseignée.' }}</p></div>
+  </div>
+</section>
 <!-- Data Table -->
 <div *ngIf="!loading && sessionsFiltrees.length > 0" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
   <div class="md:hidden divide-y divide-outline-variant">
     <article *ngFor="let s of sessionsFiltrees; let i = index" (click)="voirSession(s)" class="p-4 cursor-pointer hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="estSelectionne(s.id)">
       <div class="flex items-start gap-3">
-        <input type="checkbox" [checked]="estSelectionne(s.id)" (click)="basculerSelection(s.id, i, $event)" [attr.aria-label]="'Sélectionner ' + s.libelle" class="w-4 h-4 mt-1 accent-secondary cursor-pointer shrink-0">
         <div class="min-w-0 flex-1">
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
@@ -98,7 +106,7 @@
               </div>
             </div>
             <div class="flex items-center gap-0.5 shrink-0" (click)="$event.stopPropagation()">
-              <button type="button" (click)="voirSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+              <button type="button" (click)="modifierSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
               <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded" title="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button>
             </div>
           </div>
@@ -116,9 +124,6 @@
   <table class="w-full text-left border-collapse">
     <thead>
       <tr class="border-b border-outline-variant bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
-        <th class="px-6 py-4 w-10">
-          <input type="checkbox" [checked]="toutesSelectionnees" (click)="basculerToutSelectionner()" aria-label="Tout sélectionner" class="w-4 h-4 accent-secondary cursor-pointer">
-        </th>
         <th class="px-6 py-4 font-semibold cursor-pointer select-none hover:text-primary" (click)="trierPar('libelle')">
           Session <span class="material-symbols-outlined text-[16px] align-middle" *ngIf="triColonne === 'libelle'">{{ triDesc ? 'arrow_downward' : 'arrow_upward' }}</span>
         </th>
@@ -137,9 +142,6 @@
     </thead>
     <tbody class="divide-y divide-outline-variant text-on-surface font-body-sm text-body-sm">
       <tr *ngFor="let s of sessionsFiltrees; let i = index" (click)="voirSession(s)" class="cursor-pointer hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="estSelectionne(s.id)">
-        <td class="px-6 py-4" (click)="$event.stopPropagation()">
-          <input type="checkbox" [checked]="estSelectionne(s.id)" (click)="basculerSelection(s.id, i, $event)" [attr.aria-label]="'Sélectionner ' + s.libelle" class="w-4 h-4 accent-secondary cursor-pointer">
-        </td>
         <td class="px-6 py-4 font-medium">{{ s.libelle }}</td>
         <td class="px-6 py-4 text-on-surface-variant">{{ s.dateOuverture | date:'dd MMM yyyy' }}</td>
         <td class="px-6 py-4 text-on-surface-variant">{{ s.dateFermeture | date:'dd MMM yyyy' }}</td>
@@ -161,7 +163,7 @@
           </div>
         </td>
         <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
-          <button type="button" (click)="voirSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors" title="Modifier">
+          <button type="button" (click)="modifierSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors" title="Modifier">
             <span class="material-symbols-outlined text-[20px]">edit</span>
           </button>
           <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded transition-colors" title="Supprimer">

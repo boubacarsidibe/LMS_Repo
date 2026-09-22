@@ -1,92 +1,53 @@
 package inpg.sn.lms.security;
 
 import java.io.IOException;
-
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
-
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.service.UserService;
-
-
-
-
 
 @AllArgsConstructor
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
-
-    
     private final JwtUtils jwtUtils;
     private final UserService userService;
-    
-
-    // JwtRequestFilter(JwtUtils jwtUtils,UserDetailsService jwtUserDetailsService) {
-    //     this.jwtUtils = jwtUtils;
-    //     this.jwtUserDetailsService = jwtUserDetailsService;
-    // }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain chain)
-            throws ServletException, IOException {
-
-        final String requestTokenHeader = request.getHeader("Authorization");
-
-        String username = null;
-        String jwtToken = null;
-
-        // Extraction du token
-        if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
-            jwtToken = requestTokenHeader.substring(7);
-
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+            FilterChain chain) throws ServletException, IOException {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")
+                && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
-                username = jwtUtils.extractUsername(jwtToken);
-            } catch (Exception e) {
-                // Token invalide / expiré : on laisse la requête continuer sans
-                // authentification. Le point d'entrée déclaré dans SecurityConfig
-                // renverra alors un 401 (et non un 403), que le front interprète
-                // comme une session expirée.
-                logger.debug("JWT invalide ou expiré : " + e.getMessage());
+                String token = header.substring(7);
+                String username = jwtUtils.extractUsername(token);
+                User user = username == null ? null : userService.findByUsername(username);
+                if (user != null && jwtUtils.validateToken(token, user)) {
+                    UserDetails details = userService.loadUserByUsername(username);
+                    if (details.isEnabled() && details.isAccountNonLocked()
+                            && details.isAccountNonExpired() && details.isCredentialsNonExpired()) {
+                        var authentication = new UsernamePasswordAuthenticationToken(
+                                details, null, details.getAuthorities());
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+                }
+            } catch (JwtException | IllegalArgumentException | UsernameNotFoundException e) {
+                // Aucun détail du jeton dans les logs. SecurityConfig produit le 401.
+                SecurityContextHolder.clearContext();
             }
         }
-
-        // Validation + authentification
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-            User user = userService.findByUsername(username);
-
-            if (user != null && jwtUtils.validateToken(jwtToken, user)) {
-                UserDetails userDetails = this.userService.loadUserByUsername(username);
-
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-        }
-
-        // Continuer la chaîne de filtres
         chain.doFilter(request, response);
     }
 }

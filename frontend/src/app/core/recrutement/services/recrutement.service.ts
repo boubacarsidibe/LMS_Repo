@@ -228,14 +228,18 @@ export interface TestAcademiqueResponse {
   dateEpreuve: string;
   lieuOuLien: string | null;
   candidatId: number;
+  candidatNom?: string | null;
+  candidatPrenom?: string | null;
+  numeroDossier?: string | null;
   sessionCandidatureId: number | null;
   sessionCandidatureLibelle: string | null;
+  groupeEpreuveId: string;
 }
 
 export interface EntretienRequest {
   dateHeure: string;
   lieuOuLien: string;
-  noteEntretien: number;
+  noteEntretien: number | null;
   appreciationGlobale: string;
   candidatId: number;
 }
@@ -307,6 +311,10 @@ export interface EntretienResponse {
   noteEntretien: number | null;
   appreciationGlobale: string;
   candidatId: number;
+  candidatNom?: string | null;
+  candidatPrenom?: string | null;
+  numeroDossier?: string | null;
+  groupeEntretienId?: string | null;
 }
 
 @Injectable({
@@ -657,12 +665,12 @@ export class RecrutementService {
       `${this.baseUrl}/admin/recrutement/pieces/${pieceId}/conformite`, { estConforme, motifNonConformite });
   }
 
-  annulerDerniereAction(id: number): Observable<CandidatureResponse> {
-    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/annuler`, {});
+  annulerDerniereAction(id: number, motDePasse: string): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/annuler`, { motDePasse });
   }
 
-  reculerStatut(id: number, statut: string): Observable<CandidatureResponse> {
-    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/reculer-statut`, { statut });
+  reculerStatut(id: number, statut: string, motDePasse: string): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/reculer-statut`, { statut, motDePasse });
   }
 
   appliquerFiltreAutomatique(id: number): Observable<CandidatureResponse> {
@@ -761,12 +769,44 @@ export class RecrutementService {
   }
 
   /** Saisie rapide d'une note seule (grille de notation) — n'écrase pas les autres champs de l'épreuve. */
+  telechargerModeleImportNotes(sessionId?: number | null): Observable<Blob> {
+    const suffixe = sessionId ? `?sessionId=${sessionId}` : '';
+    return this.http.get(`${this.baseUrl}/admin/recrutement/tests/modele-import${suffixe}`, { responseType: 'blob' });
+  }
+  importerNotesExcel(fichier: File, sessionId?: number | null): Observable<{ count: number; message: string }> {
+    const donnees = new FormData();
+    donnees.append('fichier', fichier);
+    if (sessionId) donnees.append('sessionId', String(sessionId));
+    return this.http.post<{ count: number; message: string }>(`${this.baseUrl}/admin/recrutement/tests/import-notes`, donnees);
+  }
   modifierNoteTest(id: number, noteObtenue: number | null): Observable<TestAcademiqueResponse> {
     return this.http.put<TestAcademiqueResponse>(`${this.baseUrl}/admin/recrutement/tests/${id}/note`, { noteObtenue });
   }
 
   annulerNoteTest(id: number): Observable<TestAcademiqueResponse> {
     return this.http.put<TestAcademiqueResponse>(`${this.baseUrl}/admin/recrutement/tests/${id}/annuler-note`, {});
+  }
+
+  getNotesGroupeTest(groupeId: string): Observable<TestAcademiqueResponse[]> {
+    return this.http.get<TestAcademiqueResponse[]>(`${this.baseUrl}/admin/recrutement/tests/groupes/${groupeId}/notes`);
+  }
+
+  exporterNotesTest(testId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/admin/recrutement/tests/${testId}/notes/export`, {
+      responseType: 'blob',
+    });
+  }
+
+  enregistrerNotesGroupeTest(groupeId: string, notes: Record<number, number | null>): Observable<TestAcademiqueResponse[]> {
+    return this.http.put<TestAcademiqueResponse[]>(`${this.baseUrl}/admin/recrutement/tests/groupes/${groupeId}/notes`, notes);
+  }
+
+  modifierGroupeTest(groupeId: string, request: TestAcademiqueRequest): Observable<TestAcademiqueResponse[]> {
+    return this.http.put<TestAcademiqueResponse[]>(`${this.baseUrl}/admin/recrutement/tests/groupes/${groupeId}`, request);
+  }
+
+  supprimerGroupeTest(groupeId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/admin/recrutement/tests/groupes/${groupeId}`);
   }
 
   convoquerTestsGroupe(request: ConvocationTestGroupeeRequest): Observable<TestAcademiqueResponse[]> {
@@ -776,6 +816,22 @@ export class RecrutementService {
   // Entretiens
   getAllEntretiens(): Observable<EntretienResponse[]> {
     return this.http.get<EntretienResponse[]>(`${this.baseUrl}/admin/recrutement/entretiens`);
+  }
+
+  getEntretien(id: number): Observable<EntretienResponse> {
+    return this.http.get<EntretienResponse>(`${this.baseUrl}/admin/recrutement/entretiens/${id}`);
+  }
+
+  getNotesGroupeEntretien(groupeId: string): Observable<EntretienResponse[]> {
+    return this.http.get<EntretienResponse[]>(`${this.baseUrl}/admin/recrutement/entretiens/groupes/${groupeId}/notes`);
+  }
+
+  enregistrerNotesGroupeEntretien(groupeId: string, notes: Record<number, number | null>): Observable<EntretienResponse[]> {
+    return this.http.put<EntretienResponse[]>(`${this.baseUrl}/admin/recrutement/entretiens/groupes/${groupeId}/notes`, notes);
+  }
+
+  supprimerGroupeEntretien(groupeId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/admin/recrutement/entretiens/groupes/${groupeId}`);
   }
 
   creerEntretien(request: EntretienRequest): Observable<EntretienResponse> {

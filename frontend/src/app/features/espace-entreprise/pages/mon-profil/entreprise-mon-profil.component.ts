@@ -1,3 +1,4 @@
+import { passwordPolicy } from '../../../../core/auth/validators/password-policy';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -26,7 +27,7 @@ export class EntrepriseMonProfilComponent {
 
   readonly form: FormGroup = this.fb.group({
     motDePasseActuel: ['', [Validators.required]],
-    nouveauMotDePasse: ['', [Validators.required, Validators.minLength(6)]],
+    nouveauMotDePasse: ['', [Validators.required, passwordPolicy]],
     confirmation: ['', [Validators.required]],
   });
 
@@ -39,6 +40,9 @@ export class EntrepriseMonProfilComponent {
     this.messageSucces = '';
     this.messageErreur = '';
     if (this.form.invalid) {
+      if (this.form.get('nouveauMotDePasse')?.hasError('passwordPolicy')) {
+        this.messageErreur = 'Le mot de passe doit contenir au moins 12 caractères et ne pas dépasser 72 octets UTF-8.';
+      }
       this.form.markAllAsTouched();
       return;
     }

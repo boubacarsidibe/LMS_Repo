@@ -1,3 +1,4 @@
+import { passwordPolicy } from '../../../core/auth/validators/password-policy';
 import { Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -27,8 +28,8 @@ export class ForgotPassword {
 
   // Étape 2 : code reçu + nouveau mot de passe
   resetForm = this.fb.group({
-    code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
-    password: ['', [Validators.required, Validators.minLength(12)]],
+    code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
+    password: ['', [Validators.required, passwordPolicy]],
     confirmPassword: ['', [Validators.required]],
   });
 
@@ -76,6 +77,9 @@ export class ForgotPassword {
 
     if (this.resetForm.invalid || this.passwordsMismatch) {
       this.resetForm.markAllAsTouched();
+      if (this.resetForm.controls.password.hasError('passwordPolicy')) {
+        this.errorMessage = 'Le mot de passe doit contenir au moins 12 caractères et ne pas dépasser 72 octets UTF-8.';
+      }
       if (this.passwordsMismatch) {
         this.errorMessage = 'Les mots de passe ne correspondent pas.';
       }

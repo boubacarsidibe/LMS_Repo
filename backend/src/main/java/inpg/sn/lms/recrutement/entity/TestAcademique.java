@@ -1,6 +1,7 @@
 package inpg.sn.lms.recrutement.entity;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import inpg.sn.lms.auth.entity.Candidat;
 import jakarta.persistence.Column;
@@ -46,6 +47,10 @@ public class TestAcademique {
 
     @Column(name = "lieu_ou_lien")
     private String lieuOuLien;
+
+    /** Identifie l'épreuve commune dont cette ligne porte la note d'un candidat. */
+    @Column(name = "groupe_epreuve_id")
+    private UUID groupeEpreuveId;
 
     @ManyToOne
     @JoinColumn(name = "candidat_id", nullable = false)

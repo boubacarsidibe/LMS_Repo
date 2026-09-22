@@ -1,217 +1,40 @@
-<div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5 mb-stack-lg">
-  <div class="max-w-3xl">
-    <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Tests Académiques</h1>
-    <p class="font-body-md text-body-md text-on-surface-variant mt-2">Convoquez plusieurs candidats à la même épreuve, puis cliquez directement sur une note pour la saisir.</p>
+<section class="max-w-6xl mx-auto">
+  <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-8">
+    <h1 class="font-display text-display text-primary">Tests académiques</h1>
+    <div class="flex gap-2"><app-report-button [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button><a routerLink="/responsable-admission/tests/nouveau" class="inline-flex h-10 items-center justify-center gap-2 px-4 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[20px]">add</span>Nouveau test</a></div>
   </div>
-  <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-    <app-report-button [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button>
-    <a routerLink="/responsable-admission/tests/nouveau" class="flex items-center justify-center gap-2 h-10 px-4 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-primary rounded-lg transition-all shadow-sm font-label-md text-label-md">
-      <span class="material-symbols-outlined text-[20px]">add</span>
-      Nouveau test
-    </a>
-    <button type="button" [disabled]="candidatsEligibles.length === 0" (click)="ouvrirConvocationGroupee()" class="flex items-center justify-center gap-2 h-10 px-4 bg-secondary hover:bg-[#254d7d] text-on-secondary rounded-lg transition-all shadow-sm border-t border-[#4a7ec2] disabled:opacity-50 font-label-md text-label-md" [title]="candidatsEligibles.length === 0 ? 'Aucun candidat admis au test académique pour le moment' : 'Convoquer au test (un ou plusieurs candidats)'">
-      <span class="material-symbols-outlined text-[20px]">groups</span>
-      Convoquer un groupe
-    </button>
-  </div>
-</div>
 
-<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
+  <div *ngIf="errorMessage" class="mb-5 p-4 bg-error-container text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
 
-<!--
-  Compteurs de contexte, pas le sujet de la page : le sujet est la grille de notation
-  plus bas. Ils tenaient auparavant sur trois grandes cartes (32 px pour un chiffre à
-  un digit) qui repoussaient la grille sous la ligne de flottaison.
--->
-<div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest mb-stack-md">
-  <div class="flex items-center gap-3 px-4 py-3">
-    <span class="material-symbols-outlined text-secondary text-[20px]">quiz</span>
-    <div class="min-w-0">
-      <div class="font-headline-sm text-headline-sm text-primary leading-none">{{ totalTests }}</div>
-      <div class="font-label-sm text-label-sm text-on-surface-variant truncate">Tests programmés</div>
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+    <div class="p-4 md:p-5 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center gap-3">
+      <div class="relative flex-1 max-w-md">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+        <input [(ngModel)]="recherche" type="search" placeholder="Rechercher une épreuve, une session ou un lieu" class="w-full h-10 pl-10 pr-3 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20">
+      </div>
+      <span *ngIf="!loading" class="text-body-sm text-on-surface-variant sm:ml-auto">{{ testsFiltres.length }} test{{ testsFiltres.length > 1 ? 's' : '' }}</span>
+    </div>
+
+    <div *ngIf="loading" class="px-6 py-16 text-center text-on-surface-variant">Chargement des tests...</div>
+    <div *ngIf="!loading && testsFiltres.length === 0" class="px-6 py-16 text-center">
+      <span class="material-symbols-outlined text-[32px] text-outline">quiz</span>
+      <p class="mt-3 text-on-surface-variant">Aucun test ne correspond à votre recherche.</p>
+    </div>
+
+    <div *ngIf="!loading && testsFiltres.length" class="divide-y divide-outline-variant">
+      <a *ngFor="let test of testsFiltres" [routerLink]="['/responsable-admission/tests', test.id]" class="group flex flex-col lg:flex-row lg:items-center gap-4 px-5 py-5 hover:bg-surface-container-low transition-colors">
+        <div class="w-10 h-10 shrink-0 rounded-lg bg-secondary-fixed text-secondary flex items-center justify-center"><span class="material-symbols-outlined">quiz</span></div>
+        <div class="min-w-0 flex-1">
+          <h2 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-secondary">{{ test.nom }}</h2>
+          <p class="text-body-sm text-on-surface-variant mt-1">{{ test.session || 'Session non renseignée' }}</p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-body-sm">
+          <div><span class="block text-label-sm text-on-surface-variant">Date</span><span class="text-on-surface">{{ test.date ? (test.date | date:'dd MMM y, HH:mm') : 'À planifier' }}</span></div>
+          <div><span class="block text-label-sm text-on-surface-variant">Lieu</span><span class="text-on-surface">{{ test.lieu || 'Non précisé' }}</span></div>
+          <div><span class="block text-label-sm text-on-surface-variant">Notes</span><span class="text-on-surface">{{ test.notesSaisies }} / {{ test.inscrits }}</span></div>
+        </div>
+        <span class="inline-flex items-center gap-1 text-secondary font-label-md text-label-md lg:ml-3">Ouvrir<span class="material-symbols-outlined text-[18px]">chevron_right</span></span>
+      </a>
     </div>
   </div>
-  <div class="flex items-center gap-3 px-4 py-3">
-    <span class="material-symbols-outlined text-secondary text-[20px]">edit_note</span>
-    <div class="min-w-0">
-      <div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbNotes }}</div>
-      <div class="font-label-sm text-label-sm text-on-surface-variant truncate">Notes saisies</div>
-    </div>
-  </div>
-  <div class="flex items-center gap-3 px-4 py-3">
-    <span class="material-symbols-outlined text-outline text-[20px]">check_circle</span>
-    <div class="min-w-0">
-      <div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbAdmissibles }}</div>
-      <div class="font-label-sm text-label-sm text-on-surface-variant truncate">Admissibles (≥ 10/20)</div>
-    </div>
-  </div>
-</div>
-
-<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
-  <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-3">
-    <div class="flex items-center gap-2">
-      <button type="button" (click)="evaluationDirecte = !evaluationDirecte" role="switch" [attr.aria-checked]="evaluationDirecte" title="Si activé, une note insuffisante propose immédiatement le rejet du dossier — sinon, le badge Résultat reste cliquable pour évaluer plus tard"
-              class="relative w-11 h-6 rounded-full transition-colors shrink-0" [class.bg-secondary]="evaluationDirecte" [class.bg-outline-variant]="!evaluationDirecte">
-        <span class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform" [class.translate-x-5]="evaluationDirecte"></span>
-      </button>
-      <span class="font-label-sm text-label-sm text-on-surface-variant">Évaluation immédiate</span>
-    </div>
-    <div class="relative w-full sm:w-64">
-      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-      <input #rechercheBox [value]="recherche" (keyup.enter)="recherche = rechercheBox.value" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher... (Entrée)" type="text">
-    </div>
-  </div>
-
-  <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des tests…</div>
-  <div *ngIf="!loading && testsFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Aucun test ne correspond à ces critères.</div>
-
-  <div class="md:hidden divide-y divide-outline-variant" *ngIf="!loading && testsFiltres.length > 0">
-    <article *ngFor="let t of testsFiltres" (click)="voirTest(t)" class="p-4 cursor-pointer hover:bg-surface-container-low transition-colors">
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs shrink-0">{{ t.candidatPrenom | slice:0:1 }}{{ t.candidatNom | slice:0:1 }}</div>
-          <div class="min-w-0"><h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ t.candidatPrenom }} {{ t.candidatNom }}</h3><p class="text-[11px] text-on-surface-variant truncate">{{ t.numeroDossier }}</p></div>
-        </div>
-        <div (click)="$event.stopPropagation()" class="shrink-0">
-          <button *ngIf="resultat(t) === 'INSUFFISANT'; else resultatMobileSimple" type="button" (click)="evaluerMaintenant(t)" class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-error-container/40 text-error">Insuffisant<span class="material-symbols-outlined text-[12px]">chevron_right</span></button>
-          <ng-template #resultatMobileSimple><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold" [ngClass]="resultat(t) === 'ADMISSIBLE' ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-surface-container text-on-surface-variant'">{{ resultat(t) === 'ADMISSIBLE' ? 'Admissible' : 'En attente' }}</span></ng-template>
-        </div>
-      </div>
-
-      <div class="mt-3 rounded-lg bg-surface-container-low p-3">
-        <p class="font-label-sm text-label-sm text-primary font-semibold">{{ t.nomEpreuve }}</p>
-        <div class="grid grid-cols-2 gap-x-3 gap-y-2 mt-2 text-[11px]">
-          <div><span class="block text-[10px] text-on-surface-variant">Date</span><span class="text-primary">{{ t.dateEpreuve | date:'dd MMM yyyy, HH:mm' }}</span></div>
-          <div><span class="block text-[10px] text-on-surface-variant">Coefficient</span><span class="text-primary">{{ t.coefficient }}</span></div>
-          <div class="col-span-2"><span class="block text-[10px] text-on-surface-variant">Lieu ou lien</span><span class="text-primary break-all">{{ t.lieuOuLien || '—' }}</span></div>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-outline-variant" (click)="$event.stopPropagation()">
-        <div class="flex items-center gap-1"><span class="text-[10px] text-on-surface-variant">Note /20</span><app-ui-note [valeur]="t.noteObtenue" [contexte]="t" [enregistrer]="enregistrerNote" [desactive]="noteEnCoursId === t.id" [etiquette]="'Note sur 20 de ' + t.candidatPrenom + ' ' + t.candidatNom"></app-ui-note><button *ngIf="t.noteObtenuePrecedente != null" type="button" [disabled]="noteEnCoursId === t.id" (click)="annulerNote(t)" [title]="'Annuler : revenir à ' + t.noteObtenuePrecedente" class="p-1 rounded text-on-surface-variant hover:text-secondary"><span class="material-symbols-outlined text-[16px]">undo</span></button></div>
-        <div class="flex gap-1"><button type="button" (click)="voirTest(t)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button><button type="button" (click)="supprimer(t)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container" title="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button></div>
-      </div>
-    </article>
-  </div>
-
-  <div class="hidden md:block overflow-x-auto" *ngIf="!loading && testsFiltres.length > 0">
-    <table class="w-full text-left border-collapse">
-      <thead>
-        <tr class="bg-surface-container-low border-b border-outline-variant">
-          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
-          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Épreuve</th>
-          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date</th>
-          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Lieu</th>
-          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Coeff.</th>
-          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Note /20</th>
-          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Résultat</th>
-          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-outline-variant">
-        <tr *ngFor="let t of testsFiltres" (click)="voirTest(t)" class="cursor-pointer hover:bg-surface-container-low transition-colors group">
-          <td class="p-4">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">{{ t.candidatPrenom | slice:0:1 }}{{ t.candidatNom | slice:0:1 }}</div>
-              <div>
-                <div class="font-label-md text-label-md text-primary">{{ t.candidatPrenom }} {{ t.candidatNom }}</div>
-                <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ t.numeroDossier }}</div>
-              </div>
-            </div>
-          </td>
-          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ t.nomEpreuve }}</td>
-          <td class="p-4 font-body-sm text-body-sm text-primary">{{ t.dateEpreuve | date:'dd MMM yyyy, HH:mm' }}</td>
-          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ t.lieuOuLien || '—' }}</td>
-          <td class="p-4 font-body-sm text-body-sm text-primary">{{ t.coefficient }}</td>
-          <td class="p-4" (click)="$event.stopPropagation()">
-            <div class="flex items-center gap-1">
-              <app-ui-note [valeur]="t.noteObtenue"
-                           [contexte]="t"
-                           [enregistrer]="enregistrerNote"
-                           [desactive]="noteEnCoursId === t.id"
-                           [etiquette]="'Note sur 20 de ' + t.candidatPrenom + ' ' + t.candidatNom"></app-ui-note>
-              <button *ngIf="t.noteObtenuePrecedente != null" type="button" [disabled]="noteEnCoursId === t.id" (click)="annulerNote(t)" [title]="'Annuler : revenir à ' + t.noteObtenuePrecedente" class="p-1 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors">
-                <span class="material-symbols-outlined text-[18px]">undo</span>
-              </button>
-            </div>
-          </td>
-          <td class="p-4" (click)="$event.stopPropagation()">
-            <button *ngIf="resultat(t) === 'INSUFFISANT'; else resultatSimple" type="button" (click)="evaluerMaintenant(t)"
-                    title="Évaluer maintenant — proposer le rejet du dossier"
-                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-error-container/40 text-error hover:bg-error-container/70 transition-colors cursor-pointer">
-              Insuffisant
-              <span class="material-symbols-outlined text-[14px]">chevron_right</span>
-            </button>
-            <ng-template #resultatSimple>
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                    [ngClass]="{
-                      'bg-[#ecfdf5] text-[#065f46]': resultat(t) === 'ADMISSIBLE',
-                      'bg-surface-container text-on-surface-variant': resultat(t) === 'EN_ATTENTE'
-                    }">
-                {{ resultat(t) === 'ADMISSIBLE' ? 'Admissible' : 'En attente' }}
-              </span>
-            </ng-template>
-          </td>
-          <td class="p-4 text-right" (click)="$event.stopPropagation()">
-            <div class="flex justify-end gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
-              <button type="button" (click)="voirTest(t)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
-              <button type="button" (click)="supprimer(t)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<!-- Modal Convocation groupée : plusieurs candidats à la fois, reste une action rapide en surimpression -->
-<div *ngIf="convocationGroupeeOpen" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerConvocationGroupee()">
-  <div class="bg-surface rounded-xl shadow-lg w-full max-w-lg border border-outline-variant max-h-[85vh] flex flex-col" (click)="$event.stopPropagation()">
-    <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-      <h3 class="font-headline-sm text-headline-sm text-primary">Convocation groupée au test</h3>
-      <button type="button" (click)="fermerConvocationGroupee()" class="p-1 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors"><span class="material-symbols-outlined">close</span></button>
-    </div>
-    <form [formGroup]="convocationForm" (ngSubmit)="envoyerConvocationGroupee()" class="flex-1 overflow-y-auto p-6 space-y-4">
-      <div *ngIf="convocationFormError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ convocationFormError }}</div>
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Nom de l'épreuve</label>
-        <input formControlName="nomEpreuve" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Test de mathématiques" type="text"/>
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date et heure</label>
-          <input formControlName="dateEpreuve" aria-label="Date et heure" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="datetime-local"/>
-        </div>
-        <div>
-          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Coefficient</label>
-          <input formControlName="coefficient" aria-label="Coefficient" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="number" min="0.1" step="0.5"/>
-        </div>
-      </div>
-      <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Lieu / Lien</label>
-        <input formControlName="lieuOuLien" aria-label="Lieu ou lien de connexion" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" placeholder="Ex: Salle B12, campus Dakar / lien visio" type="text"/>
-      </div>
-
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <label class="font-label-md text-label-md text-on-surface-variant">Candidats à convoquer ({{ selectionCandidatIds.size }} sélectionné(s))</label>
-          <button type="button" (click)="toutSelectionner()" class="font-label-sm text-label-sm text-secondary hover:underline">Tout sélectionner</button>
-        </div>
-        <div class="border border-outline-variant rounded-lg max-h-56 overflow-y-auto divide-y divide-outline-variant">
-          <label *ngFor="let c of candidatsEligibles" class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-surface-container-low">
-            <input type="checkbox" [checked]="selectionCandidatIds.has(c.candidatId)" (change)="basculerSelection(c.candidatId)" class="w-4 h-4 accent-secondary">
-            <span class="font-body-sm text-body-sm text-on-surface flex-1">{{ c.candidatPrenom }} {{ c.candidatNom }} — {{ c.numeroDossier }}</span>
-            <span *ngIf="c.paiement?.statut !== 'SUCCES'" class="text-[10px] font-bold text-error uppercase tracking-wide shrink-0" title="Frais de dossier non réglés">Non payé</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-3 pt-2">
-        <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="fermerConvocationGroupee()">Annuler</button>
-        <button type="submit" [disabled]="envoiGroupeEnCours" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
-          {{ envoiGroupeEnCours ? 'Envoi…' : 'Envoyer les convocations' }}
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
+</section>

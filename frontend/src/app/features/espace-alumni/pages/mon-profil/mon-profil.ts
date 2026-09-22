@@ -1,3 +1,4 @@
+import { validPassword } from '../../../../core/auth/validators/password-policy';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -98,8 +99,8 @@ export class MonProfil implements OnInit {
       this.messageErreurMotDePasse = 'Tous les champs sont obligatoires.';
       return;
     }
-    if (this.nouveauMotDePasse.length < 6) {
-      this.messageErreurMotDePasse = 'Le nouveau mot de passe doit compter au moins 6 caractères.';
+    if (!validPassword(this.nouveauMotDePasse)) {
+      this.messageErreurMotDePasse = 'Le nouveau mot de passe doit compter au moins 12 caractères et ne pas dépasser 72 octets UTF-8.';
       return;
     }
     if (this.nouveauMotDePasse !== this.confirmationMotDePasse) {

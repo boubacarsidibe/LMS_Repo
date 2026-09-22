@@ -199,3 +199,7 @@ docker compose down -v && docker compose up -d --build
 
 Les données de démonstration sont regénérées ; les deux scripts de seed sont à rejouer.
 **Ne jamais faire cela sur des données réelles.**
+
+## Authentification
+
+Le fonctionnement actuel, la révocation des sessions, la récupération par OTP et les limites de déploiement sont décrits dans [docs/authentification.md](docs/authentification.md).

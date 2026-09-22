@@ -233,10 +233,31 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'tests/:id/notes',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/tests/test-notes/test-notes.component').then(
+            (m) => m.TestNotesComponent
+          ),
+      },
+      {
         path: 'tests/:id',
         loadComponent: () =>
-          import('./features/recrutement/responsable-admission/tests/test-form/test-form.component').then(
-            (m) => m.TestFormComponent
+          import('./features/recrutement/responsable-admission/tests/test-detail/test-detail.component').then(
+            (m) => m.TestDetailComponent
+          ),
+      },
+      {
+        path: 'entretiens/:id/notes',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/entretiens/entretien-notes').then(
+            (m) => m.EntretienNotesComponent
+          ),
+      },
+      {
+        path: 'entretiens/:id',
+        loadComponent: () =>
+          import('./features/recrutement/responsable-admission/entretiens/entretien-detail/entretien-detail.component').then(
+            (m) => m.EntretienDetailComponent
           ),
       },
       {

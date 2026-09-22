@@ -47,7 +47,18 @@
             <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;">check</span>
             <span *ngIf="item.pending" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
             <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-          </ng-container>
+          
+  <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
+    <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
+      <h2 id="titre-confirmation-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
+      <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourStatutCible ? 'Le dossier reviendra au statut « ' + libelleStatut(retourStatutCible) + ' ».' : 'Le dossier retrouvera son statut précédent.' }}</p>
+      <p *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</p>
+      <label for="mot-de-passe-retour-detail" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
+      <input id="mot-de-passe-retour-detail" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:outline-none focus:border-secondary" />
+      <div class="mt-6 flex justify-end gap-3"><button type="button" (click)="fermerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant">Annuler</button><button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary disabled:opacity-60">{{ actionEnCours ? 'Validation…' : 'Confirmer' }}</button></div>
+    </section>
+  </div>
+</ng-container>
         </div>
         <div>
           <h4 class="font-label-md text-label-md font-bold" [class.text-error]="item.erreur" [class.text-on-surface]="!item.erreur">{{ item.label }}</h4>
@@ -56,7 +67,18 @@
             <p *ngIf="paiementEnAttente" class="font-body-sm text-body-sm text-[#b7791f] mt-1">Paiement enregistré par le candidat, en attente de confirmation.</p>
             <p *ngIf="paiementEchoue" class="font-body-sm text-body-sm text-error mt-1">La précédente tentative de paiement du candidat n'a pas abouti.</p>
             <p *ngIf="!paiementEnAttente && !paiementEchoue" class="font-body-sm text-body-sm text-on-surface-variant mt-1">En attente du règlement des frais de dossier par le candidat.</p>
-          </ng-container>
+          
+  <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
+    <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
+      <h2 id="titre-confirmation-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
+      <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourStatutCible ? 'Le dossier reviendra au statut « ' + libelleStatut(retourStatutCible) + ' ».' : 'Le dossier retrouvera son statut précédent.' }}</p>
+      <p *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</p>
+      <label for="mot-de-passe-retour-detail" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
+      <input id="mot-de-passe-retour-detail" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:outline-none focus:border-secondary" />
+      <div class="mt-6 flex justify-end gap-3"><button type="button" (click)="fermerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant">Annuler</button><button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary disabled:opacity-60">{{ actionEnCours ? 'Validation…' : 'Confirmer' }}</button></div>
+    </section>
+  </div>
+</ng-container>
         </div>
         <div *ngIf="i < timelineItems.length - 1" class="absolute -bottom-5 left-4 h-4 w-[2px] bg-outline-variant"></div>
       </li>
@@ -158,6 +180,17 @@
         <button type="button" (click)="annulerRefusPiece()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-low disabled:opacity-60">Annuler</button>
         <button type="button" (click)="confirmerRefusPiece()" [disabled]="actionEnCours || !motifNonConformite.trim()" class="px-4 py-2 rounded-lg bg-error text-on-error hover:opacity-90 disabled:opacity-60">{{ actionEnCours ? 'Envoi…' : 'Demander le remplacement' }}</button>
       </div>
+    </section>
+  </div>
+
+  <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
+    <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
+      <h2 id="titre-confirmation-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
+      <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourStatutCible ? 'Le dossier reviendra au statut « ' + libelleStatut(retourStatutCible) + ' ».' : 'Le dossier retrouvera son statut précédent.' }}</p>
+      <p *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</p>
+      <label for="mot-de-passe-retour-detail" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
+      <input id="mot-de-passe-retour-detail" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:outline-none focus:border-secondary" />
+      <div class="mt-6 flex justify-end gap-3"><button type="button" (click)="fermerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant">Annuler</button><button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary disabled:opacity-60">{{ actionEnCours ? 'Validation…' : 'Confirmer' }}</button></div>
     </section>
   </div>
 </ng-container>

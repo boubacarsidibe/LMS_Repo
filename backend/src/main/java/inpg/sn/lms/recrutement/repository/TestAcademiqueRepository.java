@@ -1,6 +1,7 @@
 package inpg.sn.lms.recrutement.repository;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -13,4 +14,6 @@ public interface TestAcademiqueRepository extends JpaRepository<TestAcademique, 
     List<TestAcademique> findByCandidatId(Long candidatId);
 
     List<TestAcademique> findByNomEpreuve(String nomEpreuve);
+
+    List<TestAcademique> findByGroupeEpreuveId(UUID groupeEpreuveId);
 }

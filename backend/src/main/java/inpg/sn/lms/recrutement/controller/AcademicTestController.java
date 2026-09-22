@@ -83,11 +83,13 @@ public class AcademicTestController {
         if (sessionId != null) {
             SessionCandidature session = sessionRepo.findById(sessionId).orElse(null);
             if (session != null) {
+                UUID groupeEpreuveId = UUID.randomUUID();
                 session.getCandidatures().forEach(c -> {
                     TestAcademique t = new TestAcademique();
                     t.setNomEpreuve(nom);
                     t.setCoefficient(coeff);
                     t.setDateEpreuve(dateEpreuve);
+                    t.setGroupeEpreuveId(groupeEpreuveId);
                     t.setCandidat(c.getCandidat());
                     testRepo.save(t);
                 });

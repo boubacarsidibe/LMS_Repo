@@ -4,6 +4,8 @@ import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -46,6 +48,11 @@ public class TestAcademiqueService {
     }
 
     public TestAcademiqueResponse creerTest(TestAcademiqueRequest request) {
+        return creerTest(request, UUID.randomUUID());
+    }
+
+    /** Crée une ligne de note dans une épreuve commune identifiée de façon persistante. */
+    public TestAcademiqueResponse creerTest(TestAcademiqueRequest request, UUID groupeEpreuveId) {
         Candidat candidat = candidatRepository.findById(request.getCandidatId())
                 .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé avec l'ID: " + request.getCandidatId()));
 
@@ -55,6 +62,7 @@ public class TestAcademiqueService {
         test.setNoteObtenue(request.getNoteObtenue());
         test.setDateEpreuve(request.getDateEpreuve());
         test.setLieuOuLien(request.getLieuOuLien());
+        test.setGroupeEpreuveId(groupeEpreuveId);
         test.setCandidat(candidat);
 
         TestAcademique saved = testAcademiqueRepository.save(test);
@@ -125,6 +133,32 @@ public class TestAcademiqueService {
         }
     }
 
+    /** Enregistre atomiquement un lot de notes, après validation de toutes les lignes et de la session. */
+    public int importerNotes(Map<Long, Float> notes, Long sessionId) {
+        if (notes.isEmpty()) {
+            throw new BusinessException("Le fichier ne contient aucune note à importer.");
+        }
+        List<TestAcademique> tests = notes.keySet().stream()
+                .map(id -> testAcademiqueRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Test non trouvé avec l'ID: " + id)))
+                .collect(Collectors.toList());
+        for (TestAcademique test : tests) {
+            verifierNote(notes.get(test.getId()));
+            Candidature candidature = candidatureRepository.findByCandidatId(test.getCandidat().getId())
+                    .stream().findFirst().orElse(null);
+            Long sessionTest = candidature != null && candidature.getSessionCandidature() != null
+                    ? candidature.getSessionCandidature().getId() : null;
+            if (sessionId != null && !sessionId.equals(sessionTest)) {
+                throw new BusinessException("Une épreuve du fichier n'appartient pas à la session sélectionnée.");
+            }
+        }
+        tests.forEach(test -> {
+            test.setNoteObtenuePrecedente(test.getNoteObtenue());
+            test.setNoteObtenue(notes.get(test.getId()));
+        });
+        testAcademiqueRepository.saveAll(tests);
+        return tests.size();
+    }
     /** Annule la dernière saisie de note (un seul niveau, pas d'historique complet). */
     public TestAcademiqueResponse annulerNote(Long id) {
         TestAcademique test = testAcademiqueRepository.findById(id)
@@ -157,6 +191,49 @@ public class TestAcademiqueService {
                 .collect(Collectors.toList());
     }
 
+    public List<TestAcademiqueResponse> getTestsParGroupe(UUID groupeEpreuveId) {
+        return testAcademiqueRepository.findByGroupeEpreuveId(groupeEpreuveId).stream()
+                .map(this::toResponse).collect(Collectors.toList());
+    }
+
+    /** Sauvegarde un lot uniquement s'il appartient à l'épreuve affichée. */
+    public List<TestAcademiqueResponse> enregistrerNotesGroupe(UUID groupeEpreuveId, Map<Long, Float> notes) {
+        List<TestAcademique> lignes = testAcademiqueRepository.findByGroupeEpreuveId(groupeEpreuveId);
+        Map<Long, TestAcademique> parId = lignes.stream()
+                .collect(Collectors.toMap(TestAcademique::getId, test -> test));
+        if (notes.isEmpty() || !parId.keySet().containsAll(notes.keySet())) {
+            throw new BusinessException("Une note ne correspond pas à l'épreuve sélectionnée.");
+        }
+        notes.forEach((id, note) -> verifierNote(note));
+        notes.forEach((id, note) -> {
+            TestAcademique test = parId.get(id);
+            test.setNoteObtenuePrecedente(test.getNoteObtenue());
+            test.setNoteObtenue(note);
+        });
+        return testAcademiqueRepository.saveAll(notes.keySet().stream().map(parId::get).toList()).stream()
+                .map(this::toResponse).collect(Collectors.toList());
+    }
+
+    /** Modifie les informations communes sans toucher aux notes ni aux inscrits. */
+    public List<TestAcademiqueResponse> modifierGroupe(UUID groupeEpreuveId, TestAcademiqueRequest request) {
+        List<TestAcademique> lignes = testAcademiqueRepository.findByGroupeEpreuveId(groupeEpreuveId);
+        if (lignes.isEmpty()) throw new ResourceNotFoundException("Test académique introuvable.");
+        lignes.forEach(test -> {
+            test.setNomEpreuve(request.getNomEpreuve());
+            test.setCoefficient(request.getCoefficient());
+            test.setDateEpreuve(request.getDateEpreuve());
+            test.setLieuOuLien(request.getLieuOuLien());
+        });
+        return testAcademiqueRepository.saveAll(lignes).stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    /** Supprime exclusivement les inscriptions et notes de l'épreuve sélectionnée. */
+    public void supprimerGroupe(UUID groupeEpreuveId) {
+        List<TestAcademique> lignes = testAcademiqueRepository.findByGroupeEpreuveId(groupeEpreuveId);
+        if (lignes.isEmpty()) throw new ResourceNotFoundException("Test académique introuvable.");
+        testAcademiqueRepository.deleteAll(lignes);
+    }
+
     public void supprimerTest(Long id) {
         if (!testAcademiqueRepository.existsById(id)) {
             throw new ResourceNotFoundException("Test non trouvé avec l'ID: " + id);
@@ -180,8 +257,12 @@ public class TestAcademiqueService {
                 .dateEpreuve(t.getDateEpreuve())
                 .lieuOuLien(t.getLieuOuLien())
                 .candidatId(t.getCandidat().getId())
+                .candidatNom(t.getCandidat().getNom())
+                .candidatPrenom(t.getCandidat().getPrenom())
+                .numeroDossier(candidature != null ? candidature.getNumeroDossier() : null)
                 .sessionCandidatureId(candidature != null ? candidature.getSessionCandidature().getId() : null)
                 .sessionCandidatureLibelle(candidature != null ? candidature.getSessionCandidature().getLibelle() : null)
+                .groupeEpreuveId(t.getGroupeEpreuveId())
                 .build();
     }
 }

@@ -96,11 +96,11 @@ public class CandidatureService {
                     .collect(Collectors.toMap(r -> r.getCritere().getId(), ReponseCritereCandidature::getValeur));
             String resultat;
             if (session.respecteCriteres(candidature.getCandidat(), reponses)) {
-                candidature.setStatut(EnumStatutCandidature.EN_COURS_DE_PRESELECTION);
+                candidature.setStatut(EnumStatutCandidature.PRESELECTIONNE);
                 resultat = "Critères remplis : dossier retenu pour la présélection.";
                 preselectionnes++;
             } else {
-                candidature.setStatut(EnumStatutCandidature.REJETE);
+                candidature.setStatut(EnumStatutCandidature.DOSSIER_REJETE);
                 candidature.setMotifRejet("Critères de présélection de la session non remplis (filtre automatique).");
                 resultat = "Critères non remplis : dossier rejeté par le filtre automatique.";
                 rejetes++;
@@ -138,7 +138,7 @@ public class CandidatureService {
             throw new BusinessException("Transition de statut non autorisée: "
                     + candidature.getStatut() + " → " + nouveauStatut);
         }
-        if (nouveauStatut == EnumStatutCandidature.EN_COURS_DE_PRESELECTION
+        if (nouveauStatut == EnumStatutCandidature.PRESELECTIONNE
                 && candidature.getPiecesJustificatives().isEmpty()) {
             throw new BusinessException(
                     "Ce dossier ne contient aucune pièce justificative : impossible de le présélectionner.");
@@ -146,7 +146,12 @@ public class CandidatureService {
 
         candidature.setStatutPrecedent(candidature.getStatut());
         candidature.setStatut(nouveauStatut);
-        if (nouveauStatut == EnumStatutCandidature.REJETE && motif != null) {
+        if ((nouveauStatut == EnumStatutCandidature.DOSSIER_REJETE
+                || nouveauStatut == EnumStatutCandidature.NON_ADMIS) && (motif == null || motif.isBlank())) {
+            throw new BusinessException("Un motif est obligatoire pour refuser une candidature.");
+        }
+        if (nouveauStatut == EnumStatutCandidature.DOSSIER_REJETE
+                || nouveauStatut == EnumStatutCandidature.NON_ADMIS) {
             candidature.setMotifRejet(motif);
         }
 
@@ -165,7 +170,7 @@ public class CandidatureService {
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Candidature non trouvée avec l'ID: " + candidatureId));
 
-        if (candidature.getStatut() == EnumStatutCandidature.ADMIS3) {
+        if (candidature.getStatut() == EnumStatutCandidature.INSCRIPTION_FINALISEE) {
             throw new BusinessException(
                     "L'admission finale a déjà ouvert l'accès étudiant du candidat : ce statut ne peut plus être annulé automatiquement.");
         }
@@ -175,7 +180,8 @@ public class CandidatureService {
 
         candidature.setStatut(candidature.getStatutPrecedent());
         candidature.setStatutPrecedent(null);
-        if (candidature.getStatut() != EnumStatutCandidature.REJETE) {
+        if (candidature.getStatut() != EnumStatutCandidature.DOSSIER_REJETE
+                && candidature.getStatut() != EnumStatutCandidature.NON_ADMIS) {
             candidature.setMotifRejet(null);
         }
 
@@ -205,14 +211,16 @@ public class CandidatureService {
                     "Impossible de reculer vers " + cible + " — utiliser l'action dédiée pour ce statut.");
         }
         EnumStatutCandidature actuel = candidature.getStatut();
-        if (actuel == EnumStatutCandidature.ADMIS3) {
+        if (actuel == EnumStatutCandidature.INSCRIPTION_FINALISEE) {
             throw new BusinessException(
                     "L'admission finale a déjà ouvert l'accès étudiant du candidat : son statut ne peut plus être modifié automatiquement.");
         }
         // REJETE et LISTE_ATTENTE sortent du parcours linéaire : on autorise à les
         // défaire vers n'importe quelle étape (« dé-rejeter », « dé-lister »), au-delà
         // de la fenêtre d'annulation immédiate qu'offre annulerDerniereAction.
-        if (actuel != EnumStatutCandidature.REJETE && actuel != EnumStatutCandidature.LISTE_ATTENTE) {
+        if (actuel != EnumStatutCandidature.DOSSIER_REJETE
+                && actuel != EnumStatutCandidature.NON_ADMIS
+                && actuel != EnumStatutCandidature.LISTE_ATTENTE) {
             Integer rangActuel = rangParcours(actuel);
             if (rangActuel == null || rangParcours(cible) >= rangActuel) {
                 throw new BusinessException("On ne peut reculer que vers un statut antérieur dans le parcours.");
@@ -236,10 +244,17 @@ public class CandidatureService {
     private Integer rangParcours(EnumStatutCandidature statut) {
         return switch (statut) {
             case SOUMIS -> 1;
-            case EN_COURS_DE_PRESELECTION -> 2;
-            case ADMIS1 -> 3;
-            case ADMIS2 -> 4;
-            case BROUILLON, LISTE_ATTENTE, ADMIS3, REJETE -> null;
+            case INCOMPLET -> 2;
+            case DOSSIER_VALIDE -> 3;
+            case PRESELECTIONNE -> 4;
+            case PAIEMENT_EN_ATTENTE -> 5;
+            case PAIEMENT_CONFIRME -> 6;
+            case CONVOQUE_TEST -> 7;
+            case TEST_REUSSI, TEST_ECHOUE, ABSENT_TEST -> 8;
+            case CONVOQUE_ENTRETIEN -> 9;
+            case ENTRETIEN_EFFECTUE, ABSENT_ENTRETIEN -> 10;
+            case BROUILLON, DOSSIER_REJETE, LISTE_ATTENTE, ADMIS, NON_ADMIS,
+                    INSCRIPTION_FINALISEE, DESISTEMENT -> null;
         };
     }
 
@@ -314,19 +329,29 @@ public class CandidatureService {
 
     private static final List<EnumStatutCandidature> ETAPES_WORKFLOW = List.of(
             EnumStatutCandidature.SOUMIS,
-            EnumStatutCandidature.EN_COURS_DE_PRESELECTION,
-            EnumStatutCandidature.ADMIS1,
-            EnumStatutCandidature.ADMIS2,
-            EnumStatutCandidature.ADMIS3,
-            EnumStatutCandidature.REJETE);
+            EnumStatutCandidature.PRESELECTIONNE,
+            EnumStatutCandidature.PAIEMENT_EN_ATTENTE,
+            EnumStatutCandidature.PAIEMENT_CONFIRME,
+            EnumStatutCandidature.CONVOQUE_TEST,
+            EnumStatutCandidature.TEST_REUSSI,
+            EnumStatutCandidature.CONVOQUE_ENTRETIEN,
+            EnumStatutCandidature.ENTRETIEN_EFFECTUE,
+            EnumStatutCandidature.ADMIS,
+            EnumStatutCandidature.LISTE_ATTENTE,
+            EnumStatutCandidature.NON_ADMIS);
 
-    private static final Map<EnumStatutCandidature, String> LIBELLES_ETAPES = Map.of(
-            EnumStatutCandidature.SOUMIS, "Soumis",
-            EnumStatutCandidature.EN_COURS_DE_PRESELECTION, "En présélection",
-            EnumStatutCandidature.ADMIS1, "Admis au test académique",
-            EnumStatutCandidature.ADMIS2, "Admis à l'entretien",
-            EnumStatutCandidature.ADMIS3, "Admis (décision finale)",
-            EnumStatutCandidature.REJETE, "Rejetés");
+    private static final Map<EnumStatutCandidature, String> LIBELLES_ETAPES = Map.ofEntries(
+            Map.entry(EnumStatutCandidature.SOUMIS, "Soumis"),
+            Map.entry(EnumStatutCandidature.PRESELECTIONNE, "Présélectionné"),
+            Map.entry(EnumStatutCandidature.PAIEMENT_EN_ATTENTE, "Paiement en attente"),
+            Map.entry(EnumStatutCandidature.PAIEMENT_CONFIRME, "Paiement confirmé"),
+            Map.entry(EnumStatutCandidature.CONVOQUE_TEST, "Convoqué au test"),
+            Map.entry(EnumStatutCandidature.TEST_REUSSI, "Test réussi"),
+            Map.entry(EnumStatutCandidature.CONVOQUE_ENTRETIEN, "Convoqué à l'entretien"),
+            Map.entry(EnumStatutCandidature.ENTRETIEN_EFFECTUE, "Entretien effectué"),
+            Map.entry(EnumStatutCandidature.ADMIS, "Admis"),
+            Map.entry(EnumStatutCandidature.LISTE_ATTENTE, "Liste d'attente"),
+            Map.entry(EnumStatutCandidature.NON_ADMIS, "Non admis"));
 
     /**
      * Rapport qualité recrutement (demande responsable admission) : répartition des
@@ -353,7 +378,7 @@ public class CandidatureService {
                                     c.getCandidatEmail(),
                                     c.getSessionCandidatureLibelle(),
                                     c.getDateSoumission(),
-                                    statut == EnumStatutCandidature.REJETE ? c.getMotifRejet() : null))
+                                    statut == EnumStatutCandidature.NON_ADMIS ? c.getMotifRejet() : null))
                             .toList();
                     return new RapportRecrutementDto.EtapeRapport(
                             statut.name(), LIBELLES_ETAPES.get(statut), candidats.size(), candidats);
@@ -372,20 +397,43 @@ public class CandidatureService {
     private boolean estTransitionValide(EnumStatutCandidature actuel, EnumStatutCandidature nouveau) {
         return switch (actuel) {
             case BROUILLON -> nouveau == EnumStatutCandidature.SOUMIS || nouveau == EnumStatutCandidature.BROUILLON;
-            case SOUMIS -> nouveau == EnumStatutCandidature.EN_COURS_DE_PRESELECTION
-                    || nouveau == EnumStatutCandidature.REJETE;
-            case EN_COURS_DE_PRESELECTION ->
-                nouveau == EnumStatutCandidature.ADMIS1 || nouveau == EnumStatutCandidature.REJETE;
-            case ADMIS1 -> nouveau == EnumStatutCandidature.ADMIS2 || nouveau == EnumStatutCandidature.REJETE;
+            case SOUMIS -> nouveau == EnumStatutCandidature.INCOMPLET
+                    || nouveau == EnumStatutCandidature.DOSSIER_VALIDE
+                    || nouveau == EnumStatutCandidature.PRESELECTIONNE
+                    || nouveau == EnumStatutCandidature.DOSSIER_REJETE;
+            case INCOMPLET -> nouveau == EnumStatutCandidature.SOUMIS
+                    || nouveau == EnumStatutCandidature.DOSSIER_REJETE;
+            case DOSSIER_VALIDE -> nouveau == EnumStatutCandidature.PRESELECTIONNE
+                    || nouveau == EnumStatutCandidature.DOSSIER_REJETE;
+            case PRESELECTIONNE -> nouveau == EnumStatutCandidature.PAIEMENT_EN_ATTENTE
+                    || nouveau == EnumStatutCandidature.PAIEMENT_CONFIRME
+                    || nouveau == EnumStatutCandidature.DOSSIER_REJETE;
+            case PAIEMENT_EN_ATTENTE -> nouveau == EnumStatutCandidature.PAIEMENT_CONFIRME
+                    || nouveau == EnumStatutCandidature.PRESELECTIONNE;
+            case PAIEMENT_CONFIRME -> nouveau == EnumStatutCandidature.CONVOQUE_TEST;
             // À l'issue de l'entretien : admis, placé en liste complémentaire, ou rejeté.
-            case ADMIS2 -> nouveau == EnumStatutCandidature.ADMIS3
+            case CONVOQUE_TEST -> nouveau == EnumStatutCandidature.TEST_REUSSI
+                    || nouveau == EnumStatutCandidature.TEST_ECHOUE
+                    || nouveau == EnumStatutCandidature.ABSENT_TEST;
+            case ABSENT_TEST -> nouveau == EnumStatutCandidature.CONVOQUE_TEST
+                    || nouveau == EnumStatutCandidature.NON_ADMIS;
+            case TEST_REUSSI -> nouveau == EnumStatutCandidature.CONVOQUE_ENTRETIEN
+                    || nouveau == EnumStatutCandidature.NON_ADMIS;
+            case TEST_ECHOUE -> nouveau == EnumStatutCandidature.NON_ADMIS;
+            case CONVOQUE_ENTRETIEN -> nouveau == EnumStatutCandidature.ENTRETIEN_EFFECTUE
+                    || nouveau == EnumStatutCandidature.ABSENT_ENTRETIEN;
+            case ABSENT_ENTRETIEN -> nouveau == EnumStatutCandidature.CONVOQUE_ENTRETIEN
+                    || nouveau == EnumStatutCandidature.NON_ADMIS;
+            case ENTRETIEN_EFFECTUE -> nouveau == EnumStatutCandidature.ADMIS
                     || nouveau == EnumStatutCandidature.LISTE_ATTENTE
-                    || nouveau == EnumStatutCandidature.REJETE;
+                    || nouveau == EnumStatutCandidature.NON_ADMIS;
             // Liste complémentaire : on n'en sort que si une place se libère (ADMIS3)
             // ou si la campagne se solde sans place (REJETE).
-            case LISTE_ATTENTE -> nouveau == EnumStatutCandidature.ADMIS3
-                    || nouveau == EnumStatutCandidature.REJETE;
-            case ADMIS3, REJETE -> false; // État terminal
+            case LISTE_ATTENTE -> nouveau == EnumStatutCandidature.ADMIS
+                    || nouveau == EnumStatutCandidature.NON_ADMIS;
+            case ADMIS -> nouveau == EnumStatutCandidature.INSCRIPTION_FINALISEE
+                    || nouveau == EnumStatutCandidature.DESISTEMENT;
+            case DOSSIER_REJETE, NON_ADMIS, INSCRIPTION_FINALISEE, DESISTEMENT -> false;
         };
     }
 
@@ -426,6 +474,7 @@ public class CandidatureService {
                 .statutPrecedent(c.getStatutPrecedent())
                 .dateSoumission(c.getDateSoumission())
                 .motifRejet(c.getMotifRejet())
+                .rangListeAttente(c.getRangListeAttente())
                 .candidatId(c.getCandidat().getId())
                 .candidatNom(c.getCandidat().getNom())
                 .candidatPrenom(c.getCandidat().getPrenom())

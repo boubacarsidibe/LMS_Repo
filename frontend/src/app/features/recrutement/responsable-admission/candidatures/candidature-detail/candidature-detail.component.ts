@@ -32,6 +32,10 @@ export class CandidatureDetailComponent implements OnInit {
   loading = true;
   errorMessage = '';
   actionEnCours = false;
+  retourConfirmationOpen = false;
+  retourStatutCible: string | null = null;
+  motDePasseRetour = '';
+  retourErreur = '';
 
   /** Pièce et motif affichés dans la modale de demande de remplacement. */
   pieceARefuser: PieceJustificativeResponse | null = null;
@@ -272,15 +276,37 @@ export class CandidatureDetailComponent implements OnInit {
   }
 
   annuler(c: CandidatureResponse): void {
-    if (!c.statutPrecedent) return;
-    if (!confirm(`Annuler la dernière décision de ce dossier ? Il reviendra à : ${this.libelleStatut(c.statutPrecedent)}.`)) return;
-    this.executer(this.recrutementService.annulerDerniereAction(c.id));
+    if (c.statutPrecedent) this.ouvrirRetour(null);
   }
 
   reculerVers(c: CandidatureResponse, cible: string): void {
-    if (!cible || !this.peutReculerVers(c, cible)) return;
-    if (!confirm(`Faire reculer ce dossier vers : ${this.libelleStatut(cible)} ?`)) return;
-    this.executer(this.recrutementService.reculerStatut(c.id, cible));
+    if (cible && this.peutReculerVers(c, cible)) this.ouvrirRetour(cible);
+  }
+
+  ouvrirRetour(cible: string | null): void {
+    this.retourStatutCible = cible;
+    this.motDePasseRetour = '';
+    this.retourErreur = '';
+    this.retourConfirmationOpen = true;
+  }
+
+  fermerRetour(): void {
+    if (!this.actionEnCours) this.retourConfirmationOpen = false;
+  }
+
+  confirmerRetour(): void {
+    if (!this.candidature || !this.motDePasseRetour) {
+      this.retourErreur = 'Saisissez votre mot de passe pour confirmer cette correction.';
+      return;
+    }
+    const action = this.retourStatutCible
+      ? this.recrutementService.reculerStatut(this.candidature.id, this.retourStatutCible, this.motDePasseRetour)
+      : this.recrutementService.annulerDerniereAction(this.candidature.id, this.motDePasseRetour);
+    this.actionEnCours = true;
+    action.subscribe({
+      next: () => { this.actionEnCours = false; this.retourConfirmationOpen = false; this.retour(); },
+      error: (err) => { this.actionEnCours = false; this.retourErreur = err.error?.message || 'La correction n’a pas pu être appliquée.'; },
+    });
   }
 
   private executer(obs: import('rxjs').Observable<CandidatureResponse>): void {

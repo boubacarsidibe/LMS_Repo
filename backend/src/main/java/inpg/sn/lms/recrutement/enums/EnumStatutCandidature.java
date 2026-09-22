@@ -1,18 +1,25 @@
 package inpg.sn.lms.recrutement.enums;
 
+/** Etapes explicites du parcours de recrutement d'une candidature. */
 public enum EnumStatutCandidature {
     BROUILLON,
     SOUMIS,
-    EN_COURS_DE_PRESELECTION,
-    REJETE,
-    ADMIS1,
-    ADMIS2,
-    /**
-     * Liste complémentaire : entretien passé, candidat retenu sur le fond mais en
-     * attente qu'une place se libère (TDR §3.1.C, « listes retenus et en attente »).
-     * Ni une admission ni un rejet — d'où un statut à part, atteint depuis ADMIS2 et
-     * dont on ne sort que vers ADMIS3 (une place s'est libérée) ou REJETE.
-     */
+    INCOMPLET,
+    DOSSIER_VALIDE,
+    DOSSIER_REJETE,
+    PRESELECTIONNE,
+    PAIEMENT_EN_ATTENTE,
+    PAIEMENT_CONFIRME,
+    CONVOQUE_TEST,
+    TEST_REUSSI,
+    TEST_ECHOUE,
+    ABSENT_TEST,
+    CONVOQUE_ENTRETIEN,
+    ENTRETIEN_EFFECTUE,
+    ABSENT_ENTRETIEN,
+    ADMIS,
     LISTE_ATTENTE,
-    ADMIS3
+    NON_ADMIS,
+    INSCRIPTION_FINALISEE,
+    DESISTEMENT
 }

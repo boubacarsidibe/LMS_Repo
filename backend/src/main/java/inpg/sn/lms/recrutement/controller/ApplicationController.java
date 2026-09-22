@@ -114,7 +114,8 @@ public class ApplicationController {
      */
     private static final Set<EnumStatutCandidature> STATUTS_RELANCABLES = EnumSet.of(
             EnumStatutCandidature.SOUMIS,
-            EnumStatutCandidature.EN_COURS_DE_PRESELECTION);
+            EnumStatutCandidature.PRESELECTIONNE,
+            EnumStatutCandidature.PAIEMENT_EN_ATTENTE);
 
     /**
      * Ce qu'il reste exactement à fournir, nommé pièce par pièce.

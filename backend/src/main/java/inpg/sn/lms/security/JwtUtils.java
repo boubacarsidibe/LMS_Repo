@@ -1,6 +1,7 @@
 package inpg.sn.lms.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -14,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,7 @@ public class JwtUtils {
 
         return Jwts.builder()
                 .setClaims(claims)
+                .setId(UUID.randomUUID().toString())
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
@@ -70,18 +73,17 @@ public class JwtUtils {
                 .getBody();
     }
 
-    // 4. Vérifier si le Token est expiré
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
     // 5. Valider le Token avec les détails de l'utilisateur
     public Boolean validateToken(String token, User user) {
-        final String username = extractUsername(token);
-        Number versionJeton = extractAllClaims(token).get("sessionVersion", Number.class);
-        return username.equals(user.getUsername())
-                && versionJeton != null
-                && versionJeton.longValue() == user.getSessionVersion()
-                && !isTokenExpired(token);
+        try {
+            Claims claims = extractAllClaims(token);
+            Object version = claims.get("sessionVersion");
+            return user != null && user.getUsername().equals(claims.getSubject())
+                    && (version instanceof Integer || version instanceof Long)
+                    && ((Number) version).longValue() == user.getSessionVersion()
+                    && claims.getExpiration() != null && claims.getExpiration().after(new Date());
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
 }
