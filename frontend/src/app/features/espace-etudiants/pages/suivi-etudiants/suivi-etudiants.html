@@ -138,10 +138,10 @@
               </td>
               <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
                 <div class="flex items-center justify-end gap-2">
-                  <button (click)="voirProfil(e.id)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Voir le profil">
+                  <button (click)="voirProfil(e.id)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Voir le profil" aria-label="Voir le profil">
                     <span class="material-symbols-outlined text-[20px]">visibility</span>
                   </button>
-                  <button (click)="ouvrirContact(e)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Contacter">
+                  <button (click)="ouvrirContact(e)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Contacter" aria-label="Contacter">
                     <span class="material-symbols-outlined text-[20px]">mail</span>
                   </button>
                 </div>
@@ -168,12 +168,12 @@
       </div>
       <div class="p-6 space-y-base">
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Objet</label>
-          <input [(ngModel)]="objetMessage" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Relance suivi de cours" type="text">
+          <label for="suivi-contact-objet" class="font-label-md text-label-md text-on-surface-variant">Objet</label>
+          <input id="suivi-contact-objet" [(ngModel)]="objetMessage" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Relance suivi de cours" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Message</label>
-          <textarea [(ngModel)]="contenuMessage" rows="5" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none" placeholder="Votre message..."></textarea>
+          <label for="suivi-contact-message" class="font-label-md text-label-md text-on-surface-variant">Message</label>
+          <textarea id="suivi-contact-message" [(ngModel)]="contenuMessage" rows="5" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none" placeholder="Votre message..."></textarea>
         </div>
         <p *ngIf="messageErreur" class="text-body-sm text-error">{{ messageErreur }}</p>
         <p *ngIf="messageSucces" class="text-body-sm text-secondary font-medium">{{ messageSucces }}</p>

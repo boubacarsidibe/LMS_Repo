@@ -144,6 +144,50 @@ class AlumniControllerTest {
     }
 
     @Test
+    @DisplayName("Une situation « en recherche d'emploi » sans intitulé ni entreprise est acceptée : elle n'occupe justement aucun poste")
+    void ajouterSituationRechercheEmploiSansPosteEstAcceptee() {
+        AlumniProfil profil = profil();
+        when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil);
+        SituationProfessionnelleRequest requete = new SituationProfessionnelleRequest(
+                null, null, LocalDate.of(2026, 1, 1), null, EnumStatutEmploi.RECHERCHE_EMPLOI);
+        SituationProfessionnelleDto dto = new SituationProfessionnelleDto(
+                1L, null, null, LocalDate.of(2026, 1, 1), null, EnumStatutEmploi.RECHERCHE_EMPLOI);
+        when(situationService.creer(eq(profil), any(SituationProfessionnelleRequest.class))).thenReturn(dto);
+
+        ResponseEntity<?> reponse = controller.ajouterSituation(requete, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    }
+
+    @Test
+    @DisplayName("Une situation « poursuite d'études » sans intitulé ni entreprise est acceptée")
+    void ajouterSituationPoursuiteEtudesSansPosteEstAcceptee() {
+        AlumniProfil profil = profil();
+        when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil);
+        SituationProfessionnelleRequest requete = new SituationProfessionnelleRequest(
+                "  ", "  ", LocalDate.of(2026, 1, 1), null, EnumStatutEmploi.POURSUITE_ETUDES);
+        SituationProfessionnelleDto dto = new SituationProfessionnelleDto(
+                1L, null, null, LocalDate.of(2026, 1, 1), null, EnumStatutEmploi.POURSUITE_ETUDES);
+        when(situationService.creer(eq(profil), any(SituationProfessionnelleRequest.class))).thenReturn(dto);
+
+        ResponseEntity<?> reponse = controller.ajouterSituation(requete, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    }
+
+    @Test
+    @DisplayName("Un « entreprenariat » sans intitulé ni entreprise reste refusé : il désigne bien un projet à nommer")
+    void ajouterSituationEntreprenariatSansPosteEstRefusee() {
+        when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil());
+        SituationProfessionnelleRequest requete = new SituationProfessionnelleRequest(
+                null, null, LocalDate.of(2026, 1, 1), null, EnumStatutEmploi.ENTREPRENARIAT);
+
+        ResponseEntity<?> reponse = controller.ajouterSituation(requete, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @DisplayName("Date de fin antérieure à la date de début : 400")
     void ajouterSituationDateFinAvantDebutEstRefusee() {
         when(utilisateurCourant.alumniProfil(authentication)).thenReturn(profil());

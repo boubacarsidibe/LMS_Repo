@@ -24,4 +24,33 @@ describe('Login', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  /**
+   * Avant cette story, le bouton "Se connecter" était désactivé tant que le
+   * formulaire était invalide — impossible donc de cliquer pour déclencher
+   * l'affichage des erreurs, qui n'apparaissaient de toute façon qu'au blur
+   * d'un champ (avant toute tentative de connexion), pas après un clic.
+   */
+  it("champEnErreur ignore un champ invalide, même quitté, tant qu'aucune connexion n'a été tentée", () => {
+    expect(component.form.get('email')?.invalid).toBe(true);
+    component.form.get('email')?.markAsTouched();
+
+    expect(component.champEnErreur('email')).toBe(false);
+  });
+
+  it("champEnErreur signale un champ invalide après une tentative de connexion (clic sur Se connecter)", () => {
+    component.onSubmit();
+
+    expect(component.tentativeEnvoi).toBe(true);
+    expect(component.champEnErreur('email')).toBe(true);
+    expect(component.champEnErreur('password')).toBe(true);
+  });
+
+  it("n'appelle pas le service d'authentification tant que le formulaire est invalide", () => {
+    const spy = vi.spyOn((component as any).authService, 'login');
+
+    component.onSubmit();
+
+    expect(spy).not.toHaveBeenCalled();
+  });
 });

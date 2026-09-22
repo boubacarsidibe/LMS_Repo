@@ -193,8 +193,8 @@
 
       <form [formGroup]="seanceForm" (ngSubmit)="onSubmit()" class="p-6 space-y-base">
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Cours</label>
-          <select formControlName="coursId" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+          <label for="seance-cours" class="font-label-md text-label-md text-on-surface-variant">Cours</label>
+          <select id="seance-cours" formControlName="coursId" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
             <option *ngFor="let c of mesCours" [value]="c.id">{{ c.titre }}</option>
           </select>
           <p *ngIf="!mesCours.length" class="text-body-sm text-error">
@@ -203,40 +203,40 @@
         </div>
 
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Titre</label>
-          <input formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Macroéconomie" type="text">
+          <label for="seance-titre" class="font-label-md text-label-md text-on-surface-variant">Titre</label>
+          <input id="seance-titre" formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Macroéconomie" type="text">
           <p *ngIf="seanceForm.get('titre')?.invalid && seanceForm.get('titre')?.touched" class="text-body-sm text-error">
             Le titre est requis.
           </p>
         </div>
 
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Date</label>
-          <input formControlName="date" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
+          <label for="seance-date" class="font-label-md text-label-md text-on-surface-variant">Date</label>
+          <input id="seance-date" formControlName="date" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
           <p *ngIf="seanceForm.get('date')?.invalid && seanceForm.get('date')?.touched" class="text-body-sm text-error">
             La date est requise.
           </p>
         </div>
 
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Heure</label>
-          <input formControlName="heure" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="time">
+          <label for="seance-heure" class="font-label-md text-label-md text-on-surface-variant">Heure</label>
+          <input id="seance-heure" formControlName="heure" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="time">
           <p *ngIf="seanceForm.get('heure')?.invalid && seanceForm.get('heure')?.touched" class="text-body-sm text-error">
             L'heure est requise.
           </p>
         </div>
 
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Durée (minutes)</label>
-          <input formControlName="dureeMinutes" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="number" min="1">
+          <label for="seance-duree" class="font-label-md text-label-md text-on-surface-variant">Durée (minutes)</label>
+          <input id="seance-duree" formControlName="dureeMinutes" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="number" min="1">
           <p *ngIf="seanceForm.get('dureeMinutes')?.invalid && seanceForm.get('dureeMinutes')?.touched" class="text-body-sm text-error">
             La durée doit être un nombre de minutes positif.
           </p>
         </div>
 
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Type</label>
-          <select formControlName="type" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+          <label for="seance-type" class="font-label-md text-label-md text-on-surface-variant">Type</label>
+          <select id="seance-type" formControlName="type" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
             <option value="cours">Classe virtuelle</option>
             <option value="echeance">Échéance</option>
             <option value="tutorat">Tutorat</option>
@@ -244,8 +244,8 @@
         </div>
 
         <div class="space-y-1" *ngIf="seanceForm.get('type')?.value === 'cours'">
-          <label class="font-label-md text-label-md text-on-surface-variant">Lien de la classe virtuelle (optionnel)</label>
-          <input formControlName="lieuOuLien" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="https://meet.google.com/..." type="url">
+          <label for="seance-lien" class="font-label-md text-label-md text-on-surface-variant">Lien de la classe virtuelle (optionnel)</label>
+          <input id="seance-lien" formControlName="lieuOuLien" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="https://meet.google.com/..." type="url">
         </div>
 
         <p *ngIf="errorMessage" class="text-body-sm text-error">{{ errorMessage }}</p>

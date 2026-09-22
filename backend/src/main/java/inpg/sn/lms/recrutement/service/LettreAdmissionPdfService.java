@@ -60,7 +60,7 @@ public class LettreAdmissionPdfService {
         Paragraph marque = new Paragraph("INPG LMS", police(22, Font.BOLD, BLEU_INPG));
         marque.setSpacingAfter(2f);
 
-        Paragraph institut = new Paragraph("Institut National Polytechnique de Gestion\nDirection Générale — Service des Admissions et de la Scolarité",
+        Paragraph institut = new Paragraph("Institut National du Pétrole et du Gaz\nDirection Générale — Service des Admissions et de la Scolarité",
                 police(10, Font.NORMAL, GRIS_TEXTE));
         institut.setSpacingAfter(24f);
 
@@ -102,7 +102,7 @@ public class LettreAdmissionPdfService {
         prog.setSpacingAfter(10f);
 
         Paragraph suite = new Paragraph(
-                "Toute la communauté pédagogique et administrative de l'Institut National Polytechnique de Gestion (INPG) vous adresse ses plus vives félicitations pour la qualité de votre parcours et votre réussite.",
+                "Toute la communauté pédagogique et administrative de l'Institut National du Pétrole et du Gaz (INPG) vous adresse ses plus vives félicitations pour la qualité de votre parcours et votre réussite.",
                 police(10, Font.NORMAL, GRIS_TEXTE));
         suite.setSpacingAfter(16f);
 

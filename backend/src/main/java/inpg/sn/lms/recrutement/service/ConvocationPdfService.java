@@ -59,7 +59,7 @@ public class ConvocationPdfService {
         Paragraph marque = new Paragraph("INPG LMS", police(20, Font.BOLD, BLEU_INPG));
         marque.setSpacingAfter(2f);
 
-        Paragraph institut = new Paragraph("Institut National Polytechnique de Gestion\nDirection des Admissions et Concours",
+        Paragraph institut = new Paragraph("Institut National du Pétrole et du Gaz\nDirection des Admissions et Concours",
                 police(10, Font.NORMAL, GRIS_TEXTE));
         institut.setSpacingAfter(20f);
 

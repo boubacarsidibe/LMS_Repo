@@ -9,7 +9,7 @@
           <span class="w-8 h-[1px] bg-secondary"></span>
           Espace Enseignant
         </div>
-        <h1 class="font-display text-headline-lg text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
+        <h1 class="font-display text-display text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
         <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos promotions en temps réel.</p>
       </div>
     </div>
@@ -62,7 +62,7 @@
             <span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full font-label-sm text-label-sm uppercase tracking-tighter">{{ c.code }}</span>
             <div class="flex items-center gap-1">
               <span *ngIf="coursMisEnAvantId === c.id" class="px-2 py-1 bg-secondary-container text-on-secondary-container rounded-full font-label-sm text-label-sm">Sélectionné</span>
-              <button type="button" (click)="$event.stopPropagation(); preRemplirDepot(c)" title="Déposer une ressource" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">upload_file</span></button>
+              <button type="button" (click)="$event.stopPropagation(); preRemplirDepot(c)" title="Déposer une ressource" aria-label="Déposer une ressource" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">upload_file</span></button>
             </div>
           </div>
           <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2 group-hover:text-secondary transition-colors">{{ c.titre }}</h3>
@@ -125,13 +125,13 @@
             </span>
 
             <a *ngIf="s.url" [href]="s.url" target="_blank" rel="noopener"
-               class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-secondary transition-colors" title="Ouvrir">
+               class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-secondary transition-colors" title="Ouvrir" aria-label="Ouvrir">
               <span class="material-symbols-outlined text-[20px]">open_in_new</span>
             </a>
 
             <button (click)="supprimerSupport(s)" [disabled]="suppressionEnCoursId === s.id"
                     class="p-2 rounded-full text-on-surface-variant hover:bg-error-container hover:text-error transition-colors disabled:opacity-40"
-                    title="Supprimer">
+                    title="Supprimer" aria-label="Supprimer">
               <span class="material-symbols-outlined text-[20px]">delete</span>
             </button>
           </div>
@@ -151,7 +151,7 @@
         <form [formGroup]="depotForm" (ngSubmit)="onSubmit()" class="space-y-stack-md">
           <section class="space-y-base">
             <div class="flex items-center gap-2">
-              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">1</span>
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">1</span>
               <label class="font-label-md text-label-md text-on-surface" for="cours-cible">Cours concerné</label>
             </div>
             <select *ngIf="cours.length" id="cours-cible" formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-xl border border-outline-variant/40 outline-none font-body-sm text-body-sm text-on-surface focus:border-secondary">
@@ -166,7 +166,7 @@
 
           <div class="space-y-base">
             <div class="flex items-center gap-2">
-              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">2</span>
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">2</span>
               <label class="font-label-md text-label-md text-on-surface">Contenu à publier</label>
             </div>
             <p class="text-body-sm text-on-surface-variant">Choisissez le format avant d'ajouter le fichier ou le lien.</p>
@@ -191,7 +191,7 @@
 
           <section *ngIf="!estDepotLien" class="space-y-base">
             <div class="flex items-center gap-2">
-              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">3</span>
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">3</span>
               <span class="font-label-md text-label-md text-on-surface">Fichier à déposer</span>
             </div>
             <div *ngIf="!fichierSelectionne" (click)="ouvrirExplorateur()" (dragover)="$event.preventDefault(); survolDepot = true" (dragleave)="survolDepot = false" (drop)="onFichierDepose($event)"
@@ -205,13 +205,13 @@
             <div *ngIf="fichierSelectionne" class="flex items-center gap-3 rounded-xl border border-secondary/30 bg-secondary-container/20 p-3">
               <span class="material-symbols-outlined text-secondary">description</span>
               <div class="min-w-0 flex-1"><p class="truncate font-label-md text-label-md text-on-surface">{{ fichierSelectionne.name }}</p><p class="text-body-sm text-on-surface-variant">Prêt à être publié</p></div>
-              <button type="button" (click)="retirerFichier()" class="rounded-lg p-2 text-on-surface-variant hover:bg-surface-container" title="Choisir un autre fichier"><span class="material-symbols-outlined">close</span></button>
+              <button type="button" (click)="retirerFichier()" class="rounded-lg p-2 text-on-surface-variant hover:bg-surface-container" title="Choisir un autre fichier" aria-label="Choisir un autre fichier"><span class="material-symbols-outlined">close</span></button>
             </div>
           </section>
 
           <div *ngIf="estDepotLien" class="space-y-stack-md rounded-xl border border-secondary/20 bg-secondary-container/10 p-4">
             <div class="flex items-center gap-2 text-secondary">
-              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">3</span>
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">3</span>
               <p class="font-label-md text-label-md">Informations du lien externe</p>
             </div>
             <div class="space-y-base">
@@ -227,8 +227,8 @@
           </div>
 
             <div class="space-y-base">
-                <div class="flex items-center gap-2"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm">4</span><label class="font-label-md text-label-md text-on-surface">Visibilité</label></div>
-                <input formControlName="datePublication" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
+                <div class="flex items-center gap-2"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">4</span><label for="depot-date-publication" class="font-label-md text-label-md text-on-surface">Visibilité</label></div>
+                <input id="depot-date-publication" formControlName="datePublication" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
                 <p *ngIf="!publicationDifferee" class="text-body-sm text-on-surface-variant">
                 Publication immédiate. Choisissez une date future pour programmer la mise en ligne.
                 </p>
@@ -297,24 +297,24 @@
       <h3 class="font-headline-sm text-headline-sm text-on-surface">Modifier le cours</h3>
       <form [formGroup]="editionForm" (ngSubmit)="enregistrerEdition()" class="space-y-base">
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Code du cours</label>
-          <input formControlName="code" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
+          <label for="edition-cours-code" class="font-label-md text-label-md text-on-surface-variant">Code du cours</label>
+          <input id="edition-cours-code" formControlName="code" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Titre</label>
-          <input formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
+          <label for="edition-cours-titre" class="font-label-md text-label-md text-on-surface-variant">Titre</label>
+          <input id="edition-cours-titre" formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Semestre</label>
-          <input formControlName="semestre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
+          <label for="edition-cours-semestre" class="font-label-md text-label-md text-on-surface-variant">Semestre</label>
+          <input id="edition-cours-semestre" formControlName="semestre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Description</label>
-          <textarea formControlName="description" rows="3" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none"></textarea>
+          <label for="edition-cours-description" class="font-label-md text-label-md text-on-surface-variant">Description</label>
+          <textarea id="edition-cours-description" formControlName="description" rows="3" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none"></textarea>
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Volume horaire</label>
-          <input formControlName="volumeHoraire" min="0" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="number">
+          <label for="edition-cours-volume-horaire" class="font-label-md text-label-md text-on-surface-variant">Volume horaire</label>
+          <input id="edition-cours-volume-horaire" formControlName="volumeHoraire" min="0" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="number">
         </div>
         <p *ngIf="editionError" class="text-body-sm text-error">{{ editionError }}</p>
         <div class="flex gap-stack-md pt-2">
@@ -407,13 +407,13 @@
               <button (click)="marquerPresence(e, true)"
                       [class.bg-secondary]="e.present === true" [class.text-on-secondary]="e.present === true"
                       [class.text-outline]="e.present !== true"
-                      class="p-2 rounded-lg hover:bg-secondary/10 transition-colors" title="Présent">
+                      class="p-2 rounded-lg hover:bg-secondary/10 transition-colors" title="Présent" aria-label="Présent">
                 <span class="material-symbols-outlined text-[20px]">check</span>
               </button>
               <button (click)="marquerPresence(e, false)"
                       [class.bg-error]="e.present === false" [class.text-on-error]="e.present === false"
                       [class.text-outline]="e.present !== false"
-                      class="p-2 rounded-lg hover:bg-error/10 transition-colors" title="Absent">
+                      class="p-2 rounded-lg hover:bg-error/10 transition-colors" title="Absent" aria-label="Absent">
                 <span class="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>

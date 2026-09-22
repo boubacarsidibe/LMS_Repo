@@ -49,12 +49,12 @@
     <h4 class="font-bold text-on-surface mb-6">Informations de l'Établissement</h4>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       <div>
-        <label class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Nom de l'Institut</label>
-        <input type="text" class="w-full rounded-lg border-surface-container-highest text-sm" [(ngModel)]="institutName"/>
+        <label for="settings-institut-name" class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Nom de l'Institut</label>
+        <input id="settings-institut-name" type="text" class="w-full rounded-lg border-surface-container-highest text-sm" [(ngModel)]="institutName"/>
       </div>
       <div>
-        <label class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Email de Contact</label>
-        <input type="email" class="w-full rounded-lg border-surface-container-highest text-sm" [(ngModel)]="contactEmail"/>
+        <label for="settings-contact-email" class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Email de Contact</label>
+        <input id="settings-contact-email" type="email" class="w-full rounded-lg border-surface-container-highest text-sm" [(ngModel)]="contactEmail"/>
       </div>
     </div>
     <div class="space-y-4 pt-6 border-t border-surface-container-highest">
@@ -103,8 +103,8 @@
       <ng-container *ngIf="sessionOuverteId !== null">
         <div class="grid grid-cols-2 gap-6 mb-4">
           <div>
-            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Tests Académiques (/20)</label>
-            <input type="number" min="0" max="20" step="0.5" class="w-full rounded-lg border-surface-container-highest text-sm" [(ngModel)]="seuilTests"/>
+            <label for="settings-seuil-tests" class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Tests Académiques (/20)</label>
+            <input id="settings-seuil-tests" type="number" min="0" max="20" step="0.5" class="w-full rounded-lg border-surface-container-highest text-sm" [(ngModel)]="seuilTests"/>
           </div>
         </div>
         <p *ngIf="erreurRegles" class="text-error text-sm mb-4">{{ erreurRegles }}</p>
@@ -149,7 +149,7 @@
             </span>
           </td>
           <td class="px-6 py-4 text-right">
-            <button (click)="openEditUserModal(i)" class="text-on-surface-variant hover:text-primary cursor-pointer">
+            <button (click)="openEditUserModal(i)" class="text-on-surface-variant hover:text-primary cursor-pointer" aria-label="Modifier ce membre">
               <span class="material-symbols-outlined text-[18px]">edit</span>
             </button>
           </td>
@@ -175,8 +175,8 @@
       </div>
       <div class="flex-1 space-y-4">
         <div>
-          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Objet de l'Email</label>
-          <input type="text" [(ngModel)]="selectedTemplate.objet" class="w-full rounded-lg border-surface-container-highest text-sm"/>
+          <label for="settings-template-objet" class="block text-xs font-bold text-on-surface-variant uppercase mb-2">Objet de l'Email</label>
+          <input id="settings-template-objet" type="text" [(ngModel)]="selectedTemplate.objet" class="w-full rounded-lg border-surface-container-highest text-sm"/>
         </div>
         <textarea [(ngModel)]="selectedTemplate.corps" class="w-full rounded-lg border-surface-container-highest text-sm h-48 font-mono p-4"></textarea>
         <div class="flex justify-end">
@@ -192,28 +192,28 @@
   <div class="bg-surface-container-lowest rounded-2xl w-full max-w-lg p-8 shadow-2xl flex flex-col gap-6">
     <div class="flex justify-between items-center">
       <h3 class="text-xl font-bold text-on-surface">{{ modalTitle }}</h3>
-      <button class="p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant cursor-pointer" (click)="closeAddUserModal()">
+      <button class="p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant cursor-pointer" (click)="closeAddUserModal()" aria-label="Fermer">
         <span class="material-symbols-outlined">close</span>
       </button>
     </div>
     <div class="space-y-4">
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Prénom</label>
-          <input type="text" [(ngModel)]="formPrenom" name="formPrenom" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="ex: Jean"/>
+          <label for="settings-form-prenom" class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Prénom</label>
+          <input id="settings-form-prenom" type="text" [(ngModel)]="formPrenom" name="formPrenom" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="ex: Jean"/>
         </div>
         <div>
-          <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Nom</label>
-          <input type="text" [(ngModel)]="formNom" name="formNom" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="ex: Dupont"/>
+          <label for="settings-form-nom" class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Nom</label>
+          <input id="settings-form-nom" type="text" [(ngModel)]="formNom" name="formNom" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="ex: Dupont"/>
         </div>
       </div>
       <div>
-        <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Email Professionnel</label>
-        <input type="email" [(ngModel)]="formEmail" name="formEmail" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="j.dupont@inpg.sn"/>
+        <label for="settings-form-email" class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Email Professionnel</label>
+        <input id="settings-form-email" type="email" [(ngModel)]="formEmail" name="formEmail" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm" placeholder="j.dupont@inpg.sn"/>
       </div>
       <div>
-        <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Rôle Attribué</label>
-        <select [(ngModel)]="formRole" name="formRole" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm cursor-pointer">
+        <label for="settings-form-role" class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Rôle Attribué</label>
+        <select id="settings-form-role" [(ngModel)]="formRole" name="formRole" class="w-full rounded-lg border-surface-container-highest focus:ring-primary focus:border-primary text-sm cursor-pointer">
           <option>Super Admin</option>
           <option>Responsable Admissions</option>
           <option>Correcteur Test</option>

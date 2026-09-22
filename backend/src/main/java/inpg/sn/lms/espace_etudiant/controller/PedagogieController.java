@@ -7,7 +7,10 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,6 +34,7 @@ import inpg.sn.lms.espace_etudiant.dto.FormateurBrefDto;
 import inpg.sn.lms.espace_etudiant.dto.FormateurDetailDto;
 import inpg.sn.lms.espace_etudiant.dto.FormationDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDto;
+import inpg.sn.lms.espace_etudiant.dto.RapportFormateursDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportDetailDto;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
@@ -44,6 +48,7 @@ import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
 import inpg.sn.lms.espace_etudiant.repository.SeanceRepository;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
 import inpg.sn.lms.espace_etudiant.service.FormateurSuppressionService;
+import inpg.sn.lms.espace_etudiant.service.RapportFormateursPdfService;
 import inpg.sn.lms.espace_etudiant.service.FormationService;
 import inpg.sn.lms.espace_etudiant.service.PromotionService;
 import inpg.sn.lms.espace_etudiant.service.SupportService;
@@ -85,6 +90,7 @@ public class PedagogieController {
     private final ForumSujetRepository forumSujetRepository;
     private final NoteModuleRepository noteModuleRepository;
     private final RetourEvaluationRepository retourEvaluationRepository;
+    private final RapportFormateursPdfService rapportFormateursPdfService;
 
     public PedagogieController(
             FormationService formationService,
@@ -101,7 +107,8 @@ public class PedagogieController {
             ForumMessageRepository forumMessageRepository,
             ForumSujetRepository forumSujetRepository,
             NoteModuleRepository noteModuleRepository,
-            RetourEvaluationRepository retourEvaluationRepository) {
+            RetourEvaluationRepository retourEvaluationRepository,
+            RapportFormateursPdfService rapportFormateursPdfService) {
         this.formationService = formationService;
         this.promotionService = promotionService;
         this.coursService = coursService;
@@ -117,6 +124,7 @@ public class PedagogieController {
         this.forumSujetRepository = forumSujetRepository;
         this.noteModuleRepository = noteModuleRepository;
         this.retourEvaluationRepository = retourEvaluationRepository;
+        this.rapportFormateursPdfService = rapportFormateursPdfService;
     }
 
     // ===================== OFFRE DE FORMATION =====================
@@ -154,6 +162,43 @@ public class PedagogieController {
         return formateurRepository.findById(id)
                 .<ResponseEntity<?>>map(f -> ResponseEntity.ok(toFormateurDetailDto(f)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Rapport des comptes formateurs, en PDF : effectif complet avec, pour
+     * chacun, ses coordonnées et ses cours affectés — signale distinctement les
+     * formateurs sans aucun cours, invisibles dans leur propre espace tant que
+     * {@code cours_formateur} ne les y rattache pas (voir CLAUDE.md §3).
+     */
+    @Transactional(readOnly = true)
+    @GetMapping("/formateurs/rapport/pdf")
+    public ResponseEntity<byte[]> genererRapportFormateurs() {
+        byte[] pdf = rapportFormateursPdfService.genererRapport(construireRapportFormateurs());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("rapport_formateurs_" + java.time.LocalDate.now() + ".pdf", java.nio.charset.StandardCharsets.UTF_8)
+                .build());
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).headers(headers).body(pdf);
+    }
+
+    private RapportFormateursDto construireRapportFormateurs() {
+        List<Cours> tousCours = coursService.getAll();
+        List<RapportFormateursDto.FormateurRapport> formateurs = formateurRepository.findAll().stream()
+                .sorted(Comparator.comparing(f -> (f.getPrenom() + " " + f.getNom()).trim()))
+                .map(f -> new RapportFormateursDto.FormateurRapport(
+                        f.getNom(),
+                        f.getPrenom(),
+                        f.getUser() == null ? null : f.getUser().getEmail(),
+                        f.getTelephone(),
+                        f.getUser() == null ? null : f.getUser().getUsername(),
+                        f.getUser() == null ? null : f.getUser().getDateCreation(),
+                        tousCours.stream()
+                                .filter(c -> c.getFormateurs().stream().anyMatch(ft -> ft.getId().equals(f.getId())))
+                                .map(Cours::getTitre)
+                                .toList()))
+                .toList();
+        int sansCours = (int) formateurs.stream().filter(f -> f.coursEnseignes().isEmpty()).count();
+        return new RapportFormateursDto(formateurs.size(), sansCours, formateurs);
     }
 
     /**

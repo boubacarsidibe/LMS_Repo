@@ -71,7 +71,7 @@ public class RecuPaiementService {
         Paragraph marque = new Paragraph("INPG LMS", police(20, Font.BOLD, BLEU_INPG));
         marque.setSpacingAfter(2f);
 
-        Paragraph institut = new Paragraph("Institut National Polytechnique de Gestion",
+        Paragraph institut = new Paragraph("Institut National du Pétrole et du Gaz",
                 police(10, Font.NORMAL, GRIS_TEXTE));
         institut.setSpacingAfter(24f);
 

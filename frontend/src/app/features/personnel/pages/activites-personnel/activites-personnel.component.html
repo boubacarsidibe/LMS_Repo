@@ -114,7 +114,7 @@
             </td>
             <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ a.dateCreation | date: 'dd/MM/yyyy' }}</td>
             <td class="px-stack-lg py-stack-md text-right">
-              <button type="button" (click)="supprimer(a)" title="Retirer cette activité"
+              <button type="button" (click)="supprimer(a)" title="Retirer cette activité" aria-label="Retirer cette activité"
                       class="text-outline hover:text-error transition-colors">
                 <span class="material-symbols-outlined text-[20px]">delete</span>
               </button>

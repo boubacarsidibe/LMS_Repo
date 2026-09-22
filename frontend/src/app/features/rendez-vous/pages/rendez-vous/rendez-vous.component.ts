@@ -13,6 +13,7 @@ import {
   StatutRendezVous,
 } from '../../models/rendez-vous.models';
 import { RendezVousService } from '../../services/rendez-vous.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 const ROLES_PERSONNEL = ['ROLE_FORMATEUR', 'ROLE_RESPONSABLE_PEDAGOGIQUE', 'ROLE_RESPONSABLE_ADMISSION'];
 const ROLES_EXTERNE = ['ROLE_ECOLE_FORMATION', 'ROLE_ENTREPRISE'];
@@ -36,9 +37,12 @@ const ROLES_EXTERNE = ['ROLE_ECOLE_FORMATION', 'ROLE_ENTREPRISE'];
  *       responsable pédagogique (décision client, garde côté serveur). L'écran
  *       ne montre donc que « Demander un rendez-vous » avec ce seul contact,
  *       pré-sélectionné, et « Mes demandes ».</li>
- *   <li><b>Responsable pédagogique</b> : c'est lui qui traite ces demandes
- *       externes — l'onglet « Mon agenda » (demandes reçues + créneaux) est
- *       affiché en premier.</li>
+ *   <li><b>Personnel de l'INPG</b> (formateur, responsable pédagogique,
+ *       responsable admission) : il ne demande jamais de rendez-vous, il les
+ *       reçoit — l'écran ne montre que « Mon agenda » (créneaux + demandes
+ *       reçues), sans onglet « Demander ». Un personnel n'a pas besoin de
+ *       solliciter un autre personnel de la même façon qu'un candidat ou une
+ *       école : c'est lui qui gère les demandes, jamais l'inverse.</li>
  * </ul>
  */
 @Component({
@@ -50,6 +54,7 @@ const ROLES_EXTERNE = ['ROLE_ECOLE_FORMATION', 'ROLE_ENTREPRISE'];
 export class RendezVousComponent implements OnInit {
   private rendezVousService = inject(RendezVousService);
   private auth = inject(Auth);
+  private confirmation = inject(ConfirmationService);
 
   libellesModalite = LIBELLES_MODALITE;
   libellesStatut = LIBELLES_STATUT;
@@ -67,22 +72,16 @@ export class RendezVousComponent implements OnInit {
     return ROLES_EXTERNE.some((r) => this.roles.includes(r));
   }
 
-  get estResponsablePedagogique(): boolean {
-    return this.roles.includes('ROLE_RESPONSABLE_PEDAGOGIQUE');
-  }
-
   /** Sous-titre de l'écran, adapté au rôle. */
   get sousTitre(): string {
     if (this.estExterne) {
       return "Demandez un rendez-vous au responsable pédagogique de l'INPG sur l'un de ses créneaux disponibles.";
     }
-    if (this.estResponsablePedagogique) {
-      return 'Traitez les demandes de rendez-vous des écoles partenaires et des entreprises, et gérez vos créneaux de disponibilité.';
+    if (this.estPersonnel) {
+      return 'Gérez vos créneaux de disponibilité et répondez aux demandes de rendez-vous que vous recevez.';
     }
     return "Consultez le personnel de l'INPG et demandez un rendez-vous sur un créneau disponible.";
   }
-
-  ongletActif: 'demander' | 'agenda' = 'demander';
 
   // ===== Demander un rendez-vous =====
   personnel: PersonnelProfil[] = [];
@@ -115,15 +114,15 @@ export class RendezVousComponent implements OnInit {
   messageSucces = '';
 
   ngOnInit(): void {
-    // Le responsable pédagogique arrive d'abord sur les demandes à traiter.
-    if (this.estResponsablePedagogique) {
-      this.ongletActif = 'agenda';
+    // Le personnel de l'INPG ne demande jamais de rendez-vous : inutile de
+    // charger l'annuaire du personnel ou un historique de demandes qui restera
+    // toujours vide pour lui.
+    if (this.estPersonnel) {
+      this.chargerAgenda();
+      return;
     }
     this.chargerPersonnel();
     this.chargerMesDemandes();
-    if (this.estPersonnel) {
-      this.chargerAgenda();
-    }
   }
 
   private saisieVierge(): DemandeRendezVousSaisie {
@@ -133,11 +132,6 @@ export class RendezVousComponent implements OnInit {
   private reinitialiserMessages(): void {
     this.messageErreur = '';
     this.messageSucces = '';
-  }
-
-  changerOnglet(onglet: 'demander' | 'agenda'): void {
-    this.ongletActif = onglet;
-    this.reinitialiserMessages();
   }
 
   // ===== Demander un rendez-vous =====
@@ -228,13 +222,18 @@ export class RendezVousComponent implements OnInit {
   }
 
   annulerDemande(rdv: RendezVous): void {
-    if (!confirm('Annuler cette demande de rendez-vous ?')) {
-      return;
-    }
-    this.reinitialiserMessages();
-    this.rendezVousService.annulerDemande(rdv.id).subscribe({
-      next: () => this.chargerMesDemandes(),
-      error: (erreur) => (this.messageErreur = erreur.error?.message || "L'annulation a échoué."),
+    this.confirmation.demander({
+      titre: 'Annuler la demande',
+      message: 'Annuler cette demande de rendez-vous ?',
+      libelleConfirmer: 'Annuler la demande',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.reinitialiserMessages();
+      this.rendezVousService.annulerDemande(rdv.id).subscribe({
+        next: () => this.chargerMesDemandes(),
+        error: (erreur) => (this.messageErreur = erreur.error?.message || "L'annulation a échoué."),
+      });
     });
   }
 
@@ -288,14 +287,19 @@ export class RendezVousComponent implements OnInit {
   }
 
   supprimerCreneau(c: Creneau): void {
-    if (!confirm('Retirer ce créneau ?')) {
-      return;
-    }
-    this.reinitialiserMessages();
-    this.rendezVousService.supprimerCreneau(c.id).subscribe({
-      next: () => this.chargerAgenda(),
-      error: (erreur) =>
-        (this.messageErreur = erreur.error?.message || 'Ce créneau fait l’objet d’une demande, il ne peut pas être retiré.'),
+    this.confirmation.demander({
+      titre: 'Retirer le créneau',
+      message: 'Retirer ce créneau ?',
+      libelleConfirmer: 'Retirer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.reinitialiserMessages();
+      this.rendezVousService.supprimerCreneau(c.id).subscribe({
+        next: () => this.chargerAgenda(),
+        error: (erreur) =>
+          (this.messageErreur = erreur.error?.message || 'Ce créneau fait l’objet d’une demande, il ne peut pas être retiré.'),
+      });
     });
   }
 

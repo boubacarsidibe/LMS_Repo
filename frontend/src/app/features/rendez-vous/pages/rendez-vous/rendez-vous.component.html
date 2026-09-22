@@ -10,22 +10,8 @@
   <p *ngIf="messageSucces" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">{{ messageSucces }}</p>
   <p *ngIf="messageErreur" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
 
-  <!-- Onglets : divulgation progressive, « Mon agenda » réservé au personnel -->
-  <div class="flex gap-2 border-b border-outline-variant" *ngIf="estPersonnel">
-    <button type="button" (click)="changerOnglet('demander')"
-            [class.text-primary]="ongletActif === 'demander'" [class.border-primary]="ongletActif === 'demander'"
-            class="px-4 py-3 font-label-md text-label-md text-on-surface-variant border-b-2 border-transparent transition-colors">
-      Demander un rendez-vous
-    </button>
-    <button type="button" (click)="changerOnglet('agenda')"
-            [class.text-primary]="ongletActif === 'agenda'" [class.border-primary]="ongletActif === 'agenda'"
-            class="px-4 py-3 font-label-md text-label-md text-on-surface-variant border-b-2 border-transparent transition-colors">
-      Mon agenda
-    </button>
-  </div>
-
-  <!-- ===================== DEMANDER UN RENDEZ-VOUS ===================== -->
-  <section *ngIf="ongletActif === 'demander'" class="space-y-stack-lg">
+  <!-- ===================== DEMANDER UN RENDEZ-VOUS (jamais pour le personnel) ===================== -->
+  <section *ngIf="!estPersonnel" class="space-y-stack-lg">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-stack-lg">
       <!-- Personnel -->
       <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg space-y-stack-sm">
@@ -126,7 +112,7 @@
               {{ libelleStatut(d.statut) }}
             </span>
             <button *ngIf="d.statut === 'EN_ATTENTE'" type="button" (click)="annulerDemande(d)"
-                    class="text-outline hover:text-error transition-colors" title="Annuler la demande">
+                    class="text-outline hover:text-error transition-colors" title="Annuler la demande" aria-label="Annuler la demande">
               <span class="material-symbols-outlined text-[20px]">close</span>
             </button>
             <ng-container *ngIf="d.statut === 'PROPOSITION_AUTRE_DATE'">
@@ -145,7 +131,7 @@
   </section>
 
   <!-- ===================== MON AGENDA (personnel) ===================== -->
-  <section *ngIf="ongletActif === 'agenda' && estPersonnel" class="space-y-stack-lg">
+  <section *ngIf="estPersonnel" class="space-y-stack-lg">
     <p *ngIf="chargementAgenda" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
 
     <div *ngIf="!chargementAgenda" class="grid grid-cols-1 lg:grid-cols-2 gap-stack-lg">
@@ -190,7 +176,7 @@
                   [ngClass]="c.reserve ? 'bg-primary-fixed text-on-primary-fixed-variant' : 'bg-secondary-container text-on-secondary-container'">
               {{ c.reserve ? 'Réservé' : 'Libre' }}
             </span>
-            <button *ngIf="!c.reserve" type="button" (click)="supprimerCreneau(c)" title="Retirer ce créneau"
+            <button *ngIf="!c.reserve" type="button" (click)="supprimerCreneau(c)" title="Retirer ce créneau" aria-label="Retirer ce créneau"
                     class="text-outline hover:text-error transition-colors">
               <span class="material-symbols-outlined text-[20px]">delete</span>
             </button>

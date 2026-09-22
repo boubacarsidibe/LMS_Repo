@@ -23,7 +23,7 @@
       <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">{{ sel.candidatPrenom }} {{ sel.candidatNom }}</h1>
       <p class="font-body-md text-body-md text-on-surface-variant mt-1">{{ sel.numeroDossier }} — {{ sel.candidatEmail }}</p>
     </div>
-    <button type="button" (click)="retour()" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors shadow-sm shrink-0" title="Retour à la liste">
+    <button type="button" (click)="retour()" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors shadow-sm shrink-0" title="Retour à la liste" aria-label="Retour à la liste">
       <span class="material-symbols-outlined">close</span>
     </button>
   </div>
@@ -111,7 +111,7 @@
           </div>
           <p *ngIf="p.motifNonConformite" class="mt-2 text-error">Motif communiqué au candidat : {{ p.motifNonConformite }}</p>
           <div class="mt-2 flex items-center justify-end gap-2">
-            <button type="button" *ngIf="p.fichierStockeId" (click)="telechargerPiece(p)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Télécharger le document">
+            <button type="button" *ngIf="p.fichierStockeId" (click)="telechargerPiece(p)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Télécharger le document" aria-label="Télécharger le document">
               <span class="material-symbols-outlined text-[18px]">download</span>
             </button>
             <button type="button" *ngIf="p.statutVerification !== 'CONFORME'" (click)="marquerPieceConforme(p)" class="px-3 py-1.5 rounded border border-secondary text-secondary hover:bg-secondary-fixed transition-colors" title="Valider ce document">

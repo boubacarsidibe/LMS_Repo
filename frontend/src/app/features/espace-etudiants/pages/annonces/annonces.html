@@ -61,16 +61,16 @@
 
     <form [formGroup]="annonceForm" (ngSubmit)="onSubmit()" class="p-6 space-y-base">
       <div class="space-y-1">
-        <label class="font-label-md text-label-md text-on-surface-variant">Titre</label>
-        <input formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Fermeture exceptionnelle" type="text">
+        <label for="annonce-titre" class="font-label-md text-label-md text-on-surface-variant">Titre</label>
+        <input id="annonce-titre" formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Fermeture exceptionnelle" type="text">
         <p *ngIf="annonceForm.get('titre')?.invalid && annonceForm.get('titre')?.touched" class="text-body-sm text-error">
           Le titre est requis.
         </p>
       </div>
 
       <div class="space-y-1">
-        <label class="font-label-md text-label-md text-on-surface-variant">Contenu</label>
-        <textarea formControlName="contenu" rows="5" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none" placeholder="Rédigez votre annonce ici..."></textarea>
+        <label for="annonce-contenu" class="font-label-md text-label-md text-on-surface-variant">Contenu</label>
+        <textarea id="annonce-contenu" formControlName="contenu" rows="5" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none" placeholder="Rédigez votre annonce ici..."></textarea>
         <p *ngIf="annonceForm.get('contenu')?.invalid && annonceForm.get('contenu')?.touched" class="text-body-sm text-error">
           Le contenu est requis.
         </p>

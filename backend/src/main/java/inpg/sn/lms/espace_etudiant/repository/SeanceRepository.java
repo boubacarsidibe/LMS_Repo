@@ -28,4 +28,6 @@ public interface SeanceRepository extends JpaRepository<Seance, Long> {
     Optional<Seance> findById(Long id);
 
     void deleteByCoursId(Long coursId);
+
+    boolean existsByCours_Formations_Id(Long formationId);
 }

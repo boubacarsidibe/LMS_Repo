@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CritereAccreditation } from '../../../accreditation/models/accreditation.models';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { EvaluateurAccreditationService } from '../../services/evaluateur-accreditation.service';
 
 interface SectionReferentiel {
@@ -55,10 +56,10 @@ interface SectionReferentiel {
           <div class="flex items-center gap-2">
             <button
               type="button"
-              (click)="toutDeplier = !toutDeplier"
+              (click)="basculerTout()"
               class="px-3 py-1.5 rounded-lg border border-outline-variant font-label-sm text-label-sm text-on-surface-variant hover:border-secondary hover:text-secondary transition-colors"
             >
-              {{ toutDeplier ? 'Tout replier' : 'Tout déplier' }}
+              {{ toutEstOuvert ? 'Tout replier' : 'Tout déplier' }}
             </button>
             <button
               type="button"
@@ -106,16 +107,28 @@ interface SectionReferentiel {
           </button>
         </div>
 
-        <!-- Sections -->
+        <!-- Sections : repliées par défaut, pour parcourir les grandes lignes du
+             référentiel (4 sections) avant d'ouvrir celle qui concerne le dossier
+             en cours plutôt que de dérouler les 31 conditions d'un coup. -->
         <section *ngFor="let s of sections" class="space-y-base">
-          <div class="flex items-baseline justify-between gap-3 border-b border-outline-variant pb-2">
-            <h2 class="font-headline-sm text-headline-sm text-primary">{{ s.nom }}</h2>
+          <button
+            type="button"
+            (click)="basculerSection(s.nom)"
+            [attr.aria-expanded]="sectionEstOuverte(s.nom)"
+            class="w-full flex items-center justify-between gap-3 border-b border-outline-variant pb-2 text-left cursor-pointer group"
+          >
+            <span class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[20px] text-primary transition-transform" [class.rotate-90]="sectionEstOuverte(s.nom)">
+                chevron_right
+              </span>
+              <h2 class="font-headline-sm text-headline-sm text-primary">{{ s.nom }}</h2>
+            </span>
             <span class="font-label-sm text-label-sm text-on-surface-variant tabular-nums shrink-0">
               {{ s.actifs }} / {{ s.criteres.length }} active(s)
             </span>
-          </div>
+          </button>
 
-          <ul class="space-y-3">
+          <ul *ngIf="sectionEstOuverte(s.nom)" class="space-y-3">
             <li
               *ngFor="let c of s.criteres"
               class="rounded-xl border shadow-sm transition-colors"
@@ -167,7 +180,7 @@ interface SectionReferentiel {
                   </span>
                 </div>
 
-                <details *ngIf="lignesDirectrices(c).length" class="group" [open]="toutDeplier">
+                <details *ngIf="lignesDirectrices(c).length" class="group" [open]="detailsOuverts">
                   <summary class="cursor-pointer list-none flex items-center gap-1 font-label-sm text-label-sm text-secondary hover:opacity-80 select-none">
                     <span class="material-symbols-outlined text-[18px] transition-transform group-open:rotate-90">chevron_right</span>
                     Lignes directrices ({{ lignesDirectrices(c).length }})
@@ -189,11 +202,16 @@ interface SectionReferentiel {
 })
 export class EvaluateurCriteresComponent implements OnInit {
   private evaluateurService = inject(EvaluateurAccreditationService);
+  private confirmation = inject(ConfirmationService);
 
   criteres: CritereAccreditation[] = [];
   chargement = true;
-  toutDeplier = false;
   formulaireOuvert = false;
+
+  /** Sections dépliées, par nom — toutes repliées par défaut (voir commentaire au gabarit). */
+  private sectionsOuvertes = new Set<string>();
+  /** Lignes directrices des critères, dépliées ou non — indépendant des sections. */
+  detailsOuverts = false;
 
   nouveauCode = '';
   nouvelleSection = '';
@@ -204,6 +222,32 @@ export class EvaluateurCriteresComponent implements OnInit {
 
   get nombreActifs(): number {
     return this.criteres.filter((c) => c.actif).length;
+  }
+
+  sectionEstOuverte(nom: string): boolean {
+    return this.sectionsOuvertes.has(nom);
+  }
+
+  basculerSection(nom: string): void {
+    if (this.sectionsOuvertes.has(nom)) {
+      this.sectionsOuvertes.delete(nom);
+    } else {
+      this.sectionsOuvertes.add(nom);
+    }
+  }
+
+  get toutEstOuvert(): boolean {
+    return this.sections.length > 0 && this.sections.every((s) => this.sectionsOuvertes.has(s.nom));
+  }
+
+  basculerTout(): void {
+    if (this.toutEstOuvert) {
+      this.sectionsOuvertes.clear();
+      this.detailsOuverts = false;
+    } else {
+      this.sections.forEach((s) => this.sectionsOuvertes.add(s.nom));
+      this.detailsOuverts = true;
+    }
   }
 
   /** Critères regroupés par section, dans l'ordre du référentiel. */
@@ -269,6 +313,9 @@ export class EvaluateurCriteresComponent implements OnInit {
         next: (critere) => {
           this.creationEnCours = false;
           this.criteres = [...this.criteres, critere];
+          // Sans ça, la section qui vient de recevoir la nouvelle condition resterait
+          // repliée : rien ne montrerait que l'ajout a bien eu lieu.
+          this.sectionsOuvertes.add(critere.section?.trim() || 'Autres conditions');
           this.nouveauCode = '';
           this.nouvelleSection = '';
           this.nouveauLibelle = '';
@@ -292,11 +339,16 @@ export class EvaluateurCriteresComponent implements OnInit {
   }
 
   supprimer(critere: CritereAccreditation): void {
-    if (!confirm(`Supprimer définitivement la condition « ${critere.code || critere.libelle} » ?`)) {
-      return;
-    }
-    this.evaluateurService.supprimerCritere(critere.id).subscribe({
-      next: () => (this.criteres = this.criteres.filter((c) => c.id !== critere.id)),
+    this.confirmation.demander({
+      titre: 'Supprimer la condition',
+      message: `Supprimer définitivement la condition « ${critere.code || critere.libelle} » ?`,
+      libelleConfirmer: 'Supprimer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.evaluateurService.supprimerCritere(critere.id).subscribe({
+        next: () => (this.criteres = this.criteres.filter((c) => c.id !== critere.id)),
+      });
     });
   }
 }
