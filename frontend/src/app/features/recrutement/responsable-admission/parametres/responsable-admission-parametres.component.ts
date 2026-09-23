@@ -1,3 +1,4 @@
+import { passwordPolicy } from '../../../../core/auth/validators/password-policy';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -31,7 +32,7 @@ export class ResponsableAdmissionParametresComponent implements OnInit {
   ) {
     this.passwordForm = this.fb.group({
       currentPassword: ['', Validators.required],
-      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      newPassword: ['', [Validators.required, passwordPolicy]],
       confirmPassword: ['', Validators.required],
     });
     this.dashboardPrefs = this.dashboardPrefsService.charger();
@@ -67,6 +68,9 @@ export class ResponsableAdmissionParametresComponent implements OnInit {
 
     if (this.passwordForm.invalid || this.passwordsMismatch) {
       this.passwordForm.markAllAsTouched();
+      if (this.passwordForm.get('newPassword')?.hasError('passwordPolicy')) {
+        this.errorMessage = 'Le mot de passe doit contenir au moins 12 caractères et ne pas dépasser 72 octets UTF-8.';
+      }
       if (this.passwordsMismatch) {
         this.errorMessage = 'Les mots de passe ne correspondent pas.';
       }

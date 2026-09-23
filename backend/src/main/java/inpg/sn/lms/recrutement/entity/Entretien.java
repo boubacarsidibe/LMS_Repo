@@ -1,6 +1,7 @@
 package inpg.sn.lms.recrutement.entity;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import inpg.sn.lms.auth.entity.Candidat;
 import jakarta.persistence.Column;
@@ -45,6 +46,9 @@ public class Entretien {
 
     @Column(length = 1000)
     private String motifReport;
+
+    @Column(name = "groupe_entretien_id")
+    private UUID groupeEntretienId;
 
     @ManyToOne
     @JoinColumn(name = "candidat_id", nullable = false)

@@ -85,7 +85,7 @@ class PaiementServiceRelanceTest {
     @Test
     void un_dossier_rejete_nest_pas_relance_meme_impaye() {
         when(candidatureRepository.findAll()).thenReturn(
-                List.of(candidature(1L, EnumStatutCandidature.REJETE, null, "a@example.sn")));
+                List.of(candidature(1L, EnumStatutCandidature.DOSSIER_REJETE, null, "a@example.sn")));
 
         Map<String, Object> resultat = paiementService.relancerImpayes();
 
@@ -95,7 +95,7 @@ class PaiementServiceRelanceTest {
     @Test
     void un_dossier_deja_paye_nest_pas_relance() {
         when(candidatureRepository.findAll()).thenReturn(List.of(
-                candidature(1L, EnumStatutCandidature.ADMIS1, paiement(EnumStatutPaiement.SUCCES), "a@example.sn")));
+                candidature(1L, EnumStatutCandidature.CONVOQUE_TEST, paiement(EnumStatutPaiement.SUCCES), "a@example.sn")));
 
         Map<String, Object> resultat = paiementService.relancerImpayes();
 
@@ -106,7 +106,7 @@ class PaiementServiceRelanceTest {
     /** Un candidat n'ayant jamais initié de paiement (aucune ligne Paiement) est bien impayé. */
     @Test
     void un_dossier_valide_sans_aucune_tentative_de_paiement_est_relance() {
-        Candidature c = candidature(1L, EnumStatutCandidature.EN_COURS_DE_PRESELECTION, null, "a@example.sn");
+        Candidature c = candidature(1L, EnumStatutCandidature.PRESELECTIONNE, null, "a@example.sn");
         when(candidatureRepository.findAll()).thenReturn(List.of(c));
 
         Map<String, Object> resultat = paiementService.relancerImpayes();
@@ -119,7 +119,7 @@ class PaiementServiceRelanceTest {
     @Test
     void un_dossier_admis_avec_paiement_en_echec_est_relance() {
         when(candidatureRepository.findAll()).thenReturn(List.of(
-                candidature(2L, EnumStatutCandidature.ADMIS2, paiement(EnumStatutPaiement.ECHEC), "b@example.sn")));
+                candidature(2L, EnumStatutCandidature.CONVOQUE_ENTRETIEN, paiement(EnumStatutPaiement.ECHEC), "b@example.sn")));
 
         Map<String, Object> resultat = paiementService.relancerImpayes();
 
@@ -130,7 +130,7 @@ class PaiementServiceRelanceTest {
     @Test
     void un_candidat_sans_adresse_email_est_compte_en_echec_pas_en_exception() {
         when(candidatureRepository.findAll()).thenReturn(
-                List.of(candidature(3L, EnumStatutCandidature.ADMIS3, null, null)));
+                List.of(candidature(3L, EnumStatutCandidature.ADMIS, null, null)));
 
         Map<String, Object> resultat = paiementService.relancerImpayes();
 
@@ -144,9 +144,9 @@ class PaiementServiceRelanceTest {
     @Test
     void plusieurs_dossiers_eligibles_sont_tous_relances() {
         when(candidatureRepository.findAll()).thenReturn(List.of(
-                candidature(1L, EnumStatutCandidature.EN_COURS_DE_PRESELECTION, null, "a@example.sn"),
-                candidature(2L, EnumStatutCandidature.ADMIS1, paiement(EnumStatutPaiement.EN_ATTENTE), "b@example.sn"),
-                candidature(3L, EnumStatutCandidature.ADMIS3, paiement(EnumStatutPaiement.SUCCES), "c@example.sn"),
+                candidature(1L, EnumStatutCandidature.PRESELECTIONNE, null, "a@example.sn"),
+                candidature(2L, EnumStatutCandidature.CONVOQUE_TEST, paiement(EnumStatutPaiement.EN_ATTENTE), "b@example.sn"),
+                candidature(3L, EnumStatutCandidature.ADMIS, paiement(EnumStatutPaiement.SUCCES), "c@example.sn"),
                 candidature(4L, EnumStatutCandidature.SOUMIS, null, "d@example.sn")));
 
         Map<String, Object> resultat = paiementService.relancerImpayes();

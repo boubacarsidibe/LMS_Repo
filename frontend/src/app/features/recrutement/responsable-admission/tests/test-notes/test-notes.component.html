@@ -1,0 +1,68 @@
+<section class="mx-auto max-w-6xl">
+  <header class="mb-5 flex items-center justify-between gap-4">
+    <div>
+      <a routerLink="../" class="inline-flex items-center gap-1 text-body-sm text-secondary">
+        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+        Retour au test
+      </a>
+      <h1 class="mt-2 font-headline-lg text-headline-lg text-primary">{{ nomTest }}</h1>
+    </div>
+    <div class="flex gap-2">
+      <button type="button" (click)="annuler()" [disabled]="!modifie"
+        class="h-9 rounded-lg border border-outline-variant px-3 text-body-sm disabled:opacity-40">
+        Annuler
+      </button>
+      <button type="button" (click)="enregistrer()" [disabled]="saving || !modifie"
+        class="h-9 rounded-lg bg-secondary px-4 font-label-md text-on-secondary disabled:opacity-50">
+        {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
+    </div>
+  </header>
+
+  <div class="mb-4 flex flex-wrap items-center gap-4 border-y border-outline-variant py-3">
+    <div class="relative min-w-64 max-w-md flex-1">
+      <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">search</span>
+      <input [(ngModel)]="recherche" placeholder="Rechercher un candidat ou un dossier"
+        class="h-9 w-full rounded-lg border border-outline-variant bg-surface pl-8 pr-3 text-body-sm">
+    </div>
+    <label class="inline-flex items-center gap-2 text-body-sm">
+      <input type="checkbox" [(ngModel)]="manquantes">
+      Notes manquantes
+    </label>
+    <span class="ml-auto text-body-sm text-on-surface-variant">{{ nombreSaisies }} / {{ lignes.length }} saisies</span>
+  </div>
+
+  <p *ngIf="modifie" class="mb-3 text-body-sm text-secondary">Modifications non enregistrees</p>
+  <p *ngIf="error" class="mb-3 text-body-sm text-error">{{ error }}</p>
+  <p *ngIf="succes" class="mb-3 text-body-sm text-secondary">{{ succes }}</p>
+  <p *ngIf="loading" class="py-8 text-center text-body-sm text-on-surface-variant">Chargement des candidats...</p>
+
+  <div *ngIf="!loading" class="overflow-x-auto rounded-lg border border-outline-variant">
+    <table class="w-full min-w-[720px] text-left">
+      <thead class="border-b border-outline-variant bg-surface-container-low">
+        <tr>
+          <th class="w-16 px-4 py-3 text-label-md text-on-surface-variant">#</th>
+          <th class="px-4 py-3 text-label-md text-on-surface-variant">Candidat</th>
+          <th class="px-4 py-3 text-label-md text-on-surface-variant">N° dossier</th>
+          <th class="w-40 px-4 py-3 text-label-md text-on-surface-variant">Note / {{ maximum }}</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant">
+        <tr *ngFor="let ligne of affichees; index as i" class="hover:bg-surface-container-low">
+          <td class="px-4 py-3 text-body-sm text-on-surface-variant">{{ i + 1 }}</td>
+          <td class="px-4 py-3 font-label-md text-on-surface">{{ ligne.candidat }}</td>
+          <td class="px-4 py-3 text-body-sm text-on-surface-variant">{{ ligne.numeroDossierAffiche }}</td>
+          <td class="px-4 py-3">
+            <input [(ngModel)]="ligne.noteObtenue" type="number" min="0" [max]="maximum" step="0.01"
+              class="h-9 w-28 rounded-md border border-outline-variant bg-surface px-2 text-on-surface focus:border-secondary focus:outline-none">
+          </td>
+        </tr>
+        <tr *ngIf="affichees.length === 0">
+          <td colspan="4" class="px-4 py-8 text-center text-body-sm text-on-surface-variant">
+            Aucun candidat ne correspond a ce filtre.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

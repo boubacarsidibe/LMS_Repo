@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { ActiviteCours, ActiviteCreation } from '../../models/activite-cours';
+import { ActiviteCours, ActiviteCreation, RemiseActivite } from '../../models/activite-cours';
 import { Cours } from '../../models/cours';
 import { Support } from '../../models/support';
 import { ActiviteCoursService } from '../../services/activite-cours.service';
@@ -122,10 +122,20 @@ import { SupportService } from '../../services/support.service';
                 {{ activite.modalite === 'PRESENTIEL' ? 'Prévue le' : 'Publication' }} : {{ activite.datePublication | date: 'd MMM y, HH:mm' }}
                 <span *ngIf="activite.modalite === 'EN_LIGNE' && activite.dateLimite"> · Limite : {{ activite.dateLimite | date: 'd MMM y, HH:mm' }}</span>
               </p>
+              <button *ngIf="activite.modalite === 'EN_LIGNE'" type="button" (click)="ouvrirCorrections(activite)" class="mt-4 inline-flex items-center gap-2 rounded-lg border border-outline-variant px-3 py-2 font-label-md text-label-md text-secondary hover:bg-secondary-fixed">
+                <span class="material-symbols-outlined text-[18px]">fact_check</span> Voir les remises
+              </button>
             </article>
           </div>
           <p *ngIf="!activites.length" class="mt-5 rounded-xl bg-surface-container-low p-4 font-body-md text-body-md text-on-surface-variant">Aucune activité n'est encore créée pour ce cours.</p>
 
+          <section *ngIf="activitePourCorrection" class="mt-6 border-t border-outline-variant/35 pt-6">
+            <div class="flex items-start justify-between gap-3"><div><h3 class="font-headline-sm text-headline-sm text-on-surface">Remises — {{ activitePourCorrection.titre }}</h3><p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">Barème : {{ activitePourCorrection.bareme }} points.</p></div><button type="button" (click)="fermerCorrections()" class="p-1 text-on-surface-variant hover:text-secondary" title="Fermer"><span class="material-symbols-outlined">close</span></button></div>
+            <p *ngIf="chargementRemises" class="mt-4 font-body-sm text-body-sm text-on-surface-variant">Chargement des remises…</p>
+            <p *ngIf="erreurRemises" class="mt-4 rounded-lg bg-error-container/20 p-3 font-body-sm text-error">{{ erreurRemises }}</p>
+            <p *ngIf="!chargementRemises && !erreurRemises && remises.length === 0" class="mt-4 rounded-lg bg-surface-container-low p-4 font-body-sm text-body-sm text-on-surface-variant">Aucune remise n’a encore été déposée.</p>
+            <div *ngFor="let remise of remises" class="mt-4 rounded-xl border border-outline-variant/35 p-4"><div class="flex justify-between gap-3"><div><p class="font-label-md text-label-md text-on-surface">{{ remise.etudiant }}</p><p class="font-body-sm text-body-sm text-on-surface-variant">Remis le {{ remise.remiseLe | date:'d MMM y, HH:mm' }}</p></div><span *ngIf="remise.note != null" class="rounded-full bg-secondary-container px-3 py-1 font-label-sm text-label-sm text-on-secondary-container">{{ remise.note }}/{{ activitePourCorrection.bareme }}</span></div><p class="mt-3 whitespace-pre-wrap font-body-sm text-body-sm text-on-surface">{{ remise.contenu }}</p><div class="mt-4 grid gap-3 sm:grid-cols-[120px_1fr_auto]"><input type="number" min="0" [max]="activitePourCorrection.bareme" [(ngModel)]="remise.note" [name]="'note-' + remise.id" class="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2" placeholder="Note"/><input [(ngModel)]="remise.commentaireCorrection" [name]="'commentaire-' + remise.id" class="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2" placeholder="Commentaire de correction"/><button type="button" [disabled]="correctionEnCoursId === remise.id" (click)="corrigerRemise(remise)" class="rounded-lg bg-secondary px-4 py-2 font-label-md text-label-md text-on-secondary disabled:opacity-50">{{ correctionEnCoursId === remise.id ? 'Enregistrement…' : 'Enregistrer' }}</button></div></div>
+          </section>
           <form #form="ngForm" (ngSubmit)="creerActivite()" class="mt-6 grid grid-cols-1 gap-4 border-t border-outline-variant/35 pt-6 md:grid-cols-2">
             <label class="block font-label-md text-label-md text-on-surface-variant">Module
               <input required name="module" [(ngModel)]="nouvelleActivite.module" class="mt-2 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-on-surface" placeholder="Ex. Modèle supervisé" />
@@ -168,6 +178,11 @@ export class CoursDetailFormateur implements OnInit {
   activites: ActiviteCours[] = [];
   creationActivite = false;
   erreurActivite = '';
+  activitePourCorrection: ActiviteCours | null = null;
+  remises: RemiseActivite[] = [];
+  chargementRemises = false;
+  erreurRemises = '';
+  correctionEnCoursId: number | null = null;
   nouvelleActivite: ActiviteCreation = this.activiteVierge();
 
   constructor(private route: ActivatedRoute, private coursService: CoursService, private supportService: SupportService,
@@ -198,6 +213,35 @@ export class CoursDetailFormateur implements OnInit {
     return type === 'lien' ? 'link' : type === 'video' ? 'videocam' : 'description';
   }
 
+  ouvrirCorrections(activite: ActiviteCours): void {
+    this.activitePourCorrection = activite;
+    this.remises = [];
+    this.erreurRemises = '';
+    this.chargementRemises = true;
+    this.activiteService.getRemises(activite.id).subscribe({
+      next: (remises) => { this.remises = remises || []; this.chargementRemises = false; },
+      error: (error) => { this.erreurRemises = error?.error?.message || 'Impossible de charger les remises.'; this.chargementRemises = false; },
+    });
+  }
+
+  fermerCorrections(): void {
+    this.activitePourCorrection = null;
+    this.remises = [];
+  }
+
+  corrigerRemise(remise: RemiseActivite): void {
+    const bareme = this.activitePourCorrection?.bareme ?? 100;
+    if (remise.note == null || remise.note < 0 || remise.note > bareme) {
+      this.erreurRemises = `La note doit être comprise entre 0 et ${bareme}.`;
+      return;
+    }
+    this.correctionEnCoursId = remise.id;
+    this.erreurRemises = '';
+    this.activiteService.corriger(remise.id, remise.note, remise.commentaireCorrection || '').subscribe({
+      next: (maj) => { Object.assign(remise, maj); this.correctionEnCoursId = null; },
+      error: (error) => { this.erreurRemises = error?.error?.message || 'La correction n’a pas pu être enregistrée.'; this.correctionEnCoursId = null; },
+    });
+  }
   creerActivite(): void {
     if (!this.cours || this.creationActivite) return;
     this.creationActivite = true;

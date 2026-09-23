@@ -23,6 +23,11 @@ dist/
 node_modules/
 build/
 
+# Artefacts locaux Maven et fichiers temporaires créés au démarrage de la JVM.
+# Ils dépendent du poste et ne doivent jamais être ajoutés au dépôt.
+backend/.m2-repository/
+backend/.runtime-tmp/
+
 # ===================== Données d'exécution =====================
 # Fichiers déposés par l'application (supports de cours, pièces justificatives,
 # photos). En conteneur ils vivent dans le volume Docker « backend_uploads » ;
@@ -49,5 +54,8 @@ Thumbs.db
 # Rapports hebdomadaires et exports bureautiques : livrables de suivi, pas du code.
 ~$*.xlsx
 ~$*.docx
+.local-postgres/
+.tmp-weekly-reports/
+outputs/
 
 .vercel

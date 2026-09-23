@@ -44,6 +44,10 @@ export class Login {
       this.errorMessage = 'Votre session a expiré. Merci de vous reconnecter.';
     }
 
+    if (this.route.snapshot.queryParamMap.has('passwordChanged')) {
+      this.errorMessage = 'Votre mot de passe a été modifié. Connectez-vous avec votre nouveau mot de passe.';
+    }
+
     this.form = this.formBuilder.group({
 
       email: [
@@ -91,6 +95,8 @@ export class Login {
         catchError((err) => {
           if (err.status === 401) {
             this.errorMessage = 'Adresse e-mail ou mot de passe incorrect.';
+          } else if (err.status === 429) {
+            this.errorMessage = 'Trop de tentatives de connexion. Réessayez dans 15 minutes.';
           } else if (err.status === 0) {
             this.errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
           } else {

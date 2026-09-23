@@ -40,7 +40,6 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
 
   navItems: NavItem[] = [
     { label: "Vue d'ensemble", icon: 'dashboard', route: '/responsable-admission' },
-    { label: 'Statistiques', icon: 'bar_chart', route: '/responsable-admission/statistiques' },
     { label: 'Sessions', icon: 'calendar_today', route: '/responsable-admission/sessions' },
     { label: 'Candidatures', icon: 'folder_shared', route: '/responsable-admission/candidatures' },
     { label: 'Tests Académiques', icon: 'quiz', route: '/responsable-admission/tests' },

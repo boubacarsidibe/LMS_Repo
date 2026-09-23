@@ -81,16 +81,14 @@ public class AcademicTestController {
         int seuil = body.get("seuil") != null ? ((Number) body.get("seuil")).intValue() : 60;
 
         if (sessionId != null) {
-            // Requête directe plutôt que session.getCandidatures() : cette collection est
-            // en chargement paresseux (@OneToMany) et open-in-view=false interdit d'y
-            // accéder hors transaction (LazyInitializationException, même bug que
-            // SessionController.java avant sa suppression — voir CLAUDE.md §3).
+            UUID groupeEpreuveId = UUID.randomUUID();
             List<Candidature> candidatures = candidatureRepo.findBySessionCandidatureId(sessionId);
             candidatures.forEach(c -> {
                 TestAcademique t = new TestAcademique();
                 t.setNomEpreuve(nom);
                 t.setCoefficient(coeff);
                 t.setDateEpreuve(dateEpreuve);
+                t.setGroupeEpreuveId(groupeEpreuveId);
                 t.setCandidat(c.getCandidat());
                 testRepo.save(t);
             });

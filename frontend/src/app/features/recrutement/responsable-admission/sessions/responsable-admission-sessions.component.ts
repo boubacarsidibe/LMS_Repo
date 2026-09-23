@@ -2,14 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import {
   RecrutementService,
   SessionCandidatureResponse,
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
-import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 
 @Component({
@@ -42,13 +40,10 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   triColonne: 'libelle' | 'dateOuverture' | 'dateFermeture' | 'nbCandidatures' = 'dateOuverture';
   triDesc = true;
 
-  /** Sélection multiple (checkboxes) — mêmes conventions que la liste des candidatures. */
-  selection = new Set<number>();
-  private dernierIndexClique: number | null = null;
-  suppressionGroupeeEnCours = false;
+  sessionSelectionnee: SessionCandidatureResponse | null = null;
 
   constructor(private recrutementService: RecrutementService, private router: Router,
-              private notifications: NotificationService, private confirmation: ConfirmationService) {}
+              private notifications: NotificationService) {}
 
   ngOnInit(): void {
     this.chargerSessions();
@@ -60,6 +55,9 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
     this.recrutementService.getAllSessions().subscribe({
       next: (data) => {
         this.sessions = data || [];
+        if (this.sessionSelectionnee && !this.sessions.some((s) => s.id === this.sessionSelectionnee?.id)) {
+          this.sessionSelectionnee = null;
+        }
         this.loading = false;
       },
       error: () => {
@@ -128,86 +126,23 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   }
 
   voirSession(session: SessionCandidatureResponse): void {
+    this.sessionSelectionnee = session;
+  }
+
+  modifierSession(session: SessionCandidatureResponse): void {
     this.router.navigate(['/responsable-admission/sessions', session.id]);
   }
 
   supprimer(session: SessionCandidatureResponse): void {
-    this.confirmation.demander({
-      titre: 'Supprimer la session',
-      message: `Supprimer définitivement la session "${session.libelle}" ?`,
-      libelleConfirmer: 'Supprimer',
-      destructif: true,
-    }).subscribe((confirme) => {
-      if (!confirme) return;
-      this.recrutementService.supprimerSession(session.id).subscribe({
-        next: () => this.chargerSessions(),
-        error: () => this.notifications.erreur('Échec de la suppression de la session.'),
-      });
+    if (!confirm(`Supprimer définitivement la session "${session.libelle}" ?`)) return;
+    this.recrutementService.supprimerSession(session.id).subscribe({
+      next: () => this.chargerSessions(),
+      error: () => this.notifications.erreur('Échec de la suppression de la session.'),
     });
   }
-
-  // ===================== Sélection multiple =====================
 
   estSelectionne(id: number): boolean {
-    return this.selection.has(id);
-  }
-
-  get toutesSelectionnees(): boolean {
-    return this.sessionsFiltrees.length > 0 && this.sessionsFiltrees.every((s) => this.selection.has(s.id));
-  }
-
-  /** Coche/décoche une ligne ; Shift+clic étend la sélection depuis la dernière ligne cliquée. */
-  basculerSelection(id: number, index: number, event: MouseEvent): void {
-    const liste = this.sessionsFiltrees;
-    if (event.shiftKey && this.dernierIndexClique !== null) {
-      const [debut, fin] = [this.dernierIndexClique, index].sort((a, b) => a - b);
-      for (let i = debut; i <= fin; i++) this.selection.add(liste[i].id);
-    } else if (this.selection.has(id)) {
-      this.selection.delete(id);
-    } else {
-      this.selection.add(id);
-    }
-    this.dernierIndexClique = index;
-  }
-
-  basculerToutSelectionner(): void {
-    if (this.toutesSelectionnees) {
-      this.sessionsFiltrees.forEach((s) => this.selection.delete(s.id));
-    } else {
-      this.sessionsFiltrees.forEach((s) => this.selection.add(s.id));
-    }
-  }
-
-  viderSelection(): void {
-    this.selection.clear();
-    this.dernierIndexClique = null;
-  }
-
-  supprimerSelection(): void {
-    if (this.selection.size === 0) return;
-    const noms = this.sessions.filter((s) => this.selection.has(s.id)).map((s) => s.libelle);
-    this.confirmation.demander({
-      titre: 'Supprimer les sessions',
-      message: `Supprimer définitivement ${noms.length} session(s) ?\n\n${noms.join('\n')}`,
-      libelleConfirmer: 'Supprimer',
-      destructif: true,
-    }).subscribe((confirme) => {
-      if (!confirme) return;
-      this.suppressionGroupeeEnCours = true;
-      forkJoin(Array.from(this.selection).map((id) => this.recrutementService.supprimerSession(id))).subscribe({
-        next: () => {
-          this.suppressionGroupeeEnCours = false;
-          this.viderSelection();
-          this.chargerSessions();
-        },
-        error: () => {
-          this.suppressionGroupeeEnCours = false;
-          this.notifications.erreur('Échec de la suppression groupée — certaines sessions ont peut-être tout de même été supprimées.');
-          this.viderSelection();
-          this.chargerSessions();
-        },
-      });
-    });
+    return this.sessionSelectionnee?.id === id;
   }
 
   exporter(colonnes: string[]): void {

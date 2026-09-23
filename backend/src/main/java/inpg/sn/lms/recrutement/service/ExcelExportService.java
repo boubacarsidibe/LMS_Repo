@@ -3,6 +3,7 @@ package inpg.sn.lms.recrutement.service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.DoubleSummaryStatistics;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -47,6 +48,109 @@ public class ExcelExportService {
 
     public byte[] genererClasseur(String nomFeuille, List<String> entetes, List<List<Object>> lignes) {
         return genererClasseur(nomFeuille, entetes, lignes, null, null, null, null);
+    }
+
+    /**
+     * Génère un export lisible dès son ouverture : un titre métier au-dessus du
+     * tableau, une ligne d'en-tête filtrable et les colonnes dimensionnées.
+     */
+    public byte[] genererClasseurAvecTitre(String nomFeuille, String titre, List<String> entetes,
+            List<List<Object>> lignes) {
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet(nomFeuille);
+
+            CellStyle titreStyle = workbook.createCellStyle();
+            Font titreFont = workbook.createFont();
+            titreFont.setBold(true);
+            titreFont.setFontHeightInPoints((short) 16);
+            titreStyle.setFont(titreFont);
+
+            Row titreRow = sheet.createRow(0);
+            Cell titreCell = titreRow.createCell(0);
+            titreCell.setCellValue(titre);
+            titreCell.setCellStyle(titreStyle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, entetes.size() - 1));
+
+            CellStyle enteteStyle = workbook.createCellStyle();
+            Font enteteFont = workbook.createFont();
+            enteteFont.setBold(true);
+            enteteStyle.setFont(enteteFont);
+            enteteStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            enteteStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            Row headerRow = sheet.createRow(2);
+            for (int i = 0; i < entetes.size(); i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(entetes.get(i));
+                cell.setCellStyle(enteteStyle);
+            }
+
+            int rowIdx = 3;
+            for (List<Object> ligne : lignes) {
+                Row row = sheet.createRow(rowIdx++);
+                for (int i = 0; i < ligne.size(); i++) {
+                    ecrireCellule(row.createCell(i), ligne.get(i));
+                }
+            }
+            for (int i = 0; i < entetes.size(); i++) {
+                sheet.autoSizeColumn(i);
+                int largeurMinimum = "Note".equalsIgnoreCase(entetes.get(i)) ? 14 * 256 : 22 * 256;
+                int largeurSouhaitee = Math.max(largeurMinimum, sheet.getColumnWidth(i) + (3 * 256));
+                if (largeurSouhaitee > LARGEUR_COLONNE_MAX) {
+                    sheet.setColumnWidth(i, LARGEUR_COLONNE_MAX);
+                } else {
+                    // L'icône de filtre réduit l'espace disponible dans la cellule.
+                    sheet.setColumnWidth(i, largeurSouhaitee);
+                }
+            }
+            sheet.createFreezePane(0, 3);
+            if (!lignes.isEmpty()) {
+                sheet.setAutoFilter(new CellRangeAddress(2, 2, 0, entetes.size() - 1));
+            }
+            ajouterSyntheseNotes(workbook, titre, entetes, lignes);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Erreur lors de la génération du fichier Excel.", e);
+        }
+    }
+
+    /** Ajoute une synthèse chiffrée lorsque le tableau contient une colonne « Note ». */
+    private void ajouterSyntheseNotes(Workbook workbook, String titre, List<String> entetes, List<List<Object>> lignes) {
+        int indexNote = entetes.indexOf("Note");
+        if (indexNote < 0) return;
+
+        DoubleSummaryStatistics statistiques = lignes.stream()
+                .filter(ligne -> ligne.size() > indexNote && ligne.get(indexNote) instanceof Number)
+                .mapToDouble(ligne -> ((Number) ligne.get(indexNote)).doubleValue())
+                .summaryStatistics();
+        Sheet synthese = workbook.createSheet("Synthèse");
+        CellStyle titreStyle = workbook.createCellStyle();
+        Font titreFont = workbook.createFont();
+        titreFont.setBold(true);
+        titreFont.setFontHeightInPoints((short) 16);
+        titreStyle.setFont(titreFont);
+        Cell titreCell = synthese.createRow(0).createCell(0);
+        titreCell.setCellValue(titre);
+        titreCell.setCellStyle(titreStyle);
+
+        String[][] indicateurs = {
+                { "Candidats convoqués", String.valueOf(lignes.size()) },
+                { "Notes saisies", String.valueOf(statistiques.getCount()) },
+                { "Notes manquantes", String.valueOf(lignes.size() - statistiques.getCount()) },
+                { "Moyenne", statistiques.getCount() == 0 ? "—" : String.format("%.2f / 20", statistiques.getAverage()) },
+                { "Note minimale", statistiques.getCount() == 0 ? "—" : String.format("%.2f / 20", statistiques.getMin()) },
+                { "Note maximale", statistiques.getCount() == 0 ? "—" : String.format("%.2f / 20", statistiques.getMax()) }
+        };
+        for (int i = 0; i < indicateurs.length; i++) {
+            Row row = synthese.createRow(i + 2);
+            row.createCell(0).setCellValue(indicateurs[i][0]);
+            row.createCell(1).setCellValue(indicateurs[i][1]);
+        }
+        synthese.setColumnWidth(0, 28 * 256);
+        synthese.setColumnWidth(1, 18 * 256);
     }
 
     /**

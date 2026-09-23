@@ -74,7 +74,7 @@ class CandidatureServiceRapportTest {
         RapportRecrutementDto rapport = service.genererRapportParEtape();
 
         assertThat(rapport.totalCandidatures()).isZero();
-        assertThat(rapport.etapes()).hasSize(6);
+        assertThat(rapport.etapes()).hasSize(11);
         assertThat(rapport.etapes()).allSatisfy(e -> {
             assertThat(e.nombre()).isZero();
             assertThat(e.candidats()).isEmpty();
@@ -87,46 +87,48 @@ class CandidatureServiceRapportTest {
         when(candidatureRepository.findAll()).thenReturn(List.of(
                 candidature("D1", EnumStatutCandidature.SOUMIS, null),
                 candidature("D2", EnumStatutCandidature.SOUMIS, null),
-                candidature("D3", EnumStatutCandidature.EN_COURS_DE_PRESELECTION, null),
-                candidature("D4", EnumStatutCandidature.ADMIS1, null),
-                candidature("D5", EnumStatutCandidature.ADMIS3, null),
-                candidature("D6", EnumStatutCandidature.REJETE, "Dossier incomplet")));
+                candidature("D3", EnumStatutCandidature.PRESELECTIONNE, null),
+                candidature("D4", EnumStatutCandidature.CONVOQUE_TEST, null),
+                candidature("D5", EnumStatutCandidature.ADMIS, null),
+                candidature("D6", EnumStatutCandidature.NON_ADMIS, "Dossier incomplet")));
 
         RapportRecrutementDto rapport = service.genererRapportParEtape();
 
         assertThat(rapport.totalCandidatures()).isEqualTo(6);
         assertThat(etape(rapport, "SOUMIS").nombre()).isEqualTo(2);
-        assertThat(etape(rapport, "EN_COURS_DE_PRESELECTION").nombre()).isEqualTo(1);
-        assertThat(etape(rapport, "ADMIS1").nombre()).isEqualTo(1);
-        assertThat(etape(rapport, "ADMIS2").nombre()).isZero();
-        assertThat(etape(rapport, "ADMIS3").nombre()).isEqualTo(1);
-        assertThat(etape(rapport, "REJETE").nombre()).isEqualTo(1);
-        assertThat(etape(rapport, "ADMIS3").candidats().get(0).numeroDossier()).isEqualTo("D5");
+        assertThat(etape(rapport, "PRESELECTIONNE").nombre()).isEqualTo(1);
+        assertThat(etape(rapport, "CONVOQUE_TEST").nombre()).isEqualTo(1);
+        assertThat(etape(rapport, "CONVOQUE_ENTRETIEN").nombre()).isZero();
+        assertThat(etape(rapport, "ADMIS").nombre()).isEqualTo(1);
+        assertThat(etape(rapport, "NON_ADMIS").nombre()).isEqualTo(1);
+        assertThat(etape(rapport, "ADMIS").candidats().get(0).numeroDossier()).isEqualTo("D5");
     }
 
     @Test
     @DisplayName("Les étapes apparaissent dans l'ordre du workflow, pas l'ordre d'insertion en base")
     void ordonne_les_etapes_dans_l_ordre_du_workflow() {
         when(candidatureRepository.findAll()).thenReturn(List.of(
-                candidature("D1", EnumStatutCandidature.REJETE, "Non retenu"),
+                candidature("D1", EnumStatutCandidature.NON_ADMIS, "Non retenu"),
                 candidature("D2", EnumStatutCandidature.SOUMIS, null)));
 
         RapportRecrutementDto rapport = service.genererRapportParEtape();
 
         assertThat(rapport.etapes()).extracting(RapportRecrutementDto.EtapeRapport::statut)
-                .containsExactly("SOUMIS", "EN_COURS_DE_PRESELECTION", "ADMIS1", "ADMIS2", "ADMIS3", "REJETE");
+                .containsExactly("SOUMIS", "PRESELECTIONNE", "PAIEMENT_EN_ATTENTE", "PAIEMENT_CONFIRME",
+                        "CONVOQUE_TEST", "TEST_REUSSI", "CONVOQUE_ENTRETIEN", "ENTRETIEN_EFFECTUE",
+                        "ADMIS", "LISTE_ATTENTE", "NON_ADMIS");
     }
 
     @Test
     @DisplayName("Le motif de rejet n'apparaît que sur l'étape REJETE")
     void motif_de_rejet_uniquement_sur_l_etape_rejetee() {
         when(candidatureRepository.findAll()).thenReturn(List.of(
-                candidature("D1", EnumStatutCandidature.REJETE, "Critères non remplis"),
+                candidature("D1", EnumStatutCandidature.NON_ADMIS, "Critères non remplis"),
                 candidature("D2", EnumStatutCandidature.SOUMIS, null)));
 
         RapportRecrutementDto rapport = service.genererRapportParEtape();
 
-        assertThat(etape(rapport, "REJETE").candidats().get(0).motifRejet()).isEqualTo("Critères non remplis");
+        assertThat(etape(rapport, "NON_ADMIS").candidats().get(0).motifRejet()).isEqualTo("Critères non remplis");
         assertThat(etape(rapport, "SOUMIS").candidats().get(0).motifRejet()).isNull();
     }
 

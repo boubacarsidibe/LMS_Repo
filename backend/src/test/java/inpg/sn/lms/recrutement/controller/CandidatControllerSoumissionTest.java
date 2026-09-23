@@ -181,7 +181,7 @@ class CandidatControllerSoumissionTest {
     @Test
     void un_dossier_deja_examine_ne_peut_plus_etre_resoumis() {
         utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
-        Candidature enExamen = candidature(EnumStatutCandidature.EN_COURS_DE_PRESELECTION);
+        Candidature enExamen = candidature(EnumStatutCandidature.PRESELECTIONNE);
         when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
         when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of(enExamen));
 
@@ -189,7 +189,7 @@ class CandidatControllerSoumissionTest {
 
         assertEquals(HttpStatus.CONFLICT, reponse.getStatusCode());
         // Le statut ne doit pas avoir été ramené à SOUMIS.
-        assertEquals(EnumStatutCandidature.EN_COURS_DE_PRESELECTION, enExamen.getStatut());
+        assertEquals(EnumStatutCandidature.PRESELECTIONNE, enExamen.getStatut());
         verify(candidatureRepository, never()).save(any());
     }
 
@@ -203,7 +203,7 @@ class CandidatControllerSoumissionTest {
         utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
         when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
         when(candidatureRepository.findByCandidatId(ID_UTILISATEUR))
-                .thenReturn(List.of(candidature(EnumStatutCandidature.ADMIS1)));
+                .thenReturn(List.of(candidature(EnumStatutCandidature.CONVOQUE_TEST)));
         requete.setInformationsPersonnelles("{\"nom\":\"USURPE\",\"prenom\":\"USURPE\"}");
 
         assertEquals(HttpStatus.CONFLICT,
@@ -281,7 +281,7 @@ class CandidatControllerSoumissionTest {
         utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
         when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
         when(candidatureRepository.findByCandidatId(ID_UTILISATEUR))
-                .thenReturn(List.of(candidature(EnumStatutCandidature.REJETE)));
+                .thenReturn(List.of(candidature(EnumStatutCandidature.DOSSIER_REJETE)));
         when(sessionRepository.findById(ID_SESSION)).thenReturn(Optional.empty());
 
         // La session introuvable interrompt le traitement plus loin : ce qui compte ici est

@@ -60,7 +60,7 @@ class CandidatureServiceChangerStatutTest {
         when(candidatureRepository.findById(ID)).thenReturn(Optional.of(vide));
 
         BusinessException erreur = assertThrows(BusinessException.class,
-                () -> service.changerStatut(ID, EnumStatutCandidature.EN_COURS_DE_PRESELECTION, null));
+                () -> service.changerStatut(ID, EnumStatutCandidature.PRESELECTIONNE, null));
 
         assertEquals("Ce dossier ne contient aucune pièce justificative : impossible de le présélectionner.",
                 erreur.getMessage());
@@ -74,9 +74,9 @@ class CandidatureServiceChangerStatutTest {
         Candidature dossier = candidature(EnumStatutCandidature.SOUMIS, true);
         when(candidatureRepository.findById(ID)).thenReturn(Optional.of(dossier));
 
-        service.changerStatut(ID, EnumStatutCandidature.EN_COURS_DE_PRESELECTION, null);
+        service.changerStatut(ID, EnumStatutCandidature.PRESELECTIONNE, null);
 
-        assertEquals(EnumStatutCandidature.EN_COURS_DE_PRESELECTION, dossier.getStatut());
+        assertEquals(EnumStatutCandidature.PRESELECTIONNE, dossier.getStatut());
         assertEquals(EnumStatutCandidature.SOUMIS, dossier.getStatutPrecedent(),
                 "le statut précédent est mémorisé pour permettre l'annulation");
     }
@@ -87,9 +87,9 @@ class CandidatureServiceChangerStatutTest {
         Candidature vide = candidature(EnumStatutCandidature.SOUMIS, false);
         when(candidatureRepository.findById(ID)).thenReturn(Optional.of(vide));
 
-        service.changerStatut(ID, EnumStatutCandidature.REJETE, "Dossier jamais complété.");
+        service.changerStatut(ID, EnumStatutCandidature.DOSSIER_REJETE, "Dossier jamais complété.");
 
-        assertEquals(EnumStatutCandidature.REJETE, vide.getStatut());
+        assertEquals(EnumStatutCandidature.DOSSIER_REJETE, vide.getStatut());
         assertEquals("Dossier jamais complété.", vide.getMotifRejet());
     }
 
@@ -100,19 +100,19 @@ class CandidatureServiceChangerStatutTest {
         when(candidatureRepository.findById(ID)).thenReturn(Optional.of(dossier));
 
         assertThrows(BusinessException.class,
-                () -> service.changerStatut(ID, EnumStatutCandidature.ADMIS2, null));
+                () -> service.changerStatut(ID, EnumStatutCandidature.CONVOQUE_ENTRETIEN, null));
         assertEquals(EnumStatutCandidature.SOUMIS, dossier.getStatut());
     }
 
     @Test
     @DisplayName("ADMIS3 est terminal : plus aucune transition n'en part")
     void statut_terminal_n_evolue_plus() {
-        Candidature dossier = candidature(EnumStatutCandidature.ADMIS3, true);
+        Candidature dossier = candidature(EnumStatutCandidature.ADMIS, true);
         when(candidatureRepository.findById(ID)).thenReturn(Optional.of(dossier));
 
         assertThrows(BusinessException.class,
-                () -> service.changerStatut(ID, EnumStatutCandidature.REJETE, "trop tard"));
-        assertEquals(EnumStatutCandidature.ADMIS3, dossier.getStatut());
+                () -> service.changerStatut(ID, EnumStatutCandidature.DOSSIER_REJETE, "trop tard"));
+        assertEquals(EnumStatutCandidature.ADMIS, dossier.getStatut());
     }
 
     @Test
@@ -121,7 +121,7 @@ class CandidatureServiceChangerStatutTest {
         Candidature dossier = candidature(EnumStatutCandidature.SOUMIS, true);
         when(candidatureRepository.findById(ID)).thenReturn(Optional.of(dossier));
 
-        service.changerStatut(ID, EnumStatutCandidature.EN_COURS_DE_PRESELECTION, "commentaire quelconque");
+        service.changerStatut(ID, EnumStatutCandidature.PRESELECTIONNE, "commentaire quelconque");
 
         assertNull(dossier.getMotifRejet());
     }
@@ -131,7 +131,7 @@ class CandidatureServiceChangerStatutTest {
         when(candidatureRepository.findById(ID)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> service.changerStatut(ID, EnumStatutCandidature.EN_COURS_DE_PRESELECTION, null));
+                () -> service.changerStatut(ID, EnumStatutCandidature.PRESELECTIONNE, null));
     }
 
     /** @param avecPiece un dossier « non vide » au sens de la garde : au moins une pièce jointe. */

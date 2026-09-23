@@ -1,3 +1,4 @@
+import { passwordPolicy } from '../../../core/auth/validators/password-policy';
 import { Component, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -66,7 +67,7 @@ export class Register {
     nom: ['', Validators.required],
     nomOrganisation: [''],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(12)]],
+    password: ['', [Validators.required, passwordPolicy]],
     confirmPassword: ['', Validators.required]
   }, { validators: motsDePasseIdentiques });
 
@@ -102,7 +103,15 @@ export class Register {
   onSubmit(): void {
     this.tentativeEnvoi = true;
     if (this.registerForm.invalid) {
+      if (this.registerForm.controls['password'].hasError('passwordPolicy')) {
+        this.errorMessage = 'Le mot de passe doit contenir au moins 12 caractères et ne pas dépasser 72 octets UTF-8.';
+      }
       this.registerForm.markAllAsTouched();
+      return;
+    }
+
+    if (this.registerForm.value.password !== this.registerForm.value.confirmPassword) {
+      this.errorMessage = 'Les mots de passe ne correspondent pas.';
       return;
     }
 

@@ -24,6 +24,7 @@ public class CandidatureResponse {
     private EnumStatutCandidature statutPrecedent;
     private LocalDateTime dateSoumission;
     private String motifRejet;
+    private Integer rangListeAttente;
     private Long candidatId;
     private String candidatNom;
     private String candidatPrenom;

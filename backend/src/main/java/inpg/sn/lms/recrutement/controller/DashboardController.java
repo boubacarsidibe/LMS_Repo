@@ -84,14 +84,16 @@ public class DashboardController {
         List<Candidature> toutes = candidatureRepo.findAll();
         dto.setTotalCandidatures(toutes.size());
         dto.setCandidaturesValidees(toutes.stream()
-                .filter(c -> c.getStatut() == EnumStatutCandidature.ADMIS1
-                        || c.getStatut() == EnumStatutCandidature.ADMIS2
-                        || c.getStatut() == EnumStatutCandidature.ADMIS3).count());
+                .filter(c -> c.getStatut() == EnumStatutCandidature.TEST_REUSSI
+                        || c.getStatut() == EnumStatutCandidature.CONVOQUE_ENTRETIEN
+                        || c.getStatut() == EnumStatutCandidature.ENTRETIEN_EFFECTUE
+                        || c.getStatut() == EnumStatutCandidature.ADMIS).count());
         dto.setCandidaturesEnAttente(toutes.stream()
                 .filter(c -> c.getStatut() == EnumStatutCandidature.SOUMIS
-                        || c.getStatut() == EnumStatutCandidature.EN_COURS_DE_PRESELECTION).count());
+                        || c.getStatut() == EnumStatutCandidature.DOSSIER_VALIDE).count());
         dto.setCandidaturesRejetees(toutes.stream()
-                .filter(c -> c.getStatut() == EnumStatutCandidature.REJETE).count());
+                .filter(c -> c.getStatut() == EnumStatutCandidature.DOSSIER_REJETE
+                        || c.getStatut() == EnumStatutCandidature.NON_ADMIS).count());
 
         // ---- Candidatures récentes ----
         List<Candidature> recentes = candidatureRepo.findTop5ByOrderByDateSoumissionDesc();

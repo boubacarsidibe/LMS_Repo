@@ -49,6 +49,9 @@ public class Candidature {
     @Column(length = 1000)
     private String motifRejet;
 
+    @Column(name = "rang_liste_attente")
+    private Integer rangListeAttente;
+
     /** Statut d'avant la dernière décision — permet d'« annuler » sans historique complet. */
     @Enumerated(EnumType.STRING)
     @Column(name = "statut_precedent")

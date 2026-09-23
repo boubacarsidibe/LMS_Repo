@@ -160,7 +160,7 @@ class ApplicationControllerTest {
     @Test
     void un_dossier_deja_admis_nest_jamais_relance() {
         Candidature admis = candidature(1L, "a@example.sn", List.of());
-        admis.setStatut(EnumStatutCandidature.ADMIS3);
+        admis.setStatut(EnumStatutCandidature.ADMIS);
         when(candidatureRepo.findAll()).thenReturn(List.of(admis));
 
         ResponseEntity<Map<String, Object>> reponse = controller.sendReminder();
