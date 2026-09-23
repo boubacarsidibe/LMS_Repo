@@ -54,3 +54,12 @@ button, a, select, [role="button"], summary, input[type="checkbox"], input[type=
 tr[class*="cursor-pointer"], tr[class*="group"] {
   cursor: pointer;
 }
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

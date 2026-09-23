@@ -1,13 +1,12 @@
 <div class="flex flex-col w-full">
 
   <!-- En-tête -->
-  <div class="flex flex-col md:flex-row md:items-end justify-between gap-stack-md mb-stack-lg px-margin-desktop pt-stack-lg">
-    <div class="flex flex-col gap-1">
+  <div class="flex flex-col gap-stack-md mb-stack-lg px-margin-desktop pt-stack-lg">
+    <div class="flex min-w-0 flex-1 flex-col gap-1">
       <span class="text-label-sm font-bold text-secondary tracking-widest uppercase">Espace Formateur</span>
-      <h1 class="font-headline-lg text-headline-lg text-primary">Calendrier Pédagogique &amp; Classes Virtuelles</h1>
-      <p class="text-body-md text-on-surface-variant max-w-2xl">Gérez vos sessions d'enseignement, classes virtuelles et échéances d'évaluation en temps réel.</p>
+      <h1 class="w-full font-display text-headline-md md:text-headline-lg text-primary leading-tight">Calendrier pédagogique &amp; classes virtuelles</h1>
     </div>
-    <div class="flex items-center gap-stack-md shrink-0">
+    <div class="flex items-center gap-stack-md self-start md:self-end">
       <div class="bg-surface-container-low p-1 rounded-lg flex items-center shadow-sm">
         <button (click)="changerVue('mois')" class="px-4 py-2 rounded-md text-label-md transition-all" [class.font-bold]="vueActive === 'mois'" [class.font-medium]="vueActive !== 'mois'" [class.bg-surface-container-lowest]="vueActive === 'mois'" [class.text-primary]="vueActive === 'mois'" [class.shadow-sm]="vueActive === 'mois'" [class.text-on-surface-variant]="vueActive !== 'mois'">Mois</button>
         <button (click)="changerVue('semaine')" class="px-4 py-2 rounded-md text-label-md transition-all" [class.font-bold]="vueActive === 'semaine'" [class.font-medium]="vueActive !== 'semaine'" [class.bg-surface-container-lowest]="vueActive === 'semaine'" [class.text-primary]="vueActive === 'semaine'" [class.shadow-sm]="vueActive === 'semaine'" [class.text-on-surface-variant]="vueActive !== 'semaine'">Semaine</button>

@@ -32,6 +32,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/mes-cours/mes-cours').then(m => m.MesCours)
             },
             {
+                path: 'creer-ressource',
+                loadComponent: () => import('./pages/creer-ressource/creer-ressource').then(m => m.CreerRessource)
+            },
+            {
                 path: 'mes-cours/:id',
                 loadComponent: () => import('./pages/cours-detail-formateur/cours-detail-formateur').then(m => m.CoursDetailFormateur)
             },

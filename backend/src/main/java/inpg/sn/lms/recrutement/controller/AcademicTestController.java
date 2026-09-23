@@ -8,9 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import inpg.sn.lms.recrutement.entity.SessionCandidature;
+import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.TestAcademique;
-import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
+import inpg.sn.lms.recrutement.repository.CandidatureRepository;
 import inpg.sn.lms.recrutement.repository.TestAcademiqueRepository;
 
 @RestController
@@ -18,11 +18,11 @@ import inpg.sn.lms.recrutement.repository.TestAcademiqueRepository;
 public class AcademicTestController {
 
     private final TestAcademiqueRepository testRepo;
-    private final SessionCandidatureRepository sessionRepo;
+    private final CandidatureRepository candidatureRepo;
 
-    public AcademicTestController(TestAcademiqueRepository testRepo, SessionCandidatureRepository sessionRepo) {
+    public AcademicTestController(TestAcademiqueRepository testRepo, CandidatureRepository candidatureRepo) {
         this.testRepo = testRepo;
-        this.sessionRepo = sessionRepo;
+        this.candidatureRepo = candidatureRepo;
     }
 
     // KPIs
@@ -81,19 +81,17 @@ public class AcademicTestController {
         int seuil = body.get("seuil") != null ? ((Number) body.get("seuil")).intValue() : 60;
 
         if (sessionId != null) {
-            SessionCandidature session = sessionRepo.findById(sessionId).orElse(null);
-            if (session != null) {
-                UUID groupeEpreuveId = UUID.randomUUID();
-                session.getCandidatures().forEach(c -> {
-                    TestAcademique t = new TestAcademique();
-                    t.setNomEpreuve(nom);
-                    t.setCoefficient(coeff);
-                    t.setDateEpreuve(dateEpreuve);
-                    t.setGroupeEpreuveId(groupeEpreuveId);
-                    t.setCandidat(c.getCandidat());
-                    testRepo.save(t);
-                });
-            }
+            UUID groupeEpreuveId = UUID.randomUUID();
+            List<Candidature> candidatures = candidatureRepo.findBySessionCandidatureId(sessionId);
+            candidatures.forEach(c -> {
+                TestAcademique t = new TestAcademique();
+                t.setNomEpreuve(nom);
+                t.setCoefficient(coeff);
+                t.setDateEpreuve(dateEpreuve);
+                t.setGroupeEpreuveId(groupeEpreuveId);
+                t.setCandidat(c.getCandidat());
+                testRepo.save(t);
+            });
         }
 
         Map<String, Object> result = new HashMap<>();
