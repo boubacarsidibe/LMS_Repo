@@ -16,7 +16,7 @@
           <span class="material-symbols-outlined">mark_chat_unread</span>
         </div>
         <div class="flex flex-col">
-          <span class="font-display text-display text-on-surface leading-none">05</span>
+          <span class="font-display text-display text-on-surface leading-none">{{ sujetsNonLus }}</span>
           <span class="font-label-md text-label-md text-on-surface-variant">Messages non lus</span>
         </div>
       </div>
@@ -85,10 +85,19 @@
             </div>
           </div>
         </div>
+        <p *ngIf="!sujetsFiltres.length" class="font-body-sm text-body-sm text-on-surface-variant text-center py-6 px-stack-lg">
+          Aucun sujet de forum pour l'instant.
+        </p>
       </div>
     </div>
 
     <!-- Colonne droite : détail de la conversation -->
+    <div *ngIf="!sujetSelectionne" class="col-span-8 bg-surface-container-lowest flex flex-col items-center justify-center h-full min-h-0 gap-stack-md">
+      <span class="material-symbols-outlined text-outline text-[48px]">forum</span>
+      <p class="font-body-sm text-body-sm text-on-surface-variant">
+        {{ sujetsFiltres.length ? 'Sélectionnez un sujet pour afficher la conversation.' : 'Aucun sujet de forum pour l\'instant.' }}
+      </p>
+    </div>
     <div *ngIf="sujetSelectionne as sel" class="col-span-8 bg-surface-container-lowest flex flex-col h-full min-h-0 relative">
 
       <div class="p-stack-lg border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest/80 backdrop-blur-md z-10 shadow-sm">

@@ -84,7 +84,7 @@ class AuthControllerTest {
         var response = controller.resetPassword(Map.of(
                 "email", "alice@example.test",
                 "code", "123456",
-                "newPassword", "trop-court"));
+                "newPassword", "court"));
 
         assertThat(response.getStatusCode().value()).isEqualTo(400);
         verifyNoInteractions(otpService, userService);

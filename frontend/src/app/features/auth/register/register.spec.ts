@@ -70,10 +70,10 @@ describe('Register', () => {
     expect(component.champEnErreur('prenom')).toBe(true);
   });
 
-  it('rejette un mot de passe de moins de 12 caractères', () => {
-    component.registerForm.patchValue({ password: 'court1234' });
+  it('rejette un mot de passe de moins de 8 caractères', () => {
+    component.registerForm.patchValue({ password: 'court12' });
 
-    expect(component.registerForm.get('password')?.hasError('minlength')).toBe(true);
+    expect(component.registerForm.get('password')?.hasError('passwordPolicy')).toBe(true);
   });
 
   it("bascule prenom/nom vers nomOrganisation quand le type d'inscription devient ECOLE", () => {

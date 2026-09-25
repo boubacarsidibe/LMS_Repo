@@ -3,7 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { catchError, finalize, map, Observable, of, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthResponse } from '../models/auth-response';
-import { User } from '../models/user.model';
+import { ProfilCompte, User } from '../models/user.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -70,6 +70,25 @@ export class Auth {
   /** Redirige l'utilisateur vers sa page d'accueil selon son rôle */
   redirectByRole(router: any): void {
     router.navigate([this.getHomeUrl() ?? '/accueil']);
+  }
+
+  /**
+   * Type de compte n'ayant pas encore de rôle métier : oriente le navbar d'une
+   * école, d'une entreprise ou d'un candidat formateur. Un compte qui porte déjà
+   * un autre rôle n'est jamais reclassé d'après son type.
+   */
+  getProfilCompte(): ProfilCompte | null {
+    const roles = this.getUserRoles();
+    if (roles.includes('ROLE_ECOLE_FORMATION')) return 'ecole';
+    if (roles.includes('ROLE_ENTREPRISE')) return 'entreprise';
+    if (roles.includes('ROLE_CANDIDAT_FORMATEUR')) return 'formateur';
+    if (roles.length > 0) return null;
+    switch (this.currentUser()?.typeInscription) {
+      case 'ECOLE': return 'ecole';
+      case 'ENTREPRISE': return 'entreprise';
+      case 'FORMATEUR': return 'formateur';
+      default: return null;
+    }
   }
 
   getUserRoles(): string[] {

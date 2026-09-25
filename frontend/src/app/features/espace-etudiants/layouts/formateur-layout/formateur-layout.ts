@@ -48,7 +48,6 @@ export class FormateurLayout implements OnInit {
     { label: 'Retours & évaluations', icon: 'assignment_turned_in', route: 'retours-evaluations' },
     { label: 'Annonces', icon: 'campaign', route: 'annonces' },
     { label: 'Photothèque', icon: 'photo_library', route: 'phototheque' },
-    { label: 'Rendez-vous', icon: 'event', route: 'rendez-vous' },
   ];
 
   constructor(

@@ -18,7 +18,7 @@ L'inscription publique crée un compte sans rôle métier et ouvre sa session. L
 
 ## Mots de passe et révocation
 
-Tous les mots de passe choisis passent par la même politique : au moins douze caractères Unicode, pas uniquement des espaces, au maximum 72 octets UTF-8 pour BCrypt. Les comptes existants peuvent toujours se connecter avec leur ancien mot de passe ; la règle s'applique à une création ou un changement.
+Tous les mots de passe choisis passent par la même politique : au moins huit caractères Unicode, pas uniquement des espaces, sans longueur maximale (au-delà de 72 octets, limite de BCrypt, le mot de passe est condensé en SHA-256 avant hachage : voir `PasswordConfig`). Les comptes existants peuvent toujours se connecter avec leur ancien mot de passe ; la règle s'applique à une création ou un changement.
 
 POST /api/auth/change-password exige le mot de passe actuel. Le nouveau hash et l'incrément de sessionVersion sont écrits ensemble par une requête SQL atomique. Le frontend efface alors sa session et demande une nouvelle connexion. La récupération révoque également les JWT existants.
 

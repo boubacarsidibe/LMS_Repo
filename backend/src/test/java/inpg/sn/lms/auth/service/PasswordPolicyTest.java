@@ -9,16 +9,21 @@ import org.junit.jupiter.api.Test;
 class PasswordPolicyTest {
 
     @Test
-    @DisplayName("Accepte un mot de passe de douze caractères")
+    @DisplayName("Accepte un mot de passe de huit caractères")
     void accepte_la_longueur_minimale() {
-        assertThatCode(() -> PasswordPolicy.exigerMotDePasseRobuste("Abcd1234!xyza"))
+        assertThatCode(() -> PasswordPolicy.exigerMotDePasseRobuste("Abcd123!"))
                 .doesNotThrowAnyException();
     }
 
     @Test
-    void limite_bcrypt_en_octets_et_non_en_caracteres() {
-        assertThatCode(() -> PasswordPolicy.exigerMotDePasseRobuste("é".repeat(36))).doesNotThrowAnyException();
-        assertThatIllegalArgumentException().isThrownBy(() -> PasswordPolicy.exigerMotDePasseRobuste("é".repeat(37)));
+    @DisplayName("Aucun plafond de longueur : un mot de passe très long est accepté")
+    void pas_de_longueur_maximale() {
+        assertThatCode(() -> PasswordPolicy.exigerMotDePasseRobuste("é".repeat(200))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Refuse un mot de passe fait uniquement d'espaces")
+    void refuse_les_espaces_seuls() {
         assertThatIllegalArgumentException().isThrownBy(() -> PasswordPolicy.exigerMotDePasseRobuste(" ".repeat(12)));
     }
 
@@ -26,7 +31,7 @@ class PasswordPolicyTest {
     @DisplayName("Refuse un mot de passe court ou absent")
     void refuse_un_mot_de_passe_court_ou_absent() {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> PasswordPolicy.exigerMotDePasseRobuste("Abcd1234!xy"));
+                .isThrownBy(() -> PasswordPolicy.exigerMotDePasseRobuste("Abcd123"));
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> PasswordPolicy.exigerMotDePasseRobuste(null));
     }

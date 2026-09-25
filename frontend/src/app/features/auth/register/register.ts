@@ -104,14 +104,11 @@ export class Register {
     this.tentativeEnvoi = true;
     if (this.registerForm.invalid) {
       if (this.registerForm.controls['password'].hasError('passwordPolicy')) {
-        this.errorMessage = 'Le mot de passe doit contenir au moins 12 caractères et ne pas dépasser 72 octets UTF-8.';
+        this.errorMessage = 'Le mot de passe doit contenir au moins 8 caractères.';
+      } else if (this.registerForm.hasError('motsDePasseDifferents')) {
+        this.errorMessage = 'Les mots de passe ne correspondent pas.';
       }
       this.registerForm.markAllAsTouched();
-      return;
-    }
-
-    if (this.registerForm.value.password !== this.registerForm.value.confirmPassword) {
-      this.errorMessage = 'Les mots de passe ne correspondent pas.';
       return;
     }
 

@@ -69,7 +69,7 @@ export class ResponsableAdmissionParametresComponent implements OnInit {
     if (this.passwordForm.invalid || this.passwordsMismatch) {
       this.passwordForm.markAllAsTouched();
       if (this.passwordForm.get('newPassword')?.hasError('passwordPolicy')) {
-        this.errorMessage = 'Le mot de passe doit contenir au moins 12 caractères et ne pas dépasser 72 octets UTF-8.';
+        this.errorMessage = 'Le mot de passe doit contenir au moins 8 caractères.';
       }
       if (this.passwordsMismatch) {
         this.errorMessage = 'Les mots de passe ne correspondent pas.';
