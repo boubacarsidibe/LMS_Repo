@@ -3,8 +3,10 @@ package inpg.sn.lms.recrutement.entity;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import inpg.sn.lms.auth.entity.Candidat;
 import jakarta.persistence.CascadeType;
@@ -14,6 +16,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -73,6 +77,12 @@ public class SessionCandidature {
     @ManyToOne
     @JoinColumn(name = "program_id")
     private Program program;
+
+    @ManyToMany
+    @JoinTable(name = "session_candidature_programmes",
+            joinColumns = @JoinColumn(name = "session_candidature_id"),
+            inverseJoinColumns = @JoinColumn(name = "program_id"))
+    private Set<Program> programmes = new LinkedHashSet<>();
 
     /**
      * Premier filtre automatique de présélection, propre à cette session

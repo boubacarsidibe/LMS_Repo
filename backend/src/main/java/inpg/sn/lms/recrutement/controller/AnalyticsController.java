@@ -115,8 +115,8 @@ public class AnalyticsController {
                 ? ((double) (soumisesCeMois - soumisesMoisPrecedent) / soumisesMoisPrecedent) * 100
                 : (soumisesCeMois > 0 ? 100.0 : 0.0);
 
-        long admis = all.stream().filter(c -> c.getStatut() == EnumStatutCandidature.ADMIS3
-                || c.getStatut() == EnumStatutCandidature.ADMIS2).count();
+        long admis = all.stream().filter(c -> c.getStatut() == EnumStatutCandidature.ADMIS
+                || c.getStatut() == EnumStatutCandidature.INSCRIPTION_FINALISEE).count();
         double tauxAdmission = total > 0 ? ((double) admis / total) * 100 : 0.0;
 
         double frais = paiementRepo.findAll().stream()
@@ -165,11 +165,13 @@ public class AnalyticsController {
                     .filter(c -> c.getDateSoumission() != null && YearMonth.from(c.getDateSoumission()).equals(mois))
                     .toList();
             long validees = duMois.stream()
-                    .filter(c -> c.getStatut() == EnumStatutCandidature.ADMIS1
-                            || c.getStatut() == EnumStatutCandidature.ADMIS2
-                            || c.getStatut() == EnumStatutCandidature.ADMIS3)
+                    .filter(c -> c.getStatut() == EnumStatutCandidature.TEST_REUSSI
+                            || c.getStatut() == EnumStatutCandidature.ENTRETIEN_EFFECTUE
+                            || c.getStatut() == EnumStatutCandidature.ADMIS
+                            || c.getStatut() == EnumStatutCandidature.INSCRIPTION_FINALISEE)
                     .count();
-            long rejetees = duMois.stream().filter(c -> c.getStatut() == EnumStatutCandidature.REJETE).count();
+            long rejetees = duMois.stream().filter(c -> c.getStatut() == EnumStatutCandidature.DOSSIER_REJETE
+                    || c.getStatut() == EnumStatutCandidature.NON_ADMIS).count();
 
             Map<String, Object> m = new HashMap<>();
             m.put("mois", capitaliser(mois.getMonth().getDisplayName(TextStyle.FULL, Locale.FRENCH)));
@@ -242,9 +244,9 @@ public class AnalyticsController {
                 .filter(c -> c.getStatut() != EnumStatutCandidature.BROUILLON)
                 .filter(this::aUnPaiementReussi)
                 .count();
-        long admissibles = all.stream().filter(c -> estAuMoins(c.getStatut(), EnumStatutCandidature.ADMIS1)).count();
-        long entretiens = all.stream().filter(c -> estAuMoins(c.getStatut(), EnumStatutCandidature.ADMIS2)).count();
-        long inscrits = all.stream().filter(c -> c.getStatut() == EnumStatutCandidature.ADMIS3).count();
+        long admissibles = all.stream().filter(c -> estAuMoins(c.getStatut(), EnumStatutCandidature.TEST_REUSSI)).count();
+        long entretiens = all.stream().filter(c -> estAuMoins(c.getStatut(), EnumStatutCandidature.CONVOQUE_ENTRETIEN)).count();
+        long inscrits = all.stream().filter(c -> c.getStatut() == EnumStatutCandidature.INSCRIPTION_FINALISEE).count();
 
         List<Map<String, Object>> funnel = new ArrayList<>();
         funnel.add(createFunnelStep("Dossiers créés", crees, 100));
@@ -263,8 +265,11 @@ public class AnalyticsController {
     /** Un statut donné a-t-il au moins atteint {@code seuil} dans le parcours SOUMIS→ADMIS3 ? */
     private boolean estAuMoins(EnumStatutCandidature statut, EnumStatutCandidature seuil) {
         List<EnumStatutCandidature> parcours = List.of(EnumStatutCandidature.SOUMIS,
-                EnumStatutCandidature.EN_COURS_DE_PRESELECTION, EnumStatutCandidature.ADMIS1,
-                EnumStatutCandidature.ADMIS2, EnumStatutCandidature.ADMIS3);
+                EnumStatutCandidature.PRESELECTIONNE, EnumStatutCandidature.PAIEMENT_EN_ATTENTE,
+                EnumStatutCandidature.PAIEMENT_CONFIRME, EnumStatutCandidature.CONVOQUE_TEST,
+                EnumStatutCandidature.TEST_REUSSI, EnumStatutCandidature.CONVOQUE_ENTRETIEN,
+                EnumStatutCandidature.ENTRETIEN_EFFECTUE, EnumStatutCandidature.ADMIS,
+                EnumStatutCandidature.INSCRIPTION_FINALISEE);
         int indexStatut = parcours.indexOf(statut);
         int indexSeuil = parcours.indexOf(seuil);
         return indexStatut >= 0 && indexStatut >= indexSeuil;
@@ -390,11 +395,12 @@ public class AnalyticsController {
         lignes.add(ligne("Indicateurs clés", "Frais collectés", kpis.get("fraisCollectes") + " FCFA"));
         lignes.add(ligne("Indicateurs clés", "Temps de traitement moyen", kpis.get("tempsTraitement") + " j"));
 
-        List<String> statutsLabels = List.of("Soumis", "En présélection", "Admis au test", "Admis à l'entretien",
-                "Admis final", "Rejeté");
+        List<String> statutsLabels = List.of("Soumis", "Présélectionné", "Test réussi", "Entretien effectué",
+                "Admis", "Non admis");
         List<EnumStatutCandidature> statuts = List.of(EnumStatutCandidature.SOUMIS,
-                EnumStatutCandidature.EN_COURS_DE_PRESELECTION, EnumStatutCandidature.ADMIS1,
-                EnumStatutCandidature.ADMIS2, EnumStatutCandidature.ADMIS3, EnumStatutCandidature.REJETE);
+                EnumStatutCandidature.PRESELECTIONNE, EnumStatutCandidature.TEST_REUSSI,
+                EnumStatutCandidature.ENTRETIEN_EFFECTUE, EnumStatutCandidature.ADMIS,
+                EnumStatutCandidature.NON_ADMIS);
         List<Double> statutsValeurs = new ArrayList<>();
         for (int i = 0; i < statuts.size(); i++) {
             EnumStatutCandidature statutCourant = statuts.get(i);

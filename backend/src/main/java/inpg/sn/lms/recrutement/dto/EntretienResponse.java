@@ -1,6 +1,7 @@
 package inpg.sn.lms.recrutement.dto;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,4 +24,8 @@ public class EntretienResponse {
     private boolean confirmeParCandidat;
     private String motifReport;
     private Long candidatId;
+    private String candidatNom;
+    private String candidatPrenom;
+    private String numeroDossier;
+    private UUID groupeEntretienId;
 }

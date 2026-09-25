@@ -34,7 +34,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // ou expiré (voir SecurityConfig.authenticationEntryPoint). Un 403, lui,
       // reste un vrai refus de droit sur un compte valide : on le laisse aux
       // écrans, qui affichent leur propre message.
-      if (error.status === 401 && token) {
+      if (error.status === 401 && token && cibleApi && auth.getToken() === token) {
         auth.clearSession();
         if (!router.url.startsWith('/auth/login')) {
           router.navigate(['/auth/login'], { queryParams: { expired: 1 } });

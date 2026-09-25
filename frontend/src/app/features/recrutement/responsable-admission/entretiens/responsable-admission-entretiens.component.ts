@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { Observable, map, tap } from 'rxjs';
 import {
   CandidatureResponse,
@@ -13,9 +13,7 @@ import {
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
-import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { ReportButtonComponent } from '../../../../shared/components/report-button/report-button.component';
-import { UiNoteComponent } from '../../../../shared/components/ui/ui-note.component';
 
 interface EntretienAffiche extends EntretienResponse {
   candidatNom: string;
@@ -26,7 +24,7 @@ interface EntretienAffiche extends EntretienResponse {
 @Component({
   selector: 'app-responsable-admission-entretiens',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, ReportButtonComponent, UiNoteComponent],
+  imports: [CommonModule, RouterModule, FormsModule, ReactiveFormsModule, ReportButtonComponent],
   templateUrl: './responsable-admission-entretiens.component.html',
 })
 export class ResponsableAdmissionEntretiensComponent implements OnInit {
@@ -52,8 +50,8 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
   envoiGroupeEnCours = false;
   convocationFormError = '';
 
-  constructor(private recrutementService: RecrutementService, private fb: FormBuilder,
-              private notifications: NotificationService, private confirmation: ConfirmationService) {
+  constructor(private recrutementService: RecrutementService, private fb: FormBuilder, private router: Router,
+              private notifications: NotificationService) {
     this.entretienForm = this.fb.group({
       candidatId: ['', Validators.required],
       dateHeure: ['', Validators.required],
@@ -187,6 +185,10 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
     this.drawerOpen = false;
   }
 
+  ouvrirEntretien(entretien: EntretienResponse): void {
+    this.router.navigate(['/responsable-admission/entretiens', entretien.id]);
+  }
+
   private versInputDatetimeLocal(iso: string): string {
     // "2026-06-12T10:00:00" (backend) -> "2026-06-12T10:00" (attendu par <input type="datetime-local">)
     return iso ? iso.slice(0, 16) : '';
@@ -223,18 +225,11 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
     });
   }
 
-  supprimer(entretien: EntretienAffiche): void {
-    this.confirmation.demander({
-      titre: "Annuler l'entretien",
-      message: `Annuler l'entretien de ${entretien.candidatPrenom} ${entretien.candidatNom} ?`,
-      libelleConfirmer: "Annuler l'entretien",
-      destructif: true,
-    }).subscribe((confirme) => {
-      if (!confirme) return;
-      this.recrutementService.supprimerEntretien(entretien.id).subscribe({
-        next: () => this.charger(),
-        error: () => this.notifications.erreur("Échec de l'annulation de l'entretien."),
-      });
+  supprimer(entretien: EntretienResponse): void {
+    if (!confirm("Supprimer cet entretien ?")) return;
+    this.recrutementService.supprimerEntretien(entretien.id).subscribe({
+      next: () => this.charger(),
+      error: () => this.notifications.erreur("Échec de l'annulation de l'entretien."),
     });
   }
 

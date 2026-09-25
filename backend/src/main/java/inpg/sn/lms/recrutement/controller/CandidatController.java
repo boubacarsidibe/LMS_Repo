@@ -251,7 +251,8 @@ public class CandidatController {
                 .map(c -> candidatureRepository.findByCandidatId(c.getId()))
                 .orElseGet(List::of)
                 .stream()
-                .filter(c -> c.getStatut() != EnumStatutCandidature.REJETE)
+                .filter(c -> c.getStatut() != EnumStatutCandidature.DOSSIER_REJETE
+                        && c.getStatut() != EnumStatutCandidature.NON_ADMIS)
                 .filter(c -> !STATUTS_ENCORE_MODIFIABLES.contains(c.getStatut()))
                 .findFirst();
         if (dossierVerrouille.isPresent()) {
@@ -277,7 +278,8 @@ public class CandidatController {
         // 4. Vérifier si une candidature existe déjà (non rejetée)
         List<Candidature> existantes = candidatureRepository.findByCandidatId(candidat.getId());
         Optional<Candidature> active = existantes.stream()
-                .filter(c -> c.getStatut() != EnumStatutCandidature.REJETE)
+                .filter(c -> c.getStatut() != EnumStatutCandidature.DOSSIER_REJETE
+                        && c.getStatut() != EnumStatutCandidature.NON_ADMIS)
                 .findFirst();
 
         if (active.isPresent()) {
@@ -452,7 +454,8 @@ public class CandidatController {
         if (!candidature.getCandidat().getId().equals(candidat.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        if (candidature.getStatut() != EnumStatutCandidature.ADMIS3) {
+        if (candidature.getStatut() != EnumStatutCandidature.ADMIS
+                && candidature.getStatut() != EnumStatutCandidature.INSCRIPTION_FINALISEE) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(("Lettre disponible uniquement pour une candidature admise.").getBytes(StandardCharsets.UTF_8));
         }
@@ -495,8 +498,8 @@ public class CandidatController {
         // Une pièce est figée dès que le dossier a atteint une décision de sélection.
         // Un éventuel complément suit alors une réouverture tracée par le service admission,
         // plutôt que de modifier silencieusement le dossier examiné.
-        if (candidature.getStatut() != EnumStatutCandidature.SOUMIS
-                && candidature.getStatut() != EnumStatutCandidature.EN_COURS_DE_PRESELECTION) {
+        if (candidature.getStatut() != EnumStatutCandidature.PRESELECTIONNE
+                && candidature.getStatut() != EnumStatutCandidature.PAIEMENT_EN_ATTENTE) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(
                     "message", "Vous ne pouvez plus ajouter de document à cette étape du dossier. "
                             + "Contactez le service admission si un complément est nécessaire."));
@@ -662,7 +665,8 @@ public class CandidatController {
         }
 
         Candidature candidature = candidatureRepository.findByCandidatId(candidat.getId()).stream()
-                .filter(c -> c.getStatut() != EnumStatutCandidature.REJETE)
+                .filter(c -> c.getStatut() != EnumStatutCandidature.DOSSIER_REJETE
+                        && c.getStatut() != EnumStatutCandidature.NON_ADMIS)
                 .findFirst()
                 .orElse(null);
 

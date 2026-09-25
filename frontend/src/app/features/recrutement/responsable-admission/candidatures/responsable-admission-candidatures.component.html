@@ -1,6 +1,6 @@
 <!-- ==================== CONTENU SEUL ==================== -->
-<div class="relative z-30 flex flex-col xl:flex-row justify-between items-start xl:items-end mb-stack-lg gap-5">
-  <div class="max-w-2xl">
+<div class="relative z-30 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+  <div>
     <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">INPG — Institut National du Pétrole et du Gaz</p>
     <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Revue des candidatures</h2>
     <p class="font-body-md text-body-md text-on-surface-variant mt-1">Suivez les dossiers, de la soumission jusqu’à l’admission.</p>
@@ -84,12 +84,12 @@
       {{ nombreFiltresActifs }} filtre{{ nombreFiltresActifs > 1 ? 's' : '' }} actif{{ nombreFiltresActifs > 1 ? 's' : '' }}
     </span>
   </div>
-  <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_18rem_auto] gap-3 items-end">
+  <div class="flex flex-col lg:flex-row gap-3 items-end">
     <div class="flex-1 min-w-0">
-      <label for="candidature-recherche" class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Rechercher</label>
+      <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Rechercher</label>
       <div class="relative">
         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-        <input id="candidature-recherche" [(ngModel)]="recherche" (ngModelChange)="recalculerFiltres()"
+        <input [(ngModel)]="recherche" (ngModelChange)="recalculerFiltres()"
                class="w-full h-10 pl-10 pr-10 bg-surface border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none font-body-md text-body-md"
                placeholder="Nom, prénom, email ou n° de dossier…" type="text"/>
         <button *ngIf="recherche" type="button" (click)="effacerRecherche()" title="Effacer la recherche" aria-label="Effacer la recherche"
@@ -98,12 +98,19 @@
         </button>
       </div>
     </div>
-    <div class="w-full">
-      <label for="candidature-filtre-session" class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Session</label>
-      <select id="candidature-filtre-session" [(ngModel)]="filtreSessionId" (ngModelChange)="recalculerFiltres()" aria-label="Filtrer par session"
+    <div class="w-full lg:w-60 shrink-0">
+      <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Session</label>
+      <select [(ngModel)]="filtreSessionId" (ngModelChange)="recalculerFiltres()" aria-label="Filtrer par session"
               class="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-on-surface font-body-sm text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
         <option [ngValue]="null">Toutes les sessions</option>
         <option *ngFor="let s of sessionsDisponibles" [ngValue]="s.id">{{ s.libelle }}</option>
+      </select>
+    </div>
+    <div class="w-full lg:w-52 shrink-0">
+      <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Statut</label>
+      <select [ngModel]="filtreStatut" (ngModelChange)="setFiltreStatut($event)"
+              class="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-on-surface font-body-sm text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
+        <option *ngFor="let o of onglets" [value]="o.statut">{{ o.libelle }} ({{ compter(o.statut) }})</option>
       </select>
     </div>
     <button type="button" (click)="reinitialiserFiltres()" [disabled]="!filtresActifs"
@@ -114,7 +121,7 @@
 </div>
 
 <!-- Étapes du parcours : grille responsive sans barre de défilement horizontale. -->
-<div class="status-grid mb-stack-md" aria-label="Filtrer par étape du parcours">
+<div class="hidden" aria-label="Filtres par étape du parcours">
   <button *ngFor="let o of onglets" type="button" (click)="setFiltreStatut(o.statut)"
           [attr.aria-pressed]="filtreStatut === o.statut"
           class="status-tab flex items-center justify-between gap-1.5 px-2 h-8 rounded-md text-[11px] font-semibold transition-colors border"
@@ -175,6 +182,13 @@
 </section>
 
 <!-- Loading -->
+<div *ngIf="menuContextuel" (click)="$event.stopPropagation()" class="fixed z-[80] w-52 py-1 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg" [style.left.px]="menuContextuel.x" [style.top.px]="menuContextuel.y" role="menu">
+  <button type="button" (click)="ouvrirDossierContextuel()" class="w-full px-4 py-2 text-left text-body-sm text-on-surface hover:bg-surface-container-low">Ouvrir le dossier</button>
+  <button type="button" (click)="viderSelection(); fermerMenuContextuel()" class="w-full px-4 py-2 text-left text-body-sm text-on-surface hover:bg-surface-container-low">Désélectionner</button>
+  <div class="my-1 border-t border-outline-variant"></div>
+  <button *ngIf="actionSuivante(menuContextuel.candidature) as action" type="button" (click)="actionSuivanteContextuelle()" class="w-full px-4 py-2 text-left text-body-sm text-secondary hover:bg-surface-container-low">{{ action.libelle }}</button>
+  <button *ngIf="peutRejeter(menuContextuel.candidature)" type="button" (click)="rejeterContextuel()" class="w-full px-4 py-2 text-left text-body-sm text-error hover:bg-error-container">Rejeter le dossier</button>
+</div>
 <div *ngIf="loading" class="loading-state p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant" role="status" aria-live="polite">
   <span class="loading-spinner block mx-auto mb-3" aria-hidden="true"></span>
   <p class="font-body-md text-body-md text-on-surface-variant">Chargement des candidatures…</p>
@@ -224,9 +238,10 @@
         </tr>
       </tbody>
       <tbody class="divide-y divide-outline-variant">
-        <tr *ngFor="let c of candidaturesPage; let i = index" (click)="voirDetail(c)"
+        <tr *ngFor="let c of candidaturesPage; let i = index" (click)="voirDetail(c)" (contextmenu)="selectionnerAuClicDroit(c.id, i, $event)"
             class="hover:bg-surface-container-low transition-colors group cursor-pointer"
-            [class.bg-secondary-container]="estSelectionne(c.id)">
+            [class.bg-secondary-fixed]="estSelectionne(c.id)"
+            [class.shadow-[inset_4px_0_0_0_var(--color-secondary)]]="estSelectionne(c.id)">
           <td class="p-4" (click)="$event.stopPropagation()">
             <input type="checkbox" [checked]="estSelectionne(c.id)" (click)="basculerSelection(c.id, i, $event)" [attr.aria-label]="'Sélectionner ' + c.candidatPrenom + ' ' + c.candidatNom" class="w-4 h-4 accent-secondary cursor-pointer">
           </td>
@@ -257,16 +272,16 @@
           </td>
           <td class="p-4 text-right" (click)="$event.stopPropagation()">
             <div class="flex justify-end gap-1" [class.opacity-40]="actionEnCours">
-              <button *ngIf="actionSuivante(c) && !(c.statut === 'SOUMIS' && dossierVide(c))" type="button" [disabled]="actionEnCours" (click)="actionSuivante(c)!.action()" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" [title]="actionSuivante(c)!.libelle" [attr.aria-label]="actionSuivante(c)!.libelle">
+              <button *ngIf="actionSuivante(c) && !(c.statut === 'SOUMIS' && dossierVide(c))" type="button" [disabled]="actionEnCours" (click)="actionSuivante(c)!.action()" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" [title]="actionSuivante(c)!.libelle">
                 <span class="material-symbols-outlined text-[20px]">check</span>
               </button>
               <span *ngIf="actionSuivante(c) && c.statut === 'SOUMIS' && dossierVide(c)" class="p-1.5 text-error" title="Aucune pièce jointe : présélection impossible">
                 <span class="material-symbols-outlined text-[20px]">error</span>
               </span>
-              <button *ngIf="peutRejeter(c)" type="button" [disabled]="actionEnCours" (click)="rejeter(c)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Rejeter" aria-label="Rejeter">
+              <button *ngIf="peutRejeter(c)" type="button" [disabled]="actionEnCours" (click)="rejeter(c)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Rejeter">
                 <span class="material-symbols-outlined text-[20px]">close</span>
               </button>
-              <button *ngIf="peutAnnuler(c)" type="button" [disabled]="actionEnCours" (click)="annuler(c)" [title]="'Annuler : revenir à ' + libelleStatut(c.statutPrecedent!)" [attr.aria-label]="'Annuler : revenir à ' + libelleStatut(c.statutPrecedent!)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors">
+              <button *ngIf="peutAnnuler(c)" type="button" [disabled]="actionEnCours" (click)="annuler(c)" [title]="'Annuler : revenir à ' + libelleStatut(c.statutPrecedent!)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors">
                 <span class="material-symbols-outlined text-[20px]">undo</span>
               </button>
             </div>
@@ -298,4 +313,23 @@
       </button>
     </div>
   </div>
+</div>
+
+<div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
+  <section role="dialog" aria-modal="true" aria-labelledby="titre-retour" class="w-full max-w-md bg-surface-container-lowest rounded-xl border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
+    <div class="flex items-start gap-3">
+      <span class="material-symbols-outlined text-secondary" aria-hidden="true">lock</span>
+      <div>
+        <h2 id="titre-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
+        <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourCibles.length }} dossier(s) {{ retourStatutCible ? 'reviendra/reviendront au statut « ' + libelleStatut(retourStatutCible) + ' »' : 'retrouvera/retrouveront son statut précédent' }}.</p>
+      </div>
+    </div>
+    <div *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</div>
+    <label for="mot-de-passe-retour" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
+    <input id="mot-de-passe-retour" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" />
+    <div class="flex justify-end gap-3 mt-6">
+      <button type="button" (click)="fermerRetour()" [disabled]="actionEnCours || rejetGroupeEnCours" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md">Annuler</button>
+      <button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours || rejetGroupeEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md disabled:opacity-60">{{ actionEnCours || rejetGroupeEnCours ? 'Validation…' : 'Confirmer' }}</button>
+    </div>
+  </section>
 </div>

@@ -1,7 +1,7 @@
 import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Cours } from '../../models/cours';
 import { Promotion } from '../../models/promotion';
 import { Support } from '../../models/support';
@@ -19,7 +19,7 @@ import { environment } from '../../../../../environments/environment';
 @Component({
   selector: 'app-mes-cours',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
   templateUrl: './mes-cours.html',
   styleUrl: './mes-cours.css',
 })
@@ -574,6 +574,10 @@ export class MesCours implements OnInit {
         || (c.promotions || []).some(p => String(p.id) === this.promotionSelectionnee);
       return correspondRecherche && correspondSemestre && correspondPromotion;
     });
+  }
+
+  get totalEtudiantsInscrits(): number {
+    return this.cours.reduce((total, cours) => total + (cours.nbEtudiants || 0), 0);
   }
 
   urlImage(cours: Cours): string {

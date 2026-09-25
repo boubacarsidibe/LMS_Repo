@@ -35,5 +35,8 @@ public class SessionCandidatureResponse {
     private String infoCarteEtudiante;
     private String infoRentree;
     private BigDecimal montantFraisDossier;
+    private List<Long> programmeIds;
+    private int quotaMax;
+    private String status;
     private List<CritereAdmissionResponse> criteresPersonnalises;
 }

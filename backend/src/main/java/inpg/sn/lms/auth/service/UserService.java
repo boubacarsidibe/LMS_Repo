@@ -17,6 +17,7 @@ import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -53,7 +54,7 @@ public class UserService implements UserDetailsService {
 
         PasswordPolicy.exigerMotDePasseRobuste(userDto.getPassword());
 
-        String email = userDto.getEmail().trim().toLowerCase();
+        String email = userDto.getEmail().trim().toLowerCase(Locale.ROOT);
         if (userRepository.findByEmail(email) != null) {
             throw new IllegalArgumentException("Cet e-mail est déjà utilisé.");
         }
@@ -119,7 +120,7 @@ public class UserService implements UserDetailsService {
     }
 
     public User findByEmail(String email) {
-        return email == null ? null : userRepository.findByEmail(email.trim().toLowerCase());
+        return email == null ? null : userRepository.findByEmail(email.trim().toLowerCase(Locale.ROOT));
     }
 
     public boolean hasRole(User user, String roleCode) {
@@ -148,8 +149,8 @@ public class UserService implements UserDetailsService {
         PasswordPolicy.exigerMotDePasseRobuste(newPassword);
         User user = findByEmail(email);
         if (user != null) {
-            user.setPassword(passwordEncoder.encode(newPassword));
-            return invaliderSessions(user);
+            userRepository.changerMotDePasse(user.getId(), passwordEncoder.encode(newPassword));
+            return userRepository.findById(user.getId()).orElse(null);
         }
         return null;
     }
@@ -161,8 +162,9 @@ public class UserService implements UserDetailsService {
      */
     @Transactional
     public User invaliderSessions(User user) {
-        user.incrementSessionVersion();
-        return userRepository.save(user);
+        // Mise à jour atomique : ne jamais réenregistrer un hash issu d'une requête ancienne.
+        userRepository.invaliderSessions(user.getId());
+        return userRepository.findById(user.getId()).orElse(null);
     }
 
     public User save(User user) {

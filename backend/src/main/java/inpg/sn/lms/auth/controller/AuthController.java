@@ -1,19 +1,19 @@
 package inpg.sn.lms.auth.controller;
 
 import inpg.sn.lms.auth.dto.AuthRequest;
-import inpg.sn.lms.auth.dto.AuthResponse;
 import inpg.sn.lms.auth.dto.FormateurDto;
 import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.enums.EnumTypeInscription;
 import inpg.sn.lms.auth.service.FormateurService;
 import inpg.sn.lms.auth.service.PasswordPolicy;
+import inpg.sn.lms.auth.service.LoginAttemptService;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.service.OtpService;
 import inpg.sn.lms.auth.service.UserService;
-import inpg.sn.lms.exception.ResourceNotFoundException;
 import inpg.sn.lms.security.JwtUtils;
 
 import java.util.Map;
+import java.util.Locale;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +24,6 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(AuthController.class);
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
@@ -40,16 +40,18 @@ public class AuthController {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final FormateurService formateurService;
+    private final LoginAttemptService loginAttemptService;
 
     public AuthController(AuthenticationManager authenticationManager,
             JwtUtils jwtUtils, OtpService otpService, UserService userService, PasswordEncoder passwordEncoder,
-            FormateurService formateurService) {
+            FormateurService formateurService, LoginAttemptService loginAttemptService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
         this.otpService = otpService;
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.formateurService = formateurService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     /**
@@ -78,15 +80,11 @@ public class AuthController {
     public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request) {
         String email = request.get("email");
 
-        if (email == null || email.isBlank()) {
+        if (email == null || email.isBlank() || email.length() > 254) {
             return ResponseEntity.badRequest().body(Map.of("message", "L'e-mail est requis."));
         }
 
-        email = email.trim().toLowerCase();
-        if (userService.findByEmail(email) == null) {
-            return ResponseEntity.ok(Map.of("message", "Si un compte correspond à cette adresse, un code a été envoyé."));
-        }
-
+        email = email.trim().toLowerCase(Locale.ROOT);
         String otp;
         try {
             otp = otpService.generateOtp(email);
@@ -95,13 +93,13 @@ public class AuthController {
                     .body(Map.of("message", e.getMessage()));
         }
         try {
-            otpService.sendOtpEmail(email, otp);
+            if (userService.findByEmail(email) != null) {
+                otpService.sendOtpEmail(email, otp);
+            }
         } catch (MailException e) {
-            // Sans cette prise en charge, une panne SMTP remonte en 500 générique et
-            // laisse un code non délivré en cache : on l'invalide et on le signale.
+            // Réponse identique pour ne pas révéler si le compte existe.
             otpService.invalidateOtp(email);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("message", "L'envoi de l'e-mail a échoué. Veuillez réessayer dans quelques instants."));
+            LOGGER.warn("Envoi du code de récupération impossible : service SMTP indisponible.");
         }
 
         return ResponseEntity.ok(Map.of("message", "Si un compte correspond à cette adresse, un code a été envoyé."));
@@ -113,7 +111,7 @@ public class AuthController {
         String code = request.get("code");
         String newPassword = request.get("newPassword");
 
-        if (email == null || email.isBlank()) {
+        if (email == null || email.isBlank() || email.length() > 254) {
             return ResponseEntity.badRequest().body(Map.of("message", "L'e-mail est requis."));
         }
         if (code == null || code.isBlank()) {
@@ -126,7 +124,7 @@ public class AuthController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
-        email = email.trim().toLowerCase();
+        email = email.trim().toLowerCase(Locale.ROOT);
         boolean otpValide = otpService.validateOtp(email, code);
         if (!otpValide) {
             return ResponseEntity.badRequest().body(Map.of("message", "Code de vérification invalide ou expiré."));
@@ -134,7 +132,7 @@ public class AuthController {
 
         User user = userService.findByEmail(email);
         if (user == null) {
-            throw new ResourceNotFoundException("Utilisateur", "email", email);
+            return ResponseEntity.badRequest().body(Map.of("message", "Code de vérification invalide ou expiré."));
         }
 
         userService.changePassword(email, newPassword);
@@ -143,6 +141,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+        if (request.getEmail() == null || request.getEmail().isBlank() || request.getEmail().length() > 254
+                || request.getPassword() == null || request.getPassword().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Email ou mot de passe incorrect"));
+        }
+        if (!loginAttemptService.autoriser(request.getEmail())) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "Trop de tentatives de connexion. Réessayez dans 15 minutes."));
+        }
         try {
             // 1. Récupération de l'utilisateur par e-mail
             User user = userService.findByEmail(request.getEmail());
@@ -153,7 +160,7 @@ public class AuthController {
             }
 
             // 2. Authentification via le username extrait de l'utilisateur
-            Authentication authentication = authenticationManager.authenticate(
+            authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getUsername(), request.getPassword()));
 
             // 3. Récupération des détails de l'utilisateur

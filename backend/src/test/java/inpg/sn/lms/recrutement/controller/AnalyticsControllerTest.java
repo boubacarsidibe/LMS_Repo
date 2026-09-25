@@ -102,9 +102,9 @@ class AnalyticsControllerTest {
         when(candidatureRepo.findAll()).thenReturn(List.of(
                 candidature(EnumStatutCandidature.BROUILLON, "Sénégal", null),
                 candidature(EnumStatutCandidature.SOUMIS, "Sénégal", paiement(EnumStatutPaiement.SUCCES)),
-                candidature(EnumStatutCandidature.ADMIS1, "Sénégal", paiement(EnumStatutPaiement.SUCCES)),
-                candidature(EnumStatutCandidature.ADMIS2, "Sénégal", paiement(EnumStatutPaiement.SUCCES)),
-                candidature(EnumStatutCandidature.ADMIS3, "Sénégal", paiement(EnumStatutPaiement.SUCCES))));
+                candidature(EnumStatutCandidature.TEST_REUSSI, "Sénégal", paiement(EnumStatutPaiement.SUCCES)),
+                candidature(EnumStatutCandidature.CONVOQUE_ENTRETIEN, "Sénégal", paiement(EnumStatutPaiement.SUCCES)),
+                candidature(EnumStatutCandidature.INSCRIPTION_FINALISEE, "Sénégal", paiement(EnumStatutPaiement.SUCCES))));
 
         List<Map<String, Object>> funnel = controller.conversionFunnel().getBody();
 

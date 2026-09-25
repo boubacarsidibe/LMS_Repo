@@ -1,3 +1,4 @@
+import { validPassword } from '../../../../core/auth/validators/password-policy';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -122,8 +123,8 @@ export class MonProfilEtudiant implements OnInit {
     this.messageMotDePasse = null;
     this.erreurMotDePasse = null;
 
-    if (this.nouveauMotDePasse.length < 6) {
-      this.erreurMotDePasse = 'Le nouveau mot de passe doit contenir au moins 6 caractères.';
+    if (!validPassword(this.nouveauMotDePasse)) {
+      this.erreurMotDePasse = 'Le nouveau mot de passe doit contenir au moins 8 caractères et ne pas dépasser 72 octets UTF-8.';
       return;
     }
     if (this.nouveauMotDePasse !== this.confirmationMotDePasse) {
@@ -148,8 +149,7 @@ export class MonProfilEtudiant implements OnInit {
   }
 
   /**
-   * Les endpoints répondent en JSON, mais ChangePassword est appelé en
-   * responseType 'text' : le corps d'erreur arrive alors comme chaîne brute.
+   * Accepte les erreurs JSON de l'API et les réponses textuelles d'un proxy.
    */
   private messageErreur(err: any, defaut: string): string {
     const corps = err?.error;

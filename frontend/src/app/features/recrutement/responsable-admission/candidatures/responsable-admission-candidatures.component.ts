@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -7,7 +7,6 @@ import { CandidatureResponse, FormatRapport, RecrutementService, ResultatRelance
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
-import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 'ADMIS2' | 'LISTE_ATTENTE' | 'ADMIS3' | 'REJETE' | 'BROUILLON';
 
@@ -108,8 +107,14 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
    * cliqué au lieu de la remplacer, à l'image d'un gestionnaire de fichiers natif.
    */
   selection = new Set<number>();
+  menuContextuel: { x: number; y: number; candidature: CandidatureResponse } | null = null;
   private dernierIndexClique: number | null = null;
   rejetGroupeEnCours = false;
+  retourConfirmationOpen = false;
+  retourCibles: CandidatureResponse[] = [];
+  retourStatutCible: string | null = null;
+  motDePasseRetour = '';
+  retourErreur = '';
 
   readonly colonnesExport: ColonneExport[] = [
     { key: 'numeroDossier', label: 'N° Dossier' },
@@ -133,7 +138,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   readonly colonnesExportParDefaut = ['numeroDossier', 'nom', 'prenom', 'email', 'session', 'statut', 'dateSoumission', 'motifRejet'];
 
   constructor(private recrutementService: RecrutementService, private route: ActivatedRoute, private router: Router,
-              private notifications: NotificationService, private confirmation: ConfirmationService) {}
+              private notifications: NotificationService) {}
 
   ngOnInit(): void {
     const sessionParam = this.route.snapshot.queryParamMap.get('session');
@@ -437,6 +442,45 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     this.dernierIndexClique = index;
   }
 
+  selectionnerAuClicDroit(id: number, index: number, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.basculerSelection(id, index, event);
+    const candidature = this.candidaturesPage.find((item) => item.id === id);
+    if (candidature) this.menuContextuel = { x: event.clientX, y: event.clientY, candidature };
+  }
+
+  fermerMenuContextuel(): void { this.menuContextuel = null; }
+
+  executerActionContextuelle(action: () => void): void {
+    this.fermerMenuContextuel();
+    action();
+  }
+
+  ouvrirDossierContextuel(): void {
+    if (!this.menuContextuel) return;
+    const candidature = this.menuContextuel.candidature;
+    this.fermerMenuContextuel();
+    this.voirDetail(candidature);
+  }
+
+  actionSuivanteContextuelle(): void {
+    if (!this.menuContextuel) return;
+    const action = this.actionSuivante(this.menuContextuel.candidature);
+    this.fermerMenuContextuel();
+    action?.action();
+  }
+
+  rejeterContextuel(): void {
+    if (!this.menuContextuel) return;
+    const candidature = this.menuContextuel.candidature;
+    this.fermerMenuContextuel();
+    this.rejeter(candidature);
+  }
+
+  @HostListener('document:click')
+  fermerMenuAuClic(): void { this.fermerMenuContextuel(); }
+
   basculerToutSelectionner(): void {
     const page = this.candidaturesPage;
     if (this.toutesSelectionnees) {
@@ -490,73 +534,67 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
     });
   }
 
-  /** Annule en une fois la dernière décision de tous les dossiers sélectionnés qui le permettent. */
-  annulerSelection(): void {
-    const cibles = this.candidatures.filter((c) => this.selection.has(c.id) && this.peutAnnuler(c));
-    if (cibles.length === 0) {
-      this.notifications.erreur('Aucun dossier sélectionné ne peut être annulé (aucune décision récente, ou déjà admis définitivement).');
+  /** Ouvre une confirmation réutilisée pour les corrections individuelles ou groupées. */
+  private demanderRetour(cibles: CandidatureResponse[], statutCible: string | null = null): void {
+    this.retourCibles = cibles;
+    this.retourStatutCible = statutCible;
+    this.motDePasseRetour = '';
+    this.retourErreur = '';
+    this.retourConfirmationOpen = true;
+  }
+
+  fermerRetour(): void {
+    if (this.actionEnCours || this.rejetGroupeEnCours) return;
+    this.retourConfirmationOpen = false;
+  }
+
+  confirmerRetour(): void {
+    if (!this.motDePasseRetour) {
+      this.retourErreur = 'Saisissez votre mot de passe pour confirmer cette correction.';
       return;
     }
-    this.rejetGroupeEnCours = true;
-    forkJoin(cibles.map((c) => this.recrutementService.annulerDerniereAction(c.id))).subscribe({
+    const groupe = this.retourCibles.length > 1;
+    if (groupe) this.rejetGroupeEnCours = true;
+    else this.actionEnCours = true;
+    const appels = this.retourCibles.map((c) => this.retourStatutCible
+      ? this.recrutementService.reculerStatut(c.id, this.retourStatutCible, this.motDePasseRetour)
+      : this.recrutementService.annulerDerniereAction(c.id, this.motDePasseRetour));
+    forkJoin(appels).subscribe({
       next: () => {
         this.rejetGroupeEnCours = false;
+        this.actionEnCours = false;
+        this.retourConfirmationOpen = false;
         this.viderSelection();
         this.chargerCandidatures();
       },
       error: (err) => {
         this.rejetGroupeEnCours = false;
-        this.notifications.erreur(err.error?.message || 'Échec de l\'annulation groupée — certains dossiers ont peut-être tout de même été modifiés.');
-        this.viderSelection();
-        this.chargerCandidatures();
+        this.actionEnCours = false;
+        this.retourErreur = err.error?.message || 'La correction n’a pas pu être appliquée.';
       },
     });
   }
 
-  /** Fait reculer en une fois tous les dossiers sélectionnés vers le statut choisi, quand c'est possible pour eux. */
+  annulerSelection(): void {
+    const cibles = this.candidatures.filter((c) => this.selection.has(c.id) && this.peutAnnuler(c));
+    if (cibles.length === 0) {
+      this.notifications.erreur('Aucun dossier sélectionné ne peut être annulé.');
+      return;
+    }
+    this.demanderRetour(cibles);
+  }
+
   reculerSelectionVers(cible: string): void {
     const cibles = this.candidatures.filter((c) => this.selection.has(c.id) && this.peutReculerVers(c, cible));
     if (cibles.length === 0) {
       this.notifications.erreur('Aucun dossier sélectionné ne peut reculer vers ce statut.');
       return;
     }
-    this.rejetGroupeEnCours = true;
-    forkJoin(cibles.map((c) => this.recrutementService.reculerStatut(c.id, cible))).subscribe({
-      next: () => {
-        this.rejetGroupeEnCours = false;
-        this.viderSelection();
-        this.chargerCandidatures();
-      },
-      error: (err) => {
-        this.rejetGroupeEnCours = false;
-        this.notifications.erreur(err.error?.message || 'Échec du recul groupé — certains dossiers ont peut-être tout de même été modifiés.');
-        this.viderSelection();
-        this.chargerCandidatures();
-      },
-    });
+    this.demanderRetour(cibles, cible);
   }
 
   annuler(c: CandidatureResponse): void {
-    if (!c.statutPrecedent) return;
-    this.confirmation.demander({
-      titre: 'Annuler la décision',
-      message: `Annuler la dernière décision du dossier ${c.numeroDossier} ? Il reviendra à : ${this.libelleStatut(c.statutPrecedent)}.`,
-      libelleConfirmer: 'Annuler la décision',
-      destructif: true,
-    }).subscribe((confirme) => {
-      if (!confirme) return;
-      this.actionEnCours = true;
-      this.recrutementService.annulerDerniereAction(c.id).subscribe({
-        next: () => {
-          this.actionEnCours = false;
-          this.chargerCandidatures();
-        },
-        error: (err) => {
-          this.actionEnCours = false;
-          this.notifications.erreur(err.error?.message || "Échec de l'annulation.");
-        },
-      });
-    });
+    if (c.statutPrecedent) this.demanderRetour([c]);
   }
 
   private executer(obs: Observable<CandidatureResponse>): void {

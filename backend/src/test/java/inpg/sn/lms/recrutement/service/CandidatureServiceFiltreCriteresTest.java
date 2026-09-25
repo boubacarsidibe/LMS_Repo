@@ -75,7 +75,7 @@ class CandidatureServiceFiltreCriteresTest {
     void seuls_les_dossiers_soumis_sont_evalues() {
         Candidature soumisRespecte = candidature(EnumStatutCandidature.SOUMIS, 25);
         Candidature soumisRejete = candidature(EnumStatutCandidature.SOUMIS, 10);
-        Candidature dejaPreselectionne = candidature(EnumStatutCandidature.EN_COURS_DE_PRESELECTION, 5);
+        Candidature dejaPreselectionne = candidature(EnumStatutCandidature.PRESELECTIONNE, 5);
         when(candidatureRepository.findBySessionCandidatureId(ID_SESSION))
                 .thenReturn(List.of(soumisRespecte, soumisRejete, dejaPreselectionne));
 
@@ -84,10 +84,10 @@ class CandidatureServiceFiltreCriteresTest {
         assertEquals(2, resultat.getTotal(), "seuls les dossiers SOUMIS comptent");
         assertEquals(1, resultat.getPreselectionnes());
         assertEquals(1, resultat.getRejetes());
-        assertEquals(EnumStatutCandidature.EN_COURS_DE_PRESELECTION, soumisRespecte.getStatut());
-        assertEquals(EnumStatutCandidature.REJETE, soumisRejete.getStatut());
+        assertEquals(EnumStatutCandidature.PRESELECTIONNE, soumisRespecte.getStatut());
+        assertEquals(EnumStatutCandidature.DOSSIER_REJETE, soumisRejete.getStatut());
         // Le dossier déjà en présélection n'est pas retouché.
-        assertEquals(EnumStatutCandidature.EN_COURS_DE_PRESELECTION, dejaPreselectionne.getStatut());
+        assertEquals(EnumStatutCandidature.PRESELECTIONNE, dejaPreselectionne.getStatut());
     }
 
     @Test

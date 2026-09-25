@@ -1,23 +1,33 @@
 <div class="flex flex-col w-full">
 
   <!-- En-tête -->
-  <section class="px-margin-desktop py-stack-lg flex flex-col gap-base relative overflow-hidden">
+  <section class="px-margin-desktop pt-stack-lg">
     <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary-fixed-dim/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-stack-md">
-      <div class="space-y-base">
+    <div class="grid grid-cols-12 items-center gap-gutter">
+      <div class="col-span-12 lg:col-span-7">
         <div class="flex items-center gap-2 text-secondary font-label-sm text-label-sm uppercase tracking-widest">
           <span class="w-8 h-[1px] bg-secondary"></span>
           Espace Enseignant
         </div>
-        <h1 class="font-display text-display text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
-        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos promotions en temps réel.</p>
+        <h1 class="font-display text-display text-on-surface">Mes cours</h1>
+        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Gérez, organisez et partagez vos cours et supports pédagogiques.</p>
       </div>
+      <div class="relative col-span-12 min-h-36 overflow-hidden rounded-xl bg-primary-container p-5 lg:col-span-5">
+        <div class="absolute bottom-5 left-12 flex items-end gap-2 text-secondary opacity-90"><span class="material-symbols-outlined text-[72px]">menu_book</span><span class="material-symbols-outlined -ml-9 text-[58px] text-primary">menu_book</span><span class="material-symbols-outlined -ml-8 text-[48px] text-secondary">edit</span></div>
+        <blockquote class="absolute right-4 top-4 w-48 rounded-xl bg-surface-container-lowest/90 px-5 py-4 font-body-sm text-body-sm italic leading-5 text-secondary">« Partager le savoir, c’est construire l’avenir. »<span class="mt-4 block h-1 w-7 rounded-full bg-secondary"></span></blockquote>
+      </div>
+    </div>
+    <div class="mt-stack-lg grid grid-cols-1 gap-gutter md:grid-cols-3 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
+      <div class="flex items-center gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3 shadow-sm"><span class="material-symbols-outlined rounded-lg bg-primary-container p-2 text-[22px] text-secondary">menu_book</span><div><p class="font-label-md text-label-md text-on-surface">Cours publiés</p><strong class="block font-headline-sm text-headline-sm text-on-surface">{{ cours.length }}</strong></div></div>
+      <div class="flex items-center gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3 shadow-sm"><span class="material-symbols-outlined rounded-lg bg-secondary-container p-2 text-[22px] text-secondary">groups</span><div><p class="font-label-md text-label-md text-on-surface">Étudiants inscrits</p><strong class="block font-headline-sm text-headline-sm text-on-surface">{{ totalEtudiantsInscrits }}</strong></div></div>
+      <div class="flex items-center gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3 shadow-sm"><span class="material-symbols-outlined rounded-lg bg-tertiary-container p-2 text-[22px] text-on-tertiary-container">folder_open</span><div><p class="font-label-md text-label-md text-on-surface">Ressources déposées</p><strong class="block font-headline-sm text-headline-sm text-on-surface">{{ mesSupports.length }}</strong></div></div>
+      <a routerLink="/espace-etudiant/formateur/creer-ressource" class="flex items-center justify-center gap-3 self-center rounded-lg bg-secondary px-5 py-3 font-label-md text-label-md text-on-secondary transition-opacity hover:opacity-90"><span class="material-symbols-outlined">add_circle</span>Créer une ressource</a>
     </div>
   </section>
 
   <!-- Recherche & filtres -->
   <section class="px-margin-desktop mb-stack-lg">
-    <div class="bg-surface-container-lowest p-stack-md rounded-2xl shadow-sm flex flex-wrap items-center gap-gutter">
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/40 shadow-sm flex flex-wrap items-center gap-gutter">
       <div class="flex-1 min-w-[300px] relative group">
         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary transition-colors">search</span>
         <input [(ngModel)]="recherche" class="w-full pl-12 pr-4 py-3 bg-surface-container-low rounded-xl border-none focus:ring-2 focus:ring-secondary/20 outline-none font-body-sm text-body-sm transition-all" placeholder="Rechercher une ressource, un code ou un titre..." type="text">
@@ -44,7 +54,13 @@
   <!-- Grille principale -->
   <section class="px-margin-desktop grid grid-cols-12 gap-gutter pb-stack-lg">
 
-    <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-gutter items-start">
+    <div class="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-gutter items-start" [ngClass]="cours.length ? 'lg:col-span-8' : 'lg:col-span-12'">
+      <section *ngIf="!cours.length" class="col-span-full flex min-h-64 flex-col items-center justify-center rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-8 text-center shadow-sm">
+        <span class="material-symbols-outlined text-[56px] text-primary-container">menu_book</span>
+        <h2 class="mt-3 font-headline-sm text-headline-sm text-on-surface">Aucun cours attribué</h2>
+        <p class="mt-2 max-w-md font-body-sm text-body-sm text-on-surface-variant">Le dépôt de contenu sera disponible dès qu’un cours vous sera affecté.</p>
+        <a routerLink="/espace-etudiant/formateur/creer-ressource" class="mt-5 rounded-lg bg-secondary px-5 py-3 font-label-md text-label-md text-on-secondary transition-opacity hover:opacity-90">Créer une ressource</a>
+      </section>
       <div *ngFor="let c of coursFiltres" [id]="'cours-' + c.id"
            role="link" tabindex="0"
            (click)="ouvrirCours(c)"
@@ -103,7 +119,7 @@
         <p *ngIf="chargementSupports" class="font-body-sm text-body-sm text-on-surface-variant">Chargement…</p>
 
         <p *ngIf="!chargementSupports && !mesSupports.length" class="font-body-sm text-body-sm text-on-surface-variant py-4 text-center">
-          Aucune ressource déposée pour l'instant. Utilisez le panneau « Dépôt Rapide » ci-contre.
+          Aucune ressource déposée pour l’instant.
         </p>
 
         <div *ngIf="!chargementSupports && mesSupports.length" class="divide-y divide-outline-variant/20">
@@ -140,7 +156,7 @@
     </div>
 
     <!-- Panneau dépôt rapide -->
-    <aside #depotRapide class="col-span-12 lg:col-span-4 space-y-stack-lg">
+    <aside *ngIf="cours.length" #depotRapide class="col-span-12 lg:col-span-4 space-y-stack-lg">
       <div id="depot-rapide" class="bg-surface-container-lowest p-stack-lg rounded-2xl shadow-sm border border-outline-variant/20 sticky top-24">
         <div class="flex items-center gap-3 mb-stack-md">
           <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">

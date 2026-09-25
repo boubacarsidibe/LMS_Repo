@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
-import { catchError, map, Observable, of, tap } from 'rxjs';
+import { Injectable, inject, signal } from '@angular/core';
+import { catchError, finalize, map, Observable, of, tap } from 'rxjs';
+import { Router } from '@angular/router';
 import { AuthResponse } from '../models/auth-response';
 import { ProfilCompte, TypeInscription, User } from '../models/user.model';
 import { environment } from '../../../../environments/environment';
@@ -12,6 +13,8 @@ export class Auth {
   constructor(
     private http: HttpClient
   ) { }
+
+  private router = inject(Router);
 
   currentUser = signal<User | null>(null);
   private apiUrl = `${environment.apiUrl}/auth`;
@@ -157,9 +160,9 @@ export class Auth {
     return this.http.get(`${this.apiUrl}/verify`, {
       headers: { Authorization: `Bearer ${token}` }
     }).pipe(
-      map(() => true),
-      catchError(() => {
-        this.clearSession();
+      map(() => this.getToken() === token),
+      catchError((error) => {
+        if (error.status === 401 && this.getToken() === token) this.clearSession();
         return of(false);
       })
     );
@@ -175,24 +178,32 @@ export class Auth {
     return this.http.get<User>(`${this.apiUrl}/current-user`, {
       headers: { Authorization: `Bearer ${token}` }
     }).pipe(
-      tap((user) => this.currentUser.set(user)),
+      map((user) => this.getToken() === token ? user : null),
+      tap((user) => {
+        if (user) this.currentUser.set(user);
+      }),
       catchError(() => of(null))
     );
   }
 
   logout(): Observable<string> {
+    const token = this.getToken();
+    const clear = () => {
+      if (this.getToken() === token) this.clearSession();
+    };
     return this.http.post(`${this.apiUrl}/logout`, {}, { responseType: 'text' }).pipe(
-      tap(() => {
-        this.currentUser.set(null);
-        this.clearSession();
-      }),
+      tap({ next: clear, error: clear }),
+      finalize(clear),
     );
   }
 
-  ChangePassword(currentPassword: string, newPassword: string): Observable<string> {
-    return this.http.post(`${this.apiUrl}/change-password`, { currentPassword, newPassword }, { responseType: 'text' }).pipe(
+  ChangePassword(currentPassword: string, newPassword: string): Observable<{ message: string }> {
+    const token = this.getToken();
+    return this.http.post<{ message: string }>(`${this.apiUrl}/change-password`, { currentPassword, newPassword }).pipe(
       tap(() => {
-        console.log('Mot de passe changé avec succès.');
+        if (this.getToken() !== token) return;
+        this.clearSession();
+        this.router.navigate(['/auth/login'], { queryParams: { passwordChanged: 1 } });
       }),
       catchError((error) => {
         console.error('Erreur lors du changement de mot de passe :', error.error?.message || error.message);

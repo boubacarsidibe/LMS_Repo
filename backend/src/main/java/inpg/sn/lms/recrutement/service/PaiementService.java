@@ -96,6 +96,11 @@ public class PaiementService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Candidature non trouvée avec l'ID: " + request.getCandidatureId()));
 
+        if (candidature.getStatut() != EnumStatutCandidature.PRESELECTIONNE
+                && candidature.getStatut() != EnumStatutCandidature.PAIEMENT_EN_ATTENTE) {
+            throw new BusinessException("Le paiement est disponible uniquement apres la preselection.");
+        }
+
         Optional<Paiement> existant = paiementRepository.findByCandidatureId(request.getCandidatureId());
         Paiement saved;
         if (existant.isPresent()) {
@@ -123,6 +128,9 @@ public class PaiementService {
             saved = paiementRepository.save(paiement);
         }
 
+        candidature.setStatutPrecedent(candidature.getStatut());
+        candidature.setStatut(EnumStatutCandidature.PAIEMENT_EN_ATTENTE);
+        candidatureRepository.save(candidature);
         notifierAdmissionPaiementAValider(candidature, saved);
         return toResponse(saved);
     }
@@ -235,6 +243,12 @@ public class PaiementService {
 
         Paiement saved = paiementRepository.save(paiement);
         Candidature candidature = saved.getCandidature();
+        if (candidature != null && (candidature.getStatut() == EnumStatutCandidature.PRESELECTIONNE
+                || candidature.getStatut() == EnumStatutCandidature.PAIEMENT_EN_ATTENTE)) {
+            candidature.setStatutPrecedent(candidature.getStatut());
+            candidature.setStatut(EnumStatutCandidature.PAIEMENT_CONFIRME);
+            candidatureRepository.save(candidature);
+        }
         notifierCandidatPaiementConfirme(candidature);
 
         if (candidature != null && candidature.getCandidat() != null) {
@@ -287,6 +301,12 @@ public class PaiementService {
                 methodePaiement != null && !methodePaiement.isBlank() ? methodePaiement : "Hors ligne");
 
         Paiement saved = paiementRepository.save(paiement);
+        if (candidature.getStatut() == EnumStatutCandidature.PRESELECTIONNE
+                || candidature.getStatut() == EnumStatutCandidature.PAIEMENT_EN_ATTENTE) {
+            candidature.setStatutPrecedent(candidature.getStatut());
+            candidature.setStatut(EnumStatutCandidature.PAIEMENT_CONFIRME);
+            candidatureRepository.save(candidature);
+        }
         notifierCandidatPaiementConfirme(candidature);
 
         return toResponse(saved);
@@ -346,8 +366,7 @@ public class PaiementService {
      * Avant ce stade (BROUILLON, SOUMIS) ou après un rejet, aucune relance n'a de sens.
      */
     private static final Set<EnumStatutCandidature> STATUTS_ELIGIBLES_RELANCE_PAIEMENT = Set.of(
-            EnumStatutCandidature.EN_COURS_DE_PRESELECTION, EnumStatutCandidature.ADMIS1,
-            EnumStatutCandidature.ADMIS2, EnumStatutCandidature.ADMIS3);
+            EnumStatutCandidature.PRESELECTIONNE, EnumStatutCandidature.PAIEMENT_EN_ATTENTE);
 
     /**
      * Relance les candidats dont le dossier est validé mais dont les frais de dossier

@@ -2,6 +2,7 @@ package inpg.sn.lms.recrutement.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,4 +30,7 @@ public class SessionCandidatureRequest {
     private String infoCarteEtudiante;
     private String infoRentree;
     private BigDecimal montantFraisDossier;
+    private List<Long> programmeIds;
+    private Integer quotaMax;
+    private String status;
 }

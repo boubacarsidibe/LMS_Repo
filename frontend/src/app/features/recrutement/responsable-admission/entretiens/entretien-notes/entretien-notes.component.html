@@ -1,0 +1,43 @@
+<section class="mx-auto max-w-6xl">
+  <header class="mb-5 flex items-center justify-between gap-4">
+    <div>
+      <a *ngIf="entretien" [routerLink]="['/responsable-admission/entretiens', entretien.id]"
+        class="inline-flex items-center gap-1 text-body-sm text-secondary">
+        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+        Retour a l'entretien
+      </a>
+      <h1 class="mt-2 font-headline-lg text-headline-lg text-primary">Notes de l'entretien</h1>
+    </div>
+    <button type="button" (click)="enregistrer()" [disabled]="saving || loading || !modifie"
+      class="h-10 rounded-lg bg-secondary px-4 font-label-md text-on-secondary disabled:opacity-50">
+      {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
+    </button>
+  </header>
+
+  <p *ngIf="loading" class="py-8 text-center text-body-sm text-on-surface-variant">Chargement des candidats...</p>
+  <p *ngIf="error" class="mb-3 text-body-sm text-error">{{ error }}</p>
+
+  <div *ngIf="!loading" class="overflow-x-auto rounded-lg border border-outline-variant">
+    <table class="w-full min-w-[720px] text-left">
+      <thead class="border-b border-outline-variant bg-surface-container-low">
+        <tr>
+          <th class="w-16 px-4 py-3">#</th>
+          <th class="px-4 py-3">Candidat</th>
+          <th class="px-4 py-3">N° dossier</th>
+          <th class="w-44 px-4 py-3">Note / 20</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant">
+        <tr *ngFor="let ligne of lignes; index as index" class="hover:bg-surface-container-low">
+          <td class="px-4 py-3 text-on-surface-variant">{{ index + 1 }}</td>
+          <td class="px-4 py-3 font-label-md">{{ ligne.candidat }}</td>
+          <td class="px-4 py-3 text-on-surface-variant">{{ ligne.numeroDossierAffiche }}</td>
+          <td class="px-4 py-3">
+            <input [(ngModel)]="ligne.noteEntretien" type="number" min="0" max="20" step="0.25"
+              class="h-10 w-28 rounded-lg border border-outline-variant bg-surface px-3">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
