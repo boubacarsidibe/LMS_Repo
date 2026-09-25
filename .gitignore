@@ -59,3 +59,7 @@ Thumbs.db
 outputs/
 
 .vercel
+
+# Modèle de certificat INPG d'origine : porte les données d'une personne réelle, seul le fond vierge
+# (backend/src/main/resources/certificats/) est versionné.
+backend/Mod*le Certificat INPG.pdf

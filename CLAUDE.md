@@ -65,25 +65,20 @@ confondent avec le fond clair et l'écran paraît plat.
 
 ### Logotype
 
-Identique dans tous les espaces :
+Depuis le 2026-09-25, c'est **l'image du logo officiel de l'INPG** — plus l'écriture « INPG LMS », qui
+n'existe plus nulle part — identique dans tous les espaces :
 
 ```html
-<span class="text-2xl font-extrabold tracking-tight text-primary">INPG<span class="text-brand"> Connect</span></span>
+<app-logo-inpg hauteur="h-10"></app-logo-inpg>
 ```
 
-Pas de badge ni d'icône. Le jeton `brand` (`#131741`) est le bleu nuit du suffixe.
-Dans l'espace pédagogique, le suffixe est « Pédagogie » — même traitement.
-
-**Renommé « INPG LMS » → « INPG Connect » le 2026-09-22** : le sigle LMS (Learning
-Management System) restreignait un produit qui dépasse largement la formation en ligne
-(admission, accréditation d'écoles partenaires, espace entreprise, alumni, évaluation
-d'accréditation). Le suffixe « Pédagogie » de l'espace pédagogique n'est **pas** concerné
-— ce n'était déjà pas « LMS » avant, c'est une variante délibérée, pas un oubli. Si un
-nouvel espace ajoute son propre logo, chercher `INPG<span class="text-brand">` pour
-retrouver tous les endroits à traiter ensemble — neuf occurrences y sont passées en une
-fois (navbar public, six espaces à barre latérale, bandeau de la liste des écoles
-accréditées, pied de page, panneau de la page de connexion), plus un intitulé de sujet de
-formulaire de contact (« Support Technique LMS » → « Support Technique »).
+`LogoInpgComponent` (`shared/components/logo-inpg/`) est l'unique source de l'image
+(`frontend/public/images/logo-inpg.png`, 640 × 174) et de son texte alternatif : ne pas recopier un `<img>`
+ailleurs, ni recomposer un logotype en texte. Le fichier est détouré (fond transparent) et le logo est bleu
+nuit : sur un fond sombre (panneau de connexion, pied de page), le poser dans une pastille blanche arrondie,
+sans quoi il disparaît. Le nom de l'espace (« Espace formateur », « Portail Admissions », « Espace
+pédagogique ») reste écrit **sous** le logo, en `font-label-sm`. Le même logo coiffe les PDF (voir §3, papier
+à en-tête).
 
 ### Contraste : le piège des jetons jumeaux
 
@@ -247,6 +242,28 @@ et réparation manuelle des lignes de `flyway_schema_history` (correction du cha
 puis un démarrage ponctuel avec `spring.flyway.out-of-order=true` pour rattraper les
 migrations restées en attente. Un horodatage rend la collision impossible.
 
+### `ng build` tué (SIGTERM) et démon Docker qui tombe : c'est la mémoire du Codespace
+
+Le Codespace n'a que ~8 Go, sans swap, et l'IDE en occupe plus de 3. Quand la mémoire disponible
+tombe sous ~1,5 Go, un `ng build` (local **ou** dans `docker compose build frontend`) est tué en
+`SIGTERM`, sans la moindre erreur de compilation — `ngc --noEmit` et `ng test` passent pourtant. Le démon
+Docker peut lui aussi disparaître (`Cannot connect to the Docker daemon`). Ne pas chercher un bug de code.
+
+```bash
+docker stop demo-backend                       # libère ~500 Mo
+sync; echo 3 | sudo tee /proc/sys/vm/drop_caches   # vide le cache disque : le garde-fou de l'hôte le compte
+cd frontend && NODE_OPTIONS=--max-old-space-size=1536 NG_BUILD_MAX_WORKERS=1 \
+  npx ng build --configuration development --source-map=false --progress=false   # ~28 s
+docker cp dist/frontend/browser/. demo-frontend:/usr/share/nginx/html/   # sans reconstruire l'image
+docker start demo-backend
+sudo /usr/local/share/docker-init.sh true &    # si le démon Docker est tombé
+```
+
+`docker compose up -d --build backend` recrée le conteneur : toute variable passée en ligne de commande
+(ex. `APP_CORS_ORIGINS` pour un tunnel Cloudflare, dont l'URL change à chaque lancement) est perdue et doit
+être repassée. Les redémarrages du Codespace arrêtent Postgres sans arrêt propre : les écritures récentes
+peuvent être perdues.
+
 ---
 
 ## 3. Décisions d'architecture à ne pas défaire
@@ -325,99 +342,6 @@ d'une promotion, faite côté pédagogie, qui achève l'inscription et attribue 
 matricule. Le compte porte `origine = "Admission"` tant qu'un dossier de candidature
 existe derrière lui, pour distinguer un admis de la veille d'un compte oublié.
 
-**Le type d'inscription oriente, il n'autorise pas.** Les rôles métier
-(`ROLE_ECOLE_FORMATION`, `ROLE_ENTREPRISE`, `ROLE_CANDIDAT_FORMATEUR`, `ROLE_CANDIDAT`)
-ne sont accordés qu'à la **première soumission réelle** ; une école ou une entreprise
-qui s'est inscrite sans rien déposer n'a donc **aucun rôle**. Seul `typeInscription`
-(`CANDIDAT`/`ECOLE`/`ENTREPRISE`/`FORMATEUR`, colonne `users.type_inscription`) dit ce
-qu'elle est. Il doit voyager jusqu'au navigateur : `AuthController.toUserMap` en est
-l'**unique** fabrique (connexion, `/current-user`, inscription) — ces trois réponses
-avaient divergé, seule l'inscription le renvoyait, et une école qui se reconnectait le
-lendemain retombait sur l'accueil des candidats étudiants, sans le moindre lien vers son
-espace, ni erreur ni journal. Côté Angular, `Auth.getProfilCompte()` en tire le profil :
-**le rôle fait foi dès qu'il existe**, le type ne parle que quand la liste des rôles est
-vide, et un compte qui porte un autre rôle (étudiant, personnel) n'est jamais reclassé
-d'après son type. `getHomeUrl()` s'appuie dessus en dernier recours (école →
-`/accreditation`, entreprise → `/espace-entreprise`, formateur → `/offres-formateurs`,
-comme l'inscription). Le navbar public partagé (onglet propre, libellé, menu du cercle de
-profil) et les boutons du héros de `/accueil` suivent ce profil : **le compte prime sur la
-page** — `ContexteNavbarService` ne pilote plus que les visiteurs non connectés.
-**Un seul navbar pour tout le parcours** : les espaces École, Entreprise et Candidat
-formateur sont des enfants de `PublicNavbarLayoutComponent` (`app.routes.ts`), donc
-l'`app-navbar` n'est jamais recréé en passant d'« Institut » à « Espace entreprise ». Leurs
-layouts ne portent plus que le fond de page — ne pas leur redonner une barre propre : les
-onglets changeaient d'un coup à chaque passage (retour du 2026-09-21). Pas de cloche de
-notifications pour ces trois profils : c'est celle des candidats, elle resterait vide.
-
-**Le navbar public est pleine largeur, pas centré à 1280 px comme le contenu des pages**
-(retour du 2026-09-22) : sur un grand écran, le logo et le cercle de profil restaient à
-360 px du bord réel sur un écran de 1920 px, parce que la ligne du navbar reprenait
-`max-w-container-max mx-auto` — pertinent pour le contenu, pas pour une barre qui doit
-toucher les bords comme celles des espaces à sidebar (Admission, Pédagogie…). Les onglets
-du centre restent groupés entre eux (`flex-1 justify-center` sur leur propre `<nav>`), ils
-ne s'étalent pas sur toute la largeur.
-
-**Le navbar public a trois seuils de réapparition distincts, pas un seul « mobile vs
-desktop »** — chaque élément ne revient que quand il tient vraiment, trouvé par balayage
-réel (`scrollWidth` **et** la hauteur des éléments eux-mêmes : un retour à la ligne interne
-ne crée pas forcément de barre de défilement, `scrollWidth` seul l'a laissé passer une
-fois). Les trois essais qui ont précédé cet état sont volontairement gardés ci-dessous :
-un futur réglage de ce navbar tombera probablement sur le même piège dans l'autre sens.
-
-- **Bouton menu (mobile uniquement)**, à l'extrême gauche, `md:hidden` (donc < 768 px) :
-  déplacé en premier enfant du conteneur plutôt que dupliqué — un seul bouton, un seul
-  `aria-label`. Sous ce seuil, le nom lui cède sa place plutôt que de cohabiter à l'étroit.
-
-- **Logo (« INPG Connect »)**, `hidden lg:inline` (revient dès 1024 px). Trois essais :
-  masqué seulement < `md` (768) → repassait sur deux lignes entre 768 et 800 px (rien ne
-  protège ce texte d'un `whitespace-nowrap`, contrairement aux onglets) ; masqué jusqu'à
-  `xl` comme le bloc nom/rôle ci-dessous → repéré en recette comme « disparaît trop tôt »
-  en redimensionnant, le vide entre le bouton menu et le retour du logo se sentait trop
-  long ; `lg` (1024 px) est le premier seuil sûr, vérifié par balayage 375→1920 (une seule
-  ligne dès 1024, aucun débordement en dessous). **Jamais `inline-flex`** à la place
-  d'`inline` : ça transforme le lien en conteneur flexbox, dont les enfants (le texte
-  « INPG » et le `<span>` du suffixe) deviennent des items flex, ce qui **supprime l'espace
-  entre les deux** (« INPGConnect » collé, repéré via `.innerText()` qui renvoie alors un
-  saut de ligne entre les deux au lieu d'une espace).
-
-- **Bloc nom/rôle du profil et séparateur vertical**, `hidden xl:flex`/`xl:block` (revient
-  à 1280 px, un palier après le logo). `lg` (1024 px, comme le logo) essayé d'abord et
-  insuffisant : entre 768 et 1024 px, logo + 4-5 onglets + cloche + nom/rôle + chevron ne
-  tenaient déjà pas ensemble — mesuré au débordement réel, ce bloc se retrouvait coupé au
-  milieu du rôle, chevron invisible. `xl` (1280 px) est le premier seuil où tout rentre sur
-  une ligne. Ne pas aligner ce seuil sur celui du logo sans revérifier les deux ensemble.
-
-- **Police des onglets du centre : un seul `text-sm`, à toutes les tailles** (demande
-  explicite du 2026-09-22, après un premier essai `text-xs` en dessous de `xl`). Le confort
-  de lecture prime ; la place manquante se gagne ailleurs (les trois seuils ci-dessus,
-  padding/`gap` resserrés jusqu'à `xl`, `whitespace-nowrap` sur chaque onglet — sans lui, un
-  libellé de deux mots comme « Sessions ouvertes » retombe sur deux lignes dès que le
-  conteneur `flex` se resserre). Ne plus réintroduire de paire `text-xs …:text-sm` dans ce
-  fichier ; revérifier tout changement de seuil dans un vrai navigateur sur toute la plage
-  375–1920, pas seulement à une largeur.
-
-**« Accueil » comme onglet explicite : seulement pour le candidat/étudiant, pas pour
-École/Entreprise/Formateur.** Décision du 2026-08-25 revenue en recette le 2026-09-22 :
-compter sur le seul logo comme retour à l'accueil n'était pas assez visible pour ce
-public (`test.candidat@inpg.sn` et consorts). École, Entreprise et Candidat formateur
-n'ont **pas** ce même onglet : ils ont déjà un équivalent — leur onglet propre
-(« Accréditation », « Espace entreprise »…) mène à leur espace, et « Mon espace » du menu
-de profil y ramène aussi ; ajouter « Accueil » chez eux serait redondant, pas chez le
-candidat/étudiant qui n'a ni l'un ni l'autre. Le visiteur non connecté partage le même
-contexte `'etudiant'` que le candidat et voit donc aussi cet onglet.
-`auth.spec.ts`, `navbar.component.spec.ts`, `landing.component.spec.ts` et
-`AuthControllerTest` figent ce comportement.
-
-**L'erreur d'un champ s'affiche dès le premier caractère invalide, ou après le clic sur
-le bouton d'envoi — jamais sur un champ vide qu'on a seulement quitté.** Une seule règle,
-`erreurVisible()` (`shared/utils/erreur-champ.ts`), pour la connexion, l'inscription et le
-contact. Elle a été réécrite trois fois : « au blur » (un champ vide rougissait dès qu'on le
-quittait, et le bouton de connexion, désactivé tant que le formulaire était invalide,
-interdisait tout clic), puis « après le clic seulement » (une saisie fausse restait muette),
-puis celle-ci. Ne pas rebrancher `touched` dans ces formulaires. À l'inscription, le clic
-ajoute un bandeau qui nomme le premier champ bloquant et y place le curseur. « Mot de passe
-oublié » garde sa propre règle.
-
 **Un relevé délivré fige ses valeurs, il ne les recalcule pas** (migration `V9`).
 `releve_ligne` recopie code, titre, coefficient et moyenne du cours ; elle n'a
 volontairement **aucune clé étrangère** vers `cours`. Sans cela, un document remis en
@@ -466,6 +390,38 @@ non évalué, avec un délai de repos (`COOLDOWN_JOURS`) plutôt qu'une vraie da
 Si le besoin d'une session datée se confirme un jour, c'est une décision de modèle à
 instruire à part (voir `LOG_BLOQUANT.md`), pas une extension mécanique de ce service.
 
+**Le certificat suit le modèle officiel de l'INPG, il n'est pas redessiné.** `CertificatPdfService` charge
+`backend/src/main/resources/certificats/certificat-formation-fond.pdf` (le modèle dont les six zones variables
+ont été vidées) et n'y superpose que : civilité + nom, « né le », formation, période, « Fait à Dakar, le … »,
+code de bas de page, plus un QR de vérification. Positions et polices sont relevées dans le README du même
+dossier. Le fichier d'origine (`backend/Modèle Certificat INPG.pdf`) porte les données d'une personne réelle :
+il est dans `.gitignore`, ne jamais le versionner. Les champs du modèle (`civilite`, `date_naissance`,
+`date_debut`, `date_fin`, `code_certificat`) sont nullables et **scellés dans la signature seulement quand
+ils existent** : un certificat délivré avant leur ajout garde son contenu canonique, donc sa signature reste
+valide. `CertificatPdfServiceTest` relit le texte du PDF produit. Sa **date de délivrance est le jour où le
+responsable pédagogique crée le certificat** (fuseau `Africa/Dakar`, posée par le serveur, jamais saisie) : le
+formulaire n'a volontairement pas de champ « date de délivrance ». Le QR pointe vers
+`APP_FRONTEND_URL/verification-certificat/<référence>` — en production, cette variable doit être le domaine
+public et permanent de l'INPG (un QR imprimé ne se corrige pas), pas `localhost` ni un tunnel ; la référence
+est aussi imprimée sous le QR pour une saisie manuelle. La page publique qu'il ouvre (`CertificatPublicController`,
+sans connexion) restitue ce qu'un faussaire retoucherait sur un vrai document — nom, formation, **période**,
+**code**, date d'émission, validité de la signature — mais jamais la date de naissance, pourtant imprimée :
+c'est une donnée d'identité. Aucune limitation de débit n'y protège le balayage des références (8 caractères
+hexadécimaux aléatoires) : à ajouter avant la mise en production.
+
+**Tout PDF sort sur le papier à en-tête de l'INPG, par un moteur commun — ne pas réécrire de mini-moteur dans
+un service.** `pdf/PapierEnTete` (PDFBox) pose sur chaque page le logo, le pied de page (adresse, téléphone,
+site cliquable) et la pagination ; `pdf/RapportPdf` met en page les rapports (retour à la ligne, sauts de page,
+tableaux, tuiles de chiffres clés, filigrane) ; `pdf/PapierEnTeteOpenPdf` fait de même pour les trois documents
+encore écrits avec OpenPDF (lettre d'admission, convocation, reçu). Mesures, logo et icônes viennent du
+document Word fourni par l'INPG — voir `resources/pdf/README.md`. Chaque rapport avait auparavant son propre
+moteur, avec les mêmes défauts : titres « barrés » (le filet était tracé en travers du texte au lieu de dessous),
+commentaires coupés par « ... », ni logo ni pied de page. Deux pièges d'OpenPDF : ne jamais imbriquer des
+`Paragraph` dans un `Paragraph` conteneur — l'espacement et l'alignement se perdent, les titres se décentrent et
+les blocs se recouvrent — mais ajouter les éléments un à un (`PapierEnTeteOpenPdf.ajouter`). Et un test de PDF
+doit relire le fichier **produit** (texte extrait, position des glyphes par rapport aux traits), comme
+`RapportPdfTest` : constater seulement « un fichier est généré » ne voyait aucun de ces défauts.
+
 ---
 
 ## 4. Comptes et données
@@ -496,20 +452,6 @@ docker exec -i demo-postgres psql -U admin -d myappdb < backend/db/seed-demo-cli
 
 Le second remplit les écrans qui sonnent creux en démonstration : progressions
 variées, photothèque, forum, tests et entretiens.
-
-**Aucun compte de recette n'est sans rôle** — tous en portent un, ce qui masque toute une
-famille de défauts propres au compte *fraîchement inscrit* (école, entreprise ou formateur
-n'ayant encore rien soumis : les rôles métier ne s'accordent qu'à la première soumission).
-Pour les reproduire, créer un compte jetable puis le retirer par un `DELETE` ciblé :
-
-```bash
-curl -s -X POST localhost:8080/api/auth/register -H 'Content-Type: application/json' \
-  -d '{"username":"verif_ecole","email":"verif.ecole@inpg.sn","password":"Verif@2026","typeInscription":"ECOLE"}'
-docker exec -i demo-postgres psql -U admin -d myappdb \
-  -c "DELETE FROM users WHERE email = 'verif.ecole@inpg.sn';"   # après l'essai
-```
-
-`typeInscription` vaut `CANDIDAT`, `ECOLE`, `ENTREPRISE` ou `FORMATEUR`.
 
 ---
 

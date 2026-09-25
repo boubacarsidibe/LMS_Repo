@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import inpg.sn.lms.auth.entity.Etudiant;
+import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet;
@@ -25,6 +26,14 @@ import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
  * question ici, comme le reste du dépôt le fait déjà pour d'autres questions
  * métier (cf. CLAUDE.md §3), corrige ce défaut sans le recréer ailleurs.
  *
+ * <p>Un formateur ne voit que les sujets généraux, ceux de ses propres cours
+ * ({@code cours_formateur}) et ceux des promotions desservies par ces cours — la
+ * même règle de cloisonnement que partout ailleurs dans l'espace formateur
+ * (supports, séances, notes ; cf. CLAUDE.md §3, « cours_formateur commande tout le
+ * cloisonnement enseignant »). Une version antérieure donnait à tout formateur une
+ * vue sur l'intégralité du forum étudiant, y compris à un formateur sans le moindre
+ * cours assigné : corrigé pour s'aligner sur {@link PerimetreFormateurService}.
+ *
  * <p>Ne sert jamais de sujet de l'espace alumni ({@code portee = ALUMNI}) : cette
  * classe répond uniquement à « que voit un étudiant ou un formateur ? ». L'espace
  * alumni a son propre contrôleur et sa propre visibilité, plus simple (un seul
@@ -36,12 +45,15 @@ public class ForumVisibiliteService {
     private final ForumSujetRepository sujetRepository;
     private final UtilisateurCourantService utilisateurCourant;
     private final HabilitationCoursService habilitation;
+    private final PerimetreFormateurService perimetreFormateur;
 
     public ForumVisibiliteService(ForumSujetRepository sujetRepository,
-            UtilisateurCourantService utilisateurCourant, HabilitationCoursService habilitation) {
+            UtilisateurCourantService utilisateurCourant, HabilitationCoursService habilitation,
+            PerimetreFormateurService perimetreFormateur) {
         this.sujetRepository = sujetRepository;
         this.utilisateurCourant = utilisateurCourant;
         this.habilitation = habilitation;
+        this.perimetreFormateur = perimetreFormateur;
     }
 
     /** Sujets accessibles au connecté, épinglés en tête. */
@@ -51,8 +63,18 @@ public class ForumVisibiliteService {
         User utilisateur = utilisateurCourant.utilisateur(authentication);
         List<ForumSujet> sujets;
         if (etudiant == null) {
-            // Formateur ou personnel : accès à l'ensemble des salons de l'espace étudiant.
-            sujets = sujetRepository.findVisiblesEtudiantFormateur();
+            Formateur formateur = utilisateurCourant.formateur(authentication);
+            if (formateur == null) {
+                // Ni étudiant ni formateur : aucun profil, aucun sujet — un accès non fondé
+                // ne doit jamais se replier sur une vue large par défaut.
+                sujets = List.of();
+            } else {
+                List<Long> coursIds = perimetreFormateur.coursIdsDuFormateur(formateur);
+                sujets = coursIds.isEmpty()
+                        ? sujetRepository.findGeneraux(null)
+                        : sujetRepository.findVisiblesPourFormateur(coursIds,
+                                perimetreFormateur.cohorteIdsDuFormateur(formateur));
+            }
         } else {
             List<Long> coursIds = habilitation.idsCoursAutorises(etudiant);
             Long promotionId = etudiant.getPromotion() == null ? null : etudiant.getPromotion().getId();
@@ -92,19 +114,21 @@ public class ForumVisibiliteService {
         }
         if (sujet.getCours() != null) {
             Etudiant etudiant = utilisateurCourant.etudiant(authentication);
-            if (etudiant == null) {
-                return true;
+            if (etudiant != null) {
+                return habilitation.estAutorise(sujet.getCours().getId(), etudiant);
             }
-            return habilitation.estAutorise(sujet.getCours().getId(), etudiant);
+            Formateur formateur = utilisateurCourant.formateur(authentication);
+            return formateur != null && perimetreFormateur.estFormateurDuCours(formateur, sujet.getCours());
         }
         if (sujet.getPromotion() != null) {
             Etudiant etudiant = utilisateurCourant.etudiant(authentication);
-            if (etudiant == null) {
-                // Formateur ou personnel : même règle que pour un sujet de cours.
-                return true;
+            if (etudiant != null) {
+                return etudiant.getPromotion() != null
+                        && etudiant.getPromotion().getId().equals(sujet.getPromotion().getId());
             }
-            return etudiant.getPromotion() != null
-                    && etudiant.getPromotion().getId().equals(sujet.getPromotion().getId());
+            Formateur formateur = utilisateurCourant.formateur(authentication);
+            return formateur != null
+                    && perimetreFormateur.cohorteIdsDuFormateur(formateur).contains(sujet.getPromotion().getId());
         }
         return true;
     }

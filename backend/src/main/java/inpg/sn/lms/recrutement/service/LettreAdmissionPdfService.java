@@ -6,6 +6,8 @@ import java.util.Locale;
 
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
@@ -17,6 +19,8 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
+import inpg.sn.lms.pdf.PapierEnTete;
+import inpg.sn.lms.pdf.PapierEnTeteOpenPdf;
 import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.recrutement.entity.Candidature;
 
@@ -36,17 +40,18 @@ public class LettreAdmissionPdfService {
     public byte[] genererLettreAdmission(Candidature candidature) {
         Candidat candidat = candidature.getCandidat();
 
-        Document document = new Document(PageSize.A4, 45, 45, 45, 45);
+        Document document = new Document(PageSize.A4, PapierEnTete.MARGE_GAUCHE, PapierEnTete.MARGE_DROITE,
+                PapierEnTete.HAUT_CONTENU, PapierEnTete.BAS_CONTENU);
         ByteArrayOutputStream sortie = new ByteArrayOutputStream();
         try {
-            PdfWriter.getInstance(document, sortie);
+            PdfWriter.getInstance(document, sortie).setPageEvent(new PapierEnTeteOpenPdf());
             document.open();
 
             document.add(enTete());
-            document.add(titre(candidature));
-            document.add(corpsLettre(candidature, candidat));
+            PapierEnTeteOpenPdf.ajouter(document, titre(candidature));
+            PapierEnTeteOpenPdf.ajouter(document, corpsLettre(candidature, candidat));
             document.add(tableauRecapitulatif(candidature, candidat));
-            document.add(prochainesEtapes());
+            PapierEnTeteOpenPdf.ajouter(document, prochainesEtapes());
             document.add(signatureEtCachet());
 
             document.close();
@@ -56,21 +61,16 @@ public class LettreAdmissionPdfService {
         return sortie.toByteArray();
     }
 
+    /** Le logo et le pied de page viennent du papier à en-tête ({@link PapierEnTeteOpenPdf}) ; reste la direction émettrice. */
     private Element enTete() {
-        Paragraph marque = new Paragraph("INPG LMS", police(22, Font.BOLD, BLEU_INPG));
-        marque.setSpacingAfter(2f);
-
-        Paragraph institut = new Paragraph("Institut National du Pétrole et du Gaz\nDirection Générale — Service des Admissions et de la Scolarité",
+        Paragraph direction = new Paragraph("Direction Générale — Service des Admissions et de la Scolarité",
                 police(10, Font.NORMAL, GRIS_TEXTE));
-        institut.setSpacingAfter(24f);
-
-        Paragraph bloc = new Paragraph();
-        bloc.add(marque);
-        bloc.add(institut);
-        return bloc;
+        direction.setSpacingBefore(6f);
+        direction.setSpacingAfter(20f);
+        return direction;
     }
 
-    private Element titre(Candidature candidature) {
+    private List<Element> titre(Candidature candidature) {
         Paragraph titre = new Paragraph("NOTIFICATION OFFICIELLE D'ADMISSION", police(16, Font.BOLD, BLEU_FONCE));
         titre.setAlignment(Element.ALIGN_CENTER);
         titre.setSpacingAfter(4f);
@@ -79,13 +79,10 @@ public class LettreAdmissionPdfService {
         statutBadge.setAlignment(Element.ALIGN_CENTER);
         statutBadge.setSpacingAfter(20f);
 
-        Paragraph bloc = new Paragraph();
-        bloc.add(titre);
-        bloc.add(statutBadge);
-        return bloc;
+        return List.of(titre, statutBadge);
     }
 
-    private Element corpsLettre(Candidature candidature, Candidat candidat) {
+    private List<Element> corpsLettre(Candidature candidature, Candidat candidat) {
         String nomComplet = candidat != null ? (nvl(candidat.getPrenom()) + " " + nvl(candidat.getNom())).trim() : "Candidat(e)";
         String session = candidature.getSessionCandidature() != null ? candidature.getSessionCandidature().getLibelle() : "Formation INPG";
 
@@ -106,12 +103,7 @@ public class LettreAdmissionPdfService {
                 police(10, Font.NORMAL, GRIS_TEXTE));
         suite.setSpacingAfter(16f);
 
-        Paragraph bloc = new Paragraph();
-        bloc.add(salutation);
-        bloc.add(texte);
-        bloc.add(prog);
-        bloc.add(suite);
-        return bloc;
+        return List.of(salutation, texte, prog, suite);
     }
 
     private Element tableauRecapitulatif(Candidature candidature, Candidat candidat) {
@@ -133,7 +125,7 @@ public class LettreAdmissionPdfService {
         return table;
     }
 
-    private Element prochainesEtapes() {
+    private List<Element> prochainesEtapes() {
         Paragraph titreSection = new Paragraph("Prochaines étapes pour finaliser votre rentrée :",
                 police(11, Font.BOLD, BLEU_FONCE));
         titreSection.setSpacingAfter(6f);
@@ -143,12 +135,7 @@ public class LettreAdmissionPdfService {
         Paragraph e3 = new Paragraph("3. Retrait de votre carte d'étudiant lors de la journée d'intégration.", police(9.5f, Font.NORMAL, GRIS_TEXTE));
         e3.setSpacingAfter(20f);
 
-        Paragraph bloc = new Paragraph();
-        bloc.add(titreSection);
-        bloc.add(e1);
-        bloc.add(e2);
-        bloc.add(e3);
-        return bloc;
+        return List.of(titreSection, e1, e2, e3);
     }
 
     private Element signatureEtCachet() {

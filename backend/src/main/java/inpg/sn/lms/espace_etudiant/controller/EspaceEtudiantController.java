@@ -666,9 +666,7 @@ public class EspaceEtudiantController {
                     .body(Map.of("message", "Vous n'avez pas accès à ce certificat."));
         }
 
-        Double moyenne = certificat.getEtudiant() == null ? null
-                : releveNotesService.moyenneDeLEtudiant(certificat.getEtudiant().getId());
-        byte[] pdf = certificatPdfService.genererPdf(certificat, moyenne);
+        byte[] pdf = certificatPdfService.genererPdf(certificat);
         String nomFichier = "INPG-certificat-" + certificat.getReference() + ".pdf";
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
@@ -1619,7 +1617,12 @@ public class EspaceEtudiantController {
                 certificat.getIntituleFormation(),
                 certificat.getPromotion() != null ? certificat.getPromotion().getLibelle() : null,
                 certificat.getDateEmission().toString(),
-                certificat.getFormateurNom());
+                certificat.getFormateurNom(),
+                certificat.getCivilite(),
+                certificat.getDateNaissance() == null ? null : certificat.getDateNaissance().toString(),
+                certificat.getDateDebut() == null ? null : certificat.getDateDebut().toString(),
+                certificat.getDateFin() == null ? null : certificat.getDateFin().toString(),
+                certificat.getCodeCertificat());
     }
 
     private static final DateTimeFormatter DATE_HEURE_FORUM = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");

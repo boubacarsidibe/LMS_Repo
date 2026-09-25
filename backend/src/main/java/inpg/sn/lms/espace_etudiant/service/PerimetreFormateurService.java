@@ -68,6 +68,12 @@ public class PerimetreFormateurService {
         return promotionsDuCours(cours).stream().map(Promotion::getId).toList();
     }
 
+    /** Identifiants des cours que ce formateur enseigne. */
+    @Transactional(readOnly = true)
+    public List<Long> coursIdsDuFormateur(Formateur formateur) {
+        return coursService.getByFormateurId(formateur.getId()).stream().map(Cours::getId).toList();
+    }
+
     /**
      * Promotions que le formateur enseigne, deduites des formations auxquelles ses
      * cours appartiennent. Un formateur sans cours, ou dont aucun cours n'est

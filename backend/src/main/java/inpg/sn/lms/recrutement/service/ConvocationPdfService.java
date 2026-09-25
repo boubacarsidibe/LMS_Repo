@@ -6,6 +6,8 @@ import java.util.Locale;
 
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
@@ -17,6 +19,8 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
+import inpg.sn.lms.pdf.PapierEnTete;
+import inpg.sn.lms.pdf.PapierEnTeteOpenPdf;
 import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.Entretien;
@@ -27,7 +31,6 @@ public class ConvocationPdfService {
     private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("EEEE dd MMMM yyyy 'à' HH:mm", Locale.FRENCH);
     private static final String VIDE = "—";
 
-    private static final java.awt.Color BLEU_INPG = new java.awt.Color(0x30, 0x60, 0x9a);
     private static final java.awt.Color BLEU_FONCE = new java.awt.Color(0x1a, 0x36, 0x5d);
     private static final java.awt.Color GRIS_TEXTE = new java.awt.Color(0x46, 0x46, 0x4e);
     private static final java.awt.Color GRIS_FOND = new java.awt.Color(0xf2, 0xf4, 0xf6);
@@ -36,16 +39,17 @@ public class ConvocationPdfService {
     public byte[] genererConvocation(Entretien entretien, Candidature candidature) {
         Candidat candidat = entretien.getCandidat();
 
-        Document document = new Document(PageSize.A4, 45, 45, 45, 45);
+        Document document = new Document(PageSize.A4, PapierEnTete.MARGE_GAUCHE, PapierEnTete.MARGE_DROITE,
+                PapierEnTete.HAUT_CONTENU, PapierEnTete.BAS_CONTENU);
         ByteArrayOutputStream sortie = new ByteArrayOutputStream();
         try {
-            PdfWriter.getInstance(document, sortie);
+            PdfWriter.getInstance(document, sortie).setPageEvent(new PapierEnTeteOpenPdf());
             document.open();
 
             document.add(enTete());
-            document.add(titre(candidature));
+            PapierEnTeteOpenPdf.ajouter(document, titre(candidature));
             document.add(tableauDetails(entretien, candidature, candidat));
-            document.add(checklist());
+            PapierEnTeteOpenPdf.ajouter(document, checklist());
             document.add(signatureEtCachet());
 
             document.close();
@@ -55,21 +59,16 @@ public class ConvocationPdfService {
         return sortie.toByteArray();
     }
 
+    /** Le logo et le pied de page viennent du papier à en-tête ({@link PapierEnTeteOpenPdf}) ; reste la direction émettrice. */
     private Element enTete() {
-        Paragraph marque = new Paragraph("INPG LMS", police(20, Font.BOLD, BLEU_INPG));
-        marque.setSpacingAfter(2f);
-
-        Paragraph institut = new Paragraph("Institut National du Pétrole et du Gaz\nDirection des Admissions et Concours",
+        Paragraph direction = new Paragraph("Direction des Admissions et Concours",
                 police(10, Font.NORMAL, GRIS_TEXTE));
-        institut.setSpacingAfter(20f);
-
-        Paragraph bloc = new Paragraph();
-        bloc.add(marque);
-        bloc.add(institut);
-        return bloc;
+        direction.setSpacingBefore(6f);
+        direction.setSpacingAfter(16f);
+        return direction;
     }
 
-    private Element titre(Candidature candidature) {
+    private List<Element> titre(Candidature candidature) {
         Paragraph titre = new Paragraph("CONVOCATION OFFICIELLE", police(16, Font.BOLD, BLEU_FONCE));
         titre.setSpacingAfter(4f);
 
@@ -80,10 +79,7 @@ public class ConvocationPdfService {
         Paragraph sousTitre = new Paragraph("Entretien d'Admission — " + session, police(12, Font.NORMAL, GRIS_TEXTE));
         sousTitre.setSpacingAfter(18f);
 
-        Paragraph bloc = new Paragraph();
-        bloc.add(titre);
-        bloc.add(sousTitre);
-        return bloc;
+        return List.of(titre, sousTitre);
     }
 
     private Element tableauDetails(Entretien entretien, Candidature candidature, Candidat candidat) {
@@ -115,7 +111,7 @@ public class ConvocationPdfService {
         return table;
     }
 
-    private Element checklist() {
+    private List<Element> checklist() {
         Paragraph titreSection = new Paragraph("Consignes et documents requis pour le jour J :",
                 police(11, Font.BOLD, BLEU_FONCE));
         titreSection.setSpacingAfter(8f);
@@ -130,13 +126,7 @@ public class ConvocationPdfService {
                 police(10, Font.NORMAL, GRIS_TEXTE));
         p4.setSpacingAfter(20f);
 
-        Paragraph bloc = new Paragraph();
-        bloc.add(titreSection);
-        bloc.add(p1);
-        bloc.add(p2);
-        bloc.add(p3);
-        bloc.add(p4);
-        return bloc;
+        return List.of(titreSection, p1, p2, p3, p4);
     }
 
     private Element signatureEtCachet() {

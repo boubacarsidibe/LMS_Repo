@@ -3,7 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { catchError, finalize, map, Observable, of, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthResponse } from '../models/auth-response';
-import { ProfilCompte, TypeInscription, User } from '../models/user.model';
+import { ProfilCompte, User } from '../models/user.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -39,35 +39,9 @@ export class Auth {
   }
 
   /**
-   * École, entreprise ou candidat formateur — ou null pour tout le reste
-   * (candidat/étudiant, personnel INPG, visiteur).
-   *
-   * <p>Le rôle métier fait foi dès qu'il existe. Tant qu'il n'existe pas (rôle
-   * accordé seulement à la première soumission), c'est le type choisi à
-   * l'inscription qui parle : sans lui, une école qui s'est inscrite sans encore
-   * rien déposer n'avait aucun rôle et se retrouvait traitée comme un candidat —
-   * accueil, onglets et menu du profil tournés vers les admissions étudiantes.
-   * Un compte qui porte déjà un autre rôle (étudiant, personnel…) n'est jamais
-   * reclassé d'après son type.
-   */
-  getProfilCompte(): ProfilCompte | null {
-    const roles = this.getUserRoles();
-    if (roles.includes('ROLE_ECOLE_FORMATION')) return 'ecole';
-    if (roles.includes('ROLE_ENTREPRISE')) return 'entreprise';
-    if (roles.includes('ROLE_CANDIDAT_FORMATEUR')) return 'formateur';
-    if (roles.length > 0) return null;
-    switch (this.currentUser()?.typeInscription) {
-      case 'ECOLE': return 'ecole';
-      case 'ENTREPRISE': return 'entreprise';
-      case 'FORMATEUR': return 'formateur';
-      default: return null;
-    }
-  }
-
-  /**
-   * URL de l'espace propre à l'utilisateur connecté, ou null s'il n'a ni rôle
-   * métier ni type d'inscription qui le désigne (candidat sans dossier).
-   * Utilisée par redirectByRole pour la redirection post-connexion.
+   * URL de l'espace propre au rôle de l'utilisateur connecté, ou null s'il n'a
+   * encore aucun rôle métier (compte tout juste créé). Utilisée par
+   * redirectByRole pour la redirection post-connexion.
    */
   getHomeUrl(): string | null {
     const roles = this.getUserRoles();
@@ -83,8 +57,6 @@ export class Auth {
       return '/evaluateur-accreditation';
     } else if (roles.includes('ROLE_CANDIDAT')) {
       return '/recrutement/suivi';
-    } else if (roles.includes('ROLE_CANDIDAT_FORMATEUR')) {
-      return '/candidature-formateur';
     } else if (roles.includes('ROLE_ETUDIANT')) {
       return '/espace-etudiant/dashboard';
     } else if (roles.includes('ROLE_FORMATEUR')) {
@@ -92,20 +64,31 @@ export class Auth {
     } else if (roles.includes('ROLE_ALUMNI')) {
       return '/espace-alumni/mon-profil';
     }
-    // Aucun rôle métier encore : on suit le type d'inscription, comme le fait la
-    // page d'inscription juste après la création du compte. Le formateur arrive
-    // sur les offres — il doit en choisir une avant de pouvoir candidater.
-    switch (this.getProfilCompte()) {
-      case 'ecole': return '/accreditation';
-      case 'entreprise': return '/espace-entreprise';
-      case 'formateur': return '/offres-formateurs';
-      default: return null;
-    }
+    return null;
   }
 
   /** Redirige l'utilisateur vers sa page d'accueil selon son rôle */
   redirectByRole(router: any): void {
     router.navigate([this.getHomeUrl() ?? '/accueil']);
+  }
+
+  /**
+   * Type de compte n'ayant pas encore de rôle métier : oriente le navbar d'une
+   * école, d'une entreprise ou d'un candidat formateur. Un compte qui porte déjà
+   * un autre rôle n'est jamais reclassé d'après son type.
+   */
+  getProfilCompte(): ProfilCompte | null {
+    const roles = this.getUserRoles();
+    if (roles.includes('ROLE_ECOLE_FORMATION')) return 'ecole';
+    if (roles.includes('ROLE_ENTREPRISE')) return 'entreprise';
+    if (roles.includes('ROLE_CANDIDAT_FORMATEUR')) return 'formateur';
+    if (roles.length > 0) return null;
+    switch (this.currentUser()?.typeInscription) {
+      case 'ECOLE': return 'ecole';
+      case 'ENTREPRISE': return 'entreprise';
+      case 'FORMATEUR': return 'formateur';
+      default: return null;
+    }
   }
 
   getUserRoles(): string[] {
@@ -138,7 +121,7 @@ export class Auth {
     }
   }
 
-  register(username: string, email: string, password: string, typeInscription: TypeInscription = 'CANDIDAT'): Observable<AuthResponse> {
+  register(username: string, email: string, password: string, typeInscription: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' = 'CANDIDAT'): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, { username, email, password, typeInscription })
       .pipe(
         tap((resp) => this.setSession(resp))

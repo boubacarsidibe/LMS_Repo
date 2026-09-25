@@ -42,7 +42,7 @@ export class EcoleMonProfilComponent {
     this.messageErreur = '';
     if (this.form.invalid) {
       if (this.form.get('nouveauMotDePasse')?.hasError('passwordPolicy')) {
-        this.messageErreur = 'Le mot de passe doit contenir au moins 8 caractères et ne pas dépasser 72 octets UTF-8.';
+        this.messageErreur = 'Le mot de passe doit contenir au moins 8 caractères.';
       }
       this.form.markAllAsTouched();
       return;

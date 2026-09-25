@@ -40,17 +40,25 @@ public interface ForumSujetRepository extends JpaRepository<ForumSujet, Long> {
     List<ForumSujet> findGeneraux(@Param("promotionId") Long promotionId);
 
     /**
-     * Vue « formateur/personnel » : tous les sujets de l'espace étudiant (généraux
-     * et rattachés à un cours, quel qu'il soit). Exclut délibérément les sujets de
-     * l'espace alumni, qui n'est pas ce que « voir l'ensemble des salons » désigne
-     * ici — voir {@code ForumVisibiliteService}.
+     * Sujets accessibles à un formateur : les salons généraux de l'espace étudiant,
+     * ceux rattachés à un cours qu'il enseigne, et ceux rattachés à une promotion
+     * desservie par ses cours (cf. {@code PerimetreFormateurService#cohorteIdsDuFormateur}).
+     * Remplace une ancienne vue « formateur/personnel » qui renvoyait l'intégralité
+     * des sujets de l'espace étudiant sans tenir compte de {@code cours_formateur} —
+     * un formateur sans le moindre cours assigné voyait pourtant tous les fils de
+     * tous les cours, à rebours du cloisonnement appliqué partout ailleurs dans cet
+     * espace (supports, séances, notes).
      */
     @Query("""
             SELECT s FROM ForumSujet s
-            WHERE s.portee = inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet.ETUDIANT
+            WHERE (s.cours IS NULL AND s.promotion IS NULL
+                   AND s.portee = inpg.sn.lms.espace_etudiant.entity.PorteeForumSujet.ETUDIANT)
+               OR s.cours.id IN :coursIds
+               OR s.promotion.id IN :promotionIds
             ORDER BY s.epingle DESC, s.dateCreation DESC
             """)
-    List<ForumSujet> findVisiblesEtudiantFormateur();
+    List<ForumSujet> findVisiblesPourFormateur(@Param("coursIds") List<Long> coursIds,
+            @Param("promotionIds") List<Long> promotionIds);
 
     /** Sujets généraux de l'espace alumni, seul salon qui leur soit ouvert. */
     List<ForumSujet> findByPorteeOrderByEpingleDescDateCreationDesc(PorteeForumSujet portee);

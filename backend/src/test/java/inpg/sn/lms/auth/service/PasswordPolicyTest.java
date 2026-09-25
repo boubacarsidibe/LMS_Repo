@@ -8,34 +8,30 @@ import org.junit.jupiter.api.Test;
 
 class PasswordPolicyTest {
 
-    /**
-     * Construit sur {@link PasswordPolicy#LONGUEUR_MINIMALE} plutôt que sur un
-     * nombre de caractères recopié en dur : la longueur minimale a déjà changé
-     * une fois (douze caractères jugés trop contraignants pour la création de
-     * compte, ramenés à huit) et ce test n'a pas à être retouché à chaque
-     * nouvelle révision de la règle.
-     */
-    private static String motDePasse(int longueur) {
-        String motif = "Abcd1234!xyz";
-        StringBuilder resultat = new StringBuilder();
-        while (resultat.length() < longueur) {
-            resultat.append(motif);
-        }
-        return resultat.substring(0, longueur);
+    @Test
+    @DisplayName("Accepte un mot de passe de huit caractères")
+    void accepte_la_longueur_minimale() {
+        assertThatCode(() -> PasswordPolicy.exigerMotDePasseRobuste("Abcd123!"))
+                .doesNotThrowAnyException();
     }
 
     @Test
-    @DisplayName("Accepte un mot de passe à la longueur minimale exacte")
-    void accepte_la_longueur_minimale() {
-        assertThatCode(() -> PasswordPolicy.exigerMotDePasseRobuste(motDePasse(PasswordPolicy.LONGUEUR_MINIMALE)))
-                .doesNotThrowAnyException();
+    @DisplayName("Aucun plafond de longueur : un mot de passe très long est accepté")
+    void pas_de_longueur_maximale() {
+        assertThatCode(() -> PasswordPolicy.exigerMotDePasseRobuste("é".repeat(200))).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Refuse un mot de passe fait uniquement d'espaces")
+    void refuse_les_espaces_seuls() {
+        assertThatIllegalArgumentException().isThrownBy(() -> PasswordPolicy.exigerMotDePasseRobuste(" ".repeat(12)));
     }
 
     @Test
     @DisplayName("Refuse un mot de passe court ou absent")
     void refuse_un_mot_de_passe_court_ou_absent() {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> PasswordPolicy.exigerMotDePasseRobuste(motDePasse(PasswordPolicy.LONGUEUR_MINIMALE - 1)));
+                .isThrownBy(() -> PasswordPolicy.exigerMotDePasseRobuste("Abcd123"));
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> PasswordPolicy.exigerMotDePasseRobuste(null));
     }

@@ -1,7 +1,5 @@
 package inpg.sn.lms.auth.service;
 
-import java.nio.charset.StandardCharsets;
-
 /** Règle unique appliquée à tous les mots de passe choisis par un utilisateur. */
 public final class PasswordPolicy {
 
@@ -15,8 +13,8 @@ public final class PasswordPolicy {
             throw new IllegalArgumentException(
                     "Le mot de passe doit contenir au moins " + LONGUEUR_MINIMALE + " caractères.");
         }
-        if (motDePasse.isBlank() || motDePasse.getBytes(StandardCharsets.UTF_8).length > 72) {
-            throw new IllegalArgumentException("Le mot de passe ne doit pas être vide ni dépasser 72 octets UTF-8.");
+        if (motDePasse.isBlank()) {
+            throw new IllegalArgumentException("Le mot de passe ne doit pas être vide.");
         }
     }
 }

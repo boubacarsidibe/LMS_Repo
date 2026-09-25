@@ -2,6 +2,7 @@ package inpg.sn.lms.espace_etudiant.entity;
 
 import java.time.LocalDate;
 import java.time.Year;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import inpg.sn.lms.auth.entity.Etudiant;
@@ -48,6 +49,24 @@ public class Certificat {
     @Column(length = 64)
     private String signature;
 
+    /** « Monsieur », « Madame »… : imprimée avant le nom sur le certificat au modèle INPG. */
+    @Column(length = 20)
+    private String civilite;
+
+    @Column(name = "date_naissance")
+    private LocalDate dateNaissance;
+
+    /** Période de la formation (« Du 02 au 06 février 2026 »). */
+    @Column(name = "date_debut")
+    private LocalDate dateDebut;
+
+    @Column(name = "date_fin")
+    private LocalDate dateFin;
+
+    /** Code propre au certificat (ex. CG1001260206/03), imprimé en bas de page. */
+    @Column(name = "code_certificat", length = 60)
+    private String codeCertificat;
+
     public Long getId() {
         return id;
     }
@@ -82,6 +101,46 @@ public class Certificat {
 
     public void setSignature(String signature) {
         this.signature = signature;
+    }
+
+    public String getCivilite() {
+        return civilite;
+    }
+
+    public void setCivilite(String civilite) {
+        this.civilite = civilite;
+    }
+
+    public LocalDate getDateNaissance() {
+        return dateNaissance;
+    }
+
+    public void setDateNaissance(LocalDate dateNaissance) {
+        this.dateNaissance = dateNaissance;
+    }
+
+    public LocalDate getDateDebut() {
+        return dateDebut;
+    }
+
+    public void setDateDebut(LocalDate dateDebut) {
+        this.dateDebut = dateDebut;
+    }
+
+    public LocalDate getDateFin() {
+        return dateFin;
+    }
+
+    public void setDateFin(LocalDate dateFin) {
+        this.dateFin = dateFin;
+    }
+
+    public String getCodeCertificat() {
+        return codeCertificat;
+    }
+
+    public void setCodeCertificat(String codeCertificat) {
+        this.codeCertificat = codeCertificat;
     }
 
     public void setEtudiant(Etudiant etudiant) {
@@ -120,7 +179,9 @@ public class Certificat {
             reference = "INPG-CERT-" + Year.now().getValue() + "-" + suffixe;
         }
         if (dateEmission == null) {
-            dateEmission = LocalDate.now();
+            // Le jour où le responsable pédagogique crée le certificat, à l'heure de Dakar : jamais une
+            // date saisie, ni celle d'un lot de démonstration.
+            dateEmission = LocalDate.now(ZoneId.of("Africa/Dakar"));
         }
     }
 }

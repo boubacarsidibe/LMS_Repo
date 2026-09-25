@@ -100,7 +100,7 @@ export class MonProfil implements OnInit {
       return;
     }
     if (!validPassword(this.nouveauMotDePasse)) {
-      this.messageErreurMotDePasse = 'Le nouveau mot de passe doit compter au moins 8 caractères et ne pas dépasser 72 octets UTF-8.';
+      this.messageErreurMotDePasse = 'Le nouveau mot de passe doit compter au moins 8 caractères.';
       return;
     }
     if (this.nouveauMotDePasse !== this.confirmationMotDePasse) {

@@ -9,6 +9,11 @@ public record CertificatDto(
         String intituleFormation,
         String promotionLibelle,
         String dateEmission,
-        String formateurNom) {
+        String formateurNom,
+        String civilite,
+        String dateNaissance,
+        String dateDebut,
+        String dateFin,
+        String codeCertificat) {
 
 }

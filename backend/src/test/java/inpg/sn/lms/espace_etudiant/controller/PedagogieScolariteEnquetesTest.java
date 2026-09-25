@@ -122,7 +122,8 @@ class PedagogieScolariteEnquetesTest {
                 retourRepository, releveNotesService, releveDelivranceService, candidatRepository,
                 alumniProfilRepository, alumniProfilService, enqueteSuiviRepository, reponseEnqueteSuiviRepository,
                 notificationRepository, rapportQualitePdfService,
-                new inpg.sn.lms.espace_etudiant.service.RelevePdfService(), completionProgrammeService);
+                new inpg.sn.lms.espace_etudiant.service.RelevePdfService(), completionProgrammeService,
+                new inpg.sn.lms.espace_etudiant.service.CertificatPdfService("https://lms.inpg.sn"));
     }
 
     private AlumniProfil alumniAvecCompte(long id) {

@@ -2,23 +2,28 @@ package inpg.sn.lms.espace_etudiant.service;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.io.UncheckedIOException;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 import javax.imageio.ImageIO;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.pdfbox.pdmodel.PDPageContentStream.AppendMode;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
-import org.apache.pdfbox.util.Matrix;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import com.google.zxing.BarcodeFormat;
@@ -26,105 +31,114 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
+import inpg.sn.lms.auth.entity.Etudiant;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
 
 /**
- * Génère le PDF du certificat à la volée (pas de fichier stocké) : cadre,
- * QR code de vérification, cachet/signature dessinés vectoriellement et
- * filigrane répété pour limiter la contrefaçon.
+ * Génère le PDF du certificat à la volée (pas de fichier stocké), au modèle officiel de l'INPG.
  *
- * <p>Le cachet dessiné reste cosmétique — la garantie d'authenticité réelle
- * est la signature électronique (HMAC, {@code CertificatSignatureService})
- * que le QR code permet de vérifier publiquement.
+ * <p>Le cadre, le logo, le filigrane et les textes fixes ne sont pas redessinés : ils viennent du
+ * modèle d'origine, dont les zones variables ont été vidées ({@code certificats/certificat-formation-fond.pdf},
+ * voir le README du même dossier). Ce service n'y superpose que ce qui change d'un certificat à
+ * l'autre — civilité et nom, date de naissance, formation, période, date de délivrance et code — aux
+ * positions et dans les polices relevées sur le modèle, plus un petit QR code de vérification.
+ *
+ * <p>Le QR code n'est pas dans le modèle : il reste parce que la garantie d'authenticité réelle est la
+ * signature électronique ({@code CertificatSignatureService}), vérifiable publiquement par ce lien.
  */
 @Service
 public class CertificatPdfService {
 
-    private static final DateTimeFormatter FORMAT_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    /** Encodage réellement utilisé par Helvetica dans PDFBox. */
-    private static final Charset WINANSI = Charset.forName("windows-1252");
+    private static final Logger log = LoggerFactory.getLogger(CertificatPdfService.class);
+
+    private static final String FOND = "certificats/certificat-formation-fond.pdf";
+    private static final String ARIAL_GRAS = "pdf/polices/LiberationSans-Bold.ttf";
+    private static final String ARIAL = "pdf/polices/LiberationSans-Regular.ttf";
+    private static final String MONTSERRAT_REGULIER = "pdf/polices/Montserrat-Regular.ttf";
+    private static final String MONTSERRAT_CODE = "pdf/polices/Montserrat-SemiBoldItalic.ttf";
+
+    /** Bleu nuit du texte du modèle (0,162 / 0,156 / 0,361). */
+    private static final Color BLEU_NUIT = new Color(41, 40, 92);
+
+    /** Centre horizontal de la page du modèle (870,236 pt de large). */
+    private static final float CENTRE = 435.118f;
+    /** Largeur au-delà de laquelle un nom ou un intitulé est réduit pour rester dans le cadre. */
+    private static final float LARGEUR_MAX = 720f;
+
+    private static final float Y_NOM = 359.668f;
+    private static final float Y_FORMATION = 280.632f;
+    private static final float Y_PERIODE = 239.878f;
+    private static final float Y_FAIT_A = 82.368f;
+    private static final float X_FAIT_A = 75.401f;
+    private static final float Y_CODE = 41.528f;
+    private static final float X_CODE = 54.185f;
+
+    /** Écart entre le nom (22 pt gras) et « né le » : une espace de 26 pt dans le modèle. */
+    private static final float ECART_NAISSANCE = 7.228f;
+    /** Le modèle étire l'intitulé à 81,4 % (20 pt de large pour 24,576 pt de haut). */
+    private static final float ECHELLE_FORMATION = 81.38f;
+    /** Le code de bas de page est étiré à 115,6 % (9,835 pt de large pour 8,507 pt de haut). */
+    private static final float ECHELLE_CODE = 115.61f;
+
+    private static final float QR_TAILLE = 50f;
+    /** Sous le QR : la référence imprimée (5,5 pt) tient entre lui et le filet de bas de page. */
+    private static final float QR_Y = 80f;
+
+    private static final DateTimeFormatter JOUR = DateTimeFormatter.ofPattern("dd", Locale.FRENCH);
+    private static final DateTimeFormatter MOIS = DateTimeFormatter.ofPattern("MMMM", Locale.FRENCH);
+    private static final DateTimeFormatter JOUR_MOIS_ANNEE = DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.FRENCH);
+    private static final DateTimeFormatter DATE_NAISSANCE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final String frontendUrl;
+    private final byte[] fond;
+    private final byte[] arialGras;
+    private final byte[] arial;
+    private final byte[] montserratRegulier;
+    private final byte[] montserratCode;
 
     public CertificatPdfService(@Value("${app.frontend-url}") String frontendUrl) {
         this.frontendUrl = frontendUrl;
+        if (frontendUrl == null || frontendUrl.contains("localhost") || frontendUrl.contains("127.0.0.1")) {
+            // Un QR imprimé vit des années : il doit pointer vers le domaine public et permanent de la plateforme.
+            log.warn("APP_FRONTEND_URL vaut « {} » : le QR code des certificats délivrés ne sera lisible que sur ce poste. "
+                    + "Renseignez le domaine public définitif avant de délivrer de vrais certificats.", frontendUrl);
+        }
+        this.fond = lire(FOND);
+        this.arialGras = lire(ARIAL_GRAS);
+        this.arial = lire(ARIAL);
+        this.montserratRegulier = lire(MONTSERRAT_REGULIER);
+        this.montserratCode = lire(MONTSERRAT_CODE);
     }
 
     public byte[] genererPdf(Certificat certificat) {
-        return genererPdf(certificat, null);
-    }
+        try (PDDocument document = Loader.loadPDF(fond)) {
+            PDPage page = document.getPage(0);
+            PDFont arialGras = charger(document, this.arialGras);
+            PDFont arial = charger(document, this.arial);
+            PDFont montserrat = charger(document, montserratRegulier);
+            PDFont montserratCode = charger(document, this.montserratCode);
 
-    /**
-     * @param moyenneGenerale moyenne générale de l'étudiant sur 100, pour porter
-     *        une mention sur le document ; {@code null} pour l'omettre.
-     */
-    public byte[] genererPdf(Certificat certificat, Double moyenneGenerale) {
-        try (PDDocument document = new PDDocument()) {
-            PDRectangle paysage = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
-            PDPage page = new PDPage(paysage);
-            document.addPage(page);
+            try (PDPageContentStream content = new PDPageContentStream(document, page, AppendMode.APPEND, true, true)) {
+                content.setNonStrokingColor(BLEU_NUIT);
+                ecrireBeneficiaire(content, certificat, arialGras, arial);
+                ecrireFormation(content, certificat.getIntituleFormation(), arialGras);
 
-            float largeur = paysage.getWidth();
-            float hauteur = paysage.getHeight();
-
-            try (PDPageContentStream content = new PDPageContentStream(document, page)) {
-                PDType1Font titreFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-                PDType1Font texteFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-                PDType1Font texteItalique = new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE);
-
-                dessinerFiligrane(content, certificat, texteFont);
-
-                content.setStrokingColor(new Color(30, 64, 120));
-                content.setLineWidth(3f);
-                content.addRect(30, 30, largeur - 60, hauteur - 60);
-                content.stroke();
-                content.setLineWidth(1f);
-                content.addRect(38, 38, largeur - 76, hauteur - 76);
-                content.stroke();
-
-                ecrireCentre(content, titreFont, 26, "CERTIFICAT DE FORMATION", largeur, hauteur - 100);
-                ecrireCentre(content, texteFont, 13, "Institut National du Pétrole et du Gaz", largeur, hauteur - 130);
-
-                String etudiantNom = String.join(" ", certificat.getEtudiant().getPrenom(), certificat.getEtudiant().getNom());
-                ecrireCentre(content, texteFont, 12, "Décerné à", largeur, hauteur - 190);
-                ecrireCentre(content, titreFont, 22, etudiantNom, largeur, hauteur - 220);
-                if (certificat.getEtudiant().getMatricule() != null) {
-                    ecrireCentre(content, texteItalique, 10, "Matricule : " + certificat.getEtudiant().getMatricule(), largeur, hauteur - 240);
+                String periode = libellePeriode(certificat.getDateDebut(), certificat.getDateFin());
+                if (periode != null) {
+                    ecrireCentre(content, montserrat, 15f, sur(montserrat, periode), Y_PERIODE);
                 }
 
-                ecrireCentre(content, texteFont, 12, "pour avoir suivi avec succès la formation", largeur, hauteur - 280);
-                ecrireCentre(content, titreFont, 16, certificat.getIntituleFormation(), largeur, hauteur - 305);
-                if (certificat.getPromotion() != null) {
-                    ecrireCentre(content, texteFont, 11, "Promotion : " + certificat.getPromotion().getLibelle(), largeur, hauteur - 328);
-                }
+                String fait = "Fait à Dakar, le " + libelleJour(certificat.getDateEmission());
+                ecrireA(content, montserrat, 9f, sur(montserrat, fait), X_FAIT_A, Y_FAIT_A, 100f);
 
-                String mention = mention(moyenneGenerale);
-                if (mention != null) {
-                    ecrireCentre(content, texteFont, 11, "Mention : " + mention, largeur, hauteur - 348);
-                }
+                String code = codeAffiche(certificat);
+                ecrireA(content, montserratCode, 8.507f, sur(montserratCode, "INPG - Attestation - RDC - " + code),
+                        X_CODE, Y_CODE, ECHELLE_CODE);
 
-                String dateEmission = certificat.getDateEmission() == null ? "-"
-                        : certificat.getDateEmission().format(FORMAT_DATE);
-                ecrireCentre(content, texteFont, 11,
-                        "Délivré le " + dateEmission + "  -  Référence : " + certificat.getReference(),
-                        largeur, hauteur - (mention != null ? 378 : 365));
-
-                dessinerCachet(content, texteFont, titreFont, 110, 90);
-                content.setStrokingColor(Color.BLACK);
-                content.setLineWidth(0.8f);
-                content.moveTo(200, 100);
-                content.lineTo(380, 100);
-                content.stroke();
-                ecrireCentre(content, texteItalique, 9, "Signature du responsable pédagogique", 580, 85);
-
-                byte[] qrPng = genererQrCode(frontendUrl + "/verification-certificat/" + certificat.getReference());
-                PDImageXObject qrImage = PDImageXObject.createFromByteArray(document, qrPng, "qr");
-                float qrTaille = 90;
-                content.drawImage(qrImage, largeur - qrTaille - 60, 66, qrTaille, qrTaille);
-                ecrireCentreA(content, texteItalique, 7,
-                        "Vérifier l'authenticité", largeur - qrTaille / 2 - 60, 58);
+                dessinerQrVerification(document, content, montserrat, certificat.getReference());
             }
 
+            document.getDocumentInformation().setTitle("Certificat de formation INPG - " + certificat.getReference());
             ByteArrayOutputStream sortie = new ByteArrayOutputStream();
             document.save(sortie);
             return sortie.toByteArray();
@@ -133,52 +147,110 @@ public class CertificatPdfService {
         }
     }
 
-    private void dessinerFiligrane(PDPageContentStream content, Certificat certificat, PDType1Font font) throws IOException {
-        PDExtendedGraphicsState etatTransparence = new PDExtendedGraphicsState();
-        etatTransparence.setNonStrokingAlphaConstant(0.08f);
-        content.setGraphicsStateParameters(etatTransparence);
-        content.setNonStrokingColor(Color.BLACK);
+    /**
+     * « Monsieur Cherif Tidiane AIDARA né le 24/08/1985 » : le nom en Arial gras 22 pt, la naissance en
+     * Arial 15 pt à sa suite, l'ensemble centré sur la ligne comme dans le modèle. Un nom trop long est
+     * réduit plutôt que de sortir du cadre.
+     */
+    private void ecrireBeneficiaire(PDPageContentStream content, Certificat certificat, PDFont gras,
+            PDFont normal) throws IOException {
+        String nom = sur(gras, nomAffiche(certificat));
+        String naissance = certificat.getDateNaissance() == null ? null
+                : sur(normal, libelleNaissance(certificat) + certificat.getDateNaissance().format(DATE_NAISSANCE));
 
-        String texte = ("INPG - " + certificat.getReference() + " - ").repeat(6);
-        content.beginText();
-        content.setFont(font, 28);
-        for (int ligne = 0; ligne < 6; ligne++) {
-            float y = ligne * 130 - 40;
-            content.setTextMatrix(Matrix.getRotateInstance(Math.toRadians(30), -50, y));
-            content.showText(texte);
+        float taille = 22f;
+        float tailleNaissance = 15f;
+        float largeur = largeur(gras, nom, taille)
+                + (naissance == null ? 0 : ECART_NAISSANCE + largeur(normal, naissance, tailleNaissance));
+        if (largeur > LARGEUR_MAX) {
+            float facteur = LARGEUR_MAX / largeur;
+            taille *= facteur;
+            tailleNaissance *= facteur;
+            largeur = LARGEUR_MAX;
         }
-        content.endText();
 
-        PDExtendedGraphicsState etatNormal = new PDExtendedGraphicsState();
-        etatNormal.setNonStrokingAlphaConstant(1f);
-        content.setGraphicsStateParameters(etatNormal);
-    }
-
-    private void dessinerCachet(PDPageContentStream content, PDType1Font font, PDType1Font fontGras, float x, float y) throws IOException {
-        content.setStrokingColor(new Color(180, 30, 30));
-        content.setLineWidth(2f);
-        dessinerCercle(content, x, y, 55);
-        content.stroke();
-        content.setNonStrokingColor(new Color(180, 30, 30));
-        ecrireCentreA(content, fontGras, 10, "INPG", x, y + 8);
-        ecrireCentreA(content, font, 8, "CERTIFIÉ", x, y - 8);
-        content.setNonStrokingColor(Color.BLACK);
-    }
-
-    /** addEllipse n'est pas disponible sur cette version de PDFBox : approximation par segments. */
-    private void dessinerCercle(PDPageContentStream content, float centreX, float centreY, float rayon) throws IOException {
-        int segments = 48;
-        for (int i = 0; i <= segments; i++) {
-            double angle = 2 * Math.PI * i / segments;
-            float px = centreX + (float) (rayon * Math.cos(angle));
-            float py = centreY + (float) (rayon * Math.sin(angle));
-            if (i == 0) {
-                content.moveTo(px, py);
-            } else {
-                content.lineTo(px, py);
-            }
+        float x = CENTRE - largeur / 2;
+        ecrireA(content, gras, taille, nom, x, Y_NOM, 100f);
+        if (naissance != null) {
+            float xNaissance = x + largeur(gras, nom, taille) + ECART_NAISSANCE * taille / 22f;
+            ecrireA(content, normal, tailleNaissance, naissance, xNaissance, Y_NOM, 100f);
         }
     }
+
+    private void ecrireFormation(PDPageContentStream content, String intitule, PDFont gras) throws IOException {
+        String texte = sur(gras, intitule);
+        float taille = 24.576f;
+        float echelle = ECHELLE_FORMATION;
+        float largeur = largeur(gras, texte, taille) * echelle / 100f;
+        if (largeur > LARGEUR_MAX) {
+            echelle = echelle * LARGEUR_MAX / largeur;
+            largeur = LARGEUR_MAX;
+        }
+        ecrireA(content, gras, taille, texte, CENTRE - largeur / 2, Y_FORMATION, echelle);
+    }
+
+    /** Ajoute le QR de vérification, discret, au centre du bas de page (zone vide du modèle). */
+    private void dessinerQrVerification(PDDocument document, PDPageContentStream content, PDFont police,
+            String reference) throws Exception {
+        byte[] png = genererQrCode(frontendUrl + "/verification-certificat/" + reference);
+        PDImageXObject image = PDImageXObject.createFromByteArray(document, png, "qr");
+        content.drawImage(image, CENTRE - QR_TAILLE / 2, QR_Y, QR_TAILLE, QR_TAILLE);
+        ecrireCentre(content, police, 5.5f, sur(police, "Vérifier l'authenticité"), QR_Y + QR_TAILLE + 4f);
+        // Référence en clair : elle se saisit à la main si le QR est illisible (papier abîmé, impression floue).
+        ecrireCentre(content, police, 5.5f, sur(police, reference), QR_Y - 7f);
+    }
+
+    // ===================== Contenu =====================
+
+    static String nomAffiche(Certificat certificat) {
+        Etudiant etudiant = certificat.getEtudiant();
+        String prenom = etudiant.getPrenom() == null ? "" : etudiant.getPrenom().trim();
+        String nom = etudiant.getNom() == null ? "" : etudiant.getNom().trim().toUpperCase(Locale.FRENCH);
+        String identite = (prenom + " " + nom).trim();
+        String civilite = certificat.getCivilite();
+        return civilite == null || civilite.isBlank() ? identite : civilite.trim() + " " + identite;
+    }
+
+    private static String libelleNaissance(Certificat certificat) {
+        String civilite = certificat.getCivilite();
+        if (civilite == null || civilite.isBlank()) {
+            return "né(e) le ";
+        }
+        return "Monsieur".equalsIgnoreCase(civilite.trim()) ? "né le " : "née le ";
+    }
+
+    /** Le code propre au certificat, à défaut sa référence (certificats délivrés avant le modèle INPG). */
+    private static String codeAffiche(Certificat certificat) {
+        String code = certificat.getCodeCertificat();
+        return code == null || code.isBlank() ? certificat.getReference() : code.trim();
+    }
+
+    private static String libelleJour(LocalDate date) {
+        return date == null ? "-" : date.format(JOUR_MOIS_ANNEE);
+    }
+
+    /**
+     * « Du 02 au 06 février 2026 », « Du 28 janvier au 06 février 2026 », « Du 28 décembre 2025 au
+     * 06 janvier 2026 » ou « Le 06 février 2026 » ; {@code null} si la période est inconnue
+     * (certificat délivré avant l'ajout de ce champ).
+     */
+    public static String libellePeriode(LocalDate debut, LocalDate fin) {
+        if (debut == null && fin == null) {
+            return null;
+        }
+        if (debut == null || fin == null || debut.equals(fin)) {
+            return "Le " + libelleJour(debut == null ? fin : debut);
+        }
+        if (debut.getYear() == fin.getYear() && debut.getMonth() == fin.getMonth()) {
+            return "Du " + debut.format(JOUR) + " au " + fin.format(JOUR_MOIS_ANNEE);
+        }
+        if (debut.getYear() == fin.getYear()) {
+            return "Du " + debut.format(JOUR) + " " + debut.format(MOIS) + " au " + fin.format(JOUR_MOIS_ANNEE);
+        }
+        return "Du " + debut.format(JOUR_MOIS_ANNEE) + " au " + fin.format(JOUR_MOIS_ANNEE);
+    }
+
+    // ===================== Dessin =====================
 
     private byte[] genererQrCode(String contenu) throws Exception {
         QRCodeWriter writer = new QRCodeWriter();
@@ -189,59 +261,55 @@ public class CertificatPdfService {
         return sortie.toByteArray();
     }
 
-    private void ecrireCentre(PDPageContentStream content, PDType1Font font, float taille, String texte, float largeurPage, float y) throws IOException {
-        String sur = texteSur(texte);
-        float largeurTexte = font.getStringWidth(sur) / 1000 * taille;
-        float x = (largeurPage - largeurTexte) / 2;
-        ecrireTexte(content, font, taille, sur, x, y);
+    private void ecrireCentre(PDPageContentStream content, PDFont font, float taille, String texte, float y)
+            throws IOException {
+        ecrireA(content, font, taille, texte, CENTRE - largeur(font, texte, taille) / 2, y, 100f);
     }
 
-    private void ecrireCentreA(PDPageContentStream content, PDType1Font font, float taille, String texte, float centreX, float y) throws IOException {
-        String sur = texteSur(texte);
-        float largeurTexte = font.getStringWidth(sur) / 1000 * taille;
-        ecrireTexte(content, font, taille, sur, centreX - largeurTexte / 2, y);
-    }
-
-    private void ecrireTexte(PDPageContentStream content, PDType1Font font, float taille, String texte, float x, float y) throws IOException {
+    /** @param echelle étirement horizontal en pourcentage (100 = aucun). */
+    private void ecrireA(PDPageContentStream content, PDFont font, float taille, String texte, float x, float y,
+            float echelle) throws IOException {
         content.beginText();
         content.setFont(font, taille);
+        content.setHorizontalScaling(echelle);
         content.newLineAtOffset(x, y);
-        content.showText(texteSur(texte));
+        content.showText(texte);
         content.endText();
     }
 
-    /** Mention académique à partir de la moyenne /100, ou {@code null} si non disponible. */
-    private String mention(Double moyenneSur100) {
-        if (moyenneSur100 == null) {
-            return null;
-        }
-        if (moyenneSur100 >= 80) {
-            return "Très bien";
-        }
-        if (moyenneSur100 >= 70) {
-            return "Bien";
-        }
-        if (moyenneSur100 >= 60) {
-            return "Assez bien";
-        }
-        return "Passable";
+    private static float largeur(PDFont font, String texte, float taille) throws IOException {
+        return font.getStringWidth(texte) / 1000 * taille;
     }
 
+    // ===================== Textes sûrs =====================
+
     /**
-     * Rend un texte sûr pour l'encodage WinAnsi de Helvetica : les accents
-     * latins passent tels quels, seul un caractère hors Latin-1 (émoji, alphabet
-     * non latin dans un nom saisi librement) est remplacé par '?', ce qui évite
-     * un {@code IllegalArgumentException} en pleine génération.
+     * Un caractère absent de la police (émoji, alphabet non couvert dans un nom saisi librement) devient '?'
+     * plutôt que de lever une {@code IllegalArgumentException} en pleine génération.
      */
-    private static String texteSur(String valeur) {
-        if (valeur == null) {
-            return "";
-        }
+    private static String sur(PDFont font, String valeur) {
         StringBuilder resultat = new StringBuilder(valeur.length());
-        var encodeur = WINANSI.newEncoder();
-        for (char c : valeur.toCharArray()) {
-            resultat.append(encodeur.canEncode(c) ? c : '?');
-        }
+        valeur.codePoints().forEach(cp -> {
+            String caractere = new String(Character.toChars(cp));
+            try {
+                font.encode(caractere);
+                resultat.append(caractere);
+            } catch (IOException | IllegalArgumentException absent) {
+                resultat.append('?');
+            }
+        });
         return resultat.toString();
+    }
+
+    private static PDFont charger(PDDocument document, byte[] police) throws IOException {
+        return PDType0Font.load(document, new ByteArrayInputStream(police), true);
+    }
+
+    private static byte[] lire(String chemin) {
+        try {
+            return new ClassPathResource(chemin).getInputStream().readAllBytes();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Ressource de certificat introuvable : " + chemin, e);
+        }
     }
 }

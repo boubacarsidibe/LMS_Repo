@@ -5,6 +5,7 @@ import { filter } from 'rxjs/operators';
 import { Auth } from '../../../../core/auth/services/authService';
 import { RecrutementService, SessionCandidatureResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { ClocheNotificationsService, NotificationCloche } from '../../../../shared/services/cloche-notifications.service';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 interface NavItem {
   label: string;
@@ -22,7 +23,7 @@ interface Alerte {
 @Component({
   selector: 'app-responsable-admission-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LogoInpgComponent],
   templateUrl: './responsable-admission-layout.component.html',
 })
 export class ResponsableAdmissionLayoutComponent implements OnInit {

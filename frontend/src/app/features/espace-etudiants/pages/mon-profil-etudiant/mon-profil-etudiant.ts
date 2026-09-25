@@ -124,7 +124,7 @@ export class MonProfilEtudiant implements OnInit {
     this.erreurMotDePasse = null;
 
     if (!validPassword(this.nouveauMotDePasse)) {
-      this.erreurMotDePasse = 'Le nouveau mot de passe doit contenir au moins 8 caractères et ne pas dépasser 72 octets UTF-8.';
+      this.erreurMotDePasse = 'Le nouveau mot de passe doit contenir au moins 8 caractères.';
       return;
     }
     if (this.nouveauMotDePasse !== this.confirmationMotDePasse) {

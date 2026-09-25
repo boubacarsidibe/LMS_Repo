@@ -178,4 +178,15 @@ describe('NavbarComponent', () => {
       expect(liensDuMenu()).toEqual(['/recrutement/catalogue', '/recrutement/sessions']);
     });
   });
+
+  describe('logo', () => {
+    it("le lien du logo mène à l'accueil et montre l'image officielle, plus l'écriture « INPG Connect »", () => {
+      fixture.detectChanges();
+
+      const lien = fixture.nativeElement.querySelector('a[aria-label="INPG — accueil"]') as HTMLAnchorElement;
+      expect(lien.getAttribute('href')).toBe('/accueil');
+      expect(lien.querySelector('img')?.getAttribute('src')).toBe('/images/logo-inpg.png');
+      expect(lien.textContent).not.toContain('INPG');
+    });
+  });
 });

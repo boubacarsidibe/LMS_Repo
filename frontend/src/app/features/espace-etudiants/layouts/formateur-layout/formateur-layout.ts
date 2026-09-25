@@ -10,6 +10,7 @@ import { SupportService } from '../../services/support.service';
 import { Etudiant } from '../../models/etudiant';
 import { Cours } from '../../models/cours';
 import { Support } from '../../models/support';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 interface NavItem {
   label: string;
@@ -20,7 +21,7 @@ interface NavItem {
 @Component({
   selector: 'app-formateur-layout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RouterOutlet, LogoInpgComponent],
   templateUrl: './formateur-layout.html',
   styleUrl: './formateur-layout.css',
 })
@@ -48,7 +49,6 @@ export class FormateurLayout implements OnInit {
     { label: 'Retours & Évaluations', icon: 'assignment_turned_in', route: 'retours-evaluations' },
     { label: 'Annonces', icon: 'campaign', route: 'annonces' },
     { label: 'Photothèque', icon: 'photo_library', route: 'phototheque' },
-    { label: 'Rendez-vous', icon: 'event', route: 'rendez-vous' },
   ];
 
   constructor(

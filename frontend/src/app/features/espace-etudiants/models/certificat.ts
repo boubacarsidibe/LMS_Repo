@@ -8,4 +8,9 @@ export interface Certificat {
   promotionLibelle: string | null;
   dateEmission: string;
   formateurNom: string;
+  civilite: string | null;
+  dateNaissance: string | null;
+  dateDebut: string | null;
+  dateFin: string | null;
+  codeCertificat: string | null;
 }

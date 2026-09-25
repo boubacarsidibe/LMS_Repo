@@ -1,7 +1,9 @@
+import { ProfileMenuComponent } from '../../../../shared/components/profile-menu/profile-menu.component';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Auth } from '../../../../core/auth/services/authService';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 interface EntreeNavigation {
   libelle: string;
@@ -19,7 +21,7 @@ interface EntreeNavigation {
 @Component({
   selector: 'app-evaluateur-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ProfileMenuComponent, LogoInpgComponent],
   template: `
     <div *ngIf="sidebarMobileOpen" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-40 md:hidden" (click)="toggleSidebarMobile()"></div>
 
@@ -27,7 +29,7 @@ interface EntreeNavigation {
       [class.-translate-x-full]="!sidebarMobileOpen"
       [class.translate-x-0]="sidebarMobileOpen">
       <div class="p-margin-desktop mb-4 flex items-center">
-        <span class="text-2xl font-extrabold tracking-tight text-primary">INPG<span class="text-brand"> Connect</span></span>
+        <app-logo-inpg hauteur="h-10"></app-logo-inpg>
       </div>
 
       <nav class="flex-1 px-4 space-y-base overflow-y-auto" aria-label="Navigation de l'espace Évaluateur">
@@ -61,25 +63,13 @@ interface EntreeNavigation {
           <p class="font-label-md text-label-md text-on-surface-variant hidden sm:block">Direction de la Régulation et du Contrôle Qualité (DRCQ) — Accréditation des programmes Oil &amp; Gas</p>
         </div>
         <div class="flex items-center gap-3">
-          <a
-            routerLink="mon-profil"
-            class="flex items-center gap-1 group cursor-pointer"
-            aria-label="Voir mon profil"
-            title="Mon profil">
-            <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-sm group-hover:opacity-90 transition-opacity">
-              <span class="text-white font-label-md text-label-md">{{ initiales }}</span>
-            </div>
-            <span class="material-symbols-outlined text-on-surface-variant text-[20px] group-hover:text-primary transition-colors">expand_more</span>
-          </a>
-          <button
-            type="button"
-            (click)="deconnexion()"
-            class="p-2 text-on-surface-variant hover:bg-error-container hover:text-on-error-container rounded-full transition-colors"
-            aria-label="Se déconnecter"
-            title="Se déconnecter"
-          >
-            <span class="material-symbols-outlined">logout</span>
-          </button>
+          <app-profile-menu
+            [initiales]="initiales"
+            [nom]="auth.currentUser()?.username || 'Évaluateur'"
+            [email]="auth.currentUser()?.email ?? ''"
+            lienProfil="/evaluateur-accreditation/mon-profil"
+            (deconnexion)="deconnexion()"
+          ></app-profile-menu>
         </div>
       </header>
 
