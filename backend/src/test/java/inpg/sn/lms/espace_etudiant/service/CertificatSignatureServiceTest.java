@@ -110,4 +110,40 @@ class CertificatSignatureServiceTest {
         assertThat(certificat.getDateEmission()).isEqualTo(dateInitiale);
         assertThat(certificat.getReference()).isEqualTo(referenceInitiale);
     }
+
+    @Test
+    @DisplayName("Un certificat sans champ du modèle INPG garde le contenu scellé d'origine : les anciennes signatures restent valides")
+    void anciensCertificatsGardentLeurSignature() {
+        String avantAjoutDesChamps = service.signer(certificat);
+        certificat.setSignature(avantAjoutDesChamps);
+
+        assertThat(service.estAlteree(certificat)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Les champs du modèle INPG sont scellés : modifier la période, le code, la civilité ou la naissance les invalide")
+    void champsDuModeleInpgSontScelles() {
+        certificat.setCivilite("Monsieur");
+        certificat.setDateNaissance(LocalDate.of(1985, 8, 24));
+        certificat.setDateDebut(LocalDate.of(2026, 2, 2));
+        certificat.setDateFin(LocalDate.of(2026, 2, 6));
+        certificat.setCodeCertificat("CG1001260206/03");
+        certificat.setSignature(service.signer(certificat));
+        assertThat(service.estAlteree(certificat)).isFalse();
+
+        certificat.setDateFin(LocalDate.of(2026, 2, 7));
+        assertThat(service.estAlteree(certificat)).as("période").isTrue();
+        certificat.setDateFin(LocalDate.of(2026, 2, 6));
+
+        certificat.setCodeCertificat("CG1001260206/04");
+        assertThat(service.estAlteree(certificat)).as("code").isTrue();
+        certificat.setCodeCertificat("CG1001260206/03");
+
+        certificat.setCivilite("Madame");
+        assertThat(service.estAlteree(certificat)).as("civilité").isTrue();
+        certificat.setCivilite("Monsieur");
+
+        certificat.setDateNaissance(LocalDate.of(1985, 8, 25));
+        assertThat(service.estAlteree(certificat)).as("naissance").isTrue();
+    }
 }

@@ -54,12 +54,29 @@ public class CertificatSignatureService {
     private String contenuCanonique(Certificat certificat) {
         Etudiant etudiant = certificat.getEtudiant();
         String nomEtudiant = etudiant == null ? "" : (nullToVide(etudiant.getPrenom()) + " " + nullToVide(etudiant.getNom())).trim();
-        return String.join("|",
+        String contenu = String.join("|",
                 nullToVide(certificat.getReference()),
                 nomEtudiant,
                 nullToVide(certificat.getIntituleFormation()),
                 certificat.getDateEmission() == null ? "" : certificat.getDateEmission().toString(),
                 nullToVide(certificat.getFormateurNom()));
+        // Les champs du modèle INPG ne sont scellés que lorsqu'ils existent : un certificat délivré
+        // avant leur ajout garde exactement le contenu canonique d'origine, donc sa signature reste valide.
+        if (aChampsModeleInpg(certificat)) {
+            contenu += "|" + String.join("|",
+                    nullToVide(certificat.getCivilite()),
+                    certificat.getDateNaissance() == null ? "" : certificat.getDateNaissance().toString(),
+                    certificat.getDateDebut() == null ? "" : certificat.getDateDebut().toString(),
+                    certificat.getDateFin() == null ? "" : certificat.getDateFin().toString(),
+                    nullToVide(certificat.getCodeCertificat()));
+        }
+        return contenu;
+    }
+
+    private boolean aChampsModeleInpg(Certificat certificat) {
+        return certificat.getCivilite() != null || certificat.getDateNaissance() != null
+                || certificat.getDateDebut() != null || certificat.getDateFin() != null
+                || certificat.getCodeCertificat() != null;
     }
 
     private String nullToVide(String valeur) {

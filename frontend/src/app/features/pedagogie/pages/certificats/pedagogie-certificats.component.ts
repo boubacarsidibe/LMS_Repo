@@ -34,7 +34,16 @@ export class PedagogieCertificatsComponent implements OnInit {
   etudiantId: number | null = null;
   intitule = '';
   promotionId: number | null = null;
+  civilite = '';
+  dateNaissance = '';
+  dateDebut = '';
+  dateFin = '';
+  dateDelivrance = '';
+  code = '';
   enregistrement = false;
+  telechargementEnCoursId: number | null = null;
+
+  readonly civilites = ['Monsieur', 'Madame', 'Mademoiselle'];
 
   messageErreur = '';
   messageSucces = '';
@@ -69,14 +78,26 @@ export class PedagogieCertificatsComponent implements OnInit {
     this.etudiantId = null;
     this.intitule = '';
     this.promotionId = null;
+    this.civilite = '';
+    this.dateNaissance = '';
+    this.dateDebut = '';
+    this.dateFin = '';
+    this.dateDelivrance = new Date().toISOString().slice(0, 10);
+    this.code = '';
     this.formulaireOuvert = true;
     this.messageErreur = '';
     this.messageSucces = '';
     this.coursNonTermines = [];
   }
 
+  /** Le modèle INPG imprime la civilité et la période : elles sont donc demandées à la délivrance. */
   get saisieValide(): boolean {
-    return !!this.etudiantId && !!this.intitule.trim();
+    return !!this.etudiantId && !!this.intitule.trim() && !!this.civilite && !!this.dateDebut && !!this.dateFin
+      && !this.periodeInversee && !!this.dateDelivrance;
+  }
+
+  get periodeInversee(): boolean {
+    return !!this.dateDebut && !!this.dateFin && this.dateFin < this.dateDebut;
   }
 
   delivrer(): void {
@@ -87,7 +108,17 @@ export class PedagogieCertificatsComponent implements OnInit {
     this.messageErreur = '';
     this.coursNonTermines = [];
     this.pedagogie
-      .delivrerCertificat(this.etudiantId!, this.intitule.trim(), this.promotionId)
+      .delivrerCertificat({
+        etudiantId: this.etudiantId!,
+        intituleFormation: this.intitule.trim(),
+        cohorteId: this.promotionId,
+        civilite: this.civilite,
+        dateNaissance: this.dateNaissance || null,
+        dateDebut: this.dateDebut,
+        dateFin: this.dateFin,
+        code: this.code.trim() || null,
+        dateDelivrance: this.dateDelivrance,
+      })
       .subscribe({
         next: (certificat) => {
           this.enregistrement = false;
@@ -103,5 +134,26 @@ export class PedagogieCertificatsComponent implements OnInit {
             : [];
         },
       });
+  }
+
+  /** Télécharge le PDF au modèle INPG (le jeton passe par l'intercepteur). */
+  telecharger(certificat: Certificat): void {
+    this.telechargementEnCoursId = certificat.id;
+    this.messageErreur = '';
+    this.pedagogie.telechargerCertificatPdf(certificat.id).subscribe({
+      next: (blob) => {
+        this.telechargementEnCoursId = null;
+        const url = window.URL.createObjectURL(blob);
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = `INPG-certificat-${certificat.reference}.pdf`;
+        lien.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.telechargementEnCoursId = null;
+        this.messageErreur = 'Le certificat n’a pas pu être téléchargé.';
+      },
+    });
   }
 }

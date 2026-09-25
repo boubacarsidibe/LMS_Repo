@@ -27,20 +27,37 @@
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Référence</th>
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Étudiant</th>
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Intitulé</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Période</th>
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Promotion</th>
             <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Délivré le</th>
+            <th class="px-stack-lg py-stack-md"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let c of certificats" class="border-b border-outline-variant/50 last:border-0">
-            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ c.reference }}</td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">
+              {{ c.reference }}
+              <span *ngIf="c.codeCertificat" class="block text-on-surface">{{ c.codeCertificat }}</span>
+            </td>
             <td class="px-stack-lg py-stack-md font-label-md text-label-md text-on-surface">{{ c.etudiantNom }}</td>
             <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface">{{ c.intituleFormation }}</td>
+            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">
+              <ng-container *ngIf="c.dateDebut && c.dateFin; else sansPeriode">{{ c.dateDebut }} → {{ c.dateFin }}</ng-container>
+              <ng-template #sansPeriode>—</ng-template>
+            </td>
             <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant">{{ c.promotionLibelle || '—' }}</td>
             <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">{{ c.dateEmission || '—' }}</td>
+            <td class="px-stack-lg py-stack-md text-right">
+              <button type="button" (click)="telecharger(c)" [disabled]="telechargementEnCoursId === c.id"
+                      class="inline-flex items-center gap-1 px-3 h-9 rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors disabled:opacity-50"
+                      [attr.aria-label]="'Télécharger le certificat ' + c.reference">
+                <span class="material-symbols-outlined text-[18px]">download</span>
+                {{ telechargementEnCoursId === c.id ? 'Génération…' : 'PDF' }}
+              </button>
+            </td>
           </tr>
           <tr *ngIf="certificats.length === 0">
-            <td colspan="5" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+            <td colspan="7" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
               Aucun certificat délivré.
             </td>
           </tr>
@@ -69,11 +86,48 @@
         </select>
       </label>
 
+      <div class="grid grid-cols-3 gap-stack-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Civilité</span>
+          <select [(ngModel)]="civilite" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+            <option value="">Choisir…</option>
+            <option *ngFor="let c of civilites" [value]="c">{{ c }}</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1 col-span-2">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Date de naissance (facultative)</span>
+          <input type="date" [(ngModel)]="dateNaissance" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+      </div>
+
       <label class="flex flex-col gap-1">
-        <span class="font-label-sm text-label-sm text-on-surface-variant">Intitulé porté sur le certificat</span>
-        <input type="text" [(ngModel)]="intitule" placeholder="Master Pétrole & Gaz"
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Formation intitulée</span>
+        <input type="text" [(ngModel)]="intitule" placeholder="Comptage du gaz"
                class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
       </label>
+
+      <div class="grid grid-cols-2 gap-stack-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Début de la formation</span>
+          <input type="date" [(ngModel)]="dateDebut" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Fin de la formation</span>
+          <input type="date" [(ngModel)]="dateFin" [min]="dateDebut" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+      </div>
+      <p *ngIf="periodeInversee" class="font-body-sm text-body-sm text-error -mt-2">La fin de la formation précède son début.</p>
+
+      <div class="grid grid-cols-2 gap-stack-md">
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Date de délivrance</span>
+          <input type="date" [(ngModel)]="dateDelivrance" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="font-label-sm text-label-sm text-on-surface-variant">Code du certificat (facultatif)</span>
+          <input type="text" [(ngModel)]="code" maxlength="60" placeholder="CG1001260206/03" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+        </label>
+      </div>
 
       <label class="flex flex-col gap-1">
         <span class="font-label-sm text-label-sm text-on-surface-variant">Promotion (facultative)</span>
@@ -84,8 +138,8 @@
       </label>
 
       <p class="font-body-sm text-body-sm text-on-surface-variant">
-        Le certificat est délivré au nom de l’institut : il porte
-        « INPG — Direction pédagogique », et non votre nom.
+        Le certificat suit le modèle officiel de l’institut, signé par le Directeur Général. Sans code saisi, sa
+        référence est imprimée en bas de page.
       </p>
 
       <div *ngIf="messageErreur" class="bg-error-container/20 rounded-lg px-4 py-3 space-y-1">

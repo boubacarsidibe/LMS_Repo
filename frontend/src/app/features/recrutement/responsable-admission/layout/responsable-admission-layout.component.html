@@ -94,8 +94,9 @@
 
         <!-- Profil -->
         <div class="relative">
-          <button id="profile-btn" type="button" class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-label-md text-label-md ml-2 cursor-pointer border border-outline-variant" (click)="toggleDropdown('profile')" aria-label="Menu utilisateur">
-            {{ userInitials }}
+          <button id="profile-btn" type="button" class="flex items-center gap-1 ml-2 cursor-pointer group" (click)="toggleDropdown('profile')" aria-label="Menu utilisateur" aria-haspopup="menu" [attr.aria-expanded]="profileOpen">
+            <span class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-label-md text-label-md border border-outline-variant">{{ userInitials }}</span>
+            <span class="material-symbols-outlined text-on-surface-variant text-[20px] group-hover:text-primary transition-colors">{{ profileOpen ? 'expand_less' : 'expand_more' }}</span>
           </button>
           <div *ngIf="profileOpen" id="profile-dropdown" class="absolute right-0 mt-2 w-56 bg-surface border border-outline-variant rounded-xl shadow-lg py-1 z-50">
             <div class="px-4 py-3 border-b border-outline-variant">

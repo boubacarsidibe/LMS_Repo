@@ -114,7 +114,7 @@ import { AccreditationService } from '../../services/accreditation.service';
         </h2>
         <p class="font-body-sm text-body-sm text-on-surface-variant -mt-1">
           L'accréditation porte sur un programme de formation précis, sa cohorte et ses formateurs de
-          spécialité — pas sur l'établissement dans son ensemble (Cadre de référence DRCQ §II).
+          spécialité — pas sur l'établissement dans son ensemble (Cadre de référence DRCQ).
         </p>
         <div>
           <label for="intituleProgramme" class="font-label-md text-label-md text-on-surface">Intitulé du programme</label>

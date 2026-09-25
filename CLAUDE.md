@@ -236,6 +236,27 @@ et réparation manuelle des lignes de `flyway_schema_history` (correction du cha
 puis un démarrage ponctuel avec `spring.flyway.out-of-order=true` pour rattraper les
 migrations restées en attente. Un horodatage rend la collision impossible.
 
+### `ng build` tué (SIGTERM) et démon Docker qui tombe : c'est la mémoire du Codespace
+
+Le Codespace n'a que ~8 Go, sans swap, et l'IDE en occupe plus de 3. Quand la mémoire disponible
+tombe sous ~1,5 Go, un `ng build` (local **ou** dans `docker compose build frontend`) est tué en
+`SIGTERM`, sans la moindre erreur de compilation — `ngc --noEmit` et `ng test` passent pourtant. Le démon
+Docker peut lui aussi disparaître (`Cannot connect to the Docker daemon`). Ne pas chercher un bug de code.
+
+```bash
+docker stop demo-backend                       # libère ~500 Mo
+cd frontend && NODE_OPTIONS=--max-old-space-size=2048 NG_BUILD_MAX_WORKERS=1 \
+  npx ng build --configuration development --source-map=false        # ~25 s
+docker cp dist/frontend/browser/. demo-frontend:/usr/share/nginx/html/   # sans reconstruire l'image
+docker start demo-backend
+sudo /usr/local/share/docker-init.sh true &    # si le démon Docker est tombé
+```
+
+`docker compose up -d --build backend` recrée le conteneur : toute variable passée en ligne de commande
+(ex. `APP_CORS_ORIGINS` pour un tunnel Cloudflare, dont l'URL change à chaque lancement) est perdue et doit
+être repassée. Les redémarrages du Codespace arrêtent Postgres sans arrêt propre : les écritures récentes
+peuvent être perdues.
+
 ---
 
 ## 3. Décisions d'architecture à ne pas défaire
@@ -361,6 +382,16 @@ possible aujourd'hui ; le rappel actuel se déclenche tant qu'un cours autorisé
 non évalué, avec un délai de repos (`COOLDOWN_JOURS`) plutôt qu'une vraie date de fin.
 Si le besoin d'une session datée se confirme un jour, c'est une décision de modèle à
 instruire à part (voir `LOG_BLOQUANT.md`), pas une extension mécanique de ce service.
+
+**Le certificat suit le modèle officiel de l'INPG, il n'est pas redessiné.** `CertificatPdfService` charge
+`backend/src/main/resources/certificats/certificat-formation-fond.pdf` (le modèle dont les six zones variables
+ont été vidées) et n'y superpose que : civilité + nom, « né le », formation, période, « Fait à Dakar, le … »,
+code de bas de page, plus un QR de vérification. Positions et polices sont relevées dans le README du même
+dossier. Le fichier d'origine (`backend/Modèle Certificat INPG.pdf`) porte les données d'une personne réelle :
+il est dans `.gitignore`, ne jamais le versionner. Les champs du modèle (`civilite`, `date_naissance`,
+`date_debut`, `date_fin`, `code_certificat`) sont nullables et **scellés dans la signature seulement quand
+ils existent** : un certificat délivré avant leur ajout garde son contenu canonique, donc sa signature reste
+valide. `CertificatPdfServiceTest` relit le texte du PDF produit.
 
 ---
 

@@ -1,3 +1,4 @@
+import { ProfileMenuComponent } from '../../../../shared/components/profile-menu/profile-menu.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -19,7 +20,7 @@ interface EntreeNavigation {
 @Component({
   selector: 'app-alumni-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ProfileMenuComponent],
   templateUrl: './alumni-layout.html',
 })
 export class AlumniLayout implements OnInit {
@@ -33,7 +34,6 @@ export class AlumniLayout implements OnInit {
     { libelle: 'Enquêtes de suivi', lien: 'enquetes', icone: 'fact_check' },
     { libelle: 'Forum', lien: 'forum', icone: 'forum' },
     { libelle: 'Documents partagés', lien: 'documents', icone: 'folder_shared' },
-    { libelle: 'Mon profil', lien: 'mon-profil', icone: 'account_circle' },
   ];
 
   constructor(
