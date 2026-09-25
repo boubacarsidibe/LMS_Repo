@@ -405,7 +405,6 @@ export interface DemandeCertificat {
   dateDebut: string | null;
   dateFin: string | null;
   code: string | null;
-  dateDelivrance: string | null;
 }
 
 export interface Certificat {

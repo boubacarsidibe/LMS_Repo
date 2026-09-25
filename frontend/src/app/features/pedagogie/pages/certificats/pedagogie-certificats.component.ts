@@ -38,7 +38,6 @@ export class PedagogieCertificatsComponent implements OnInit {
   dateNaissance = '';
   dateDebut = '';
   dateFin = '';
-  dateDelivrance = '';
   code = '';
   enregistrement = false;
   telechargementEnCoursId: number | null = null;
@@ -82,7 +81,6 @@ export class PedagogieCertificatsComponent implements OnInit {
     this.dateNaissance = '';
     this.dateDebut = '';
     this.dateFin = '';
-    this.dateDelivrance = new Date().toISOString().slice(0, 10);
     this.code = '';
     this.formulaireOuvert = true;
     this.messageErreur = '';
@@ -93,7 +91,7 @@ export class PedagogieCertificatsComponent implements OnInit {
   /** Le modèle INPG imprime la civilité et la période : elles sont donc demandées à la délivrance. */
   get saisieValide(): boolean {
     return !!this.etudiantId && !!this.intitule.trim() && !!this.civilite && !!this.dateDebut && !!this.dateFin
-      && !this.periodeInversee && !!this.dateDelivrance;
+      && !this.periodeInversee;
   }
 
   get periodeInversee(): boolean {
@@ -117,7 +115,6 @@ export class PedagogieCertificatsComponent implements OnInit {
         dateDebut: this.dateDebut,
         dateFin: this.dateFin,
         code: this.code.trim() || null,
-        dateDelivrance: this.dateDelivrance,
       })
       .subscribe({
         next: (certificat) => {

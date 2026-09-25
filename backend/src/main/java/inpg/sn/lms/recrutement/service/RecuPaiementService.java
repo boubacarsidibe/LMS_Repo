@@ -8,6 +8,8 @@ import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
@@ -19,6 +21,8 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 
+import inpg.sn.lms.pdf.PapierEnTete;
+import inpg.sn.lms.pdf.PapierEnTeteOpenPdf;
 import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.Paiement;
@@ -37,7 +41,6 @@ public class RecuPaiementService {
     private static final String VIDE = "—";
 
     /** Bleu de la charte (#30609a), aligne sur l'interface. */
-    private static final java.awt.Color BLEU_INPG = new java.awt.Color(0x30, 0x60, 0x9a);
     private static final java.awt.Color GRIS_TEXTE = new java.awt.Color(0x46, 0x46, 0x4e);
     private static final java.awt.Color GRIS_FOND = new java.awt.Color(0xf2, 0xf4, 0xf6);
     private static final java.awt.Color GRIS_BORDURE = new java.awt.Color(0xc7, 0xc5, 0xd0);
@@ -46,14 +49,14 @@ public class RecuPaiementService {
         Candidature candidature = paiement.getCandidature();
         Candidat candidat = candidature != null ? candidature.getCandidat() : null;
 
-        Document document = new Document(PageSize.A4, 56, 56, 56, 56);
+        Document document = new Document(PageSize.A4, PapierEnTete.MARGE_GAUCHE, PapierEnTete.MARGE_DROITE,
+                PapierEnTete.HAUT_CONTENU, PapierEnTete.BAS_CONTENU);
         ByteArrayOutputStream sortie = new ByteArrayOutputStream();
         try {
-            PdfWriter.getInstance(document, sortie);
+            PdfWriter.getInstance(document, sortie).setPageEvent(new PapierEnTeteOpenPdf());
             document.open();
 
-            document.add(enTete());
-            document.add(titre(candidature));
+            PapierEnTeteOpenPdf.ajouter(document, titre(candidature));
             document.add(tableauDetails(paiement, candidature, candidat));
             document.add(mentionLegale());
 
@@ -67,21 +70,7 @@ public class RecuPaiementService {
         return sortie.toByteArray();
     }
 
-    private Element enTete() {
-        Paragraph marque = new Paragraph("INPG LMS", police(20, Font.BOLD, BLEU_INPG));
-        marque.setSpacingAfter(2f);
-
-        Paragraph institut = new Paragraph("Institut National du Pétrole et du Gaz",
-                police(10, Font.NORMAL, GRIS_TEXTE));
-        institut.setSpacingAfter(24f);
-
-        Paragraph bloc = new Paragraph();
-        bloc.add(marque);
-        bloc.add(institut);
-        return bloc;
-    }
-
-    private Element titre(Candidature candidature) {
+    private List<Element> titre(Candidature candidature) {
         Paragraph titre = new Paragraph("Reçu de paiement " + VIDE + " Frais de dossier",
                 police(15, Font.BOLD, java.awt.Color.BLACK));
         titre.setSpacingAfter(4f);
@@ -90,10 +79,7 @@ public class RecuPaiementService {
         Paragraph sousTitre = new Paragraph("Dossier n° " + dossier, police(11, Font.NORMAL, GRIS_TEXTE));
         sousTitre.setSpacingAfter(20f);
 
-        Paragraph bloc = new Paragraph();
-        bloc.add(titre);
-        bloc.add(sousTitre);
-        return bloc;
+        return List.of(titre, sousTitre);
     }
 
     private Element tableauDetails(Paiement paiement, Candidature candidature, Candidat candidat) throws Exception {

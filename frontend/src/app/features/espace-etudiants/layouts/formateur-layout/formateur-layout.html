@@ -1,8 +1,8 @@
 <div class="bg-surface min-h-screen">
   <aside class="fixed inset-y-0 left-0 z-50 hidden w-64 flex-col border-r border-outline-variant/50 bg-surface-container-lowest md:flex">
     <a routerLink="dashboard-formateur" class="px-6 py-6 no-underline">
-      <span class="block text-2xl font-extrabold tracking-tight text-primary">INPG<span class="text-brand"> LMS</span></span>
-      <span class="mt-1 block font-label-sm text-label-sm text-on-surface-variant">Espace formateur</span>
+      <app-logo-inpg hauteur="h-10"></app-logo-inpg>
+      <span class="mt-2 block font-label-sm text-label-sm text-on-surface-variant">Espace formateur</span>
     </a>
     <nav class="flex-1 space-y-1 overflow-y-auto px-3 pb-6" aria-label="Navigation de l'espace formateur">
       <a *ngFor="let item of navItems" [routerLink]="item.route" routerLinkActive="bg-secondary-fixed text-secondary font-semibold"

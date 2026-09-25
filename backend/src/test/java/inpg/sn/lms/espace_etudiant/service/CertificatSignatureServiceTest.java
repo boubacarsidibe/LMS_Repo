@@ -146,4 +146,17 @@ class CertificatSignatureServiceTest {
         certificat.setDateNaissance(LocalDate.of(1985, 8, 25));
         assertThat(service.estAlteree(certificat)).as("naissance").isTrue();
     }
+
+    @Test
+    @DisplayName("La date de délivrance est le jour de création (heure de Dakar), jamais une date déjà présente écrasée")
+    void dateDeDelivranceEstLeJourDeCreation() {
+        Certificat neuf = new Certificat();
+        neuf.assurerReferenceEtDate();
+        assertThat(neuf.getDateEmission()).isEqualTo(LocalDate.now(java.time.ZoneId.of("Africa/Dakar")));
+
+        Certificat existant = new Certificat();
+        existant.setDateEmission(LocalDate.of(2026, 9, 7));
+        existant.assurerReferenceEtDate();
+        assertThat(existant.getDateEmission()).isEqualTo(LocalDate.of(2026, 9, 7));
+    }
 }

@@ -6,6 +6,7 @@ import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty
 import { Auth } from '../../../../core/auth/services/authService';
 import { EcoleAccreditee, LIBELLES_NIVEAU_PROGRAMME } from '../../models/accreditation.models';
 import { AccreditationService } from '../../services/accreditation.service';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 /**
  * Liste des écoles accréditées (TDR §F : « processus transparent »).
@@ -23,12 +24,12 @@ import { AccreditationService } from '../../services/accreditation.service';
 @Component({
   selector: 'app-ecoles-accreditees',
   standalone: true,
-  imports: [CommonModule, RouterLink, UiSpinnerComponent, UiEmptyStateComponent],
+  imports: [CommonModule, RouterLink, UiSpinnerComponent, UiEmptyStateComponent, LogoInpgComponent],
   template: `
     <header class="bg-white/95 backdrop-blur-sm border-b border-outline-variant/40 sticky top-0 z-50">
       <div class="flex justify-between items-center w-full max-w-container-max mx-auto px-4 md:px-margin-desktop h-[72px]">
-        <a routerLink="/accueil" class="text-2xl font-extrabold tracking-tight text-primary no-underline hover:opacity-80 transition-opacity">
-          INPG<span class="text-brand"> LMS</span>
+        <a routerLink="/accueil" class="no-underline hover:opacity-80 transition-opacity" aria-label="INPG — accueil">
+          <app-logo-inpg hauteur="h-10"></app-logo-inpg>
         </a>
         <a [routerLink]="retourUrl"
            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:border-secondary hover:text-secondary transition-colors no-underline">

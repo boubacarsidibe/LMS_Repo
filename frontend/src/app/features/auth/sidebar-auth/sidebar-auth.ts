@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
+import { LogoInpgComponent } from '../../../shared/components/logo-inpg/logo-inpg.component';
 
 @Component({
   selector: 'app-sidebar-auth',
-  imports: [],
+  imports: [LogoInpgComponent],
   templateUrl: './sidebar-auth.html',
   styleUrl: './sidebar-auth.css',
   host: {

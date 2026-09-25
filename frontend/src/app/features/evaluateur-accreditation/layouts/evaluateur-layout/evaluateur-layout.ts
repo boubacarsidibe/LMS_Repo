@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Auth } from '../../../../core/auth/services/authService';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 interface EntreeNavigation {
   libelle: string;
@@ -20,7 +21,7 @@ interface EntreeNavigation {
 @Component({
   selector: 'app-evaluateur-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ProfileMenuComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ProfileMenuComponent, LogoInpgComponent],
   template: `
     <div *ngIf="sidebarMobileOpen" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-40 md:hidden" (click)="toggleSidebarMobile()"></div>
 
@@ -28,7 +29,7 @@ interface EntreeNavigation {
       [class.-translate-x-full]="!sidebarMobileOpen"
       [class.translate-x-0]="sidebarMobileOpen">
       <div class="p-margin-desktop mb-4 flex items-center">
-        <span class="text-2xl font-extrabold tracking-tight text-primary">INPG<span class="text-brand"> LMS</span></span>
+        <app-logo-inpg hauteur="h-10"></app-logo-inpg>
       </div>
 
       <nav class="flex-1 px-4 space-y-base overflow-y-auto" aria-label="Navigation de l'espace Évaluateur">

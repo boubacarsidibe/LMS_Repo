@@ -5,6 +5,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { Auth } from '../../../../core/auth/services/authService';
 import { AlumniProfil } from '../../models/alumni.models';
 import { AlumniService } from '../../services/alumni.service';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 interface EntreeNavigation {
   libelle: string;
@@ -20,7 +21,7 @@ interface EntreeNavigation {
 @Component({
   selector: 'app-alumni-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ProfileMenuComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ProfileMenuComponent, LogoInpgComponent],
   templateUrl: './alumni-layout.html',
 })
 export class AlumniLayout implements OnInit {

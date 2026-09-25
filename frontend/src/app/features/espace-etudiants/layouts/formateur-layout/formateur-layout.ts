@@ -10,6 +10,7 @@ import { SupportService } from '../../services/support.service';
 import { Etudiant } from '../../models/etudiant';
 import { Cours } from '../../models/cours';
 import { Support } from '../../models/support';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 interface NavItem {
   label: string;
@@ -20,7 +21,7 @@ interface NavItem {
 @Component({
   selector: 'app-formateur-layout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RouterOutlet, LogoInpgComponent],
   templateUrl: './formateur-layout.html',
   styleUrl: './formateur-layout.css',
 })

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Auth } from '../../../../core/auth/services/authService';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 /**
  * Cadre de l'espace École de formation (TDR §F).
@@ -18,12 +19,12 @@ import { Auth } from '../../../../core/auth/services/authService';
 @Component({
   selector: 'app-ecole-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, LogoInpgComponent],
   template: `
     <header class="bg-white/95 backdrop-blur-sm border-b border-outline-variant/40 fixed top-0 left-0 right-0 z-50">
       <div class="flex justify-between items-center w-full max-w-[1280px] mx-auto px-4 md:px-10 h-[72px]">
-        <a routerLink="/accreditation" class="text-2xl font-extrabold tracking-tight text-primary no-underline hover:opacity-80 transition-opacity">
-          INPG<span class="text-brand"> LMS</span>
+        <a routerLink="/accreditation" class="no-underline hover:opacity-80 transition-opacity" aria-label="INPG — accueil">
+          <app-logo-inpg hauteur="h-10"></app-logo-inpg>
         </a>
 
         <nav class="hidden md:flex flex-1 justify-center items-center gap-6">

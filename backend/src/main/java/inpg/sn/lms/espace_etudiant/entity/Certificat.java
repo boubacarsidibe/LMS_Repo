@@ -2,6 +2,7 @@ package inpg.sn.lms.espace_etudiant.entity;
 
 import java.time.LocalDate;
 import java.time.Year;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import inpg.sn.lms.auth.entity.Etudiant;
@@ -178,7 +179,9 @@ public class Certificat {
             reference = "INPG-CERT-" + Year.now().getValue() + "-" + suffixe;
         }
         if (dateEmission == null) {
-            dateEmission = LocalDate.now();
+            // Le jour où le responsable pédagogique crée le certificat, à l'heure de Dakar : jamais une
+            // date saisie, ni celle d'un lot de démonstration.
+            dateEmission = LocalDate.now(ZoneId.of("Africa/Dakar"));
         }
     }
 }

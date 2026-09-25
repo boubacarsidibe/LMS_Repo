@@ -26,8 +26,8 @@
          le vide entre le menu (mobile) et le retour du logo se sentait trop long en
          redimensionnant. lg (1024 px) est le premier seuil sûr, vérifié par balayage
          375→1920 : logo sur une seule ligne dès 1024, aucun débordement en dessous. -->
-    <a routerLink="/accueil" class="hidden lg:inline text-2xl font-extrabold tracking-tight text-primary no-underline hover:opacity-80 transition-opacity">
-      INPG<span class="text-brand"> Connect</span>
+    <a routerLink="/accueil" class="hidden lg:inline-block no-underline hover:opacity-80 transition-opacity" aria-label="INPG — accueil">
+      <app-logo-inpg hauteur="h-10"></app-logo-inpg>
     </a>
 
     <!-- Navigation Links (Desktop/Tablette) - centered. La règle du 2026-08-25 (pas de

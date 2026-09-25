@@ -7,6 +7,7 @@ import { Auth } from '../../../core/auth/services/authService';
 import { ProfilCompte } from '../../../core/auth/models/user.model';
 import { RecrutementService, CandidatureResponse, NotificationCandidatResponse } from '../../../core/recrutement/services/recrutement.service';
 import { ContexteNavbarService } from './contexte-navbar.service';
+import { LogoInpgComponent } from '../logo-inpg/logo-inpg.component';
 
 /** Une entrée du menu du cercle de profil (ou un onglet du centre du navbar). */
 interface EntreeNavigation {
@@ -48,7 +49,7 @@ const MENU_PAR_PROFIL: Record<ProfilCompte, EntreeNavigation[]> = {
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, LogoInpgComponent],
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent implements OnInit, OnDestroy {

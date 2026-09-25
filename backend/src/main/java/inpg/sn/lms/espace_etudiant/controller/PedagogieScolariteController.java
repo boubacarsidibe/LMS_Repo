@@ -587,8 +587,6 @@ public class PedagogieScolariteController {
         certificat.setDateDebut(request.dateDebut());
         certificat.setDateFin(request.dateFin());
         certificat.setCodeCertificat(estVide(request.code()) ? null : request.code().trim());
-        // Absente : la date du jour, fixée par CertificatService à la délivrance.
-        certificat.setDateEmission(request.dateDelivrance());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(toCertificatDto(certificatService.save(certificat)));
     }

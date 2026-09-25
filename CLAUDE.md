@@ -65,14 +65,20 @@ confondent avec le fond clair et l'écran paraît plat.
 
 ### Logotype
 
-Identique dans tous les espaces :
+Depuis le 2026-09-25, c'est **l'image du logo officiel de l'INPG** — plus l'écriture « INPG LMS », qui
+n'existe plus nulle part — identique dans tous les espaces :
 
 ```html
-<span class="text-2xl font-extrabold tracking-tight text-primary">INPG<span class="text-brand"> LMS</span></span>
+<app-logo-inpg hauteur="h-10"></app-logo-inpg>
 ```
 
-Pas de badge ni d'icône. Le jeton `brand` (`#131741`) est le bleu nuit du suffixe.
-Dans l'espace pédagogique, le suffixe est « Pédagogie » — même traitement.
+`LogoInpgComponent` (`shared/components/logo-inpg/`) est l'unique source de l'image
+(`frontend/public/images/logo-inpg.png`, 640 × 174) et de son texte alternatif : ne pas recopier un `<img>`
+ailleurs, ni recomposer un logotype en texte. Le fichier est détouré (fond transparent) et le logo est bleu
+nuit : sur un fond sombre (panneau de connexion, pied de page), le poser dans une pastille blanche arrondie,
+sans quoi il disparaît. Le nom de l'espace (« Espace formateur », « Portail Admissions », « Espace
+pédagogique ») reste écrit **sous** le logo, en `font-label-sm`. Le même logo coiffe les PDF (voir §3, papier
+à en-tête).
 
 ### Contraste : le piège des jetons jumeaux
 
@@ -245,8 +251,9 @@ Docker peut lui aussi disparaître (`Cannot connect to the Docker daemon`). Ne p
 
 ```bash
 docker stop demo-backend                       # libère ~500 Mo
-cd frontend && NODE_OPTIONS=--max-old-space-size=2048 NG_BUILD_MAX_WORKERS=1 \
-  npx ng build --configuration development --source-map=false        # ~25 s
+sync; echo 3 | sudo tee /proc/sys/vm/drop_caches   # vide le cache disque : le garde-fou de l'hôte le compte
+cd frontend && NODE_OPTIONS=--max-old-space-size=1536 NG_BUILD_MAX_WORKERS=1 \
+  npx ng build --configuration development --source-map=false --progress=false   # ~28 s
 docker cp dist/frontend/browser/. demo-frontend:/usr/share/nginx/html/   # sans reconstruire l'image
 docker start demo-backend
 sudo /usr/local/share/docker-init.sh true &    # si le démon Docker est tombé
@@ -391,7 +398,29 @@ dossier. Le fichier d'origine (`backend/Modèle Certificat INPG.pdf`) porte les 
 il est dans `.gitignore`, ne jamais le versionner. Les champs du modèle (`civilite`, `date_naissance`,
 `date_debut`, `date_fin`, `code_certificat`) sont nullables et **scellés dans la signature seulement quand
 ils existent** : un certificat délivré avant leur ajout garde son contenu canonique, donc sa signature reste
-valide. `CertificatPdfServiceTest` relit le texte du PDF produit.
+valide. `CertificatPdfServiceTest` relit le texte du PDF produit. Sa **date de délivrance est le jour où le
+responsable pédagogique crée le certificat** (fuseau `Africa/Dakar`, posée par le serveur, jamais saisie) : le
+formulaire n'a volontairement pas de champ « date de délivrance ». Le QR pointe vers
+`APP_FRONTEND_URL/verification-certificat/<référence>` — en production, cette variable doit être le domaine
+public et permanent de l'INPG (un QR imprimé ne se corrige pas), pas `localhost` ni un tunnel ; la référence
+est aussi imprimée sous le QR pour une saisie manuelle. La page publique qu'il ouvre (`CertificatPublicController`,
+sans connexion) restitue ce qu'un faussaire retoucherait sur un vrai document — nom, formation, **période**,
+**code**, date d'émission, validité de la signature — mais jamais la date de naissance, pourtant imprimée :
+c'est une donnée d'identité. Aucune limitation de débit n'y protège le balayage des références (8 caractères
+hexadécimaux aléatoires) : à ajouter avant la mise en production.
+
+**Tout PDF sort sur le papier à en-tête de l'INPG, par un moteur commun — ne pas réécrire de mini-moteur dans
+un service.** `pdf/PapierEnTete` (PDFBox) pose sur chaque page le logo, le pied de page (adresse, téléphone,
+site cliquable) et la pagination ; `pdf/RapportPdf` met en page les rapports (retour à la ligne, sauts de page,
+tableaux, tuiles de chiffres clés, filigrane) ; `pdf/PapierEnTeteOpenPdf` fait de même pour les trois documents
+encore écrits avec OpenPDF (lettre d'admission, convocation, reçu). Mesures, logo et icônes viennent du
+document Word fourni par l'INPG — voir `resources/pdf/README.md`. Chaque rapport avait auparavant son propre
+moteur, avec les mêmes défauts : titres « barrés » (le filet était tracé en travers du texte au lieu de dessous),
+commentaires coupés par « ... », ni logo ni pied de page. Deux pièges d'OpenPDF : ne jamais imbriquer des
+`Paragraph` dans un `Paragraph` conteneur — l'espacement et l'alignement se perdent, les titres se décentrent et
+les blocs se recouvrent — mais ajouter les éléments un à un (`PapierEnTeteOpenPdf.ajouter`). Et un test de PDF
+doit relire le fichier **produit** (texte extrait, position des glyphes par rapport aux traits), comme
+`RapportPdfTest` : constater seulement « un fichier est généré » ne voyait aucun de ces défauts.
 
 ---
 

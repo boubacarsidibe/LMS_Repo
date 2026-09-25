@@ -51,14 +51,11 @@ describe('PedagogieCertificatsComponent', () => {
     expect(composant.saisieValide).toBe(false);
   });
 
-  it('la date de délivrance vaut aujourd\'hui par défaut', () => {
-    expect(composant.dateDelivrance).toBe(new Date().toISOString().slice(0, 10));
-  });
-
   it('envoie tous les champs du modèle, la naissance et le code vides valant null', () => {
     remplir();
     composant.delivrer();
 
+    expect(delivrer.mock.calls[0][0]).not.toHaveProperty('dateDelivrance');
     expect(delivrer).toHaveBeenCalledWith(expect.objectContaining({
       etudiantId: 7,
       intituleFormation: 'Comptage du gaz',

@@ -3,6 +3,7 @@ import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Auth } from '../../../core/auth/services/authService';
 import { ClocheNotificationsService, NotificationCloche } from '../../../shared/services/cloche-notifications.service';
+import { LogoInpgComponent } from '../../../shared/components/logo-inpg/logo-inpg.component';
 
 interface EntreeNavigation {
   libelle: string;
@@ -22,7 +23,7 @@ interface EntreeNavigation {
 @Component({
   selector: 'app-pedagogie-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, LogoInpgComponent],
   templateUrl: './pedagogie-layout.component.html',
 })
 export class PedagogieLayoutComponent implements OnInit {

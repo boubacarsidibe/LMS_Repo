@@ -70,7 +70,8 @@ class CertificatPdfServiceTest {
     @Test
     @DisplayName("reprend les textes fixes du modèle et y ajoute les valeurs variables")
     void reprend_le_modele_et_ajoute_les_valeurs() throws IOException {
-        String texte = texte(service.genererPdf(certificatDuModele()));
+        Certificat certificat = certificatDuModele();
+        String texte = texte(service.genererPdf(certificat));
 
         assertThat(texte)
                 .contains("CERTIFICAT DE FORMATION")
@@ -82,7 +83,9 @@ class CertificatPdfServiceTest {
                 .contains("Comptage du gaz")
                 .contains("Du 02 au 06 février 2026")
                 .contains("Fait à Dakar, le 06 février 2026")
-                .contains("INPG - Attestation - RDC - CG1001260206/03");
+                .contains("INPG - Attestation - RDC - CG1001260206/03")
+                .as("la référence est imprimée sous le QR pour une saisie manuelle")
+                .contains(certificat.getReference());
     }
 
     @Test

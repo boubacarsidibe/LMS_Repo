@@ -7,6 +7,7 @@ import { EtudiantProfile, EtudiantService } from '../../services/etudiant.servic
 import { ProfileMenuComponent } from '../../../../shared/components/profile-menu/profile-menu.component';
 import { CommunicationService } from '../../services/communication.service';
 import { ScolariteService } from '../../services/scolarite.service';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 interface EntreeNavigation {
   libelle: string;
@@ -24,7 +25,7 @@ interface EntreeNavigation {
 @Component({
   selector: 'app-etudiant-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ProfileMenuComponent],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ProfileMenuComponent, LogoInpgComponent],
   templateUrl: './etudiant-layout.html',
 })
 export class EtudiantLayout implements OnInit, OnDestroy {

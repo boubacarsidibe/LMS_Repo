@@ -51,6 +51,10 @@
               <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Formation</dt>
               <dd class="font-body-md text-body-md text-on-surface">{{ c.intituleFormation }}</dd>
             </div>
+            <div *ngIf="c.periode">
+              <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Période</dt>
+              <dd class="font-body-md text-body-md text-on-surface">{{ c.periode }}</dd>
+            </div>
             <div>
               <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Délivré le</dt>
               <dd class="font-body-md text-body-md text-on-surface">{{ c.dateEmission || '—' }}</dd>
@@ -62,6 +66,10 @@
             <div>
               <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Référence</dt>
               <dd class="font-body-sm text-body-sm text-on-surface-variant font-mono">{{ c.reference }}</dd>
+            </div>
+            <div *ngIf="c.codeCertificat">
+              <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Code du certificat</dt>
+              <dd class="font-body-sm text-body-sm text-on-surface-variant font-mono">{{ c.codeCertificat }}</dd>
             </div>
           </dl>
         </div>

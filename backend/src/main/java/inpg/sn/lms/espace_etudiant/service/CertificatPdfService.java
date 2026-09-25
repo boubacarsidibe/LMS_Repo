@@ -20,6 +20,8 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream.AppendMode;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -47,11 +49,13 @@ import inpg.sn.lms.espace_etudiant.entity.Certificat;
 @Service
 public class CertificatPdfService {
 
+    private static final Logger log = LoggerFactory.getLogger(CertificatPdfService.class);
+
     private static final String FOND = "certificats/certificat-formation-fond.pdf";
-    private static final String ARIAL_GRAS = "certificats/polices/LiberationSans-Bold.ttf";
-    private static final String ARIAL = "certificats/polices/LiberationSans-Regular.ttf";
-    private static final String MONTSERRAT_REGULIER = "certificats/polices/Montserrat-Regular.ttf";
-    private static final String MONTSERRAT_CODE = "certificats/polices/Montserrat-SemiBoldItalic.ttf";
+    private static final String ARIAL_GRAS = "pdf/polices/LiberationSans-Bold.ttf";
+    private static final String ARIAL = "pdf/polices/LiberationSans-Regular.ttf";
+    private static final String MONTSERRAT_REGULIER = "pdf/polices/Montserrat-Regular.ttf";
+    private static final String MONTSERRAT_CODE = "pdf/polices/Montserrat-SemiBoldItalic.ttf";
 
     /** Bleu nuit du texte du modèle (0,162 / 0,156 / 0,361). */
     private static final Color BLEU_NUIT = new Color(41, 40, 92);
@@ -77,7 +81,8 @@ public class CertificatPdfService {
     private static final float ECHELLE_CODE = 115.61f;
 
     private static final float QR_TAILLE = 50f;
-    private static final float QR_Y = 62f;
+    /** Sous le QR : la référence imprimée (5,5 pt) tient entre lui et le filet de bas de page. */
+    private static final float QR_Y = 80f;
 
     private static final DateTimeFormatter JOUR = DateTimeFormatter.ofPattern("dd", Locale.FRENCH);
     private static final DateTimeFormatter MOIS = DateTimeFormatter.ofPattern("MMMM", Locale.FRENCH);
@@ -93,6 +98,11 @@ public class CertificatPdfService {
 
     public CertificatPdfService(@Value("${app.frontend-url}") String frontendUrl) {
         this.frontendUrl = frontendUrl;
+        if (frontendUrl == null || frontendUrl.contains("localhost") || frontendUrl.contains("127.0.0.1")) {
+            // Un QR imprimé vit des années : il doit pointer vers le domaine public et permanent de la plateforme.
+            log.warn("APP_FRONTEND_URL vaut « {} » : le QR code des certificats délivrés ne sera lisible que sur ce poste. "
+                    + "Renseignez le domaine public définitif avant de délivrer de vrais certificats.", frontendUrl);
+        }
         this.fond = lire(FOND);
         this.arialGras = lire(ARIAL_GRAS);
         this.arial = lire(ARIAL);
@@ -186,6 +196,8 @@ public class CertificatPdfService {
         PDImageXObject image = PDImageXObject.createFromByteArray(document, png, "qr");
         content.drawImage(image, CENTRE - QR_TAILLE / 2, QR_Y, QR_TAILLE, QR_TAILLE);
         ecrireCentre(content, police, 5.5f, sur(police, "Vérifier l'authenticité"), QR_Y + QR_TAILLE + 4f);
+        // Référence en clair : elle se saisit à la main si le QR est illisible (papier abîmé, impression floue).
+        ecrireCentre(content, police, 5.5f, sur(police, reference), QR_Y - 7f);
     }
 
     // ===================== Contenu =====================
@@ -222,7 +234,7 @@ public class CertificatPdfService {
      * 06 janvier 2026 » ou « Le 06 février 2026 » ; {@code null} si la période est inconnue
      * (certificat délivré avant l'ajout de ce champ).
      */
-    static String libellePeriode(LocalDate debut, LocalDate fin) {
+    public static String libellePeriode(LocalDate debut, LocalDate fin) {
         if (debut == null && fin == null) {
             return null;
         }

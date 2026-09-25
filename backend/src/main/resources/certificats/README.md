@@ -19,5 +19,5 @@ textes fixes, nom du signataire) vient du modèle d'origine, sans redessin.
 
 Le modèle d'origine porte les données d'une personne réelle : il ne doit pas être versionné, seul ce
 fond vierge l'est. Le texte variable est en bleu nuit (41, 40, 92), comme le texte du modèle. Les polices sont sous licence SIL OFL 1.1 :
-Montserrat (`polices/OFL.txt`) et Liberation Sans (`polices/Liberation-LICENSE.txt`), métriquement compatible avec Arial,
+Montserrat (`../pdf/polices/OFL.txt`) et Liberation Sans (`../pdf/polices/Liberation-LICENSE.txt`), métriquement compatible avec Arial,
 celle du modèle, dont les polices embarquées ne contiennent que les glyphes déjà utilisés.

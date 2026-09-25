@@ -248,15 +248,14 @@ class PedagogieScolariteImportTest {
     }
 
     @Test
-    @DisplayName("La délivrance conserve civilité, naissance, période, code et date de délivrance saisis")
+    @DisplayName("La délivrance conserve civilité, naissance, période et code saisis, sans fixer la date de délivrance")
     void delivrance_conserve_les_champs_du_modele() {
         etudiantPourCertificat();
         when(certificatService.save(any(Certificat.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         var reponse = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
                 5L, " Comptage du gaz ", null, "Monsieur", java.time.LocalDate.of(1985, 8, 24),
-                java.time.LocalDate.of(2026, 2, 2), java.time.LocalDate.of(2026, 2, 6), " CG1001260206/03 ",
-                java.time.LocalDate.of(2026, 2, 6)));
+                java.time.LocalDate.of(2026, 2, 2), java.time.LocalDate.of(2026, 2, 6), " CG1001260206/03 "));
 
         assertThat(reponse.getStatusCode().value()).isEqualTo(201);
         org.mockito.ArgumentCaptor<Certificat> saisi = org.mockito.ArgumentCaptor.forClass(Certificat.class);
@@ -268,7 +267,9 @@ class PedagogieScolariteImportTest {
         assertThat(certificat.getDateDebut()).isEqualTo(java.time.LocalDate.of(2026, 2, 2));
         assertThat(certificat.getDateFin()).isEqualTo(java.time.LocalDate.of(2026, 2, 6));
         assertThat(certificat.getCodeCertificat()).isEqualTo("CG1001260206/03");
-        assertThat(certificat.getDateEmission()).isEqualTo(java.time.LocalDate.of(2026, 2, 6));
+        assertThat(certificat.getDateEmission())
+                .as("la date de délivrance n'est jamais saisie : CertificatService la fixe à la création")
+                .isNull();
     }
 
     @Test
@@ -276,7 +277,7 @@ class PedagogieScolariteImportTest {
     void delivrance_refuse_une_periode_inversee() {
         var reponse = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
                 5L, "Comptage du gaz", null, "Monsieur", null,
-                java.time.LocalDate.of(2026, 2, 6), java.time.LocalDate.of(2026, 2, 2), null, null));
+                java.time.LocalDate.of(2026, 2, 6), java.time.LocalDate.of(2026, 2, 2), null));
 
         assertThat(reponse.getStatusCode().value()).isEqualTo(400);
         verify(etudiantRepository, never()).findById(any());
@@ -287,7 +288,7 @@ class PedagogieScolariteImportTest {
     @DisplayName("Une civilité inconnue est refusée")
     void delivrance_refuse_une_civilite_inconnue() {
         var reponse = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
-                5L, "Comptage du gaz", null, "Seigneur", null, null, null, null, null));
+                5L, "Comptage du gaz", null, "Seigneur", null, null, null, null));
 
         assertThat(reponse.getStatusCode().value()).isEqualTo(400);
         verify(etudiantRepository, never()).findById(any());

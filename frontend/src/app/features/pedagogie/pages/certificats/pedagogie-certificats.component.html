@@ -118,16 +118,10 @@
       </div>
       <p *ngIf="periodeInversee" class="font-body-sm text-body-sm text-error -mt-2">La fin de la formation précède son début.</p>
 
-      <div class="grid grid-cols-2 gap-stack-md">
-        <label class="flex flex-col gap-1">
-          <span class="font-label-sm text-label-sm text-on-surface-variant">Date de délivrance</span>
-          <input type="date" [(ngModel)]="dateDelivrance" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
-        </label>
-        <label class="flex flex-col gap-1">
-          <span class="font-label-sm text-label-sm text-on-surface-variant">Code du certificat (facultatif)</span>
-          <input type="text" [(ngModel)]="code" maxlength="60" placeholder="CG1001260206/03" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
-        </label>
-      </div>
+      <label class="flex flex-col gap-1">
+        <span class="font-label-sm text-label-sm text-on-surface-variant">Code du certificat (facultatif)</span>
+        <input type="text" [(ngModel)]="code" maxlength="60" placeholder="CG1001260206/03" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+      </label>
 
       <label class="flex flex-col gap-1">
         <span class="font-label-sm text-label-sm text-on-surface-variant">Promotion (facultative)</span>
@@ -138,7 +132,7 @@
       </label>
 
       <p class="font-body-sm text-body-sm text-on-surface-variant">
-        Le certificat suit le modèle officiel de l’institut, signé par le Directeur Général. Sans code saisi, sa
+        Le certificat suit le modèle officiel de l’institut. Il est daté du jour de sa création. Sans code saisi, sa
         référence est imprimée en bas de page.
       </p>
 
