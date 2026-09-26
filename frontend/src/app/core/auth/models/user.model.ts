@@ -1,7 +1,8 @@
 /**
  * Intention déclarée à l'inscription (EnumTypeInscription côté serveur). Elle
  * n'accorde aucun droit : les rôles métier ne sont acquis qu'à la première
- * soumission réelle.
+ * soumission réelle. Elle sert seulement à orienter un compte qui n'en a pas
+ * encore — une école ou une entreprise inscrite mais n'ayant rien déposé.
  */
 export type TypeInscription = 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE' | 'FORMATEUR';
 
