@@ -249,9 +249,30 @@ import { EntrepriseService } from '../../services/entreprise.service';
                   >
                     Vous avez demandé des ajustements : « {{ f.commentaireEntreprise }} ». L'équipe pédagogique révise la fiche.
                   </p>
-                  <p *ngIf="f.statut === 'ACCEPTEE'" class="font-body-sm text-body-sm text-success bg-success/10 rounded-lg px-4 py-3">
-                    Vous avez accepté cette fiche technique.
-                  </p>
+                  <div *ngIf="f.statut === 'ACCEPTEE'" class="bg-success/10 rounded-lg px-4 py-3 space-y-3">
+                    <p class="font-body-sm text-body-sm text-success">Vous avez accepté cette fiche technique.</p>
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        (click)="telechargerDevis(d)"
+                        [disabled]="!!telechargementEnCours"
+                        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface font-label-sm text-label-sm hover:border-secondary transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        <span class="material-symbols-outlined text-[18px]">request_quote</span>
+                        {{ telechargementEnCours === 'devis' ? 'Préparation…' : 'Télécharger le devis' }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="telechargerConvention(d)"
+                        [disabled]="!!telechargementEnCours"
+                        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface font-label-sm text-label-sm hover:border-secondary transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        <span class="material-symbols-outlined text-[18px]">description</span>
+                        {{ telechargementEnCours === 'convention' ? 'Préparation…' : 'Télécharger la convention' }}
+                      </button>
+                    </div>
+                    <p *ngIf="erreurFiche" class="font-body-sm text-body-sm text-error">{{ erreurFiche }}</p>
+                  </div>
 
                   <dl class="grid sm:grid-cols-2 gap-3 bg-surface-container-low rounded-lg p-4">
                     <div class="sm:col-span-2">
@@ -392,6 +413,7 @@ export class NouvelleDemande implements OnInit {
   ajustementsTexte = '';
   decisionEnCours = false;
   erreurFiche = '';
+  telechargementEnCours: 'devis' | 'convention' | null = null;
 
   type: TypeDemandeEntreprise = 'BESOIN_FORMATION';
   raisonSociale = '';
@@ -506,6 +528,51 @@ export class NouvelleDemande implements OnInit {
       error: (e) => {
         this.decisionEnCours = false;
         this.erreurFiche = e?.error?.message || 'L\'acceptation de la fiche a échoué.';
+      },
+    });
+  }
+
+  private declencherTelechargement(blob: Blob, nomFichier: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const lien = document.createElement('a');
+    lien.href = url;
+    lien.download = nomFichier;
+    lien.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  telechargerDevis(demande: DemandeEntreprise): void {
+    if (this.telechargementEnCours) {
+      return;
+    }
+    this.telechargementEnCours = 'devis';
+    this.erreurFiche = '';
+    this.entrepriseService.telechargerDevisPdf(demande.id).subscribe({
+      next: (blob) => {
+        this.telechargementEnCours = null;
+        this.declencherTelechargement(blob, `INPG-devis-entreprise-${demande.id}.pdf`);
+      },
+      error: () => {
+        this.telechargementEnCours = null;
+        this.erreurFiche = 'Le devis n\'a pas pu être téléchargé.';
+      },
+    });
+  }
+
+  telechargerConvention(demande: DemandeEntreprise): void {
+    if (this.telechargementEnCours) {
+      return;
+    }
+    this.telechargementEnCours = 'convention';
+    this.erreurFiche = '';
+    this.entrepriseService.telechargerConventionPdf(demande.id).subscribe({
+      next: (blob) => {
+        this.telechargementEnCours = null;
+        this.declencherTelechargement(blob, `INPG-convention-formation-${demande.id}.pdf`);
+      },
+      error: () => {
+        this.telechargementEnCours = null;
+        this.erreurFiche = 'La convention n\'a pas pu être téléchargée.';
       },
     });
   }

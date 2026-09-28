@@ -261,8 +261,21 @@ sudo /usr/local/share/docker-init.sh true &    # si le démon Docker est tombé
 
 `docker compose up -d --build backend` recrée le conteneur : toute variable passée en ligne de commande
 (ex. `APP_CORS_ORIGINS` pour un tunnel Cloudflare, dont l'URL change à chaque lancement) est perdue et doit
-être repassée. Les redémarrages du Codespace arrêtent Postgres sans arrêt propre : les écritures récentes
-peuvent être perdues.
+être repassée. **Ce n'est pas propre à `backend`** : `docker compose up -d frontend` seul (par exemple après
+un vidage de cache, ci-dessus) recrée aussi `demo-backend` en silence dès que sa config effective a dérivé
+de celle appliquée en dernier — même symptôme, même remède (repasser `APP_CORS_ORIGINS`). Vérifier après coup
+(`docker inspect demo-backend --format '{{json .Config.Env}}' | grep -i cors`) plutôt que de le supposer
+intact. Les redémarrages du Codespace arrêtent Postgres sans arrêt propre : les écritures récentes peuvent
+être perdues.
+
+### 504 « Outdated Optimize Dep » sur le frontend : même piège de cache, un autre symptôme
+
+Vidage de `.angular/cache` déjà documenté ci-dessus pour un module qui ne se met pas à jour — mais le même
+cache périmé peut aussi produire une page blanche avec des erreurs console `Failed to load resource: 504
+(Outdated Optimize Dep)` (dépendances pré-empaquetées par le serveur de dev, invalidées par un rebuild mais
+pas rechargées). Symptôme constaté après un simple redémarrage de conteneur, sans rien changer côté source.
+Même remède : `docker compose stop frontend && rm -rf frontend/.angular/cache frontend/dist && docker compose
+up -d frontend` (reconstruction à froid, ~90 s).
 
 ---
 
