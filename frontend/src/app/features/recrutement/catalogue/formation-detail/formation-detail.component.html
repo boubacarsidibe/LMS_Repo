@@ -237,7 +237,7 @@
           </section>
 
           <!-- ===== CTA Full-width ===== -->
-          <div *ngIf="formation.ctaText && !formation.sidebar" class="text-center bg-white border border-[#c7c5d0] rounded-xl p-8">
+          <div *ngIf="formation.ctaText && !formation.sidebar && !estCompteOrganisation" class="text-center bg-white border border-[#c7c5d0] rounded-xl p-8">
             <p class="text-sm text-[#46464e] mb-3">{{ formation.ctaText }}</p>
             <button type="button" routerLink="/recrutement/sessions" class="bg-[#30609a] text-white px-6 py-2.5 rounded text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#254d7d] transition-colors border-t border-[#a5c8ff]/40">
               Postuler maintenant
@@ -305,7 +305,7 @@
 
             <!-- Actions -->
             <div class="flex flex-col gap-3">
-              <button *ngIf="formation.sidebar.boutonTexte" type="button" routerLink="/recrutement/sessions" class="w-full bg-[#30609a] text-white px-4 py-3 rounded text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#254d7d] transition-colors border-t border-[#a5c8ff]/40 flex items-center justify-center gap-2">
+              <button *ngIf="formation.sidebar.boutonTexte && !estCompteOrganisation" type="button" routerLink="/recrutement/sessions" class="w-full bg-[#30609a] text-white px-4 py-3 rounded text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#254d7d] transition-colors border-t border-[#a5c8ff]/40 flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">how_to_reg</span>
                 {{ formation.sidebar.boutonTexte }}
               </button>

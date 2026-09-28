@@ -88,7 +88,18 @@ export class LandingComponent implements OnInit {
   /** Accueil propre au type du compte connecté (école, entreprise, candidat formateur), sinon null. */
   get accueilProfil(): AccueilProfil | null {
     const profil = this.auth.getProfilCompte();
-    return profil ? ACCUEIL_PAR_PROFIL[profil] : null;
+    if (!profil) {
+      return null;
+    }
+    const accueil = ACCUEIL_PAR_PROFIL[profil];
+    if (profil === 'entreprise' && !this.auth.getUserRoles().includes('ROLE_ENTREPRISE')) {
+      // ROLE_ENTREPRISE n'est accordé qu'à la première demande réellement soumise
+      // (EntrepriseController.soumettreDemande) : avant ça, la fiche Entreprise
+      // n'existe pas encore et l'envoi d'un message échoue en 403 (même correctif
+      // que sur le menu du profil, navbar.component.ts).
+      return { ...accueil, actions: accueil.actions.filter(a => a.libelle !== 'Messagerie') };
+    }
+    return accueil;
   }
 
   /**
