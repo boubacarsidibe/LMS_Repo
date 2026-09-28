@@ -47,7 +47,8 @@ public class AccreditationPublicController {
                         demande.getNiveauProgramme() != null ? demande.getNiveauProgramme().name() : null,
                         demande.getDateDecision(),
                         demande.getDateExpiration(),
-                        demande.getStatut() == EnumStatutDemandeAccreditation.ACCREDITE_SOUS_RESERVE))
+                        demande.getStatut() == EnumStatutDemandeAccreditation.ACCREDITE_SOUS_RESERVE,
+                        demande.getReferenceAttestation()))
                 .toList();
         return ResponseEntity.ok(ecoles);
     }

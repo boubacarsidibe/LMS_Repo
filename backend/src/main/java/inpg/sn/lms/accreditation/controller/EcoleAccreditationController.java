@@ -33,6 +33,8 @@ import inpg.sn.lms.accreditation.enums.EnumTypeStructure;
 import inpg.sn.lms.accreditation.repository.DemandeAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.PieceAccreditationRepository;
 import inpg.sn.lms.accreditation.service.AccreditationNotificationService;
+import inpg.sn.lms.accreditation.service.AttestationAccreditationPdfService;
+import inpg.sn.lms.accreditation.service.AttestationAccreditationService;
 import inpg.sn.lms.accreditation.service.PieceAccreditationStorageService;
 import inpg.sn.lms.auth.entity.EcoleFormation;
 import inpg.sn.lms.auth.entity.Role;
@@ -72,11 +74,14 @@ public class EcoleAccreditationController {
     private final UtilisateurCourantService utilisateurCourant;
     private final PieceAccreditationStorageService storage;
     private final AccreditationNotificationService notificationService;
+    private final AttestationAccreditationService attestationService;
+    private final AttestationAccreditationPdfService attestationPdfService;
 
     public EcoleAccreditationController(EcoleFormationRepository ecoleFormationRepository,
             DemandeAccreditationRepository demandeRepository, PieceAccreditationRepository pieceRepository,
             RoleRepository roleRepository, UtilisateurCourantService utilisateurCourant,
-            PieceAccreditationStorageService storage, AccreditationNotificationService notificationService) {
+            PieceAccreditationStorageService storage, AccreditationNotificationService notificationService,
+            AttestationAccreditationService attestationService, AttestationAccreditationPdfService attestationPdfService) {
         this.ecoleFormationRepository = ecoleFormationRepository;
         this.demandeRepository = demandeRepository;
         this.pieceRepository = pieceRepository;
@@ -84,6 +89,8 @@ public class EcoleAccreditationController {
         this.utilisateurCourant = utilisateurCourant;
         this.storage = storage;
         this.notificationService = notificationService;
+        this.attestationService = attestationService;
+        this.attestationPdfService = attestationPdfService;
     }
 
     /**
@@ -197,6 +204,36 @@ public class EcoleAccreditationController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(toDto(demande));
+    }
+
+    /**
+     * Attestation d'accréditation de cette demande, au format PDF. Réservée à une
+     * demande ACCREDITE ou ACCREDITE_SOUS_RESERVE ; référence et signature
+     * générées ici si elles manquent encore (accréditation décidée avant cette
+     * fonctionnalité) plutôt qu'exclusivement à la décision — {@link
+     * AttestationAccreditationService#genererReferenceEtSignatureSiAccreditee}
+     * est idempotente.
+     */
+    @GetMapping("/demande/{id}/attestation/pdf")
+    @Transactional
+    public ResponseEntity<?> attestationPdf(@PathVariable Long id, Authentication authentication) {
+        DemandeAccreditation demande = demandePropriete(id, authentication);
+        if (demande == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (demande.getStatut() != EnumStatutDemandeAccreditation.ACCREDITE
+                && demande.getStatut() != EnumStatutDemandeAccreditation.ACCREDITE_SOUS_RESERVE) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Cette demande n'est pas (encore) accréditée."));
+        }
+        attestationService.genererReferenceEtSignatureSiAccreditee(demande);
+        demandeRepository.save(demande);
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        org.springframework.http.ContentDisposition.inline()
+                                .filename("INPG-attestation-accreditation-" + demande.getId() + ".pdf").build().toString())
+                .body(attestationPdfService.genererPdf(demande));
     }
 
     /**

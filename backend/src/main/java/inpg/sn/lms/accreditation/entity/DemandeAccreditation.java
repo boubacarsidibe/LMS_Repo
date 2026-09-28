@@ -108,6 +108,19 @@ public class DemandeAccreditation {
     @JoinColumn(name = "evaluateur_id")
     private User evaluateur;
 
+    /**
+     * Référence opaque et signature HMAC de l'attestation d'accréditation
+     * (migration V202609271700), sur le même principe que {@code Certificat} :
+     * remplies uniquement pour ACCREDITE / ACCREDITE_SOUS_RESERVE, jamais
+     * recalculées ensuite — un plan d'actions corrigé après coup ne doit pas
+     * changer une attestation déjà imprimée.
+     */
+    @Column(name = "reference_attestation", length = 60, unique = true)
+    private String referenceAttestation;
+
+    @Column(name = "signature_attestation", length = 64)
+    private String signatureAttestation;
+
     @OneToMany(mappedBy = "demande", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<PieceAccreditation> pieces = new ArrayList<>();

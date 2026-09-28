@@ -284,6 +284,19 @@ import { AccreditationService } from '../../services/accreditation.service';
               {{ demande.planActions }}
             </p>
           </div>
+
+          <div *ngIf="attestationDisponible" class="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              (click)="telechargerAttestation()"
+              [disabled]="telechargementAttestationEnCours"
+              class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+            >
+              <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
+              {{ telechargementAttestationEnCours ? 'Préparation…' : "Télécharger l'attestation d'accréditation" }}
+            </button>
+            <p *ngIf="erreurAttestation" class="font-body-sm text-body-sm text-error">{{ erreurAttestation }}</p>
+          </div>
         </div>
 
         <!-- Pièces du dossier : checklist par type de document attendu -->
@@ -460,9 +473,40 @@ export class DemandeAccreditationComponent implements OnInit {
   televersementEnCours = false;
   erreurPiece = '';
 
+  telechargementAttestationEnCours = false;
+  erreurAttestation = '';
+
   /** La demande accepte encore des pièces tant qu'elle n'est pas tranchée. */
   get modifiable(): boolean {
     return this.demande?.statut === 'SOUMISE' || this.demande?.statut === 'EN_COURS_EVALUATION';
+  }
+
+  /** L'attestation n'existe qu'une fois la demande tranchée favorablement (pleine ou sous réserve). */
+  get attestationDisponible(): boolean {
+    return this.demande?.statut === 'ACCREDITE' || this.demande?.statut === 'ACCREDITE_SOUS_RESERVE';
+  }
+
+  telechargerAttestation(): void {
+    if (!this.demande) {
+      return;
+    }
+    this.telechargementAttestationEnCours = true;
+    this.erreurAttestation = '';
+    this.accreditationService.telechargerAttestationPdf(this.demande.id).subscribe({
+      next: (blob) => {
+        this.telechargementAttestationEnCours = false;
+        const url = window.URL.createObjectURL(blob);
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = `INPG-attestation-accreditation-${this.demande!.id}.pdf`;
+        lien.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.telechargementAttestationEnCours = false;
+        this.erreurAttestation = "L'attestation n'a pas pu être téléchargée.";
+      },
+    });
   }
 
   /** Première pièce déposée pour ce type, ou undefined. */
