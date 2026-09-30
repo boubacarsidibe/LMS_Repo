@@ -99,7 +99,27 @@ public class RendezVousService {
     }
 
     public void notifier(User destinataire, String message, String type) {
-        notificationRepository.save(new Notification(destinataire, message, type, "/rendez-vous"));
+        notificationRepository.save(new Notification(destinataire, message, type, lienRendezVous(destinataire)));
+    }
+
+    /**
+     * URL de l'espace du destinataire pour ce rendez-vous. Chaque espace a sa
+     * propre racine de route (même piège déjà rencontré pour les réponses du
+     * forum et de la messagerie privée) : un lien unique {@code "/rendez-vous"}
+     * ne correspond à aucune route réelle, quel que soit le rôle du destinataire.
+     */
+    private String lienRendezVous(User destinataire) {
+        return switch (premierRoleConnu(destinataire)) {
+            case "ROLE_FORMATEUR" -> "/espace-etudiant/formateur/rendez-vous";
+            case "ROLE_RESPONSABLE_PEDAGOGIQUE" -> "/pedagogie/rendez-vous";
+            case "ROLE_RESPONSABLE_ADMISSION" -> "/responsable-admission/rendez-vous";
+            case "ROLE_ETUDIANT" -> "/espace-etudiant/rendez-vous";
+            case "ROLE_ECOLE_FORMATION" -> "/accreditation/rendez-vous";
+            case "ROLE_ENTREPRISE" -> "/espace-entreprise/rendez-vous";
+            // Alumni et candidat n'ont aujourd'hui aucun écran de rendez-vous dédié ;
+            // ce repli reste au moins correct pour un candidat.
+            default -> "/recrutement/rendez-vous";
+        };
     }
 
     public String libelleRole(User user) {
