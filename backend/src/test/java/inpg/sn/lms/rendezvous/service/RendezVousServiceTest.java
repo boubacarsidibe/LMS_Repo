@@ -3,6 +3,9 @@ package inpg.sn.lms.rendezvous.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -106,5 +109,29 @@ class RendezVousServiceTest {
         service = creerService();
         assertThat(service.estPersonnel(utilisateurAvecRole("ROLE_FORMATEUR"))).isTrue();
         assertThat(service.estPersonnel(utilisateurAvecRole("ROLE_ETUDIANT"))).isFalse();
+    }
+
+    @Test
+    @DisplayName("estInterlocuteurExterne reconnaît pédagogie et admission, pas le formateur")
+    void est_interlocuteur_externe() {
+        service = creerService();
+        assertThat(service.estInterlocuteurExterne(utilisateurAvecRole("ROLE_RESPONSABLE_PEDAGOGIQUE"))).isTrue();
+        assertThat(service.estInterlocuteurExterne(utilisateurAvecRole("ROLE_RESPONSABLE_ADMISSION"))).isTrue();
+        assertThat(service.estInterlocuteurExterne(utilisateurAvecRole("ROLE_FORMATEUR"))).isFalse();
+    }
+
+    @Test
+    @DisplayName("listerInterlocuteursExternes interroge le dépôt sur pédagogie ET admission, jamais formateur")
+    void liste_interlocuteurs_externes_interroge_les_deux_roles() {
+        service = creerService();
+        when(userRepository.findDistinctByRoles_CodeInOrderByUsernameAsc(any())).thenReturn(List.of());
+
+        service.listerInterlocuteursExternes();
+
+        ArgumentCaptor<List<String>> capture = ArgumentCaptor.forClass(List.class);
+        verify(userRepository).findDistinctByRoles_CodeInOrderByUsernameAsc(capture.capture());
+        assertThat(capture.getValue())
+                .containsExactlyInAnyOrder("ROLE_RESPONSABLE_PEDAGOGIQUE", "ROLE_RESPONSABLE_ADMISSION")
+                .doesNotContain("ROLE_FORMATEUR");
     }
 }

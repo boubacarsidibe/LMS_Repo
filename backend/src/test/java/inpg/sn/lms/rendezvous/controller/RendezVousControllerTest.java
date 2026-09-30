@@ -210,7 +210,7 @@ class RendezVousControllerTest {
     }
 
     @Test
-    @DisplayName("école / entreprise : une demande vers un créneau non tenu par un responsable pédagogique est refusée")
+    @DisplayName("école / entreprise : une demande vers un créneau tenu par un formateur est refusée")
     void demanderRendezVous_externe_hors_pedagogie_refuse() {
         User titulaire = personnel(9L); // ROLE_FORMATEUR
         User ecole = demandeur(30L);
@@ -219,7 +219,7 @@ class RendezVousControllerTest {
         when(creneauRepository.findById(3L)).thenReturn(Optional.of(creneau));
         when(utilisateurCourant.utilisateur(authentication)).thenReturn(ecole);
         when(rendezVousService.estDemandeurExterne(ecole)).thenReturn(true);
-        when(rendezVousService.estResponsablePedagogique(titulaire)).thenReturn(false);
+        when(rendezVousService.estInterlocuteurExterne(titulaire)).thenReturn(false);
 
         ResponseEntity<?> reponse = controller.demanderRendezVous(
                 new DemandeRendezVousRequest(3L, "EN_LIGNE", null, null), authentication);
@@ -227,6 +227,27 @@ class RendezVousControllerTest {
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(creneau.isReserve()).isFalse();
         verify(rendezVousRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("école / entreprise : une demande vers un responsable admission est acceptée (pas seulement pédagogique)")
+    void demanderRendezVous_externe_vers_admission_est_acceptee() {
+        User titulaire = personnel(9L); // représente ici ROLE_RESPONSABLE_ADMISSION
+        User entreprise = demandeur(30L);
+        CreneauDisponibilite creneau = new CreneauDisponibilite(titulaire, LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(1).plusHours(1));
+        when(creneauRepository.findById(3L)).thenReturn(Optional.of(creneau));
+        when(utilisateurCourant.utilisateur(authentication)).thenReturn(entreprise);
+        when(rendezVousService.estDemandeurExterne(entreprise)).thenReturn(true);
+        when(rendezVousService.estInterlocuteurExterne(titulaire)).thenReturn(true);
+        when(rendezVousRepository.save(any(RendezVous.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ResponseEntity<?> reponse = controller.demanderRendezVous(
+                new DemandeRendezVousRequest(3L, "EN_LIGNE", null, "Devis pour une session"), authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(creneau.isReserve()).isTrue();
+        verify(rendezVousRepository).save(any());
     }
 
     @Test

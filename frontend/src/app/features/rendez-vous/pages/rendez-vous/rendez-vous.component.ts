@@ -33,10 +33,12 @@ const ROLES_EXTERNE = ['ROLE_ECOLE_FORMATION', 'ROLE_ENTREPRISE'];
  *
  * <p>Deux adaptations selon le rôle connecté :
  * <ul>
- *   <li><b>École partenaire / entreprise</b> : leur unique interlocuteur est le
- *       responsable pédagogique (décision client, garde côté serveur). L'écran
- *       ne montre donc que « Demander un rendez-vous » avec ce seul contact,
- *       pré-sélectionné, et « Mes demandes ».</li>
+ *   <li><b>École partenaire / entreprise</b> : leurs seuls interlocuteurs sont
+ *       le responsable pédagogique et le responsable admission, jamais un
+ *       formateur (décision client, garde côté serveur — {@code scope=EXTERNE}).
+ *       L'écran ne montre donc que « Demander un rendez-vous » avec l'un de ces
+ *       deux contacts (le seul disponible étant pré-sélectionné), et « Mes
+ *       demandes ».</li>
  *   <li><b>Personnel de l'INPG</b> (formateur, responsable pédagogique,
  *       responsable admission) : il ne demande jamais de rendez-vous, il les
  *       reçoit — l'écran ne montre que « Mon agenda » (créneaux + demandes
@@ -67,7 +69,7 @@ export class RendezVousComponent implements OnInit {
     return ROLES_PERSONNEL.some((r) => this.roles.includes(r));
   }
 
-  /** École partenaire ou entreprise : demandeur « externe », interlocuteur = responsable pédagogique. */
+  /** École partenaire ou entreprise : demandeur « externe », interlocuteurs = pédagogie ou admission. */
   get estExterne(): boolean {
     return ROLES_EXTERNE.some((r) => this.roles.includes(r));
   }
@@ -75,7 +77,7 @@ export class RendezVousComponent implements OnInit {
   /** Sous-titre de l'écran, adapté au rôle. */
   get sousTitre(): string {
     if (this.estExterne) {
-      return "Demandez un rendez-vous au responsable pédagogique de l'INPG sur l'un de ses créneaux disponibles.";
+      return "Demandez un rendez-vous au responsable pédagogique ou au responsable admission de l'INPG sur l'un de leurs créneaux disponibles.";
     }
     if (this.estPersonnel) {
       return 'Gérez vos créneaux de disponibilité et répondez aux demandes de rendez-vous que vous recevez.';
@@ -139,12 +141,13 @@ export class RendezVousComponent implements OnInit {
   chargerPersonnel(): void {
     this.chargementPersonnel = true;
     const monId = this.auth.currentUser()?.id;
-    // Écoles / entreprises : on ne propose que le responsable pédagogique.
-    this.rendezVousService.getPersonnel(this.estExterne ? 'PEDAGOGIE' : undefined).subscribe({
+    // Écoles / entreprises : on ne propose que pédagogie et admission, jamais un formateur.
+    this.rendezVousService.getPersonnel(this.estExterne ? 'EXTERNE' : undefined).subscribe({
       next: (personnel) => {
         this.personnel = personnel.filter((p) => p.id !== monId);
         this.chargementPersonnel = false;
-        // Interlocuteur unique : on le sélectionne d'emblée pour aller droit aux créneaux.
+        // Interlocuteur unique (l'autre rôle n'a personne actuellement) : on le
+        // sélectionne d'emblée pour aller droit aux créneaux ; sinon, laisser choisir.
         if (this.estExterne && this.personnel.length === 1) {
           this.choisirPersonnel(this.personnel[0]);
         }

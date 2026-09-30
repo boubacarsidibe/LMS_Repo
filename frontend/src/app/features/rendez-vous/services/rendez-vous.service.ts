@@ -14,11 +14,11 @@ export class RendezVousService {
   private api = `${environment.apiUrl}/rendez-vous`;
 
   /**
-   * Personnel consultable pour une prise de rendez-vous. {@code scope='PEDAGOGIE'}
-   * restreint au responsable pédagogique — l'unique interlocuteur des écoles
-   * partenaires et des entreprises.
+   * Personnel consultable pour une prise de rendez-vous. {@code scope='EXTERNE'}
+   * restreint aux responsables pédagogique et admission — les deux seuls
+   * interlocuteurs des écoles partenaires et des entreprises, jamais un formateur.
    */
-  getPersonnel(scope?: 'PEDAGOGIE'): Observable<PersonnelProfil[]> {
+  getPersonnel(scope?: 'EXTERNE'): Observable<PersonnelProfil[]> {
     const params = scope ? { params: { scope } } : {};
     return this.http.get<PersonnelProfil[]>(`${this.api}/personnel`, params);
   }
