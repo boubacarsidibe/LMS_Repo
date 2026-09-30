@@ -31,6 +31,9 @@ import org.apache.pdfbox.util.Matrix;
  */
 public final class RapportPdf implements AutoCloseable {
 
+    /** Air supplémentaire entre le logo et le début du texte (le papier à en-tête seul ne laissait que 16 pt). */
+    private static final float ESPACE_SOUS_LOGO = 22f;
+
     private static final Color NAVY = new Color(19, 23, 65);
     private static final Color GRIS = new Color(70, 70, 78);
     private static final Color TEXTE = new Color(30, 30, 36);
@@ -290,7 +293,7 @@ public final class RapportPdf implements AutoCloseable {
         PDPage page = new PDPage(PDRectangle.A4);
         document.addPage(page);
         flux = new PDPageContentStream(document, page);
-        y = hauteurPage - PapierEnTete.HAUT_CONTENU;
+        y = hauteurPage - PapierEnTete.HAUT_CONTENU - ESPACE_SOUS_LOGO;
         dessinerFiligrane();
     }
 

@@ -294,4 +294,35 @@ class PedagogieScolariteImportTest {
         verify(etudiantRepository, never()).findById(any());
         verify(certificatService, never()).save(any());
     }
+
+    @Test
+    @DisplayName("Un intitulé ou un code plus long que la colonne est refusé en 400 explicite, pas en faux « déjà utilisé »")
+    void delivrance_refuse_les_valeurs_trop_longues() {
+        var intituleLong = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
+                5L, "A".repeat(151), null, "Monsieur", null, null, null, null));
+        var codeLong = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
+                5L, "Comptage du gaz", null, "Monsieur", null, null, null, "B".repeat(61)));
+
+        assertThat(intituleLong.getStatusCode().value()).isEqualTo(400);
+        assertThat(codeLong.getStatusCode().value()).isEqualTo(400);
+        verify(certificatService, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Un certificat identique (même étudiant, formation et période) n'est pas délivré deux fois")
+    void delivrance_refuse_un_doublon() {
+        Etudiant etudiant = etudiantPourCertificat();
+        Certificat existant = new Certificat();
+        existant.setIntituleFormation("Comptage du gaz");
+        existant.setDateDebut(java.time.LocalDate.of(2026, 2, 2));
+        existant.setDateFin(java.time.LocalDate.of(2026, 2, 6));
+        when(certificatService.getByEtudiant(etudiant.getId())).thenReturn(java.util.List.of(existant));
+
+        var reponse = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
+                5L, " comptage DU gaz ", null, "Monsieur", null,
+                java.time.LocalDate.of(2026, 2, 2), java.time.LocalDate.of(2026, 2, 6), null));
+
+        assertThat(reponse.getStatusCode().value()).isEqualTo(409);
+        verify(certificatService, never()).save(any());
+    }
 }
