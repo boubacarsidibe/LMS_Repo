@@ -44,8 +44,13 @@
     </div>
   </div>
 
-  <!-- Interface principale -->
-  <div class="grid grid-cols-12 gap-0 border-t border-outline-variant h-[70vh] min-h-[560px] overflow-hidden">
+  <!-- Interface principale. Hauteur relevée le 2026-09-28 : la zone de réponse (barre d'outils +
+       zone de texte + barre d'actions) occupe à elle seule environ 473 px, fixes quel que soit le
+       viewport (aucune unité vh dedans) — avec le budget précédent (min-h-[560px]), il ne restait que
+       156 px pour les messages, soit moins qu'un seul message affiché en entier : l'utilisateur avait
+       l'impression que ses messages étaient masqués par l'interface de saisie. Le nouveau budget
+       garantit toujours au moins ~280 px aux messages (voir le plancher posé plus bas). -->
+  <div class="grid grid-cols-12 gap-0 border-t border-outline-variant h-[75vh] min-h-[760px] overflow-hidden">
 
     <!-- Colonne gauche : liste des sujets -->
     <div class="col-span-4 bg-surface-container-low border-r border-outline-variant flex flex-col h-full min-h-0">
@@ -140,7 +145,11 @@
         </div>
       </div>
 
-      <div class="flex-1 min-h-0 overflow-y-auto p-margin-desktop space-y-stack-lg custom-scrollbar">
+      <!-- Plancher explicite plutôt que min-h-0 : sans lui, flex-1 laisse cette zone se réduire à la
+           taille qu'impose sa voisine (la zone de réponse, ~473 px fixes) plutôt qu'à un minimum
+           réellement lisible. Le panneau parent (min-h-[760px] ci-dessus) garantit que ce plancher
+           reste toujours atteignable, même sur un petit écran. -->
+      <div class="flex-1 min-h-[240px] overflow-y-auto p-margin-desktop space-y-stack-lg custom-scrollbar">
         <div *ngFor="let m of sel.messages" class="flex flex-col gap-stack-md max-w-3xl">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center font-bold text-on-secondary-container text-[12px]">{{ m.initiales }}</div>
