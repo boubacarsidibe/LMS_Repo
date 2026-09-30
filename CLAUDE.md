@@ -76,7 +76,9 @@ n'existe plus nulle part — identique dans tous les espaces :
 (`frontend/public/images/logo-inpg.png`, 640 × 174) et de son texte alternatif : ne pas recopier un `<img>`
 ailleurs, ni recomposer un logotype en texte. Le fichier est détouré (fond transparent) et le logo est bleu
 nuit : sur un fond sombre (panneau de connexion, pied de page), le poser dans une pastille blanche arrondie,
-sans quoi il disparaît. Le nom de l'espace (« Espace formateur », « Portail Admissions », « Espace
+sans quoi il disparaît. **Exception voulue** : le layout de connexion/inscription (`auth-layout`) garde le
+texte « INPG LMS » (`text-2xl font-extrabold text-primary`, suffixe en `text-brand`) en haut de sa partie
+blanche, et le panneau sombre n'a plus de logo — choix esthétique du 2026-09-25. Le nom de l'espace (« Espace formateur », « Portail Admissions », « Espace
 pédagogique ») reste écrit **sous** le logo, en `font-label-sm`. Le même logo coiffe les PDF (voir §3, papier
 à en-tête).
 

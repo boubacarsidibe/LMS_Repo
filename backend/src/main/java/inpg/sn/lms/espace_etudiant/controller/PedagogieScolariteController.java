@@ -528,6 +528,8 @@ public class PedagogieScolariteController {
 
     // ===================== CERTIFICATS =====================
 
+    private static final int INTITULE_MAX = 150;
+    private static final int CODE_MAX = 60;
     private static final java.util.Set<String> CIVILITES = java.util.Set.of("Monsieur", "Madame", "Mademoiselle");
 
     @GetMapping("/certificats")
@@ -557,6 +559,17 @@ public class PedagogieScolariteController {
         if (!estVide(request.civilite()) && !CIVILITES.contains(request.civilite().trim())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Civilité inconnue."));
         }
+        // Bornes des colonnes : au-delà, la base refusait l'écriture et l'écran affichait un faux
+        // « identifiant déjà utilisé ». L'intitulé est plafonné plus bas que la colonne : sur le modèle
+        // imprimé il tient sur une seule ligne, qu'il faudrait sinon réduire jusqu'à l'illisible.
+        if (request.intituleFormation().trim().length() > INTITULE_MAX) {
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "L'intitulé de la formation est trop long (" + INTITULE_MAX + " caractères au plus)."));
+        }
+        if (!estVide(request.code()) && request.code().trim().length() > CODE_MAX) {
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "Le code du certificat est trop long (" + CODE_MAX + " caractères au plus)."));
+        }
         Etudiant etudiant = etudiantRepository.findById(request.etudiantId()).orElse(null);
         if (etudiant == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Étudiant introuvable."));
@@ -566,6 +579,16 @@ public class PedagogieScolariteController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message",
                     "Cet étudiant n'a pas terminé son programme, le certificat ne peut pas encore être délivré.",
                     "coursNonTermines", coursNonTermines));
+        }
+        // Un second clic, ou une seconde personne, ne doit pas produire un deuxième certificat identique.
+        String intitule = request.intituleFormation().trim();
+        boolean dejaDelivre = certificatService.getByEtudiant(etudiant.getId()).stream().anyMatch(c ->
+                c.getIntituleFormation().trim().equalsIgnoreCase(intitule)
+                        && java.util.Objects.equals(c.getDateDebut(), request.dateDebut())
+                        && java.util.Objects.equals(c.getDateFin(), request.dateFin()));
+        if (dejaDelivre) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message",
+                    "Un certificat identique (même étudiant, même formation, même période) a déjà été délivré."));
         }
         Promotion promotion = null;
         if (request.cohorteId() != null) {

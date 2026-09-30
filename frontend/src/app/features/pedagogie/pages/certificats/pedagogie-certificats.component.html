@@ -102,7 +102,7 @@
 
       <label class="flex flex-col gap-1">
         <span class="font-label-sm text-label-sm text-on-surface-variant">Formation intitulée</span>
-        <input type="text" [(ngModel)]="intitule" placeholder="Comptage du gaz"
+        <input type="text" [(ngModel)]="intitule" maxlength="150" placeholder="Comptage du gaz"
                class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
       </label>
 
@@ -141,6 +141,7 @@
           <span class="material-symbols-outlined text-[18px] shrink-0">error</span>
           <span>{{ messageErreur }}</span>
         </p>
+        <p *ngIf="coursNonTermines.length" class="font-body-sm text-body-sm text-error/90">Un cours est terminé quand tous ses supports sont consultés et qu'au moins une note est saisie. À compléter :</p>
         <ul *ngIf="coursNonTermines.length" class="list-disc list-inside font-body-sm text-body-sm text-error/90 pl-1">
           <li *ngFor="let c of coursNonTermines">{{ c }}</li>
         </ul>
