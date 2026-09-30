@@ -2,13 +2,10 @@
 
   <!-- En-tête + KPI -->
   <div class="flex flex-col gap-stack-lg p-margin-desktop">
-    <div class="grid grid-cols-12 items-center gap-gutter">
-      <div class="col-span-12 lg:col-span-7">
+    <div>
       <span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest">Interaction &amp; Engagement</span>
       <h1 class="font-display text-display text-on-surface leading-none">Forum de Discussion &amp; Animation des Promotions</h1>
       <p class="mt-2 font-body-lg text-body-lg text-on-surface-variant">Échangez avec vos étudiants, répondez à leurs questions et animez vos cours.</p>
-      </div>
-      <div class="relative col-span-12 min-h-36 overflow-hidden rounded-xl bg-primary-container lg:col-span-5"><span class="material-symbols-outlined absolute bottom-4 left-14 text-[94px] text-secondary">forum</span><span class="material-symbols-outlined absolute bottom-5 left-44 text-[56px] text-primary">lightbulb</span><blockquote class="absolute right-4 top-4 w-44 rounded-xl bg-surface-container-lowest/90 px-5 py-4 font-body-sm text-body-sm italic leading-5 text-secondary">« Des échanges d’aujourd’hui nourrissent les réussites de demain. »<span class="mt-4 block h-1 w-7 rounded-full bg-secondary"></span></blockquote></div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
       <div class="bg-surface-container-lowest p-stack-lg rounded-xl flex items-center gap-stack-md shadow-sm">
@@ -56,9 +53,9 @@
     <div class="col-span-4 bg-surface-container-low border-r border-outline-variant flex flex-col h-full min-h-0">
       <div class="p-stack-md bg-surface-container-lowest/50 backdrop-blur-sm sticky top-0 z-10">
         <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          <button (click)="filtreActif = 'tous'" [class.bg-secondary]="filtreActif === 'tous'" [class.text-on-secondary]="filtreActif === 'tous'" [class.bg-surface-container-high]="filtreActif !== 'tous'" [class.text-on-surface-variant]="filtreActif !== 'tous'" class="px-4 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors">Tous les cours</button>
-          <button (click)="filtreActif = 'non-lus'" [class.bg-secondary]="filtreActif === 'non-lus'" [class.text-on-secondary]="filtreActif === 'non-lus'" [class.bg-surface-container-high]="filtreActif !== 'non-lus'" [class.text-on-surface-variant]="filtreActif !== 'non-lus'" class="px-4 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors">Non lus</button>
-          <button (click)="filtreActif = 'prioritaires'" [class.bg-secondary]="filtreActif === 'prioritaires'" [class.text-on-secondary]="filtreActif === 'prioritaires'" [class.bg-surface-container-high]="filtreActif !== 'prioritaires'" [class.text-on-surface-variant]="filtreActif !== 'prioritaires'" class="px-4 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors">Questions prioritaires</button>
+          <button (click)="filtreActif = 'tous'" [class.bg-primary]="filtreActif === 'tous'" [class.text-on-primary]="filtreActif === 'tous'" [class.bg-surface-container-high]="filtreActif !== 'tous'" [class.text-on-surface-variant]="filtreActif !== 'tous'" class="px-4 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors">Tous les cours</button>
+          <button (click)="filtreActif = 'non-lus'" [class.bg-primary]="filtreActif === 'non-lus'" [class.text-on-primary]="filtreActif === 'non-lus'" [class.bg-surface-container-high]="filtreActif !== 'non-lus'" [class.text-on-surface-variant]="filtreActif !== 'non-lus'" class="px-4 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors">Non lus</button>
+          <button (click)="filtreActif = 'prioritaires'" [class.bg-primary]="filtreActif === 'prioritaires'" [class.text-on-primary]="filtreActif === 'prioritaires'" [class.bg-surface-container-high]="filtreActif !== 'prioritaires'" [class.text-on-surface-variant]="filtreActif !== 'prioritaires'" class="px-4 py-2 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors">Questions prioritaires</button>
         </div>
       </div>
 
@@ -200,7 +197,7 @@
                 <span class="text-label-sm text-on-surface-variant">Marquer comme solution</span>
               </label>
             </div>
-            <button (click)="envoyerReponse()" [disabled]="!nouveauMessage.trim() || isSending" class="flex items-center gap-2 px-6 py-2.5 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            <button (click)="envoyerReponse()" [disabled]="!nouveauMessage.trim() || isSending" class="flex items-center gap-2 px-6 py-2.5 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
               <span>{{ isSending ? 'Envoi…' : 'Publier la réponse' }}</span>
               <span class="material-symbols-outlined text-[20px]">send</span>
             </button>

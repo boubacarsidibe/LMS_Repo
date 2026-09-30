@@ -39,7 +39,7 @@ import { SupportService } from '../../services/support.service';
               <p *ngIf="cours.description" class="mt-3 max-w-3xl font-body-md text-body-md text-on-surface-variant">{{ cours.description }}</p>
             </div>
             <a [routerLink]="['/espace-etudiant/formateur/mes-cours']" [queryParams]="{ cours: cours.id }"
-               class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-secondary px-4 py-2.5 font-label-md text-label-md text-on-secondary hover:opacity-90">
+               class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-label-md text-label-md text-on-primary hover:opacity-90">
               <span class="material-symbols-outlined text-[19px]">upload_file</span> Déposer une ressource
             </a>
           </div>
@@ -161,7 +161,7 @@ import { SupportService } from '../../services/support.service';
               <textarea name="description" [(ngModel)]="nouvelleActivite.description" rows="3" class="mt-2 w-full rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2.5 text-on-surface" placeholder="Consigne visible par les étudiants"></textarea>
             </label>
             <div class="md:col-span-2 flex items-center gap-3">
-              <button type="submit" [disabled]="form.invalid || creationActivite" class="rounded-lg bg-secondary px-5 py-2.5 font-label-md text-label-md text-on-secondary disabled:opacity-50">{{ creationActivite ? 'Création…' : 'Créer l’activité' }}</button>
+              <button type="submit" [disabled]="form.invalid || creationActivite" class="rounded-lg bg-primary px-5 py-2.5 font-label-md text-label-md text-on-primary disabled:opacity-50">{{ creationActivite ? 'Création…' : 'Créer l’activité' }}</button>
               <p *ngIf="erreurActivite" class="font-body-sm text-body-sm text-error">{{ erreurActivite }}</p>
             </div>
           </form>
