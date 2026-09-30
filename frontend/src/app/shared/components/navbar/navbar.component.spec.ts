@@ -83,19 +83,19 @@ describe('NavbarComponent', () => {
       expect(component.ongletSpecifique.libelle).toBe('Accréditation');
     });
 
-    it('le navbar garde les mêmes onglets communs pour tous, sans « Accueil » : école/entreprise/formateur l\'ont déjà via leur onglet propre et « Mon espace »', () => {
+    it('entreprise : mêmes onglets communs que les autres publics, Accueil compris', () => {
       connecter([], 'ENTREPRISE');
       fixture.detectChanges();
-      expect(ongletsDuCentre()).toEqual(['Institut', 'Formations', 'Espace entreprise', 'Contact']);
+      expect(ongletsDuCentre()).toEqual(['Accueil', 'Institut', 'Formations', 'Espace entreprise', 'Contact']);
     });
 
     /**
-     * Retour de recette : pour le candidat/étudiant, le logo seul comme retour à
-     * l'accueil n'était pas assez visible — contrairement à école/entreprise/
-     * formateur, qui ont déjà un équivalent (leur onglet propre + « Mon espace »
-     * du menu de profil). « Accueil » redevient donc un onglet explicite, mais
-     * seulement pour ce public — un candidat qui consulte les offres formateur
-     * (contexte 'etudiant' inchangé) le garde aussi.
+     * Retour de recette (candidat/étudiant) : le logo seul comme retour à l'accueil
+     * n'était pas assez visible. Corrigé le 2026-09-27 : école/entreprise/formateur
+     * avaient le même problème — leur menu de profil ne mène qu'à leur propre espace,
+     * jamais à /accueil, le logo restait donc leur seule voie (et il est masqué sous
+     * 1024 px). « Accueil » est désormais un onglet explicite pour tous les publics,
+     * connectés ou non.
      */
     it('candidat/étudiant : Accueil en premier onglet', () => {
       connecter(['ROLE_CANDIDAT'], 'CANDIDAT');
@@ -148,15 +148,22 @@ describe('NavbarComponent', () => {
   });
 
   describe('menu du cercle de profil', () => {
-    it('école : son espace et son profil, pas « Mes candidatures »', () => {
+    it('école : son profil, pas « Mes candidatures » — pas de « Mon espace », redondant avec l\'onglet Accréditation', () => {
       connecter([], 'ECOLE');
-      expect(liensDuMenu()).toEqual(['/accreditation', '/accreditation/mon-profil']);
+      expect(liensDuMenu()).toEqual(['/accreditation/mon-profil']);
     });
 
-    it('entreprise : son espace, sa messagerie et son profil', () => {
+    it('entreprise sans ROLE_ENTREPRISE (aucune demande encore soumise) : son profil, pas la messagerie', () => {
+      // La fiche Entreprise n'existe en base qu'à la première demande réellement
+      // soumise (EntrepriseController.soumettreDemande) ; avant ça, envoyer un
+      // message échoue en 403 — la messagerie reste masquée jusque-là.
       connecter([], 'ENTREPRISE');
+      expect(liensDuMenu()).toEqual(['/espace-entreprise/mon-profil']);
+    });
+
+    it('entreprise avec ROLE_ENTREPRISE (première demande déjà soumise) : sa messagerie et son profil', () => {
+      connecter(['ROLE_ENTREPRISE']);
       expect(liensDuMenu()).toEqual([
-        '/espace-entreprise',
         '/espace-entreprise/messagerie',
         '/espace-entreprise/mon-profil',
       ]);

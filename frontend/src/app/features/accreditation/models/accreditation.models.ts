@@ -146,6 +146,8 @@ export interface EcoleAccreditee {
   dateAccreditation: string;
   dateExpiration: string | null;
   sousReserve: boolean;
+  /** Nul seulement pour une accréditation décidée avant l'attestation téléchargeable. */
+  referenceAttestation: string | null;
 }
 
 export interface CritereAccreditation {

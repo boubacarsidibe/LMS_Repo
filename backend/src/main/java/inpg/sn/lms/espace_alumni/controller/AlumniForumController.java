@@ -198,6 +198,7 @@ public class AlumniForumController {
                 estAuteur,
                 null,
                 null,
+                null,
                 null);
     }
 

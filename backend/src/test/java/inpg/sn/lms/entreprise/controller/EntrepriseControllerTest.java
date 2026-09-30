@@ -62,6 +62,8 @@ class EntrepriseControllerTest {
     @Mock
     private EntrepriseNotificationService notificationService;
     @Mock
+    private inpg.sn.lms.entreprise.service.FicheTechniqueModulePdfService ficheModulePdfService;
+    @Mock
     private Authentication authentication;
 
     private EntrepriseController controller;
@@ -71,7 +73,7 @@ class EntrepriseControllerTest {
     void setUp() {
         controller = new EntrepriseController(entrepriseRepository, demandeRepository, messageRepository,
                 formationRepository, ficheRepository, ficheService, roleRepository, utilisateurCourant,
-                notificationService);
+                notificationService, ficheModulePdfService);
         user = new User();
         user.setId(7L);
     }

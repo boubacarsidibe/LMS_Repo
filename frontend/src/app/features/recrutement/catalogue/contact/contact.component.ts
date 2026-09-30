@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule, NgForm } from '@angular/forms';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
+import { erreurVisible } from '../../../../shared/utils/erreur-champ';
 
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, RouterModule, FormsModule, FooterComponent],
   templateUrl: './contact.component.html',
 })
 export class ContactComponent {
@@ -33,10 +33,9 @@ export class ContactComponent {
 
   constructor(private recrutementService: RecrutementService) {}
 
-  /** Un champ n'affiche son erreur qu'après une tentative d'envoi, jamais avant (même en le quittant). */
+  /** Erreur d'un champ : dès un caractère saisi, ou après une tentative d'envoi (voir erreurVisible). */
   champEnErreur(form: NgForm, nom: string): boolean {
-    const controle = form.controls[nom];
-    return !!controle && controle.invalid && this.envoiTente;
+    return erreurVisible(form.controls[nom], this.envoiTente);
   }
 
   /**

@@ -5,7 +5,6 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { RecrutementService, SessionCandidatureResponse, CandidatureRequest, CandidatureResponse, CritereAdmissionResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { Auth } from '../../../../core/auth/services/authService';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
@@ -57,7 +56,7 @@ interface BulletinAnnuel {
 @Component({
   selector: 'app-formulaire',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent],
   templateUrl: './formulaire.component.html'
 })
 export class FormulaireComponent implements OnInit {

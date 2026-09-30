@@ -31,22 +31,134 @@ export const routes: Routes = [
       ),
   },
 
-  // Contact
+  // Contact, Institut, offres formateurs, tout /recrutement/* ET les espaces
+  // École, Entreprise et Candidat formateur : regroupés sous un même layout
+  // (PublicNavbarLayoutComponent) portant UN SEUL
+  // app-navbar persistant. Avant ce regroupement, chacune de ces pages
+  // embarquait son propre app-navbar : naviguer de l'une à l'autre détruisait
+  // et recréait le composant à chaque clic (relançant notifications et
+  // vérification de candidature à chaque fois) — signalé en recette comme un
+  // navbar qui « clignote », alors même que son CSS `position: fixed` le
+  // gardait immobile pendant un défilement (deux choses différentes). Les
+  // chemins ('contact', 'institut'...) restent inchangés : ce parent ne porte
+  // pas de segment d'URL propre (`path: ''`), donc aucune route existante ne
+  // bouge.
   {
-    path: 'contact',
+    path: '',
     loadComponent: () =>
-      import('./features/recrutement/catalogue/contact/contact.component').then(
-        (m) => m.ContactComponent
+      import('./shared/components/navbar/public-navbar-layout.component').then(
+        (m) => m.PublicNavbarLayoutComponent
       ),
-  },
+    children: [
+      {
+        path: 'contact',
+        loadComponent: () =>
+          import('./features/recrutement/catalogue/contact/contact.component').then(
+            (m) => m.ContactComponent
+          ),
+      },
+      {
+        path: 'institut',
+        loadComponent: () =>
+          import('./features/recrutement/catalogue/institut/institut.component').then(
+            (m) => m.InstitutComponent
+          ),
+      },
+      // Recrutement des formateurs (procédure QMS-007). La LISTE des offres
+      // est publique — sans compte, comme n'importe quel site d'offres
+      // d'emploi : l'endpoint correspondant est déjà permitAll
+      // (RecrutementFormateurPublicController). Seul « Postuler » exige la
+      // connexion, le composant renvoyant alors vers /auth/login avec un
+      // returnUrl pour revenir sur l'offre choisie.
+      {
+        path: 'offres-formateurs',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/pages/offres-publiques/offres-publiques').then(
+            (m) => m.OffresPubliquesComponent
+          ),
+      },
+      {
+        path: 'recrutement',
+        loadChildren: () => import('./features/recrutement/recrutement.routes').then(m => m.RECRUTEMENT_ROUTES),
+      },
 
-  // Institut (À propos)
-  {
-    path: 'institut',
-    loadComponent: () =>
-      import('./features/recrutement/catalogue/institut/institut.component').then(
-        (m) => m.InstitutComponent
-      ),
+      // Espace Entreprise (TDR §H) : tout utilisateur connecté peut soumettre un
+      // besoin ou une demande de devis (ROLE_ENTREPRISE n'est accordé qu'à la
+      // première soumission réussie, cf. EntrepriseController) — même patron que
+      // /accreditation, authGuard seul, pas de roleGuard. Sous le navbar commun (voir
+      // le parent ci-dessus) : plus de barre propre à cet espace.
+      {
+        path: 'espace-entreprise',
+        canActivate: [authGuard, noRoleGuard(...ROLES_INTERNES_ETABLIS, 'ROLE_ECOLE_FORMATION')],
+        loadChildren: () => import('./features/espace-entreprise/espace-entreprise.routes').then(m => m.routes)
+      },
+
+      // Espace École de formation : tout utilisateur connecté peut déposer une demande
+      // d'accréditation (le rôle ROLE_ECOLE_FORMATION n'est accordé qu'à la première
+      // soumission réussie, cf. EcoleAccreditationController) — même patron que la
+      // candidature de recrutement, authGuard seul, pas de roleGuard. Sous le navbar
+      // commun (voir le parent ci-dessus) : plus de barre propre à cet espace.
+      {
+        path: 'accreditation',
+        canActivate: [authGuard, noRoleGuard(...ROLES_INTERNES_ETABLIS, 'ROLE_ENTREPRISE')],
+        loadComponent: () =>
+          import('./features/accreditation/layouts/ecole-layout/ecole-layout').then((m) => m.EcoleLayout),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/accreditation/pages/demande-accreditation/demande-accreditation').then(
+                (m) => m.DemandeAccreditationComponent
+              ),
+          },
+          {
+            path: 'rendez-vous',
+            loadComponent: () =>
+              import('./features/rendez-vous/pages/rendez-vous/rendez-vous.component').then(
+                (m) => m.RendezVousComponent
+              ),
+          },
+          {
+            path: 'mon-profil',
+            loadComponent: () =>
+              import('./features/accreditation/pages/mon-profil/ecole-mon-profil.component').then(
+                (m) => m.EcoleMonProfilComponent
+              ),
+          },
+        ],
+      },
+
+      // Recrutement des formateurs (procédure QMS-007) : « Postuler » exige la
+      // connexion, le composant renvoyant alors vers /auth/login avec un
+      // returnUrl pour revenir sur l'offre choisie. Le rôle ROLE_CANDIDAT_FORMATEUR
+      // n'est accordé qu'au premier dépôt (cf. CandidatFormateurController).
+      // Sous le même navbar commun que la vitrine publique (/offres-formateurs) :
+      // passer de l'une à l'autre ne change ni les onglets ni le composant.
+      {
+        path: 'candidature-formateur',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/layouts/candidat-formateur-layout/candidat-formateur-layout').then(
+            (m) => m.CandidatFormateurLayout
+          ),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/recrutement-formateurs/pages/ma-candidature/ma-candidature').then(
+                (m) => m.MaCandidatureComponent
+              ),
+          },
+          {
+            path: 'mon-profil',
+            loadComponent: () =>
+              import('./features/recrutement-formateurs/pages/mon-profil/candidat-formateur-mon-profil').then(
+                (m) => m.CandidatFormateurMonProfilComponent
+              ),
+          },
+        ],
+      },
+    ],
   },
 
   // Vérification publique d'un certificat (page vers laquelle pointe le QR code
@@ -56,6 +168,17 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/certificats/verification/verification-certificat.component').then(
         (m) => m.VerificationCertificatComponent
+      ),
+  },
+
+  // Même principe pour l'attestation d'accréditation d'une école (TDR §F) : sert
+  // à la fois de page de vérification (QR imprimé) et de fiche détaillée depuis
+  // la liste des écoles accréditées.
+  {
+    path: 'verification-accreditation/:reference',
+    loadComponent: () =>
+      import('./features/accreditation/verification/verification-accreditation.component').then(
+        (m) => m.VerificationAccreditationComponent
       ),
   },
 
@@ -93,16 +216,6 @@ export const routes: Routes = [
     loadChildren: () => import('./features/espace-alumni/espace-alumni.routes').then(m => m.routes)
   },
 
-  // Espace Entreprise (TDR §H) : tout utilisateur connecté peut soumettre un
-  // besoin ou une demande de devis (ROLE_ENTREPRISE n'est accordé qu'à la
-  // première soumission réussie, cf. EntrepriseController) — même patron que
-  // /accreditation, authGuard seul, pas de roleGuard.
-  {
-    path: 'espace-entreprise',
-    canActivate: [authGuard, noRoleGuard(...ROLES_INTERNES_ETABLIS, 'ROLE_ECOLE_FORMATION')],
-    loadChildren: () => import('./features/espace-entreprise/espace-entreprise.routes').then(m => m.routes)
-  },
-
   // Liste des écoles accréditées (TDR §F) : réservée aux comptes connectés,
   // tout rôle confondu — décision produit du 2026-08-25 (LOG_BLOQUANT.md),
   // le TDR demandait initialement une liste réellement publique.
@@ -113,42 +226,6 @@ export const routes: Routes = [
       import('./features/accreditation/pages/ecoles-accreditees/ecoles-accreditees').then(
         (m) => m.EcolesAccrediteesComponent
       ),
-  },
-
-  // Espace École de formation : tout utilisateur connecté peut déposer une demande
-  // d'accréditation (le rôle ROLE_ECOLE_FORMATION n'est accordé qu'à la première
-  // soumission réussie, cf. EcoleAccreditationController) — même patron que la
-  // candidature de recrutement, authGuard seul, pas de roleGuard. Cadre commun
-  // (EcoleLayout) ajouté le 2026-08-25 : la page de dépôt s'affichait seule, sans
-  // en-tête ni cercle de profil (LOG_BLOQUANT.md).
-  {
-    path: 'accreditation',
-    canActivate: [authGuard, noRoleGuard(...ROLES_INTERNES_ETABLIS, 'ROLE_ENTREPRISE')],
-    loadComponent: () =>
-      import('./features/accreditation/layouts/ecole-layout/ecole-layout').then((m) => m.EcoleLayout),
-    children: [
-      {
-        path: '',
-        loadComponent: () =>
-          import('./features/accreditation/pages/demande-accreditation/demande-accreditation').then(
-            (m) => m.DemandeAccreditationComponent
-          ),
-      },
-      {
-        path: 'rendez-vous',
-        loadComponent: () =>
-          import('./features/rendez-vous/pages/rendez-vous/rendez-vous.component').then(
-            (m) => m.RendezVousComponent
-          ),
-      },
-      {
-        path: 'mon-profil',
-        loadComponent: () =>
-          import('./features/accreditation/pages/mon-profil/ecole-mon-profil.component').then(
-            (m) => m.EcoleMonProfilComponent
-          ),
-      },
-    ],
   },
 
   // Espace Évaluateur Accréditation
@@ -219,6 +296,43 @@ export const routes: Routes = [
             (m) => m.SessionFormComponent
           ),
       },
+
+      // Recrutement des formateurs (QMS-007) — onglet Formateurs de l'espace admission.
+      {
+        path: 'recrutement-formateurs',
+        pathMatch: 'full',
+        redirectTo: 'recrutement-formateurs/offres',
+      },
+      {
+        // Route littérale avant 'offres/:id' : sinon Angular la capterait comme un id.
+        path: 'recrutement-formateurs/offres/nouvelle',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/admin/offre-form/offre-form.component').then(
+            (m) => m.OffreFormFormateursComponent
+          ),
+      },
+      {
+        path: 'recrutement-formateurs/offres/:id',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/admin/offre-form/offre-form.component').then(
+            (m) => m.OffreFormFormateursComponent
+          ),
+      },
+      {
+        path: 'recrutement-formateurs/offres',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/admin/offres-admin/offres-admin.component').then(
+            (m) => m.OffresAdminFormateursComponent
+          ),
+      },
+      {
+        path: 'recrutement-formateurs/candidatures',
+        loadComponent: () =>
+          import('./features/recrutement-formateurs/admin/candidatures-admin/candidatures-admin.component').then(
+            (m) => m.CandidaturesAdminFormateursComponent
+          ),
+      },
+
       {
         path: 'candidatures',
         loadComponent: () =>
@@ -359,11 +473,8 @@ export const routes: Routes = [
       import('./core/staticPages/terms-and-conditions/terms-and-conditions').then((m) => m.TermsAndConditions),
   },
 
-  // Module Recrutement & Candidatures (lazy-loaded)
-  {
-    path: 'recrutement',
-    loadChildren: () => import('./features/recrutement/recrutement.routes').then(m => m.RECRUTEMENT_ROUTES)
-  },
+  // Module Recrutement & Candidatures : déclaré plus haut, sous
+  // PublicNavbarLayoutComponent (avec /contact, /institut, /offres-formateurs).
 
   // Redirection de sécurité si l'URL saisie n'existe pas
   { path: '**', redirectTo: 'auth/login' },

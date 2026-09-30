@@ -1,11 +1,16 @@
 package inpg.sn.lms.espace_etudiant.controller;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -15,7 +20,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.auth.entity.Etudiant;
@@ -26,7 +33,6 @@ import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.espace_etudiant.dto.ConversationCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.ConversationDto;
 import inpg.sn.lms.espace_etudiant.dto.MentionnableDto;
-import inpg.sn.lms.espace_etudiant.dto.MessagePriveCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.MessagePriveDto;
 import inpg.sn.lms.espace_etudiant.entity.Conversation;
 import inpg.sn.lms.espace_etudiant.entity.MessagePrive;
@@ -37,6 +43,7 @@ import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
 import inpg.sn.lms.espace_etudiant.service.PerimetreFormateurService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
+import inpg.sn.lms.fichier.PieceJointeStorage;
 
 /**
  * Messagerie privée apprenant ↔ formateur. Distincte du forum : un fil ici
@@ -66,12 +73,14 @@ public class MessagerieController {
     private final PerimetreFormateurService perimetreFormateur;
     private final UtilisateurCourantService utilisateurCourant;
     private final NotificationRepository notificationRepository;
+    private final Path uploadDirectory;
 
     public MessagerieController(ConversationRepository conversationRepository,
             MessagePriveRepository messageRepository, EtudiantRepository etudiantRepository,
             FormateurRepository formateurRepository, HabilitationCoursService habilitation,
             PerimetreFormateurService perimetreFormateur, UtilisateurCourantService utilisateurCourant,
-            NotificationRepository notificationRepository) {
+            NotificationRepository notificationRepository,
+            @Value("${app.upload.dir:uploads}") String uploadDirectory) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.etudiantRepository = etudiantRepository;
@@ -80,6 +89,7 @@ public class MessagerieController {
         this.perimetreFormateur = perimetreFormateur;
         this.utilisateurCourant = utilisateurCourant;
         this.notificationRepository = notificationRepository;
+        this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize();
     }
 
     /**
@@ -189,9 +199,11 @@ public class MessagerieController {
                 "messages", messages));
     }
 
-    @PostMapping("/conversations/{id}/messages")
+    @PostMapping(value = "/conversations/{id}/messages", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
-    public ResponseEntity<?> repondre(@PathVariable Long id, @RequestBody MessagePriveCreateRequest request,
+    public ResponseEntity<?> repondre(@PathVariable Long id,
+            @RequestParam String contenu,
+            @RequestParam(value = "fichier", required = false) MultipartFile fichier,
             Authentication authentication) {
         User utilisateur = utilisateurCourant.utilisateur(authentication);
         if (utilisateur == null) {
@@ -202,12 +214,47 @@ public class MessagerieController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Cette conversation ne vous est pas accessible."));
         }
-        if (estVide(request.contenu())) {
+        if (estVide(contenu)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le message ne peut pas être vide."));
         }
-        MessagePrive message = messageRepository.save(new MessagePrive(conversation, utilisateur, request.contenu().trim()));
+
+        MessagePrive message = new MessagePrive(conversation, utilisateur, contenu.trim());
+        if (fichier != null && !fichier.isEmpty()) {
+            try {
+                PieceJointeStorage.Enregistree stockee = PieceJointeStorage.enregistrer(fichier, uploadDirectory, "messages");
+                message.setPieceJointeNomOriginal(stockee.nomOriginal());
+                message.setPieceJointeNomStocke(stockee.nomStocke());
+                message.setPieceJointeTypeContenu(stockee.typeContenu());
+            } catch (IllegalArgumentException invalide) {
+                return ResponseEntity.badRequest().body(Map.of("message", invalide.getMessage()));
+            } catch (IOException exception) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("message", "Le fichier n'a pas pu être enregistré."));
+            }
+        }
+        message = messageRepository.save(message);
         notifierNouveauMessage(conversation, message, utilisateur);
         return ResponseEntity.status(HttpStatus.CREATED).body(toMessageDto(message, utilisateur));
+    }
+
+    /**
+     * Le message porte à sa conversation, dont seuls les deux participants ont le
+     * droit de lire les pièces jointes — même recoupement que {@code fil}/{@code
+     * repondre} ; sans lui, l'identifiant de message suffirait à lire un document
+     * échangé entre deux tiers.
+     */
+    @GetMapping("/messages/{messageId}/piece-jointe")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Resource> telechargerPieceJointe(@PathVariable Long messageId, Authentication authentication) {
+        User utilisateur = utilisateurCourant.utilisateur(authentication);
+        MessagePrive message = messageRepository.findById(messageId).orElse(null);
+        if (utilisateur == null || message == null || message.getPieceJointeNomStocke() == null
+                || !estParticipant(message.getConversation(), utilisateur)) {
+            return ResponseEntity.notFound().build();
+        }
+        return PieceJointeStorage.servir(uploadDirectory, "messages",
+                message.getPieceJointeNomStocke(), message.getPieceJointeNomOriginal(),
+                message.getPieceJointeTypeContenu());
     }
 
     // ===================== Habilitation =====================
@@ -275,7 +322,8 @@ public class MessagerieController {
                 utilisateurCourant.nomAffiche(message.getAuteur()),
                 message.getAuteur().getId().equals(lecteur.getId()),
                 message.getContenu(),
-                message.getDateEnvoi().format(JOUR_HEURE));
+                message.getDateEnvoi().format(JOUR_HEURE),
+                message.getPieceJointeNomOriginal());
     }
 
     private boolean estVide(String valeur) {

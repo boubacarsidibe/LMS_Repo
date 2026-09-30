@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
+import { Auth } from '../../../../core/auth/services/authService';
 
 export interface FormationDetailData {
   id: number; libelle: string; description: string; imageUrl: string; niveau: string; domaine: string; duree: string;
@@ -29,15 +29,21 @@ export interface FormationDetailData {
 @Component({
   selector: 'app-formation-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, RouterModule, FooterComponent],
   templateUrl: './formation-detail.component.html',
 })
 export class FormationDetailComponent implements OnInit {
   formation: FormationDetailData | null = null;
   notFound = false;
   chargement = true;
+  private auth = inject(Auth);
 
   constructor(private route: ActivatedRoute, private recrutementService: RecrutementService) {}
+
+  /** École, entreprise ou candidat formateur connecté : « Postuler » (candidature étudiante) ne le concerne pas. */
+  get estCompteOrganisation(): boolean {
+    return this.auth.getProfilCompte() !== null;
+  }
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');

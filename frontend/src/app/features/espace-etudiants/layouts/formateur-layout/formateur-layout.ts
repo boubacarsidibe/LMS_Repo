@@ -11,6 +11,7 @@ import { Etudiant } from '../../models/etudiant';
 import { Cours } from '../../models/cours';
 import { Support } from '../../models/support';
 import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
+import { ClocheNotificationsService, NotificationCloche } from '../../../../shared/services/cloche-notifications.service';
 
 interface NavItem {
   label: string;
@@ -28,7 +29,8 @@ interface NavItem {
 export class FormateurLayout implements OnInit {
   notificationOpen = false;
   profileOpen = false;
-  mobileMenuOpen = false;
+  sidebarMobileOpen = false;
+  notifications: NotificationCloche[] = [];
 
   searchQuery = '';
   searchOpen = false;
@@ -41,12 +43,13 @@ export class FormateurLayout implements OnInit {
 
   navItems: NavItem[] = [
     { label: "Vue d'ensemble", icon: 'dashboard', route: 'dashboard-formateur' },
-    { label: 'Mes cours', icon: 'menu_book', route: 'mes-cours' },
-    { label: 'Suivi étudiants', icon: 'analytics', route: 'suivi-etudiants' },
-    { label: 'Planning', icon: 'calendar_today', route: 'planning-calendrier' },
-    { label: 'Forum', icon: 'forum', route: 'forum' },
+    { label: 'Mes Cours & Ressources', icon: 'menu_book', route: 'mes-cours' },
+    { label: 'Suivi Étudiants', icon: 'analytics', route: 'suivi-etudiants' },
+    { label: 'Planning & Calendrier', icon: 'calendar_today', route: 'planning-calendrier' },
+    { label: 'Rendez-vous', icon: 'event', route: 'rendez-vous' },
+    { label: 'Forum & Interaction', icon: 'forum', route: 'forum' },
     { label: 'Messagerie', icon: 'chat', route: 'messagerie' },
-    { label: 'Retours & évaluations', icon: 'assignment_turned_in', route: 'retours-evaluations' },
+    { label: 'Retours & Évaluations', icon: 'assignment_turned_in', route: 'retours-evaluations' },
     { label: 'Annonces', icon: 'campaign', route: 'annonces' },
     { label: 'Photothèque', icon: 'photo_library', route: 'phototheque' },
   ];
@@ -57,11 +60,12 @@ export class FormateurLayout implements OnInit {
     private etudiantService: EtudiantService,
     private coursService: CoursService,
     private supportService: SupportService,
+    private cloche: ClocheNotificationsService,
   ) {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(() => {
-        this.mobileMenuOpen = false;
+        this.sidebarMobileOpen = false;
       });
   }
 
@@ -69,6 +73,22 @@ export class FormateurLayout implements OnInit {
     this.etudiantService.getAll().subscribe({ next: (data) => (this.tousEtudiants = data), error: () => {} });
     this.coursService.getAll().subscribe({ next: (data) => (this.tousCours = data), error: () => {} });
     this.supportService.getMesSupports().subscribe({ next: (data) => (this.tousSupports = data), error: () => {} });
+    this.cloche.lister().subscribe({
+      next: (liste) => (this.notifications = (liste || []).filter((n) => !n.lu)),
+      error: () => {},
+    });
+  }
+
+  /** Ouvre la cible et marque la notification lue, sans quoi la cloche répète un événement traité. */
+  ouvrirNotification(notification: NotificationCloche): void {
+    this.cloche.marquerLue(notification.id).subscribe({
+      next: () => (this.notifications = this.notifications.filter((n) => n.id !== notification.id)),
+      error: () => {},
+    });
+    this.closeAll();
+    if (notification.lien) {
+      this.router.navigateByUrl(notification.lien);
+    }
   }
 
   onSearchInput(): void {
@@ -159,8 +179,8 @@ export class FormateurLayout implements OnInit {
     }
   }
 
-  toggleMobileMenu(): void {
-    this.mobileMenuOpen = !this.mobileMenuOpen;
+  toggleSidebarMobile(): void {
+    this.sidebarMobileOpen = !this.sidebarMobileOpen;
   }
 
   @HostListener('document:click', ['$event'])
@@ -178,12 +198,12 @@ export class FormateurLayout implements OnInit {
     if (
       target.closest('#notification-dropdown') ||
       target.closest('#profile-dropdown') ||
-      target.closest('#mobile-nav-menu')
+      target.closest('#mobile-sidebar')
     ) {
       return;
     }
     this.closeAll();
-    this.mobileMenuOpen = false;
+    this.sidebarMobileOpen = false;
     this.searchOpen = false;
   }
 }

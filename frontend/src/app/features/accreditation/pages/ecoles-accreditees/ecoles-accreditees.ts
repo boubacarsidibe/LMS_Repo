@@ -81,7 +81,7 @@ import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-
                 [class.text-secondary]="!e.sousReserve" [class.text-warning]="e.sousReserve">
             {{ e.sousReserve ? 'verified_user' : 'verified' }}
           </span>
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <p class="font-label-md text-label-md text-on-surface">
               {{ e.intituleProgramme || 'Programme non précisé' }}
             </p>
@@ -95,6 +95,12 @@ import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-
                   class="inline-block mt-2 px-2 py-0.5 rounded-full bg-warning/15 text-warning font-label-sm text-label-sm">
               Sous réserve (plan d'actions en cours)
             </span>
+            <a *ngIf="e.referenceAttestation"
+               [routerLink]="['/verification-accreditation', e.referenceAttestation]"
+               class="flex items-center gap-1 mt-2 font-label-sm text-label-sm text-secondary hover:underline no-underline w-fit">
+              Voir la fiche détaillée
+              <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </a>
           </div>
         </li>
       </ul>
@@ -114,6 +120,13 @@ export class EcolesAccrediteesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // authGuard vérifie le jeton mais ne charge pas le compte : après un
+    // rechargement de la page, le lien « Retour à mon espace » ignorait donc
+    // l'espace de l'utilisateur et menait toujours à l'accueil.
+    if (!this.auth.currentUser()) {
+      this.auth.getCurrentUser().subscribe();
+    }
+
     this.accreditationService.getEcolesAccreditees().subscribe({
       next: (ecoles) => {
         this.ecoles = ecoles;

@@ -160,6 +160,8 @@ public class DataInitializer {
                     "École externe — soumet et suit sa demande d'accréditation");
             ensureRole(roleRepository, "ROLE_ENTREPRISE", "Entreprise",
                     "Entreprise partenaire — soumet des besoins de formation, des demandes de devis, échange avec la pédagogie");
+            ensureRole(roleRepository, "ROLE_CANDIDAT_FORMATEUR", "Candidat formateur",
+                    "Postulant à une offre de recrutement de formateur — dépose et suit sa candidature (QMS-007)");
 
             // ===================== SESSIONS =====================
             // Garde-fou : plutôt qu'un IndexOutOfBoundsException opaque au démarrage,
@@ -181,7 +183,7 @@ public class DataInitializer {
                 s1.setDateFermeture(LocalDate.of(2026, 9, 30));
                 s1.setEstOuverte(true);
                 s1.setQuotaMax(220);
-                s1.setStatus("OUVERT");
+                s1.setStatus("OUVERTE");
                 s1.setProgram(p1);
                 sessionRepository.save(s1);
 
@@ -191,7 +193,7 @@ public class DataInitializer {
                 s2.setDateFermeture(LocalDate.of(2027, 5, 30));
                 s2.setEstOuverte(true);
                 s2.setQuotaMax(150);
-                s2.setStatus("OUVERT");
+                s2.setStatus("OUVERTE");
                 s2.setProgram(p2);
                 sessionRepository.save(s2);
 
@@ -211,7 +213,7 @@ public class DataInitializer {
                 s4.setDateFermeture(LocalDate.of(2026, 3, 15));
                 s4.setEstOuverte(false);
                 s4.setQuotaMax(100);
-                s4.setStatus("CLOTURE");
+                s4.setStatus("CLOTUREE");
                 s4.setProgram(p4);
                 sessionRepository.save(s4);
 

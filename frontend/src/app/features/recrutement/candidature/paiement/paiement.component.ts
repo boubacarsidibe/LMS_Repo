@@ -4,14 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RecrutementService, CandidatureResponse, PaiementResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 @Component({
   selector: 'app-paiement',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent],
   templateUrl: './paiement.component.html'
 })
 export class PaiementComponent implements OnInit {

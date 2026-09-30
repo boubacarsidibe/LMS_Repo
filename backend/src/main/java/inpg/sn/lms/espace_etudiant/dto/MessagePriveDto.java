@@ -5,5 +5,6 @@ public record MessagePriveDto(
         String auteurNom,
         boolean estAuteur,
         String contenu,
-        String dateEnvoi) {
+        String dateEnvoi,
+        String pieceJointeNom) {
 }

@@ -1,0 +1,14 @@
+-- =====================================================================
+-- V202609201140 — Lettre de motivation formateur : texte libre -> pièce jointe
+-- =====================================================================
+--
+-- Retour de recette du 2026-09-20 : la lettre de motivation d'une candidature
+-- formateur se rédigeait dans un <textarea> du formulaire web plutôt que
+-- d'être jointe comme un document (CV, diplôme...). Remplacée par un type de
+-- pièce supplémentaire (EnumTypeDocumentCandidatureFormateur.LETTRE_MOTIVATION,
+-- réutilisant pieces_candidature_formateur — aucune table nouvelle) plutôt
+-- que par un envoi de fichier séparé.
+--
+-- Colonne supprimée sans recopie : aucune candidature déposée à ce jour n'a
+-- rempli ce champ (vérifié, table vide sur cette colonne avant suppression).
+ALTER TABLE public.candidatures_formateur DROP COLUMN lettre_motivation;

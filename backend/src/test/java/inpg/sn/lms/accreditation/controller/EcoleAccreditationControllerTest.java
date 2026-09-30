@@ -28,6 +28,8 @@ import inpg.sn.lms.accreditation.enums.EnumTypeDocumentAccreditation;
 import inpg.sn.lms.accreditation.repository.DemandeAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.PieceAccreditationRepository;
 import inpg.sn.lms.accreditation.service.AccreditationNotificationService;
+import inpg.sn.lms.accreditation.service.AttestationAccreditationPdfService;
+import inpg.sn.lms.accreditation.service.AttestationAccreditationService;
 import inpg.sn.lms.accreditation.service.PieceAccreditationStorageService;
 import inpg.sn.lms.auth.entity.EcoleFormation;
 import inpg.sn.lms.auth.entity.Role;
@@ -59,6 +61,10 @@ class EcoleAccreditationControllerTest {
     @Mock
     private AccreditationNotificationService notificationService;
     @Mock
+    private AttestationAccreditationService attestationService;
+    @Mock
+    private AttestationAccreditationPdfService attestationPdfService;
+    @Mock
     private Authentication authentication;
 
     private EcoleAccreditationController controller;
@@ -67,7 +73,8 @@ class EcoleAccreditationControllerTest {
     @BeforeEach
     void setUp() {
         controller = new EcoleAccreditationController(ecoleFormationRepository, demandeRepository, pieceRepository,
-                roleRepository, utilisateurCourant, storage, notificationService);
+                roleRepository, utilisateurCourant, storage, notificationService, attestationService,
+                attestationPdfService);
         user = new User();
         user.setId(7L);
     }
@@ -183,6 +190,65 @@ class EcoleAccreditationControllerTest {
         ResponseEntity<?> reponse = controller.demande(5L, authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("Attestation de la demande d'une autre école : 404, pas de fuite")
+    void attestation_d_une_autre_ecole_est_invisible() {
+        EcoleFormation monEcole = new EcoleFormation(user, "Mon École", "Adresse", "77000000", null);
+        monEcole.setId(7L);
+        when(utilisateurCourant.ecoleFormation(authentication)).thenReturn(monEcole);
+        User autreUser = new User();
+        autreUser.setId(99L);
+        EcoleFormation autreEcole = new EcoleFormation(autreUser, "Autre École", "Adresse", "77000000", null);
+        autreEcole.setId(99L);
+        DemandeAccreditation demandeAutrui = new DemandeAccreditation(autreEcole);
+        demandeAutrui.setId(5L);
+        demandeAutrui.setStatut(EnumStatutDemandeAccreditation.ACCREDITE);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demandeAutrui));
+
+        ResponseEntity<?> reponse = controller.attestationPdf(5L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        verify(attestationService, never()).genererReferenceEtSignatureSiAccreditee(any());
+    }
+
+    @Test
+    @DisplayName("Attestation d'une demande pas encore accréditée : 409, aucun PDF généré")
+    void attestation_d_une_demande_non_accreditee_est_refusee() {
+        EcoleFormation monEcole = new EcoleFormation(user, "Mon École", "Adresse", "77000000", null);
+        monEcole.setId(7L);
+        when(utilisateurCourant.ecoleFormation(authentication)).thenReturn(monEcole);
+        DemandeAccreditation maDemande = new DemandeAccreditation(monEcole);
+        maDemande.setId(5L);
+        maDemande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(maDemande));
+
+        ResponseEntity<?> reponse = controller.attestationPdf(5L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        verify(attestationService, never()).genererReferenceEtSignatureSiAccreditee(any());
+        verify(attestationPdfService, never()).genererPdf(any());
+    }
+
+    @Test
+    @DisplayName("Attestation d'une demande accréditée : 200 PDF, référence garantie puis sauvegardée")
+    void attestation_d_une_demande_accreditee_est_servie() {
+        EcoleFormation monEcole = new EcoleFormation(user, "Mon École", "Adresse", "77000000", null);
+        monEcole.setId(7L);
+        when(utilisateurCourant.ecoleFormation(authentication)).thenReturn(monEcole);
+        DemandeAccreditation maDemande = new DemandeAccreditation(monEcole);
+        maDemande.setId(5L);
+        maDemande.setStatut(EnumStatutDemandeAccreditation.ACCREDITE);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(maDemande));
+        when(attestationPdfService.genererPdf(maDemande)).thenReturn(new byte[] { 1, 2, 3 });
+
+        ResponseEntity<?> reponse = controller.attestationPdf(5L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(reponse.getBody()).isEqualTo(new byte[] { 1, 2, 3 });
+        verify(attestationService).genererReferenceEtSignatureSiAccreditee(maDemande);
+        verify(demandeRepository).save(maDemande);
     }
 
     @Test

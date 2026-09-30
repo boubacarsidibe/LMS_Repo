@@ -1,24 +1,33 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { RecrutementService, SessionCandidatureResponse } from '../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
+import { ContexteNavbarService } from '../../../shared/components/navbar/contexte-navbar.service';
+import { Auth } from '../../../core/auth/services/authService';
 
 @Component({
   selector: 'app-sessions-publiques',
   standalone: true,
-  imports: [CommonModule, RouterModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, RouterModule, FooterComponent],
   templateUrl: './sessions-publiques.component.html',
 })
 export class SessionsPubliquesComponent implements OnInit {
   sessions: SessionCandidatureResponse[] = [];
   loading = false;
   errorMessage = '';
+  private contexteNavbar = inject(ContexteNavbarService);
+  private auth = inject(Auth);
+
+  /** École, entreprise ou candidat formateur connecté : « Postuler » (candidature étudiante) ne le concerne pas. */
+  get estCompteOrganisation(): boolean {
+    return this.auth.getProfilCompte() !== null;
+  }
 
   constructor(private recrutementService: RecrutementService) {}
 
   ngOnInit(): void {
+    this.contexteNavbar.contexte.set('etudiant');
     this.loading = true;
     this.recrutementService.getCataloguePublic().subscribe({
       next: (data) => {

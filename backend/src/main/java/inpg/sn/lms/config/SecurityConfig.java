@@ -81,11 +81,16 @@ public class SecurityConfig {
                         "/api/auth/register",
                         "/api/auth/send-otp",
                         "/api/auth/reset-password").permitAll()
-                .requestMatchers("/api/recrutement/public/**", "/", "/error", "/login", "/uploads/**").permitAll()
+                .requestMatchers("/api/recrutement/public/**", "/api/recrutement-formateurs/public/**",
+                        "/", "/error", "/login", "/uploads/**").permitAll()
                 // Vérification publique d'un certificat par sa référence (page vers laquelle
                 // pointe le QR code imprimé) : destinée à un tiers sans compte, qui n'obtient
                 // qu'une DTO restreinte (voir CertificatPublicController), jamais l'entité.
                 .requestMatchers("/api/certificats/public/**").permitAll()
+                // Même principe pour l'attestation d'accréditation d'une école (voir
+                // AttestationAccreditationPublicController) : vérifier UN document déjà en main par
+                // sa référence opaque n'énumère aucune liste, contrairement à ce qui suit.
+                .requestMatchers("/api/attestations-accreditation/public/**").permitAll()
                 // Liste des écoles accréditées (voir AccreditationPublicController) : le TDR §F
                 // demandait une liste publique (« processus transparent »), mais décision produit
                 // du 2026-08-25 (LOG_BLOQUANT.md) de la réserver aux comptes connectés — tout rôle

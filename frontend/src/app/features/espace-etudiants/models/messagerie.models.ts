@@ -19,6 +19,7 @@ export interface MessagePrive {
   estAuteur: boolean;
   contenu: string;
   dateEnvoi: string;
+  pieceJointeNom: string | null;
 }
 
 export interface FilMessagerie {

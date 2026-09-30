@@ -263,8 +263,21 @@ sudo /usr/local/share/docker-init.sh true &    # si le démon Docker est tombé
 
 `docker compose up -d --build backend` recrée le conteneur : toute variable passée en ligne de commande
 (ex. `APP_CORS_ORIGINS` pour un tunnel Cloudflare, dont l'URL change à chaque lancement) est perdue et doit
-être repassée. Les redémarrages du Codespace arrêtent Postgres sans arrêt propre : les écritures récentes
-peuvent être perdues.
+être repassée. **Ce n'est pas propre à `backend`** : `docker compose up -d frontend` seul (par exemple après
+un vidage de cache, ci-dessus) recrée aussi `demo-backend` en silence dès que sa config effective a dérivé
+de celle appliquée en dernier — même symptôme, même remède (repasser `APP_CORS_ORIGINS`). Vérifier après coup
+(`docker inspect demo-backend --format '{{json .Config.Env}}' | grep -i cors`) plutôt que de le supposer
+intact. Les redémarrages du Codespace arrêtent Postgres sans arrêt propre : les écritures récentes peuvent
+être perdues.
+
+### 504 « Outdated Optimize Dep » sur le frontend : même piège de cache, un autre symptôme
+
+Vidage de `.angular/cache` déjà documenté ci-dessus pour un module qui ne se met pas à jour — mais le même
+cache périmé peut aussi produire une page blanche avec des erreurs console `Failed to load resource: 504
+(Outdated Optimize Dep)` (dépendances pré-empaquetées par le serveur de dev, invalidées par un rebuild mais
+pas rechargées). Symptôme constaté après un simple redémarrage de conteneur, sans rien changer côté source.
+Même remède : `docker compose stop frontend && rm -rf frontend/.angular/cache frontend/dist && docker compose
+up -d frontend` (reconstruction à froid, ~90 s).
 
 ---
 
@@ -435,7 +448,7 @@ Mot de passe commun aux comptes de recette : `Test@2026`.
 | Candidat (sans dossier) | `test.candidat@inpg.sn` |
 | Candidat (avec dossier) | `test.candidat2@inpg.sn` |
 | Étudiant | `test.etudiant@inpg.sn` |
-| Formateur *(sans cours — cobaye de cloisonnement)* | `test.formateur@inpg.sn` |
+| Formateur | `test.formateur@inpg.sn` |
 | Responsable admission | `test.admission@inpg.sn` |
 | Responsable pédagogique | `test.pedago@inpg.sn` |
 | Alumni | `test.alumni@inpg.sn` |
@@ -444,6 +457,19 @@ Mot de passe commun aux comptes de recette : `Test@2026`.
 
 Pour une démonstration, préférer **`prof.demo@inpg.sn` / `Demo@2026`** : trois cours,
 six supports, seize notes. Les étudiants de démonstration utilisent `Etudiant@2026`.
+
+**`test.formateur@inpg.sn` n'est plus « sans cours ».** Constaté le 2026-09-28 en
+cherchant un formateur exclu d'un cours donné pour vérifier un cloisonnement : la table
+`cours_formateur` montre qu'il enseigne désormais `GEO-101`. Plus largement, à cette
+date, **aucun** formateur de la base n'est exclu d'aucun cours — `prof.demo@inpg.sn`
+enseigne la totalité des cours existants. Un test de cloisonnement formateur ne peut
+donc plus s'appuyer sur un compte présumé « sans cours » : vérifier `cours_formateur`
+avant de choisir un compte, ou passer par un étudiant d'une autre promotion pour le
+même genre de vérification. Les cours de la maquette `DEMO-DS`/`DEMO-FIN`/`DEMO-PROC`
+souffrent par ailleurs du même genre de maillon rompu déjà documenté plus haut pour
+`MPG-2026` (§3) : ils apparaissent dans `GET /api/espace-etudiant/cours` pour
+`test.etudiant@inpg.sn` mais `HabilitationCoursService.estAutorise` les refuse (403) —
+non instruit plus avant, sans rapport avec la tâche qui l'a fait découvrir.
 
 Scripts hors Flyway, relançables sans risque (`backend/db/`) :
 

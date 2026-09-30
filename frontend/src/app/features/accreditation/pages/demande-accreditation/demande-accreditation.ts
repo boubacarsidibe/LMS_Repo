@@ -56,6 +56,45 @@ import { AccreditationService } from '../../services/accreditation.service';
 
       <app-ui-spinner *ngIf="chargement" message="Chargement de votre dossier…"></app-ui-spinner>
 
+      <!-- Aucune demande active : contexte avant le formulaire, pour qu'un premier
+           dépôt n'atterrisse pas directement sur neuf champs sans explication. -->
+      <div *ngIf="!chargement && !demande" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg space-y-stack-md">
+        <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary">info</span>
+          Comment se déroule une demande d'accréditation ?
+        </h2>
+        <p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+          Le formulaire ci-dessous ouvre votre dossier. Une fois déposé, vous pourrez y ajouter les
+          pièces justificatives et suivre son évolution jusqu'à la décision de la DRCQ (Direction de la
+          Régulation et du Contrôle Qualité).
+        </p>
+
+        <ol class="flex items-center w-full">
+          <li *ngFor="let etape of etapes; let i = index" class="flex items-center" [class.flex-1]="i < etapes.length - 1">
+            <div class="flex flex-col items-center gap-1 shrink-0">
+              <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-surface-container text-on-surface-variant">
+                <span class="material-symbols-outlined text-[20px]">{{ etape.icone }}</span>
+              </div>
+              <span class="font-label-sm text-label-sm text-center max-w-[7rem] text-on-surface-variant">{{ etape.libelle }}</span>
+            </div>
+            <div *ngIf="i < etapes.length - 1" class="flex-1 h-0.5 mx-2 mb-5 bg-outline-variant"></div>
+          </li>
+        </ol>
+
+        <div class="border-t border-outline-variant pt-4">
+          <p class="font-label-md text-label-md text-on-surface mb-2">Pièces à préparer pour la suite du dossier</p>
+          <ul class="grid sm:grid-cols-2 gap-x-4 gap-y-1.5">
+            <li *ngFor="let t of typesRequis" class="flex items-center gap-2 font-body-sm text-body-sm text-on-surface-variant">
+              <span class="material-symbols-outlined text-[16px] text-outline">description</span>{{ libellesType[t] }}
+            </li>
+          </ul>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-3">
+            Ces documents ne sont pas demandés maintenant : vous les déposerez depuis votre dossier une
+            fois la demande soumise.
+          </p>
+        </div>
+      </div>
+
       <!-- Aucune demande active : formulaire de dépôt -->
       <form
         *ngIf="!chargement && !demande"
@@ -284,6 +323,19 @@ import { AccreditationService } from '../../services/accreditation.service';
               {{ demande.planActions }}
             </p>
           </div>
+
+          <div *ngIf="attestationDisponible" class="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              (click)="telechargerAttestation()"
+              [disabled]="telechargementAttestationEnCours"
+              class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+            >
+              <span class="material-symbols-outlined text-[20px]">workspace_premium</span>
+              {{ telechargementAttestationEnCours ? 'Préparation…' : "Télécharger l'attestation d'accréditation" }}
+            </button>
+            <p *ngIf="erreurAttestation" class="font-body-sm text-body-sm text-error">{{ erreurAttestation }}</p>
+          </div>
         </div>
 
         <!-- Pièces du dossier : checklist par type de document attendu -->
@@ -460,9 +512,40 @@ export class DemandeAccreditationComponent implements OnInit {
   televersementEnCours = false;
   erreurPiece = '';
 
+  telechargementAttestationEnCours = false;
+  erreurAttestation = '';
+
   /** La demande accepte encore des pièces tant qu'elle n'est pas tranchée. */
   get modifiable(): boolean {
     return this.demande?.statut === 'SOUMISE' || this.demande?.statut === 'EN_COURS_EVALUATION';
+  }
+
+  /** L'attestation n'existe qu'une fois la demande tranchée favorablement (pleine ou sous réserve). */
+  get attestationDisponible(): boolean {
+    return this.demande?.statut === 'ACCREDITE' || this.demande?.statut === 'ACCREDITE_SOUS_RESERVE';
+  }
+
+  telechargerAttestation(): void {
+    if (!this.demande) {
+      return;
+    }
+    this.telechargementAttestationEnCours = true;
+    this.erreurAttestation = '';
+    this.accreditationService.telechargerAttestationPdf(this.demande.id).subscribe({
+      next: (blob) => {
+        this.telechargementAttestationEnCours = false;
+        const url = window.URL.createObjectURL(blob);
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = `INPG-attestation-accreditation-${this.demande!.id}.pdf`;
+        lien.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.telechargementAttestationEnCours = false;
+        this.erreurAttestation = "L'attestation n'a pas pu être téléchargée.";
+      },
+    });
   }
 
   /** Première pièce déposée pour ce type, ou undefined. */

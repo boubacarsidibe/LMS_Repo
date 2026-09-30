@@ -11,8 +11,9 @@
       class="flex-1 pb-3 text-center font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors">
       Se connecter
     </a>
-    <a 
-      routerLink="/auth/register" 
+    <a
+      routerLink="/auth/register"
+      [queryParams]="returnUrl ? { returnUrl: returnUrl } : {}"
       routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
       class="flex-1 pb-3 text-center font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors">
       S'inscrire
@@ -85,7 +86,7 @@
   <div class="mt-8 border-t border-outline-variant pt-6">
     <p class="text-center font-body-sm text-body-sm text-on-surface-variant">
       Pas encore de compte ?
-      <a routerLink="/auth/register" class="font-semibold text-secondary hover:underline">
+      <a routerLink="/auth/register" [queryParams]="returnUrl ? { returnUrl: returnUrl } : {}" class="font-semibold text-secondary hover:underline">
         S'inscrire
       </a>
     </p>

@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
-import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
+import { ContexteNavbarService } from '../../../shared/components/navbar/contexte-navbar.service';
 import { RecrutementService } from '../../../core/recrutement/services/recrutement.service';
 
 export interface FormationItem {
@@ -23,7 +23,7 @@ const ITEMS_PER_PAGE = 6;
 @Component({
   selector: 'app-catalogue',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent],
   templateUrl: './catalogue.component.html'
 })
 export class CatalogueComponent implements OnInit {
@@ -37,10 +37,16 @@ export class CatalogueComponent implements OnInit {
   erreur = '';
 
   private readonly PAGE_STORAGE_KEY = 'catalogue_current_page';
+  private contexteNavbar = inject(ContexteNavbarService);
 
   constructor(private router: Router, private recrutementService: RecrutementService) {}
 
   ngOnInit(): void {
+    // Remet le navbar partagé en contexte étudiant : un formateur candidat
+    // qui aurait navigué jusqu'ici depuis la vitrine des offres (via
+    // « Formations », lien commun aux deux parcours) doit retrouver
+    // « Sessions ouvertes » plutôt que « Offres de recrutement ».
+    this.contexteNavbar.contexte.set('etudiant');
     this.recrutementService.getFormationsPubliques().subscribe({
       next: (formations) => {
         this.formations = formations.map((f) => ({

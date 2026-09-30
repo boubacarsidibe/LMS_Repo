@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -16,10 +17,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -37,7 +41,6 @@ import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.espace_etudiant.dto.ConversationCreateRequest;
-import inpg.sn.lms.espace_etudiant.dto.MessagePriveCreateRequest;
 import inpg.sn.lms.espace_etudiant.entity.Conversation;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
 import inpg.sn.lms.espace_etudiant.entity.MessagePrive;
@@ -124,7 +127,8 @@ class MessagerieControllerTest {
     @BeforeEach
     void preparer() {
         controller = new MessagerieController(conversationRepository, messageRepository, etudiantRepository,
-                formateurRepository, habilitation, perimetreFormateur, utilisateurCourant, notificationRepository);
+                formateurRepository, habilitation, perimetreFormateur, utilisateurCourant, notificationRepository,
+                "uploads");
 
         etudiantUser = new User();
         etudiantUser.setId(1L);
@@ -243,7 +247,7 @@ class MessagerieControllerTest {
         Conversation conversationDautrui = new Conversation(formateurAutoriseUser, formateurEtrangerUser);
         when(conversationRepository.findById(9L)).thenReturn(Optional.of(conversationDautrui));
 
-        ResponseEntity<?> reponse = controller.repondre(9L, new MessagePriveCreateRequest("Bonjour"), authentication);
+        ResponseEntity<?> reponse = controller.repondre(9L, "Bonjour", null, authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         verify(messageRepository, never()).save(any());
@@ -257,7 +261,7 @@ class MessagerieControllerTest {
         when(conversationRepository.findById(9L)).thenReturn(Optional.of(conversation));
         when(messageRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ResponseEntity<?> reponse = controller.repondre(9L, new MessagePriveCreateRequest("Bonjour"), authentication);
+        ResponseEntity<?> reponse = controller.repondre(9L, "Bonjour", null, authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         verify(messageRepository).save(any());
@@ -271,9 +275,85 @@ class MessagerieControllerTest {
         Conversation conversation = new Conversation(etudiantUser, formateurAutoriseUser);
         when(conversationRepository.findById(9L)).thenReturn(Optional.of(conversation));
 
-        ResponseEntity<?> reponse = controller.repondre(9L, new MessagePriveCreateRequest("   "), authentication);
+        ResponseEntity<?> reponse = controller.repondre(9L, "   ", null, authentication);
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verify(messageRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Répondre avec une pièce jointe valide : enregistrée avec le message")
+    void repondre_avec_piece_jointe_valide_est_acceptee(@TempDir Path repertoireTemp) {
+        connecteEnTantQuEtudiant();
+        controller = new MessagerieController(conversationRepository, messageRepository, etudiantRepository,
+                formateurRepository, habilitation, perimetreFormateur, utilisateurCourant, notificationRepository,
+                repertoireTemp.toString());
+        Conversation conversation = new Conversation(etudiantUser, formateurAutoriseUser);
+        when(conversationRepository.findById(9L)).thenReturn(Optional.of(conversation));
+        when(messageRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        MockMultipartFile fichier = new MockMultipartFile(
+                "fichier", "support.pdf", "application/pdf", "contenu".getBytes());
+
+        ResponseEntity<?> reponse = controller.repondre(9L, "Voici le support", fichier, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        MessagePrive enregistre = messagePriveCapture();
+        assertThat(enregistre.getPieceJointeNomOriginal()).isEqualTo("support.pdf");
+        assertThat(enregistre.getPieceJointeNomStocke()).endsWith("-support.pdf");
+        assertThat(enregistre.getPieceJointeTypeContenu()).isEqualTo("application/pdf");
+    }
+
+    @Test
+    @DisplayName("Répondre avec une pièce jointe d'un format refusé : rejetée, rien enregistré")
+    void repondre_avec_piece_jointe_invalide_est_rejetee(@TempDir Path repertoireTemp) {
+        connecteEnTantQuEtudiant();
+        controller = new MessagerieController(conversationRepository, messageRepository, etudiantRepository,
+                formateurRepository, habilitation, perimetreFormateur, utilisateurCourant, notificationRepository,
+                repertoireTemp.toString());
+        Conversation conversation = new Conversation(etudiantUser, formateurAutoriseUser);
+        when(conversationRepository.findById(9L)).thenReturn(Optional.of(conversation));
+        MockMultipartFile fichier = new MockMultipartFile(
+                "fichier", "page.html", "text/html", "<script>alert(1)</script>".getBytes());
+
+        ResponseEntity<?> reponse = controller.repondre(9L, "Voici", fichier, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        verify(messageRepository, never()).save(any());
+    }
+
+    private MessagePrive messagePriveCapture() {
+        ArgumentCaptor<MessagePrive> capture = ArgumentCaptor.forClass(MessagePrive.class);
+        verify(messageRepository).save(capture.capture());
+        return capture.getValue();
+    }
+
+    // ===================== Télécharger une pièce jointe =====================
+
+    @Test
+    @DisplayName("Télécharger la pièce jointe d'une conversation dont on n'est pas participant : introuvable")
+    void telecharger_piece_jointe_est_refuse_a_qui_n_est_pas_participant() {
+        connecteEnTantQuEtudiant();
+        Conversation conversationDautrui = new Conversation(formateurAutoriseUser, formateurEtrangerUser);
+        MessagePrive message = new MessagePrive(conversationDautrui, formateurAutoriseUser, "Voici");
+        message.setPieceJointeNomOriginal("support.pdf");
+        message.setPieceJointeNomStocke("abc-support.pdf");
+        when(messageRepository.findById(42L)).thenReturn(Optional.of(message));
+
+        ResponseEntity<?> reponse = controller.telechargerPieceJointe(42L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("Télécharger la pièce jointe d'un message sans pièce jointe : introuvable")
+    void telecharger_piece_jointe_absente_est_introuvable() {
+        connecteEnTantQuEtudiant();
+        Conversation conversation = new Conversation(etudiantUser, formateurAutoriseUser);
+        MessagePrive message = new MessagePrive(conversation, formateurAutoriseUser, "Sans pièce jointe");
+        when(messageRepository.findById(42L)).thenReturn(Optional.of(message));
+
+        ResponseEntity<?> reponse = controller.telechargerPieceJointe(42L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }

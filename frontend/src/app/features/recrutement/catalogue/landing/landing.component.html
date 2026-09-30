@@ -9,27 +9,42 @@
         <div class="absolute inset-0 bg-gradient-to-b from-surface-container-low/80 to-surface"></div>
       </div>
       <div class="relative z-10 max-w-3xl mx-auto text-center flex flex-col items-center gap-8">
-        <h1 class="text-4xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-on-surface">
-          Excellence Académique & Innovation Professionnelle
-        </h1>
+        <div class="flex flex-col items-center gap-3">
+          <!-- Sur-titre : rappelle à une école, une entreprise ou un candidat formateur
+               connecté que cette page lui est adressée aussi. -->
+          <span *ngIf="accueilProfil as accueil" class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">{{ accueil.surtitre }}</span>
+          <h1 class="text-4xl md:text-[48px] leading-tight md:leading-[56px] tracking-[-0.02em] font-bold text-on-surface">
+            Excellence Académique & Innovation Professionnelle
+          </h1>
+        </div>
         <p class="text-base md:text-lg leading-6 md:leading-7 text-on-surface-variant max-w-2xl">
-          Formez-vous aux métiers de demain avec l'expertise de l'INPG. Une approche rigoureuse et structurée pour propulser votre carrière.
+          {{ accueilProfil?.accroche ?? "Formez-vous aux métiers de demain avec l'expertise de l'INPG. Une approche rigoureuse et structurée pour propulser votre carrière." }}
         </p>
-        <div class="flex flex-col sm:flex-row gap-4 mt-4">
-          <a (click)="goToCatalogue()" class="cursor-pointer px-6 py-3 bg-primary text-on-primary text-sm leading-4 tracking-[0.01em] font-medium rounded-lg shadow-sm border-t border-primary-fixed-dim hover:brightness-90 transition-all no-underline">
-            Découvrir les formations
-          </a>
-          <a routerLink="/recrutement/sessions" class="px-6 py-3 bg-white text-on-surface text-sm leading-4 tracking-[0.01em] font-medium rounded-lg border border-outline-variant shadow-sm hover:bg-surface-container-low transition-all no-underline">
-            Postuler
-          </a>
-          <!-- Sortie du menu (2026-08-25, demande directe) : un lien "Écoles accréditées"
-               en permanence dans la navbar public poussait son nombre d'entrées trop haut,
-               et ce contenu est réservé aux comptes connectés (authGuard) - un bouton
-               explicite, au même endroit que les autres appels à l'action, évite qu'un
-               visiteur non connecté tombe dessus par surprise dans le menu. -->
-          <a routerLink="/ecoles-accreditees" class="px-6 py-3 bg-transparent text-primary text-sm leading-4 tracking-[0.01em] font-medium rounded-lg border border-outline-variant hover:bg-surface-container-low transition-all no-underline">
-            Voir les écoles accréditées
-          </a>
+        <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-4 mt-4 w-max max-w-[92vw]" [class.invisible]="profilEnCours">
+          <!-- École, entreprise, candidat formateur : les boutons mènent à SON espace. -->
+          <ng-container *ngIf="accueilProfil as accueil; else boutonsCandidat">
+            <a *ngFor="let action of accueil.actions; let premiere = first" [routerLink]="action.lien"
+               [class]="premiere ? classeActionPrincipale : classeActionSecondaire">
+              <span class="material-symbols-outlined text-[18px]">{{ action.icone }}</span>
+              {{ action.libelle }}
+            </a>
+          </ng-container>
+          <ng-template #boutonsCandidat>
+            <a (click)="goToCatalogue()" class="cursor-pointer px-6 py-3 bg-primary text-on-primary text-sm leading-4 tracking-[0.01em] font-medium rounded-lg shadow-sm border-t border-primary-fixed-dim hover:brightness-90 transition-all no-underline">
+              Découvrir les formations
+            </a>
+            <a routerLink="/recrutement/sessions" class="px-6 py-3 bg-white text-on-surface text-sm leading-4 tracking-[0.01em] font-medium rounded-lg border border-outline-variant shadow-sm hover:bg-surface-container-low transition-all no-underline">
+              Postuler
+            </a>
+            <!-- Sortie du menu (2026-08-25, demande directe) : un lien "Écoles accréditées"
+                 en permanence dans la navbar public poussait son nombre d'entrées trop haut,
+                 et ce contenu est réservé aux comptes connectés (authGuard) - un bouton
+                 explicite, au même endroit que les autres appels à l'action, évite qu'un
+                 visiteur non connecté tombe dessus par surprise dans le menu. -->
+            <a routerLink="/ecoles-accreditees" class="px-6 py-3 bg-transparent text-primary text-sm leading-4 tracking-[0.01em] font-medium rounded-lg border border-outline-variant hover:bg-surface-container-low transition-all no-underline">
+              Voir les écoles accréditées
+            </a>
+          </ng-template>
         </div>
       </div>
     </section>

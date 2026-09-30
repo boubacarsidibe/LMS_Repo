@@ -1770,3 +1770,135 @@ cheminement d'un dossier, seulement son état final.
   obligatoire, convocation groupée, notes CSV, élimination post-notation,
   réversibilité avec mot de passe, export filtrable) : toujours en
   attente, voir point 60.
+
+### 67. Recrutement des formateurs (procédure QMS-007) : workflow complet
+
+« La plateforme doit permettre le recrutement de formateur à l'INPG. » Jusqu'ici
+un formateur était créé d'un seul geste par le responsable pédagogique
+(`PedagogieController#creerFormateur` → `FormateurService.createFormateur`),
+sans offre, sans candidature, sans traçabilité.
+
+**Périmètre retenu (décisions produit 2026-09-08)** : offre de poste → candidature
+avec pièces → tri/sélection → création du compte formateur → e-mail à chaque
+étape. Suivi en **3 états** : `DOSSIER_RECU` → `EN_COURS_DE_TRAITEMENT` →
+`TERMINE` (+ `decision` `RETENU`/`NON_RETENU`). **Pilote =
+`RESPONSABLE_ADMISSION`** (pas de rôle DAF/RH distinct — QMS-007 confie pourtant
+le pilotage à la DAF ; à rouvrir si la séparation des responsabilités devient un
+besoin réel). Roadmap détaillée : `docs/roadmap-recrutement-formateurs.md`.
+
+**Nouveau paquet `inpg.sn.lms.recrutementformateur`** (sibling de `recrutement`,
+pas une greffe : ce dernier est trop couplé aux étudiants — promotions, frais de
+dossier, tests académiques). Migration **V38** (renommée **V42** au point 68,
+conflit de numérotation avec `develop`) :
+`offres_recrutement_formateur`, `candidatures_formateur` (index unique partiel :
+une candidature active par `(offre, candidat)` tant que `statut <> 'TERMINE'`),
+`pieces_candidature_formateur` (réutilise `fichiers_stockes` +
+`FichierStockeService`). Rôle **`ROLE_CANDIDAT_FORMATEUR`** amorcé dans
+`DataInitializer`, accordé au premier dépôt (patron `garantirRoleEcole`) ;
+au `RETENU`, le **compte du candidat est basculé** en `ROLE_FORMATEUR` + fiche
+`Formateur` créée (on ne crée pas un compte neuf : `FormateurService.createFormateur`
+refuse un e-mail déjà pris ; on promeut l'existant, patron
+`AdminRecrutementController#inscrireCommeEtudiant`). Garde-fous : `formateur_cree`
+(idempotence), téléphone unique (`Formateur.telephone`), motif obligatoire au
+refus.
+
+**API** : `RecrutementFormateurPublicController` (`/api/recrutement-formateurs/public/**`,
+ajouté au `permitAll` de `SecurityConfig`), `CandidatFormateurController`
+(authentifié, exclusivité d'espace, pièces), `AdminRecrutementFormateurController`
+(`/api/admin/recrutement-formateurs/**`, couvert par le joker admin). `PUT /statut`
+ne fait avancer que `DOSSIER_RECU → EN_COURS_DE_TRAITEMENT` ; la clôture passe par
+`PUT /decision` (comme l'accréditation sépare prise en charge et décision).
+
+**Front** : nouveau paquet `features/recrutement-formateurs/`, calqué sur
+l'espace école d'accréditation (layout, checklist de pièces, barre de
+progression) et sur `responsable-admission/sessions` (pages dédiées, onglet de
+nav « Formateurs »). Vitrine `/offres-formateurs`, espace candidat
+`/candidature-formateur`, onglet admission
+`/responsable-admission/recrutement-formateurs/{offres,candidatures}`.
+
+**Vérifié bout en bout sur la stack Docker** (base locale réinitialisée pour la
+renumérotation des migrations du lot précédent — Flyway V1→V38) : offre
+créée/publiée/listée sans token, candidature + rôle accordé, doublon 409, upload
+de pièce 201, `EN_COURS` notifié, `RETENU` → compte formateur actif et connexion
+OK, garde-fous 400/409. 17 tests unitaires ciblés
+(`CandidatFormateurControllerTest`, `AdminRecrutementFormateurControllerTest`).
+
+**Reporté (phases suivantes)** : épreuves/tests d'aptitude, entretiens, grille du
+comité de recrutement, contrat PDF + suivi paiements (QMS-007 §5), export Excel,
+journal d'étapes fin. Et surtout la **certification INPG des formateurs**
+(condition 1.3 du Référentiel DRCQ : formation des formateurs → certificat 3 ans
+renouvelable, registre des modules qu'un formateur peut enseigner) — à brancher
+sur l'accréditation. Discoverability : un lien « Rejoindre l'INPG comme
+formateur » sur le site vitrine reste à poser (les écrans sont sinon atteignables
+par URL et se cross-linkent).
+
+### 68. Dossier de candidature formateur enrichi, sur le format d'un portail de référence (SAP SuccessFactors)
+
+Demande directe de l'utilisateur, captures d'écran d'un portail de recrutement
+SAP SuccessFactors à l'appui : le dossier du point 67 (nom/prénom/téléphone,
+diplôme en texte libre, années d'expérience, lettre de motivation) était bien
+plus pauvre que l'état civil, l'adresse, et les blocs **répétables**
+(formation, expérience professionnelle avec référence du supérieur
+hiérarchique, langues, certifications) attendus d'un dossier RH. Deux
+décisions produit ont cadré la reprise : garder « l'essentiel » (pas les
+champs propres à l'ONU comme « Grade for UN staff »), et dériver le domaine
+d'expertise du catalogue déjà utilisé par les offres/formations plutôt que
+d'inventer une nouvelle liste à maintenir.
+
+**Migration V39** (renommée **V43** au moment de fusionner avec `develop`, cf.
+plus bas) : colonnes scalaires sur `candidatures_formateur` (civilité,
+genre, naissance, nationalités, niveau d'étude, adresse — toutes VARCHAR
+libres et nullable, même parti pris que `InfosPersonnellesDto` : pas de liste
+déroulante fermée façon SuccessFactors). Quatre tables répétables
+(`formations_candidature_formateur`, `experiences_candidature_formateur`,
+`langues_candidature_formateur`, `certifications_candidature_formateur`),
+patron exact de `pieces_candidature_formateur` (V38, devenue V42) : FK `ON DELETE CASCADE`,
+une entité par table, `@OneToMany(cascade = ALL, orphanRemoval = true)` sur
+`CandidatureFormateur`. Seul le niveau de langue est un enum
+(`EnumNiveauLangue`) — seul champ du lot assez borné pour le justifier. Les
+domaines d'expertise cochés sont un simple `@ElementCollection<String>`
+(`candidature_formateur_domaines_expertise`), sans entité ni contrainte de
+référence — le catalogue proposé au candidat vient d'un nouvel endpoint `GET
+/api/recrutement-formateurs/public/domaines` (union live des `domaine` de
+`offres_recrutement_formateur` et `formation`, pas une table à maintenir).
+
+**Tout l'enrichissement est facultatif** : nom/prénom/téléphone restent les
+seuls champs obligatoires, contrairement à SuccessFactors (asterisques rouges
+partout). But : enrichir le dossier plutôt que dresser un mur de champs
+obligatoires qui ferait fuir les candidatures — ce dépôt reste une seule
+soumission (pas d'assistant multi-étapes comme SuccessFactors).
+
+**Front** : nouveau patron visuel pour ce dépôt — sections **rétractables**
+(carte + en-tête cliquable + chevron `expand_more`/`expand_less`) dans
+`MaCandidatureComponent`, pas de composants enfants séparés (la logique reste
+assez simple pour tenir dans le composant existant). Panneau d'instruction de
+l'espace admission (`CandidaturesAdminFormateursComponent`) étendu en lecture
+seule avec les mêmes informations.
+
+**Vérifié bout en bout sur la stack Docker** : Flyway V39 appliqué, schéma
+validé par Hibernate (`ddl-auto=validate`) sans écart. Dépôt d'une candidature
+avec les quatre blocs répétables peuplés (formation, expérience + référence,
+deux langues, une certification) et un domaine d'expertise coché → restituée
+intacte côté candidat et côté admission. `ng build` OK, chaînes du nouveau
+formulaire retrouvées dans le bundle déployé. 18 tests unitaires ciblés verts
+(1 nouveau sur `CandidatFormateurControllerTest`, couvrant la persistance d'un
+bloc répétable).
+
+**Renumérotation V38/V39 → V42/V43 à la fusion avec `develop` (2026-09-15)** :
+ce lot avait été développé sur une branche restée isolée pendant qu'un autre
+lot prenait sur `develop` les numéros **V38 à V41** (annulation de décisions,
+prix par session, relevé de moyenne déclarée, description des pièces
+justificatives — module recrutement étudiant, sans rapport). `git merge` ne
+signale aucun conflit texte sur ces fichiers (noms différents), mais Flyway
+aurait refusé de démarrer avec deux migrations portant le même numéro. Les
+deux fichiers de ce lot ont donc été renommés (`V38__recrutement_formateurs.sql`
+→ `V42__…`, `V39__profil_candidature_formateur.sql` → `V43__…`, contenu SQL
+inchangé) et les deux lignes correspondantes de `flyway_schema_history` sur la
+base locale corrigées à la main (`version` et `script`, le `checksum` ne
+change pas puisqu'il porte sur le contenu du fichier). `out-of-order=true`
+étant déjà actif (`application.properties`), les migrations V38-V41 de
+`develop` se sont ensuite appliquées sans heurt malgré leur numéro inférieur à
+des migrations déjà marquées appliquées. Piège à retenir : une collision de
+version Flyway entre deux branches ne remonte **jamais** comme un conflit git
+— seuls les noms de fichiers diffèrent — il faut la chercher à la main
+(`ls db/migration | sort -V`) à chaque fusion touchant ce dossier.

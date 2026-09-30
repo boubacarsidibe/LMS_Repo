@@ -71,11 +71,18 @@ export class CommunicationService {
     return this.http.get<Mentionnable[]>(`${this.api}/forum/sujets/${sujetId}/citables`);
   }
 
-  repondre(sujetId: number, contenu: string, citeIds: number[] = []): Observable<ForumMessage> {
-    return this.http.post<ForumMessage>(`${this.api}/forum/sujets/${sujetId}/messages`, {
-      contenu,
-      citeIds,
-    });
+  repondre(sujetId: number, contenu: string, citeIds: number[] = [], fichier: File | null = null): Observable<ForumMessage> {
+    const payload = new FormData();
+    payload.append('contenu', contenu);
+    citeIds.forEach((id) => payload.append('citeIds', String(id)));
+    if (fichier) {
+      payload.append('fichier', fichier);
+    }
+    return this.http.post<ForumMessage>(`${this.api}/forum/sujets/${sujetId}/messages`, payload);
+  }
+
+  telechargerPieceJointe(messageId: number): Observable<Blob> {
+    return this.http.get(`${this.api}/forum/messages/${messageId}/piece-jointe`, { responseType: 'blob' });
   }
 
   supprimerMessage(messageId: number): Observable<void> {

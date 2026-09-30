@@ -50,11 +50,20 @@ describe('ContactComponent', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it("champEnErreur ignore un champ invalide tant que ni touché ni tentative d'envoi", () => {
+  it("champEnErreur ignore un champ vide tant qu'aucun envoi n'a été tenté, même quitté", () => {
     const form = ngForm();
+    form.controls['email']?.markAsTouched();
 
     expect(form.controls['email']?.invalid).toBe(true);
     expect(component.champEnErreur(form, 'email')).toBe(false);
+  });
+
+  it("champEnErreur signale une adresse invalide dès qu'un caractère est saisi", () => {
+    const form = ngForm();
+    form.controls['email']?.setValue('a');
+
+    expect(component.envoiTente).toBe(false);
+    expect(component.champEnErreur(form, 'email')).toBe(true);
   });
 
   it("champEnErreur signale un champ invalide après une tentative d'envoi", () => {

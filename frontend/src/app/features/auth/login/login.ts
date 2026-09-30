@@ -6,6 +6,7 @@ import { EMPTY } from 'rxjs';
 import { finalize, tap, catchError } from 'rxjs/operators';
 import { Auth } from '../../../core/auth/services/authService';
 import { AuthResponse } from '../../../core/auth/models/auth-response';
+import { erreurVisible } from '../../../shared/utils/erreur-champ';
 
 @Component({
   selector: 'app-login',
@@ -28,7 +29,14 @@ export class Login {
 
   loginLoading = false;
 
-  /** Les erreurs de champ ne s'affichent qu'après une tentative de connexion — pas au survol/blur. */
+  /**
+   * Page demandée avant d'être renvoyé ici faute de session (ex. « Postuler »
+   * depuis la vitrine publique des offres de formateur). Sans elle, l'utilisateur
+   * repart vers l'accueil de son rôle et perd ce qu'il était en train de faire.
+   */
+  returnUrl: string | null = null;
+
+  /** Une tentative de connexion a eu lieu : les champs invalides, même vides, affichent leur erreur. */
   tentativeEnvoi = false;
 
   constructor(
@@ -43,6 +51,8 @@ export class Login {
     if (this.route.snapshot.queryParamMap.has('expired')) {
       this.errorMessage = 'Votre session a expiré. Merci de vous reconnecter.';
     }
+
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
 
     if (this.route.snapshot.queryParamMap.has('passwordChanged')) {
       this.errorMessage = 'Votre mot de passe a été modifié. Connectez-vous avec votre nouveau mot de passe.';
@@ -67,10 +77,9 @@ export class Login {
 
   }
 
-  /** Un champ n'affiche son erreur qu'après une tentative de connexion, jamais avant. */
+  /** Erreur d'un champ : dès un caractère saisi, ou après le clic sur « Se connecter » (voir erreurVisible). */
   champEnErreur(nom: string): boolean {
-    const controle = this.form.get(nom);
-    return !!controle && controle.invalid && this.tentativeEnvoi;
+    return erreurVisible(this.form.get(nom), this.tentativeEnvoi);
   }
 
   onSubmit(): void {
@@ -113,7 +122,7 @@ export class Login {
       )
       .subscribe({
         next: () => {
-            this.authService.redirectByRole(this.router);
+            this.apresConnexion();
         },
         error: () => {
           this.errorMessage = 'Une erreur inattendue est survenue.';
@@ -124,4 +133,17 @@ export class Login {
 
   }
 
+  /**
+   * Reprend le parcours interrompu s'il y en avait un, sinon envoie vers
+   * l'espace du rôle. Seules les URL internes sont suivies : une valeur
+   * commençant par « // » désignerait un autre site (redirection ouverte).
+   */
+  private apresConnexion(): void {
+    const cible = this.returnUrl;
+    if (cible && cible.startsWith('/') && !cible.startsWith('//')) {
+      this.router.navigateByUrl(cible);
+      return;
+    }
+    this.authService.redirectByRole(this.router);
+  }
 }

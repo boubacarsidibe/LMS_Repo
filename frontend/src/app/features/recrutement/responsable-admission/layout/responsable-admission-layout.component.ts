@@ -45,6 +45,7 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
     { label: 'Candidatures', icon: 'folder_shared', route: '/responsable-admission/candidatures' },
     { label: 'Tests Académiques', icon: 'quiz', route: '/responsable-admission/tests' },
     { label: 'Entretiens', icon: 'groups', route: '/responsable-admission/entretiens' },
+    { label: 'Formateurs', icon: 'co_present', route: '/responsable-admission/recrutement-formateurs' },
     { label: 'Délibération', icon: 'gavel', route: '/responsable-admission/deliberation', filled: true },
     { label: 'Paiements', icon: 'payments', route: '/responsable-admission/paiements' },
     { label: 'Notifications', icon: 'mail', route: '/responsable-admission/notifications' },

@@ -35,6 +35,7 @@ import inpg.sn.lms.entreprise.repository.DemandeEntrepriseRepository;
 import inpg.sn.lms.entreprise.repository.FicheTechniqueModuleRepository;
 import inpg.sn.lms.entreprise.repository.MessageEntrepriseRepository;
 import inpg.sn.lms.entreprise.service.EntrepriseNotificationService;
+import inpg.sn.lms.entreprise.service.FicheTechniqueModulePdfService;
 import inpg.sn.lms.entreprise.service.FicheTechniqueModuleService;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
 import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
@@ -69,12 +70,14 @@ public class EntrepriseController {
     private final RoleRepository roleRepository;
     private final UtilisateurCourantService utilisateurCourant;
     private final EntrepriseNotificationService notificationService;
+    private final FicheTechniqueModulePdfService ficheModulePdfService;
 
     public EntrepriseController(EntrepriseRepository entrepriseRepository,
             DemandeEntrepriseRepository demandeRepository, MessageEntrepriseRepository messageRepository,
             FormationRepository formationRepository, FicheTechniqueModuleRepository ficheRepository,
             FicheTechniqueModuleService ficheService, RoleRepository roleRepository,
-            UtilisateurCourantService utilisateurCourant, EntrepriseNotificationService notificationService) {
+            UtilisateurCourantService utilisateurCourant, EntrepriseNotificationService notificationService,
+            FicheTechniqueModulePdfService ficheModulePdfService) {
         this.entrepriseRepository = entrepriseRepository;
         this.demandeRepository = demandeRepository;
         this.messageRepository = messageRepository;
@@ -84,6 +87,7 @@ public class EntrepriseController {
         this.roleRepository = roleRepository;
         this.utilisateurCourant = utilisateurCourant;
         this.notificationService = notificationService;
+        this.ficheModulePdfService = ficheModulePdfService;
     }
 
     /** Catalogue des formations publiées — même source que la vitrine publique. */
@@ -186,6 +190,41 @@ public class EntrepriseController {
         return ResponseEntity.ok(ficheService.toDto(fiche));
     }
 
+    /**
+     * Devis et convention ne sont téléchargeables qu'une fois la fiche acceptée
+     * (historique du dossier, pas un brouillon de travail) — {@link #ficheVisible}
+     * exclut déjà BROUILLON, il reste à exclure TRANSMISE/AJUSTEMENTS_DEMANDES.
+     */
+    @GetMapping("/demandes/{id}/fiche/devis-pdf")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> devisPdf(@PathVariable Long id, Authentication authentication) {
+        FicheTechniqueModule fiche = ficheAcceptee(id, authentication);
+        if (fiche == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        org.springframework.http.ContentDisposition.inline()
+                                .filename("INPG-devis-entreprise-" + id + ".pdf").build().toString())
+                .body(ficheModulePdfService.genererDevisPdf(fiche));
+    }
+
+    @GetMapping("/demandes/{id}/fiche/convention-pdf")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> conventionPdf(@PathVariable Long id, Authentication authentication) {
+        FicheTechniqueModule fiche = ficheAcceptee(id, authentication);
+        if (fiche == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        org.springframework.http.ContentDisposition.inline()
+                                .filename("INPG-convention-formation-" + id + ".pdf").build().toString())
+                .body(ficheModulePdfService.genererConventionPdf(fiche));
+    }
+
     /** L'entreprise accepte la fiche : la demande est clôturée. */
     @PutMapping("/demandes/{id}/fiche/accepter")
     @Transactional
@@ -249,6 +288,12 @@ public class EntrepriseController {
             return null;
         }
         return fiche;
+    }
+
+    /** Une fiche visible par l'entreprise connectée, seulement si elle a été acceptée. */
+    private FicheTechniqueModule ficheAcceptee(Long demandeId, Authentication authentication) {
+        FicheTechniqueModule fiche = ficheVisible(demandeId, authentication);
+        return fiche != null && fiche.getStatut() == EnumStatutFicheModule.ACCEPTEE ? fiche : null;
     }
 
     /** Historique de la messagerie privée de l'entreprise connectée. */

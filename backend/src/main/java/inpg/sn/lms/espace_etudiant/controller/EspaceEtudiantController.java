@@ -51,6 +51,7 @@ import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.config.WebConfig;
+import inpg.sn.lms.fichier.PieceJointeStorage;
 import inpg.sn.lms.fichier.ValidationFichier;
 import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
@@ -420,25 +421,15 @@ public class EspaceEtudiantController {
         String pieceJointeTypeContenu = null;
         if (fichier != null && !fichier.isEmpty()) {
             // Le dossier « messages » est sous /uploads, donc atteignable en statique :
-            // une pièce jointe non filtrée y serait re-servie et exécutée.
+            // une pièce jointe non filtrée y serait re-servie et exécutée (voir
+            // ValidationFichier, appelé par PieceJointeStorage.enregistrer).
             try {
-                ValidationFichier.exiger(fichier,
-                        ValidationFichier.EXTENSIONS_SUPPORT_COURS,
-                        ValidationFichier.TYPES_SUPPORT_COURS,
-                        "PDF, Word, PowerPoint, Excel, images, archives ZIP, audio et vidéo");
+                PieceJointeStorage.Enregistree stockee = PieceJointeStorage.enregistrer(fichier, uploadDirectory, "messages");
+                pieceJointeNomOriginal = stockee.nomOriginal();
+                pieceJointeNomStocke = stockee.nomStocke();
+                pieceJointeTypeContenu = stockee.typeContenu();
             } catch (IllegalArgumentException invalide) {
                 return ResponseEntity.badRequest().body(Map.of("message", invalide.getMessage()));
-            }
-
-            pieceJointeNomOriginal = ValidationFichier.nomSur(fichier, "fichier");
-            pieceJointeNomStocke = UUID.randomUUID() + "-" + pieceJointeNomOriginal;
-            pieceJointeTypeContenu = fichier.getContentType();
-            try {
-                Path messagesDirectory = uploadDirectory.resolve("messages");
-                Files.createDirectories(messagesDirectory);
-                Files.copy(fichier.getInputStream(),
-                        ValidationFichier.destinationSure(messagesDirectory, pieceJointeNomStocke),
-                        StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException exception) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(Map.of("message", "Le fichier n'a pas pu être enregistré."));
@@ -457,28 +448,26 @@ public class EspaceEtudiantController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toSujetDto(sujet));
     }
 
+    /**
+     * Le sujet du message porte la même visibilité que {@code listSujets}/{@code
+     * repondreAuSujet} : sans ce recoupement, n'importe quel étudiant ou formateur
+     * authentifié pouvait télécharger la pièce jointe de n'importe quel autre cours en
+     * devinant un identifiant de message, sans être inscrit à ce cours ni même en
+     * partager la promotion — l'endpoint ne vérifiait jusqu'ici que l'existence du
+     * message, jamais qui y avait droit.
+     */
     @PreAuthorize("hasAnyRole('ETUDIANT','FORMATEUR')")
     @Transactional(readOnly = true)
     @GetMapping("/sujets/messages/{messageId}/piece-jointe")
-    public ResponseEntity<Resource> downloadMessageAttachment(@PathVariable Long messageId) {
+    public ResponseEntity<Resource> downloadMessageAttachment(@PathVariable Long messageId, Authentication authentication) {
         ForumMessage message = forumMessageRepository.findById(messageId).orElse(null);
-        if (message == null || message.getPieceJointeNomStocke() == null) {
+        if (message == null || message.getPieceJointeNomStocke() == null
+                || !forumVisibilite.estVisible(message.getSujet(), authentication)) {
             return ResponseEntity.notFound().build();
         }
-        Path filePath = uploadDirectory.resolve("messages").resolve(message.getPieceJointeNomStocke()).normalize();
-        if (!filePath.startsWith(uploadDirectory) || !Files.isRegularFile(filePath)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Resource resource = new FileSystemResource(filePath);
-        MediaType mediaType = message.getPieceJointeTypeContenu() != null
-                ? MediaType.parseMediaType(message.getPieceJointeTypeContenu())
-                : MediaType.APPLICATION_OCTET_STREAM;
-        return ResponseEntity.ok()
-                .contentType(mediaType)
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.attachment().filename(message.getPieceJointeNomOriginal()).build().toString())
-                .body(resource);
+        return PieceJointeStorage.servir(uploadDirectory, "messages",
+                message.getPieceJointeNomStocke(), message.getPieceJointeNomOriginal(),
+                message.getPieceJointeTypeContenu());
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")

@@ -22,11 +22,11 @@
         <button *ngFor="let p of personnel" type="button" (click)="choisirPersonnel(p)"
                 [class.border-secondary]="personnelSelectionne?.id === p.id"
                 class="w-full text-left px-4 py-3 rounded-lg border border-outline-variant hover:border-secondary transition-colors">
-          <span class="font-label-md text-label-md text-on-surface block">{{ estExterne ? "Responsable pédagogique de l'INPG" : p.nomAffiche }}</span>
+          <span class="font-label-md text-label-md text-on-surface block">{{ p.nomAffiche }}</span>
           <span class="font-body-sm text-body-sm text-on-surface-variant">{{ p.role }}</span>
         </button>
         <p *ngIf="!chargementPersonnel && personnel.length === 0" class="font-body-sm text-body-sm text-on-surface-variant">
-          {{ estExterne ? "Aucun responsable pédagogique n'est joignable pour le moment." : 'Aucun membre du personnel disponible.' }}
+          {{ estExterne ? "Aucun interlocuteur n'est joignable pour le moment." : 'Aucun membre du personnel disponible.' }}
         </p>
       </div>
 
@@ -98,7 +98,7 @@
         <div *ngFor="let d of mesDemandes" class="px-stack-lg py-stack-md flex items-center justify-between gap-stack-md flex-wrap">
           <div>
             <span class="font-label-md text-label-md text-on-surface block">
-              Avec {{ estExterne ? "le responsable pédagogique de l'INPG" : d.personnelNom }}
+              Avec {{ d.personnelNom }}
             </span>
             <span class="font-body-sm text-body-sm text-on-surface-variant">
               {{ d.dateHeureDebut | date:'EEEE d MMMM, HH:mm' }} — {{ libelleModalite(d.modalite) }}

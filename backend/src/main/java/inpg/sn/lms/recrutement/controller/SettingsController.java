@@ -5,8 +5,12 @@ import java.util.*;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import inpg.sn.lms.recrutement.dto.ProgramRequest;
+import inpg.sn.lms.recrutement.dto.ProgramResponse;
 import inpg.sn.lms.recrutement.entity.Program;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
 import inpg.sn.lms.recrutement.repository.ProgramRepository;
@@ -26,35 +30,75 @@ public class SettingsController {
 
     // ========== PROGRAMS ==========
 
+    /**
+     * Ces quatre endpoints renvoyaient et acceptaient l'entité {@code Program}
+     * brute. {@link ProgramResponse} et {@link ProgramRequest} documentent en
+     * détail ce que cela cassait ; en résumé : la collection paresseuse
+     * {@code Program.sessions} faisait échouer la sérialisation hors
+     * transaction (500 « Failed to write request » sur le seul {@code GET}),
+     * et la liaison directe de l'entité en entrée exposait cette même
+     * collection en écriture.
+     */
     @GetMapping("/programs")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    public ResponseEntity<List<Program>> listPrograms() {
-        return ResponseEntity.ok(programRepo.findAll());
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<ProgramResponse>> listPrograms() {
+        return ResponseEntity.ok(programRepo.findAll().stream().map(this::versDto).toList());
     }
 
     @PostMapping("/programs")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    public ResponseEntity<Program> createProgram(@RequestBody Program program) {
-        return ResponseEntity.ok(programRepo.save(program));
+    @Transactional
+    public ResponseEntity<ProgramResponse> createProgram(@Validated @RequestBody ProgramRequest requete) {
+        Program program = new Program();
+        appliquer(program, requete);
+        return ResponseEntity.ok(versDto(programRepo.save(program)));
     }
 
     @PutMapping("/programs/{id}")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    public ResponseEntity<Program> updateProgram(@PathVariable Long id, @RequestBody Program body) {
-        Program p = programRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Programme introuvable"));
-        p.setTitle(body.getTitle());
-        p.setLevel(body.getLevel());
-        p.setDepartment(body.getDepartment());
-        return ResponseEntity.ok(programRepo.save(p));
+    @Transactional
+    public ResponseEntity<ProgramResponse> updateProgram(@PathVariable Long id,
+            @Validated @RequestBody ProgramRequest requete) {
+        Program program = programRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Programme introuvable"));
+        appliquer(program, requete);
+        return ResponseEntity.ok(versDto(programRepo.save(program)));
     }
 
+    /**
+     * Refuse la suppression d'un programme encore rattaché à des sessions de
+     * candidature plutôt que de laisser la clé étrangère remonter en 500, et
+     * répond 404 sur un identifiant inconnu au lieu d'annoncer une suppression
+     * qui n'a pas eu lieu ({@code deleteById} est silencieux dans ce cas).
+     */
     @DeleteMapping("/programs/{id}")
     @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
+    @Transactional
     public ResponseEntity<Map<String, String>> deleteProgram(@PathVariable Long id) {
+        if (!programRepo.existsById(id)) {
+            throw new ResourceNotFoundException("Programme introuvable");
+        }
+        long sessionsRattachees = sessionRepo.countByProgram_Id(id);
+        if (sessionsRattachees > 0) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT)
+                    .body(Map.of("message", "Ce programme est rattaché à " + sessionsRattachees
+                            + " session(s) de candidature : il ne peut pas être supprimé."));
+        }
         programRepo.deleteById(id);
         Map<String, String> ok = new HashMap<>();
         ok.put("message", "Programme supprimé");
         return ResponseEntity.ok(ok);
+    }
+
+    private void appliquer(Program program, ProgramRequest requete) {
+        program.setTitle(requete.getTitle().trim());
+        program.setLevel(requete.getLevel().trim());
+        program.setDepartment(requete.getDepartment() == null ? null : requete.getDepartment().trim());
+    }
+
+    private ProgramResponse versDto(Program program) {
+        return new ProgramResponse(program.getId(), program.getTitle(), program.getLevel(), program.getDepartment());
     }
 
     // ========== RULES ==========

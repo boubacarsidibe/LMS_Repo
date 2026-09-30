@@ -4,14 +4,14 @@
 
   <!-- Onglets de Navigation -->
   <div class="flex border-b border-outline-variant mb-8">
-    <a 
-      routerLink="/auth/login" 
+    <a
+      routerLink="/auth/login"
       routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
       class="flex-1 pb-3 text-center font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors">
       Se connecter
     </a>
-    <a 
-      routerLink="/auth/register" 
+    <a
+      routerLink="/auth/register"
       routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
       [routerLinkActiveOptions]="{ exact: true }"
       class="flex-1 pb-3 text-center font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors">
@@ -25,6 +25,10 @@
   </div>
 
   <!-- Formulaire Inscription -->
+  <!-- novalidate : sans ça, les "required" HTML5 ci-dessous font apparaître les bulles
+       natives du navigateur AVANT que (ngSubmit) ne se déclenche — le formulaire Angular
+       ne voit jamais le clic sur un champ vide, et ses propres messages ne s'affichent
+       donc jamais dans ce cas (relevé lors d'un audit externe). -->
   <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-6" novalidate>
     <!-- Type de compte : oriente la redirection après inscription (aucun rôle métier
          n'est encore attribué à ce stade, il ne l'est qu'à la soumission réelle). -->
@@ -110,11 +114,14 @@
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
         required />
       <p *ngIf="champEnErreur('nomOrganisation')" class="font-body-sm text-body-sm text-error mt-1.5">{{ libelleNomOrganisation }} est requis.</p>
+      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">
+        Les autres informations (description, secteur, adresse…) seront demandées à l'étape suivante.
+      </p>
     </div>
 
     <div>
       <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-email">Email institutionnel</label>
-      <input 
+      <input
         id="reg-email"
         type="email"
         formControlName="email"
@@ -128,7 +135,7 @@
 
     <div>
       <label class="block font-label-md text-label-md text-on-surface-variant mb-1.5" for="reg-password">Mot de passe</label>
-      <input 
+      <input
         id="reg-password"
         type="password"
         formControlName="password"
@@ -137,7 +144,7 @@
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
         required />
       <p *ngIf="champEnErreur('password') && registerForm.get('password')?.hasError('required')" class="font-body-sm text-body-sm text-error mt-1.5">Le mot de passe est requis.</p>
-      <p *ngIf="champEnErreur('password') && registerForm.get('password')?.hasError('passwordPolicy')" class="font-body-sm text-body-sm text-error mt-1.5">Le mot de passe doit contenir au moins 8 caractères.</p>
+      <p *ngIf="champEnErreur('password') && registerForm.get('password')?.hasError('passwordPolicy')" class="font-body-sm text-body-sm text-error mt-1.5">Le mot de passe doit compter au moins 8 caractères.</p>
       <p *ngIf="!champEnErreur('password')" class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Au moins 8 caractères.</p>
     </div>
 
@@ -148,15 +155,15 @@
         type="password"
         formControlName="confirmPassword"
         placeholder="••••••••"
-        [class.border-error]="champEnErreur('confirmPassword') || (registerForm.hasError('motsDePasseDifferents') && tentativeEnvoi)"
+        [class.border-error]="champEnErreur('confirmPassword') || registerForm.hasError('motsDePasseDifferents')"
         class="form-input w-full rounded-lg border border-outline-variant px-4 py-2.5 font-body-md text-body-md text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all bg-surface-container-lowest outline-none"
         required />
       <p *ngIf="champEnErreur('confirmPassword')" class="font-body-sm text-body-sm text-error mt-1.5">La confirmation du mot de passe est requise.</p>
-      <p *ngIf="!champEnErreur('confirmPassword') && registerForm.hasError('motsDePasseDifferents') && tentativeEnvoi" class="font-body-sm text-body-sm text-error mt-1.5">Les mots de passe ne correspondent pas.</p>
+      <p *ngIf="!champEnErreur('confirmPassword') && registerForm.hasError('motsDePasseDifferents')" class="font-body-sm text-body-sm text-error mt-1.5">Les mots de passe ne correspondent pas.</p>
     </div>
 
-    <button 
-      type="submit" 
+    <button
+      type="submit"
       [disabled]="isLoading"
       class="w-full bg-secondary text-on-secondary font-label-md text-label-md py-3 px-4 rounded-lg hover:bg-opacity-90 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] disabled:opacity-50 cursor-pointer">
       {{ isLoading ? 'Création en cours...' : 'Créer un compte' }}

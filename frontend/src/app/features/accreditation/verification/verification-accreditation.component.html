@@ -1,0 +1,77 @@
+<div class="min-h-screen flex flex-col bg-surface">
+  <app-navbar></app-navbar>
+
+  <main class="flex-grow w-full max-w-container-max mx-auto p-margin-desktop flex flex-col items-center">
+    <div class="w-full max-w-xl space-y-stack-lg">
+      <header class="text-center">
+        <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Vérification</span>
+        <h1 class="font-display text-display text-on-surface leading-none">Accréditation</h1>
+        <p class="font-body-lg text-body-lg text-on-surface-variant mt-4">
+          Authenticité de l'attestation portant la référence <span class="font-mono">{{ reference }}</span>.
+        </p>
+      </header>
+
+      <p *ngIf="etat === 'chargement'" class="text-center font-body-md text-body-md text-on-surface-variant">
+        Vérification en cours…
+      </p>
+
+      <div *ngIf="etat === 'introuvable'" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg text-center space-y-stack-md">
+        <span class="material-symbols-outlined text-error text-[48px]">error</span>
+        <h2 class="font-headline-sm text-headline-sm text-on-surface">Référence inconnue</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant">
+          Aucune attestation ne correspond à cette référence. Vérifiez qu'elle a été saisie sans erreur.
+        </p>
+      </div>
+
+      <p *ngIf="etat === 'erreur'" class="text-center font-body-md text-body-md text-error">
+        La vérification a échoué. Réessayez dans un instant.
+      </p>
+
+      <div *ngIf="etat === 'trouve' && attestation as a" class="space-y-stack-md">
+        <div *ngIf="a.valide" class="flex items-center gap-3 bg-success/10 border border-success/30 text-success rounded-xl px-stack-lg py-stack-md">
+          <span class="material-symbols-outlined">verified</span>
+          <p class="font-label-md text-label-md">Attestation authentique et non modifiée.</p>
+        </div>
+        <div *ngIf="!a.valide && a.verifiable" class="flex items-center gap-3 bg-error-container/30 border border-error/30 text-error rounded-xl px-stack-lg py-stack-md">
+          <span class="material-symbols-outlined">warning</span>
+          <p class="font-label-md text-label-md">Le contenu de cette attestation ne correspond plus à sa signature d'origine.</p>
+        </div>
+        <div *ngIf="a.sousReserve" class="flex items-center gap-3 bg-warning/10 border border-warning/40 text-on-surface rounded-xl px-stack-lg py-stack-md">
+          <span class="material-symbols-outlined text-warning">info</span>
+          <p class="font-label-md text-label-md">Accréditation conditionnelle (sous réserve d'un plan d'actions).</p>
+        </div>
+
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg space-y-stack-md">
+          <dl class="space-y-stack-sm">
+            <div>
+              <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">École accréditée</dt>
+              <dd class="font-headline-sm text-headline-sm text-on-surface">{{ a.nomEcole }}</dd>
+            </div>
+            <div>
+              <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Programme</dt>
+              <dd class="font-body-md text-body-md text-on-surface">{{ a.intituleProgramme || '—' }}</dd>
+            </div>
+            <div *ngIf="a.niveauProgramme">
+              <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Niveau</dt>
+              <dd class="font-body-md text-body-md text-on-surface">{{ libelleNiveau(a.niveauProgramme) }}</dd>
+            </div>
+            <div>
+              <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Décidée le</dt>
+              <dd class="font-body-md text-body-md text-on-surface">{{ (a.dateDecision | date: 'd MMMM y') || '—' }}</dd>
+            </div>
+            <div>
+              <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Valable jusqu'au</dt>
+              <dd class="font-body-md text-body-md text-on-surface">{{ (a.dateExpiration | date: 'd MMMM y') || '—' }}</dd>
+            </div>
+            <div>
+              <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Référence</dt>
+              <dd class="font-body-sm text-body-sm text-on-surface-variant font-mono">{{ a.reference }}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <app-footer></app-footer>
+</div>

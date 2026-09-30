@@ -15,4 +15,12 @@ public interface SessionCandidatureRepository extends JpaRepository<SessionCandi
     List<SessionCandidature> findByLibelleContainingIgnoreCase(String libelle);
 
     SessionCandidature findTopByEstOuverteTrueOrderByIdDesc();
+
+    /**
+     * Sessions rattachées à un programme. Compté avant toute suppression de
+     * programme : la clé étrangère {@code sessions_candidature.program_id}
+     * faisait autrement remonter une violation de contrainte en 500, là où
+     * l'appelant a besoin de savoir que la suppression est refusée et pourquoi.
+     */
+    long countByProgram_Id(Long programId);
 }
