@@ -446,7 +446,7 @@ Mot de passe commun aux comptes de recette : `Test@2026`.
 | Candidat (sans dossier) | `test.candidat@inpg.sn` |
 | Candidat (avec dossier) | `test.candidat2@inpg.sn` |
 | Étudiant | `test.etudiant@inpg.sn` |
-| Formateur *(sans cours — cobaye de cloisonnement)* | `test.formateur@inpg.sn` |
+| Formateur | `test.formateur@inpg.sn` |
 | Responsable admission | `test.admission@inpg.sn` |
 | Responsable pédagogique | `test.pedago@inpg.sn` |
 | Alumni | `test.alumni@inpg.sn` |
@@ -455,6 +455,19 @@ Mot de passe commun aux comptes de recette : `Test@2026`.
 
 Pour une démonstration, préférer **`prof.demo@inpg.sn` / `Demo@2026`** : trois cours,
 six supports, seize notes. Les étudiants de démonstration utilisent `Etudiant@2026`.
+
+**`test.formateur@inpg.sn` n'est plus « sans cours ».** Constaté le 2026-09-28 en
+cherchant un formateur exclu d'un cours donné pour vérifier un cloisonnement : la table
+`cours_formateur` montre qu'il enseigne désormais `GEO-101`. Plus largement, à cette
+date, **aucun** formateur de la base n'est exclu d'aucun cours — `prof.demo@inpg.sn`
+enseigne la totalité des cours existants. Un test de cloisonnement formateur ne peut
+donc plus s'appuyer sur un compte présumé « sans cours » : vérifier `cours_formateur`
+avant de choisir un compte, ou passer par un étudiant d'une autre promotion pour le
+même genre de vérification. Les cours de la maquette `DEMO-DS`/`DEMO-FIN`/`DEMO-PROC`
+souffrent par ailleurs du même genre de maillon rompu déjà documenté plus haut pour
+`MPG-2026` (§3) : ils apparaissent dans `GET /api/espace-etudiant/cours` pour
+`test.etudiant@inpg.sn` mais `HabilitationCoursService.estAutorise` les refuse (403) —
+non instruit plus avant, sans rapport avec la tâche qui l'a fait découvrir.
 
 Scripts hors Flyway, relançables sans risque (`backend/db/`) :
 

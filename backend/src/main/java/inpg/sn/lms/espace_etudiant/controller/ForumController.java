@@ -1,9 +1,14 @@
 package inpg.sn.lms.espace_etudiant.controller;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,12 +18,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import inpg.sn.lms.auth.entity.Etudiant;
 import inpg.sn.lms.auth.entity.User;
-import inpg.sn.lms.espace_etudiant.dto.ForumMessageCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.ForumMessageDto;
 import inpg.sn.lms.espace_etudiant.dto.ForumSujetCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.ForumSujetDto;
@@ -35,6 +41,7 @@ import inpg.sn.lms.espace_etudiant.service.ForumVisibiliteService;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
 import inpg.sn.lms.espace_etudiant.service.MentionForumService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
+import inpg.sn.lms.fichier.PieceJointeStorage;
 
 /**
  * Forum de discussion (TDR §3.2), qui sert aussi de canal de communication
@@ -63,11 +70,13 @@ public class ForumController {
     private final MentionForumService mentions;
     private final ForumVisibiliteService visibilite;
     private final NotificationRepository notificationRepository;
+    private final Path uploadDirectory;
 
     public ForumController(ForumSujetRepository sujetRepository, ForumMessageRepository messageRepository,
             CoursRepository coursRepository, UtilisateurCourantService utilisateurCourant,
             HabilitationCoursService habilitation, MentionForumService mentions, ForumVisibiliteService visibilite,
-            NotificationRepository notificationRepository) {
+            NotificationRepository notificationRepository,
+            @Value("${app.upload.dir:uploads}") String uploadDirectory) {
         this.sujetRepository = sujetRepository;
         this.messageRepository = messageRepository;
         this.coursRepository = coursRepository;
@@ -76,6 +85,7 @@ public class ForumController {
         this.mentions = mentions;
         this.visibilite = visibilite;
         this.notificationRepository = notificationRepository;
+        this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize();
     }
 
     /** Sujets accessibles au connecté, épinglés en tête. */
@@ -159,9 +169,13 @@ public class ForumController {
     }
 
     /** Répond dans un sujet. */
-    @PostMapping("/sujets/{id}/messages")
+    @PostMapping(value = "/sujets/{id}/messages", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
-    public ResponseEntity<?> repondre(@PathVariable Long id, @RequestBody ForumMessageCreateRequest request,
+    public ResponseEntity<?> repondre(@PathVariable Long id,
+            @RequestParam String contenu,
+            @RequestParam(value = "citeIds", required = false) List<Long> citeIds,
+            @RequestParam(value = "reponseAId", required = false) Long reponseAId,
+            @RequestParam(value = "fichier", required = false) MultipartFile fichier,
             Authentication authentication) {
         User auteur = utilisateurCourant.utilisateur(authentication);
         if (auteur == null) {
@@ -178,23 +192,55 @@ public class ForumController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("message", "Ce sujet est clos : il n'accepte plus de réponse."));
         }
-        if (estVide(request.contenu())) {
+        if (estVide(contenu)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le message ne peut pas être vide."));
         }
         ForumMessage reponseA = null;
-        if (request.reponseAId() != null) {
+        if (reponseAId != null) {
             // Recoupé avec le sujet courant : un identifiant d'un autre fil ne doit pas
             // pouvoir être glissé pour citer un message auquel l'auteur n'a pas accès.
-            reponseA = messageRepository.findById(request.reponseAId())
+            reponseA = messageRepository.findById(reponseAId)
                     .filter(candidat -> candidat.getSujet().getId().equals(sujet.getId()))
                     .orElse(null);
         }
-        ForumMessage message = new ForumMessage(sujet, auteur, request.contenu().trim());
+
+        ForumMessage message = new ForumMessage(sujet, auteur, contenu.trim());
         message.setReponseA(reponseA);
+        if (fichier != null && !fichier.isEmpty()) {
+            try {
+                PieceJointeStorage.Enregistree stockee = PieceJointeStorage.enregistrer(fichier, uploadDirectory, "messages");
+                message.setPieceJointeNomOriginal(stockee.nomOriginal());
+                message.setPieceJointeNomStocke(stockee.nomStocke());
+                message.setPieceJointeTypeContenu(stockee.typeContenu());
+            } catch (IllegalArgumentException invalide) {
+                return ResponseEntity.badRequest().body(Map.of("message", invalide.getMessage()));
+            } catch (IOException exception) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("message", "Le fichier n'a pas pu être enregistré."));
+            }
+        }
         message = messageRepository.save(message);
-        mentions.enregistrer(message, request.citeIds(), auteur);
+        mentions.enregistrer(message, citeIds == null ? List.of() : citeIds, auteur);
         notifierReponse(message, reponseA, auteur);
         return ResponseEntity.status(HttpStatus.CREATED).body(toMessageDto(message, auteur));
+    }
+
+    /**
+     * Le sujet du message porte sa visibilité, même recoupement que {@code fil}/
+     * {@code repondre} ci-dessus : sans lui, l'identifiant de message suffirait à
+     * lire la pièce jointe d'un cours auquel on n'a pas accès.
+     */
+    @GetMapping("/messages/{messageId}/piece-jointe")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Resource> telechargerPieceJointe(@PathVariable Long messageId, Authentication authentication) {
+        ForumMessage message = messageRepository.findById(messageId).orElse(null);
+        if (message == null || message.getPieceJointeNomStocke() == null
+                || !visibilite.estVisible(message.getSujet(), authentication)) {
+            return ResponseEntity.notFound().build();
+        }
+        return PieceJointeStorage.servir(uploadDirectory, "messages",
+                message.getPieceJointeNomStocke(), message.getPieceJointeNomOriginal(),
+                message.getPieceJointeTypeContenu());
     }
 
     /**
@@ -295,7 +341,8 @@ public class ForumController {
                 estAuteur,
                 reponseA == null ? null : reponseA.getId(),
                 reponseA == null ? null : utilisateurCourant.nomAffiche(reponseA.getAuteur()),
-                reponseA == null ? null : extrait(reponseA.getContenu()));
+                reponseA == null ? null : extrait(reponseA.getContenu()),
+                message.getPieceJointeNomOriginal());
     }
 
     /** Court résumé du message cité, affiché au-dessus de la réponse (façon WhatsApp). */

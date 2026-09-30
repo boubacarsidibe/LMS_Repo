@@ -26,7 +26,16 @@ export class MessagerieService {
     return this.http.get<FilMessagerie>(`${this.api}/conversations/${conversationId}`);
   }
 
-  repondre(conversationId: number, contenu: string): Observable<MessagePrive> {
-    return this.http.post<MessagePrive>(`${this.api}/conversations/${conversationId}/messages`, { contenu });
+  repondre(conversationId: number, contenu: string, fichier: File | null = null): Observable<MessagePrive> {
+    const payload = new FormData();
+    payload.append('contenu', contenu);
+    if (fichier) {
+      payload.append('fichier', fichier);
+    }
+    return this.http.post<MessagePrive>(`${this.api}/conversations/${conversationId}/messages`, payload);
+  }
+
+  telechargerPieceJointe(messageId: number): Observable<Blob> {
+    return this.http.get(`${this.api}/messages/${messageId}/piece-jointe`, { responseType: 'blob' });
   }
 }

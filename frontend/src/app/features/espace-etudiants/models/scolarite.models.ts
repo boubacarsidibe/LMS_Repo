@@ -104,6 +104,7 @@ export interface ForumMessage {
   contenu: string;
   dateCreation: string;
   estAuteur: boolean;
+  pieceJointeNom: string | null;
 }
 
 export interface FilForum {
