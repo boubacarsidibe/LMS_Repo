@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { Auth } from '../../../../core/auth/services/authService';
@@ -8,6 +8,7 @@ import { ProfileMenuComponent } from '../../../../shared/components/profile-menu
 import { CommunicationService } from '../../services/communication.service';
 import { ScolariteService } from '../../services/scolarite.service';
 import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
+import { ClocheNotificationsService, NotificationCloche } from '../../../../shared/services/cloche-notifications.service';
 
 interface EntreeNavigation {
   libelle: string;
@@ -35,6 +36,8 @@ export class EtudiantLayout implements OnInit, OnDestroy {
   chargement = true;
   nbAnnoncesNonLues = 0;
   sidebarMobileOpen = false;
+  notificationOpen = false;
+  notifications: NotificationCloche[] = [];
 
   readonly navigation: EntreeNavigation[] = [
     { libelle: 'Tableau de bord', lien: 'dashboard', icone: 'dashboard' },
@@ -58,7 +61,8 @@ export class EtudiantLayout implements OnInit, OnDestroy {
     private scolariteService: ScolariteService,
     private communicationService: CommunicationService,
     private auth: Auth,
-    private router: Router
+    private router: Router,
+    private cloche: ClocheNotificationsService
   ) {}
 
   ngOnInit(): void {
@@ -92,10 +96,40 @@ export class EtudiantLayout implements OnInit, OnDestroy {
         next: (reponse) => (this.nbAnnoncesNonLues = reponse.count),
         error: () => undefined,
       });
+
+    this.cloche.lister().subscribe({
+      next: (liste) => (this.notifications = (liste || []).filter((n) => !n.lu)),
+      error: () => {},
+    });
   }
 
   ngOnDestroy(): void {
     this.sondage?.unsubscribe();
+  }
+
+  toggleNotificationDropdown(): void {
+    this.notificationOpen = !this.notificationOpen;
+  }
+
+  /** Ouvre la cible et marque la notification lue, sans quoi la cloche répète un événement traité. */
+  ouvrirNotification(notification: NotificationCloche): void {
+    this.cloche.marquerLue(notification.id).subscribe({
+      next: () => (this.notifications = this.notifications.filter((n) => n.id !== notification.id)),
+      error: () => {},
+    });
+    this.notificationOpen = false;
+    if (notification.lien) {
+      this.router.navigateByUrl(notification.lien);
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (target.closest('#notification-btn') || target.closest('#notification-dropdown')) {
+      return;
+    }
+    this.notificationOpen = false;
   }
 
   get nomAffiche(): string {

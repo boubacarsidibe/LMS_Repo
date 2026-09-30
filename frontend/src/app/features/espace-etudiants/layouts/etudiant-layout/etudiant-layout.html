@@ -55,6 +55,10 @@
     </div>
 
     <div class="flex items-center gap-stack-lg">
+      <!-- Icône alignée sur celle des « Annonces » dans la barre latérale : ce lien mène aux
+           communications, pas aux notifications personnelles ci-dessous, qui portent désormais la
+           cloche. Les deux existaient déjà côté données (nbAnnoncesNonLues n'a jamais eu de rapport
+           avec la table `notification`) ; seule l'icône prêtait à confusion. -->
       <a
         routerLink="annonces"
         class="relative p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors"
@@ -64,7 +68,7 @@
             : 'Aucune communication non lue'
         "
       >
-        <span class="material-symbols-outlined">notifications</span>
+        <span class="material-symbols-outlined">campaign</span>
         <span
           *ngIf="nbAnnoncesNonLues > 0"
           class="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-error text-on-error text-[10px] font-bold rounded-full ring-2 ring-surface"
@@ -72,6 +76,32 @@
           {{ nbAnnoncesNonLues }}
         </span>
       </a>
+
+      <!-- Cloche de notifications réelle (messages privés, mentions au forum…), même patron que
+           l'espace pédagogique : sans elle, un formateur qui envoyait un message à cet étudiant ne
+           disposait d'aucun signal avant d'ouvrir « Messagerie » soi-même. -->
+      <div class="relative">
+        <button id="notification-btn" type="button" class="relative p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors" (click)="toggleNotificationDropdown()" aria-label="Notifications">
+          <span class="material-symbols-outlined">notifications</span>
+          <span *ngIf="notifications.length > 0" class="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-error text-on-error text-[10px] font-bold rounded-full ring-2 ring-surface">{{ notifications.length }}</span>
+        </button>
+        <div *ngIf="notificationOpen" id="notification-dropdown" class="absolute right-0 mt-2 w-80 bg-surface border border-outline-variant rounded-xl shadow-lg z-50">
+          <div class="px-4 py-3 border-b border-outline-variant">
+            <p class="font-label-md text-label-md text-on-surface">Notifications</p>
+          </div>
+          <div class="max-h-80 overflow-y-auto">
+            <div *ngIf="notifications.length === 0" class="px-4 py-8 text-center">
+              <span class="material-symbols-outlined text-3xl text-outline mb-1 block">check_circle</span>
+              <p class="font-body-sm text-body-sm text-on-surface-variant">Rien à signaler.</p>
+            </div>
+            <button *ngFor="let n of notifications" type="button" (click)="ouvrirNotification(n)"
+                    class="w-full text-left flex items-start gap-3 px-4 py-3 border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors cursor-pointer">
+              <span class="material-symbols-outlined text-[18px] text-secondary mt-0.5">notifications_active</span>
+              <span class="font-body-sm text-body-sm text-on-surface">{{ n.message }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div class="h-8 w-[1px] bg-outline-variant"></div>
 
