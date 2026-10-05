@@ -1830,3 +1830,115 @@ renouvelable, registre des modules qu'un formateur peut enseigner) — à branch
 sur l'accréditation. Discoverability : un lien « Rejoindre l'INPG comme
 formateur » sur le site vitrine reste à poser (les écrans sont sinon atteignables
 par URL et se cross-linkent).
+
+> La migration **V38** ci-dessus a depuis été renumérotée **V48** (point 70) :
+> l'équipe distante avait déposé son propre V38 pendant ce lot.
+
+## 2026-10-05 — Demandes directes de l'utilisateur : finitions de l'espace formateur, puis fusion avec l'équipe distante
+
+### 68. Espace formateur : uniformisation du bleu clair, photothèque réservée à la consultation, avatars lisibles
+
+Trois signalements de l'utilisateur sur **mes cours et ressources** / **photothèque** /
+**suivi étudiants**, tous dans l'espace formateur.
+
+**Mes cours et ressources** : l'icône de type de ressource (grise, `text-on-surface-variant`,
+perçue « noire » par l'utilisateur) et le badge « Dépôt rapide »
+(`bg-secondary-container`/`text-on-secondary-container`, un bleu plus soutenu que le
+reste de la page) ne suivaient pas le même bleu clair que le fond de page — corrigés en
+`text-secondary` et `bg-secondary/10`/`text-secondary`.
+
+**Photothèque** : la création d'album (bouton « Nouvel album », formulaire, et tout le
+code associé — `PromotionService`, champs `nouveauTitre`/`nouvellePromotionId`/etc.)
+retirée du formateur sur demande explicite (« il devra juste pouvoir visualiser les
+albums ainsi que les photos pas créer un album, ça c'est pour le responsable
+pédagogique ») : décision produit, pas de bug. Le dépôt d'un cliché dans un album
+existant reste permis — la demande ne visait que la création. L'endpoint
+`POST /formateur/albums` n'a pas été retiré côté back (seul chemin de création qui
+existe dans l'appli ; l'retirer aurait été disproportionné par rapport à la demande).
+
+**Suivi étudiants** : les avatars ronds à initiales posaient `bg-primary-container`
+(bleu pâle) sous du texte blanc — contraste quasi nul, même piège que CLAUDE.md §1
+documente pour `primary-fixed`/`primary-container`. Corrigé en `bg-secondary` (même
+bleu que le bouton « Envoyer une relance »), dans `EspaceEtudiantController#toEtudiantSuiviDto`
+— seul point de construction réellement lié dans un template (`PedagogieScolariteController`
+a le même défaut sur son propre DTO, mais son frontend code `bg-primary` en dur et ne lit
+jamais `couleurAvatar` : rien à corriger côté pédagogie).
+
+**Vérifié sur la stack Docker** (`prof.demo@inpg.sn`) : bundle sans occurrence de « Nouvel
+album », `GET /formateur/etudiants` renvoie `couleurAvatar: "bg-secondary"` pour les 7
+étudiants. Commit `f03b54e`.
+
+### 69. Photothèque : visionneuse plein écran, navigation et suppression d'un cliché
+
+Suite directe du point précédent : « si on clique sur un album on devrait également
+cliquer sur une photo précise afin de visualiser en grand cette photo (...), pouvoir
+scroller dedans à l'intérieur d'un album (...) ajouter des fonctionnalités
+supplémentaires en t'inspirant des photothèques existantes (...) supprimer une photo
+que nous avons déjà mise dans l'album. »
+
+**Nouvel endpoint** `DELETE /api/espace-etudiant/formateur/photos/{id}`
+(`PhotothequeController`) : `Photo` ne porte aucune notion d'auteur (comme l'ajout,
+déjà ouvert à tout formateur), donc la suppression l'est aussi — même granularité,
+pas de régression de périmètre. Best-effort sur le fichier disque (`Files.deleteIfExists`,
+erreur ignorée : la ligne en base part de toute façon, un fichier orphelin n'a aucun
+impact fonctionnel). `PhotoDto` gagne un champ `nomOriginal`, pour que le téléchargement
+depuis la visionneuse produise un fichier avec la bonne extension plutôt que le nom de
+la légende sans suffixe.
+
+**Front** (`phototheque.ts`/`.html`) : cliquer une photo dans la grille d'un album l'ouvre
+en grand par-dessus celle-ci (`photoOuverteIndex`) ; précédent/suivant (boutons + flèches
+clavier via `@HostListener`, bouclage modulo plutôt que désactivation aux extrémités —
+code plus simple, parcours continu plus proche de l'usage courant d'une photothèque) ;
+compteur de position, légende, téléchargement, fermeture (bouton + Échap) ; suppression
+accessible depuis la grille (icône au survol) et depuis la visionneuse, avec réajustement
+de l'index affiché pour rester sur une photo valide après coup (décalage arrière si la
+photo retirée précédait l'index courant, fermeture si l'album devient vide) et rafraîchissement
+silencieux des compteurs/couvertures de la grille sans rouvrir le spinner de page.
+
+**Vérifié sur la stack Docker** (`prof.demo@inpg.sn`, album à 3 photos) : ajout d'un
+cliché de test → `nomOriginal` correct → compteur d'album 3→4 → suppression (204) → 3,
+suppression d'un identifiant inexistant → 404, suppression côté étudiant → 403 (règle de
+préfixe `/api/espace-etudiant/formateur/**` déjà en place dans `SecurityConfig`). Commit
+`d65757e`.
+
+### 70. Fusion avec `origin/develop` : collision de migration et script de seed désynchronisé
+
+Sept commits locaux (points 67 à 69) poussés après sept heures de travail parallèle d'une
+autre équipe (dix-huit commits distants, dont le passage à `springdoc-openapi`, une
+refonte des statuts de candidature et deux colonnes `groupe_*_id` devenues `NOT NULL`).
+Un seul conflit textuel (`phototheque.ts` : leur copie, antérieure au point 68, tentait
+encore d'injecter `PromotionService` dans `ngOnInit` — retiré, la fonctionnalité qu'elle
+alimentait n'existe plus côté formateur).
+
+**Deux défauts muets, aucun des deux signalé par le conflit Git :**
+
+- **Migration V38 en double** : leur `V38__annulation_decisions_candidature.sql`
+  occupait le numéro déjà pris par `V38__recrutement_formateurs.sql` (point 67) — Flyway
+  refuse deux migrations au même numéro, mais la fusion elle-même ne le voit pas (deux
+  fichiers différents, aucun conflit textuel). Renumérotée en **V48** (premier numéro
+  libre après leur V47), sans dépendance de schéma avec les migrations V39-V47
+  intercalées (tables disjointes, vérifié). La base locale ayant déjà le schéma de
+  l'ancien V38 (créé avant la fusion), `DROP TABLE` ciblé des trois tables
+  (`offres_recrutement_formateur`, `candidatures_formateur`,
+  `pieces_candidature_formateur` — exactement celles que ce fichier crée, pas une de
+  plus) + suppression de la ligne `flyway_schema_history` correspondante, pour laisser
+  Flyway rejouer la chaîne complète dans le bon ordre plutôt que de bricoler un
+  checksum. Base de démonstration locale, donc sans conséquence : reseedée derrière
+  (point suivant).
+- **`seed-demo-client.sql` désynchronisé** : leurs migrations `V202609211030` et
+  `V202609211100` ont rendu `tests_academiques.groupe_epreuve_id` et
+  `entretiens.groupe_entretien_id` `NOT NULL` sans mettre à jour ce script, resté sur
+  l'ancien schéma. Le script entier étant une seule transaction, la première ligne
+  fautive annulait tout le lot — plus aucune donnée de démonstration (cours, notes,
+  phototheque, forum) ne s'injectait, en silence (`ROLLBACK`, pas d'erreur visible
+  ailleurs qu'au prompt). Corrigé par l'ajout de ces colonnes aux deux `INSERT`
+  concernés (UUID partagé entre les deux lignes `tests_academiques` du même candidat —
+  une même séance — plutôt qu'un par ligne).
+
+**Vérifié bout en bout** : compilation + tests ciblés après fusion
+(`EspaceEtudiantGardeFousTest`, `MentionForumServiceTest`, `PedagogieCoursProgrammeTest`,
+`ScolariteReleveNotesTest`, `ReleveDelivranceServiceTest`, `ValidationFichierTest`,
+`AdminRecrutementFormateurControllerTest`, `CandidatFormateurControllerTest` — tous au
+vert), build frontend propre, puis redéploiement Docker complet (base reseedée) et
+nouvelle passe fonctionnelle du point 69 sur les données de démonstration restaurées.
+Poussé sur `origin/develop`. Commits `02a6b0d`, `184f2df`, `ac6b6d5`.
