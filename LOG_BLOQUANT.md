@@ -1942,3 +1942,68 @@ alimentait n'existe plus côté formateur).
 vert), build frontend propre, puis redéploiement Docker complet (base reseedée) et
 nouvelle passe fonctionnelle du point 69 sur les données de démonstration restaurées.
 Poussé sur `origin/develop`. Commits `02a6b0d`, `184f2df`, `ac6b6d5`.
+
+### 71. Forum : pièce jointe fiable, réponse étudiante avec fichier, relance collective sur un sujet
+
+Signalement direct de l'utilisateur : « le formateur arrive à télécharger un
+fichier envoyé par un étudiant à travers le forum mais il ne peut pas l'ouvrir
+(...) peut-être le post date de longtemps ».
+
+**Reproduit** en supprimant du disque le fichier d'un message existant, sans
+toucher à sa ligne en base (exactement ce qu'une purge de disque ou une
+réinitialisation d'environnement produit avec le temps — voir point 70 pour un
+exemple du genre d'incident qui en est la cause probable ici). Deux défauts
+superposés expliquaient la confusion :
+- `EspaceEtudiantController#downloadMessageAttachment` répondait bien 404,
+  mais la **liste des messages continuait d'annoncer le bouton** (son
+  `pieceJointeNom` n'était jamais revérifié contre le disque) — le formateur
+  voit un bouton de téléchargement qui ne peut que mener à un échec.
+- Côté front, `forum.ts#telechargerPieceJointe` **avalait l'échec en
+  silence** (`error: () => { this.telechargementEnCoursId = null; }`, sans le
+  moindre message) : cliquer ne produisait rien d'observable, lu comme
+  « ça télécharge mais n'ouvre rien » alors qu'aucun octet n'avait jamais
+  atteint le navigateur.
+
+Corrigé des deux côtés : `pieceJointeNom` (`EspaceEtudiantController` et
+`ForumController`, qui partagent la même table `forum_messages`) repasse à
+`null` si le fichier promis n'est plus sur le disque, revérifié à chaque
+listage — le bouton mort disparaît plutôt que d'échouer silencieusement ; et
+`forum.ts` affiche désormais un message clair si un téléchargement échoue
+malgré tout (course entre l'affichage et le clic). `PhotoDto` gagne au passage
+`nomOriginal`, pour un nom de fichier correct au téléchargement (point 69).
+
+**En creusant « envoyé par un étudiant »** : aucun écran étudiant
+(`forum-etudiant`, `fil-forum`) ne permettait réellement de joindre un fichier
+— seul `EspaceEtudiantController#repondreAuSujet` (formateur) le pouvait,
+`ForumController#repondre` (étudiant) n'acceptant que du JSON sans pièce
+jointe. Basculé en multipart, même stockage/validation que le formateur ;
+`ForumMessageDto` expose désormais `pieceJointeNom` pour les deux parcours
+(`AlumniForumController`, qui réutilise ce DTO, ajusté en conséquence sans y
+ajouter la capacité — hors périmètre).
+
+**Repéré en sécurisant la création de sujet par un formateur** (nécessaire
+pour la relance ci-dessous) : `ForumController#ouvrirSujet` ne vérifiait
+l'appartenance au cours que côté étudiant (`HabilitationCoursService`) —
+aucun contrôle symétrique côté formateur. Un formateur aurait pu adresser un
+sujet aux étudiants de n'importe quel cours, pas seulement le sien, en
+contournant le cloisonnement `cours_formateur` que CLAUDE.md §3 documente par
+ailleurs comme central. Ajouté via `PerimetreFormateurService#estFormateurDuCours`.
+
+**Nouveau bouton « Relancer sur le forum »** dans le suivi des étudiants, en
+plus de la relance par e-mail : ouvre un sujet dans un cours du formateur,
+avec un message de son choix (« joignez vos devoirs ici »). À la différence de
+la relance par e-mail (liste arbitraire d'étudiants filtrés), elle s'adresse à
+tous les étudiants d'**un** cours à la fois — le forum n'a pas de notion de
+liste arbitraire — et attend une réponse dans le fil plutôt qu'une boîte mail.
+
+**Vérifié bout en bout sur la stack Docker** : formateur crée le sujet (201),
+rejeté sur un cours qu'il n'enseigne pas (403), étudiante répond avec une
+pièce jointe PDF (octets identiques au téléchargement par le formateur),
+visibilité correcte (vu par les étudiants du cours, absent pour les autres),
+fichier supprimé du disque → bouton disparu du listage, 404 à l'appel direct.
+Tests ciblés au vert (`EspaceEtudiantForumModerationTest`,
+`MentionForumServiceTest`, `EspaceEtudiantGardeFousTest`,
+`AlumniForumControllerTest`, `EspaceAlumniGardeFousTest`,
+`ForumSujetRepositoryVisibiliteTest`, `ForumVisibiliteServiceTest`). Données de
+test nettoyées après coup (sujet et messages créés pour la vérification,
+fichiers temporaires). Commit `0447279`.
