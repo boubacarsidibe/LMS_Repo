@@ -198,6 +198,8 @@ public class AlumniForumController {
                 estAuteur,
                 null,
                 null,
+                null,
+                // Le forum alumni ne pose pas de pièce jointe à l'écriture : rien à annoncer.
                 null);
     }
 

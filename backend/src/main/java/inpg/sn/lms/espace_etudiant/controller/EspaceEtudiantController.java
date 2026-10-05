@@ -1701,7 +1701,21 @@ public class EspaceEtudiantController {
                 initialsFromFullName(auteurNom),
                 message.getContenu(),
                 message.getDateCreation().format(DATE_HEURE_FORUM),
-                message.getPieceJointeNomOriginal());
+                // Un message ancien peut annoncer une pièce jointe dont le fichier a disparu
+                // (incident d'infrastructure, nettoyage de disque) : sans ce contrôle, le bouton
+                // de téléchargement reste affiché, cliquable, et échoue à chaque fois — un dialogue
+                // qui se lit comme « ça télécharge mais ça ne s'ouvre pas » alors qu'aucun octet
+                // n'a jamais atteint le navigateur. Ne pas l'annoncer du tout est plus honnête.
+                pieceJointeDisponible(message) ? message.getPieceJointeNomOriginal() : null);
+    }
+
+    private boolean pieceJointeDisponible(ForumMessage message) {
+        String nomStocke = message.getPieceJointeNomStocke();
+        if (nomStocke == null) {
+            return false;
+        }
+        Path chemin = uploadDirectory.resolve("messages").resolve(nomStocke).normalize();
+        return chemin.startsWith(uploadDirectory) && Files.isRegularFile(chemin);
     }
 
     private String displayName(User user) {

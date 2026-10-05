@@ -66,6 +66,16 @@ import { CommunicationService, Mentionnable } from '../../services/communication
             <p class="font-body-md text-body-md text-on-surface mt-2 whitespace-pre-line">
               {{ m.contenu }}
             </p>
+            <button *ngIf="m.pieceJointeNom" type="button" (click)="telechargerPieceJointe(m)"
+                    [disabled]="telechargementEnCoursId === m.id"
+                    class="mt-3 flex items-center gap-2 px-3 py-2 bg-surface-container rounded-lg border border-outline-variant/50 hover:bg-surface-container-high transition-colors text-left disabled:opacity-60">
+              <span class="material-symbols-outlined text-[20px] text-secondary">attach_file</span>
+              <span class="font-label-sm text-label-sm text-on-surface truncate max-w-[220px]">{{ m.pieceJointeNom }}</span>
+              <span class="material-symbols-outlined text-[18px] text-outline ml-1">{{ telechargementEnCoursId === m.id ? 'hourglass_empty' : 'download' }}</span>
+            </button>
+            <p *ngIf="erreurTelechargementId === m.id" class="mt-1 flex items-center gap-1 text-body-sm text-error">
+              <span class="material-symbols-outlined text-[16px]">error</span>{{ erreurTelechargement }}
+            </p>
           </li>
         </ul>
 
@@ -118,16 +128,37 @@ import { CommunicationService, Mentionnable } from '../../services/communication
           <p *ngIf="cites.length > 0" class="font-body-sm text-body-sm text-on-surface-variant">
             Seront prévenus : {{ nomsCites }}.
           </p>
+
+          <input #champFichier type="file" (change)="onFichierSelectionne($event)" class="hidden" />
+          <div *ngIf="fichierSelectionne" class="flex items-center gap-2 px-3 py-2 bg-secondary-container/20 rounded-lg border border-outline-variant/30">
+            <span class="material-symbols-outlined text-[18px] text-secondary">attach_file</span>
+            <span class="font-label-sm text-label-sm text-on-surface truncate max-w-xs">{{ fichierSelectionne.name }}</span>
+            <button type="button" (click)="retirerFichier()" class="ml-auto p-1 text-outline hover:text-error transition-colors" title="Retirer le fichier" aria-label="Retirer le fichier">
+              <span class="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
+
           <p *ngIf="erreurReponse" class="font-body-sm text-body-sm text-error">
             {{ erreurReponse }}
           </p>
-          <button
-            type="submit"
-            [disabled]="!reponse.trim() || envoiEnCours"
-            class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {{ envoiEnCours ? 'Envoi…' : 'Envoyer' }}
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              (click)="champFichier.click()"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg text-secondary hover:bg-secondary-container/20 transition-colors font-label-md text-label-md"
+              title="Joindre un fichier"
+            >
+              <span class="material-symbols-outlined text-[20px]">attach_file</span>
+              <span>Joindre un fichier</span>
+            </button>
+            <button
+              type="submit"
+              [disabled]="!reponse.trim() || envoiEnCours"
+              class="ml-auto px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {{ envoiEnCours ? 'Envoi…' : 'Envoyer' }}
+            </button>
+          </div>
         </form>
 
         <p
@@ -149,6 +180,10 @@ export class FilForum implements OnInit {
   reponse = '';
   envoiEnCours = false;
   erreurReponse = '';
+  fichierSelectionne: File | null = null;
+  telechargementEnCoursId: number | null = null;
+  erreurTelechargementId: number | null = null;
+  erreurTelechargement = '';
 
   /** Personnes citables dans ce fil, chargées une fois à l'ouverture. */
   citables: Mentionnable[] = [];
@@ -242,6 +277,15 @@ export class FilForum implements OnInit {
       .join('');
   }
 
+  onFichierSelectionne(evenement: Event): void {
+    const champ = evenement.target as HTMLInputElement;
+    this.fichierSelectionne = champ.files?.length ? champ.files[0] : null;
+  }
+
+  retirerFichier(): void {
+    this.fichierSelectionne = null;
+  }
+
   repondre(): void {
     if (!this.reponse.trim()) {
       return;
@@ -252,18 +296,43 @@ export class FilForum implements OnInit {
     // « @Nom » apres l'avoir choisi ne doit pas laisser une notification partir.
     const citesRetenus = this.cites.filter((c) => this.reponse.includes('@' + c.nom));
     this.communication
-      .repondre(this.sujetId, this.reponse.trim(), citesRetenus.map((c) => c.id))
+      .repondre(this.sujetId, this.reponse.trim(), citesRetenus.map((c) => c.id), this.fichierSelectionne)
       .subscribe({
       next: (message) => {
         this.messages = [...this.messages, message];
         this.reponse = '';
         this.cites = [];
+        this.fichierSelectionne = null;
         this.fermerSuggestions();
         this.envoiEnCours = false;
       },
       error: (e) => {
         this.envoiEnCours = false;
         this.erreurReponse = e?.error?.message || "L'envoi de votre réponse a échoué.";
+      },
+    });
+  }
+
+  telechargerPieceJointe(message: ForumMessage): void {
+    if (!message.pieceJointeNom) return;
+    this.telechargementEnCoursId = message.id;
+    this.erreurTelechargementId = null;
+    this.communication.telechargerPieceJointe(message.id).subscribe({
+      next: (blob) => {
+        this.telechargementEnCoursId = null;
+        const url = window.URL.createObjectURL(blob);
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = message.pieceJointeNom!;
+        lien.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (erreur) => {
+        this.telechargementEnCoursId = null;
+        this.erreurTelechargementId = message.id;
+        this.erreurTelechargement = erreur.status === 404
+          ? "Cette pièce jointe a disparu du serveur : le message l'annonce encore, mais le fichier n'existe plus."
+          : "Le téléchargement de cette pièce jointe a échoué.";
       },
     });
   }

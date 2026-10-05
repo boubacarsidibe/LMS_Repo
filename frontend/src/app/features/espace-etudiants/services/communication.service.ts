@@ -71,11 +71,29 @@ export class CommunicationService {
     return this.http.get<Mentionnable[]>(`${this.api}/forum/sujets/${sujetId}/citables`);
   }
 
-  repondre(sujetId: number, contenu: string, citeIds: number[] = []): Observable<ForumMessage> {
-    return this.http.post<ForumMessage>(`${this.api}/forum/sujets/${sujetId}/messages`, {
-      contenu,
-      citeIds,
-    });
+  /**
+   * En multipart, pas en JSON : seule façon de porter `fichier`. Sans cette
+   * pièce jointe, un formateur demandant « joignez votre devoir ici » sur le
+   * forum ne pouvait être satisfait — lui seul (via `SujetService`) pouvait en
+   * joindre une, pas l'étudiant qui répond.
+   */
+  repondre(
+    sujetId: number,
+    contenu: string,
+    citeIds: number[] = [],
+    fichier: File | null = null
+  ): Observable<ForumMessage> {
+    const payload = new FormData();
+    payload.append('contenu', contenu);
+    citeIds.forEach((id) => payload.append('citeIds', String(id)));
+    if (fichier) {
+      payload.append('fichier', fichier);
+    }
+    return this.http.post<ForumMessage>(`${this.api}/forum/sujets/${sujetId}/messages`, payload);
+  }
+
+  telechargerPieceJointe(messageId: number): Observable<Blob> {
+    return this.http.get(`${this.api}/sujets/messages/${messageId}/piece-jointe`, { responseType: 'blob' });
   }
 
   supprimerMessage(messageId: number): Observable<void> {

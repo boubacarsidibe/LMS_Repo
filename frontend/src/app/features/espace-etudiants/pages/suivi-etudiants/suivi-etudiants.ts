@@ -6,6 +6,9 @@ import { Etudiant } from '../../models/etudiant';
 import { EtudiantService } from '../../services/etudiant.service';
 import { Promotion } from '../../models/promotion';
 import { PromotionService } from '../../services/promotion.service';
+import { Cours } from '../../models/cours';
+import { CoursService } from '../../services/cours.service';
+import { SujetService } from '../../services/sujet.service';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -32,10 +35,23 @@ export class SuiviEtudiants implements OnInit {
   messageErreur = '';
   messageSucces = '';
 
+  /** Relance collective par sujet de forum, plutôt que par e-mail (voir ouvrirRelanceForum). */
+  afficherRelanceForum = false;
+  mesCours: Cours[] = [];
+  chargementCoursForum = false;
+  coursIdForum: number | null = null;
+  titreForum = '';
+  messageForum = '';
+  isEnvoiForumEnCours = false;
+  messageErreurForum = '';
+  messageSuccesForum = '';
+
   constructor(
     private router: Router,
     private etudiantService: EtudiantService,
-    private promotionService: PromotionService
+    private promotionService: PromotionService,
+    private coursService: CoursService,
+    private sujetService: SujetService
   ) {}
 
   ngOnInit(): void {
@@ -113,6 +129,7 @@ export class SuiviEtudiants implements OnInit {
   ouvrirContact(e: Etudiant) {
     this.etudiantEnContact = e;
     this.afficherRelanceCollective = false;
+    this.afficherRelanceForum = false;
     this.objetMessage = '';
     this.contenuMessage = '';
     this.messageErreur = '';
@@ -122,6 +139,7 @@ export class SuiviEtudiants implements OnInit {
   ouvrirRelanceCollective() {
     this.etudiantEnContact = null;
     this.afficherRelanceCollective = true;
+    this.afficherRelanceForum = false;
     this.objetMessage = '';
     this.contenuMessage = '';
     this.messageErreur = '';
@@ -131,6 +149,61 @@ export class SuiviEtudiants implements OnInit {
   fermerModalMessage() {
     this.etudiantEnContact = null;
     this.afficherRelanceCollective = false;
+  }
+
+  ouvrirRelanceForum(): void {
+    this.etudiantEnContact = null;
+    this.afficherRelanceCollective = false;
+    this.afficherRelanceForum = true;
+    this.coursIdForum = null;
+    this.titreForum = '';
+    this.messageForum = '';
+    this.messageErreurForum = '';
+    this.messageSuccesForum = '';
+    if (this.mesCours.length === 0) {
+      this.chargementCoursForum = true;
+      this.coursService.getAll().subscribe({
+        next: (cours) => {
+          this.mesCours = cours || [];
+          this.chargementCoursForum = false;
+        },
+        error: () => {
+          this.mesCours = [];
+          this.chargementCoursForum = false;
+        },
+      });
+    }
+  }
+
+  fermerRelanceForum(): void {
+    this.afficherRelanceForum = false;
+  }
+
+  envoyerRelanceForum(): void {
+    if (!this.coursIdForum) {
+      this.messageErreurForum = 'Choisissez un cours.';
+      return;
+    }
+    if (!this.titreForum.trim() || !this.messageForum.trim()) {
+      this.messageErreurForum = 'Le titre et le message sont requis.';
+      return;
+    }
+    this.isEnvoiForumEnCours = true;
+    this.messageErreurForum = '';
+    this.messageSuccesForum = '';
+    this.sujetService.creerSujet(this.titreForum.trim(), this.coursIdForum, this.messageForum.trim()).subscribe({
+      next: () => {
+        this.isEnvoiForumEnCours = false;
+        this.messageSuccesForum = 'Sujet publié : ses étudiants le verront dans leur forum.';
+        this.titreForum = '';
+        this.messageForum = '';
+        this.coursIdForum = null;
+      },
+      error: (erreur) => {
+        this.isEnvoiForumEnCours = false;
+        this.messageErreurForum = erreur.error?.message || "La publication sur le forum a échoué.";
+      },
+    });
   }
 
   envoyerMessage() {

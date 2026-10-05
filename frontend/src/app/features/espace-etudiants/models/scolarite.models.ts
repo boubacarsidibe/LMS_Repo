@@ -104,6 +104,12 @@ export interface ForumMessage {
   contenu: string;
   dateCreation: string;
   estAuteur: boolean;
+  reponseAId?: number | null;
+  reponseAAuteur?: string | null;
+  reponseAExtrait?: string | null;
+  /** Nom à afficher pour le téléchargement ; absent si le message n'a pas de pièce
+   *  jointe, ou si le fichier annoncé a disparu du serveur. */
+  pieceJointeNom?: string | null;
 }
 
 export interface FilForum {

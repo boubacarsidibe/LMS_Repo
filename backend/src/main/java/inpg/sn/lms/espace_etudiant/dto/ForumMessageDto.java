@@ -9,6 +9,12 @@ import java.time.LocalDateTime;
  * <p>{@code reponseA*} porte un résumé du message cité (façon WhatsApp), null quand
  * le message ne répond à rien de précis — le client n'a pas besoin d'aller
  * rechercher le message d'origine pour l'afficher au-dessus de la réponse.
+ *
+ * <p>{@code pieceJointeNom} est le nom à afficher pour le téléchargement (voir
+ * {@code EspaceEtudiantController#downloadMessageAttachment}, qui sert le fichier
+ * quel que soit le contrôleur par lequel le message a été posté) ; null aussi bien
+ * quand le message n'en a pas que quand le fichier promis a disparu du disque —
+ * ne jamais annoncer un téléchargement qui échouerait.
  */
 public record ForumMessageDto(
         Long id,
@@ -18,5 +24,6 @@ public record ForumMessageDto(
         boolean estAuteur,
         Long reponseAId,
         String reponseAAuteur,
-        String reponseAExtrait) {
+        String reponseAExtrait,
+        String pieceJointeNom) {
 }

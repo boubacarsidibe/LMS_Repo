@@ -24,6 +24,9 @@ export class Forum implements OnInit {
   optionsOuvertes = false;
   fichierSelectionne: File | null = null;
   telechargementEnCoursId: number | null = null;
+  /** Identifiant du message dont la pièce jointe n'a pas pu être téléchargée, et pourquoi. */
+  erreurTelechargementId: number | null = null;
+  erreurTelechargement = '';
   readonly caractereCode = '`';
 
   constructor(private sujetService: SujetService,
@@ -70,6 +73,7 @@ export class Forum implements OnInit {
     this.errorMessage = '';
     this.optionsOuvertes = false;
     this.fichierSelectionne = null;
+    this.erreurTelechargementId = null;
   }
 
   onFichierSelectionne(event: Event) {
@@ -128,6 +132,7 @@ export class Forum implements OnInit {
   telechargerPieceJointe(message: MessageForum) {
     if (!message.pieceJointeNom) return;
     this.telechargementEnCoursId = message.id;
+    this.erreurTelechargementId = null;
     this.sujetService.telechargerPieceJointe(message.id).subscribe({
       next: (blob) => {
         this.telechargementEnCoursId = null;
@@ -138,8 +143,16 @@ export class Forum implements OnInit {
         lien.click();
         window.URL.revokeObjectURL(url);
       },
-      error: () => {
+      // Un message ancien peut survivre à son fichier (nettoyage de disque, incident
+      // d'infrastructure) : jusqu'ici l'échec disparaissait en silence, et un clic qui
+      // ne produit rien se lit comme « le fichier télécharge mais refuse de s'ouvrir »,
+      // alors qu'aucun fichier n'a jamais été reçu par le navigateur.
+      error: (erreur) => {
         this.telechargementEnCoursId = null;
+        this.erreurTelechargementId = message.id;
+        this.erreurTelechargement = erreur.status === 404
+          ? "Cette pièce jointe a disparu du serveur : le message l'annonce encore, mais le fichier n'existe plus."
+          : "Le téléchargement de cette pièce jointe a échoué.";
       },
     });
   }
