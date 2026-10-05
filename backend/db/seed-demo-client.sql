@@ -167,13 +167,17 @@ WHERE NOT EXISTS (
 -- documentation de recette ; on se limite à deux épreuves pour ce candidat,
 -- ce qui suffit à sortir l'écran de son état vide.
 -- ---------------------------------------------------------------------
-INSERT INTO tests_academiques (candidat_id, nom_epreuve, coefficient, note_obtenue, date_epreuve)
-SELECT u.id, v.epreuve, v.coef, v.note, now() - (v.jours || ' days')::interval
+-- groupe_epreuve_id (V202609211030) regroupe les épreuves d'une même séance :
+-- les deux lignes ci-dessous forment une seule séance pour ce candidat, d'où
+-- l'UUID commun plutôt qu'un gen_random_uuid() par ligne.
+INSERT INTO tests_academiques (candidat_id, nom_epreuve, coefficient, note_obtenue, date_epreuve, groupe_epreuve_id)
+SELECT u.id, v.epreuve, v.coef, v.note, now() - (v.jours || ' days')::interval, seance.id
 FROM (VALUES
     ('test_candidat2', 'Culture scientifique',     1.0, 14.5, 30),
     ('test_candidat2', 'Mathématiques appliquées', 2.0, 15.0, 28)
 ) AS v(username, epreuve, coef, note, jours)
 JOIN users u ON u.username = v.username
+CROSS JOIN (SELECT gen_random_uuid() AS id) AS seance
 WHERE NOT EXISTS (
     SELECT 1 FROM tests_academiques t
     WHERE t.candidat_id = u.id AND t.nom_epreuve = v.epreuve);
@@ -190,9 +194,11 @@ WHERE NOT EXISTS (
 -- autres états resteront à démontrer manuellement, ou demanderont d'enrichir
 -- le jeu de comptes de test si le besoin se confirme.
 -- ---------------------------------------------------------------------
+-- groupe_entretien_id (V202609211100) regroupe les entretiens d'une même
+-- convocation : une seule ligne ici, donc un UUID par ligne suffit.
 INSERT INTO entretiens (candidat_id, date_heure, lieu_ou_lien, note_entretien,
-                        appreciation_globale, confirme_par_candidat)
-SELECT u.id, now() + (v.jours || ' days')::interval, v.lieu, v.note, v.appreciation, v.confirme
+                        appreciation_globale, confirme_par_candidat, groupe_entretien_id)
+SELECT u.id, now() + (v.jours || ' days')::interval, v.lieu, v.note, v.appreciation, v.confirme, gen_random_uuid()
 FROM (VALUES
     ('test_candidat2', -12, 'Salle B12 — Immeuble Adja Koone', 15.0,
      'Motivation solide et projet professionnel clair. Bonne connaissance du secteur pétrolier.', true)
