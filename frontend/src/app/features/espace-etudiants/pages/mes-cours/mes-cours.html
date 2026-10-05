@@ -111,7 +111,7 @@
 
         <div *ngIf="!chargementSupports && mesSupports.length" class="divide-y divide-outline-variant/20">
           <div *ngFor="let s of mesSupports" class="flex items-center gap-3 py-3">
-            <span class="material-symbols-outlined text-on-surface-variant">{{ iconeTypeRessource(s.typeRessource) }}</span>
+            <span class="material-symbols-outlined text-secondary">{{ iconeTypeRessource(s.typeRessource) }}</span>
 
             <div class="flex-1 min-w-0">
               <p class="font-label-md text-label-md text-on-surface truncate">{{ s.titre }}</p>
@@ -146,7 +146,7 @@
     <aside #depotRapide class="col-span-12 lg:col-span-4 space-y-stack-lg">
       <div id="depot-rapide" class="bg-surface-container-lowest p-stack-lg rounded-2xl shadow-sm border border-outline-variant/20 sticky top-24">
         <div class="flex items-center gap-3 mb-stack-md">
-          <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+          <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
             <span class="material-symbols-outlined">upload_file</span>
           </div>
           <h3 class="font-headline-sm text-headline-sm text-on-surface">Dépôt Rapide</h3>

@@ -1732,7 +1732,11 @@ public class EspaceEtudiantController {
                 noteMoyenne,
                 releveNotesService.statutDeSuivi(noteMoyenne),
                 initials(etudiant.getPrenom(), etudiant.getNom()),
-                "bg-primary-container",
+                // Bleu foncé uniforme au bouton « Envoyer une relance » (bg-secondary) : avec
+                // le texte blanc de l'avatar, bg-primary-container (bleu pâle) donnait un
+                // contraste quasi nul — le même piège que CLAUDE.md §1 documente pour
+                // primary-fixed/primary-container.
+                "bg-secondary",
                 etudiant.getMatricule(),
                 // Sans objet cote formateur : il enseigne a ses etudiants, il ne les inscrit pas.
                 null,

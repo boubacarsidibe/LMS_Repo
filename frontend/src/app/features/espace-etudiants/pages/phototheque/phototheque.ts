@@ -5,19 +5,19 @@ import { MediaProtegeService } from '../../services/media-protege.service';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { AlbumPhoto, Photo } from '../../models/scolarite.models';
-import { Promotion } from '../../models/promotion';
-import { PromotionService } from '../../services/promotion.service';
 import { PhotoService } from '../../services/photo.service';
 
 /**
- * Photothèque du formateur : consultation des albums et dépôt de clichés.
+ * Photothèque du formateur : consultation des albums et dépôt de clichés dans
+ * un album existant.
+ *
+ * <p>La création d'un album est réservée au responsable pédagogique (décision
+ * produit) : le formateur ne fait que visualiser les albums et leurs photos,
+ * et peut y déposer un cliché une fois qu'un album existe.
  *
  * <p>L'écran s'adressait auparavant à `GET /photos` et `POST /formateur/photos`,
  * disparus lors du passage à un modèle en albums — un cliché appartient
- * désormais toujours à un album. Ni l'affichage ni l'envoi ne fonctionnaient.
- *
- * <p>Le dépôt se fait donc en deux temps, comme le prévoit l'API : on choisit
- * (ou l'on crée) un album, puis on y ajoute des photos.
+ * désormais toujours à un album.
  */
 @Component({
   selector: 'app-phototheque',
@@ -27,25 +27,16 @@ import { PhotoService } from '../../services/photo.service';
 })
 export class Phototheque implements OnInit, OnDestroy {
   private photoService = inject(PhotoService);
-  private promotionService = inject(PromotionService);
 
   @ViewChild('champFichier') champFichier?: ElementRef<HTMLInputElement>;
 
   albums: AlbumPhoto[] = [];
-  promotions: Promotion[] = [];
   chargement = true;
 
   /** Album ouvert dans la visionneuse, avec ses clichés. */
   albumOuvert: AlbumPhoto | null = null;
   photosAlbumOuvert: Photo[] = [];
   chargementPhotos = false;
-
-  // ----- Création d'un album -----
-  formulaireAlbumOuvert = false;
-  nouveauTitre = '';
-  nouvelleDescription = '';
-  nouvelleDate = '';
-  nouvellePromotionId: number | null = null;
 
   // ----- Dépôt d'un cliché -----
   albumCibleId: number | null = null;
@@ -58,10 +49,6 @@ export class Phototheque implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.charger();
-    this.promotionService.getAll().subscribe({
-      next: (liste) => (this.promotions = liste || []),
-      error: () => (this.promotions = []),
-    });
   }
 
   private charger(): void {
@@ -108,50 +95,6 @@ export class Phototheque implements OnInit, OnDestroy {
   fermerAlbum(): void {
     this.albumOuvert = null;
     this.photosAlbumOuvert = [];
-  }
-
-  // ===================== Création d'un album =====================
-
-  ouvrirFormulaireAlbum(): void {
-    this.formulaireAlbumOuvert = true;
-    this.nouveauTitre = '';
-    this.nouvelleDescription = '';
-    this.nouvelleDate = '';
-    this.nouvellePromotionId = null;
-    this.reinitialiserMessages();
-  }
-
-  fermerFormulaireAlbum(): void {
-    this.formulaireAlbumOuvert = false;
-  }
-
-  creerAlbum(): void {
-    if (!this.nouveauTitre.trim()) {
-      this.messageErreur = "Le titre de l'album est requis.";
-      return;
-    }
-    this.enCours = true;
-    this.reinitialiserMessages();
-    this.photoService
-      .creerAlbum(
-        this.nouveauTitre.trim(),
-        this.nouvelleDescription.trim() || null,
-        this.nouvellePromotionId,
-        this.nouvelleDate || null
-      )
-      .subscribe({
-        next: (album) => {
-          this.enCours = false;
-          this.formulaireAlbumOuvert = false;
-          this.messageSucces = `Album « ${album.titre} » créé.`;
-          this.albumCibleId = album.id;
-          this.charger();
-        },
-        error: (erreur) => {
-          this.enCours = false;
-          this.messageErreur = erreur.error?.message || "L'album n'a pas pu être créé.";
-        },
-      });
   }
 
   // ===================== Dépôt d'un cliché =====================
