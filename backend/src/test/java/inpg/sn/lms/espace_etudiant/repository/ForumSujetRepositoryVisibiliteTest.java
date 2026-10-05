@@ -125,6 +125,58 @@ class ForumSujetRepositoryVisibiliteTest {
                 .containsExactlyInAnyOrder("Bienvenue à tous", "Sortie de promotion");
     }
 
+    /**
+     * Reproduit le défaut signalé : un formateur voyait l'intégralité du forum,
+     * y compris les sujets de cours et de promotions qui ne sont pas les siens.
+     * {@link ForumSujetRepository#findVisiblesPourFormateur} doit, comme
+     * {@link ForumSujetRepository#findVisiblesPour} pour un étudiant, ne renvoyer
+     * que le périmètre du formateur — jamais un {@code findAll()} déguisé.
+     */
+    @Test
+    @DisplayName("Un formateur avec des cours voit le général, ses cours et les promotions qu'ils desservent")
+    void formateur_avec_cours_voit_son_perimetre() {
+        Promotion maPromotion = promotionRepository.save(promotionBrute("MPG-2026", "Master Pétrole & Gaz"));
+        Promotion autrePromotion = promotionRepository.save(promotionBrute("GEN-2026", "Génie civil"));
+        Cours monCours = coursRepository.save(coursBrut("Thermodynamique"));
+        Cours autreCours = coursRepository.save(coursBrut("Comptabilité"));
+        User auteur = nouvelUtilisateur("camarade1");
+
+        sujetRepository.save(new ForumSujet("Bienvenue à tous", auteur, PorteeForumSujet.ETUDIANT));
+        sujetRepository.save(new ForumSujet("Question sur le TD", monCours, auteur));
+        sujetRepository.save(new ForumSujet("Sortie de promotion", maPromotion, auteur));
+        sujetRepository.save(new ForumSujet("Hors cursus", autreCours, auteur));
+        sujetRepository.save(new ForumSujet("Hors promotion", autrePromotion, auteur));
+
+        List<ForumSujet> visibles = sujetRepository.findVisiblesPourFormateur(
+                List.of(monCours.getId()), List.of(maPromotion.getId()));
+
+        assertThat(visibles).extracting(ForumSujet::getTitre)
+                .containsExactlyInAnyOrder("Bienvenue à tous", "Question sur le TD", "Sortie de promotion");
+    }
+
+    /**
+     * Un formateur dont les cours n'appartiennent à aucun programme (donc à aucune
+     * promotion, cf. {@code PerimetreFormateurService#cohorteIdsDuFormateur}) ne
+     * doit voir que le général et ses cours — jamais lever d'exception JPQL sur la
+     * clause {@code IN ()} vide, et jamais se rabattre sur une vue large.
+     */
+    @Test
+    @DisplayName("Un formateur dont les cours ne desservent aucune promotion ne voit pas les sujets de promotion")
+    void formateur_sans_promotion_ne_voit_pas_les_sujets_de_promotion() {
+        Promotion autrePromotion = promotionRepository.save(promotionBrute("GEN-2026", "Génie civil"));
+        Cours monCours = coursRepository.save(coursBrut("Thermodynamique"));
+        User auteur = nouvelUtilisateur("camarade1");
+
+        sujetRepository.save(new ForumSujet("Bienvenue à tous", auteur, PorteeForumSujet.ETUDIANT));
+        sujetRepository.save(new ForumSujet("Question sur le TD", monCours, auteur));
+        sujetRepository.save(new ForumSujet("Hors promotion", autrePromotion, auteur));
+
+        List<ForumSujet> visibles = sujetRepository.findVisiblesPourFormateur(List.of(monCours.getId()), List.of());
+
+        assertThat(visibles).extracting(ForumSujet::getTitre)
+                .containsExactlyInAnyOrder("Bienvenue à tous", "Question sur le TD");
+    }
+
     private Promotion promotionBrute(String code, String libelle) {
         Promotion promotion = new Promotion();
         promotion.setCode(code);

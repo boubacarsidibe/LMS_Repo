@@ -6,6 +6,7 @@ import { Etudiant } from '../../models/etudiant';
 import { EtudiantService } from '../../services/etudiant.service';
 import { Promotion } from '../../models/promotion';
 import { PromotionService } from '../../services/promotion.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-suivi-etudiants',
@@ -19,6 +20,9 @@ export class SuiviEtudiants implements OnInit {
   promotions: Promotion[] = [];
   recherche: string = '';
   promotionSelectionnee: string = '';
+  statutSelectionne: '' | Etudiant['statut'] = '';
+  chargement = true;
+  erreurChargement = '';
 
   etudiantEnContact: Etudiant | null = null;
   afficherRelanceCollective = false;
@@ -35,16 +39,57 @@ export class SuiviEtudiants implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.etudiantService.getAll().subscribe({ next: list => this.etudiants = list, error: () => this.etudiants = [] });
-    this.promotionService.getAll().subscribe({ next: list => this.promotions = list, error: () => this.promotions = [] });
+    this.chargerDonnees();
+  }
+
+  chargerDonnees(): void {
+    this.chargement = true;
+    this.erreurChargement = '';
+    forkJoin({
+      etudiants: this.etudiantService.getAll(),
+      promotions: this.promotionService.getMesPromotionsFormateur(),
+    }).subscribe({
+      next: ({ etudiants, promotions }) => {
+        this.etudiants = etudiants || [];
+        this.promotions = promotions || [];
+        this.chargement = false;
+      },
+      error: () => {
+        this.etudiants = [];
+        this.promotions = [];
+        this.chargement = false;
+        this.erreurChargement = 'Le suivi des étudiants est indisponible. Réessayez dans un instant.';
+      },
+    });
   }
 
   get etudiantsFiltres(): Etudiant[] {
     return this.etudiants.filter(e => {
       const correspondRecherche = e.nom.toLowerCase().includes(this.recherche.toLowerCase());
       const correspondPromotion = !this.promotionSelectionnee || e.promotion === this.promotionSelectionnee;
-      return correspondRecherche && correspondPromotion;
+      const correspondStatut = !this.statutSelectionne || e.statut === this.statutSelectionne;
+      return correspondRecherche && correspondPromotion && correspondStatut;
     });
+  }
+
+  get progressionMoyenne(): number {
+    if (!this.etudiants.length) return 0;
+    return Math.round(this.etudiants.reduce((total, etudiant) => total + etudiant.progression, 0) / this.etudiants.length);
+  }
+
+  get etudiantsPrioritaires(): number {
+    return this.etudiants.filter(({ statut }) => statut === 'À risque' || statut === 'En retard').length;
+  }
+
+  get engagementMoyen(): number {
+    if (!this.etudiants.length) return 0;
+    return Math.round((this.etudiants.filter(({ statut }) => statut === 'Actif').length / this.etudiants.length) * 100);
+  }
+
+  reinitialiserFiltres(): void {
+    this.recherche = '';
+    this.promotionSelectionnee = '';
+    this.statutSelectionne = '';
   }
 
   voirProfil(id: number) {

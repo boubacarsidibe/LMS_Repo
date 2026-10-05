@@ -2,7 +2,7 @@ import { Component, HostListener, signal } from '@angular/core';
 
 @Component({
   selector: 'app-politique-confidentialite',
-  standalone: false,
+  standalone: true,
   templateUrl: './politique-confidentialite.html',
   styleUrl: './politique-confidentialite.css',
 })

@@ -1,27 +1,33 @@
 <div class="flex flex-col w-full">
 
   <!-- En-tête -->
-  <section class="px-margin-desktop py-stack-lg flex flex-col gap-base relative overflow-hidden">
+  <section class="px-margin-desktop pt-stack-lg">
     <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary-fixed-dim/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-stack-md">
-      <div class="space-y-base">
+    <div class="grid grid-cols-12 items-center gap-gutter">
+      <div class="col-span-12 lg:col-span-7">
         <div class="flex items-center gap-2 text-secondary font-label-sm text-label-sm uppercase tracking-widest">
           <span class="w-8 h-[1px] bg-secondary"></span>
           Espace Enseignant
         </div>
-        <h1 class="font-display text-headline-lg text-on-surface">Gestion des Cours &amp; Supports Pédagogiques</h1>
-        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Publiez, organisez et gérez les ressources de vos promotions en temps réel.</p>
+        <h1 class="font-display text-display text-on-surface">Mes cours</h1>
+        <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Gérez, organisez et partagez vos cours et supports pédagogiques.</p>
       </div>
-      <button routerLink="/espace-etudiant/formateur/creer-cours" class="group flex items-center gap-3 bg-secondary text-on-secondary px-6 py-4 rounded-xl font-label-md text-label-md hover:bg-on-secondary-container transition-all">
-        <span class="material-symbols-outlined">add_circle</span>
-        Créer un nouveau cours / module
-      </button>
+      <div class="relative col-span-12 min-h-36 overflow-hidden rounded-xl bg-primary-container p-5 lg:col-span-5">
+        <div class="absolute bottom-5 left-12 flex items-end gap-2 text-secondary opacity-90"><span class="material-symbols-outlined text-[72px]">menu_book</span><span class="material-symbols-outlined -ml-9 text-[58px] text-primary">menu_book</span><span class="material-symbols-outlined -ml-8 text-[48px] text-secondary">edit</span></div>
+        <blockquote class="absolute right-4 top-4 w-48 rounded-xl bg-surface-container-lowest/90 px-5 py-4 font-body-sm text-body-sm italic leading-5 text-secondary">« Partager le savoir, c’est construire l’avenir. »<span class="mt-4 block h-1 w-7 rounded-full bg-secondary"></span></blockquote>
+      </div>
+    </div>
+    <div class="mt-stack-lg grid grid-cols-1 gap-gutter md:grid-cols-3 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
+      <div class="flex items-center gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3 shadow-sm"><span class="material-symbols-outlined rounded-lg bg-primary-container p-2 text-[22px] text-secondary">menu_book</span><div><p class="font-label-md text-label-md text-on-surface">Cours publiés</p><strong class="block font-headline-sm text-headline-sm text-on-surface">{{ cours.length }}</strong></div></div>
+      <div class="flex items-center gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3 shadow-sm"><span class="material-symbols-outlined rounded-lg bg-secondary-container p-2 text-[22px] text-secondary">groups</span><div><p class="font-label-md text-label-md text-on-surface">Étudiants inscrits</p><strong class="block font-headline-sm text-headline-sm text-on-surface">{{ totalEtudiantsInscrits }}</strong></div></div>
+      <div class="flex items-center gap-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-4 py-3 shadow-sm"><span class="material-symbols-outlined rounded-lg bg-tertiary-container p-2 text-[22px] text-on-tertiary-container">folder_open</span><div><p class="font-label-md text-label-md text-on-surface">Ressources déposées</p><strong class="block font-headline-sm text-headline-sm text-on-surface">{{ mesSupports.length }}</strong></div></div>
+      <a routerLink="/espace-etudiant/formateur/creer-ressource" class="flex items-center justify-center gap-3 self-center rounded-lg bg-secondary px-5 py-3 font-label-md text-label-md text-on-secondary transition-opacity hover:opacity-90"><span class="material-symbols-outlined">add_circle</span>Créer une ressource</a>
     </div>
   </section>
 
   <!-- Recherche & filtres -->
   <section class="px-margin-desktop mb-stack-lg">
-    <div class="bg-surface-container-lowest p-stack-md rounded-2xl shadow-sm flex flex-wrap items-center gap-gutter">
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/40 shadow-sm flex flex-wrap items-center gap-gutter">
       <div class="flex-1 min-w-[300px] relative group">
         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary transition-colors">search</span>
         <input [(ngModel)]="recherche" class="w-full pl-12 pr-4 py-3 bg-surface-container-low rounded-xl border-none focus:ring-2 focus:ring-secondary/20 outline-none font-body-sm text-body-sm transition-all" placeholder="Rechercher une ressource, un code ou un titre..." type="text">
@@ -48,9 +54,18 @@
   <!-- Grille principale -->
   <section class="px-margin-desktop grid grid-cols-12 gap-gutter pb-stack-lg">
 
-    <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-gutter items-start">
+    <div class="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-gutter items-start" [ngClass]="cours.length ? 'lg:col-span-8' : 'lg:col-span-12'">
+      <section *ngIf="!cours.length" class="col-span-full flex min-h-64 flex-col items-center justify-center rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-8 text-center shadow-sm">
+        <span class="material-symbols-outlined text-[56px] text-primary-container">menu_book</span>
+        <h2 class="mt-3 font-headline-sm text-headline-sm text-on-surface">Aucun cours attribué</h2>
+        <p class="mt-2 max-w-md font-body-sm text-body-sm text-on-surface-variant">Le dépôt de contenu sera disponible dès qu’un cours vous sera affecté.</p>
+        <a routerLink="/espace-etudiant/formateur/creer-ressource" class="mt-5 rounded-lg bg-secondary px-5 py-3 font-label-md text-label-md text-on-secondary transition-opacity hover:opacity-90">Créer une ressource</a>
+      </section>
       <div *ngFor="let c of coursFiltres" [id]="'cours-' + c.id"
-           class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden border"
+           role="link" tabindex="0"
+           (click)="ouvrirCours(c)"
+           (keydown.enter)="ouvrirCours(c)"
+           class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden border cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
            [ngClass]="coursMisEnAvantId === c.id
                         ? 'border-secondary ring-2 ring-secondary/30'
                         : 'border-outline-variant/30'">
@@ -62,10 +77,8 @@
           <div class="flex justify-between items-start mb-4">
             <span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full font-label-sm text-label-sm uppercase tracking-tighter">{{ c.code }}</span>
             <div class="flex items-center gap-1">
-              <button (click)="preRemplirDepot(c)" title="Déposer une ressource" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">upload_file</span></button>
-              <button (click)="ouvrirGestionPromotions(c)" title="Gérer les promotions" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">groups</span></button>
-              <button (click)="ouvrirEditionCours(c)" title="Modifier le cours" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">edit</span></button>
-              <button (click)="supprimerCours(c)" [disabled]="suppressionCoursEnCoursId === c.id" title="Supprimer le cours" class="text-outline hover:text-error disabled:opacity-40"><span class="material-symbols-outlined">delete</span></button>
+              <span *ngIf="coursMisEnAvantId === c.id" class="px-2 py-1 bg-secondary-container text-on-secondary-container rounded-full font-label-sm text-label-sm">Sélectionné</span>
+              <button type="button" (click)="$event.stopPropagation(); preRemplirDepot(c)" title="Déposer une ressource" aria-label="Déposer une ressource" class="text-outline hover:text-secondary"><span class="material-symbols-outlined">upload_file</span></button>
             </div>
           </div>
           <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2 group-hover:text-secondary transition-colors">{{ c.titre }}</h3>
@@ -84,7 +97,7 @@
                n'en montre que l'historique. -->
           <button
             type="button"
-            (click)="ouvrirPresence(c)"
+            (click)="$event.stopPropagation(); ouvrirPresence(c)"
             class="mt-auto flex items-center justify-center gap-2 w-full py-2.5 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md leading-none hover:border-secondary hover:text-secondary transition-colors">
             <span class="material-symbols-outlined text-[20px] leading-none">checklist</span>
             Faire l'appel
@@ -106,7 +119,7 @@
         <p *ngIf="chargementSupports" class="font-body-sm text-body-sm text-on-surface-variant">Chargement…</p>
 
         <p *ngIf="!chargementSupports && !mesSupports.length" class="font-body-sm text-body-sm text-on-surface-variant py-4 text-center">
-          Aucune ressource déposée pour l'instant. Utilisez le panneau « Dépôt Rapide » ci-contre.
+          Aucune ressource déposée pour l’instant.
         </p>
 
         <div *ngIf="!chargementSupports && mesSupports.length" class="divide-y divide-outline-variant/20">
@@ -128,13 +141,13 @@
             </span>
 
             <a *ngIf="s.url" [href]="s.url" target="_blank" rel="noopener"
-               class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-secondary transition-colors" title="Ouvrir">
+               class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-secondary transition-colors" title="Ouvrir" aria-label="Ouvrir">
               <span class="material-symbols-outlined text-[20px]">open_in_new</span>
             </a>
 
             <button (click)="supprimerSupport(s)" [disabled]="suppressionEnCoursId === s.id"
                     class="p-2 rounded-full text-on-surface-variant hover:bg-error-container hover:text-error transition-colors disabled:opacity-40"
-                    title="Supprimer">
+                    title="Supprimer" aria-label="Supprimer">
               <span class="material-symbols-outlined text-[20px]">delete</span>
             </button>
           </div>
@@ -143,7 +156,7 @@
     </div>
 
     <!-- Panneau dépôt rapide -->
-    <aside #depotRapide class="col-span-12 lg:col-span-4 space-y-stack-lg">
+    <aside *ngIf="cours.length" #depotRapide class="col-span-12 lg:col-span-4 space-y-stack-lg">
       <div id="depot-rapide" class="bg-surface-container-lowest p-stack-lg rounded-2xl shadow-sm border border-outline-variant/20 sticky top-24">
         <div class="flex items-center gap-3 mb-stack-md">
           <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
@@ -151,65 +164,87 @@
           </div>
           <h3 class="font-headline-sm text-headline-sm text-on-surface">Dépôt Rapide</h3>
         </div>
-        <div class="space-y-stack-md">
-          <div (click)="ouvrirExplorateur()" class="border-2 border-dashed border-outline-variant rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-surface-container-low/50 hover:bg-secondary/5 hover:border-secondary transition-all cursor-pointer group">
-            <span class="material-symbols-outlined text-[48px] text-outline group-hover:text-secondary transition-colors">cloud_upload</span>
-            <div class="text-center">
-              <p class="font-label-md text-label-md text-on-surface">Glissez vos fichiers ici</p>
-              <p class="text-body-sm text-outline">PDF, PPTX ou ZIP (Max. 50MB)</p>
-            </div>
-            <input #fileInput class="hidden" type="file" (change)="onFichierSelectionne($event)">
-          </div>
-        </div>
-        <p *ngIf="fichierSelectionne" class="text-body-sm text-secondary font-medium">
-          Fichier sélectionné : {{ fichierSelectionne.name }}
-        </p>
         <form [formGroup]="depotForm" (ngSubmit)="onSubmit()" class="space-y-stack-md">
+          <section class="space-y-base">
+            <div class="flex items-center gap-2">
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">1</span>
+              <label class="font-label-md text-label-md text-on-surface" for="cours-cible">Cours concerné</label>
+            </div>
+            <select *ngIf="cours.length" id="cours-cible" formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-xl border border-outline-variant/40 outline-none font-body-sm text-body-sm text-on-surface focus:border-secondary">
+              <option value="">Choisissez le cours auquel ajouter cette ressource</option>
+              <option *ngFor="let c of cours" [value]="c.id">{{ c.code }} — {{ c.titre }}</option>
+            </select>
+            <div *ngIf="!cours.length" class="p-3 bg-surface-container-low rounded-xl space-y-2">
+              <p class="font-body-sm text-body-sm text-on-surface-variant">Vous n'avez encore aucun cours attribué : contactez le responsable pédagogique.</p>
+            </div>
+            <p *ngIf="cours.length && depotForm.get('coursCible')?.invalid && depotForm.get('coursCible')?.touched" class="text-body-sm text-error">Choisissez le cours avant de publier.</p>
+          </section>
+
           <div class="space-y-base">
-            <label class="font-label-md text-label-md text-on-surface-variant">Type de ressource</label>
+            <div class="flex items-center gap-2">
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">2</span>
+              <label class="font-label-md text-label-md text-on-surface">Contenu à publier</label>
+            </div>
+            <p class="text-body-sm text-on-surface-variant">Choisissez le format avant d'ajouter le fichier ou le lien.</p>
             <div class="grid grid-cols-1 gap-2">
-              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                <input formControlName="typeRessource" value="pdf" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
+              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer border transition-colors" [class.border-secondary]="typeRessource === 'pdf'" [class.bg-secondary-container]="typeRessource === 'pdf'" [class.border-transparent]="typeRessource !== 'pdf'">
+                <input formControlName="typeRessource" value="pdf" (change)="changerTypeRessource('pdf')" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
                 <span class="material-symbols-outlined text-on-surface-variant">description</span>
-                <span class="font-body-sm text-body-sm text-on-surface">Support de cours (PDF)</span>
+                <span class="font-body-sm text-body-sm text-on-surface">Document pédagogique</span>
               </label>
-              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                <input formControlName="typeRessource" value="lien" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
+              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer border transition-colors" [class.border-secondary]="typeRessource === 'lien'" [class.bg-secondary-container]="typeRessource === 'lien'" [class.border-transparent]="typeRessource !== 'lien'">
+                <input formControlName="typeRessource" value="lien" (change)="changerTypeRessource('lien')" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
                 <span class="material-symbols-outlined text-on-surface-variant">link</span>
                 <span class="font-body-sm text-body-sm text-on-surface">Lien externe</span>
               </label>
-              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
-                <input formControlName="typeRessource" value="video" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
+              <label class="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl cursor-pointer border transition-colors" [class.border-secondary]="typeRessource === 'video'" [class.bg-secondary-container]="typeRessource === 'video'" [class.border-transparent]="typeRessource !== 'video'">
+                <input formControlName="typeRessource" value="video" (change)="changerTypeRessource('video')" class="w-4 h-4 accent-secondary" name="typeRessource" type="radio">
                 <span class="material-symbols-outlined text-on-surface-variant">videocam</span>
-                <span class="font-body-sm text-body-sm text-on-surface">Visioconférence / Vidéo</span>
+                <span class="font-body-sm text-body-sm text-on-surface">Vidéo (MP4)</span>
               </label>
             </div>
           </div>
 
-            <div class="space-y-base">
-                <label class="font-label-md text-label-md text-on-surface-variant">Cours cible</label>
-                <select *ngIf="cours.length" formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
-                <option value="">Sélectionnez un cours...</option>
-                <option *ngFor="let c of cours" [value]="c.id">{{ c.code }} - {{ c.titre }}</option>
-                </select>
-                <!-- Sans cours, un menu vide ressemble a une panne : on explique et on oriente. -->
-                <div *ngIf="!cours.length" class="p-3 bg-surface-container-low rounded-xl space-y-2">
-                <p class="font-body-sm text-body-sm text-on-surface-variant">
-                    Vous n'avez encore aucun cours : impossible d'y rattacher une ressource.
-                </p>
-                <a routerLink="/espace-etudiant/formateur/creer-cours" class="inline-flex items-center gap-1 text-label-sm font-bold text-secondary hover:underline">
-                    Créer mon premier cours
-                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-                </a>
-                </div>
-                <p *ngIf="cours.length && depotForm.get('coursCible')?.invalid && depotForm.get('coursCible')?.touched" class="text-body-sm text-error">
-                Veuillez sélectionner un cours.
-                </p>
+          <section *ngIf="!estDepotLien" class="space-y-base">
+            <div class="flex items-center gap-2">
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">3</span>
+              <span class="font-label-md text-label-md text-on-surface">Fichier à déposer</span>
             </div>
+            <div *ngIf="!fichierSelectionne" (click)="ouvrirExplorateur()" (dragover)="$event.preventDefault(); survolDepot = true" (dragleave)="survolDepot = false" (drop)="onFichierDepose($event)"
+                 class="border-2 border-dashed border-outline-variant rounded-2xl p-6 flex flex-col items-center justify-center gap-2 bg-surface-container-low/50 hover:bg-secondary/5 hover:border-secondary transition-all cursor-pointer group"
+                 [class.border-secondary]="survolDepot" [ngClass]="{ 'bg-secondary/5': survolDepot }" role="button" tabindex="0" (keydown.enter)="ouvrirExplorateur()" aria-label="Choisir un fichier à déposer">
+              <span class="material-symbols-outlined text-[36px] text-outline group-hover:text-secondary transition-colors">cloud_upload</span>
+              <p class="font-label-md text-label-md text-on-surface text-center">Glissez le fichier ici ou cliquez pour le choisir</p>
+              <p class="text-body-sm text-outline text-center">{{ aideFichier }}</p>
+              <input #fileInput class="hidden" type="file" [accept]="acceptFichier" (change)="onFichierSelectionne($event)">
+            </div>
+            <div *ngIf="fichierSelectionne" class="flex items-center gap-3 rounded-xl border border-secondary/30 bg-secondary-container/20 p-3">
+              <span class="material-symbols-outlined text-secondary">description</span>
+              <div class="min-w-0 flex-1"><p class="truncate font-label-md text-label-md text-on-surface">{{ fichierSelectionne.name }}</p><p class="text-body-sm text-on-surface-variant">Prêt à être publié</p></div>
+              <button type="button" (click)="retirerFichier()" class="rounded-lg p-2 text-on-surface-variant hover:bg-surface-container" title="Choisir un autre fichier" aria-label="Choisir un autre fichier"><span class="material-symbols-outlined">close</span></button>
+            </div>
+          </section>
+
+          <div *ngIf="estDepotLien" class="space-y-stack-md rounded-xl border border-secondary/20 bg-secondary-container/10 p-4">
+            <div class="flex items-center gap-2 text-secondary">
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">3</span>
+              <p class="font-label-md text-label-md">Informations du lien externe</p>
+            </div>
+            <div class="space-y-base">
+              <label class="font-label-md text-label-md text-on-surface-variant" for="titre-lien">Titre affiché</label>
+              <input id="titre-lien" formControlName="titreLien" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex. Replay du cours 1" type="text" maxlength="150">
+              <p *ngIf="depotForm.get('titreLien')?.invalid && depotForm.get('titreLien')?.touched" class="text-body-sm text-error">Un titre est requis (150 caractères maximum).</p>
+            </div>
+            <div class="space-y-base">
+              <label class="font-label-md text-label-md text-on-surface-variant" for="url-lien">Adresse du lien</label>
+              <input id="url-lien" formControlName="urlLien" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="https://…" type="url" inputmode="url">
+              <p *ngIf="depotForm.get('urlLien')?.invalid && depotForm.get('urlLien')?.touched" class="text-body-sm text-error">Saisissez une adresse qui commence par http:// ou https://.</p>
+            </div>
+          </div>
 
             <div class="space-y-base">
-                <label class="font-label-md text-label-md text-on-surface-variant">Date de publication</label>
-                <input formControlName="datePublication" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
+                <div class="flex items-center gap-2"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">4</span><label for="depot-date-publication" class="font-label-md text-label-md text-on-surface">Visibilité</label></div>
+                <input id="depot-date-publication" formControlName="datePublication" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
                 <p *ngIf="!publicationDifferee" class="text-body-sm text-on-surface-variant">
                 Publication immédiate. Choisissez une date future pour programmer la mise en ligne.
                 </p>
@@ -219,14 +254,14 @@
                 </p>
             </div>
 
-            <p *ngIf="!fichierSelectionne && depotForm.touched" class="text-body-sm text-error">
+            <p *ngIf="!estDepotLien && !fichierSelectionne && depotForm.touched" class="text-body-sm text-error">
                 Veuillez sélectionner un fichier.
             </p>
 
             <p *ngIf="uploadMessage" class="text-body-sm text-secondary font-medium">{{ uploadMessage }}</p>
             <p *ngIf="uploadError" class="text-body-sm text-error">{{ uploadError }}</p>
             <button [disabled]="isUploading || !cours.length" class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all mt-4 disabled:opacity-60 disabled:cursor-not-allowed" type="submit">
-                {{ isUploading ? 'Publication…' : 'Publier la ressource' }}
+                {{ isUploading ? 'Publication…' : publicationDifferee ? 'Programmer la publication' : 'Publier maintenant' }}
             </button>
             </form>
         </div>
@@ -239,9 +274,7 @@
         <p class="text-body-sm text-on-surface-variant">
           Pensez à structurer vos fichiers par modules pour une meilleure lisibilité côté étudiant.
         </p>
-        <a routerLink="/espace-etudiant/formateur/creer-cours" class="text-label-sm text-secondary hover:underline flex items-center gap-1">
-          Voir la documentation <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
-        </a>
+        <p class="text-label-sm text-on-surface-variant">Le responsable pédagogique attribue vos cours et les étudiants associés.</p>
       </div>
     </aside>
   </section>
@@ -280,24 +313,24 @@
       <h3 class="font-headline-sm text-headline-sm text-on-surface">Modifier le cours</h3>
       <form [formGroup]="editionForm" (ngSubmit)="enregistrerEdition()" class="space-y-base">
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Code du cours</label>
-          <input formControlName="code" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
+          <label for="edition-cours-code" class="font-label-md text-label-md text-on-surface-variant">Code du cours</label>
+          <input id="edition-cours-code" formControlName="code" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Titre</label>
-          <input formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
+          <label for="edition-cours-titre" class="font-label-md text-label-md text-on-surface-variant">Titre</label>
+          <input id="edition-cours-titre" formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Semestre</label>
-          <input formControlName="semestre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
+          <label for="edition-cours-semestre" class="font-label-md text-label-md text-on-surface-variant">Semestre</label>
+          <input id="edition-cours-semestre" formControlName="semestre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Description</label>
-          <textarea formControlName="description" rows="3" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none"></textarea>
+          <label for="edition-cours-description" class="font-label-md text-label-md text-on-surface-variant">Description</label>
+          <textarea id="edition-cours-description" formControlName="description" rows="3" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none"></textarea>
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Volume horaire</label>
-          <input formControlName="volumeHoraire" min="0" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="number">
+          <label for="edition-cours-volume-horaire" class="font-label-md text-label-md text-on-surface-variant">Volume horaire</label>
+          <input id="edition-cours-volume-horaire" formControlName="volumeHoraire" min="0" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="number">
         </div>
         <p *ngIf="editionError" class="text-body-sm text-error">{{ editionError }}</p>
         <div class="flex gap-stack-md pt-2">
@@ -390,13 +423,13 @@
               <button (click)="marquerPresence(e, true)"
                       [class.bg-secondary]="e.present === true" [class.text-on-secondary]="e.present === true"
                       [class.text-outline]="e.present !== true"
-                      class="p-2 rounded-lg hover:bg-secondary/10 transition-colors" title="Présent">
+                      class="p-2 rounded-lg hover:bg-secondary/10 transition-colors" title="Présent" aria-label="Présent">
                 <span class="material-symbols-outlined text-[20px]">check</span>
               </button>
               <button (click)="marquerPresence(e, false)"
                       [class.bg-error]="e.present === false" [class.text-on-error]="e.present === false"
                       [class.text-outline]="e.present !== false"
-                      class="p-2 rounded-lg hover:bg-error/10 transition-colors" title="Absent">
+                      class="p-2 rounded-lg hover:bg-error/10 transition-colors" title="Absent" aria-label="Absent">
                 <span class="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>

@@ -30,6 +30,7 @@ import inpg.sn.lms.auth.service.EtudiantService;
 import inpg.sn.lms.espace_alumni.repository.EnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.repository.ReponseEnqueteSuiviRepository;
 import inpg.sn.lms.espace_alumni.service.AlumniProfilService;
+import inpg.sn.lms.espace_etudiant.entity.Certificat;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
 import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumMentionRepository;
@@ -131,7 +132,8 @@ class PedagogieScolariteImportTest {
                 retourRepository, releveNotesService, releveDelivranceService, candidatRepository,
                 alumniProfilRepository, alumniProfilService, enqueteSuiviRepository, reponseEnqueteSuiviRepository,
                 notificationRepository, rapportQualitePdfService,
-                new inpg.sn.lms.espace_etudiant.service.RelevePdfService(), completionProgrammeService);
+                new inpg.sn.lms.espace_etudiant.service.RelevePdfService(), completionProgrammeService,
+                new inpg.sn.lms.espace_etudiant.service.CertificatPdfService("https://lms.inpg.sn"));
     }
 
     private Etudiant etudiantCree(long id) {
@@ -234,5 +236,93 @@ class PedagogieScolariteImportTest {
         ResponseEntity<?> reponse = controller.creerEtudiant(dto);
 
         assertThat(reponse.getStatusCode().value()).isEqualTo(201);
+    }
+
+    // ===================== Certificat au modèle INPG =====================
+
+    private Etudiant etudiantPourCertificat() {
+        Etudiant etudiant = etudiantCree(5L);
+        when(etudiantRepository.findById(5L)).thenReturn(java.util.Optional.of(etudiant));
+        when(completionProgrammeService.coursNonTermines(etudiant)).thenReturn(java.util.List.of());
+        return etudiant;
+    }
+
+    @Test
+    @DisplayName("La délivrance conserve civilité, naissance, période et code saisis, sans fixer la date de délivrance")
+    void delivrance_conserve_les_champs_du_modele() {
+        etudiantPourCertificat();
+        when(certificatService.save(any(Certificat.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var reponse = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
+                5L, " Comptage du gaz ", null, "Monsieur", java.time.LocalDate.of(1985, 8, 24),
+                java.time.LocalDate.of(2026, 2, 2), java.time.LocalDate.of(2026, 2, 6), " CG1001260206/03 "));
+
+        assertThat(reponse.getStatusCode().value()).isEqualTo(201);
+        org.mockito.ArgumentCaptor<Certificat> saisi = org.mockito.ArgumentCaptor.forClass(Certificat.class);
+        verify(certificatService).save(saisi.capture());
+        Certificat certificat = saisi.getValue();
+        assertThat(certificat.getIntituleFormation()).isEqualTo("Comptage du gaz");
+        assertThat(certificat.getCivilite()).isEqualTo("Monsieur");
+        assertThat(certificat.getDateNaissance()).isEqualTo(java.time.LocalDate.of(1985, 8, 24));
+        assertThat(certificat.getDateDebut()).isEqualTo(java.time.LocalDate.of(2026, 2, 2));
+        assertThat(certificat.getDateFin()).isEqualTo(java.time.LocalDate.of(2026, 2, 6));
+        assertThat(certificat.getCodeCertificat()).isEqualTo("CG1001260206/03");
+        assertThat(certificat.getDateEmission())
+                .as("la date de délivrance n'est jamais saisie : CertificatService la fixe à la création")
+                .isNull();
+    }
+
+    @Test
+    @DisplayName("Une période dont la fin précède le début est refusée, rien n'est enregistré")
+    void delivrance_refuse_une_periode_inversee() {
+        var reponse = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
+                5L, "Comptage du gaz", null, "Monsieur", null,
+                java.time.LocalDate.of(2026, 2, 6), java.time.LocalDate.of(2026, 2, 2), null));
+
+        assertThat(reponse.getStatusCode().value()).isEqualTo(400);
+        verify(etudiantRepository, never()).findById(any());
+        verify(certificatService, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Une civilité inconnue est refusée")
+    void delivrance_refuse_une_civilite_inconnue() {
+        var reponse = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
+                5L, "Comptage du gaz", null, "Seigneur", null, null, null, null));
+
+        assertThat(reponse.getStatusCode().value()).isEqualTo(400);
+        verify(etudiantRepository, never()).findById(any());
+        verify(certificatService, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Un intitulé ou un code plus long que la colonne est refusé en 400 explicite, pas en faux « déjà utilisé »")
+    void delivrance_refuse_les_valeurs_trop_longues() {
+        var intituleLong = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
+                5L, "A".repeat(151), null, "Monsieur", null, null, null, null));
+        var codeLong = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
+                5L, "Comptage du gaz", null, "Monsieur", null, null, null, "B".repeat(61)));
+
+        assertThat(intituleLong.getStatusCode().value()).isEqualTo(400);
+        assertThat(codeLong.getStatusCode().value()).isEqualTo(400);
+        verify(certificatService, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Un certificat identique (même étudiant, formation et période) n'est pas délivré deux fois")
+    void delivrance_refuse_un_doublon() {
+        Etudiant etudiant = etudiantPourCertificat();
+        Certificat existant = new Certificat();
+        existant.setIntituleFormation("Comptage du gaz");
+        existant.setDateDebut(java.time.LocalDate.of(2026, 2, 2));
+        existant.setDateFin(java.time.LocalDate.of(2026, 2, 6));
+        when(certificatService.getByEtudiant(etudiant.getId())).thenReturn(java.util.List.of(existant));
+
+        var reponse = controller.delivrerCertificat(new inpg.sn.lms.espace_etudiant.dto.CertificatCreateRequest(
+                5L, " comptage DU gaz ", null, "Monsieur", null,
+                java.time.LocalDate.of(2026, 2, 2), java.time.LocalDate.of(2026, 2, 6), null));
+
+        assertThat(reponse.getStatusCode().value()).isEqualTo(409);
+        verify(certificatService, never()).save(any());
     }
 }

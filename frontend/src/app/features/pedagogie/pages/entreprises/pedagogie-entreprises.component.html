@@ -174,7 +174,7 @@
             </div>
 
             <!-- §1 -->
-            <h4 class="font-label-md text-label-md text-on-surface pt-2">§1 — Caractéristiques des cibles à former</h4>
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">Caractéristiques des cibles à former</h4>
             <div class="grid sm:grid-cols-2 gap-stack-md">
               <label class="flex flex-col gap-1">
                 <span class="font-label-sm text-label-sm text-on-surface-variant">Département</span>
@@ -234,7 +234,7 @@
             </div>
 
             <!-- §2 -->
-            <h4 class="font-label-md text-label-md text-on-surface pt-2">§2 — Objectifs d’apprentissage</h4>
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">Objectifs d’apprentissage</h4>
             <label class="flex flex-col gap-1">
               <span class="font-label-sm text-label-sm text-on-surface-variant">Objectif général *</span>
               <textarea rows="2" [(ngModel)]="fiche.objectifGeneral" name="objectifGeneral"
@@ -247,12 +247,12 @@
             </label>
 
             <!-- §3 -->
-            <h4 class="font-label-md text-label-md text-on-surface pt-2">§3 — Modalités de test de prérequis</h4>
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">Modalités de test de prérequis</h4>
             <textarea rows="2" [(ngModel)]="fiche.modalitesTestPrerequis" name="modalitesTestPrerequis"
                       class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
 
             <!-- §4 -->
-            <h4 class="font-label-md text-label-md text-on-surface pt-2">§4 — Programme jour par jour *</h4>
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">Programme jour par jour *</h4>
             <div class="space-y-3">
               <div *ngFor="let j of fiche.jours; let i = index" class="bg-surface-container-low rounded-lg border border-outline-variant p-3 space-y-2">
                 <div class="flex items-center justify-between">
@@ -292,23 +292,23 @@
             </div>
 
             <!-- §5 à §9 -->
-            <h4 class="font-label-md text-label-md text-on-surface pt-2">§5 — Formation sur site</h4>
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">Formation sur site</h4>
             <textarea rows="2" [(ngModel)]="fiche.formationSurSite" name="formationSurSite"
                       class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
 
-            <h4 class="font-label-md text-label-md text-on-surface pt-2">§6 — Types d’évaluation</h4>
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">Types d’évaluation</h4>
             <textarea rows="2" [(ngModel)]="fiche.typesEvaluation" name="typesEvaluation"
                       class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
 
-            <h4 class="font-label-md text-label-md text-on-surface pt-2">§7 — Ressources pédagogiques</h4>
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">Ressources pédagogiques</h4>
             <textarea rows="2" [(ngModel)]="fiche.ressourcesPedagogiques" name="ressourcesPedagogiques"
                       class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
 
-            <h4 class="font-label-md text-label-md text-on-surface pt-2">§8 — Bibliographie</h4>
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">Bibliographie</h4>
             <textarea rows="2" [(ngModel)]="fiche.bibliographie" name="bibliographie"
                       class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
 
-            <h4 class="font-label-md text-label-md text-on-surface pt-2">§9 — Profil des formateurs</h4>
+            <h4 class="font-label-md text-label-md text-on-surface pt-2">Profil des formateurs</h4>
             <textarea rows="2" [(ngModel)]="fiche.profilFormateur" name="profilFormateur"
                       class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface"></textarea>
 

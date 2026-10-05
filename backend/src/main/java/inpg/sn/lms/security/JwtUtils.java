@@ -1,19 +1,21 @@
 package inpg.sn.lms.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+
+import inpg.sn.lms.auth.entity.User;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -31,16 +33,17 @@ public class JwtUtils {
     }
 
     // 1. Générer un Token pour l'utilisateur
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-        // Optionnel : Ajouter les rôles dans le Payload du JWT
-        claims.put("roles", userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
+        claims.put("roles", user.getRoles().stream()
+                .map(role -> role.getCode())
                 .collect(Collectors.toList()));
+        claims.put("sessionVersion", user.getSessionVersion());
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userDetails.getUsername())
+                .setId(UUID.randomUUID().toString())
+                .setSubject(user.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(getSigningKey())
@@ -70,14 +73,17 @@ public class JwtUtils {
                 .getBody();
     }
 
-    // 4. Vérifier si le Token est expiré
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
     // 5. Valider le Token avec les détails de l'utilisateur
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    public Boolean validateToken(String token, User user) {
+        try {
+            Claims claims = extractAllClaims(token);
+            Object version = claims.get("sessionVersion");
+            return user != null && user.getUsername().equals(claims.getSubject())
+                    && (version instanceof Integer || version instanceof Long)
+                    && ((Number) version).longValue() == user.getSessionVersion()
+                    && claims.getExpiration() != null && claims.getExpiration().after(new Date());
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
 }

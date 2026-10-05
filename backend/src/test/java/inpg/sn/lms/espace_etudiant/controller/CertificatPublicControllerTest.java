@@ -3,6 +3,7 @@ package inpg.sn.lms.espace_etudiant.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -81,7 +82,37 @@ class CertificatPublicControllerTest {
         assertThat(corps.etudiantNomComplet()).isEqualTo("Aissatou Ndiaye");
         assertThat(corps.verifiable()).isTrue();
         assertThat(corps.valide()).isTrue();
+        assertThat(corps.periode()).as("certificat anterieur au modele INPG : pas de periode").isNull();
+        assertThat(corps.codeCertificat()).isNull();
         assertThat(corps.toString()).doesNotContain("MAT-2026-001");
+    }
+
+    @Test
+    @DisplayName("Certificat au modèle INPG : la période et le code imprimés sont restitués, jamais la date de naissance")
+    void certificatAuModeleRestitueLaPeriodeEtLeCodeMaisPasLaNaissance() {
+        Etudiant etudiant = new Etudiant(null, "Aidara", "Cherif Tidiane", "770000000");
+        Certificat certificat = new Certificat();
+        certificat.setEtudiant(etudiant);
+        certificat.setIntituleFormation("Comptage du gaz");
+        certificat.setFormateurNom("INPG — Direction pédagogique");
+        certificat.setCivilite("Monsieur");
+        certificat.setDateNaissance(LocalDate.of(1990, 3, 14));
+        certificat.setDateDebut(LocalDate.of(2026, 2, 2));
+        certificat.setDateFin(LocalDate.of(2026, 2, 6));
+        certificat.setCodeCertificat("CG1001260206/03");
+        certificat.assurerReferenceEtDate();
+        certificat.setSignature("abc123");
+
+        when(certificatService.findByReference(certificat.getReference())).thenReturn(Optional.of(certificat));
+        when(signatureService.estAlteree(certificat)).thenReturn(false);
+
+        CertificatVerificationDto corps = controller.verifier(certificat.getReference()).getBody();
+
+        assertThat(corps).isNotNull();
+        assertThat(corps.periode()).isEqualTo("Du 02 au 06 février 2026");
+        assertThat(corps.codeCertificat()).isEqualTo("CG1001260206/03");
+        assertThat(corps.toString()).as("la date de naissance est une donnee d'identite : jamais sur la page publique")
+                .doesNotContain("1990-03-14").doesNotContain("14 mars 1990");
     }
 
     @Test

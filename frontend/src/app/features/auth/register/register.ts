@@ -1,8 +1,21 @@
+import { passwordPolicy } from '../../../core/auth/validators/password-policy';
 import { Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth } from '../../../core/auth/services/authService';
+
+/**
+ * confirmPassword n'avait jusqu'ici que Validators.required : un mot de passe
+ * de confirmation différent du premier passait la validation sans le
+ * moindre avertissement (relevé lors d'un audit externe). Validateur de
+ * groupe plutôt que de champ, car il doit lire les deux contrôles à la fois.
+ */
+function motsDePasseIdentiques(groupe: AbstractControl): ValidationErrors | null {
+  const motDePasse = groupe.get('password')?.value;
+  const confirmation = groupe.get('confirmPassword')?.value;
+  return !confirmation || motDePasse === confirmation ? null : { motsDePasseDifferents: true };
+}
 
 @Component({
   selector: 'app-register',
@@ -54,9 +67,18 @@ export class Register {
     nom: ['', Validators.required],
     nomOrganisation: [''],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    password: ['', [Validators.required, passwordPolicy]],
     confirmPassword: ['', Validators.required]
-  });
+  }, { validators: motsDePasseIdentiques });
+
+  /** Lu depuis le template (comparaison des mots de passe) : pas de modificateur d'accès. */
+  tentativeEnvoi = false;
+
+  /** Un champ n'affiche son erreur qu'après une tentative d'envoi, jamais avant (même en quittant le champ). */
+  champEnErreur(nom: string): boolean {
+    const controle = this.registerForm.get(nom);
+    return !!controle && controle.invalid && this.tentativeEnvoi;
+  }
 
   choisirTypeInscription(type: 'CANDIDAT' | 'ECOLE' | 'ENTREPRISE'): void {
     this.typeInscription = type;
@@ -79,7 +101,13 @@ export class Register {
   }
 
   onSubmit(): void {
+    this.tentativeEnvoi = true;
     if (this.registerForm.invalid) {
+      if (this.registerForm.controls['password'].hasError('passwordPolicy')) {
+        this.errorMessage = 'Le mot de passe doit contenir au moins 8 caractères.';
+      } else if (this.registerForm.hasError('motsDePasseDifferents')) {
+        this.errorMessage = 'Les mots de passe ne correspondent pas.';
+      }
       this.registerForm.markAllAsTouched();
       return;
     }

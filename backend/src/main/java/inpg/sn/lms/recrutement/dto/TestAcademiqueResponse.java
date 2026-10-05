@@ -1,6 +1,7 @@
 package inpg.sn.lms.recrutement.dto;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,9 +20,14 @@ public class TestAcademiqueResponse {
     private String nomEpreuve;
     private Float coefficient;
     private Float noteObtenue;
+    private Float noteObtenuePrecedente;
     private LocalDateTime dateEpreuve;
     private String lieuOuLien;
     private Long candidatId;
+    private String candidatNom;
+    private String candidatPrenom;
+    private String numeroDossier;
     private Long sessionCandidatureId;
     private String sessionCandidatureLibelle;
+    private UUID groupeEpreuveId;
 }

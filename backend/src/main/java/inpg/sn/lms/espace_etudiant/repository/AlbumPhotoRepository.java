@@ -22,4 +22,6 @@ public interface AlbumPhotoRepository extends JpaRepository<AlbumPhoto, Long> {
 
     @Query("SELECT a FROM AlbumPhoto a WHERE a.promotion IS NULL ORDER BY a.dateEvenement DESC NULLS LAST, a.id DESC")
     List<AlbumPhoto> findGeneraux();
+
+    boolean existsByTitre(String titre);
 }

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import inpg.sn.lms.auth.entity.Etudiant;
 import inpg.sn.lms.espace_etudiant.dto.CertificatVerificationDto;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
+import inpg.sn.lms.espace_etudiant.service.CertificatPdfService;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.CertificatSignatureService;
 
@@ -52,8 +53,10 @@ public class CertificatPublicController {
                 certificat.getReference(),
                 nomComplet,
                 certificat.getIntituleFormation(),
+                CertificatPdfService.libellePeriode(certificat.getDateDebut(), certificat.getDateFin()),
                 certificat.getDateEmission() == null ? null : certificat.getDateEmission().toString(),
                 certificat.getFormateurNom(),
+                certificat.getCodeCertificat(),
                 verifiable,
                 valide));
     }

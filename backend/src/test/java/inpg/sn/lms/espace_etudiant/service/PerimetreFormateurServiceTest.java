@@ -120,6 +120,29 @@ class PerimetreFormateurServiceTest {
         }
     }
 
+    // ---------- coursIdsDuFormateur ----------
+
+    @Test
+    @DisplayName("Renvoie les identifiants des cours du formateur")
+    void coursIdsDuFormateur_renvoieLesIdentifiants() {
+        Formateur formateur = formateur(10L);
+        Cours coursA = cours(promotion(1L));
+        setId(coursA, 100L);
+        Cours coursB = cours(promotion(2L));
+        setId(coursB, 200L);
+        when(coursService.getByFormateurId(10L)).thenReturn(List.of(coursA, coursB));
+
+        assertThat(perimetreFormateurService.coursIdsDuFormateur(formateur)).containsExactlyInAnyOrder(100L, 200L);
+    }
+
+    @Test
+    @DisplayName("Un formateur sans cours obtient une liste vide de coursIds")
+    void coursIdsDuFormateur_sansCours() {
+        when(coursService.getByFormateurId(anyLong())).thenReturn(List.of());
+
+        assertThat(perimetreFormateurService.coursIdsDuFormateur(formateur(10L))).isEmpty();
+    }
+
     // ---------- cohorteIdsDuFormateur ----------
 
     @Test

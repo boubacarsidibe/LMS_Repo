@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   AppreciationCritere,
@@ -50,6 +51,7 @@ export class EvaluateurDemandesComponent implements OnInit {
   private evaluateurService = inject(EvaluateurAccreditationService);
   private mediaProtege = inject(MediaProtegeService);
   private auth = inject(Auth);
+  private route = inject(ActivatedRoute);
 
   demandes: DemandeAccreditationEvaluateur[] = [];
   toutesDemandes: DemandeAccreditationEvaluateur[] = [];
@@ -94,8 +96,17 @@ export class EvaluateurDemandesComponent implements OnInit {
 
   ngOnInit(): void {
     this.charger();
+    // ?id=… : lien direct depuis le tableau de bord vers un dossier précis, plutôt
+    // que de forcer un second clic dans la liste une fois sur cet écran.
+    const idCible = Number(this.route.snapshot.queryParamMap.get('id')) || null;
     this.evaluateurService.getDemandes(undefined).subscribe({
-      next: (demandes) => (this.toutesDemandes = demandes),
+      next: (demandes) => {
+        this.toutesDemandes = demandes;
+        const cible = idCible ? demandes.find((d) => d.id === idCible) : null;
+        if (cible) {
+          this.selectionner(cible);
+        }
+      },
       error: () => (this.toutesDemandes = []),
     });
   }

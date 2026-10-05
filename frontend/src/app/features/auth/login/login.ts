@@ -26,17 +26,10 @@ export class Login {
 
   errorMessage: string = '';
 
-  email = '';
-
-  showOtpField = false;
-
   loginLoading = false;
 
-  otpLoading = false;
-
-  resendLoading = false;
-
-  resendCountdown = 0;
+  /** Les erreurs de champ ne s'affichent qu'après une tentative de connexion — pas au survol/blur. */
+  tentativeEnvoi = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -49,6 +42,10 @@ export class Login {
     // Redirigé ici par l'intercepteur quand le jeton a expiré en cours de session.
     if (this.route.snapshot.queryParamMap.has('expired')) {
       this.errorMessage = 'Votre session a expiré. Merci de vous reconnecter.';
+    }
+
+    if (this.route.snapshot.queryParamMap.has('passwordChanged')) {
+      this.errorMessage = 'Votre mot de passe a été modifié. Connectez-vous avec votre nouveau mot de passe.';
     }
 
     this.form = this.formBuilder.group({
@@ -64,15 +61,21 @@ export class Login {
       password: [
         '',
         Validators.required
-      ],
-
-      otp: ['']
+      ]
 
     });
 
   }
 
+  /** Un champ n'affiche son erreur qu'après une tentative de connexion, jamais avant. */
+  champEnErreur(nom: string): boolean {
+    const controle = this.form.get(nom);
+    return !!controle && controle.invalid && this.tentativeEnvoi;
+  }
+
   onSubmit(): void {
+    this.tentativeEnvoi = true;
+    this.cdr.markForCheck();
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -81,10 +84,10 @@ export class Login {
 
     this.loginLoading = true;
     this.errorMessage = '';
-    this.email = this.form.value.email;
+    const email = this.form.value.email;
     const password = this.form.value.password;
 
-    this.authService.login(this.email, password)
+    this.authService.login(email, password)
       .pipe(
         tap((response: AuthResponse) => {
           this.authService.setSession(response);
@@ -92,6 +95,8 @@ export class Login {
         catchError((err) => {
           if (err.status === 401) {
             this.errorMessage = 'Adresse e-mail ou mot de passe incorrect.';
+          } else if (err.status === 429) {
+            this.errorMessage = 'Trop de tentatives de connexion. Réessayez dans 15 minutes.';
           } else if (err.status === 0) {
             this.errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
           } else {
@@ -119,84 +124,4 @@ export class Login {
 
   }
 
-  resendOtp(): void {
-    if (this.resendLoading || this.resendCountdown > 0) return;
-
-    this.resendLoading = true;
-    this.errorMessage = '';
-
-    this.authService.getOtp(this.email).subscribe({
-      next: () => {
-        this.resendLoading = false;
-        this.resendCountdown = 60;
-        const interval = setInterval(() => {
-          this.resendCountdown--;
-          this.cdr.markForCheck();
-          if (this.resendCountdown <= 0) {
-            clearInterval(interval);
-          }
-        }, 1000);
-      },
-      error: (err) => {
-        this.resendLoading = false;
-        if (err.status === 0) {
-          this.errorMessage = 'Impossible de contacter le serveur.';
-        } else {
-          this.errorMessage = 'Échec de l\'envoi du code. Veuillez réessayer.';
-        }
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  verifyOtp(): void {
-
-    if (this.form.get('otp')?.invalid) {
-      this.form.get('otp')?.markAsTouched();
-      return;
-    }
-
-    this.errorMessage = '';
-
-    this.otpLoading = true;
-
-    const otp = this.form.value.otp;
-
-    this.authService
-      .verifyOtp(this.email, otp)
-      .pipe(
-        catchError((err) => {
-          if (err.status === 400 || err.status === 401) {
-            this.errorMessage = 'Code OTP invalide ou expiré.';
-          } else if (err.status === 0) {
-            this.errorMessage = 'Impossible de contacter le serveur.';
-          } else {
-            this.errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
-          }
-          console.warn('Erreur OTP :', err.status, err.error?.message || err.message);
-          this.cdr.markForCheck();
-          return EMPTY;
-        }),
-        finalize(() => {
-          this.otpLoading = false;
-          this.cdr.markForCheck();
-        })
-      )
-      .subscribe({
-        next: (isVerified: boolean) => {
-          if (!isVerified) {
-            this.errorMessage = 'Le code OTP est invalide ou a expiré.';
-            return;
-          }
-          // Le token est déjà stocké via setSession() dans onSubmit()
-          this.authService.redirectByRole(this.router);
-        },
-        error: () => {
-          this.errorMessage = 'Une erreur inattendue est survenue lors de la vérification.';
-          this.otpLoading = false;
-          this.cdr.markForCheck();
-        }
-      });
-
-  }
 }

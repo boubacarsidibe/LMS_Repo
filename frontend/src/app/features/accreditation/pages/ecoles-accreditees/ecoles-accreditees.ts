@@ -3,19 +3,42 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
+import { Auth } from '../../../../core/auth/services/authService';
 import { EcoleAccreditee, LIBELLES_NIVEAU_PROGRAMME } from '../../models/accreditation.models';
 import { AccreditationService } from '../../services/accreditation.service';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 /**
  * Liste des écoles accréditées (TDR §F : « processus transparent »).
  * Réservée aux comptes connectés (`authGuard`) — décision produit du
  * 2026-08-25, voir `LOG_BLOQUANT.md`.
+ *
+ * <p>Accessible depuis l'accueil public à des comptes de n'importe quel rôle
+ * (école, entreprise, étudiant, candidat…) : pas de layout de rôle unique à
+ * utiliser ici. Portait donc jusqu'ici sa propre page nue, sans le moindre
+ * moyen de revenir à son espace — un utilisateur connecté qui cliquait ce
+ * lien depuis l'accueil se retrouvait dans une impasse de navigation. Le
+ * bandeau ci-dessous (logo + retour à l'espace du rôle courant) comble ce
+ * trou sans dupliquer la barre de navigation propre à chaque rôle.
  */
 @Component({
   selector: 'app-ecoles-accreditees',
   standalone: true,
-  imports: [CommonModule, RouterLink, UiSpinnerComponent, UiEmptyStateComponent],
+  imports: [CommonModule, RouterLink, UiSpinnerComponent, UiEmptyStateComponent, LogoInpgComponent],
   template: `
+    <header class="bg-white/95 backdrop-blur-sm border-b border-outline-variant/40 sticky top-0 z-50">
+      <div class="flex justify-between items-center w-full max-w-container-max mx-auto px-4 md:px-margin-desktop h-[72px]">
+        <a routerLink="/accueil" class="no-underline hover:opacity-80 transition-opacity" aria-label="INPG — accueil">
+          <app-logo-inpg hauteur="h-10"></app-logo-inpg>
+        </a>
+        <a [routerLink]="retourUrl"
+           class="flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:border-secondary hover:text-secondary transition-colors no-underline">
+          <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+          Retour à mon espace
+        </a>
+      </div>
+    </header>
+
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header>
         <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
@@ -80,10 +103,15 @@ import { AccreditationService } from '../../services/accreditation.service';
 })
 export class EcolesAccrediteesComponent implements OnInit {
   private accreditationService = inject(AccreditationService);
+  private auth = inject(Auth);
 
   ecoles: EcoleAccreditee[] = [];
   chargement = true;
   libellesNiveau = LIBELLES_NIVEAU_PROGRAMME;
+
+  get retourUrl(): string {
+    return this.auth.getHomeUrl() ?? '/accueil';
+  }
 
   ngOnInit(): void {
     this.accreditationService.getEcolesAccreditees().subscribe({

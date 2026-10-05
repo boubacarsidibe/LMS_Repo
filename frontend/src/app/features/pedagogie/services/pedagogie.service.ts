@@ -68,6 +68,11 @@ export class PedagogieService {
     return this.http.get<FormateurDetail>(`${this.api}/formateurs/${id}`);
   }
 
+  /** Rapport de l'effectif formateurs (PDF) : coordonnées, cours affectés, formateurs sans cours signalés. */
+  telechargerRapportFormateurs(): Observable<Blob> {
+    return this.http.get(`${this.api}/formateurs/rapport/pdf`, { responseType: 'blob' });
+  }
+
   /**
    * Refusée (409) s'il est seul titulaire d'un cours, s'il a un dossier de
    * candidature ou un historique alumni, ou s'il a publié dans le forum.
@@ -163,8 +168,13 @@ export class PedagogieService {
     return this.http.get<Certificat[]>(`${this.api}/certificats`);
   }
 
-  delivrerCertificat(etudiantId: number, intituleFormation: string, cohorteId: number | null): Observable<Certificat> {
-    return this.http.post<Certificat>(`${this.api}/certificats`, { etudiantId, intituleFormation, cohorteId });
+  delivrerCertificat(demande: DemandeCertificat): Observable<Certificat> {
+    return this.http.post<Certificat>(`${this.api}/certificats`, demande);
+  }
+
+  /** PDF au modèle INPG (Blob : nom de fichier posé par le serveur). */
+  telechargerCertificatPdf(id: number): Observable<Blob> {
+    return this.http.get(`${this.api}/certificats/${id}/pdf`, { responseType: 'blob' });
   }
 
   // ===================== Qualité et rappels =====================
@@ -385,6 +395,18 @@ export interface ResultatRappel {
   echecs: string[];
 }
 
+/** Champs du certificat au modèle INPG ; les dates sont au format ISO (AAAA-MM-JJ). */
+export interface DemandeCertificat {
+  etudiantId: number;
+  intituleFormation: string;
+  cohorteId: number | null;
+  civilite: string | null;
+  dateNaissance: string | null;
+  dateDebut: string | null;
+  dateFin: string | null;
+  code: string | null;
+}
+
 export interface Certificat {
   id: number;
   reference: string;
@@ -395,6 +417,11 @@ export interface Certificat {
   promotionLibelle: string | null;
   dateEmission: string | null;
   formateurNom: string | null;
+  civilite: string | null;
+  dateNaissance: string | null;
+  dateDebut: string | null;
+  dateFin: string | null;
+  codeCertificat: string | null;
 }
 
 export interface LigneQualite {

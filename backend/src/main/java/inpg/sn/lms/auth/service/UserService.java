@@ -17,6 +17,7 @@ import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -51,9 +52,11 @@ public class UserService implements UserDetailsService {
             throw new IllegalArgumentException("Le nom d'utilisateur, l'e-mail et le mot de passe sont requis.");
         }
 
-        String email = userDto.getEmail().trim().toLowerCase();
+        PasswordPolicy.exigerMotDePasseRobuste(userDto.getPassword());
+
+        String email = userDto.getEmail().trim().toLowerCase(Locale.ROOT);
         if (userRepository.findByEmail(email) != null) {
-            throw new RuntimeException("Cet email est déjà utilisé.");
+            throw new IllegalArgumentException("Cet e-mail est déjà utilisé.");
         }
         String baseUsername = userDto.getUsername().trim();
         String username = baseUsername;
@@ -117,7 +120,7 @@ public class UserService implements UserDetailsService {
     }
 
     public User findByEmail(String email) {
-        return userRepository.findByEmail(email);
+        return email == null ? null : userRepository.findByEmail(email.trim().toLowerCase(Locale.ROOT));
     }
 
     public boolean hasRole(User user, String roleCode) {
@@ -141,13 +144,27 @@ public class UserService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
     }
 
-    public User ChangePassword(String email, String newPassword) {
-        User user = userRepository.findByEmail(email);
+    @Transactional
+    public User changePassword(String email, String newPassword) {
+        PasswordPolicy.exigerMotDePasseRobuste(newPassword);
+        User user = findByEmail(email);
         if (user != null) {
-            user.setPassword(passwordEncoder.encode(newPassword));
-            return userRepository.save(user);
+            userRepository.changerMotDePasse(user.getId(), passwordEncoder.encode(newPassword));
+            return userRepository.findById(user.getId()).orElse(null);
         }
         return null;
+    }
+
+    /**
+     * Révoque tous les JWT déjà émis pour l'utilisateur. Le jeton embarque cette
+     * version et {@code JwtUtils} la compare à la valeur persistée à chaque
+     * requête authentifiée.
+     */
+    @Transactional
+    public User invaliderSessions(User user) {
+        // Mise à jour atomique : ne jamais réenregistrer un hash issu d'une requête ancienne.
+        userRepository.invaliderSessions(user.getId());
+        return userRepository.findById(user.getId()).orElse(null);
     }
 
     public User save(User user) {

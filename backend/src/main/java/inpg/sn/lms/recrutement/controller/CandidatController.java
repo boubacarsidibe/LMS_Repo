@@ -24,6 +24,7 @@ import inpg.sn.lms.recrutement.entity.ReponseCritereCandidature;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
 import inpg.sn.lms.recrutement.enums.EnumEtapeQms;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
+import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.repository.BrouillonCandidatureRepository;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
@@ -50,6 +51,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -110,6 +113,13 @@ public class CandidatController {
      * de pièce d'identité tient largement dans 5 Mo.
      */
     private static final long TAILLE_MAX_PIECE_OCTETS = 5L * 1024 * 1024;
+
+    /**
+     * Le formulaire candidat plafonne à 3 années récentes, chacune pouvant compter jusqu'à
+     * 3 bulletins (ex: trimestres) : 9 est donc la borne réelle côté serveur, pas un chiffre
+     * arbitraire. Jamais un nombre illimité.
+     */
+    private static final int MAX_RELEVES_PAR_CANDIDATURE = 9;
 
     private final CandidatureService candidatureService;
     private final CandidatRepository candidatRepository;
@@ -198,7 +208,18 @@ public class CandidatController {
      * et la Candidature en statut SOUMIS directement.
      * Un visiteur ne peut avoir qu'une seule candidature active.
      */
+    /*
+     * @Transactional est indispensable ici, pas décoratif : avec open-in-view=false, la
+     * branche « redépôt » plus bas travaille sur une Candidature chargée par le dépôt puis
+     * détachée, et enregistrerReponsesCriteres() touche sa collection paresseuse
+     * reponsesCriteres. Sans session ouverte, cet accès levait une
+     * LazyInitializationException remontée en HTTP 500 : tout candidat possédant déjà un
+     * dossier actif se voyait refuser un nouveau dépôt. Le défaut ne se voyait pas sur un
+     * dossier REJETE, qui emprunte la branche « création » et construit une entité neuve
+     * dont la collection est déjà initialisée.
+     */
     @PostMapping("/candidature/soumettre")
+    @Transactional
     public ResponseEntity<?> soumettreCandidature(
             @RequestBody CandidatureRequest request,
             Authentication authentication) {
@@ -230,7 +251,8 @@ public class CandidatController {
                 .map(c -> candidatureRepository.findByCandidatId(c.getId()))
                 .orElseGet(List::of)
                 .stream()
-                .filter(c -> c.getStatut() != EnumStatutCandidature.REJETE)
+                .filter(c -> c.getStatut() != EnumStatutCandidature.DOSSIER_REJETE
+                        && c.getStatut() != EnumStatutCandidature.NON_ADMIS)
                 .filter(c -> !STATUTS_ENCORE_MODIFIABLES.contains(c.getStatut()))
                 .findFirst();
         if (dossierVerrouille.isPresent()) {
@@ -256,7 +278,8 @@ public class CandidatController {
         // 4. Vérifier si une candidature existe déjà (non rejetée)
         List<Candidature> existantes = candidatureRepository.findByCandidatId(candidat.getId());
         Optional<Candidature> active = existantes.stream()
-                .filter(c -> c.getStatut() != EnumStatutCandidature.REJETE)
+                .filter(c -> c.getStatut() != EnumStatutCandidature.DOSSIER_REJETE
+                        && c.getStatut() != EnumStatutCandidature.NON_ADMIS)
                 .findFirst();
 
         if (active.isPresent()) {
@@ -431,7 +454,8 @@ public class CandidatController {
         if (!candidature.getCandidat().getId().equals(candidat.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        if (candidature.getStatut() != EnumStatutCandidature.ADMIS3) {
+        if (candidature.getStatut() != EnumStatutCandidature.ADMIS
+                && candidature.getStatut() != EnumStatutCandidature.INSCRIPTION_FINALISEE) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(("Lettre disponible uniquement pour une candidature admise.").getBytes(StandardCharsets.UTF_8));
         }
@@ -450,10 +474,13 @@ public class CandidatController {
      * Téléverser une pièce justificative pour une candidature
      */
     @PostMapping("/candidature/{candidatureId}/pieces")
+    @Transactional
     public ResponseEntity<?> televerserPiece(
             @PathVariable Long candidatureId,
             @RequestParam("file") MultipartFile file,
             @RequestParam("typeDocument") String typeDocumentStr,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "moyenneDeclaree", required = false) Double moyenneDeclaree,
             Authentication authentication) {
 
         // Vérifier que le candidat est bien le propriétaire
@@ -468,6 +495,16 @@ public class CandidatController {
             return ResponseEntity.status(403).body(java.util.Map.of("message", "Accès non autorisé"));
         }
 
+        // Une pièce est figée dès que le dossier a atteint une décision de sélection.
+        // Un éventuel complément suit alors une réouverture tracée par le service admission,
+        // plutôt que de modifier silencieusement le dossier examiné.
+        if (candidature.getStatut() != EnumStatutCandidature.PRESELECTIONNE
+                && candidature.getStatut() != EnumStatutCandidature.PAIEMENT_EN_ATTENTE) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(
+                    "message", "Vous ne pouvez plus ajouter de document à cette étape du dossier. "
+                            + "Contactez le service admission si un complément est nécessaire."));
+        }
+
         // Valider le type de document
         EnumTypeDocument typeDocument;
         try {
@@ -475,6 +512,17 @@ public class CandidatController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(java.util.Map.of("message", "Type de document invalide: " + typeDocumentStr));
+        }
+
+        // Un diplôme/certificat s'ajoute en nombre libre : rien d'autre que cette
+        // description ne permet ensuite de savoir à quoi il correspond.
+        if (typeDocument == EnumTypeDocument.DIPLOME && (description == null || description.isBlank())) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("message", "Une description est requise pour un diplôme ou certificat."));
+        }
+        if (description != null && description.length() > 500) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("message", "La description ne doit pas dépasser 500 caractères."));
         }
 
         // Seule la taille est contrôlée ici : c'est la seule règle que
@@ -488,6 +536,22 @@ public class CandidatController {
                     .body(java.util.Map.of("message", "Le fichier dépasse la taille maximale autorisée (5 Mo)."));
         }
 
+        // Un releve de notes n'est plus accepte sans limite : au plus 3 (une, deux ou
+        // trois annees recentes), verifie cote serveur pour ne pas dependre du seul
+        // formulaire candidat.
+        if (typeDocument == EnumTypeDocument.RELEVE_NOTES) {
+            long dejaDeposes = pieceJustificativeRepository.countByCandidatureIdAndTypeDocument(
+                    candidatureId, EnumTypeDocument.RELEVE_NOTES);
+            if (dejaDeposes >= MAX_RELEVES_PAR_CANDIDATURE) {
+                return ResponseEntity.badRequest().body(java.util.Map.of(
+                        "message", "Au plus " + MAX_RELEVES_PAR_CANDIDATURE + " relevés de notes peuvent être déposés."));
+            }
+            if (moyenneDeclaree != null && (moyenneDeclaree < 0 || moyenneDeclaree > 20)) {
+                return ResponseEntity.badRequest()
+                        .body(java.util.Map.of("message", "La moyenne déclarée doit être comprise entre 0 et 20."));
+            }
+        }
+
         // Enregistrer le fichier (extension, type MIME et chemin de destination validés)
         FichierStocke fichier = fichierStockeService.enregistrerFichier(file);
 
@@ -495,8 +559,11 @@ public class CandidatController {
         PieceJustificative piece = new PieceJustificative();
         piece.setTypeDocument(typeDocument);
         piece.setEstConforme(false);
+        piece.setStatutVerification(EnumStatutVerificationPiece.A_VERIFIER);
+        piece.setDescription(description != null && !description.isBlank() ? description.trim() : null);
         piece.setFichierStocke(fichier);
         piece.setCandidature(candidature);
+        piece.setMoyenneDeclaree(typeDocument == EnumTypeDocument.RELEVE_NOTES ? moyenneDeclaree : null);
         pieceJustificativeRepository.save(piece);
 
         return ResponseEntity.ok(java.util.Map.of(
@@ -598,7 +665,8 @@ public class CandidatController {
         }
 
         Candidature candidature = candidatureRepository.findByCandidatId(candidat.getId()).stream()
-                .filter(c -> c.getStatut() != EnumStatutCandidature.REJETE)
+                .filter(c -> c.getStatut() != EnumStatutCandidature.DOSSIER_REJETE
+                        && c.getStatut() != EnumStatutCandidature.NON_ADMIS)
                 .findFirst()
                 .orElse(null);
 

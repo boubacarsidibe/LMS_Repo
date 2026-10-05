@@ -4,13 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RecrutementService, CandidatureResponse, PaiementResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { CandidatNavbarComponent } from '../../../../shared/components/candidat-navbar/candidat-navbar.component';
+import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { downloadBlob } from '../../../../shared/utils/download-file';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 @Component({
   selector: 'app-paiement',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, CandidatNavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
   templateUrl: './paiement.component.html'
 })
 export class PaiementComponent implements OnInit {
@@ -19,17 +20,14 @@ export class PaiementComponent implements OnInit {
   paiement: PaiementResponse | null = null;
   loading = false;
   telechargementRecu = false;
+  actualisationEnCours = false;
   currentDate = '';
+  /** Bascule vers le formulaire même si un paiement EN_ATTENTE/ECHEC existe déjà — permet de changer de moyen. */
+  modifierMethode = false;
 
   // Méthode de paiement
   paymentMethod = 'mobile_money';
   selectedOperator = 'wave';
-  phonePrefix = '+221';
-  phoneNumber = '';
-  cardHolder = '';
-  cardNumber = '';
-  cardExpiry = '';
-  cardCvc = '';
 
   mobileOperators = [
     { code: 'wave', name: 'Wave', logo: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCu5Fx6MGPwXW1O6nXZUIge8lJW5ETKGegBrzOxfjTArVgilG1l6cVQzr73utkVc2reBbvFe1yzClqxmu0utfk8CrZd0HvguvXgRa1U8Yr5CArrl1dlgQoJHVOv0Om_iY78aycE8tjPh__lfbRhx93Z7JeYR8r9vmBWdbTsqgbQUgJlDVlPT30k1dKoma5woDthMs9XhYRylfBt94rrYtZOfPZlL5PWSyMQnhgPez76zbbE9aoieDMN' },
@@ -41,11 +39,24 @@ export class PaiementComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private recrutementService: RecrutementService,
-    private router: Router
+    private router: Router,
+    private notifications: NotificationService
   ) { }
 
   get paiementReussi(): boolean {
-    return this.paiement?.statut === 'SUCCES' || this.paiement?.statut === 'CONFIRME';
+    // Seul SUCCES existe côté serveur (EnumStatutPaiement : EN_ATTENTE, SUCCES, ECHEC) ;
+    // le 'CONFIRME' qui figurait ici ne correspondait à aucune valeur émise.
+    return this.paiement?.statut === 'SUCCES';
+  }
+
+  /** Tentative enregistrée côté serveur, en attente de confirmation par l'admission. */
+  get paiementEnAttente(): boolean {
+    return this.paiement?.statut === 'EN_ATTENTE';
+  }
+
+  /** Tentative précédente soldée en échec — un nouveau règlement reste possible. */
+  get paiementEchoue(): boolean {
+    return this.paiement?.statut === 'ECHEC';
   }
 
   get nomComplet(): string {
@@ -67,7 +78,6 @@ export class PaiementComponent implements OnInit {
 
   /** Libellé lisible du moyen de paiement actuellement sélectionné dans le formulaire. */
   private get methodeSelectionnee(): string {
-    if (this.paymentMethod === 'card') return 'Carte Bancaire';
     if (this.paymentMethod === 'transfer') return 'Virement Bancaire';
     return this.mobileOperators.find(op => op.code === this.selectedOperator)?.name || 'Mobile Money';
   }
@@ -84,12 +94,38 @@ export class PaiementComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       this.candidatureId = params['candidatureId'] ? +params['candidatureId'] : null;
       if (this.candidatureId) {
-        this.recrutementService.getCandidature(this.candidatureId).subscribe({
-          next: (data) => {
-            this.candidature = data;
-            this.paiement = data.paiement;
-          }
-        });
+        this.chargerCandidature();
+      }
+    });
+  }
+
+  private chargerCandidature(): void {
+    if (!this.candidatureId) return;
+    this.recrutementService.getCandidature(this.candidatureId).subscribe({
+      next: (data) => {
+        this.candidature = data;
+        this.paiement = data.paiement;
+      }
+    });
+  }
+
+  /** Revient au formulaire pour régler avec un autre moyen — une tentative EN_ATTENTE/ECHEC reste rejouable côté serveur. */
+  essayerAutreMoyen(): void {
+    this.modifierMethode = true;
+  }
+
+  /** Recharge le statut depuis le serveur — l'admission peut avoir confirmé le règlement hors ligne entre-temps. */
+  actualiserStatut(): void {
+    if (!this.candidatureId || this.actualisationEnCours) return;
+    this.actualisationEnCours = true;
+    this.recrutementService.getCandidature(this.candidatureId).subscribe({
+      next: (data) => {
+        this.candidature = data;
+        this.paiement = data.paiement;
+        this.actualisationEnCours = false;
+      },
+      error: () => {
+        this.actualisationEnCours = false;
       }
     });
   }
@@ -121,11 +157,12 @@ export class PaiementComponent implements OnInit {
       next: (response) => {
         this.paiement = response;
         this.loading = false;
+        this.modifierMethode = false;
         this.updateCurrentDate();
-        // La vue de confirmation s'affichera automatiquement via paiementReussi
+        // La vue de confirmation ou d'attente s'affichera automatiquement selon le statut renvoyé.
       },
       error: (err) => {
-        alert('Erreur de paiement: ' + (err.error?.message || 'Erreur inconnue'));
+        this.notifications.erreur('Erreur de paiement: ' + (err.error?.message || 'Erreur inconnue'));
         this.loading = false;
       }
     });
@@ -143,7 +180,7 @@ export class PaiementComponent implements OnInit {
       },
       error: () => {
         this.telechargementRecu = false;
-        alert('Échec du téléchargement du reçu.');
+        this.notifications.erreur('Échec du téléchargement du reçu.');
       }
     });
   }

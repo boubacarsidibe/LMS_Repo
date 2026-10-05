@@ -1,3 +1,4 @@
+import { passwordPolicy } from '../../../../core/auth/validators/password-policy';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -29,7 +30,7 @@ export class EvaluateurMonProfilComponent {
 
   readonly form: FormGroup = this.fb.group({
     motDePasseActuel: ['', [Validators.required]],
-    nouveauMotDePasse: ['', [Validators.required, Validators.minLength(6)]],
+    nouveauMotDePasse: ['', [Validators.required, passwordPolicy]],
     confirmation: ['', [Validators.required]],
   });
 
@@ -42,6 +43,9 @@ export class EvaluateurMonProfilComponent {
     this.messageSucces = '';
     this.messageErreur = '';
     if (this.form.invalid) {
+      if (this.form.get('nouveauMotDePasse')?.hasError('passwordPolicy')) {
+        this.messageErreur = 'Le mot de passe doit contenir au moins 8 caractères.';
+      }
       this.form.markAllAsTouched();
       return;
     }

@@ -1,10 +1,14 @@
 package inpg.sn.lms.recrutement.controller;
 
+import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.UUID;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +23,8 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,8 +34,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.auth.entity.Etudiant;
@@ -50,6 +63,7 @@ import inpg.sn.lms.recrutement.dto.EtapeDossierResponse;
 import inpg.sn.lms.recrutement.dto.FiltreCriteresResponse;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.dto.PieceJustificativeResponse;
+import inpg.sn.lms.recrutement.dto.ModifierConformitePieceRequest;
 import inpg.sn.lms.recrutement.dto.RapportRecrutementDto;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureRequest;
 import inpg.sn.lms.recrutement.dto.SessionCandidatureResponse;
@@ -61,6 +75,8 @@ import inpg.sn.lms.recrutement.entity.NotificationTemplate;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.enums.EnumEtapeQms;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
+import inpg.sn.lms.recrutement.enums.EnumStatutPaiement;
+import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 import inpg.sn.lms.recrutement.enums.EnumTypeNotification;
 import inpg.sn.lms.recrutement.repository.PieceJustificativeRepository;
@@ -110,6 +126,7 @@ public class AdminRecrutementController {
     private final NotificationTemplateService notificationTemplateService;
     private final JournalEtapeService journalEtapeService;
     private final RapportRecrutementPdfService rapportRecrutementPdfService;
+    private final PasswordEncoder passwordEncoder;
 
     public AdminRecrutementController(SessionCandidatureService sessionService,
             CandidatureService candidatureService,
@@ -127,7 +144,8 @@ public class AdminRecrutementController {
             CandidatRepository candidatRepository,
             NotificationTemplateService notificationTemplateService,
             JournalEtapeService journalEtapeService,
-            RapportRecrutementPdfService rapportRecrutementPdfService) {
+            RapportRecrutementPdfService rapportRecrutementPdfService,
+            PasswordEncoder passwordEncoder) {
         this.journalEtapeService = journalEtapeService;
         this.sessionService = sessionService;
         this.candidatureService = candidatureService;
@@ -145,6 +163,7 @@ public class AdminRecrutementController {
         this.candidatRepository = candidatRepository;
         this.notificationTemplateService = notificationTemplateService;
         this.rapportRecrutementPdfService = rapportRecrutementPdfService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     private ResponseEntity<byte[]> telechargerXlsx(byte[] contenu, String nomFichier) {
@@ -305,6 +324,13 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(candidatureService.getAllCandidatures());
     }
 
+    @GetMapping("/candidatures/page")
+    public ResponseEntity<Page<CandidatureResponse>> getCandidaturesPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int taille) {
+        return ResponseEntity.ok(candidatureService.getCandidaturesPage(page, taille));
+    }
+
     @GetMapping("/candidatures/{id}")
     public ResponseEntity<CandidatureResponse> getCandidature(@PathVariable Long id) {
         return ResponseEntity.ok(candidatureService.getCandidatureById(id));
@@ -365,8 +391,14 @@ public class AdminRecrutementController {
         List<String> categories = List.of("Soumis", "En présélection", "Admis test", "Admis entretien",
                 "Admis final", "Rejeté");
         List<EnumStatutCandidature> statutsCategories = List.of(EnumStatutCandidature.SOUMIS,
-                EnumStatutCandidature.EN_COURS_DE_PRESELECTION, EnumStatutCandidature.ADMIS1,
-                EnumStatutCandidature.ADMIS2, EnumStatutCandidature.ADMIS3, EnumStatutCandidature.REJETE);
+                EnumStatutCandidature.INCOMPLET, EnumStatutCandidature.DOSSIER_VALIDE,
+                EnumStatutCandidature.PRESELECTIONNE, EnumStatutCandidature.PAIEMENT_EN_ATTENTE,
+                EnumStatutCandidature.PAIEMENT_CONFIRME, EnumStatutCandidature.CONVOQUE_TEST,
+                EnumStatutCandidature.TEST_REUSSI, EnumStatutCandidature.TEST_ECHOUE,
+                EnumStatutCandidature.ABSENT_TEST, EnumStatutCandidature.CONVOQUE_ENTRETIEN,
+                EnumStatutCandidature.ENTRETIEN_EFFECTUE, EnumStatutCandidature.ABSENT_ENTRETIEN,
+                EnumStatutCandidature.ADMIS, EnumStatutCandidature.LISTE_ATTENTE,
+                EnumStatutCandidature.NON_ADMIS, EnumStatutCandidature.DESISTEMENT);
         List<Double> valeurs = statutsCategories.stream()
                 .map(s -> (double) candidatures.stream().filter(c -> c.getStatut() == s).count())
                 .toList();
@@ -483,11 +515,17 @@ public class AdminRecrutementController {
         return user != null ? user : userRepository.findByEmail(authentication.getName());
     }
 
+    private void verifierMotDePasseConfirmation(Authentication authentication, String motDePasse) {
+        User agent = agentCourant(authentication);
+        if (agent == null || motDePasse == null || !passwordEncoder.matches(motDePasse, agent.getPassword())) {
+            throw new BusinessException("Mot de passe de confirmation incorrect.");
+        }
+    }
     @PutMapping("/candidatures/{id}/valider-preselection")
     public ResponseEntity<CandidatureResponse> validerPreselection(@PathVariable Long id,
             Authentication authentication) {
         CandidatureResponse response = candidatureService.changerStatut(id,
-                EnumStatutCandidature.EN_COURS_DE_PRESELECTION, null);
+                EnumStatutCandidature.PRESELECTIONNE, null);
         candidatureService.journaliser(id, EnumEtapeQms.FILTRE_INITIAL, response.getStatut(),
                 agentCourant(authentication), "Dossier validé et passé en présélection.");
         if (response.getCandidatEmail() != null) {
@@ -507,11 +545,18 @@ public class AdminRecrutementController {
         // reçoit un message de résultat de parcours plutôt qu'un simple rejet de dossier
         // administratif (TDR 3.1.2/3.1.3 : notification de non-admission après évaluation).
         EnumStatutCandidature statutAvant = candidatureService.getCandidatureById(id).getStatut();
-        boolean apresEvaluation = statutAvant == EnumStatutCandidature.ADMIS1
-                || statutAvant == EnumStatutCandidature.ADMIS2;
+        boolean apresEvaluation = statutAvant == EnumStatutCandidature.CONVOQUE_TEST
+                || statutAvant == EnumStatutCandidature.TEST_REUSSI
+                || statutAvant == EnumStatutCandidature.TEST_ECHOUE
+                || statutAvant == EnumStatutCandidature.CONVOQUE_ENTRETIEN
+                || statutAvant == EnumStatutCandidature.ENTRETIEN_EFFECTUE
+                || statutAvant == EnumStatutCandidature.ABSENT_TEST
+                || statutAvant == EnumStatutCandidature.ABSENT_ENTRETIEN;
 
-        CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.REJETE,
-                motif);
+        EnumStatutCandidature statutRefus = apresEvaluation
+                ? EnumStatutCandidature.NON_ADMIS
+                : EnumStatutCandidature.DOSSIER_REJETE;
+        CandidatureResponse response = candidatureService.changerStatut(id, statutRefus, motif);
         candidatureService.journaliser(id, EnumEtapeQms.SELECTION, response.getStatut(),
                 agentCourant(authentication), "Dossier rejeté. Motif : " + motif);
         if (response.getCandidatEmail() != null) {
@@ -531,7 +576,16 @@ public class AdminRecrutementController {
     @PutMapping("/candidatures/{id}/admettre-test")
     public ResponseEntity<CandidatureResponse> admettreTestAcademique(@PathVariable Long id,
             Authentication authentication) {
-        CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS1,
+        // TDR : les frais de dossier doivent être réglés avant le passage du test — un
+        // candidat qui n'a pas payé ne doit pas pouvoir être convoqué.
+        CandidatureResponse existante = candidatureService.getCandidatureById(id);
+        PaiementResponse paiement = existante.getPaiement();
+        if (paiement == null || paiement.getStatut() != EnumStatutPaiement.SUCCES) {
+            throw new BusinessException(
+                    "Les frais de dossier doivent être réglés et confirmés avant d'admettre ce candidat au test académique.");
+        }
+
+        CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.CONVOQUE_TEST,
                 null);
         candidatureService.journaliser(id, EnumEtapeQms.EVALUATION, response.getStatut(),
                 agentCourant(authentication), "Dossier admis au test académique.");
@@ -547,7 +601,7 @@ public class AdminRecrutementController {
     @PutMapping("/candidatures/{id}/admettre-entretien")
     public ResponseEntity<CandidatureResponse> admettreEntretien(@PathVariable Long id,
             Authentication authentication) {
-        CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS2,
+        CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.CONVOQUE_ENTRETIEN,
                 null);
         candidatureService.journaliser(id, EnumEtapeQms.EVALUATION, response.getStatut(),
                 agentCourant(authentication), "Dossier admis à l'entretien.");
@@ -573,7 +627,7 @@ public class AdminRecrutementController {
     @PutMapping("/candidatures/{id}/admettre-final")
     public ResponseEntity<CandidatureResponse> admettreFinal(@PathVariable Long id,
             Authentication authentication) {
-        CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS3,
+        CandidatureResponse response = candidatureService.changerStatut(id, EnumStatutCandidature.ADMIS,
                 null);
         candidatureService.journaliser(id, EnumEtapeQms.SELECTION, response.getStatut(),
                 agentCourant(authentication), "Candidature définitivement admise ; inscription à finaliser.");
@@ -587,6 +641,30 @@ public class AdminRecrutementController {
     }
 
     /**
+     * Place un candidat sur liste complémentaire à l'issue de l'entretien (TDR §3.1.C,
+     * « saisie des listes retenus et en attente »).
+     *
+     * <p>Ni une admission ni un rejet : le candidat est retenu sur le fond, mais aucune
+     * place n'est disponible. Le frontend affichait déjà ce statut alors que rien ne
+     * permettait de l'attribuer — cette action comble ce manque. Le dossier n'en sort
+     * que par {@link #admettreFinal} (une place se libère) ou {@link #rejeterDossier}.
+     */
+    @PutMapping("/candidatures/{id}/liste-attente")
+    public ResponseEntity<CandidatureResponse> placerEnListeAttente(@PathVariable Long id,
+            Authentication authentication) {
+        CandidatureResponse response = candidatureService.changerStatut(id,
+                EnumStatutCandidature.LISTE_ATTENTE, null);
+        candidatureService.journaliser(id, EnumEtapeQms.SELECTION, response.getStatut(),
+                agentCourant(authentication), "Candidat placé sur liste complémentaire.");
+        if (response.getCandidatEmail() != null) {
+            notificationService.notifierListeAttente(response.getCandidatEmail(), response.getNumeroDossier());
+        }
+        notifierCandidatEnLigne(response, "Votre candidature n°" + response.getNumeroDossier()
+                + " est placée sur liste complémentaire : elle est retenue, en attente qu'une place se libère.");
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Étape 6 de la procédure QMS-009 : <strong>inscription et finalisation</strong>.
      * Ouvre l'accès étudiant au candidat admis, et consigne qui l'a fait.
      *
@@ -596,15 +674,21 @@ public class AdminRecrutementController {
     @PostMapping("/candidatures/{id}/finaliser-inscription")
     public ResponseEntity<?> finaliserInscription(@PathVariable Long id, Authentication authentication) {
         CandidatureResponse response = candidatureService.getCandidatureById(id);
-        if (response.getStatut() != EnumStatutCandidature.ADMIS3) {
+        if (response.getStatut() != EnumStatutCandidature.ADMIS) {
             return ResponseEntity.badRequest().body(Map.of("message",
                     "Seule une candidature définitivement admise peut être inscrite."));
         }
         if (journalEtapeService.etapeFranchie(id, EnumEtapeQms.INSCRIPTION)) {
             return ResponseEntity.ok(response);
         }
+        PaiementResponse paiement = response.getPaiement();
+        if (paiement == null || paiement.getStatut() != EnumStatutPaiement.SUCCES) {
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "Les frais de dossier doivent être réglés et confirmés avant l'ouverture de l'accès étudiant."));
+        }
 
         inscrireCommeEtudiant(response.getCandidatId());
+        response = candidatureService.changerStatut(id, EnumStatutCandidature.INSCRIPTION_FINALISEE, null);
         candidatureService.journaliser(id, EnumEtapeQms.INSCRIPTION, response.getStatut(),
                 agentCourant(authentication), "Accès étudiant ouvert ; affectation à une promotion à faire côté pédagogie.");
         return ResponseEntity.ok(response);
@@ -618,7 +702,7 @@ public class AdminRecrutementController {
     @GetMapping("/candidatures/en-attente-inscription")
     public ResponseEntity<List<CandidatureResponse>> candidaturesEnAttenteInscription() {
         List<CandidatureResponse> enAttente = candidatureService
-                .getCandidaturesByStatut(EnumStatutCandidature.ADMIS3).stream()
+                .getCandidaturesByStatut(EnumStatutCandidature.ADMIS).stream()
                 .filter(c -> !journalEtapeService.etapeFranchie(c.getId(), EnumEtapeQms.INSCRIPTION))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(enAttente);
@@ -628,6 +712,32 @@ public class AdminRecrutementController {
     @GetMapping("/candidatures/{id}/journal")
     public ResponseEntity<List<EtapeDossierResponse>> journalDuDossier(@PathVariable Long id) {
         return ResponseEntity.ok(journalEtapeService.journalDe(id));
+    }
+
+    /**
+     * Annule la dernière décision prise sur cette candidature (retour au statut
+     * précédent). Correction administrative, pas une nouvelle décision : ni email ni
+     * notification cloche envoyés, pour ne pas contredire sans explication la
+     * notification déjà reçue par le candidat pour la décision qu'on vient d'annuler.
+     */
+    @PutMapping("/candidatures/{id}/annuler")
+    public ResponseEntity<CandidatureResponse> annulerDerniereAction(@PathVariable Long id,
+            @RequestBody Map<String, String> body, Authentication authentication) {
+        verifierMotDePasseConfirmation(authentication, body.get("motDePasse"));
+        return ResponseEntity.ok(candidatureService.annulerDerniereAction(id));
+    }
+
+    /**
+     * Fait reculer explicitement une candidature vers une étape antérieure choisie,
+     * à tout moment — pas seulement juste après la décision à défaire. Une
+     * réauthentification protège cette correction sensible.
+     */
+    @PutMapping("/candidatures/{id}/reculer-statut")
+    public ResponseEntity<CandidatureResponse> reculerStatut(@PathVariable Long id,
+            @RequestBody Map<String, String> body, Authentication authentication) {
+        verifierMotDePasseConfirmation(authentication, body.get("motDePasse"));
+        EnumStatutCandidature cible = EnumStatutCandidature.valueOf(body.get("statut").toUpperCase());
+        return ResponseEntity.ok(candidatureService.reculerStatut(id, cible));
     }
 
     /**
@@ -750,6 +860,95 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(testAcademiqueService.getAllTests());
     }
 
+    /** Modèle Excel prérempli pour la saisie ou l'import des notes de test. */
+    @GetMapping("/tests/modele-import")
+    public ResponseEntity<byte[]> telechargerModeleImportNotes(
+            @RequestParam(required = false) Long sessionId) {
+        List<List<Object>> lignes = testAcademiqueService.getAllTests().stream()
+                .filter(test -> sessionId == null || sessionId.equals(test.getSessionCandidatureId()))
+                .map(test -> List.<Object>of(
+                        test.getId(),
+                        nvl(test.getNomEpreuve()),
+                        nvl(test.getSessionCandidatureLibelle()),
+                        ""))
+                .collect(Collectors.toList());
+        return telechargerXlsx(excelExportService.genererClasseur(
+                "Notes de tests", List.of("ID test", "Épreuve", "Session", "Note /20"), lignes),
+                "modele_import_notes.xlsx");
+    }
+
+    /** Export Excel des résultats d'une épreuve, prêt à être partagé avec le jury. */
+    @GetMapping("/tests/groupes/{groupeId}/notes/export")
+    public ResponseEntity<byte[]> exporterNotesGroupeTest(@PathVariable UUID groupeId) {
+        List<TestAcademiqueResponse> tests = testAcademiqueService.getTestsParGroupe(groupeId);
+        if (tests.isEmpty()) {
+            throw new ResourceNotFoundException("Test académique introuvable.");
+        }
+        TestAcademiqueResponse epreuve = tests.get(0);
+        List<List<Object>> lignes = tests.stream()
+                .map(test -> List.<Object>of(
+                        test.getCandidatId(),
+                        nvl(test.getCandidatNom()),
+                        nvl(test.getCandidatPrenom()),
+                        test.getNoteObtenue() != null ? test.getNoteObtenue() : ""))
+                .collect(Collectors.toList());
+        byte[] fichier = excelExportService.genererClasseurAvecTitre(
+                "Notes",
+                "Relevé des notes — " + nvl(epreuve.getNomEpreuve()),
+                List.of("ID candidat", "Nom", "Prénom", "Note"),
+                lignes);
+        String nomEpreuve = nvl(epreuve.getNomEpreuve()).replaceAll("[^a-zA-Z0-9_-]+", "_");
+        return telechargerXlsx(fichier, "releve_notes_" + nomEpreuve + ".xlsx");
+    }
+
+    /** Même export depuis une ligne de test : point d'entrée stable pour l'écran de détail. */
+    @GetMapping("/tests/{id}/notes/export")
+    public ResponseEntity<byte[]> exporterNotesTest(@PathVariable Long id) {
+        TestAcademiqueResponse test = testAcademiqueService.getTestById(id);
+        return exporterNotesGroupeTest(test.getGroupeEpreuveId());
+    }
+    /** Lit le modèle .xlsx et n'enregistre le lot que si chaque ligne est valide. */
+    @PostMapping("/tests/import-notes")
+    public ResponseEntity<Map<String, Object>> importerNotesExcel(
+            @RequestParam("fichier") MultipartFile fichier,
+            @RequestParam(required = false) Long sessionId) {
+        if (fichier.isEmpty()) {
+            throw new BusinessException("Sélectionnez un fichier Excel non vide.");
+        }
+        Map<Long, Float> notes = new LinkedHashMap<>();
+        try (Workbook workbook = WorkbookFactory.create(fichier.getInputStream())) {
+            Sheet feuille = workbook.getNumberOfSheets() == 0 ? null : workbook.getSheetAt(0);
+            if (feuille == null || feuille.getPhysicalNumberOfRows() < 2) {
+                throw new BusinessException("Le fichier Excel ne contient aucune ligne de note.");
+            }
+            DataFormatter format = new DataFormatter();
+            for (int index = 1; index <= feuille.getLastRowNum(); index++) {
+                Row ligne = feuille.getRow(index);
+                if (ligne == null) continue;
+                String idBrut = format.formatCellValue(ligne.getCell(0)).trim();
+                String noteBrute = format.formatCellValue(ligne.getCell(3)).trim();
+                if (idBrut.isEmpty() && noteBrute.isEmpty()) continue;
+                if (idBrut.isEmpty() || noteBrute.isEmpty()) {
+                    throw new BusinessException("Ligne " + (index + 1) + " : l'identifiant et la note sont requis.");
+                }
+                long id;
+                float note;
+                try {
+                    id = Long.parseLong(idBrut.replace(".0", ""));
+                    note = Float.parseFloat(noteBrute.replace(',', '.'));
+                } catch (NumberFormatException exception) {
+                    throw new BusinessException("Ligne " + (index + 1) + " : identifiant ou note invalide.");
+                }
+                if (notes.putIfAbsent(id, note) != null) {
+                    throw new BusinessException("Ligne " + (index + 1) + " : le même test apparaît plusieurs fois.");
+                }
+            }
+        } catch (IOException exception) {
+            throw new BusinessException("Le fichier Excel ne peut pas être lu.");
+        }
+        int nombre = testAcademiqueService.importerNotes(notes, sessionId);
+        return ResponseEntity.ok(Map.of("count", nombre, "message", nombre + " notes importées."));
+    }
     @GetMapping("/tests/{id}")
     public ResponseEntity<TestAcademiqueResponse> getTest(@PathVariable Long id) {
         return ResponseEntity.ok(testAcademiqueService.getTestById(id));
@@ -766,6 +965,19 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(testAcademiqueService.modifierTest(id, request));
     }
 
+    /** Saisie rapide de la note seule — utilisé par la grille de notation (édition en ligne). */
+    @PutMapping("/tests/{id}/note")
+    public ResponseEntity<TestAcademiqueResponse> modifierNoteTest(@PathVariable Long id,
+            @RequestBody Map<String, Float> body) {
+        return ResponseEntity.ok(testAcademiqueService.modifierNote(id, body.get("noteObtenue")));
+    }
+
+    /** Annule la dernière saisie de note d'un test. */
+    @PutMapping("/tests/{id}/annuler-note")
+    public ResponseEntity<TestAcademiqueResponse> annulerNoteTest(@PathVariable Long id) {
+        return ResponseEntity.ok(testAcademiqueService.annulerNote(id));
+    }
+
     @DeleteMapping("/tests/{id}")
     public ResponseEntity<Map<String, String>> supprimerTest(@PathVariable Long id) {
         testAcademiqueService.supprimerTest(id);
@@ -776,6 +988,7 @@ public class AdminRecrutementController {
     @PostMapping("/tests/convocation-groupee")
     public ResponseEntity<List<TestAcademiqueResponse>> convoquerTestsGroupe(
             @RequestBody ConvocationTestGroupeeRequest request) {
+        UUID groupeEpreuveId = UUID.randomUUID();
         List<TestAcademiqueResponse> resultats = request.getCandidatIds().stream()
                 .map(candidatId -> {
                     TestAcademiqueRequest r = new TestAcademiqueRequest();
@@ -784,10 +997,33 @@ public class AdminRecrutementController {
                     r.setCoefficient(request.getCoefficient());
                     r.setDateEpreuve(request.getDateEpreuve());
                     r.setLieuOuLien(request.getLieuOuLien());
-                    return testAcademiqueService.creerTest(r);
+                    return testAcademiqueService.creerTest(r, groupeEpreuveId);
                 })
                 .collect(Collectors.toList());
         return ResponseEntity.ok(resultats);
+    }
+
+    @GetMapping("/tests/groupes/{groupeId}/notes")
+    public ResponseEntity<List<TestAcademiqueResponse>> getNotesGroupe(@PathVariable UUID groupeId) {
+        return ResponseEntity.ok(testAcademiqueService.getTestsParGroupe(groupeId));
+    }
+
+    @PutMapping("/tests/groupes/{groupeId}/notes")
+    public ResponseEntity<List<TestAcademiqueResponse>> enregistrerNotesGroupe(@PathVariable UUID groupeId,
+            @RequestBody Map<Long, Float> notes) {
+        return ResponseEntity.ok(testAcademiqueService.enregistrerNotesGroupe(groupeId, notes));
+    }
+
+    @PutMapping("/tests/groupes/{groupeId}")
+    public ResponseEntity<List<TestAcademiqueResponse>> modifierGroupeTest(@PathVariable UUID groupeId,
+            @RequestBody TestAcademiqueRequest request) {
+        return ResponseEntity.ok(testAcademiqueService.modifierGroupe(groupeId, request));
+    }
+
+    @DeleteMapping("/tests/groupes/{groupeId}")
+    public ResponseEntity<Void> supprimerGroupeTest(@PathVariable UUID groupeId) {
+        testAcademiqueService.supprimerGroupe(groupeId);
+        return ResponseEntity.noContent().build();
     }
 
     // ===================== ENTRETIENS =====================
@@ -795,6 +1031,11 @@ public class AdminRecrutementController {
     @GetMapping("/entretiens")
     public ResponseEntity<List<EntretienResponse>> getAllEntretiens() {
         return ResponseEntity.ok(entretienService.getAllEntretiens());
+    }
+
+    @GetMapping("/entretiens/{id}")
+    public ResponseEntity<EntretienResponse> getEntretien(@PathVariable Long id) {
+        return ResponseEntity.ok(entretienService.getEntretienById(id));
     }
 
     @PostMapping("/entretiens")
@@ -808,6 +1049,13 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(entretienService.modifierEntretien(id, request));
     }
 
+    /** Saisie rapide de la note seule, depuis la liste (grille de notation après entretien). */
+    @PutMapping("/entretiens/{id}/note")
+    public ResponseEntity<EntretienResponse> modifierNoteEntretien(@PathVariable Long id,
+            @RequestBody Map<String, Float> body) {
+        return ResponseEntity.ok(entretienService.modifierNote(id, body.get("noteEntretien")));
+    }
+
     @DeleteMapping("/entretiens/{id}")
     public ResponseEntity<Map<String, String>> supprimerEntretien(@PathVariable Long id) {
         entretienService.supprimerEntretien(id);
@@ -818,16 +1066,34 @@ public class AdminRecrutementController {
     @PostMapping("/entretiens/convocation-groupee")
     public ResponseEntity<List<EntretienResponse>> convoquerEntretiensGroupe(
             @RequestBody ConvocationEntretienGroupeeRequest request) {
+        UUID groupeEntretienId = UUID.randomUUID();
         List<EntretienResponse> resultats = request.getCandidatIds().stream()
                 .map(candidatId -> {
                     EntretienRequest r = new EntretienRequest();
                     r.setCandidatId(candidatId);
                     r.setDateHeure(request.getDateHeure());
                     r.setLieuOuLien(request.getLieuOuLien());
-                    return entretienService.creerEntretien(r);
+                    return entretienService.creerEntretien(r, groupeEntretienId);
                 })
                 .collect(Collectors.toList());
         return ResponseEntity.ok(resultats);
+    }
+
+    @GetMapping("/entretiens/groupes/{groupeId}/notes")
+    public ResponseEntity<List<EntretienResponse>> getNotesGroupeEntretien(@PathVariable UUID groupeId) {
+        return ResponseEntity.ok(entretienService.getEntretiensParGroupe(groupeId));
+    }
+
+    @PutMapping("/entretiens/groupes/{groupeId}/notes")
+    public ResponseEntity<List<EntretienResponse>> enregistrerNotesGroupeEntretien(
+            @PathVariable UUID groupeId, @RequestBody Map<Long, Float> notes) {
+        return ResponseEntity.ok(entretienService.enregistrerNotesGroupe(groupeId, notes));
+    }
+
+    @DeleteMapping("/entretiens/groupes/{groupeId}")
+    public ResponseEntity<Void> supprimerGroupeEntretien(@PathVariable UUID groupeId) {
+        entretienService.supprimerGroupe(groupeId);
+        return ResponseEntity.noContent().build();
     }
 
     // ===================== MODÈLES DE NOTIFICATIONS =====================
@@ -846,11 +1112,22 @@ public class AdminRecrutementController {
     // ===================== PIÈCES JUSTIFICATIVES (consultation admin) =====================
 
     @PutMapping("/pieces/{id}/conformite")
-    public ResponseEntity<?> modifierConformitePiece(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
+    public ResponseEntity<?> modifierConformitePiece(@PathVariable Long id,
+            @Validated @RequestBody ModifierConformitePieceRequest body) {
         PieceJustificative piece = pieceJustificativeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pièce justificative non trouvée avec l'ID: " + id));
-        boolean conforme = Boolean.TRUE.equals(body.get("estConforme"));
+        boolean conforme = Boolean.TRUE.equals(body.getEstConforme());
+        String motif = body.getMotifNonConformite() != null ? body.getMotifNonConformite().trim() : null;
+        if (!conforme && (motif == null || motif.isBlank())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", "Un motif est requis pour demander le remplacement d'un document."));
+        }
         piece.setEstConforme(conforme);
+        piece.setStatutVerification(conforme
+                ? EnumStatutVerificationPiece.CONFORME
+                : EnumStatutVerificationPiece.A_REMPLACER);
+        piece.setMotifNonConformite(conforme ? null : motif);
+        piece.setDateVerification(LocalDateTime.now());
         pieceJustificativeRepository.save(piece);
 
         Candidature candidature = piece.getCandidature();
@@ -875,11 +1152,22 @@ public class AdminRecrutementController {
             notificationCandidatService.creerNotification(candidature.getCandidat().getId(),
                     conforme
                             ? "Votre document \"" + libelleType + "\" a été vérifié et validé."
-                            : "Votre document \"" + libelleType + "\" n'est pas conforme, merci de le remplacer.",
+                            : "Votre document \"" + libelleType + "\" doit être remplacé : " + motif,
                     "DOCUMENT", "/recrutement/suivi");
         }
 
-        return ResponseEntity.ok(Map.of("id", piece.getId(), "estConforme", piece.isEstConforme()));
+        return ResponseEntity.ok(PieceJustificativeResponse.builder()
+                .id(piece.getId())
+                .typeDocument(piece.getTypeDocument())
+                .estConforme(piece.isEstConforme())
+                .statutVerification(piece.getStatutVerification())
+                .motifNonConformite(piece.getMotifNonConformite())
+                .dateVerification(piece.getDateVerification())
+                .description(piece.getDescription())
+                .fichierStockeId(piece.getFichierStocke() != null ? piece.getFichierStocke().getId() : null)
+                .fichierNomOriginal(piece.getFichierStocke() != null ? piece.getFichierStocke().getNomOriginal() : null)
+                .moyenneDeclaree(piece.getMoyenneDeclaree())
+                .build());
     }
 
     @GetMapping("/pieces/{id}/telecharger")

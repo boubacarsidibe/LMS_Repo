@@ -104,13 +104,55 @@
       </div>
     </details>
 
-    <details class="group py-3">
+    <details class="group border-b border-outline-variant py-3">
       <summary class="cursor-pointer list-none flex items-center justify-between font-label-md text-label-md text-on-surface">
         Gérer les rôles des utilisateurs
         <span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
       </summary>
       <div class="mt-2 text-body-sm text-on-surface-variant space-y-2">
         <p>Onglet <em>Utilisateurs</em> : cochez/décochez Étudiant ou Formateur pour un compte. Le changement est immédiat, sans confirmation supplémentaire.</p>
+      </div>
+    </details>
+
+    <details class="group py-3">
+      <summary class="cursor-pointer list-none flex items-center justify-between font-label-md text-label-md text-on-surface">
+        Modèles de notifications — variables disponibles
+        <span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
+      </summary>
+      <div class="mt-2 text-body-sm text-on-surface-variant space-y-4">
+        <p>Onglet <em>Notifications</em> : chaque email automatique a son propre modèle. Écrivez une variable telle quelle dans le Sujet ou le Message (ex. <code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code>) — elle sera remplacée par la vraie valeur au moment de l'envoi. Une variable non utilisée dans un modèle est simplement ignorée ; en ajouter une qui n'existe pas pour ce modèle laissera le texte tel quel (elle ne sera jamais remplacée).</p>
+
+        <div>
+          <p class="font-label-md text-label-md text-on-surface mb-2">Variables par modèle</p>
+          <dl class="space-y-2">
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Dossier validé (présélection)</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Dossier rejeté</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code> <code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{motif}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Paiement confirmé</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Convocation au test académique</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{nomEpreuve}}' }}</code> <code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{date}}' }}</code> <code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{lieuOuLien}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Convocation à l'entretien</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{date}}' }}</code> <code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{lieuOuLien}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Admis au test académique</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Admis à l'entretien</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Admission finale</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Non-admission</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Document validé</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code> <code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{typeDocument}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Document non conforme</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code> <code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{typeDocument}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Rappel : dossier incomplet</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code> <code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{piecesManquantes}}' }}</code></dd></div>
+            <div class="flex flex-wrap items-baseline gap-x-2"><dt class="text-on-surface">Rappel : paiement en attente</dt><dd><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code></dd></div>
+          </dl>
+        </div>
+
+        <div>
+          <p class="font-label-md text-label-md text-on-surface mb-2">Ce que représente chaque variable</p>
+          <dl class="space-y-1.5">
+            <div class="flex gap-2"><dt><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{numeroDossier}}' }}</code></dt><dd>Numéro du dossier de candidature (ex. INPG-2026-0042).</dd></div>
+            <div class="flex gap-2"><dt><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{motif}}' }}</code></dt><dd>Motif de rejet saisi lors du refus du dossier.</dd></div>
+            <div class="flex gap-2"><dt><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{nomEpreuve}}' }}</code></dt><dd>Intitulé du test académique.</dd></div>
+            <div class="flex gap-2"><dt><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{date}}' }}</code></dt><dd>Date (et heure) du test ou de l'entretien.</dd></div>
+            <div class="flex gap-2"><dt><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{lieuOuLien}}' }}</code></dt><dd>Salle physique ou lien de visioconférence renseigné pour la convocation.</dd></div>
+            <div class="flex gap-2"><dt><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{typeDocument}}' }}</code></dt><dd>Nom de la pièce justificative concernée (ex. « Diplôme », « CNI »).</dd></div>
+            <div class="flex gap-2"><dt><code class="px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{piecesManquantes}}' }}</code></dt><dd>Liste des pièces encore manquantes dans le dossier.</dd></div>
+          </dl>
+        </div>
       </div>
     </details>
   </div>

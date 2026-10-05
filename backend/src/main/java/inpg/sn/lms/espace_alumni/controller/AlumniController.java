@@ -350,8 +350,17 @@ public class AlumniController {
                         .toList());
     }
 
+    /** Statuts qui désignent un emploi réellement occupé — seuls eux exigent un intitulé et une entreprise. */
+    private static final java.util.Set<inpg.sn.lms.espace_alumni.enums.EnumStatutEmploi> STATUTS_AVEC_POSTE = java.util.Set.of(
+            inpg.sn.lms.espace_alumni.enums.EnumStatutEmploi.EN_EMPLOI,
+            inpg.sn.lms.espace_alumni.enums.EnumStatutEmploi.ENTREPRENARIAT);
+
     private String validerSituation(SituationProfessionnelleRequest requete) {
-        if (estVide(requete.intitulePoste()) || estVide(requete.entreprise())) {
+        // Un alumni « en recherche d'emploi », en poursuite d'études ou dans une situation
+        // « autre » n'occupe justement aucun poste : lui en imposer un l'aurait obligé à en
+        // inventer un pour pouvoir simplement consigner qu'il cherche.
+        if (STATUTS_AVEC_POSTE.contains(requete.statutEmploi())
+                && (estVide(requete.intitulePoste()) || estVide(requete.entreprise()))) {
             return "L'intitulé du poste et l'entreprise sont requis.";
         }
         if (requete.dateDebut() == null) {

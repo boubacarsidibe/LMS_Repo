@@ -43,6 +43,16 @@ export class Forum implements OnInit {
     });
   }
 
+  /**
+   * Même définition que le filtre « Non lus » ci-dessous (statut nouveau) :
+   * cette carte affichait un « 05 » codé en dur, sans lien avec les sujets
+   * réellement chargés — contradiction flagrante pour un formateur dont la
+   * liste est vide.
+   */
+  get sujetsNonLus(): number {
+    return this.sujets.filter(s => s.statut === 'nouveau').length;
+  }
+
   get sujetsFiltres(): SujetForum[] {
     if (this.filtreActif === 'non-lus') {
       return this.sujets.filter(s => s.statut === 'nouveau');

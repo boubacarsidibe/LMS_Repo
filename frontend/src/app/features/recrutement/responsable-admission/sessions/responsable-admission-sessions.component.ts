@@ -7,6 +7,7 @@ import {
   SessionCandidatureResponse,
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 
 @Component({
@@ -39,7 +40,10 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   triColonne: 'libelle' | 'dateOuverture' | 'dateFermeture' | 'nbCandidatures' = 'dateOuverture';
   triDesc = true;
 
-  constructor(private recrutementService: RecrutementService, private router: Router) {}
+  sessionSelectionnee: SessionCandidatureResponse | null = null;
+
+  constructor(private recrutementService: RecrutementService, private router: Router,
+              private notifications: NotificationService) {}
 
   ngOnInit(): void {
     this.chargerSessions();
@@ -51,6 +55,9 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
     this.recrutementService.getAllSessions().subscribe({
       next: (data) => {
         this.sessions = data || [];
+        if (this.sessionSelectionnee && !this.sessions.some((s) => s.id === this.sessionSelectionnee?.id)) {
+          this.sessionSelectionnee = null;
+        }
         this.loading = false;
       },
       error: () => {
@@ -119,6 +126,10 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   }
 
   voirSession(session: SessionCandidatureResponse): void {
+    this.sessionSelectionnee = session;
+  }
+
+  modifierSession(session: SessionCandidatureResponse): void {
     this.router.navigate(['/responsable-admission/sessions', session.id]);
   }
 
@@ -126,8 +137,12 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
     if (!confirm(`Supprimer définitivement la session "${session.libelle}" ?`)) return;
     this.recrutementService.supprimerSession(session.id).subscribe({
       next: () => this.chargerSessions(),
-      error: () => alert('Échec de la suppression de la session.'),
+      error: () => this.notifications.erreur('Échec de la suppression de la session.'),
     });
+  }
+
+  estSelectionne(id: number): boolean {
+    return this.sessionSelectionnee?.id === id;
   }
 
   exporter(colonnes: string[]): void {
@@ -139,7 +154,7 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
       },
       error: () => {
         this.exporting = false;
-        alert("Échec de l'export Excel.");
+        this.notifications.erreur("Échec de l'export Excel.");
       },
     });
   }

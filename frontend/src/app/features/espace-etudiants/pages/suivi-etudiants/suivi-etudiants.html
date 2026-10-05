@@ -1,9 +1,13 @@
 <div class="flex flex-col w-full">
 
   <!-- En-tête -->
-  <div class="px-margin-desktop py-stack-lg flex flex-col gap-base">
-    <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Suivi des Étudiants &amp; Progression</h1>
+  <div class="px-margin-desktop pt-stack-lg grid grid-cols-12 items-center gap-gutter">
+    <div class="col-span-12 lg:col-span-7">
+    <span class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Suivi pédagogique</span>
+    <h1 class="mt-2 font-display text-display text-on-surface leading-none">Suivi des Étudiants &amp; Progression</h1>
     <p class="text-body-md text-on-surface-variant max-w-2xl">Analysez la performance de vos promotions et identifiez les besoins d'accompagnement personnalisés.</p>
+    </div>
+    <div class="relative col-span-12 min-h-36 overflow-hidden rounded-xl bg-primary-container lg:col-span-5"><span class="material-symbols-outlined absolute bottom-5 left-12 text-[92px] text-secondary">monitoring</span><span class="material-symbols-outlined absolute bottom-6 left-40 text-[60px] text-primary">school</span><blockquote class="absolute right-4 top-4 w-40 rounded-xl bg-surface-container-lowest/90 px-5 py-4 font-body-sm text-body-sm italic leading-5 text-secondary">« Un meilleur suivi pour une réussite partagée. »<span class="mt-4 block h-1 w-7 rounded-full bg-secondary"></span></blockquote></div>
   </div>
 
   <!-- KPI -->
@@ -17,17 +21,26 @@
         <span class="font-display text-display text-primary tracking-tighter">{{ etudiants.length }}</span>
       </div>
     </div>
-    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center items-center text-center gap-1">
-      <span class="material-symbols-outlined text-outline text-[28px]">analytics</span>
-      <span class="text-label-sm text-on-surface-variant">Taux d'achèvement — Bientôt disponible</span>
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">Progression moyenne</span>
+        <span class="material-symbols-outlined text-secondary">analytics</span>
+      </div>
+      <span class="font-display text-display text-primary tracking-tighter">{{ progressionMoyenne }}<small class="text-headline-sm">%</small></span>
     </div>
-    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center items-center text-center gap-1">
-      <span class="material-symbols-outlined text-outline text-[28px]">priority_high</span>
-      <span class="text-label-sm text-on-surface-variant">Suivi prioritaire — Bientôt disponible</span>
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">Étudiants à suivre</span>
+        <span class="material-symbols-outlined text-error">priority_high</span>
+      </div>
+      <span class="font-display text-display text-primary tracking-tighter">{{ etudiantsPrioritaires }}</span>
     </div>
-    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center items-center text-center gap-1">
-      <span class="material-symbols-outlined text-outline text-[28px]">trending_up</span>
-      <span class="text-label-sm text-on-surface-variant">Engagement — Bientôt disponible</span>
+    <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">Engagement</span>
+        <span class="material-symbols-outlined text-secondary">trending_up</span>
+      </div>
+      <span class="font-display text-display text-primary tracking-tighter">{{ engagementMoyen }}<small class="text-headline-sm">%</small></span>
     </div>
   </div>
 
@@ -66,17 +79,26 @@
             <option value="">Toutes les promotions</option>
             <option *ngFor="let p of promotions" [value]="p.libelle">{{ p.libelle }}{{ p.annee ? ' (' + p.annee + ')' : '' }}</option>
           </select>
-          <select disabled title="Bientôt disponible" class="px-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm text-on-surface-variant/50 cursor-not-allowed">
-            <option>Tous les niveaux (Bientôt disponible)</option>
+          <select [(ngModel)]="statutSelectionne" class="px-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm text-on-surface-variant focus:outline-none cursor-pointer">
+            <option value="">Tous les statuts</option>
+            <option value="Actif">Actif</option>
+            <option value="À risque">À risque</option>
+            <option value="En retard">En retard</option>
           </select>
         </div>
-        <button disabled title="Bientôt disponible" class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg text-label-md text-on-surface-variant/50 cursor-not-allowed">
-          <span class="material-symbols-outlined text-[18px]">filter_list</span>
-          Plus de filtres
+        <button type="button" (click)="reinitialiserFiltres()" class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg text-label-md text-on-surface-variant hover:border-secondary hover:text-secondary transition-colors">
+          <span class="material-symbols-outlined text-[18px]">restart_alt</span>
+          Réinitialiser
         </button>
       </div>
 
-      <div class="overflow-x-auto">
+      <div *ngIf="chargement" class="px-6 py-10 text-center text-body-sm text-on-surface-variant">Chargement du suivi…</div>
+      <div *ngIf="erreurChargement" class="m-4 rounded-lg border border-error/30 bg-error-container/30 px-4 py-3 flex items-center justify-between gap-4 text-body-sm text-on-error-container">
+        <span>{{ erreurChargement }}</span>
+        <button type="button" (click)="chargerDonnees()" class="font-bold underline">Réessayer</button>
+      </div>
+
+      <div *ngIf="!chargement && !erreurChargement" class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-surface-container-low/50">
@@ -112,22 +134,19 @@
                   <span class="text-[11px] font-bold text-on-surface-variant">{{ e.progression }}%</span>
                 </div>
               </td>
-              <td class="px-6 py-4 text-body-sm font-medium text-primary"><ng-container *ngIf="e.noteMoyenne !== null && e.noteMoyenne !== undefined; else pasEncoreNote">{{ e.noteMoyenne | number: '1.1-1' }}/20</ng-container>
+              <td class="px-6 py-4 text-body-sm font-medium text-primary"><ng-container *ngIf="e.noteMoyenne !== null && e.noteMoyenne !== undefined; else pasEncoreNote">{{ e.noteMoyenne | number: '1.1-1' }}/100 <span class="text-on-surface-variant">({{ e.noteMoyenne / 5 | number: '1.1-1' }}/20)</span></ng-container>
               <ng-template #pasEncoreNote><span class="text-on-surface-variant">Pas encore noté</span></ng-template>
             </td>
               <td class="px-6 py-4">
                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-tight" [ngClass]="classeStatut(e.statut)">{{ e.statut }}</span>
               </td>
               <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
-                <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button (click)="voirProfil(e.id)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Voir le profil">
+                <div class="flex items-center justify-end gap-2">
+                  <button (click)="voirProfil(e.id)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Voir le profil" aria-label="Voir le profil">
                     <span class="material-symbols-outlined text-[20px]">visibility</span>
                   </button>
-                  <button (click)="ouvrirContact(e)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Contacter">
+                  <button (click)="ouvrirContact(e)" class="p-2 text-outline hover:text-secondary hover:bg-secondary/10 rounded-full transition-all" title="Contacter" aria-label="Contacter">
                     <span class="material-symbols-outlined text-[20px]">mail</span>
-                  </button>
-                  <button disabled class="p-2 text-outline/50 rounded-full cursor-not-allowed" title="Bientôt disponible">
-                    <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
                   </button>
                 </div>
               </td>
@@ -136,18 +155,8 @@
         </table>
       </div>
 
-      <!-- Pagination désactivée (attend l'API) -->
-      <div class="p-4 border-t border-outline-variant flex items-center justify-between">
+      <div *ngIf="!chargement && !erreurChargement" class="p-4 border-t border-outline-variant flex items-center justify-between">
         <span class="text-body-sm text-on-surface-variant">Affichage de {{ etudiantsFiltres.length }} sur {{ etudiants.length }} étudiant(s)</span>
-        <div class="flex items-center gap-2 opacity-40 pointer-events-none">
-          <button aria-label="Page precedente" class="p-2 border border-outline-variant rounded-lg" disabled>
-            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
-          </button>
-          <button class="w-8 h-8 rounded-lg bg-secondary text-on-secondary text-label-md">1</button>
-          <button aria-label="Page suivante" class="p-2 border border-outline-variant rounded-lg" disabled>
-            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -163,12 +172,12 @@
       </div>
       <div class="p-6 space-y-base">
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Objet</label>
-          <input [(ngModel)]="objetMessage" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Relance suivi de cours" type="text">
+          <label for="suivi-contact-objet" class="font-label-md text-label-md text-on-surface-variant">Objet</label>
+          <input id="suivi-contact-objet" [(ngModel)]="objetMessage" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Relance suivi de cours" type="text">
         </div>
         <div class="space-y-1">
-          <label class="font-label-md text-label-md text-on-surface-variant">Message</label>
-          <textarea [(ngModel)]="contenuMessage" rows="5" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none" placeholder="Votre message..."></textarea>
+          <label for="suivi-contact-message" class="font-label-md text-label-md text-on-surface-variant">Message</label>
+          <textarea id="suivi-contact-message" [(ngModel)]="contenuMessage" rows="5" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none" placeholder="Votre message..."></textarea>
         </div>
         <p *ngIf="messageErreur" class="text-body-sm text-error">{{ messageErreur }}</p>
         <p *ngIf="messageSucces" class="text-body-sm text-secondary font-medium">{{ messageSucces }}</p>

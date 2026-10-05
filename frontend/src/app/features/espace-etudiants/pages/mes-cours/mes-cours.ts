@@ -1,7 +1,7 @@
 import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Cours } from '../../models/cours';
 import { Promotion } from '../../models/promotion';
 import { Support } from '../../models/support';
@@ -24,7 +24,7 @@ import { environment } from '../../../../../environments/environment';
   styleUrl: './mes-cours.css',
 })
 export class MesCours implements OnInit {
-  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
   @ViewChild('depotRapide') depotRapide!: ElementRef<HTMLElement>;
 
   cours: Cours[] = [];
@@ -62,6 +62,8 @@ export class MesCours implements OnInit {
   isUploading = false;
   uploadMessage = '';
   uploadError = '';
+  survolDepot = false;
+  readonly tailleMaxFichier = 500 * 1024 * 1024;
 
   suppressionCoursEnCoursId: number | null = null;
 
@@ -81,7 +83,8 @@ export class MesCours implements OnInit {
     private presenceService: PresenceService,
     private confirmation: ConfirmationService,
     private notifications: NotificationService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     // datePublication n'est pas obligatoire : par defaut on publie immediatement.
     // La renseigner dans le futur programme la mise en ligne (la ressource reste
@@ -89,7 +92,9 @@ export class MesCours implements OnInit {
     this.depotForm = this.fb.group({
       typeRessource: ['pdf', Validators.required],
       coursCible: ['', Validators.required],
-      datePublication: [this.aujourdhuiIso()]
+      datePublication: [this.aujourdhuiIso()],
+      titreLien: [''],
+      urlLien: [''],
     });
     this.editionForm = this.fb.group({
       code: ['', Validators.required],
@@ -148,10 +153,14 @@ export class MesCours implements OnInit {
     // ?cours=<id> vient de « Ajuster le cours » sur la page des retours.
     const cible = this.route.snapshot.queryParamMap.get('cours');
     this.coursMisEnAvantId = cible ? Number(cible) : null;
+    if (this.coursMisEnAvantId && this.coursMisEnAvantId > 0 && Number.isInteger(this.coursMisEnAvantId)) {
+      this.depotForm.patchValue({ coursCible: this.coursMisEnAvantId });
+    }
 
     this.loadCours();
     this.chargerSupports();
-    this.promotionService.getAll().subscribe({
+    this.mettreAJourContraintesDepot('pdf');
+    this.promotionService.getMesPromotionsFormateur().subscribe({
       next: (data) => (this.toutesPromotions = data || []),
       error: () => (this.toutesPromotions = [])
     });
@@ -207,8 +216,22 @@ export class MesCours implements OnInit {
   }
 
   preRemplirDepot(cours: Cours) {
-    this.depotForm.patchValue({ coursCible: cours.id });
+    this.selectionnerCours(cours);
     this.depotRapide?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /**
+   * La sélection d'un cours reste visible sur la liste et évite au formateur
+   * de devoir le rechercher à nouveau dans le formulaire de dépôt.
+   */
+  selectionnerCours(cours: Cours): void {
+    this.coursMisEnAvantId = cours.id;
+    this.depotForm.patchValue({ coursCible: cours.id });
+    this.depotForm.get('coursCible')?.markAsTouched();
+  }
+
+  ouvrirCours(cours: Cours): void {
+    this.router.navigate(['/espace-etudiant/formateur/mes-cours', cours.id]);
   }
 
   ouvrirEditionCours(cours: Cours) {
@@ -393,18 +416,91 @@ export class MesCours implements OnInit {
   }
 
   ouvrirExplorateur() {
-    this.fileInput.nativeElement.click();
+    this.fileInput?.nativeElement.click();
   }
 
   onFichierSelectionne(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.fichierSelectionne = input.files[0];
+      this.choisirFichier(input.files[0]);
     }
   }
 
+  onFichierDepose(event: DragEvent): void {
+    event.preventDefault();
+    this.survolDepot = false;
+    const fichier = event.dataTransfer?.files.item(0);
+    if (fichier) this.choisirFichier(fichier);
+  }
+
+  changerTypeRessource(type: 'pdf' | 'lien' | 'video'): void {
+    this.depotForm.patchValue({ typeRessource: type });
+    this.mettreAJourContraintesDepot(type);
+    this.uploadError = '';
+    this.uploadMessage = '';
+    this.fichierSelectionne = null;
+    if (this.fileInput) this.fileInput.nativeElement.value = '';
+  }
+
+  private mettreAJourContraintesDepot(type: string): void {
+    const titre = this.depotForm.get('titreLien');
+    const url = this.depotForm.get('urlLien');
+    if (type === 'lien') {
+      titre?.setValidators([Validators.required, Validators.maxLength(150)]);
+      url?.setValidators([Validators.required, Validators.pattern(/^https?:\/\/.+/i)]);
+    } else {
+      titre?.clearValidators();
+      url?.clearValidators();
+      titre?.reset('');
+      url?.reset('');
+    }
+    titre?.updateValueAndValidity();
+    url?.updateValueAndValidity();
+  }
+
+  private choisirFichier(fichier: File): void {
+    this.uploadError = '';
+    if (fichier.size > this.tailleMaxFichier) {
+      this.fichierSelectionne = null;
+      this.uploadError = 'Ce fichier dépasse la limite de 500 Mo.';
+      return;
+    }
+    if (this.typeRessource === 'video' && !fichier.name.toLowerCase().endsWith('.mp4')) {
+      this.fichierSelectionne = null;
+      this.uploadError = 'Pour une vidéo, choisissez un fichier MP4.';
+      return;
+    }
+    this.fichierSelectionne = fichier;
+  }
+
+  retirerFichier(): void {
+    this.fichierSelectionne = null;
+    this.uploadError = '';
+    if (this.fileInput) this.fileInput.nativeElement.value = '';
+  }
+
+  get typeRessource(): 'pdf' | 'lien' | 'video' {
+    return this.depotForm.get('typeRessource')?.value || 'pdf';
+  }
+
+  get estDepotLien(): boolean {
+    return this.typeRessource === 'lien';
+  }
+
+  get acceptFichier(): string {
+    return this.typeRessource === 'video'
+      ? '.mp4,video/mp4'
+      : '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.odt,.odp,.ods,.txt,.csv,.zip';
+  }
+
+  get aideFichier(): string {
+    return this.typeRessource === 'video'
+      ? 'MP4 uniquement · 500 Mo maximum'
+      : 'PDF, Word, PowerPoint, Excel, texte ou ZIP · 500 Mo maximum';
+  }
+
   onSubmit() {
-    if (this.depotForm.invalid || !this.fichierSelectionne) {
+    if (this.depotForm.invalid || (!this.estDepotLien && !this.fichierSelectionne)) {
       this.depotForm.markAllAsTouched();
       return;
     }
@@ -412,19 +508,18 @@ export class MesCours implements OnInit {
     this.isUploading = true;
     this.uploadError = '';
     this.uploadMessage = '';
-    const { coursCible, typeRessource, datePublication } = this.depotForm.getRawValue();
-    this.supportService.uploadCourseSupport(
-      Number(coursCible),
-      typeRessource,
-      datePublication,
-      this.fichierSelectionne
-    ).subscribe({
+    const { coursCible, typeRessource, datePublication, titreLien, urlLien } = this.depotForm.getRawValue();
+    const publication = this.estDepotLien
+      ? this.supportService.publierLienExterne(Number(coursCible), titreLien.trim(), urlLien.trim(), datePublication)
+      : this.supportService.uploadCourseSupport(Number(coursCible), typeRessource, datePublication, this.fichierSelectionne!);
+    publication.subscribe({
       next: () => {
         this.isUploading = false;
         this.uploadMessage = 'La ressource a été publiée.';
         this.fichierSelectionne = null;
-        this.depotForm.reset({ typeRessource: 'pdf', coursCible: '', datePublication: this.aujourdhuiIso() });
-        this.fileInput.nativeElement.value = '';
+        this.depotForm.reset({ typeRessource: 'pdf', coursCible: '', datePublication: this.aujourdhuiIso(), titreLien: '', urlLien: '' });
+        this.mettreAJourContraintesDepot('pdf');
+        if (this.fileInput) this.fileInput.nativeElement.value = '';
         this.loadCours();
         this.chargerSupports();
       },
@@ -479,6 +574,10 @@ export class MesCours implements OnInit {
         || (c.promotions || []).some(p => String(p.id) === this.promotionSelectionnee);
       return correspondRecherche && correspondSemestre && correspondPromotion;
     });
+  }
+
+  get totalEtudiantsInscrits(): number {
+    return this.cours.reduce((total, cours) => total + (cours.nbEtudiants || 0), 0);
   }
 
   urlImage(cours: Cours): string {

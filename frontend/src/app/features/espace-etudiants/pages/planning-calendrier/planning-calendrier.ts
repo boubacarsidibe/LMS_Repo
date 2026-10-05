@@ -6,6 +6,7 @@ import { Seance } from '../../models/seance';
 import { SeanceCreation, SeanceService } from '../../services/seance.service';
 import { Cours } from '../../models/cours';
 import { CoursService } from '../../services/cours.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 /**
  * Vue calendrier d'une {@link Seance} : la date/heure API (un seul champ
@@ -55,7 +56,8 @@ export class PlanningCalendrier implements OnInit {
   errorMessage = '';
   seanceEnEdition: SeanceVM | null = null;
 
-  constructor(private seanceService: SeanceService, private coursService: CoursService, private fb: FormBuilder) {
+  constructor(private seanceService: SeanceService, private coursService: CoursService, private fb: FormBuilder,
+              private confirmation: ConfirmationService) {
     this.seanceForm = this.fb.group({
       coursId: ['', Validators.required],
       titre: ['', Validators.required],
@@ -387,17 +389,22 @@ export class PlanningCalendrier implements OnInit {
 
   supprimerSeance(seance: SeanceVM, evenement: Event) {
     evenement.stopPropagation();
-    if (!confirm(`Supprimer la séance « ${seance.titre} » ?`)) {
-      return;
-    }
-    this.seanceService.supprimer(seance.id).subscribe({
-      next: () => {
-        this.seances = this.seances.filter(s => s.id !== seance.id);
-        this.genererCalendrier();
-        if (this.seanceEnEdition?.id === seance.id) {
-          this.fermerFormulaire();
-        }
-      },
+    this.confirmation.demander({
+      titre: 'Supprimer la séance',
+      message: `Supprimer la séance « ${seance.titre} » ?`,
+      libelleConfirmer: 'Supprimer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.seanceService.supprimer(seance.id).subscribe({
+        next: () => {
+          this.seances = this.seances.filter(s => s.id !== seance.id);
+          this.genererCalendrier();
+          if (this.seanceEnEdition?.id === seance.id) {
+            this.fermerFormulaire();
+          }
+        },
+      });
     });
   }
 }

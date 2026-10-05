@@ -27,23 +27,29 @@
 
     <div class="space-y-4">
       <div>
-        <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Intitulé de la formation</label>
-        <input formControlName="libelle" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" placeholder="Ex: Master Data Science 2025" type="text"/>
+        <label for="session-libelle" class="block font-label-md text-label-md text-on-surface-variant mb-1">Intitulé de la formation</label>
+        <input id="session-libelle" formControlName="libelle" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" placeholder="Ex: Master Data Science 2025" type="text"/>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date d'ouverture</label>
-          <input formControlName="dateOuverture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
+          <label for="session-date-ouverture" class="block font-label-md text-label-md text-on-surface-variant mb-1">Date d'ouverture</label>
+          <input id="session-date-ouverture" formControlName="dateOuverture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
         </div>
         <div>
-          <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date limite</label>
-          <input formControlName="dateFermeture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
+          <label for="session-date-fermeture" class="block font-label-md text-label-md text-on-surface-variant mb-1">Date limite</label>
+          <input id="session-date-fermeture" formControlName="dateFermeture" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="date"/>
         </div>
       </div>
       <label class="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant">
         <input formControlName="estOuverte" type="checkbox" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
         Session ouverte aux candidatures
       </label>
+      <div>
+        <label for="session-frais-dossier" class="block font-label-md text-label-md text-on-surface-variant mb-1">Frais de dossier (XOF)</label>
+        <input id="session-frais-dossier" formControlName="montantFraisDossier" placeholder="Laisser vide pour appliquer le tarif par défaut de l'établissement"
+               class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="number" min="0" step="0.01"/>
+        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Montant demandé au candidat pour le traitement de son dossier de candidature à cette formation.</p>
+      </div>
     </div>
 
     <div class="border-t border-outline-variant pt-4">
@@ -70,13 +76,13 @@
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Âge minimum</label>
-            <input formControlName="criteresAgeMinimum" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="100" placeholder="Ex: 18"
+            <label for="session-age-min" class="block font-label-md text-label-md text-on-surface-variant mb-1">Âge minimum</label>
+            <input id="session-age-min" formControlName="criteresAgeMinimum" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="100" placeholder="Ex: 18"
                    class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
           </div>
           <div>
-            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Âge maximum</label>
-            <input formControlName="criteresAgeMaximum" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="100" placeholder="Ex: 45"
+            <label for="session-age-max" class="block font-label-md text-label-md text-on-surface-variant mb-1">Âge maximum</label>
+            <input id="session-age-max" formControlName="criteresAgeMaximum" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="100" placeholder="Ex: 45"
                    class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
           </div>
         </div>
@@ -91,8 +97,8 @@
             </select>
           </div>
           <div>
-            <label class="block font-label-md text-label-md text-on-surface-variant mb-1">Expérience minimale (années)</label>
-            <input formControlName="criteresExperienceMinimale" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="60" placeholder="Ex: 2"
+            <label for="session-experience-min" class="block font-label-md text-label-md text-on-surface-variant mb-1">Expérience minimale (années)</label>
+            <input id="session-experience-min" formControlName="criteresExperienceMinimale" [disabled]="!sessionForm.value.criteresActifs" type="number" min="0" max="60" placeholder="Ex: 2"
                    class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
           </div>
         </div>
@@ -105,9 +111,9 @@
     </div>
 
     <div class="border-t border-outline-variant pt-4">
-      <label class="block font-label-md text-label-md text-on-surface font-bold mb-1">Seuil de réussite des tests académiques</label>
+      <label for="session-seuil-reussite" class="block font-label-md text-label-md text-on-surface font-bold mb-1">Seuil de réussite des tests académiques</label>
       <p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Note minimale sur 20 pour être considéré « admissible » à cette session (TDR : pass/fail défini par l'INPG).</p>
-      <input formControlName="seuilReussiteTest" type="number" min="0" max="20" step="0.5" placeholder="Ex: 10"
+      <input id="session-seuil-reussite" formControlName="seuilReussiteTest" type="number" min="0" max="20" step="0.5" placeholder="Ex: 10"
              class="w-32 h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
     </div>
 
@@ -116,18 +122,18 @@
       <p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Ces trois informations apparaissent sur l'écran de suivi une fois le candidat admis. Laisser vide si non applicable.</p>
       <div class="space-y-3">
         <div>
-          <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Frais de scolarité</label>
-          <input formControlName="infoFraisScolarite" placeholder="Ex: Procédez au règlement avant le 15 décembre."
+          <label for="session-info-frais-scolarite" class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Frais de scolarité</label>
+          <input id="session-info-frais-scolarite" formControlName="infoFraisScolarite" placeholder="Ex: Procédez au règlement avant le 15 décembre."
                  class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="text"/>
         </div>
         <div>
-          <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Carte étudiante</label>
-          <input formControlName="infoCarteEtudiante" placeholder="Ex: Votre carte sera disponible en janvier."
+          <label for="session-info-carte-etudiante" class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Carte étudiante</label>
+          <input id="session-info-carte-etudiante" formControlName="infoCarteEtudiante" placeholder="Ex: Votre carte sera disponible en janvier."
                  class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="text"/>
         </div>
         <div>
-          <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Rentrée</label>
-          <input formControlName="infoRentree" placeholder="Ex: Journée d'intégration le 15 janvier."
+          <label for="session-info-rentree" class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Rentrée</label>
+          <input id="session-info-rentree" formControlName="infoRentree" placeholder="Ex: Journée d'intégration le 15 janvier."
                  class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="text"/>
         </div>
       </div>

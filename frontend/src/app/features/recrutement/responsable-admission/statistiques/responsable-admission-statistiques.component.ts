@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CandidatureResponse, RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 import { DashboardPreferences, DashboardPreferencesService } from '../services/dashboard-preferences.service';
 
 interface SegmentStatut {
@@ -21,25 +22,29 @@ const CIRCONFERENCE_ANNEAU = 2 * Math.PI * 58;
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './responsable-admission-statistiques.component.html',
+  styleUrl: './responsable-admission-statistiques.component.css',
 })
 export class ResponsableAdmissionStatistiquesComponent implements OnInit {
   candidatures: CandidatureResponse[] = [];
   loading = false;
   exporting = false;
+  loadError = false;
   prefs: DashboardPreferences;
 
   constructor(
     private recrutementService: RecrutementService,
-    private prefsService: DashboardPreferencesService
+    private prefsService: DashboardPreferencesService,
+    private notifications: NotificationService
   ) {
     this.prefs = this.prefsService.charger();
   }
 
   ngOnInit(): void {
     this.loading = true;
+    this.loadError = false;
     this.recrutementService.getAllCandidatures().subscribe({
       next: (data) => (this.candidatures = data || []),
-      error: () => (this.candidatures = []),
+      error: () => { this.loadError = true; this.loading = false; },
       complete: () => (this.loading = false),
     });
   }
@@ -112,7 +117,7 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
       const count = this.candidatures.filter((c) => c.candidatGenre === d.statut).length;
       return { ...d, count, pourcentage: Math.round((count / total) * 100) };
     });
-    const nonRenseigne = this.candidatures.filter((c) => !c.candidatGenre).length;
+    const nonRenseigne = this.candidatures.filter((c) => !c.candidatGenre?.trim()).length;
     if (nonRenseigne > 0) {
       segments.push({
         statut: 'NON_RENSEIGNE',
@@ -122,7 +127,26 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
         pourcentage: Math.round((nonRenseigne / total) * 100),
       });
     }
+    const nonClasse = this.totalCandidats - segments.reduce((sum, seg) => sum + seg.count, 0);
+    if (nonClasse > 0) segments.push({ statut: 'NON_CLASSE', label: 'Non classé', couleur: 'bg-surface-tint', count: nonClasse, pourcentage: Math.round(nonClasse / total * 100) });
     return segments;
+  }
+
+  readonly couleursGenre = ['#5875d8', '#a79aea', '#70b9b0', '#cbd3df', '#cbd3df'];
+
+  get gradientGenre(): string {
+    if (!this.totalCandidats) return '#edf1f7';
+    let offset = 0;
+    const stops = this.repartitionGenre.map((seg, index) => {
+      const start = offset;
+      offset += seg.count / this.totalCandidats * 100;
+      return `${this.couleursGenre[index]} ${start}% ${offset}%`;
+    });
+    return `conic-gradient(${stops.join(', ')})`;
+  }
+
+  get agesRenseignes(): number {
+    return this.repartitionAge.reduce((sum, seg) => sum + seg.count, 0);
   }
 
   /** Âge courant calculé depuis la date de naissance déclarée. */
@@ -212,7 +236,7 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
       },
       error: () => {
         this.exporting = false;
-        alert("Échec de l'export Excel.");
+        this.notifications.erreur("Échec de l'export Excel.");
       },
     });
   }

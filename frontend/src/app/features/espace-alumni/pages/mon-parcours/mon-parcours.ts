@@ -81,8 +81,17 @@ export class MonParcours implements OnInit {
     return LIBELLES_STATUT_EMPLOI[statut] ?? statut;
   }
 
+  /** Seuls un emploi réellement occupé ou un entreprenariat exigent un intitulé et une entreprise —
+   * une recherche d'emploi, une poursuite d'études ou une situation « autre » n'en ont justement aucun. */
+  get posteRequis(): boolean {
+    return this.saisie.statutEmploi === 'EN_EMPLOI' || this.saisie.statutEmploi === 'ENTREPRENARIAT';
+  }
+
   get saisieValide(): boolean {
-    return !!this.saisie.intitulePoste.trim() && !!this.saisie.entreprise.trim() && !!this.saisie.dateDebut;
+    if (this.posteRequis) {
+      return !!this.saisie.intitulePoste.trim() && !!this.saisie.entreprise.trim() && !!this.saisie.dateDebut;
+    }
+    return !!this.saisie.dateDebut;
   }
 
   enregistrer(): void {

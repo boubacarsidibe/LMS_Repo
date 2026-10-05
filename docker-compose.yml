@@ -48,6 +48,9 @@ services:
       # production tourne sur Railway, dont la variable APP_CORS_ORIGINS se
       # regle directement dans son tableau de bord (pas via ce fichier).
       APP_CORS_ORIGINS: ${APP_CORS_ORIGINS:-http://localhost:4200}
+      # La pile Compose est un environnement de démonstration local. Les
+      # environnements réels gardent APP_DEMO_DATA_ENABLED à false.
+      APP_DEMO_DATA_ENABLED: "true"
     # Sans ce volume, /app/uploads vit uniquement dans le conteneur : chaque
     # reconstruction de l'image effacait TOUS les supports de cours et photos
     # deposes, alors que leurs lignes restaient en base (references mortes).

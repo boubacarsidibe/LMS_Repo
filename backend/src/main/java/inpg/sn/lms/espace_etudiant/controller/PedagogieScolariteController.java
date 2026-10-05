@@ -67,6 +67,7 @@ import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
+import inpg.sn.lms.espace_etudiant.service.CertificatPdfService;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.CompletionProgrammeService;
 import inpg.sn.lms.espace_etudiant.service.EtudiantImportService;
@@ -126,6 +127,7 @@ public class PedagogieScolariteController {
     private final RapportQualitePdfService rapportQualitePdfService;
     private final RelevePdfService relevePdfService;
     private final CompletionProgrammeService completionProgrammeService;
+    private final CertificatPdfService certificatPdfService;
 
     public PedagogieScolariteController(PromotionRepository promotionRepository,
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
@@ -141,7 +143,8 @@ public class PedagogieScolariteController {
             ReponseEnqueteSuiviRepository reponseEnqueteSuiviRepository,
             NotificationRepository notificationRepository, RapportQualitePdfService rapportQualitePdfService,
             RelevePdfService relevePdfService,
-            CompletionProgrammeService completionProgrammeService) {
+            CompletionProgrammeService completionProgrammeService,
+            CertificatPdfService certificatPdfService) {
         this.promotionRepository = promotionRepository;
         this.formationRepository = formationRepository;
         this.etudiantRepository = etudiantRepository;
@@ -167,6 +170,7 @@ public class PedagogieScolariteController {
         this.rapportQualitePdfService = rapportQualitePdfService;
         this.relevePdfService = relevePdfService;
         this.completionProgrammeService = completionProgrammeService;
+        this.certificatPdfService = certificatPdfService;
     }
 
     // ===================== PROMOTIONS =====================
@@ -524,6 +528,10 @@ public class PedagogieScolariteController {
 
     // ===================== CERTIFICATS =====================
 
+    private static final int INTITULE_MAX = 150;
+    private static final int CODE_MAX = 60;
+    private static final java.util.Set<String> CIVILITES = java.util.Set.of("Monsieur", "Madame", "Mademoiselle");
+
     @GetMapping("/certificats")
     @Transactional(readOnly = true)
     public ResponseEntity<?> listerCertificats() {
@@ -544,6 +552,24 @@ public class PedagogieScolariteController {
             return ResponseEntity.badRequest()
                     .body(Map.of("message", "L'étudiant et l'intitulé de la formation sont requis."));
         }
+        if (request.dateDebut() != null && request.dateFin() != null && request.dateFin().isBefore(request.dateDebut())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "La date de fin de la formation précède sa date de début."));
+        }
+        if (!estVide(request.civilite()) && !CIVILITES.contains(request.civilite().trim())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Civilité inconnue."));
+        }
+        // Bornes des colonnes : au-delà, la base refusait l'écriture et l'écran affichait un faux
+        // « identifiant déjà utilisé ». L'intitulé est plafonné plus bas que la colonne : sur le modèle
+        // imprimé il tient sur une seule ligne, qu'il faudrait sinon réduire jusqu'à l'illisible.
+        if (request.intituleFormation().trim().length() > INTITULE_MAX) {
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "L'intitulé de la formation est trop long (" + INTITULE_MAX + " caractères au plus)."));
+        }
+        if (!estVide(request.code()) && request.code().trim().length() > CODE_MAX) {
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "Le code du certificat est trop long (" + CODE_MAX + " caractères au plus)."));
+        }
         Etudiant etudiant = etudiantRepository.findById(request.etudiantId()).orElse(null);
         if (etudiant == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Étudiant introuvable."));
@@ -553,6 +579,16 @@ public class PedagogieScolariteController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message",
                     "Cet étudiant n'a pas terminé son programme, le certificat ne peut pas encore être délivré.",
                     "coursNonTermines", coursNonTermines));
+        }
+        // Un second clic, ou une seconde personne, ne doit pas produire un deuxième certificat identique.
+        String intitule = request.intituleFormation().trim();
+        boolean dejaDelivre = certificatService.getByEtudiant(etudiant.getId()).stream().anyMatch(c ->
+                c.getIntituleFormation().trim().equalsIgnoreCase(intitule)
+                        && java.util.Objects.equals(c.getDateDebut(), request.dateDebut())
+                        && java.util.Objects.equals(c.getDateFin(), request.dateFin()));
+        if (dejaDelivre) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message",
+                    "Un certificat identique (même étudiant, même formation, même période) a déjà été délivré."));
         }
         Promotion promotion = null;
         if (request.cohorteId() != null) {
@@ -569,8 +605,29 @@ public class PedagogieScolariteController {
         certificat.setPromotion(promotion);
         certificat.setIntituleFormation(request.intituleFormation().trim());
         certificat.setFormateurNom("INPG — Direction pédagogique");
+        certificat.setCivilite(estVide(request.civilite()) ? null : request.civilite().trim());
+        certificat.setDateNaissance(request.dateNaissance());
+        certificat.setDateDebut(request.dateDebut());
+        certificat.setDateFin(request.dateFin());
+        certificat.setCodeCertificat(estVide(request.code()) ? null : request.code().trim());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(toCertificatDto(certificatService.save(certificat)));
+    }
+
+    /** Version PDF au modèle INPG : l'équipe qui délivre remet le document, sans passer par le compte de l'étudiant. */
+    @GetMapping("/certificats/{id}/pdf")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> certificatPdf(@PathVariable Long id) {
+        Certificat certificat = certificatService.findById(id).orElse(null);
+        if (certificat == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        org.springframework.http.ContentDisposition.inline()
+                                .filename("INPG-certificat-" + certificat.getReference() + ".pdf").build().toString())
+                .body(certificatPdfService.genererPdf(certificat));
     }
 
     // ===================== RELEVES DE NOTES =====================
@@ -992,7 +1049,12 @@ public class PedagogieScolariteController {
                 certificat.getIntituleFormation(),
                 certificat.getPromotion() == null ? null : certificat.getPromotion().getLibelle(),
                 certificat.getDateEmission() == null ? null : certificat.getDateEmission().format(JOUR),
-                certificat.getFormateurNom());
+                certificat.getFormateurNom(),
+                certificat.getCivilite(),
+                certificat.getDateNaissance() == null ? null : certificat.getDateNaissance().format(JOUR),
+                certificat.getDateDebut() == null ? null : certificat.getDateDebut().format(JOUR),
+                certificat.getDateFin() == null ? null : certificat.getDateFin().format(JOUR),
+                certificat.getCodeCertificat());
     }
 
     private String nomComplet(Etudiant etudiant) {

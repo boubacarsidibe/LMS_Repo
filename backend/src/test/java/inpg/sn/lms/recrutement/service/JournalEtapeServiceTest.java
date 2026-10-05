@@ -57,7 +57,7 @@ class JournalEtapeServiceTest {
         agent.setUsername("resp.admission");
 
         EtapeDossier ligne = service.enregistrer(candidature, EnumEtapeQms.SELECTION,
-                EnumStatutCandidature.ADMIS3, agent, "Admis.");
+                EnumStatutCandidature.ADMIS, agent, "Admis.");
 
         assertEquals("resp.admission", ligne.getAuteurNom());
         assertEquals(agent, ligne.getAuteur(), "le lien reste tant que le compte existe");
@@ -70,7 +70,7 @@ class JournalEtapeServiceTest {
         agent.setEmail("test.admission@inpg.sn");
 
         EtapeDossier ligne = service.enregistrer(candidature, EnumEtapeQms.EVALUATION,
-                EnumStatutCandidature.ADMIS1, agent, null);
+                EnumStatutCandidature.CONVOQUE_TEST, agent, null);
 
         assertEquals("test.admission@inpg.sn", ligne.getAuteurNom());
     }
@@ -80,7 +80,7 @@ class JournalEtapeServiceTest {
         // auteur_nom est NOT NULL (migration V32) : sans ce repli, l'écriture échouerait
         // et l'action métier échouerait avec elle.
         EtapeDossier ligne = service.enregistrer(candidature, EnumEtapeQms.INSCRIPTION,
-                EnumStatutCandidature.ADMIS3, new User(), null);
+                EnumStatutCandidature.ADMIS, new User(), null);
 
         assertEquals("Système", ligne.getAuteurNom());
     }

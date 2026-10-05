@@ -5,8 +5,9 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { RecrutementService, SessionCandidatureResponse, CandidatureRequest, CandidatureResponse, CritereAdmissionResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
-import { CandidatNavbarComponent } from '../../../../shared/components/candidat-navbar/candidat-navbar.component';
+import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { Auth } from '../../../../core/auth/services/authService';
+import { NotificationService } from '../../../../shared/components/ui/notification.service';
 
 const STORAGE_KEY = 'candidature_brouillon';
 
@@ -19,21 +20,44 @@ interface CandidatureFormData {
   etape: number;
   nom: string; prenom: string; email: string; telephone: string;
   adresse: string; phonePrefix: string; dateNaissance: string; nationalite: string;
-  genre: string; profession: string; anneesExperience: number | null;
+  genre: string; estProfessionnel: string; profession: string; anneesExperience: number | null;
   sessionCandidatureId: number | null;
-  typeFormation: string; niveauVise: string; programme: string; campus: string;
-  sessionRentree: string; niveauActuel: string; etablissement: string;
+  niveauActuel: string; etablissement: string;
   diplome: string; anneeObtention: string;
-  fichierIdentite: string; fichierCV: string; fichierMotivation: string; fichierReleves: string;
+  fichierIdentite: string; fichierCV: string;
   consentement: boolean;
   /** Réponses aux critères personnalisés de la session choisie : clé = id du critère. */
   reponsesCriteres: { [critereId: number]: string };
+  /** Formations/certifications déjà suivies par le candidat, déclarées librement. */
+  formationsSuivies: FormationSuivie[];
+  /** Relevés de notes des dernières années : 1 à MAX_ANNEES années, chacune portant un ou
+   * plusieurs bulletins (ex: trimestres) — jamais un nombre illimité d'années ni de bulletins. */
+  bulletinsParAnnee: AnneeBulletins[];
+}
+
+interface FormationSuivie {
+  nom: string;
+  etablissement: string;
+  diplome: string;
+  anneeObtention: string;
+  pays: string;
+}
+
+/** Une année scolaire déclarée, avec le ou les bulletins qui la couvrent. */
+interface AnneeBulletins {
+  bulletins: BulletinAnnuel[];
+}
+
+/** Un bulletin (ex: trimestre) : la moyenne déclarée par le candidat, prouvée par le PDF joint. */
+interface BulletinAnnuel {
+  moyenne: number | null;
+  fichierNom: string;
 }
 
 @Component({
   selector: 'app-formulaire',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, CandidatNavbarComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FooterComponent, NavbarComponent],
   templateUrl: './formulaire.component.html'
 })
 export class FormulaireComponent implements OnInit {
@@ -48,21 +72,38 @@ export class FormulaireComponent implements OnInit {
   /** Stocke les vrais fichiers sélectionnés (pas juste leurs noms) */
   filesToUpload: Map<string, File[]> = new Map();
 
+  /**
+   * Diplômes/certificats ajoutés en nombre libre (à l'image d'un formulaire de
+   * candidature UNESCO où l'on ajoute autant de compétences que l'on veut) : un
+   * document + sa description, avec un bouton « + » qui n'apparaît qu'une fois la
+   * dernière entrée complète. Volontairement hors de `data` : les `File` ne
+   * survivent pas à la sérialisation JSON du brouillon.
+   */
+  diplomes: { file: File | null; description: string }[] = [{ file: null, description: '' }];
+
   etape = 1;
-  readonly totalEtapes = 4;
+  readonly totalEtapes = 3;
 
   data: CandidatureFormData = {
     etape: 1, nom: '', prenom: '', email: '', telephone: '', adresse: '',
     phonePrefix: '+221', dateNaissance: '', nationalite: '',
-    genre: '', profession: '', anneesExperience: null,
+    genre: '', estProfessionnel: '', profession: '', anneesExperience: null,
     sessionCandidatureId: null,
-    typeFormation: '', niveauVise: '', programme: '', campus: '',
-    sessionRentree: '', niveauActuel: '', etablissement: '',
+    niveauActuel: '', etablissement: '',
     diplome: '', anneeObtention: '',
-    fichierIdentite: '', fichierCV: '', fichierMotivation: '', fichierReleves: '',
+    fichierIdentite: '', fichierCV: '',
     consentement: false,
     reponsesCriteres: {},
+    formationsSuivies: [],
+    bulletinsParAnnee: [{ bulletins: [{ moyenne: null, fichierNom: '' }] }],
   };
+
+  /** Fichiers PDF réels des bulletins, indexés [année][bulletin] comme data.bulletinsParAnnee —
+   * hors du brouillon JSON comme les autres champs fichier*, un File ne survit pas à la sérialisation. */
+  bulletinFiles: (File | null)[][] = [[null]];
+
+  readonly MAX_ANNEES = 3;
+  readonly MAX_BULLETINS_PAR_ANNEE = 3;
 
   /** Session imposée via l'URL (ex: venant de la page « Sessions ouvertes ») : prioritaire sur un brouillon existant. */
   private sessionImposeeParUrl: number | null = null;
@@ -71,7 +112,8 @@ export class FormulaireComponent implements OnInit {
     private recrutementService: RecrutementService,
     private router: Router,
     private route: ActivatedRoute,
-    private auth: Auth
+    private auth: Auth,
+    private notifications: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -142,9 +184,18 @@ export class FormulaireComponent implements OnInit {
     if (this.sessionImposeeParUrl !== null) {
       this.data.sessionCandidatureId = this.sessionImposeeParUrl;
     }
+    // Un File ne survit pas à JSON.stringify/parse : le brouillon restauré connaît les
+    // noms de fichiers de bulletins mais plus les fichiers eux-mêmes, qu'il faut
+    // resélectionner. On réaligne seulement la forme [année][bulletin] du tableau.
+    if (!this.data.bulletinsParAnnee || this.data.bulletinsParAnnee.length === 0) {
+      this.data.bulletinsParAnnee = [{ bulletins: [{ moyenne: null, fichierNom: '' }] }];
+    }
+    this.bulletinFiles = this.data.bulletinsParAnnee.map(annee =>
+      (annee.bulletins && annee.bulletins.length > 0 ? annee.bulletins : (annee.bulletins = [{ moyenne: null, fichierNom: '' }])).map(() => null)
+    );
   }
 
-  get etapeLabels(): string[] { return ['Profil', 'Formation', 'Parcours', 'Documents']; }
+  get etapeLabels(): string[] { return ['Profil', 'Formation & Parcours', 'Documents']; }
 
   // --- Validateurs étape 1 (Profil) : présence ET format, pas juste "non vide" ---
 
@@ -184,6 +235,37 @@ export class FormulaireComponent implements OnInit {
   /** La session choisie doit exister parmi celles réellement publiées/ouvertes par l'admin. */
   get sessionInvalide(): boolean {
     return !this.sessions.some(s => s.id === this.data.sessionCandidatureId);
+  }
+
+  /** Alimente Candidat#niveauEtude, utilisé par le filtre de critères côté serveur : le laisser vide désactive silencieusement ce critère. */
+  get niveauActuelInvalide(): boolean {
+    return !this.data.niveauActuel;
+  }
+
+  readonly anneeCourante = new Date().getFullYear();
+
+  /** Libellés des documents requis (badge « Requis » en étape Documents) non encore sélectionnés. */
+  get documentsManquants(): string[] {
+    const requis: { type: string; label: string }[] = [
+      { type: 'identite', label: "Pièce d'identité" },
+      { type: 'cv', label: 'CV' },
+    ];
+    return requis.filter(r => !this.filesToUpload.get(r.type)?.length).map(r => r.label);
+  }
+
+  /**
+   * Une à trois années, chacune avec un à trois bulletins — jamais un nombre illimité
+   * ni d'années ni de bulletins. Chaque bulletin doit porter sa moyenne déclarée (sur
+   * 20) ET son PDF de preuve : les deux vont ensemble, l'un sans l'autre est une
+   * déclaration invérifiable ou une preuve sans valeur.
+   */
+  get bulletinsIncomplets(): boolean {
+    if (this.data.bulletinsParAnnee.length === 0) return true;
+    return this.data.bulletinsParAnnee.some((annee, ai) =>
+      annee.bulletins.length === 0 || annee.bulletins.some((b, bi) =>
+        b.moyenne === null || !Number.isFinite(b.moyenne) || b.moyenne < 0 || b.moyenne > 20 || !this.bulletinFiles[ai]?.[bi]
+      )
+    );
   }
 
   get sessionSelectionnee(): SessionCandidatureResponse | undefined {
@@ -261,6 +343,73 @@ export class FormulaireComponent implements OnInit {
     return avertissements;
   }
 
+  /** Un candidat sans activité professionnelle n'a ni profession ni ancienneté à déclarer. */
+  onEstProfessionnelChange(): void {
+    if (this.data.estProfessionnel !== 'Oui') {
+      this.data.profession = '';
+      this.data.anneesExperience = null;
+    }
+    this.saveDraft();
+  }
+
+  ajouterFormationSuivie(): void {
+    this.data.formationsSuivies.push({ nom: '', etablissement: '', diplome: '', anneeObtention: '', pays: '' });
+    this.saveDraft();
+  }
+
+  retirerFormationSuivie(index: number): void {
+    this.data.formationsSuivies.splice(index, 1);
+    this.saveDraft();
+  }
+
+  /** Une année de plus (jusqu'à MAX_ANNEES, jamais au-delà), avec un premier bulletin vide. */
+  ajouterAnnee(): void {
+    if (this.data.bulletinsParAnnee.length >= this.MAX_ANNEES) return;
+    this.data.bulletinsParAnnee.push({ bulletins: [{ moyenne: null, fichierNom: '' }] });
+    this.bulletinFiles.push([null]);
+    this.saveDraft();
+  }
+
+  retirerAnnee(anneeIndex: number): void {
+    if (this.data.bulletinsParAnnee.length <= 1) return; // au moins une année reste obligatoire
+    this.data.bulletinsParAnnee.splice(anneeIndex, 1);
+    this.bulletinFiles.splice(anneeIndex, 1);
+    this.saveDraft();
+  }
+
+  /** Un bulletin de plus dans cette année (ex: trimestre suivant), jusqu'à MAX_BULLETINS_PAR_ANNEE. */
+  ajouterBulletin(anneeIndex: number): void {
+    const bulletins = this.data.bulletinsParAnnee[anneeIndex].bulletins;
+    if (bulletins.length >= this.MAX_BULLETINS_PAR_ANNEE) return;
+    bulletins.push({ moyenne: null, fichierNom: '' });
+    this.bulletinFiles[anneeIndex].push(null);
+    this.saveDraft();
+  }
+
+  retirerBulletin(anneeIndex: number, bulletinIndex: number): void {
+    const bulletins = this.data.bulletinsParAnnee[anneeIndex].bulletins;
+    if (bulletins.length <= 1) return; // au moins un bulletin reste obligatoire par année
+    bulletins.splice(bulletinIndex, 1);
+    this.bulletinFiles[anneeIndex].splice(bulletinIndex, 1);
+    this.saveDraft();
+  }
+
+  onBulletinFileSelected(event: Event, anneeIndex: number, bulletinIndex: number): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      const MAX_SIZE_MO = 5;
+      if (file.size > MAX_SIZE_MO * 1024 * 1024) {
+        this.notifications.erreur(`Fichier trop volumineux (max ${MAX_SIZE_MO} Mo) : ${file.name}.`);
+        input.value = '';
+        return;
+      }
+      this.bulletinFiles[anneeIndex][bulletinIndex] = file;
+      this.data.bulletinsParAnnee[anneeIndex].bulletins[bulletinIndex].fichierNom = file.name;
+      this.saveDraft();
+    }
+  }
+
   precedent(): void { if (this.etape > 1) { this.etape--; this.saveDraft(); } }
   suivant(): void { if (!this.peutAvancer()) return; if (this.etape < this.totalEtapes) { this.etape++; this.saveDraft(); } }
 
@@ -273,7 +422,7 @@ export class FormulaireComponent implements OnInit {
       }
     }
     if (this.etape === 2) {
-      if (this.sessionInvalide || !this.data.programme.trim() || this.criteresPersonnalisesManquants.length > 0) {
+      if (this.sessionInvalide || this.criteresPersonnalisesManquants.length > 0 || this.niveauActuelInvalide) {
         this.showErrors = true; return false;
       }
     }
@@ -305,12 +454,16 @@ export class FormulaireComponent implements OnInit {
       this.showErrors = true;
       return;
     }
-    if (this.sessionInvalide || !this.data.programme.trim() || this.criteresPersonnalisesManquants.length > 0) {
+    if (this.sessionInvalide || this.criteresPersonnalisesManquants.length > 0 || this.niveauActuelInvalide) {
       this.etape = 2;
       this.showErrors = true;
       return;
     }
-    if (!this.data.consentement) { alert('Veuillez accepter les conditions.'); return; }
+    if (this.documentsManquants.length > 0 || this.bulletinsIncomplets || !this.data.consentement) {
+      this.etape = 3;
+      this.showErrors = true;
+      return;
+    }
     this.loading = true;
     const request: CandidatureRequest = {
       sessionCandidatureId: this.data.sessionCandidatureId!,
@@ -323,13 +476,13 @@ export class FormulaireComponent implements OnInit {
         anneesExperience: this.data.anneesExperience !== null ? String(this.data.anneesExperience) : '',
       }),
       informationsAcademiques: JSON.stringify({
-        typeFormation: this.data.typeFormation, niveauVise: this.data.niveauVise,
-        programme: this.data.programme, niveauActuel: this.data.niveauActuel,
+        niveauActuel: this.data.niveauActuel,
         etablissement: this.data.etablissement, diplome: this.data.diplome,
         anneeObtention: this.data.anneeObtention,
+        formationsSuivies: this.data.formationsSuivies.filter(f => f.nom.trim()),
       }),
       informationsProfessionnelles: JSON.stringify({
-        campus: this.data.campus, sessionRentree: this.data.sessionRentree,
+        estProfessionnel: this.data.estProfessionnel,
       }),
       reponsesCriteres: this.data.reponsesCriteres,
     };
@@ -342,18 +495,25 @@ export class FormulaireComponent implements OnInit {
       error: (err) => {
         this.loading = false;
         const msg = err.error?.message || err.message || 'Erreur inconnue';
-        alert('Erreur lors de la soumission : ' + msg);
+        this.notifications.erreur('Erreur lors de la soumission : ' + msg);
       }
     });
   }
+
+  private readonly libelleTypePiece: Record<string, string> = {
+    'identite': "Pièce d'identité",
+    'cv': 'CV',
+  };
 
   private uploadAllFiles(candidatureId: number): void {
     const typeMap: Record<string, string> = {
       'identite': 'PIECE_IDENTITE',
       'cv': 'CV',
-      'motivation': 'LETTRE_MOTIVATION',
-      'releves': 'RELEVE_NOTES',
     };
+    // Échecs suivis explicitement : un upload qui échoue silencieusement laissait
+    // afficher « Candidature soumise avec succès ! » alors que le dossier restait
+    // sans pièces, sans que le candidat n'en sache jamais rien.
+    const echecs: string[] = [];
     const uploads: Promise<any>[] = [];
     this.filesToUpload.forEach((files, type) => {
       files.forEach(file => {
@@ -362,21 +522,59 @@ export class FormulaireComponent implements OnInit {
         uploads.push(
           firstValueFrom(upload$).catch((err) => {
             console.error(`[uploadAllFiles] Échec upload "${type}" (${file.name}) comme ${docType}:`, err);
-            return Promise.resolve(null);
+            echecs.push(`${this.libelleTypePiece[type] || type} (${file.name})`);
+            return null;
           })
         );
       });
     });
+    // Bulletins annuels : chacun est un relevé de notes distinct, avec sa moyenne déclarée.
+    this.data.bulletinsParAnnee.forEach((annee, ai) => {
+      annee.bulletins.forEach((bulletin, bi) => {
+        const file = this.bulletinFiles[ai]?.[bi];
+        if (!file) return;
+        const upload$ = this.recrutementService.televerserPiece(candidatureId, file, 'RELEVE_NOTES', bulletin.moyenne);
+        uploads.push(
+          firstValueFrom(upload$).catch((err) => {
+            console.error(`[uploadAllFiles] Échec upload relevé année ${ai + 1}, bulletin ${bi + 1} (${file.name}):`, err);
+            echecs.push(`Relevé de notes — année ${ai + 1}, bulletin ${bi + 1} (${file.name})`);
+            return null;
+          })
+        );
+      });
+    });
+    this.diplomes
+      .filter((d) => d.file && d.description.trim())
+      .forEach((d) => {
+        const upload$ = this.recrutementService.televerserPiece(candidatureId, d.file!, 'DIPLOME', d.description.trim());
+        uploads.push(
+          firstValueFrom(upload$).catch((err) => {
+            console.error(`[uploadAllFiles] Échec upload diplôme (${d.file!.name}):`, err);
+            echecs.push(`Diplôme ou certification (${d.file!.name})`);
+            return Promise.resolve(null);
+          })
+        );
+      });
+
     if (uploads.length > 0) {
-      Promise.all(uploads).finally(() => this.onSubmitComplete());
+      Promise.all(uploads).finally(() => this.onSubmitComplete(echecs));
     } else {
-      this.onSubmitComplete();
+      this.onSubmitComplete(echecs);
     }
   }
 
-  private onSubmitComplete(): void {
+  private onSubmitComplete(echecsUpload: string[] = []): void {
     this.loading = false;
-    this.successMessage = 'Candidature soumise avec succès ! N° ' + (this.candidature?.numeroDossier || '');
+    const numero = this.candidature?.numeroDossier || '';
+    if (echecsUpload.length > 0) {
+      this.notifications.erreur(
+        `Candidature n°${numero} enregistrée, mais ${echecsUpload.length} document(s) n'ont pas été transmis : `
+        + `${echecsUpload.join(', ')}. Vous pourrez les ajouter depuis l'espace candidat.`
+      );
+      this.successMessage = '';
+    } else {
+      this.successMessage = 'Candidature soumise avec succès ! N° ' + numero;
+    }
     localStorage.removeItem(STORAGE_KEY);
     // La soumission vient d'accorder ROLE_CANDIDAT côté backend : on rafraîchit
     // currentUser AVANT de naviguer vers /suivi (gardée par candidatGuard), sinon
@@ -385,7 +583,7 @@ export class FormulaireComponent implements OnInit {
       next: () => {
         setTimeout(() => {
           this.router.navigate(['/recrutement/suivi']);
-        }, 1500);
+        }, echecsUpload.length > 0 ? 200 : 1500);
       },
     });
   }
@@ -400,7 +598,7 @@ export class FormulaireComponent implements OnInit {
       const oversized = allFiles.filter(f => f.size > MAX_SIZE_BYTES);
       if (oversized.length > 0) {
         const names = oversized.map(f => `${f.name} (${(f.size / (1024 * 1024)).toFixed(1)} Mo)`).join(', ');
-        alert(`❌ Fichier(s) trop volumineux (max ${MAX_SIZE_MO} Mo) :\n${names}`);
+        this.notifications.erreur(`Fichier(s) trop volumineux (max ${MAX_SIZE_MO} Mo) : ${names}.`);
         input.value = '';
         return;
       }
@@ -409,9 +607,36 @@ export class FormulaireComponent implements OnInit {
       const names = allFiles.map(f => f.name).join(', ');
       if (type === 'identite') this.data.fichierIdentite = names;
       else if (type === 'cv') this.data.fichierCV = names;
-      else if (type === 'motivation') this.data.fichierMotivation = names;
-      else if (type === 'releves') this.data.fichierReleves = names;
       this.saveDraft();
     }
+  }
+
+  /** La dernière entrée doit être complète avant de pouvoir en ajouter une autre. */
+  get dernierDiplomeComplet(): boolean {
+    const dernier = this.diplomes[this.diplomes.length - 1];
+    return !!dernier?.file && dernier.description.trim().length > 0;
+  }
+
+  onDiplomeFileSelected(event: Event, index: number): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const MAX_SIZE_MO = 5;
+    if (file.size > MAX_SIZE_MO * 1024 * 1024) {
+      this.notifications.erreur(`Fichier trop volumineux (max ${MAX_SIZE_MO} Mo) : ${file.name}.`);
+      input.value = '';
+      return;
+    }
+    this.diplomes[index].file = file;
+  }
+
+  ajouterDiplome(): void {
+    if (!this.dernierDiplomeComplet) return;
+    this.diplomes.push({ file: null, description: '' });
+  }
+
+  retirerDiplome(index: number): void {
+    this.diplomes.splice(index, 1);
+    if (this.diplomes.length === 0) this.diplomes.push({ file: null, description: '' });
   }
 }

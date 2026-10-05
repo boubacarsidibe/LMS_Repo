@@ -10,6 +10,7 @@ import { SupportService } from '../../services/support.service';
 import { Etudiant } from '../../models/etudiant';
 import { Cours } from '../../models/cours';
 import { Support } from '../../models/support';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 interface NavItem {
   label: string;
@@ -20,14 +21,14 @@ interface NavItem {
 @Component({
   selector: 'app-formateur-layout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RouterOutlet, LogoInpgComponent],
   templateUrl: './formateur-layout.html',
   styleUrl: './formateur-layout.css',
 })
 export class FormateurLayout implements OnInit {
   notificationOpen = false;
   profileOpen = false;
-  sidebarMobileOpen = false;
+  mobileMenuOpen = false;
 
   searchQuery = '';
   searchOpen = false;
@@ -40,16 +41,14 @@ export class FormateurLayout implements OnInit {
 
   navItems: NavItem[] = [
     { label: "Vue d'ensemble", icon: 'dashboard', route: 'dashboard-formateur' },
-    { label: 'Mes Cours & Ressources', icon: 'menu_book', route: 'mes-cours' },
-    { label: 'Suivi Étudiants', icon: 'analytics', route: 'suivi-etudiants' },
-    { label: 'Planning & Calendrier', icon: 'calendar_today', route: 'planning-calendrier' },
-    { label: 'Forum & Interaction', icon: 'forum', route: 'forum' },
+    { label: 'Mes cours', icon: 'menu_book', route: 'mes-cours' },
+    { label: 'Suivi étudiants', icon: 'analytics', route: 'suivi-etudiants' },
+    { label: 'Planning', icon: 'calendar_today', route: 'planning-calendrier' },
+    { label: 'Forum', icon: 'forum', route: 'forum' },
     { label: 'Messagerie', icon: 'chat', route: 'messagerie' },
-    { label: 'Retours & Évaluations', icon: 'assignment_turned_in', route: 'retours-evaluations' },
+    { label: 'Retours & évaluations', icon: 'assignment_turned_in', route: 'retours-evaluations' },
     { label: 'Annonces', icon: 'campaign', route: 'annonces' },
     { label: 'Photothèque', icon: 'photo_library', route: 'phototheque' },
-    { label: 'Certificats', icon: 'workspace_premium', route: 'certificats' },
-    { label: 'Rendez-vous', icon: 'event', route: 'rendez-vous' },
   ];
 
   constructor(
@@ -62,7 +61,7 @@ export class FormateurLayout implements OnInit {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe(() => {
-        this.sidebarMobileOpen = false;
+        this.mobileMenuOpen = false;
       });
   }
 
@@ -160,8 +159,8 @@ export class FormateurLayout implements OnInit {
     }
   }
 
-  toggleSidebarMobile(): void {
-    this.sidebarMobileOpen = !this.sidebarMobileOpen;
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
   }
 
   @HostListener('document:click', ['$event'])
@@ -179,12 +178,12 @@ export class FormateurLayout implements OnInit {
     if (
       target.closest('#notification-dropdown') ||
       target.closest('#profile-dropdown') ||
-      target.closest('#mobile-sidebar')
+      target.closest('#mobile-nav-menu')
     ) {
       return;
     }
     this.closeAll();
-    this.sidebarMobileOpen = false;
+    this.mobileMenuOpen = false;
     this.searchOpen = false;
   }
 }

@@ -26,10 +26,11 @@
 
       <!-- Search -->
       <div class="mb-6">
-        <label class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e] mb-2 block">Recherche</label>
+        <label for="catalogue-recherche" class="text-sm leading-4 tracking-[0.01em] font-medium text-[#46464e] mb-2 block">Recherche</label>
         <div class="relative">
           <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#77767f]" style="font-variation-settings: 'FILL' 0;">search</span>
           <input
+            id="catalogue-recherche"
             [(ngModel)]="searchTerm"
             (input)="onSearchChange()"
             class="w-full pl-10 pr-3 py-2 border border-[#c7c5d0] rounded-lg focus:outline-none focus:border-[#30609a] focus:ring-2 focus:ring-[#30609a]/20 bg-white text-[#191c1e] transition-all text-sm"
@@ -162,6 +163,7 @@
         <button
           (click)="changePage(currentPage - 1)"
           [disabled]="currentPage === 1"
+          aria-label="Page précédente"
           class="w-8 h-8 flex items-center justify-center rounded border border-[#c7c5d0] text-[#46464e] hover:bg-[#e0e3e5] transition-colors disabled:opacity-50">
           <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">chevron_left</span>
         </button>
@@ -184,6 +186,7 @@
         <button
           (click)="changePage(currentPage + 1)"
           [disabled]="currentPage === totalPages"
+          aria-label="Page suivante"
           class="w-8 h-8 flex items-center justify-center rounded border border-[#c7c5d0] text-[#46464e] hover:bg-[#e0e3e5] transition-colors disabled:opacity-50">
           <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">chevron_right</span>
         </button>

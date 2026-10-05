@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import {
   DemandeEntreprise,
@@ -24,19 +24,28 @@ import { EntrepriseService } from '../../services/entreprise.service';
 @Component({
   selector: 'app-nouvelle-demande',
   standalone: true,
-  imports: [CommonModule, FormsModule, UiSpinnerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, UiSpinnerComponent],
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
-      <header>
-        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
-          Espace Entreprise
-        </p>
-        <h1 class="font-display text-display text-on-surface leading-none -ml-1">Mes demandes</h1>
-        <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
-          Exprimez un besoin de formation ou demandez un devis pour une session sur mesure, et suivez la
-          réponse de l'équipe pédagogique.
-        </p>
-      </header>
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <header>
+          <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
+            Espace Entreprise
+          </p>
+          <h1 class="font-display text-display text-on-surface leading-none -ml-1">Mes demandes</h1>
+          <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+            Exprimez un besoin de formation ou demandez un devis pour une session sur mesure, et suivez la
+            réponse de l'équipe pédagogique.
+          </p>
+        </header>
+        <!-- Bouton plutôt qu'un onglet permanent du navbar : une entreprise ne
+             prend rendez-vous qu'à certains moments précis, pas en continu. -->
+        <a routerLink="/espace-entreprise/rendez-vous"
+           class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity no-underline shrink-0 shadow-sm">
+          <span class="material-symbols-outlined text-[20px]">event</span>
+          Prendre rendez-vous
+        </a>
+      </div>
 
       <app-ui-spinner *ngIf="chargement" message="Chargement de vos demandes…"></app-ui-spinner>
 

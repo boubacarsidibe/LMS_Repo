@@ -1,0 +1,40 @@
+<div class="p-margin-desktop">
+  <div class="mx-auto max-w-2xl space-y-stack-lg">
+    <header class="space-y-2">
+      <span class="font-label-md text-label-md uppercase tracking-[0.12em] text-secondary">Ressources pédagogiques</span>
+      <h1 class="font-display text-display text-on-surface">Créer une ressource</h1>
+    </header>
+
+    <section class="rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-stack-lg shadow-sm">
+      <p *ngIf="chargement" class="font-body-sm text-body-sm text-on-surface-variant">Chargement des cours…</p>
+
+      <ng-container *ngIf="!chargement && cours.length">
+        <div class="space-y-2">
+          <label for="cours-ressource" class="font-label-md text-label-md text-on-surface">Cours concerné</label>
+          <select id="cours-ressource" [(ngModel)]="coursId" class="w-full rounded-lg bg-surface-container-low p-3 font-body-md text-body-md text-on-surface outline-none">
+            <option [ngValue]="null">Choisir un cours</option>
+            <option *ngFor="let item of cours" [ngValue]="item.id">{{ item.code }} — {{ item.titre }}</option>
+          </select>
+        </div>
+
+        <p class="mt-stack-md font-body-sm text-body-sm text-on-surface-variant">Vous pourrez ensuite ajouter un document, un lien externe ou une vidéo.</p>
+
+        <div class="mt-stack-lg flex justify-end gap-stack-sm">
+          <a routerLink="/espace-etudiant/formateur/mes-cours" class="rounded-lg px-4 py-3 font-label-md text-label-md text-on-surface hover:bg-surface-container">Annuler</a>
+          <button type="button" (click)="continuer()" [disabled]="!coursId" class="rounded-lg bg-secondary px-5 py-3 font-label-md text-label-md text-on-secondary transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">Continuer</button>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="!chargement && !cours.length">
+        <div class="flex flex-col items-start gap-3">
+          <span class="material-symbols-outlined text-[32px] text-secondary">menu_book</span>
+          <div>
+            <h2 class="font-headline-sm text-headline-sm text-on-surface">Aucun cours attribué</h2>
+            <p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">Une ressource doit être associée à un cours. Elle sera disponible ici dès qu’un cours vous sera affecté.</p>
+          </div>
+          <a routerLink="/espace-etudiant/formateur/mes-cours" class="mt-2 rounded-lg bg-secondary px-5 py-3 font-label-md text-label-md text-on-secondary hover:opacity-90">Retour à mes cours</a>
+        </div>
+      </ng-container>
+    </section>
+  </div>
+</div>

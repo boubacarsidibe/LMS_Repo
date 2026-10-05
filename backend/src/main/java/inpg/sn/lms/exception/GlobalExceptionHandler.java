@@ -105,7 +105,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponse body = ErrorResponse.of(
                 HttpStatus.PAYLOAD_TOO_LARGE.value(),
                 HttpStatus.PAYLOAD_TOO_LARGE.getReasonPhrase(),
-                "Le fichier dépasse la taille maximale autorisée (10 Mo).",
+                "Le fichier dépasse la taille maximale autorisée (500 Mo).",
                 path(request)
         );
 

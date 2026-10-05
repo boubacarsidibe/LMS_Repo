@@ -1,9 +1,9 @@
-<div class="mb-stack-lg flex flex-wrap items-start justify-between gap-4">
-  <div>
+<div class="mb-stack-lg flex flex-col xl:flex-row xl:items-end justify-between gap-5">
+  <div class="max-w-3xl">
     <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Historique des paiements</h1>
     <p class="font-body-md text-body-md text-on-surface-variant mt-2">Suivi des frais de dossier réglés par les candidats, toutes sessions confondues.</p>
   </div>
-  <button type="button" [disabled]="relanceEnCours || candidaturesImpayees.length === 0" (click)="relancerImpayes()" title="Envoie un email et une notification aux candidats dont le dossier est validé mais les frais impayés" class="shrink-0 flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md disabled:opacity-60">
+  <button type="button" [disabled]="relanceEnCours || candidaturesImpayees.length === 0" (click)="relancerImpayes()" title="Envoie un email et une notification aux candidats dont le dossier est validé mais les frais impayés" class="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-4 h-10 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md disabled:opacity-60">
     <span class="material-symbols-outlined text-sm">mark_email_unread</span>
     {{ relanceEnCours ? 'Relance en cours…' : 'Relancer les impayés (' + candidaturesImpayees.length + ')' }}
   </button>
@@ -12,23 +12,11 @@
 <div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
 <div *ngIf="relanceMessage" class="mb-stack-md p-4 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm text-body-sm">{{ relanceMessage }}</div>
 
-<div class="grid grid-cols-1 sm:grid-cols-4 gap-gutter mb-stack-lg">
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
-    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Total encaissé</span><span class="material-symbols-outlined text-secondary">payments</span></div>
-    <div class="font-headline-lg text-headline-lg text-primary">{{ montantTotal | number:'1.0-0' }} <span class="font-body-md text-body-md text-on-surface-variant font-normal">XOF</span></div>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
-    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Paiements réussis</span><span class="material-symbols-outlined text-secondary">check_circle</span></div>
-    <div class="font-headline-lg text-headline-lg text-primary">{{ nbReussis }}</div>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
-    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">En attente</span><span class="material-symbols-outlined text-outline">hourglass_empty</span></div>
-    <div class="font-headline-lg text-headline-lg text-primary">{{ nbEnAttente }}</div>
-  </div>
-  <div class="bg-surface-container-lowest p-6 rounded-xl border shadow-sm" [class.border-error]="candidaturesImpayees.length > 0" [class.border-outline-variant]="candidaturesImpayees.length === 0">
-    <div class="flex justify-between items-start mb-2"><span class="font-label-md text-label-md text-on-surface-variant">Dossiers validés impayés</span><span class="material-symbols-outlined" [class.text-error]="candidaturesImpayees.length > 0" [class.text-on-surface-variant]="candidaturesImpayees.length === 0">priority_high</span></div>
-    <div class="font-headline-lg text-headline-lg" [class.text-error]="candidaturesImpayees.length > 0" [class.text-primary]="candidaturesImpayees.length === 0">{{ candidaturesImpayees.length }}</div>
-  </div>
+<div class="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest mb-stack-md overflow-hidden">
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-secondary text-[20px]">payments</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ montantTotal | number:'1.0-0' }} <span class="font-label-sm text-label-sm text-on-surface-variant font-normal">XOF</span></div><div class="font-label-sm text-label-sm text-on-surface-variant">Total encaissé</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbReussis }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">Réussis</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-outline text-[20px]">hourglass_empty</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbEnAttente }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">En attente</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-[20px]" [class.text-error]="candidaturesImpayees.length > 0" [class.text-outline]="candidaturesImpayees.length === 0">priority_high</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm leading-none" [class.text-error]="candidaturesImpayees.length > 0" [class.text-primary]="candidaturesImpayees.length === 0">{{ candidaturesImpayees.length }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">Impayés</div></div></div>
 </div>
 
 <!-- Dossiers validés sans paiement réussi : jamais tentés (invisibles de l'historique ci-dessous) ou tentative en attente/échouée. -->
@@ -36,7 +24,20 @@
   <div class="p-4 border-b border-outline-variant bg-surface">
     <span class="font-label-md text-label-md text-on-surface">Dossiers validés en attente de paiement</span>
   </div>
-  <div class="overflow-x-auto">
+  <div class="md:hidden divide-y divide-outline-variant">
+    <article *ngFor="let c of candidaturesImpayees" [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ dossier: c.numeroDossier }" class="p-4 cursor-pointer hover:bg-surface-container-low transition-colors">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0"><h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ c.candidatPrenom }} {{ c.candidatNom }}</h3><p class="text-[11px] text-on-surface-variant truncate">{{ c.numeroDossier }}</p></div>
+        <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-error-container/30 text-error whitespace-nowrap">Paiement requis</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mt-3 rounded-lg bg-surface-container-low p-3 text-[11px]">
+        <div><span class="block text-[10px] text-on-surface-variant">Dossier</span><span class="text-primary">{{ c.statut }}</span></div>
+        <div><span class="block text-[10px] text-on-surface-variant">Dernière tentative</span><span [class.text-error]="c.paiement?.statut === 'ECHEC'" [class.text-on-surface-variant]="c.paiement?.statut !== 'ECHEC'">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</span></div>
+      </div>
+      <div class="mt-3" (click)="$event.stopPropagation()"><button type="button" (click)="confirmerDossier(c)" [disabled]="idEnCours === c.id" class="h-8 px-3 rounded-md bg-secondary text-on-secondary text-[11px] font-semibold disabled:opacity-50">{{ idEnCours === c.id ? 'Confirmation…' : 'Confirmer le paiement' }}</button></div>
+    </article>
+  </div>
+  <div class="hidden md:block overflow-x-auto">
     <table class="w-full text-left border-collapse">
       <thead>
         <tr class="bg-surface-container-low border-b border-outline-variant">
@@ -53,7 +54,9 @@
             <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ c.numeroDossier }}</div>
           </td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.statut }}</td>
-          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</td>
+          <td class="p-4 font-body-sm text-body-sm"
+              [class.text-error]="c.paiement?.statut === 'ECHEC'"
+              [class.text-on-surface-variant]="c.paiement?.statut !== 'ECHEC'">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</td>
           <td class="p-4 text-right" (click)="$event.stopPropagation()">
             <button
               type="button"
@@ -72,22 +75,41 @@
 </div>
 
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
-  <div class="p-4 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-4">
-    <div class="flex items-center gap-2">
-      <button type="button" (click)="filtreStatut = 'TOUS'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtreStatut === 'TOUS'" [class.text-on-secondary]="filtreStatut === 'TOUS'" [class.text-on-surface-variant]="filtreStatut !== 'TOUS'">Tous</button>
-      <button type="button" (click)="filtreStatut = 'SUCCES'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtreStatut === 'SUCCES'" [class.text-on-secondary]="filtreStatut === 'SUCCES'" [class.text-on-surface-variant]="filtreStatut !== 'SUCCES'">Réussis</button>
-      <button type="button" (click)="filtreStatut = 'EN_ATTENTE'" class="px-4 py-1.5 rounded-full font-label-sm text-label-sm whitespace-nowrap transition-colors" [class.bg-secondary]="filtreStatut === 'EN_ATTENTE'" [class.text-on-secondary]="filtreStatut === 'EN_ATTENTE'" [class.text-on-surface-variant]="filtreStatut !== 'EN_ATTENTE'">En attente</button>
+  <div class="p-3 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-3">
+    <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto" aria-label="Filtrer les paiements">
+      <button type="button" (click)="filtreStatut = 'TOUS'" [attr.aria-pressed]="filtreStatut === 'TOUS'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtreStatut === 'TOUS'" [class.text-on-secondary]="filtreStatut === 'TOUS'" [class.border-secondary]="filtreStatut === 'TOUS'" [class.bg-surface-container-lowest]="filtreStatut !== 'TOUS'" [class.text-on-surface-variant]="filtreStatut !== 'TOUS'" [class.border-outline-variant]="filtreStatut !== 'TOUS'">Tous</button>
+      <button type="button" (click)="filtreStatut = 'SUCCES'" [attr.aria-pressed]="filtreStatut === 'SUCCES'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtreStatut === 'SUCCES'" [class.text-on-secondary]="filtreStatut === 'SUCCES'" [class.border-secondary]="filtreStatut === 'SUCCES'" [class.bg-surface-container-lowest]="filtreStatut !== 'SUCCES'" [class.text-on-surface-variant]="filtreStatut !== 'SUCCES'" [class.border-outline-variant]="filtreStatut !== 'SUCCES'">Réussis</button>
+      <button type="button" (click)="filtreStatut = 'EN_ATTENTE'" [attr.aria-pressed]="filtreStatut === 'EN_ATTENTE'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtreStatut === 'EN_ATTENTE'" [class.text-on-secondary]="filtreStatut === 'EN_ATTENTE'" [class.border-secondary]="filtreStatut === 'EN_ATTENTE'" [class.bg-surface-container-lowest]="filtreStatut !== 'EN_ATTENTE'" [class.text-on-surface-variant]="filtreStatut !== 'EN_ATTENTE'" [class.border-outline-variant]="filtreStatut !== 'EN_ATTENTE'">En attente</button>
+      <button type="button" (click)="filtreStatut = 'ECHEC'" [attr.aria-pressed]="filtreStatut === 'ECHEC'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-error]="filtreStatut === 'ECHEC'" [class.text-on-error]="filtreStatut === 'ECHEC'" [class.border-error]="filtreStatut === 'ECHEC'" [class.bg-surface-container-lowest]="filtreStatut !== 'ECHEC'" [class.text-on-surface-variant]="filtreStatut !== 'ECHEC'" [class.border-outline-variant]="filtreStatut !== 'ECHEC'">Échecs</button>
     </div>
     <div class="relative w-full sm:w-64">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-      <input [(ngModel)]="recherche" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Nom, dossier, référence..." type="text">
+      <input #rechercheBox [value]="recherche" (keyup.enter)="recherche = rechercheBox.value" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Nom, dossier, référence... (Entrée)" type="text">
     </div>
   </div>
 
   <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement…</div>
   <div *ngIf="!loading && paiementsFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Aucun paiement ne correspond à ces critères.</div>
 
-  <div class="overflow-x-auto" *ngIf="!loading && paiementsFiltres.length > 0">
+  <div class="md:hidden divide-y divide-outline-variant" *ngIf="!loading && paiementsFiltres.length > 0">
+    <article *ngFor="let p of paiementsFiltres" [routerLink]="p.numeroDossier ? ['/responsable-admission/candidatures'] : null" [queryParams]="p.numeroDossier ? { dossier: p.numeroDossier } : null" [class.cursor-pointer]="p.numeroDossier" class="p-4 hover:bg-surface-container-low transition-colors">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0"><h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ p.candidatPrenom }} {{ p.candidatNom }}</h3><p class="text-[11px] text-on-surface-variant truncate">{{ p.numeroDossier || p.referenceTransaction }}</p></div>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap" [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]' : (p.statut === 'ECHEC' ? 'bg-error-container/30 text-error' : 'bg-surface-container text-on-surface-variant')">{{ p.statut === 'SUCCES' ? 'Réussi' : (p.statut === 'ECHEC' ? 'Échec' : 'En attente') }}</span>
+      </div>
+      <dl class="grid grid-cols-2 gap-2 mt-3 rounded-lg bg-surface-container-low p-3 text-[11px]">
+        <div><dt class="text-[10px] text-on-surface-variant">Montant</dt><dd class="font-semibold text-primary mt-0.5">{{ p.montant | number:'1.0-0' }} {{ p.devise }}</dd></div>
+        <div><dt class="text-[10px] text-on-surface-variant">Date</dt><dd class="text-primary mt-0.5">{{ p.datePaiement ? (p.datePaiement | date:'dd MMM yyyy, HH:mm') : '—' }}</dd></div>
+        <div class="col-span-2"><dt class="text-[10px] text-on-surface-variant">Référence</dt><dd class="text-primary mt-0.5 break-all">{{ p.referenceTransaction || '—' }}</dd></div>
+      </dl>
+      <div class="flex gap-1.5 mt-3 pt-3 border-t border-outline-variant" *ngIf="p.statut === 'EN_ATTENTE'" (click)="$event.stopPropagation()">
+        <button type="button" (click)="valider(p)" [disabled]="idEnCours === p.id" class="h-8 px-3 rounded-md bg-secondary text-on-secondary text-[11px] font-semibold disabled:opacity-50">Valider</button>
+        <button type="button" (click)="rejeter(p)" [disabled]="idEnCours === p.id" class="h-8 px-3 rounded-md border border-outline-variant text-error bg-surface text-[11px] font-semibold disabled:opacity-50">Rejeter</button>
+      </div>
+    </article>
+  </div>
+
+  <div class="hidden md:block overflow-x-auto" *ngIf="!loading && paiementsFiltres.length > 0">
     <table class="w-full text-left border-collapse">
       <thead>
         <tr class="bg-surface-container-low border-b border-outline-variant">
@@ -109,9 +131,13 @@
           <td class="p-4 font-body-sm text-body-sm text-primary">{{ p.montant | number:'1.0-0' }} {{ p.devise }}</td>
           <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ p.datePaiement ? (p.datePaiement | date:'dd MMM yyyy, HH:mm') : '—' }}</td>
           <td class="p-4">
+            <!-- Trois statuts existent côté serveur (EN_ATTENTE, SUCCES, ECHEC). Le badge
+                 n'en connaissait que deux : un paiement en échec s'affichait « En attente »
+                 en gris, c'est-à-dire l'inverse de ce qu'il fallait lire. -->
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-surface-container text-on-surface-variant'">
-              {{ p.statut === 'SUCCES' ? 'Réussi' : 'En attente' }}
+                  [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]'
+                             : (p.statut === 'ECHEC' ? 'bg-error-container/30 text-error' : 'bg-surface-container text-on-surface-variant')">
+              {{ p.statut === 'SUCCES' ? 'Réussi' : (p.statut === 'ECHEC' ? 'Échec' : 'En attente') }}
             </span>
           </td>
           <td class="p-4" (click)="$event.stopPropagation()">

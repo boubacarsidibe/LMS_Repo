@@ -1,7 +1,9 @@
 package inpg.sn.lms.recrutement.controller;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.Period;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
@@ -18,12 +20,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import inpg.sn.lms.recrutement.entity.Candidature;
+import inpg.sn.lms.recrutement.entity.Entretien;
 import inpg.sn.lms.recrutement.entity.Paiement;
+import inpg.sn.lms.recrutement.entity.SessionCandidature;
+import inpg.sn.lms.recrutement.entity.TestAcademique;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.enums.EnumStatutPaiement;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
 import inpg.sn.lms.recrutement.repository.PaiementRepository;
 import inpg.sn.lms.recrutement.repository.EntretienRepository;
+import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
+import inpg.sn.lms.recrutement.repository.TestAcademiqueRepository;
+import inpg.sn.lms.recrutement.service.ExcelExportService;
+import inpg.sn.lms.recrutement.service.LigneRapport;
+import inpg.sn.lms.recrutement.service.RapportSyntheseRecrutementPdfService;
 
 /**
  * Statistiques du recrutement, calculées à partir des données réelles.
@@ -44,16 +54,31 @@ public class AnalyticsController {
     private static final int NOMBRE_MOIS_AFFICHES = 5;
     private static final int NOMBRE_PAYS_AFFICHES = 4;
 
+    /** Seuil d'admissibilité par défaut si la session du candidat n'est pas identifiable — même valeur que le frontend (Tests). */
+    private static final float SEUIL_ADMISSIBILITE_DEFAUT = 10f;
+
     private final CandidatureRepository candidatureRepo;
     private final PaiementRepository paiementRepo;
     private final EntretienRepository entretienRepo;
+    private final TestAcademiqueRepository testAcademiqueRepo;
+    private final SessionCandidatureRepository sessionCandidatureRepo;
+    private final RapportSyntheseRecrutementPdfService rapportPdfService;
+    private final ExcelExportService excelExportService;
 
     public AnalyticsController(CandidatureRepository candidatureRepo,
                                 PaiementRepository paiementRepo,
-                                EntretienRepository entretienRepo) {
+                                EntretienRepository entretienRepo,
+                                TestAcademiqueRepository testAcademiqueRepo,
+                                SessionCandidatureRepository sessionCandidatureRepo,
+                                RapportSyntheseRecrutementPdfService rapportPdfService,
+                                ExcelExportService excelExportService) {
         this.candidatureRepo = candidatureRepo;
         this.paiementRepo = paiementRepo;
         this.entretienRepo = entretienRepo;
+        this.testAcademiqueRepo = testAcademiqueRepo;
+        this.sessionCandidatureRepo = sessionCandidatureRepo;
+        this.rapportPdfService = rapportPdfService;
+        this.excelExportService = excelExportService;
     }
 
     // ==============================================
@@ -90,8 +115,8 @@ public class AnalyticsController {
                 ? ((double) (soumisesCeMois - soumisesMoisPrecedent) / soumisesMoisPrecedent) * 100
                 : (soumisesCeMois > 0 ? 100.0 : 0.0);
 
-        long admis = all.stream().filter(c -> c.getStatut() == EnumStatutCandidature.ADMIS3
-                || c.getStatut() == EnumStatutCandidature.ADMIS2).count();
+        long admis = all.stream().filter(c -> c.getStatut() == EnumStatutCandidature.ADMIS
+                || c.getStatut() == EnumStatutCandidature.INSCRIPTION_FINALISEE).count();
         double tauxAdmission = total > 0 ? ((double) admis / total) * 100 : 0.0;
 
         double frais = paiementRepo.findAll().stream()
@@ -140,11 +165,13 @@ public class AnalyticsController {
                     .filter(c -> c.getDateSoumission() != null && YearMonth.from(c.getDateSoumission()).equals(mois))
                     .toList();
             long validees = duMois.stream()
-                    .filter(c -> c.getStatut() == EnumStatutCandidature.ADMIS1
-                            || c.getStatut() == EnumStatutCandidature.ADMIS2
-                            || c.getStatut() == EnumStatutCandidature.ADMIS3)
+                    .filter(c -> c.getStatut() == EnumStatutCandidature.TEST_REUSSI
+                            || c.getStatut() == EnumStatutCandidature.ENTRETIEN_EFFECTUE
+                            || c.getStatut() == EnumStatutCandidature.ADMIS
+                            || c.getStatut() == EnumStatutCandidature.INSCRIPTION_FINALISEE)
                     .count();
-            long rejetees = duMois.stream().filter(c -> c.getStatut() == EnumStatutCandidature.REJETE).count();
+            long rejetees = duMois.stream().filter(c -> c.getStatut() == EnumStatutCandidature.DOSSIER_REJETE
+                    || c.getStatut() == EnumStatutCandidature.NON_ADMIS).count();
 
             Map<String, Object> m = new HashMap<>();
             m.put("mois", capitaliser(mois.getMonth().getDisplayName(TextStyle.FULL, Locale.FRENCH)));
@@ -217,9 +244,9 @@ public class AnalyticsController {
                 .filter(c -> c.getStatut() != EnumStatutCandidature.BROUILLON)
                 .filter(this::aUnPaiementReussi)
                 .count();
-        long admissibles = all.stream().filter(c -> estAuMoins(c.getStatut(), EnumStatutCandidature.ADMIS1)).count();
-        long entretiens = all.stream().filter(c -> estAuMoins(c.getStatut(), EnumStatutCandidature.ADMIS2)).count();
-        long inscrits = all.stream().filter(c -> c.getStatut() == EnumStatutCandidature.ADMIS3).count();
+        long admissibles = all.stream().filter(c -> estAuMoins(c.getStatut(), EnumStatutCandidature.TEST_REUSSI)).count();
+        long entretiens = all.stream().filter(c -> estAuMoins(c.getStatut(), EnumStatutCandidature.CONVOQUE_ENTRETIEN)).count();
+        long inscrits = all.stream().filter(c -> c.getStatut() == EnumStatutCandidature.INSCRIPTION_FINALISEE).count();
 
         List<Map<String, Object>> funnel = new ArrayList<>();
         funnel.add(createFunnelStep("Dossiers créés", crees, 100));
@@ -238,8 +265,11 @@ public class AnalyticsController {
     /** Un statut donné a-t-il au moins atteint {@code seuil} dans le parcours SOUMIS→ADMIS3 ? */
     private boolean estAuMoins(EnumStatutCandidature statut, EnumStatutCandidature seuil) {
         List<EnumStatutCandidature> parcours = List.of(EnumStatutCandidature.SOUMIS,
-                EnumStatutCandidature.EN_COURS_DE_PRESELECTION, EnumStatutCandidature.ADMIS1,
-                EnumStatutCandidature.ADMIS2, EnumStatutCandidature.ADMIS3);
+                EnumStatutCandidature.PRESELECTIONNE, EnumStatutCandidature.PAIEMENT_EN_ATTENTE,
+                EnumStatutCandidature.PAIEMENT_CONFIRME, EnumStatutCandidature.CONVOQUE_TEST,
+                EnumStatutCandidature.TEST_REUSSI, EnumStatutCandidature.CONVOQUE_ENTRETIEN,
+                EnumStatutCandidature.ENTRETIEN_EFFECTUE, EnumStatutCandidature.ADMIS,
+                EnumStatutCandidature.INSCRIPTION_FINALISEE);
         int indexStatut = parcours.indexOf(statut);
         int indexSeuil = parcours.indexOf(seuil);
         return indexStatut >= 0 && indexStatut >= indexSeuil;
@@ -277,5 +307,243 @@ public class AnalyticsController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=rapport_statistiques_" + annee + ".csv")
                 .contentType(MediaType.parseMediaType("text/csv"))
                 .body(bytes);
+    }
+
+    // ==============================================
+    // GET /api/analytics/rapport-candidatures
+    // GET /api/analytics/rapport-tests
+    // GET /api/analytics/rapport-entretiens
+    //
+    // Rapport de synthèse par étape (indicateurs + répartitions), au format
+    // choisi — PDF (RapportSyntheseRecrutementPdfService) ou Excel avec graphique natif
+    // (ExcelExportService, déjà utilisé par l'export Candidatures). Les deux
+    // formats partagent exactement les mêmes lignes calculées une seule fois
+    // ci-dessous, pour ne jamais diverger entre eux ni de l'écran.
+    // ==============================================
+
+    @GetMapping("/rapport-candidatures")
+    @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
+    public ResponseEntity<byte[]> rapportCandidatures(@RequestParam(defaultValue = "pdf") String format) {
+        return genererReponseRapport("rapport_candidatures", "Rapport de synthèse — Candidatures",
+                construireRapportCandidatures(), format);
+    }
+
+    @GetMapping("/rapport-tests")
+    @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
+    public ResponseEntity<byte[]> rapportTests(@RequestParam(defaultValue = "pdf") String format) {
+        return genererReponseRapport("rapport_tests", "Rapport de synthèse — Tests académiques",
+                construireRapportTests(), format);
+    }
+
+    @GetMapping("/rapport-entretiens")
+    @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
+    public ResponseEntity<byte[]> rapportEntretiens(@RequestParam(defaultValue = "pdf") String format) {
+        return genererReponseRapport("rapport_entretiens", "Rapport de synthèse — Entretiens",
+                construireRapportEntretiens(), format);
+    }
+
+    /** Contenu d'un rapport : les lignes imprimables (PDF/Excel) + la série numérique du seul graphique (Excel natif). */
+    private record DonneesRapport(List<LigneRapport> lignes, String titreGraphique,
+            List<String> categoriesGraphique, List<Double> valeursGraphique, String legendeGraphique) {
+    }
+
+    /** PDF (texte + indicateurs) ou Excel (mêmes lignes + graphique natif) — même contenu, deux mises en forme. */
+    private ResponseEntity<byte[]> genererReponseRapport(String nomFichier, String titre, DonneesRapport donnees,
+            String format) {
+        byte[] fichier;
+        String nomComplet;
+        MediaType type;
+        if ("xlsx".equalsIgnoreCase(format)) {
+            List<String> entetes = List.of("Section", "Indicateur", "Valeur");
+            List<List<Object>> lignes = donnees.lignes().stream()
+                    .map(l -> List.<Object>of(l.section(), l.libelle(), l.valeur()))
+                    .toList();
+            fichier = excelExportService.genererClasseur(titre, entetes, lignes,
+                    donnees.titreGraphique(), donnees.categoriesGraphique(), donnees.valeursGraphique(),
+                    donnees.legendeGraphique());
+            nomComplet = nomFichier + ".xlsx";
+            type = MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        } else {
+            fichier = rapportPdfService.genererRapport(titre, donnees.lignes());
+            nomComplet = nomFichier + ".pdf";
+            type = MediaType.APPLICATION_PDF;
+        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + nomComplet)
+                .contentType(type)
+                .body(fichier);
+    }
+
+    private LigneRapport ligne(String section, String libelle, String valeur) {
+        return new LigneRapport(section, libelle, valeur);
+    }
+
+    private String compteEtPourcentage(long compte, long total) {
+        return compte + " (" + Math.round(pourcentage(compte, total)) + "%)";
+    }
+
+    // ===================== Rapport Candidatures =====================
+
+    private DonneesRapport construireRapportCandidatures() {
+        List<Candidature> all = candidatureRepo.findAll();
+        long total = all.size();
+        Map<String, Object> kpis = calculerKpis();
+
+        List<LigneRapport> lignes = new ArrayList<>();
+        lignes.add(ligne("Indicateurs clés", "Total candidatures", String.valueOf(total)));
+        lignes.add(ligne("Indicateurs clés", "Taux d'admission", kpis.get("tauxAdmission") + "%"));
+        lignes.add(ligne("Indicateurs clés", "Frais collectés", kpis.get("fraisCollectes") + " FCFA"));
+        lignes.add(ligne("Indicateurs clés", "Temps de traitement moyen", kpis.get("tempsTraitement") + " j"));
+
+        List<String> statutsLabels = List.of("Soumis", "Présélectionné", "Test réussi", "Entretien effectué",
+                "Admis", "Non admis");
+        List<EnumStatutCandidature> statuts = List.of(EnumStatutCandidature.SOUMIS,
+                EnumStatutCandidature.PRESELECTIONNE, EnumStatutCandidature.TEST_REUSSI,
+                EnumStatutCandidature.ENTRETIEN_EFFECTUE, EnumStatutCandidature.ADMIS,
+                EnumStatutCandidature.NON_ADMIS);
+        List<Double> statutsValeurs = new ArrayList<>();
+        for (int i = 0; i < statuts.size(); i++) {
+            EnumStatutCandidature statutCourant = statuts.get(i);
+            long compte = all.stream().filter(c -> c.getStatut() == statutCourant).count();
+            statutsValeurs.add((double) compte);
+            lignes.add(ligne("Répartition par statut", statutsLabels.get(i), compteEtPourcentage(compte, total)));
+        }
+
+        ajouterDemographie(lignes, all, total);
+
+        return new DonneesRapport(lignes, "Répartition par statut", statutsLabels, statutsValeurs, "Nb candidatures");
+    }
+
+    /** Mêmes quatre axes démographiques que la page Statistiques (genre, âge, profession, nationalité). */
+    private void ajouterDemographie(List<LigneRapport> lignes, List<Candidature> all, long total) {
+        Map<String, Long> parGenre = all.stream()
+                .map(c -> c.getCandidat() != null ? c.getCandidat().getGenre() : null)
+                .collect(Collectors.groupingBy(g -> g == null || g.isBlank() ? "Non renseigné" : g, Collectors.counting()));
+        parGenre.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> lignes.add(ligne("Démographie — Genre", e.getKey(), compteEtPourcentage(e.getValue(), total))));
+
+        LocalDate maintenant = LocalDate.now();
+        List<int[]> tranches = List.of(new int[] { 0, 19 }, new int[] { 20, 25 }, new int[] { 26, 30 },
+                new int[] { 31, 40 }, new int[] { 41, 999 });
+        List<String> tranchesLabels = List.of("< 20 ans", "20-25 ans", "26-30 ans", "31-40 ans", "> 40 ans");
+        List<Integer> ages = all.stream()
+                .map(c -> c.getCandidat() != null ? c.getCandidat().getDateNaissance() : null)
+                .filter(Objects::nonNull)
+                .map(naissance -> Period.between(naissance, maintenant).getYears())
+                .toList();
+        for (int i = 0; i < tranches.size(); i++) {
+            int[] bornes = tranches.get(i);
+            long compte = ages.stream().filter(age -> age >= bornes[0] && age <= bornes[1]).count();
+            lignes.add(ligne("Démographie — Tranche d'âge", tranchesLabels.get(i), compteEtPourcentage(compte, total)));
+        }
+
+        Map<String, Long> parProfession = all.stream()
+                .map(c -> c.getCandidat() != null ? c.getCandidat().getProfession() : null)
+                .filter(p -> p != null && !p.isBlank())
+                .collect(Collectors.groupingBy(p -> p.trim().toLowerCase(Locale.FRENCH), Collectors.counting()));
+        parProfession.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(6)
+                .forEach(e -> lignes.add(
+                        ligne("Démographie — Professions", capitaliser(e.getKey()), compteEtPourcentage(e.getValue(), total))));
+
+        Map<String, Long> parNationalite = all.stream()
+                .map(c -> c.getCandidat() != null ? c.getCandidat().getNationalite() : null)
+                .filter(n -> n != null && !n.isBlank())
+                .collect(Collectors.groupingBy(n -> n, Collectors.counting()));
+        parNationalite.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(6)
+                .forEach(e -> lignes.add(
+                        ligne("Démographie — Nationalités", e.getKey(), compteEtPourcentage(e.getValue(), total))));
+    }
+
+    // ===================== Rapport Tests =====================
+
+    private DonneesRapport construireRapportTests() {
+        List<TestAcademique> tests = testAcademiqueRepo.findAll();
+        Map<Long, Candidature> candidatureParCandidat = candidatureRepo.findAll().stream()
+                .filter(c -> c.getCandidat() != null)
+                .collect(Collectors.toMap(c -> c.getCandidat().getId(), c -> c, (a, b) -> a));
+
+        long total = tests.size();
+        long notes = tests.stream().filter(t -> t.getNoteObtenue() != null).count();
+        long enAttente = total - notes;
+        long admissibles = tests.stream()
+                .filter(t -> t.getNoteObtenue() != null && t.getNoteObtenue() >= seuilPour(t, candidatureParCandidat))
+                .count();
+        long insuffisants = notes - admissibles;
+        double moyenne = tests.stream().filter(t -> t.getNoteObtenue() != null)
+                .mapToDouble(TestAcademique::getNoteObtenue).average().orElse(0.0);
+
+        List<LigneRapport> lignes = new ArrayList<>();
+        lignes.add(ligne("Indicateurs clés", "Total tests programmés", String.valueOf(total)));
+        lignes.add(ligne("Indicateurs clés", "Notés", String.valueOf(notes)));
+        lignes.add(ligne("Indicateurs clés", "En attente de note", String.valueOf(enAttente)));
+        lignes.add(ligne("Indicateurs clés", "Moyenne des notes obtenues",
+                notes > 0 ? String.format(Locale.FRENCH, "%.1f/20", moyenne) : "—"));
+
+        List<String> labels = List.of("Admissible", "Insuffisant", "En attente");
+        List<Double> valeurs = List.of((double) admissibles, (double) insuffisants, (double) enAttente);
+        for (int i = 0; i < labels.size(); i++) {
+            lignes.add(ligne("Répartition par résultat", labels.get(i), compteEtPourcentage(valeurs.get(i).longValue(), total)));
+        }
+
+        Map<String, List<TestAcademique>> parSession = tests.stream()
+                .collect(Collectors.groupingBy(t -> {
+                    Candidature c = candidatureParCandidat.get(t.getCandidat().getId());
+                    return c != null && c.getSessionCandidature() != null ? c.getSessionCandidature().getLibelle()
+                            : "Session inconnue";
+                }));
+        parSession.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> {
+                    double moyenneSession = e.getValue().stream().filter(t -> t.getNoteObtenue() != null)
+                            .mapToDouble(TestAcademique::getNoteObtenue).average().orElse(0.0);
+                    lignes.add(ligne("Répartition par session", e.getKey(),
+                            e.getValue().size() + " test(s), moyenne " + String.format(Locale.FRENCH, "%.1f/20", moyenneSession)));
+                });
+
+        return new DonneesRapport(lignes, "Répartition par résultat", labels, valeurs, "Nb tests");
+    }
+
+    /** Seuil de réussite (note/20) de la session du candidat de ce test — même règle que le frontend (page Tests). */
+    private float seuilPour(TestAcademique test, Map<Long, Candidature> candidatureParCandidat) {
+        Candidature candidature = candidatureParCandidat.get(test.getCandidat().getId());
+        SessionCandidature session = candidature != null ? candidature.getSessionCandidature() : null;
+        return session != null ? session.getSeuilReussiteTest() : SEUIL_ADMISSIBILITE_DEFAUT;
+    }
+
+    // ===================== Rapport Entretiens =====================
+
+    private DonneesRapport construireRapportEntretiens() {
+        List<Entretien> entretiens = entretienRepo.findAll();
+        LocalDateTime maintenant = LocalDateTime.now();
+
+        long total = entretiens.size();
+        long effectues = entretiens.stream().filter(e -> e.getDateHeure().isBefore(maintenant)).count();
+        long aVenir = total - effectues;
+        long aujourdhui = entretiens.stream()
+                .filter(e -> e.getDateHeure().toLocalDate().equals(maintenant.toLocalDate()))
+                .count();
+        long confirmes = entretiens.stream().filter(Entretien::isConfirmeParCandidat).count();
+        long notes = entretiens.stream().filter(e -> e.getNoteEntretien() != null).count();
+        double moyenne = entretiens.stream().filter(e -> e.getNoteEntretien() != null)
+                .mapToDouble(Entretien::getNoteEntretien).average().orElse(0.0);
+
+        List<LigneRapport> lignes = new ArrayList<>();
+        lignes.add(ligne("Indicateurs clés", "Total entretiens", String.valueOf(total)));
+        lignes.add(ligne("Indicateurs clés", "Aujourd'hui", String.valueOf(aujourdhui)));
+        lignes.add(ligne("Indicateurs clés", "Confirmés par le candidat", compteEtPourcentage(confirmes, total)));
+        lignes.add(ligne("Indicateurs clés", "Moyenne des notes", notes > 0 ? String.format(Locale.FRENCH, "%.1f/20", moyenne) : "—"));
+
+        List<String> labels = List.of("Effectués", "À venir");
+        List<Double> valeurs = List.of((double) effectues, (double) aVenir);
+        for (int i = 0; i < labels.size(); i++) {
+            lignes.add(ligne("Répartition par état", labels.get(i), compteEtPourcentage(valeurs.get(i).longValue(), total)));
+        }
+
+        return new DonneesRapport(lignes, "Répartition par état", labels, valeurs, "Nb entretiens");
     }
 }

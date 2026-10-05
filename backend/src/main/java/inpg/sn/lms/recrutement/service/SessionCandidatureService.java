@@ -15,6 +15,7 @@ import inpg.sn.lms.recrutement.dto.SessionCandidatureResponse;
 import inpg.sn.lms.recrutement.entity.CritereAdmissionPersonnalise;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
 import inpg.sn.lms.recrutement.repository.CritereAdmissionPersonnaliseRepository;
+import inpg.sn.lms.recrutement.repository.ProgramRepository;
 import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
 
 @Service
@@ -23,11 +24,14 @@ public class SessionCandidatureService {
 
     private final SessionCandidatureRepository sessionRepository;
     private final CritereAdmissionPersonnaliseRepository critereRepository;
+    private final ProgramRepository programRepository;
 
     public SessionCandidatureService(SessionCandidatureRepository sessionRepository,
-            CritereAdmissionPersonnaliseRepository critereRepository) {
+            CritereAdmissionPersonnaliseRepository critereRepository,
+            ProgramRepository programRepository) {
         this.sessionRepository = sessionRepository;
         this.critereRepository = critereRepository;
+        this.programRepository = programRepository;
     }
 
     public SessionCandidatureResponse creerSession(SessionCandidatureRequest request) {
@@ -36,6 +40,7 @@ public class SessionCandidatureService {
         session.setDateOuverture(request.getDateOuverture());
         session.setDateFermeture(request.getDateFermeture());
         session.setEstOuverte(request.isEstOuverte());
+        appliquerConfiguration(session, request);
         appliquerCriteres(session, request);
 
         SessionCandidature saved = sessionRepository.save(session);
@@ -50,6 +55,7 @@ public class SessionCandidatureService {
         session.setDateOuverture(request.getDateOuverture());
         session.setDateFermeture(request.getDateFermeture());
         session.setEstOuverte(request.isEstOuverte());
+        appliquerConfiguration(session, request);
         appliquerCriteres(session, request);
 
         SessionCandidature saved = sessionRepository.save(session);
@@ -73,6 +79,21 @@ public class SessionCandidatureService {
         session.setInfoFraisScolarite(vide(request.getInfoFraisScolarite()) ? null : request.getInfoFraisScolarite());
         session.setInfoCarteEtudiante(vide(request.getInfoCarteEtudiante()) ? null : request.getInfoCarteEtudiante());
         session.setInfoRentree(vide(request.getInfoRentree()) ? null : request.getInfoRentree());
+        session.setMontantFraisDossier(request.getMontantFraisDossier());
+    }
+
+    private void appliquerConfiguration(SessionCandidature session, SessionCandidatureRequest request) {
+        session.setQuotaMax(request.getQuotaMax() != null ? request.getQuotaMax() : 220);
+        String status = vide(request.getStatus())
+                ? (request.isEstOuverte() ? "OUVERTE" : "BROUILLON")
+                : request.getStatus();
+        session.setStatus(status);
+        session.setEstOuverte("OUVERTE".equals(status));
+        session.getProgrammes().clear();
+        if (request.getProgrammeIds() != null) {
+            session.getProgrammes().addAll(programRepository.findAllById(request.getProgrammeIds()));
+        }
+        session.setProgram(session.getProgrammes().stream().findFirst().orElse(null));
     }
 
     private boolean vide(String valeur) {
@@ -218,6 +239,10 @@ public class SessionCandidatureService {
                 .infoFraisScolarite(s.getInfoFraisScolarite())
                 .infoCarteEtudiante(s.getInfoCarteEtudiante())
                 .infoRentree(s.getInfoRentree())
+                .montantFraisDossier(s.getMontantFraisDossier())
+                .programmeIds(s.getProgrammes().stream().map(p -> p.getId()).toList())
+                .quotaMax(s.getQuotaMax())
+                .status(s.getStatus())
                 .criteresPersonnalises(criteres)
                 .build();
     }

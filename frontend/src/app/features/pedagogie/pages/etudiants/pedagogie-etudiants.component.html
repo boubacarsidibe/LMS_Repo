@@ -8,17 +8,19 @@
       </p>
     </div>
     <div class="flex gap-stack-md shrink-0 flex-wrap">
+      <!-- Même géométrie que l'espace admission : hauteur 40 px, icône 20 px, action
+           principale en dernier. Les tailles variaient ici de px-4 py-3 à px-6 py-3. -->
       <button type="button" (click)="exporter()"
-              class="flex items-center gap-2 px-4 py-3 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:border-secondary hover:text-secondary transition-colors">
-        <span class="material-symbols-outlined">download</span>Exporter
+              class="flex items-center gap-2 px-4 h-10 rounded-lg bg-surface border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors whitespace-nowrap">
+        <span class="material-symbols-outlined text-[20px]">download</span>Exporter
       </button>
       <button type="button" (click)="ouvrirImport()"
-              class="flex items-center gap-2 px-4 py-3 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:border-secondary hover:text-secondary transition-colors">
-        <span class="material-symbols-outlined">upload_file</span>Importer
+              class="flex items-center gap-2 px-4 h-10 rounded-lg bg-surface border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors whitespace-nowrap">
+        <span class="material-symbols-outlined text-[20px]">upload_file</span>Importer
       </button>
       <button type="button" (click)="ouvrirCreation()"
-              class="flex items-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors">
-        <span class="material-symbols-outlined">person_add</span>Nouveau compte
+              class="flex items-center gap-2 px-4 h-10 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors whitespace-nowrap">
+        <span class="material-symbols-outlined text-[20px]">person_add</span>Nouveau compte
       </button>
     </div>
   </header>
@@ -30,9 +32,9 @@
   <div class="flex gap-stack-md flex-wrap">
     <input type="text" [(ngModel)]="recherche" (keyup.enter)="rechercher()"
            placeholder="Nom, matricule ou promotion…"
-           class="flex-1 min-w-[240px] p-3 bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm font-body-sm text-body-sm text-on-surface" />
+           class="flex-1 min-w-[240px] h-10 px-3 bg-surface rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none transition-all" />
     <button type="button" (click)="rechercher()"
-            class="px-6 py-3 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:border-secondary hover:text-secondary transition-colors">
+            class="px-4 h-10 rounded-lg bg-surface border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors whitespace-nowrap">
       Rechercher
     </button>
   </div>

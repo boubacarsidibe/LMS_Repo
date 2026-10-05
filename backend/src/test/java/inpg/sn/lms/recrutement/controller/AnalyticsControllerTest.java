@@ -23,6 +23,10 @@ import inpg.sn.lms.recrutement.enums.EnumStatutPaiement;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
 import inpg.sn.lms.recrutement.repository.EntretienRepository;
 import inpg.sn.lms.recrutement.repository.PaiementRepository;
+import inpg.sn.lms.recrutement.repository.SessionCandidatureRepository;
+import inpg.sn.lms.recrutement.repository.TestAcademiqueRepository;
+import inpg.sn.lms.recrutement.service.ExcelExportService;
+import inpg.sn.lms.recrutement.service.RapportSyntheseRecrutementPdfService;
 
 /**
  * Avant cette story, plusieurs endpoints renvoyaient des valeurs codées en
@@ -41,12 +45,21 @@ class AnalyticsControllerTest {
     private PaiementRepository paiementRepo;
     @Mock
     private EntretienRepository entretienRepo;
+    @Mock
+    private TestAcademiqueRepository testAcademiqueRepo;
+    @Mock
+    private SessionCandidatureRepository sessionCandidatureRepo;
+    @Mock
+    private RapportSyntheseRecrutementPdfService rapportPdfService;
+    @Mock
+    private ExcelExportService excelExportService;
 
     private AnalyticsController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new AnalyticsController(candidatureRepo, paiementRepo, entretienRepo);
+        controller = new AnalyticsController(candidatureRepo, paiementRepo, entretienRepo, testAcademiqueRepo,
+                sessionCandidatureRepo, rapportPdfService, excelExportService);
     }
 
     private Candidature candidature(EnumStatutCandidature statut, String nationalite, Paiement paiement) {
@@ -89,9 +102,9 @@ class AnalyticsControllerTest {
         when(candidatureRepo.findAll()).thenReturn(List.of(
                 candidature(EnumStatutCandidature.BROUILLON, "Sénégal", null),
                 candidature(EnumStatutCandidature.SOUMIS, "Sénégal", paiement(EnumStatutPaiement.SUCCES)),
-                candidature(EnumStatutCandidature.ADMIS1, "Sénégal", paiement(EnumStatutPaiement.SUCCES)),
-                candidature(EnumStatutCandidature.ADMIS2, "Sénégal", paiement(EnumStatutPaiement.SUCCES)),
-                candidature(EnumStatutCandidature.ADMIS3, "Sénégal", paiement(EnumStatutPaiement.SUCCES))));
+                candidature(EnumStatutCandidature.TEST_REUSSI, "Sénégal", paiement(EnumStatutPaiement.SUCCES)),
+                candidature(EnumStatutCandidature.CONVOQUE_ENTRETIEN, "Sénégal", paiement(EnumStatutPaiement.SUCCES)),
+                candidature(EnumStatutCandidature.INSCRIPTION_FINALISEE, "Sénégal", paiement(EnumStatutPaiement.SUCCES))));
 
         List<Map<String, Object>> funnel = controller.conversionFunnel().getBody();
 

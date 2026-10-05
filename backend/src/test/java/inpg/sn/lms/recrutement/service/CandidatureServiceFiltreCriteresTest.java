@@ -22,6 +22,7 @@ import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import inpg.sn.lms.recrutement.dto.FiltreCriteresResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
+import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
@@ -74,7 +75,7 @@ class CandidatureServiceFiltreCriteresTest {
     void seuls_les_dossiers_soumis_sont_evalues() {
         Candidature soumisRespecte = candidature(EnumStatutCandidature.SOUMIS, 25);
         Candidature soumisRejete = candidature(EnumStatutCandidature.SOUMIS, 10);
-        Candidature dejaPreselectionne = candidature(EnumStatutCandidature.EN_COURS_DE_PRESELECTION, 5);
+        Candidature dejaPreselectionne = candidature(EnumStatutCandidature.PRESELECTIONNE, 5);
         when(candidatureRepository.findBySessionCandidatureId(ID_SESSION))
                 .thenReturn(List.of(soumisRespecte, soumisRejete, dejaPreselectionne));
 
@@ -83,10 +84,28 @@ class CandidatureServiceFiltreCriteresTest {
         assertEquals(2, resultat.getTotal(), "seuls les dossiers SOUMIS comptent");
         assertEquals(1, resultat.getPreselectionnes());
         assertEquals(1, resultat.getRejetes());
-        assertEquals(EnumStatutCandidature.EN_COURS_DE_PRESELECTION, soumisRespecte.getStatut());
-        assertEquals(EnumStatutCandidature.REJETE, soumisRejete.getStatut());
+        assertEquals(EnumStatutCandidature.PRESELECTIONNE, soumisRespecte.getStatut());
+        assertEquals(EnumStatutCandidature.DOSSIER_REJETE, soumisRejete.getStatut());
         // Le dossier déjà en présélection n'est pas retouché.
-        assertEquals(EnumStatutCandidature.EN_COURS_DE_PRESELECTION, dejaPreselectionne.getStatut());
+        assertEquals(EnumStatutCandidature.PRESELECTIONNE, dejaPreselectionne.getStatut());
+    }
+
+    @Test
+    void un_dossier_sans_piece_jointe_est_exclu_du_filtre() {
+        Candidature soumisRespecte = candidature(EnumStatutCandidature.SOUMIS, 25);
+        Candidature soumisVide = candidature(EnumStatutCandidature.SOUMIS, 25);
+        soumisVide.getPiecesJustificatives().clear();
+        when(candidatureRepository.findBySessionCandidatureId(ID_SESSION))
+                .thenReturn(List.of(soumisRespecte, soumisVide));
+
+        FiltreCriteresResponse resultat = service.appliquerFiltreCriteres(ID_SESSION, null);
+
+        assertEquals(2, resultat.getTotal());
+        assertEquals(1, resultat.getPreselectionnes());
+        assertEquals(0, resultat.getRejetes());
+        assertEquals(1, resultat.getDossiersVides());
+        // Ni présélectionné ni rejeté : reste SOUMIS pour que le candidat puisse compléter son dossier.
+        assertEquals(EnumStatutCandidature.SOUMIS, soumisVide.getStatut());
     }
 
     private Candidature candidature(EnumStatutCandidature statut, int ageCandidat) {
@@ -97,6 +116,9 @@ class CandidatureServiceFiltreCriteresTest {
         candidature.setStatut(statut);
         candidature.setCandidat(candidat);
         candidature.setSessionCandidature(session);
+        // Un dossier vide est exclu du filtre (CandidatureService#appliquerFiltreCriteres) :
+        // sans pièce jointe, aucune candidature de ce fixture ne serait jamais évaluée.
+        candidature.getPiecesJustificatives().add(new PieceJustificative());
         return candidature;
     }
 }

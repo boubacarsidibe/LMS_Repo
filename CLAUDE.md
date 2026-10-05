@@ -30,6 +30,21 @@ la graisse viennent de `text-<échelle>`, une classe **distincte**.
 s'affichaient en 16 px au lieu de 48. Vérifier systématiquement que les deux classes
 sont présentes.
 
+**Poser `text-<échelle>` ne suffit pas si une troisième classe de taille traîne déjà
+sur l'élément** (`text-[11px]`, `text-sm`…) — piège trouvé le 2026-09-18 en corrigeant
+19 occurrences de ce même oubli. `text-<échelle>` et `text-[Npx]`/`text-sm` ciblent la
+même propriété CSS avec la même spécificité (une seule classe) ; Tailwind les déclare
+dans l'ordre où elles sont *rencontrées à la compilation*, pas dans l'ordre des classes
+posées dans le HTML — et dans ce projet, les classes arbitraires (`text-[11px]`) et les
+utilitaires par défaut (`text-sm`) sont émises **après** les échelles du thème dans
+`styles.css`, donc elles l'emportent silencieusement. Un badge qui portait déjà
+`text-[11px]` avant qu'on lui ajoute `font-label-sm text-label-sm` continuait de
+s'afficher en 11 px : le correctif était posé mais sans le moindre effet visible tant
+que `text-[11px]` restait sur l'élément. Vérifier en cas de doute dans le CSS compilé
+(`grep`/byte offset des deux règles) — ou, plus simple, retirer la classe de taille
+concurrente : c'est presque toujours elle l'ancien pis-aller que `text-<échelle>`
+remplace.
+
 ### Règles à appliquer
 
 | Élément | Classes |
@@ -50,14 +65,22 @@ confondent avec le fond clair et l'écran paraît plat.
 
 ### Logotype
 
-Identique dans tous les espaces :
+Depuis le 2026-09-25, c'est **l'image du logo officiel de l'INPG** — plus l'écriture « INPG LMS », qui
+n'existe plus nulle part — identique dans tous les espaces :
 
 ```html
-<span class="text-2xl font-extrabold tracking-tight text-primary">INPG<span class="text-brand"> LMS</span></span>
+<app-logo-inpg hauteur="h-10"></app-logo-inpg>
 ```
 
-Pas de badge ni d'icône. Le jeton `brand` (`#131741`) est le bleu nuit du suffixe.
-Dans l'espace pédagogique, le suffixe est « Pédagogie » — même traitement.
+`LogoInpgComponent` (`shared/components/logo-inpg/`) est l'unique source de l'image
+(`frontend/public/images/logo-inpg.png`, 640 × 174) et de son texte alternatif : ne pas recopier un `<img>`
+ailleurs, ni recomposer un logotype en texte. Le fichier est détouré (fond transparent) et le logo est bleu
+nuit : sur un fond sombre (panneau de connexion, pied de page), le poser dans une pastille blanche arrondie,
+sans quoi il disparaît. **Exception voulue** : le layout de connexion/inscription (`auth-layout`) garde le
+texte « INPG LMS » (`text-2xl font-extrabold text-primary`, suffixe en `text-brand`) en haut de sa partie
+blanche, et le panneau sombre n'a plus de logo — choix esthétique du 2026-09-25. Le nom de l'espace (« Espace formateur », « Portail Admissions », « Espace
+pédagogique ») reste écrit **sous** le logo, en `font-label-sm`. Le même logo coiffe les PDF (voir §3, papier
+à en-tête).
 
 ### Contraste : le piège des jetons jumeaux
 
@@ -96,19 +119,61 @@ Google avec la réponse moderne (`@font-face` seul, sans classe de secours) — 
 seule règle `.material-symbols-outlined` restante dans le bundle est la nôtre,
 correctement dans `@layer base`. Vérifié par inspection du CSS compilé (une
 seule occurrence de la règle, dans `@layer base`, avant la couche `utilities`) —
-non vérifié par rendu visuel réel, cet environnement n'ayant pas de navigateur.
+non vérifié par rendu visuel réel à l'époque (voir §2, un navigateur réel est en
+fait disponible via Docker).
 
 ---
 
 ## 2. Pièges de l'environnement
 
-### Le cache de build fige certains modules
+### Un navigateur réel est disponible malgré les apparences
 
-Quand une modification du frontend semble ne pas s'appliquer, le suspect n'est pas le
-navigateur mais **`frontend/.angular/cache`**. Le conteneur monte le dossier local
-(`./frontend:/app`), ce cache est donc partagé, et il peut servir des modules périmés
-**pour certains fichiers seulement** — symptôme observé : la barre latérale se mettait
-à jour, les pages chargées à la demande non.
+Aucun navigateur dans le shell de ce Codespace, mais **Playwright tourne très bien en
+conteneur** et permet une vérification visuelle réelle plutôt qu'une simple lecture de
+code :
+
+```bash
+docker run --rm --network host -v <dossier-scripts>:/scratchpad -w /scratchpad \
+  mcr.microsoft.com/playwright:v1.48.0-jammy bash -c "node script.js"
+```
+
+`--network host` donne accès direct à `localhost:4200`/`:8080` — inutile de résoudre
+`host.docker.internal` (il n'est pas résolvable avec ce réseau). Utilisé avec succès
+pour capturer des captures d'écran et lire du `getComputedStyle` réel (par exemple
+pour confirmer qu'un `text-<échelle>` l'emportait bien sur une classe de taille
+concurrente après correctif — voir le piège de cascade en §1).
+
+### Ce Codespace ne sert pas le frontend en mode dev — vérifier avant d'accuser le cache
+
+Le paragraphe suivant décrit le montage `./frontend:/app` défini dans
+`docker-compose.yml`. **Il ne s'applique pas forcément** : un `docker-compose.override.yml`
+(présent dans ce Codespace, ignoré par git — donc à vérifier sur chaque nouvelle
+machine plutôt que supposé absent) remplace le service `frontend` par une image de
+production statique (`Dockerfile.local` : `ng build --configuration development` puis
+Nginx, sans le moindre volume monté). Symptôme si on l'ignore : vider
+`frontend/.angular/cache` et relancer `docker compose up -d frontend` ne change
+strictement rien, parce que ce cache n'est même pas dans le conteneur. Vérifier lequel
+des deux cas s'applique avant d'agir :
+
+```bash
+docker inspect demo-frontend --format '{{json .Mounts}}'   # [] → pas de montage, voir ci-dessous
+```
+
+Si `Mounts` est vide, la seule façon de pousser une modification est de reconstruire
+l'image (même logique que pour le backend) :
+
+```bash
+docker compose up -d --build frontend        # ~10-30 s, PAS ~90 s : ce n'est pas le dev-server
+```
+
+### Le cache de build fige certains modules (setup dev-server avec volume monté)
+
+Quand une modification du frontend semble ne pas s'appliquer **et que `docker-compose.override.yml`
+ne détourne pas déjà le service vers une image statique** (voir ci-dessus), le suspect
+n'est pas le navigateur mais **`frontend/.angular/cache`**. Le conteneur monte le
+dossier local (`./frontend:/app`), ce cache est donc partagé, et il peut servir des
+modules périmés **pour certains fichiers seulement** — symptôme observé : la barre
+latérale se mettait à jour, les pages chargées à la demande non.
 
 ```bash
 docker compose stop frontend
@@ -144,6 +209,62 @@ normalisent les fins de ligne et transforment un correctif de 20 lignes en diff 
 `LmsApplicationTests` démarre Spring contre `localhost:5432`, donc **Flyway applique
 les migrations** pendant les tests, avant tout déploiement. En tenir compte avant de
 lancer la suite sur une base qui sert à une démonstration.
+
+### Les e-mails partent, mais n'arrivent pas — SPF d'`inpg.sn` contre Brevo
+
+Diagnostiqué le 2026-09-08 : le code d'envoi fonctionne (SMTP Brevo authentifié,
+aucune exception), mais `inpg.sn` a de vrais MX Microsoft 365 et un SPF terminé par
+`-all` qui **n'autorise pas Brevo**. Un message expédié via Brevo en se présentant
+comme `@inpg.sn` est donc rejeté ou mis en quarantaine chez le destinataire, sans
+que rien ne remonte côté serveur. Ne pas chercher le bug dans `NotificationService` :
+il n'y en a pas.
+
+Deux sorties, à trancher avant la production : autoriser Brevo dans le SPF/DKIM du
+DNS d'`inpg.sn`, ou renoncer à Brevo et pointer `MAIL_HOST` vers le SMTP Microsoft
+365 du domaine. En développement, `APP_MAIL_FROM` utilise une adresse d'un domaine
+vérifié chez Brevo — contournement inacceptable en production, où les candidats
+recevraient leurs convocations depuis une adresse personnelle.
+
+### Numéroter les nouvelles migrations par horodatage, pas par entier
+
+Les migrations `V1` à `V39` restent telles quelles — **ne jamais les renommer** : leur
+somme de contrôle est enregistrée dans `flyway_schema_history`, et un fichier renommé
+après application fait échouer la validation au démarrage.
+
+Toute **nouvelle** migration prend en revanche la forme `V<AAAAMMJJHHMM>__sujet.sql`
+(ex. `V202609081430__prix_par_session.sql`). Flyway compare les versions numériquement,
+donc un horodatage passe toujours après `V39`.
+
+La raison : deux branches (ou deux agents) qui travaillent en parallèle choisissent
+fatalement le même entier suivant. C'est arrivé le 2026-09-08 — `V32`/`V33` ont été
+renumérotées en `V38`/`V39` alors que la base les avait déjà appliquées sous leur
+ancien numéro. Résultat : validation Flyway en échec, backend qui refuse de démarrer,
+et réparation manuelle des lignes de `flyway_schema_history` (correction du champ
+`version`, checksums inchangés car le contenu des fichiers, lui, n'avait pas bougé)
+puis un démarrage ponctuel avec `spring.flyway.out-of-order=true` pour rattraper les
+migrations restées en attente. Un horodatage rend la collision impossible.
+
+### `ng build` tué (SIGTERM) et démon Docker qui tombe : c'est la mémoire du Codespace
+
+Le Codespace n'a que ~8 Go, sans swap, et l'IDE en occupe plus de 3. Quand la mémoire disponible
+tombe sous ~1,5 Go, un `ng build` (local **ou** dans `docker compose build frontend`) est tué en
+`SIGTERM`, sans la moindre erreur de compilation — `ngc --noEmit` et `ng test` passent pourtant. Le démon
+Docker peut lui aussi disparaître (`Cannot connect to the Docker daemon`). Ne pas chercher un bug de code.
+
+```bash
+docker stop demo-backend                       # libère ~500 Mo
+sync; echo 3 | sudo tee /proc/sys/vm/drop_caches   # vide le cache disque : le garde-fou de l'hôte le compte
+cd frontend && NODE_OPTIONS=--max-old-space-size=1536 NG_BUILD_MAX_WORKERS=1 \
+  npx ng build --configuration development --source-map=false --progress=false   # ~28 s
+docker cp dist/frontend/browser/. demo-frontend:/usr/share/nginx/html/   # sans reconstruire l'image
+docker start demo-backend
+sudo /usr/local/share/docker-init.sh true &    # si le démon Docker est tombé
+```
+
+`docker compose up -d --build backend` recrée le conteneur : toute variable passée en ligne de commande
+(ex. `APP_CORS_ORIGINS` pour un tunnel Cloudflare, dont l'URL change à chaque lancement) est perdue et doit
+être repassée. Les redémarrages du Codespace arrêtent Postgres sans arrêt propre : les écritures récentes
+peuvent être perdues.
 
 ---
 
@@ -270,6 +391,38 @@ possible aujourd'hui ; le rappel actuel se déclenche tant qu'un cours autorisé
 non évalué, avec un délai de repos (`COOLDOWN_JOURS`) plutôt qu'une vraie date de fin.
 Si le besoin d'une session datée se confirme un jour, c'est une décision de modèle à
 instruire à part (voir `LOG_BLOQUANT.md`), pas une extension mécanique de ce service.
+
+**Le certificat suit le modèle officiel de l'INPG, il n'est pas redessiné.** `CertificatPdfService` charge
+`backend/src/main/resources/certificats/certificat-formation-fond.pdf` (le modèle dont les six zones variables
+ont été vidées) et n'y superpose que : civilité + nom, « né le », formation, période, « Fait à Dakar, le … »,
+code de bas de page, plus un QR de vérification. Positions et polices sont relevées dans le README du même
+dossier. Le fichier d'origine (`backend/Modèle Certificat INPG.pdf`) porte les données d'une personne réelle :
+il est dans `.gitignore`, ne jamais le versionner. Les champs du modèle (`civilite`, `date_naissance`,
+`date_debut`, `date_fin`, `code_certificat`) sont nullables et **scellés dans la signature seulement quand
+ils existent** : un certificat délivré avant leur ajout garde son contenu canonique, donc sa signature reste
+valide. `CertificatPdfServiceTest` relit le texte du PDF produit. Sa **date de délivrance est le jour où le
+responsable pédagogique crée le certificat** (fuseau `Africa/Dakar`, posée par le serveur, jamais saisie) : le
+formulaire n'a volontairement pas de champ « date de délivrance ». Le QR pointe vers
+`APP_FRONTEND_URL/verification-certificat/<référence>` — en production, cette variable doit être le domaine
+public et permanent de l'INPG (un QR imprimé ne se corrige pas), pas `localhost` ni un tunnel ; la référence
+est aussi imprimée sous le QR pour une saisie manuelle. La page publique qu'il ouvre (`CertificatPublicController`,
+sans connexion) restitue ce qu'un faussaire retoucherait sur un vrai document — nom, formation, **période**,
+**code**, date d'émission, validité de la signature — mais jamais la date de naissance, pourtant imprimée :
+c'est une donnée d'identité. Aucune limitation de débit n'y protège le balayage des références (8 caractères
+hexadécimaux aléatoires) : à ajouter avant la mise en production.
+
+**Tout PDF sort sur le papier à en-tête de l'INPG, par un moteur commun — ne pas réécrire de mini-moteur dans
+un service.** `pdf/PapierEnTete` (PDFBox) pose sur chaque page le logo, le pied de page (adresse, téléphone,
+site cliquable) et la pagination ; `pdf/RapportPdf` met en page les rapports (retour à la ligne, sauts de page,
+tableaux, tuiles de chiffres clés, filigrane) ; `pdf/PapierEnTeteOpenPdf` fait de même pour les trois documents
+encore écrits avec OpenPDF (lettre d'admission, convocation, reçu). Mesures, logo et icônes viennent du
+document Word fourni par l'INPG — voir `resources/pdf/README.md`. Chaque rapport avait auparavant son propre
+moteur, avec les mêmes défauts : titres « barrés » (le filet était tracé en travers du texte au lieu de dessous),
+commentaires coupés par « ... », ni logo ni pied de page. Deux pièges d'OpenPDF : ne jamais imbriquer des
+`Paragraph` dans un `Paragraph` conteneur — l'espacement et l'alignement se perdent, les titres se décentrent et
+les blocs se recouvrent — mais ajouter les éléments un à un (`PapierEnTeteOpenPdf.ajouter`). Et un test de PDF
+doit relire le fichier **produit** (texte extrait, position des glyphes par rapport aux traits), comme
+`RapportPdfTest` : constater seulement « un fichier est généré » ne voyait aucun de ces défauts.
 
 ---
 

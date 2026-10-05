@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { MediaProtegeService } from '../../../espace-etudiants/services/media-protege.service';
 import {
   DemandeAccreditation,
@@ -29,19 +31,28 @@ import { AccreditationService } from '../../services/accreditation.service';
 @Component({
   selector: 'app-demande-accreditation',
   standalone: true,
-  imports: [CommonModule, FormsModule, UiSpinnerComponent],
+  imports: [CommonModule, FormsModule, RouterLink, UiSpinnerComponent],
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
-      <header>
-        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
-          Écoles de formation
-        </p>
-        <h1 class="font-display text-display text-on-surface leading-none -ml-1">Demande d'accréditation</h1>
-        <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
-          Soumettez votre demande d'accréditation pour dispenser des formations dans le domaine du
-          pétrole et du gaz, et suivez son évolution.
-        </p>
-      </header>
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <header>
+          <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">
+            Écoles de formation
+          </p>
+          <h1 class="font-display text-display text-on-surface leading-none -ml-1">Demande d'accréditation</h1>
+          <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
+            Soumettez votre demande d'accréditation pour dispenser des formations dans le domaine du
+            pétrole et du gaz, et suivez son évolution.
+          </p>
+        </header>
+        <!-- Bouton plutôt qu'un onglet permanent du navbar : une école ne prend
+             rendez-vous qu'à certains moments précis du dossier, pas en continu. -->
+        <a routerLink="rendez-vous"
+           class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity no-underline shrink-0 shadow-sm">
+          <span class="material-symbols-outlined text-[20px]">event</span>
+          Prendre rendez-vous
+        </a>
+      </div>
 
       <app-ui-spinner *ngIf="chargement" message="Chargement de votre dossier…"></app-ui-spinner>
 
@@ -103,7 +114,7 @@ import { AccreditationService } from '../../services/accreditation.service';
         </h2>
         <p class="font-body-sm text-body-sm text-on-surface-variant -mt-1">
           L'accréditation porte sur un programme de formation précis, sa cohorte et ses formateurs de
-          spécialité — pas sur l'établissement dans son ensemble (Cadre de référence DRCQ §II).
+          spécialité — pas sur l'établissement dans son ensemble (Cadre de référence DRCQ).
         </p>
         <div>
           <label for="intituleProgramme" class="font-label-md text-label-md text-on-surface">Intitulé du programme</label>
@@ -179,9 +190,15 @@ import { AccreditationService } from '../../services/accreditation.service';
 
       <!-- Demande existante : suivi + pièces -->
       <ng-container *ngIf="!chargement && demande">
-        <!-- Progression du dossier -->
-        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg" *ngIf="demande.statut !== 'REJETE'">
-          <ol class="flex items-center w-full">
+        <!-- Bandeau narratif, à l'image du suivi de candidature : le statut se lit d'abord comme une phrase, pas comme un badge technique -->
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
+          <div class="flex flex-col gap-2">
+            <span class="px-3 py-1 rounded-full text-label-sm w-fit" [ngClass]="heroClasses">{{ heroPill }}</span>
+            <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">{{ heroTitre }}</h2>
+            <p class="text-lg text-on-surface-variant max-w-2xl">{{ heroParagraphe }}</p>
+          </div>
+
+          <ol class="flex items-center w-full mt-6" *ngIf="demande.statut !== 'REJETE'">
             <li *ngFor="let etape of etapes; let i = index" class="flex items-center" [class.flex-1]="i < etapes.length - 1">
               <div class="flex flex-col items-center gap-1 shrink-0">
                 <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
@@ -410,6 +427,7 @@ import { AccreditationService } from '../../services/accreditation.service';
 export class DemandeAccreditationComponent implements OnInit {
   private accreditationService = inject(AccreditationService);
   private mediaProtege = inject(MediaProtegeService);
+  private confirmation = inject(ConfirmationService);
 
   @ViewChild('champFichier') champFichier?: ElementRef<HTMLInputElement>;
 
@@ -481,6 +499,60 @@ export class DemandeAccreditationComponent implements OnInit {
     const statut = this.demande.statut === 'ACCREDITE_SOUS_RESERVE' ? 'ACCREDITE' : this.demande.statut;
     const index = this.etapes.findIndex((e) => e.statut === statut);
     return index === -1 ? 0 : index;
+  }
+
+  /** Bandeau narratif façon suivi de candidature — un mot par statut, pas un badge d'état brut. */
+  private static readonly HERO: Record<string, { pill: string; titre: string; paragraphe: string; classes: string }> = {
+    SOUMISE: {
+      pill: 'Dossier déposé',
+      titre: 'Votre dossier a bien été déposé.',
+      paragraphe: "Merci d'avoir soumis votre demande d'accréditation. Notre équipe l'examinera prochainement — vous serez notifié dès le début de l'évaluation.",
+      classes: 'bg-surface-container text-on-surface-variant',
+    },
+    EN_COURS_EVALUATION: {
+      pill: "En cours d'évaluation",
+      titre: 'Votre dossier est en cours d\'évaluation.',
+      paragraphe: "Un évaluateur de l'INPG examine actuellement votre programme et vos pièces justificatives. Ce processus garantit la qualité du référentiel DRCQ.",
+      classes: 'bg-secondary-container text-on-secondary-container',
+    },
+    ACCREDITE: {
+      pill: 'Accréditée',
+      titre: 'Félicitations, votre programme est accrédité !',
+      paragraphe: "Toute l'équipe de l'INPG vous félicite pour la qualité de votre dossier et de votre programme.",
+      classes: 'bg-success/15 text-success',
+    },
+    ACCREDITE_SOUS_RESERVE: {
+      pill: 'Accréditation conditionnelle',
+      titre: 'Votre programme est accrédité sous réserve.',
+      paragraphe: "Votre programme est accrédité, sous réserve de la mise en œuvre du plan d'actions détaillé ci-dessous.",
+      classes: 'bg-warning/15 text-warning',
+    },
+    REJETE: {
+      pill: 'Dossier rejeté',
+      titre: "Votre demande n'a pas été retenue.",
+      paragraphe: 'Le motif de cette décision est détaillé ci-dessous. Vous pouvez déposer une nouvelle demande à tout moment.',
+      classes: 'bg-error-container text-on-error-container',
+    },
+  };
+
+  private get hero() {
+    return this.demande ? DemandeAccreditationComponent.HERO[this.demande.statut] : undefined;
+  }
+
+  get heroPill(): string {
+    return this.hero?.pill ?? '';
+  }
+
+  get heroTitre(): string {
+    return this.hero?.titre ?? '';
+  }
+
+  get heroParagraphe(): string {
+    return this.hero?.paragraphe ?? '';
+  }
+
+  get heroClasses(): string {
+    return this.hero?.classes ?? '';
   }
 
   ngOnInit(): void {
@@ -585,13 +657,21 @@ export class DemandeAccreditationComponent implements OnInit {
   }
 
   supprimerPiece(pieceId: number): void {
-    if (!this.demande || !confirm('Retirer cette pièce du dossier ?')) {
+    if (!this.demande) {
       return;
     }
-    this.erreurPiece = '';
-    this.accreditationService.supprimerPiece(this.demande.id, pieceId).subscribe({
-      next: () => (this.demande!.pieces = this.demande!.pieces.filter((p) => p.id !== pieceId)),
-      error: (e) => (this.erreurPiece = e?.error?.message || 'La suppression a échoué.'),
+    this.confirmation.demander({
+      titre: 'Retirer la pièce',
+      message: 'Retirer cette pièce du dossier ?',
+      libelleConfirmer: 'Retirer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.erreurPiece = '';
+      this.accreditationService.supprimerPiece(this.demande!.id, pieceId).subscribe({
+        next: () => (this.demande!.pieces = this.demande!.pieces.filter((p) => p.id !== pieceId)),
+        error: (e) => (this.erreurPiece = e?.error?.message || 'La suppression a échoué.'),
+      });
     });
   }
 }

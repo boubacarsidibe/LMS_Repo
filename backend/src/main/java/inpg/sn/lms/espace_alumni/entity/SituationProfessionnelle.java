@@ -42,10 +42,12 @@ public class SituationProfessionnelle {
     @JoinColumn(name = "alumni_profil_id", nullable = false)
     private AlumniProfil alumniProfil;
 
-    @Column(name = "intitule_poste", nullable = false)
+    /** Nul pour une situation qui ne désigne aucun poste occupé (en recherche d'emploi,
+     * poursuite d'études, autre) — voir {@code AlumniController#validerSituation}. */
+    @Column(name = "intitule_poste")
     private String intitulePoste;
 
-    @Column(nullable = false)
+    @Column
     private String entreprise;
 
     @Column(name = "date_debut", nullable = false)

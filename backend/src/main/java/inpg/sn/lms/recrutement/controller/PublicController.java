@@ -6,6 +6,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -143,19 +144,16 @@ public class PublicController {
 
         // Envoi de l'email au service admission avec l'email du visiteur en objet,
         // afin que le responsable admission puisse identifier et répondre facilement.
-        try {
-            notificationService.envoyerEmail(
-                    emailAdmission,
-                    "Nouvelle question du site (" + email + ")",
-                    "Une nouvelle question a été posée depuis le site public.\n\n"
-                            + "Email du visiteur : " + email + "\n\n"
-                            + "Message :\n" + message
-            );
-        } catch (Exception e) {
-            // On ne fait pas échouer la requête du visiteur si le serveur SMTP est
-            // momentanément indisponible : on journalise l'incident pour investigation
-            // et on informe tout de même l'utilisateur que sa demande a bien été reçue.
-            log.error("Échec de l'envoi de l'email de contact vers {} : {}", emailAdmission, e.getMessage(), e);
+        boolean envoye = notificationService.envoyerEmail(
+                emailAdmission,
+                "Nouvelle question du site (" + email + ")",
+                "Une nouvelle question a été posée depuis le site public.\n\n"
+                        + "Email du visiteur : " + email + "\n\n"
+                        + "Message :\n" + message
+        );
+        if (!envoye) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("message", "Votre message n'a pas pu être transmis. Veuillez réessayer."));
         }
 
         return ResponseEntity.ok(Map.of("message", "Votre question a bien été envoyée. Nous vous répondrons dans les plus brefs délais."));

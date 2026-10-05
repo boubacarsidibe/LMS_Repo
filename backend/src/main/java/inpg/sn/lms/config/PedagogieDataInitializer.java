@@ -7,15 +7,18 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import inpg.sn.lms.auth.entity.Etudiant;
+import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.entity.Role;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.auth.repository.EtudiantRepository;
+import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
 import inpg.sn.lms.espace_etudiant.entity.AlbumPhoto;
@@ -51,6 +54,7 @@ public class PedagogieDataInitializer {
     private static final String CODE_PROMOTION = "MPG-2026";
 
     @Bean
+    @ConditionalOnProperty(name = "app.demo-data.enabled", havingValue = "true")
     @Order(2)
     CommandLineRunner initPedagogie(
             FormationRepository formationRepository,
@@ -62,29 +66,39 @@ public class PedagogieDataInitializer {
             EtudiantRepository etudiantRepository,
             UserRepository userRepository,
             RoleRepository roleRepository,
+            FormateurRepository formateurRepository,
             MatriculeService matriculeService,
             PasswordEncoder passwordEncoder) {
         return args -> {
             Formation formation = formationRepository.findAll().stream()
                     .filter(f -> CODE_FORMATION.equals(f.getCode()))
                     .findFirst()
-                    .orElseGet(() -> creerFormationEtCours(formationRepository, coursRepository));
+                    .orElseGet(() -> creerFormationEtCours(formationRepository, coursRepository, userRepository,
+                            formateurRepository));
 
             Promotion promotion = promotionRepository.findAll().stream()
                     .filter(p -> CODE_PROMOTION.equals(p.getCode()))
                     .findFirst()
                     .orElseGet(() -> creerPromotion(promotionRepository, formation));
 
-            if (seanceRepository.count() == 0) {
+            // Par cours de CETTE formation, pas par count() global : DataInitializer crée
+            // déjà ses propres séances/annonces avant ce runner (@Order(2)), donc
+            // count() == 0 n'était jamais vrai et ces blocs ne s'exécutaient jamais — même
+            // bug, mêmes conséquences silencieuses que l'album de la photothèque ci-dessus.
+            if (!seanceRepository.existsByCours_Formations_Id(formation.getId())) {
                 creerSeances(seanceRepository, coursRepository, formation);
             }
 
             User auteur = userRepository.findByUsername("admin_admission");
-            if (annonceRepository.count() == 0 && auteur != null) {
+            if (!annonceRepository.existsByPromotion_Id(promotion.getId()) && auteur != null) {
                 creerAnnonces(annonceRepository, auteur, promotion);
             }
 
-            if (albumRepository.count() == 0) {
+            // Par titre, pas par count() global : DataInitializer crée déjà 3 albums avant
+            // que ce runner ne s'exécute (@Order(2)), donc albumRepository.count() == 0
+            // n'était jamais vrai et cet album n'était en réalité jamais créé — silencieusement,
+            // sans erreur ni journal (même famille de bug que CLAUDE.md §3).
+            if (!albumRepository.existsByTitre("Visite du terminal pétrolier de Sendou")) {
                 albumRepository.save(new AlbumPhoto(
                         "Visite du terminal pétrolier de Sendou",
                         "Sortie pédagogique de la promotion : découverte des installations de stockage et des procédures de sécurité.",
@@ -105,7 +119,8 @@ public class PedagogieDataInitializer {
         };
     }
 
-    private Formation creerFormationEtCours(FormationRepository formationRepository, CoursRepository coursRepository) {
+    private Formation creerFormationEtCours(FormationRepository formationRepository, CoursRepository coursRepository,
+            UserRepository userRepository, FormateurRepository formateurRepository) {
         Formation formation = new Formation();
         formation.setCode(CODE_FORMATION);
         formation.setIntitule("Master Pétrole & Gaz");
@@ -114,33 +129,50 @@ public class PedagogieDataInitializer {
                         + "pétrolières et gazières, adossée aux besoins de la filière sénégalaise.");
         formation = formationRepository.save(formation);
 
+        // Sans formateur rattaché (cours_formateur), ces cours resteraient invisibles
+        // dans tout espace formateur — cf. CLAUDE.md §3. On réutilise prof_demo, déjà
+        // créé par DataInitializer (qui s'exécute avant, @Order(1) < @Order(2)).
+        Formateur formateurDemo = resoudreFormateurDemo(userRepository, formateurRepository);
+
         Set<Cours> cours = new LinkedHashSet<>(List.of(
-                cours(coursRepository, "GEO-101", "Géologie des réservoirs",
+                cours(coursRepository, formateurDemo, "GEO-101", "Géologie des réservoirs",
                         "Caractérisation des roches-mères, migration et pièges pétroliers.", 40L, "Semestre 1"),
-                cours(coursRepository, "FOR-102", "Techniques de forage",
+                cours(coursRepository, formateurDemo, "FOR-102", "Techniques de forage",
                         "Architecture des puits, fluides de forage et contrôle des venues.", 35L, "Semestre 1"),
-                cours(coursRepository, "PRO-201", "Production et traitement",
+                cours(coursRepository, formateurDemo, "PRO-201", "Production et traitement",
                         "Séparation, traitement du gaz associé et optimisation de la production.", 45L, "Semestre 2"),
-                cours(coursRepository, "HSE-202", "Sécurité et environnement",
+                cours(coursRepository, formateurDemo, "HSE-202", "Sécurité et environnement",
                         "Analyse de risques, barrières de sécurité et réglementation environnementale.", 30L,
                         "Semestre 2"),
-                cours(coursRepository, "ECO-203", "Économie pétrolière",
+                cours(coursRepository, formateurDemo, "ECO-203", "Économie pétrolière",
                         "Contrats pétroliers, fiscalité et évaluation économique des projets.", 25L, "Semestre 2")));
 
         formation.setCours(cours);
         formation = formationRepository.save(formation);
-        System.out.println("✅ Formation « Master Pétrole & Gaz » créée avec " + cours.size() + " cours");
+        System.out.println("✅ Formation « Master Pétrole & Gaz » créée avec " + cours.size() + " cours"
+                + (formateurDemo != null ? " (rattachés à prof_demo)" : " (⚠ aucun formateur trouvé à rattacher)"));
         return formation;
     }
 
-    private Cours cours(CoursRepository coursRepository, String code, String titre, String description,
-            Long volumeHoraire, String semestre) {
+    private Formateur resoudreFormateurDemo(UserRepository userRepository, FormateurRepository formateurRepository) {
+        User user = userRepository.findByUsername("prof_demo");
+        if (user == null) {
+            return null;
+        }
+        return formateurRepository.findByUserId(user.getId()).orElse(null);
+    }
+
+    private Cours cours(CoursRepository coursRepository, Formateur formateur, String code, String titre,
+            String description, Long volumeHoraire, String semestre) {
         Cours cours = new Cours();
         cours.setNom(code);
         cours.setTitre(titre);
         cours.setDescription(description);
         cours.setVolumeHoraire(volumeHoraire);
         cours.setSemestre(semestre);
+        if (formateur != null) {
+            cours.getFormateurs().add(formateur);
+        }
         return coursRepository.save(cours);
     }
 

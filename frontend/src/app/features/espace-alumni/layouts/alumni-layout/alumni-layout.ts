@@ -1,9 +1,11 @@
+import { ProfileMenuComponent } from '../../../../shared/components/profile-menu/profile-menu.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Auth } from '../../../../core/auth/services/authService';
 import { AlumniProfil } from '../../models/alumni.models';
 import { AlumniService } from '../../services/alumni.service';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 interface EntreeNavigation {
   libelle: string;
@@ -19,15 +21,15 @@ interface EntreeNavigation {
 @Component({
   selector: 'app-alumni-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ProfileMenuComponent, LogoInpgComponent],
   templateUrl: './alumni-layout.html',
 })
 export class AlumniLayout implements OnInit {
   profil: AlumniProfil | null = null;
   chargement = true;
+  sidebarMobileOpen = false;
 
   readonly navigation: EntreeNavigation[] = [
-    { libelle: 'Mon profil', lien: 'mon-profil', icone: 'account_circle' },
     { libelle: 'Parcours professionnel', lien: 'mon-parcours', icone: 'work_history' },
     { libelle: 'Mes relevés', lien: 'mes-releves', icone: 'description' },
     { libelle: 'Enquêtes de suivi', lien: 'enquetes', icone: 'fact_check' },
@@ -70,5 +72,9 @@ export class AlumniLayout implements OnInit {
       next: () => this.router.navigate(['/accueil']),
       error: () => this.router.navigate(['/accueil']),
     });
+  }
+
+  toggleSidebarMobile(): void {
+    this.sidebarMobileOpen = !this.sidebarMobileOpen;
   }
 }

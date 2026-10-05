@@ -1,39 +1,75 @@
 <!-- TopNavBar -->
 <header class="bg-white/95 backdrop-blur-sm border-b border-outline-variant/40 fixed top-0 left-0 right-0 z-50">
-  <div class="flex justify-between items-center w-full max-w-[1280px] mx-auto px-4 md:px-10 h-[72px]">
-    <!-- Brand -->
-    <a routerLink="/accueil" class="text-2xl font-extrabold tracking-tight text-primary no-underline hover:opacity-80 transition-opacity">
-      INPG<span class="text-brand"> LMS</span>
+  <!-- Pleine largeur, pas de max-w-container-max ici (contrairement au contenu des
+       pages) : sur un grand écran (vidéoprojecteur…), le logo et le cercle de profil
+       doivent toucher les bords réels de la fenêtre, comme dans les espaces à barre
+       latérale (Admission, Pédagogie…) — retour de recette du 2026-09-22, mesuré à
+       360 px de vide de chaque côté sur un écran de 1920 px avant ce correctif. -->
+  <div class="flex justify-between items-center w-full px-4 md:px-10 h-[72px]">
+    <!-- Bouton menu (mobile uniquement), à l'extrême gauche : sur petit écran, le nom
+         cède sa place au menu plutôt que de cohabiter à l'étroit avec lui — retour de
+         recette du 2026-09-22. Le logo reste le premier élément visible en desktop
+         (md:hidden le masque à partir de md), donc rien ne change au-delà. -->
+    <button
+      type="button"
+      (click)="toggleMobileMenu()"
+      class="md:hidden p-2 -ml-2 rounded-full hover:bg-surface-container-low transition-colors cursor-pointer border-0 bg-transparent"
+      aria-label="Ouvrir le menu">
+      <span class="material-symbols-outlined text-on-surface-variant text-[24px]">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
+    </button>
+
+    <!-- Brand : masqué jusqu'à lg (1024 px, donc en mobile ET sur la première moitié de
+         la tablette), pas jusqu'à xl comme le bloc nom/rôle juste plus bas. Deux essais
+         avant celui-ci : caché seulement < md (768) → repassait sur deux lignes entre 768
+         et 800 px (rien ne protège ce texte-ci d'un whitespace-nowrap, contrairement aux
+         onglets) ; caché jusqu'à xl comme le nom/rôle → « disparaît trop tôt » en recette,
+         le vide entre le menu (mobile) et le retour du logo se sentait trop long en
+         redimensionnant. lg (1024 px) est le premier seuil sûr, vérifié par balayage
+         375→1920 : logo sur une seule ligne dès 1024, aucun débordement en dessous. -->
+    <a routerLink="/accueil" class="hidden lg:inline-block no-underline hover:opacity-80 transition-opacity" aria-label="INPG — accueil">
+      <app-logo-inpg hauteur="h-10"></app-logo-inpg>
     </a>
 
-    <!-- Navigation Links (Desktop) - centered. Volontairement limitée à 4-5 entrées
-         (demande du 2026-08-25) : le logo mène déjà à /accueil (pas besoin d'un lien
-         "Accueil" redondant), et un compte connecté n'a besoin que d'UN lien de
-         retour vers son espace, pas d'un lien par sous-page de ce dernier. -->
-    <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
-      <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
-      <a routerLink="/recrutement/sessions" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Sessions ouvertes</a>
-      <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
-      <a routerLink="/contact" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Contact</a>
-      <a *ngIf="monEspaceUrl" [routerLink]="monEspaceUrl" routerLinkActive="text-primary border-b-2 border-primary" class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Mon espace</a>
+    <!-- Navigation Links (Desktop/Tablette) - centered. La règle du 2026-08-25 (pas de
+         lien "Accueil" séparé, le logo suffit) est revenue en recette côté candidat : le
+         logo comme seul retour à l'accueil n'était pas assez visible pour ce public.
+         École/Entreprise/Formateur gardent leur logo + leur onglet propre + « Mon
+         espace » du menu de profil, sans « Accueil » distinct — équivalent déjà
+         couvert autrement pour eux, contrairement au candidat/étudiant.
+         whitespace-nowrap sur chaque onglet : sans lui, un libellé de deux mots
+         (« Sessions ouvertes ») retombe sur deux lignes dès que le conteneur flex se
+         resserre, plutôt que de laisser le texte définir sa propre largeur minimale.
+         La police reste text-sm à toutes les tailles (demande explicite du 2026-09-22 :
+         ne plus la faire varier selon l'écran) ; seuls le padding et l'espacement entre
+         onglets se resserrent jusqu'à xl (1280 px) pour compenser l'absence du logo. -->
+    <nav class="hidden md:flex flex-1 justify-center items-center gap-1 xl:gap-6">
+      <a *ngIf="contexte === 'etudiant'" routerLink="/accueil" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Accueil</a>
+      <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
+      <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
+      <!-- Le seul onglet qui change selon le public : sessions d'admission (étudiant),
+           offres de recrutement (formateur), accréditation (école), espace entreprise. -->
+      <a [routerLink]="ongletSpecifique.lien" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">{{ ongletSpecifique.libelle }}</a>
+      <a routerLink="/contact" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Contact</a>
     </nav>
 
     <!-- Actions (Desktop) -->
     <div class="flex items-center gap-3">
       <!-- Non connecté : boutons Connexion / Inscription -->
       <ng-container *ngIf="!isLoggedIn">
-        <a routerLink="/auth/login" class="hidden md:inline-flex items-center px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg transition-all duration-200 no-underline">
+        <a routerLink="/auth/login" class="hidden md:inline-flex items-center px-3 xl:px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg transition-all duration-200 no-underline">
           Se connecter
         </a>
-        <a routerLink="/auth/register" class="inline-flex items-center px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-[#254d7d] active:scale-95 transition-all duration-200 shadow-sm shadow-primary/20 no-underline">
+        <a routerLink="/auth/register" class="inline-flex items-center px-4 xl:px-5 py-2 xl:py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-[#254d7d] active:scale-95 transition-all duration-200 shadow-sm shadow-primary/20 no-underline">
           S'inscrire
         </a>
       </ng-container>
 
       <!-- Connecté : icône notifications + avatar + dropdown -->
       <ng-container *ngIf="isLoggedIn">
-        <!-- Icône Notifications (cloche) -->
-        <div class="relative">
+        <!-- Icône Notifications (cloche) : celles des candidats à une formation. Sans objet
+             pour une école, une entreprise ou un candidat formateur (autres parcours) —
+             elle restait vide, sous un message parlant de « votre candidature ». -->
+        <div class="relative" *ngIf="!profil">
           <button
             id="notif-btn"
             (click)="toggleNotifDropdown()"
@@ -90,8 +126,10 @@
           </div>
         </div>
 
-        <!-- vertical divider -->
-        <div class="hidden sm:block h-8 w-px bg-outline-variant/40 mx-3"></div>
+        <!-- vertical divider : n'a de sens qu'avec le bloc nom/rôle ci-dessous, masqué
+             comme lui jusqu'à xl — un trait seul entre la cloche et un avatar nu ne
+             sépare plus rien. -->
+        <div *ngIf="!profil" class="hidden xl:block h-8 w-px bg-outline-variant/40 mx-3"></div>
 
         <!-- Avatar utilisateur + nom/role -->
         <div class="relative">
@@ -103,7 +141,13 @@
             <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold shadow-sm">
               {{ userInitials }}
             </div>
-            <div class="hidden sm:flex flex-col items-start leading-tight">
+            <!-- Nom + rôle : masqués jusqu'à xl (donc en tablette aussi, pas seulement en
+                 mobile). Retour de recette du 2026-09-22 : ce bloc se retrouvait coupé au
+                 milieu du rôle, sans chevron visible, faute de place à côté des onglets et
+                 de la cloche — jusqu'à 1024 px inclus, pas seulement en dessous de 640.
+                 Le cercle seul (+ chevron) suffit pour ouvrir le menu ; le nom complet est
+                 dans son en-tête. -->
+            <div class="hidden xl:flex flex-col items-start leading-tight">
               <span class="text-sm font-medium text-on-surface">{{ userDisplayName }}</span>
               <span class="text-xs uppercase text-outline">{{ getUserRoleLabel() }}</span>
             </div>
@@ -120,13 +164,11 @@
             <div class="px-4 py-3 border-b border-outline-variant/40">
               <p class="text-sm font-semibold text-[#000002] capitalize">{{ userDisplayName }}</p>
             </div>
-            <a (click)="goToDashboard()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
-              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">dashboard</span>
-              Tableau de bord
-            </a>
-            <a (click)="goToMesCandidatures()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
-              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">description</span>
-              Mes candidatures
+            <!-- Menu selon le type du compte (école, entreprise, candidat formateur,
+                 candidat/étudiant) : voir entreesMenu. -->
+            <a *ngFor="let entree of entreesMenu()" [routerLink]="entree.lien" (click)="closeDropdown()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors no-underline">
+              <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">{{ entree.icone }}</span>
+              {{ entree.libelle }}
             </a>
             <hr class="my-1 border-outline-variant/40">
             <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
@@ -138,6 +180,19 @@
       </ng-container>
     </div>
   </div>
+
+  <!-- Menu de navigation (mobile uniquement) -->
+  <nav *ngIf="mobileMenuOpen" class="md:hidden border-t border-outline-variant/40 bg-white px-4 py-3 space-y-1" aria-label="Navigation">
+    <a *ngIf="contexte === 'etudiant'" routerLink="/accueil" (click)="closeMobileMenu()" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Accueil</a>
+    <a routerLink="/institut" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Institut</a>
+    <a routerLink="/recrutement/catalogue" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Formations</a>
+    <a [routerLink]="ongletSpecifique.lien" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">{{ ongletSpecifique.libelle }}</a>
+    <a routerLink="/contact" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Contact</a>
+    <ng-container *ngIf="!isLoggedIn">
+      <hr class="my-2 border-outline-variant/40">
+      <a routerLink="/auth/login" (click)="closeMobileMenu()" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Se connecter</a>
+    </ng-container>
+  </nav>
 </header>
 <!-- Spacer for fixed navbar -->
 <div class="h-[72px]"></div>
@@ -145,10 +200,11 @@
 <!-- Backdrops for closing dropdowns on outside click -->
 <div *ngIf="dropdownOpen" class="fixed inset-0 z-40" (click)="closeDropdown()"></div>
 <div *ngIf="notifDropdownOpen" class="fixed inset-0 z-40" (click)="closeNotifDropdown()"></div>
+<div *ngIf="mobileMenuOpen" class="fixed inset-0 z-40" (click)="closeMobileMenu()"></div>
 
 <!-- Bouton flottant : suivi de candidature (visible dès que le rôle Candidat est acquis) -->
 <a *ngIf="isLoggedIn && isCandidatRole"
-   [routerLink]="candidatureUrl"
+   [routerLink]="candidatureUrl()"
    class="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-primary hover:bg-[#254d7d] active:scale-95 rounded-full shadow-lg shadow-primary/30 transition-all duration-200 no-underline">
   <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">description</span>
   <span class="hidden sm:inline">Suivre ma candidature</span>

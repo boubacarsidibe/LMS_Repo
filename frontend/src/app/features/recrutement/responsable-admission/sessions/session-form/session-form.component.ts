@@ -52,6 +52,7 @@ export class SessionFormComponent implements OnInit {
       infoFraisScolarite: [null],
       infoCarteEtudiante: [null],
       infoRentree: [null],
+      montantFraisDossier: [null],
     });
   }
 
@@ -78,6 +79,7 @@ export class SessionFormComponent implements OnInit {
           infoFraisScolarite: session.infoFraisScolarite,
           infoCarteEtudiante: session.infoCarteEtudiante,
           infoRentree: session.infoRentree,
+          montantFraisDossier: session.montantFraisDossier,
         });
         this.loading = false;
       },

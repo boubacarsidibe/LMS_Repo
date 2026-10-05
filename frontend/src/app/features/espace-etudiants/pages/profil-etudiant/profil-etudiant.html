@@ -29,7 +29,7 @@
     </div>
     <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm">
       <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">Note Moyenne</span>
-      <p class="font-display text-headline-md text-primary mt-2"><ng-container *ngIf="etudiant.noteMoyenne !== null && etudiant.noteMoyenne !== undefined; else sansNote">{{ etudiant.noteMoyenne | number: '1.1-1' }}/20</ng-container>
+      <p class="font-headline-md text-headline-md text-primary mt-2"><ng-container *ngIf="etudiant.noteMoyenne !== null && etudiant.noteMoyenne !== undefined; else sansNote">{{ etudiant.noteMoyenne | number: '1.1-1' }}/100 <span class="text-body-sm text-on-surface-variant">({{ etudiant.noteMoyenne / 5 | number: '1.1-1' }}/20)</span></ng-container>
         <ng-template #sansNote><span class="text-on-surface-variant">Pas encore noté</span></ng-template>
       </p>
     </div>
@@ -114,8 +114,8 @@
             <p class="text-label-sm text-outline mt-1">Saisie par {{ n.formateurNom }}</p>
           </div>
           <div class="flex items-center gap-stack-sm">
-            <span class="font-display text-headline-sm text-primary">{{ n.note }}/20</span>
-            <button (click)="supprimerNote(n)" class="p-1.5 text-outline hover:text-error transition-colors" title="Supprimer cette note">
+            <span class="font-headline-sm text-headline-sm text-primary">{{ n.note }}/100 <small class="text-body-sm text-on-surface-variant">({{ n.note / 5 }}/20)</small></span>
+            <button (click)="supprimerNote(n)" class="p-1.5 text-outline hover:text-error transition-colors" title="Supprimer cette note" aria-label="Supprimer cette note">
               <span class="material-symbols-outlined text-[18px]">delete</span>
             </button>
           </div>
@@ -133,9 +133,12 @@
             <option *ngFor="let c of mesCours" [ngValue]="c.id">{{ c.titre }} ({{ c.code }})</option>
           </select>
           <input [(ngModel)]="nouvelleNoteModule" type="text" placeholder="Nom du module (ex: Module 3)" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
-          <input [(ngModel)]="nouvelleNoteValeur" type="number" min="0" max="20" step="0.5" placeholder="Note / 20" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+          <input [(ngModel)]="nouvelleNoteTexte" type="text" inputmode="decimal" autocomplete="off" placeholder="Note / 100" aria-label="Note sur 100"
+                 class="p-3 bg-surface-container-low rounded-xl outline-none font-body-sm text-body-sm text-on-surface tabular-nums border"
+                 [class.border-error]="messageNoteSaisie" [class.border-transparent]="!messageNoteSaisie">
           <input [(ngModel)]="nouvelleNoteCommentaire" type="text" placeholder="Commentaire (optionnel)" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
         </div>
+        <p *ngIf="messageNoteSaisie" class="text-body-sm text-error mb-stack-md">{{ messageNoteSaisie }}</p>
         <button [disabled]="!nouvelleNoteCoursId || !nouvelleNoteModule.trim() || nouvelleNoteValeur === null || isSavingNote"
                 (click)="ajouterNote()"
                 class="px-6 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">

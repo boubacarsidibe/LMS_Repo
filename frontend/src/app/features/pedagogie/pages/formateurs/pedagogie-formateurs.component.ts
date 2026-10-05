@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FormateurBref, FormateurDetail, FormateurSaisie, PedagogieService } from '../../services/pedagogie.service';
+import { downloadBlob } from '../../../../shared/utils/download-file';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 /**
  * Ouverture des comptes formateurs par la pédagogie.
@@ -20,6 +22,7 @@ import { FormateurBref, FormateurDetail, FormateurSaisie, PedagogieService } fro
 })
 export class PedagogieFormateursComponent implements OnInit {
   private pedagogie = inject(PedagogieService);
+  private confirmation = inject(ConfirmationService);
 
   chargement = true;
   formateurs: FormateurBref[] = [];
@@ -37,8 +40,24 @@ export class PedagogieFormateursComponent implements OnInit {
   messageErreur = '';
   messageSucces = '';
 
+  generatingRapport = false;
+
   ngOnInit(): void {
     this.charger();
+  }
+
+  genererRapportFormateurs(): void {
+    this.generatingRapport = true;
+    this.pedagogie.telechargerRapportFormateurs().subscribe({
+      next: (blob) => {
+        downloadBlob(blob, `rapport_formateurs_${new Date().toISOString().slice(0, 10)}.pdf`);
+        this.generatingRapport = false;
+      },
+      error: () => {
+        this.generatingRapport = false;
+        this.messageErreur = 'Échec de la génération du rapport formateurs.';
+      },
+    });
   }
 
   ouvrirDetail(formateur: FormateurBref): void {
@@ -68,23 +87,28 @@ export class PedagogieFormateursComponent implements OnInit {
     if (!formateur || this.suppressionEnCours) {
       return;
     }
-    if (!confirm(`Supprimer définitivement le compte de ${formateur.prenom} ${formateur.nom} ?`)) {
-      return;
-    }
-    this.suppressionEnCours = true;
-    this.reinitialiserMessages();
-    this.pedagogie.supprimerFormateur(formateur.id).subscribe({
-      next: () => {
-        this.suppressionEnCours = false;
-        this.detailOuvert = false;
-        this.formateurDetail = null;
-        this.messageSucces = `Le compte de ${formateur.prenom} ${formateur.nom} a été supprimé.`;
-        this.charger();
-      },
-      error: (erreur) => {
-        this.suppressionEnCours = false;
-        this.messageErreur = erreur.error?.message || 'La suppression a échoué.';
-      },
+    this.confirmation.demander({
+      titre: 'Supprimer le compte formateur',
+      message: `Supprimer définitivement le compte de ${formateur.prenom} ${formateur.nom} ?`,
+      libelleConfirmer: 'Supprimer le compte',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.suppressionEnCours = true;
+      this.reinitialiserMessages();
+      this.pedagogie.supprimerFormateur(formateur.id).subscribe({
+        next: () => {
+          this.suppressionEnCours = false;
+          this.detailOuvert = false;
+          this.formateurDetail = null;
+          this.messageSucces = `Le compte de ${formateur.prenom} ${formateur.nom} a été supprimé.`;
+          this.charger();
+        },
+        error: (erreur) => {
+          this.suppressionEnCours = false;
+          this.messageErreur = erreur.error?.message || 'La suppression a échoué.';
+        },
+      });
     });
   }
 

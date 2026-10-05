@@ -4,8 +4,10 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { Auth } from '../../../../core/auth/services/authService';
 import { EtudiantProfile, EtudiantService } from '../../services/etudiant.service';
+import { ProfileMenuComponent } from '../../../../shared/components/profile-menu/profile-menu.component';
 import { CommunicationService } from '../../services/communication.service';
 import { ScolariteService } from '../../services/scolarite.service';
+import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
 
 interface EntreeNavigation {
   libelle: string;
@@ -23,7 +25,7 @@ interface EntreeNavigation {
 @Component({
   selector: 'app-etudiant-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ProfileMenuComponent, LogoInpgComponent],
   templateUrl: './etudiant-layout.html',
 })
 export class EtudiantLayout implements OnInit, OnDestroy {
@@ -32,6 +34,7 @@ export class EtudiantLayout implements OnInit, OnDestroy {
   promotionLibelle = '';
   chargement = true;
   nbAnnoncesNonLues = 0;
+  sidebarMobileOpen = false;
 
   readonly navigation: EntreeNavigation[] = [
     { libelle: 'Tableau de bord', lien: 'dashboard', icone: 'dashboard' },
@@ -45,7 +48,6 @@ export class EtudiantLayout implements OnInit, OnDestroy {
     { libelle: 'Ma promotion', lien: 'ma-promotion', icone: 'groups' },
     { libelle: 'Mes évaluations', lien: 'mes-evaluations', icone: 'reviews' },
     { libelle: 'Mes résultats', lien: 'mes-resultats', icone: 'workspace_premium' },
-    { libelle: 'Mon profil', lien: 'mon-profil', icone: 'account_circle' },
     { libelle: 'Rendez-vous', lien: 'rendez-vous', icone: 'event' },
   ];
 
@@ -117,5 +119,9 @@ export class EtudiantLayout implements OnInit, OnDestroy {
       next: () => this.router.navigate(['/accueil']),
       error: () => this.router.navigate(['/accueil']),
     });
+  }
+
+  toggleSidebarMobile(): void {
+    this.sidebarMobileOpen = !this.sidebarMobileOpen;
   }
 }

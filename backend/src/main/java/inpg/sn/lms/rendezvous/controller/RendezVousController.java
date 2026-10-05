@@ -40,12 +40,12 @@ import inpg.sn.lms.rendezvous.service.RendezVousService;
  * temps. [...] Les membres du personnel auront la possibilité d'accepter,
  * de refuser ou de proposer une autre date. »
  *
- * <p>Ouvert à tout utilisateur connecté (voir {@code SecurityConfig}), sans
- * restriction de rôle : contrairement au suivi des activités (TDR §I), le
- * TDR dit explicitement « chaque utilisateur », pas « chaque département ».
- * Seule la création/gestion de créneaux et la réponse aux demandes restent
- * réservées aux trois rôles internes déjà établis comme « personnel »
- * ({@link RendezVousService#ROLES_PERSONNEL}).
+ * <p>Ouvert à tout utilisateur connecté (voir {@code SecurityConfig}) pour la
+ * consultation et la demande — sauf au personnel de l'INPG lui-même
+ * ({@link RendezVousService#ROLES_PERSONNEL}), qui reçoit les demandes plutôt
+ * que d'en émettre : {@code demanderRendezVous} le refuse explicitement. La
+ * création/gestion de créneaux et la réponse aux demandes restent, elles,
+ * réservées à ces trois rôles internes.
  */
 @RestController
 @RequestMapping("/api/rendez-vous")
@@ -167,6 +167,13 @@ public class RendezVousController {
         User demandeur = utilisateurCourant.utilisateur(authentication);
         if (demandeur == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        // Le personnel de l'INPG gère les demandes, il ne les fait jamais : sans ce
+        // garde-fou serveur, l'interface seule empêchait un formateur ou un
+        // responsable de solliciter un collègue — un appel direct à l'API restait possible.
+        if (rendezVousService.estPersonnel(demandeur)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message",
+                    "Le personnel de l'INPG ne demande pas de rendez-vous : il gère les demandes reçues depuis « Mon agenda »."));
         }
         if (demandeur.getId().equals(creneau.getPersonnel().getId())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Vous ne pouvez pas demander un rendez-vous avec vous-même."));

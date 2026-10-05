@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
-import { catchError, map, Observable, of, tap } from 'rxjs';
+import { Injectable, inject, signal } from '@angular/core';
+import { catchError, finalize, map, Observable, of, tap } from 'rxjs';
+import { Router } from '@angular/router';
 import { AuthResponse } from '../models/auth-response';
-import { User } from '../models/user.model';
+import { ProfilCompte, User } from '../models/user.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -12,6 +13,8 @@ export class Auth {
   constructor(
     private http: HttpClient
   ) { }
+
+  private router = inject(Router);
 
   currentUser = signal<User | null>(null);
   private apiUrl = `${environment.apiUrl}/auth`;
@@ -37,9 +40,8 @@ export class Auth {
 
   /**
    * URL de l'espace propre au rôle de l'utilisateur connecté, ou null s'il n'a
-   * encore aucun rôle métier (compte tout juste créé). Centralise la même
-   * correspondance que redirectByRole pour que le lien « Mon espace » de la
-   * navbar publique et la redirection post-connexion ne divergent jamais.
+   * encore aucun rôle métier (compte tout juste créé). Utilisée par
+   * redirectByRole pour la redirection post-connexion.
    */
   getHomeUrl(): string | null {
     const roles = this.getUserRoles();
@@ -68,6 +70,25 @@ export class Auth {
   /** Redirige l'utilisateur vers sa page d'accueil selon son rôle */
   redirectByRole(router: any): void {
     router.navigate([this.getHomeUrl() ?? '/accueil']);
+  }
+
+  /**
+   * Type de compte n'ayant pas encore de rôle métier : oriente le navbar d'une
+   * école, d'une entreprise ou d'un candidat formateur. Un compte qui porte déjà
+   * un autre rôle n'est jamais reclassé d'après son type.
+   */
+  getProfilCompte(): ProfilCompte | null {
+    const roles = this.getUserRoles();
+    if (roles.includes('ROLE_ECOLE_FORMATION')) return 'ecole';
+    if (roles.includes('ROLE_ENTREPRISE')) return 'entreprise';
+    if (roles.includes('ROLE_CANDIDAT_FORMATEUR')) return 'formateur';
+    if (roles.length > 0) return null;
+    switch (this.currentUser()?.typeInscription) {
+      case 'ECOLE': return 'ecole';
+      case 'ENTREPRISE': return 'entreprise';
+      case 'FORMATEUR': return 'formateur';
+      default: return null;
+    }
   }
 
   getUserRoles(): string[] {
@@ -107,20 +128,8 @@ export class Auth {
       );
   }
 
-  verifyOtp(email: string, code: string): Observable<boolean> {
-    const payload = { email, code };
-
-    return this.http.post<{ message: string }>(`${this.apiUrl}/verify-otp`, payload).pipe(
-      map(() => true),
-      catchError((error) => {
-        console.warn('Vérification OTP échouée :', error.error?.message || error.message);
-        return of(false);
-      })
-    );
-  }
-
-  getOtp(email: string): Observable<boolean> {
-    return this.http.post<boolean>(`${this.apiUrl}/send-otp`, { email });
+  getOtp(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/send-otp`, { email });
   }
 
   checkToken(): Observable<boolean> {
@@ -134,9 +143,9 @@ export class Auth {
     return this.http.get(`${this.apiUrl}/verify`, {
       headers: { Authorization: `Bearer ${token}` }
     }).pipe(
-      map(() => true),
-      catchError(() => {
-        this.clearSession();
+      map(() => this.getToken() === token),
+      catchError((error) => {
+        if (error.status === 401 && this.getToken() === token) this.clearSession();
         return of(false);
       })
     );
@@ -152,24 +161,32 @@ export class Auth {
     return this.http.get<User>(`${this.apiUrl}/current-user`, {
       headers: { Authorization: `Bearer ${token}` }
     }).pipe(
-      tap((user) => this.currentUser.set(user)),
+      map((user) => this.getToken() === token ? user : null),
+      tap((user) => {
+        if (user) this.currentUser.set(user);
+      }),
       catchError(() => of(null))
     );
   }
 
   logout(): Observable<string> {
+    const token = this.getToken();
+    const clear = () => {
+      if (this.getToken() === token) this.clearSession();
+    };
     return this.http.post(`${this.apiUrl}/logout`, {}, { responseType: 'text' }).pipe(
-      tap(() => {
-        this.currentUser.set(null);
-        this.clearSession();
-      }),
+      tap({ next: clear, error: clear }),
+      finalize(clear),
     );
   }
 
-  ChangePassword(currentPassword: string, newPassword: string): Observable<string> {
-    return this.http.post(`${this.apiUrl}/change-password`, { currentPassword, newPassword }, { responseType: 'text' }).pipe(
+  ChangePassword(currentPassword: string, newPassword: string): Observable<{ message: string }> {
+    const token = this.getToken();
+    return this.http.post<{ message: string }>(`${this.apiUrl}/change-password`, { currentPassword, newPassword }).pipe(
       tap(() => {
-        console.log('Mot de passe changé avec succès.');
+        if (this.getToken() !== token) return;
+        this.clearSession();
+        this.router.navigate(['/auth/login'], { queryParams: { passwordChanged: 1 } });
       }),
       catchError((error) => {
         console.error('Erreur lors du changement de mot de passe :', error.error?.message || error.message);

@@ -1,52 +1,51 @@
 <!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
 
-<div class="mb-stack-lg flex flex-col md:flex-row md:items-end justify-between gap-4">
+<header class="mb-stack-lg flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
   <div>
-    <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1">Vue d'ensemble</h2>
-    <p class="font-body-md text-body-md text-on-surface-variant">Suivi des sessions en cours. Pour les indicateurs et graphiques, voir <a routerLink="/responsable-admission/statistiques" class="text-secondary hover:underline">Statistiques</a>.</p>
+    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Admissions</span>
+    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Vue d'ensemble</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">Suivez les sessions en cours et les derniers dossiers déposés.</p>
   </div>
-  <div class="flex gap-3">
-    <button type="button" routerLink="/responsable-admission/statistiques" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm">
-      <span class="material-symbols-outlined text-[18px]">bar_chart</span> Statistiques
-    </button>
-    <button type="button" [disabled]="exporting" (click)="exporterSessions()" class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60">
-      <span class="material-symbols-outlined text-[18px]">download</span> {{ exporting ? 'Export en cours…' : 'Rapport (Sessions)' }}
+  <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+    <button type="button" [disabled]="exporting" (click)="exporterSessions()" [title]="exporting ? 'Export en cours…' : 'Rapport (Sessions)'" class="flex items-center justify-center gap-2 h-10 px-4 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60 font-label-md text-label-md">
+      <span class="material-symbols-outlined text-[18px]">download</span>
+      {{ exporting ? 'Export…' : 'Exporter les sessions' }}
     </button>
   </div>
-</div>
+</header>
 
 <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des données…</div>
 
 <ng-container *ngIf="!loading">
   <!-- Indicateurs -->
-  <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter mb-stack-lg">
+  <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter mb-stack-lg" aria-label="Indicateurs d'admission">
     <a routerLink="/responsable-admission/candidatures" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
       <div class="flex items-center gap-2 text-on-surface-variant">
         <span class="material-symbols-outlined">folder_shared</span>
         <span class="font-label-sm text-label-sm uppercase tracking-wider">Candidatures</span>
       </div>
-      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ totalCandidats }}</p>
+      <p class="font-display text-headline-lg text-on-surface mt-5 tabular-nums">{{ totalCandidats }}</p>
     </a>
     <a routerLink="/responsable-admission/sessions" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
       <div class="flex items-center gap-2 text-on-surface-variant">
         <span class="material-symbols-outlined">calendar_today</span>
         <span class="font-label-sm text-label-sm uppercase tracking-wider">Sessions actives</span>
       </div>
-      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ sessionsActives.length }}</p>
+      <p class="font-display text-headline-lg text-on-surface mt-5 tabular-nums">{{ sessionsActives.length }}</p>
     </a>
     <a routerLink="/responsable-admission/candidatures" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
       <div class="flex items-center gap-2 text-on-surface-variant">
         <span class="material-symbols-outlined">hourglass_top</span>
         <span class="font-label-sm text-label-sm uppercase tracking-wider">À traiter</span>
       </div>
-      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ validationEnCours + preselectionnes }}</p>
+      <p class="font-display text-headline-lg text-on-surface mt-5 tabular-nums">{{ validationEnCours + preselectionnes }}</p>
     </a>
     <a routerLink="/responsable-admission/statistiques" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
       <div class="flex items-center gap-2 text-on-surface-variant">
         <span class="material-symbols-outlined">check_circle</span>
         <span class="font-label-sm text-label-sm uppercase tracking-wider">Taux d'admission</span>
       </div>
-      <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ tauxAdmission }}%</p>
+      <p class="font-display text-headline-lg text-on-surface mt-5 tabular-nums">{{ tauxAdmission }}%</p>
     </a>
   </section>
 
@@ -80,7 +79,7 @@
             <td class="px-6 py-4"><p class="font-body-md text-body-md text-primary">{{ s.dateFermeture | date:'dd MMM yyyy' }}</p></td>
             <td class="px-6 py-4 text-right">
               <span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-label-sm"
-                    [ngClass]="s.estOuverte ? 'bg-secondary-fixed text-secondary border border-secondary-fixed' : 'bg-surface-container text-on-surface-variant'">
+                    [ngClass]="s.estOuverte ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'">
                 {{ s.estOuverte ? 'Ouverte' : 'Fermée' }}
               </span>
             </td>
@@ -98,7 +97,7 @@
   <!-- Candidatures récentes -->
   <section class="mt-stack-lg space-y-stack-md">
     <div class="flex items-center justify-between">
-      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+      <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary">history</span>Candidatures récentes
       </h2>
       <a routerLink="/responsable-admission/candidatures" class="font-label-md text-label-md text-secondary hover:underline">Tout voir</a>
