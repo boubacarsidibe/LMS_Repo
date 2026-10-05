@@ -171,6 +171,31 @@ public class PhotothequeController {
         }
     }
 
+    /**
+     * Retire un cliché déjà déposé. Aucune notion d'auteur sur {@link Photo}
+     * (comme l'ajout, déjà ouvert à tout formateur) : qui a pu le déposer peut
+     * aussi le retirer.
+     */
+    @org.springframework.web.bind.annotation.DeleteMapping("/formateur/photos/{id}")
+    @Transactional
+    public ResponseEntity<?> supprimerPhoto(@PathVariable Long id) {
+        Photo photo = photoRepository.findById(id).orElse(null);
+        if (photo == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Path chemin = photoStorage.cheminDe(photo);
+        if (chemin != null) {
+            try {
+                Files.deleteIfExists(chemin);
+            } catch (IOException ignore) {
+                // Best-effort : la ligne en base part de toute façon, le fichier orphelin
+                // sur disque n'a pas d'impact fonctionnel.
+            }
+        }
+        photoRepository.delete(photo);
+        return ResponseEntity.noContent().build();
+    }
+
     // ===================== Visibilité =====================
 
     private List<AlbumPhoto> albumsVisibles(Authentication authentication) {
@@ -214,7 +239,7 @@ public class PhotothequeController {
     }
 
     private PhotoDto toPhotoDto(Photo photo) {
-        return new PhotoDto(photo.getId(), urlDe(photo), photo.getLegende(), photo.getDateAjout());
+        return new PhotoDto(photo.getId(), urlDe(photo), photo.getLegende(), photo.getNomOriginal(), photo.getDateAjout());
     }
 
     private String urlDe(Photo photo) {

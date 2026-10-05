@@ -125,6 +125,8 @@ export interface Photo {
   id: number;
   url: string;
   legende: string | null;
+  /** Nom du fichier d'origine, pour un téléchargement avec une extension correcte. */
+  nomOriginal: string | null;
   dateAjout: string;
 }
 

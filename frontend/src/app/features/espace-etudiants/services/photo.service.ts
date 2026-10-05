@@ -56,4 +56,9 @@ export class PhotoService {
     }
     return this.http.post<Photo>(`${this.api}/formateur/albums/${albumId}/photos`, donnees);
   }
+
+  /** Retire un cliché déjà déposé dans un album. */
+  supprimerPhoto(photoId: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/formateur/photos/${photoId}`);
+  }
 }

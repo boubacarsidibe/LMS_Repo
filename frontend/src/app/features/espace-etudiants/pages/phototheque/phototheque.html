@@ -154,11 +154,97 @@
       ></app-ui-empty-state>
 
       <ul *ngIf="!chargementPhotos && photosAlbumOuvert.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
-        <li *ngFor="let p of photosAlbumOuvert" class="rounded-lg overflow-hidden border border-outline-variant">
-          <img [src]="media.image(p.url) | async" [alt]="p.legende || 'Photo'" class="w-full h-44 object-cover" />
-          <p *ngIf="p.legende" class="font-body-sm text-body-sm text-on-surface-variant p-2">{{ p.legende }}</p>
+        <li *ngFor="let p of photosAlbumOuvert; let i = index" class="group relative rounded-lg overflow-hidden border border-outline-variant">
+          <button
+            type="button"
+            (click)="ouvrirPhoto(i)"
+            [attr.aria-label]="'Agrandir ' + (p.legende || 'la photo')"
+            class="block w-full text-left cursor-zoom-in">
+            <img [src]="media.image(p.url) | async" [alt]="p.legende || 'Photo'" class="w-full h-44 object-cover group-hover:brightness-90 transition-all" />
+          </button>
+          <p *ngIf="p.legende" class="font-body-sm text-body-sm text-on-surface-variant p-2 truncate">{{ p.legende }}</p>
+          <button
+            type="button"
+            (click)="supprimerPhoto(p, $event)"
+            [disabled]="suppressionPhotoEnCoursId === p.id"
+            aria-label="Supprimer cette photo"
+            title="Supprimer"
+            class="absolute top-2 right-2 p-1.5 rounded-full bg-inverse-surface/70 text-inverse-on-surface opacity-0 group-hover:opacity-100 hover:bg-error transition-all disabled:opacity-60">
+            <span class="material-symbols-outlined text-[18px]">delete</span>
+          </button>
         </li>
       </ul>
     </div>
   </div>
+</div>
+
+<!-- ===================== Visionneuse plein écran d'une photo ===================== -->
+<div
+  *ngIf="photoOuverte as photo"
+  class="fixed inset-0 bg-inverse-surface/90 z-[70] flex flex-col items-center justify-center p-4 sm:p-8"
+  (click)="fermerPhoto()">
+  <!-- Barre d'outils : compteur, suppression, fermeture -->
+  <span
+    *ngIf="photosAlbumOuvert.length > 1"
+    class="absolute top-5 left-4 font-label-sm text-label-sm text-inverse-on-surface"
+    (click)="$event.stopPropagation()">
+    {{ photoOuverteIndex! + 1 }} / {{ photosAlbumOuvert.length }}
+  </span>
+  <div class="absolute top-2 right-2 flex items-center gap-1" (click)="$event.stopPropagation()">
+    <button
+      type="button"
+      (click)="supprimerPhoto(photo, $event)"
+      [disabled]="suppressionPhotoEnCoursId === photo.id"
+      aria-label="Supprimer cette photo"
+      title="Supprimer"
+      class="p-2 text-inverse-on-surface hover:bg-error rounded-full transition-colors disabled:opacity-60">
+      <span class="material-symbols-outlined">delete</span>
+    </button>
+    <a
+      [href]="media.image(photo.url) | async"
+      [download]="photo.nomOriginal || photo.legende || 'photo'"
+      (click)="$event.stopPropagation()"
+      aria-label="Télécharger cette photo"
+      title="Télécharger"
+      class="p-2 text-inverse-on-surface hover:bg-surface-container/20 rounded-full transition-colors">
+      <span class="material-symbols-outlined">download</span>
+    </a>
+    <button
+      type="button"
+      (click)="fermerPhoto()"
+      aria-label="Fermer la visionneuse"
+      title="Fermer (Échap)"
+      class="p-2 text-inverse-on-surface hover:bg-surface-container/20 rounded-full transition-colors">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <!-- Navigation précédente / suivante : parcourt l'album sans repasser par la grille -->
+  <button
+    *ngIf="photosAlbumOuvert.length > 1"
+    type="button"
+    (click)="photoPrecedente(); $event.stopPropagation()"
+    aria-label="Photo précédente"
+    title="Précédente (←)"
+    class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 text-inverse-on-surface hover:bg-surface-container/20 rounded-full transition-colors">
+    <span class="material-symbols-outlined text-[32px]">chevron_left</span>
+  </button>
+  <button
+    *ngIf="photosAlbumOuvert.length > 1"
+    type="button"
+    (click)="photoSuivante(); $event.stopPropagation()"
+    aria-label="Photo suivante"
+    title="Suivante (→)"
+    class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 text-inverse-on-surface hover:bg-surface-container/20 rounded-full transition-colors">
+    <span class="material-symbols-outlined text-[32px]">chevron_right</span>
+  </button>
+
+  <img
+    [src]="media.image(photo.url) | async"
+    [alt]="photo.legende || 'Photo'"
+    (click)="$event.stopPropagation()"
+    class="max-w-[90vw] max-h-[75vh] object-contain rounded-lg shadow-lg" />
+  <p *ngIf="photo.legende" class="font-body-sm text-body-sm text-inverse-on-surface mt-4 max-w-2xl text-center" (click)="$event.stopPropagation()">
+    {{ photo.legende }}
+  </p>
 </div>
