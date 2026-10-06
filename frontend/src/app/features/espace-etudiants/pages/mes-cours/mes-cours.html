@@ -438,10 +438,24 @@
         </div>
 
         <p *ngIf="presenceError" class="text-body-sm text-error">{{ presenceError }}</p>
+        <p *ngIf="presenceSuccess" class="flex items-center gap-1 text-body-sm text-secondary font-medium">
+          <span class="material-symbols-outlined text-[18px]">check_circle</span>{{ presenceSuccess }}
+        </p>
         <button [disabled]="isSavingPresences" (click)="enregistrerPresences()"
                 class="w-full py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
           {{ isSavingPresences ? 'Enregistrement…' : 'Enregistrer les présences' }}
         </button>
+
+        <button *ngIf="presencesEnregistrees" [disabled]="isSendingRelanceAbsences" (click)="envoyerRelanceAbsences()"
+                title="Envoie un message privé à chaque étudiant marqué absent, pour qu'il en indique le motif."
+                class="w-full py-3 bg-surface-container-lowest border border-secondary text-secondary rounded-xl font-label-md text-label-md hover:bg-secondary/10 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[20px]">mail</span>
+          {{ isSendingRelanceAbsences ? 'Envoi…' : 'Demander une justification aux absents' }}
+        </button>
+        <p *ngIf="relanceAbsencesError" class="text-body-sm text-error">{{ relanceAbsencesError }}</p>
+        <p *ngIf="relanceAbsencesMessage" class="flex items-center gap-1 text-body-sm text-secondary font-medium">
+          <span class="material-symbols-outlined text-[18px]">check_circle</span>{{ relanceAbsencesMessage }}
+        </p>
       </ng-container>
     </div>
   </div>

@@ -30,11 +30,10 @@ import inpg.sn.lms.espace_etudiant.dto.MessagePriveCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.MessagePriveDto;
 import inpg.sn.lms.espace_etudiant.entity.Conversation;
 import inpg.sn.lms.espace_etudiant.entity.MessagePrive;
-import inpg.sn.lms.espace_etudiant.entity.Notification;
 import inpg.sn.lms.espace_etudiant.repository.ConversationRepository;
 import inpg.sn.lms.espace_etudiant.repository.MessagePriveRepository;
-import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
+import inpg.sn.lms.espace_etudiant.service.MessagerieService;
 import inpg.sn.lms.espace_etudiant.service.PerimetreFormateurService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
@@ -65,13 +64,13 @@ public class MessagerieController {
     private final HabilitationCoursService habilitation;
     private final PerimetreFormateurService perimetreFormateur;
     private final UtilisateurCourantService utilisateurCourant;
-    private final NotificationRepository notificationRepository;
+    private final MessagerieService messagerieService;
 
     public MessagerieController(ConversationRepository conversationRepository,
             MessagePriveRepository messageRepository, EtudiantRepository etudiantRepository,
             FormateurRepository formateurRepository, HabilitationCoursService habilitation,
             PerimetreFormateurService perimetreFormateur, UtilisateurCourantService utilisateurCourant,
-            NotificationRepository notificationRepository) {
+            MessagerieService messagerieService) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.etudiantRepository = etudiantRepository;
@@ -79,7 +78,7 @@ public class MessagerieController {
         this.habilitation = habilitation;
         this.perimetreFormateur = perimetreFormateur;
         this.utilisateurCourant = utilisateurCourant;
-        this.notificationRepository = notificationRepository;
+        this.messagerieService = messagerieService;
     }
 
     /**
@@ -152,18 +151,15 @@ public class MessagerieController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Cette personne ne fait pas partie de vos contacts."));
         }
-        Conversation conversation = conversationRepository
-                .findEntreParticipants(utilisateur.getId(), request.destinataireId())
-                .orElseGet(() -> {
-                    User destinataire = etudiantRepository.findById(request.destinataireId())
-                            .map(Etudiant::getUser)
-                            .orElseGet(() -> formateurRepository.findById(request.destinataireId())
-                                    .map(Formateur::getUser).orElse(null));
-                    return conversationRepository.save(new Conversation(utilisateur, destinataire));
-                });
-        MessagePrive message = messageRepository.save(new MessagePrive(conversation, utilisateur, request.contenu().trim()));
-        notifierNouveauMessage(conversation, message, utilisateur);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toConversationDto(conversation, utilisateur));
+        User destinataire = etudiantRepository.findById(request.destinataireId())
+                .map(Etudiant::getUser)
+                .orElseGet(() -> formateurRepository.findById(request.destinataireId())
+                        .map(Formateur::getUser).orElse(null));
+        if (destinataire == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Destinataire introuvable."));
+        }
+        MessagePrive message = messagerieService.envoyer(utilisateur, destinataire, request.contenu().trim());
+        return ResponseEntity.status(HttpStatus.CREATED).body(toConversationDto(message.getConversation(), utilisateur));
     }
 
     /** Fil complet, et marque comme lus les messages reçus. */
@@ -205,8 +201,7 @@ public class MessagerieController {
         if (estVide(request.contenu())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le message ne peut pas être vide."));
         }
-        MessagePrive message = messageRepository.save(new MessagePrive(conversation, utilisateur, request.contenu().trim()));
-        notifierNouveauMessage(conversation, message, utilisateur);
+        MessagePrive message = messagerieService.deposerDans(conversation, utilisateur, request.contenu().trim());
         return ResponseEntity.status(HttpStatus.CREATED).body(toMessageDto(message, utilisateur));
     }
 
@@ -232,26 +227,6 @@ public class MessagerieController {
         List<Long> cohorteIds = perimetreFormateur.cohorteIdsDuFormateur(formateur);
         return etudiantRepository.findByPromotion_IdIn(cohorteIds).stream()
                 .anyMatch(e -> e.getUser() != null && e.getUser().getId().equals(destinataireId));
-    }
-
-    private void notifierNouveauMessage(Conversation conversation, MessagePrive message, User auteur) {
-        User destinataire = conversation.autreParticipant(auteur);
-        notificationRepository.save(new Notification(
-                destinataire,
-                utilisateurCourant.nomAffiche(auteur) + " vous a envoyé un message.",
-                Notification.MESSAGE_PRIVE,
-                lienDeLaConversation(conversation.getId(), destinataire)));
-    }
-
-    /**
-     * L'espace formateur n'a pas la même racine de route que l'espace étudiant
-     * (même piège déjà rencontré pour les réponses du forum) : sans cette
-     * distinction, une notification adressée à un formateur pointait vers une
-     * URL que son espace ne sait pas résoudre.
-     */
-    private String lienDeLaConversation(Long conversationId, User destinataire) {
-        boolean estFormateur = formateurRepository.findByUserId(destinataire.getId()).isPresent();
-        return (estFormateur ? "/espace-etudiant/formateur/messagerie/" : "/espace-etudiant/messagerie/") + conversationId;
     }
 
     // ===================== Correspondances =====================

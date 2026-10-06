@@ -45,6 +45,7 @@ import inpg.sn.lms.espace_etudiant.repository.ConversationRepository;
 import inpg.sn.lms.espace_etudiant.repository.MessagePriveRepository;
 import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.service.HabilitationCoursService;
+import inpg.sn.lms.espace_etudiant.service.MessagerieService;
 import inpg.sn.lms.espace_etudiant.service.PerimetreFormateurService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
@@ -123,8 +124,15 @@ class MessagerieControllerTest {
 
     @BeforeEach
     void preparer() {
+        // Objet reel, construit sur les memes mocks que le controleur : le depot d'un
+        // message passe desormais par ce service (voir MessagerieService), mais les
+        // assertions sur conversationRepository/messageRepository/notificationRepository
+        // ci-dessous restent valables sans changement, puisque c'est bien eux qui
+        // recoivent l'appel .save(...) au bout de la chaine.
+        MessagerieService messagerieService = new MessagerieService(conversationRepository, messageRepository,
+                notificationRepository, formateurRepository, utilisateurCourant);
         controller = new MessagerieController(conversationRepository, messageRepository, etudiantRepository,
-                formateurRepository, habilitation, perimetreFormateur, utilisateurCourant, notificationRepository);
+                formateurRepository, habilitation, perimetreFormateur, utilisateurCourant, messagerieService);
 
         etudiantUser = new User();
         etudiantUser.setId(1L);

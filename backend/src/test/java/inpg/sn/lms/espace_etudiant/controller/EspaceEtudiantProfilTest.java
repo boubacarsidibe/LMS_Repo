@@ -89,6 +89,8 @@ class EspaceEtudiantProfilTest {
     private SupportCoursStorageService supportCoursStorageService;
     @Mock
     private ForumVisibiliteService forumVisibilite;
+    @Mock
+    private inpg.sn.lms.espace_etudiant.service.MessagerieService messagerieService;
 
     @Mock private ReleveNotesService releveNotesService;
 
@@ -108,7 +110,7 @@ class EspaceEtudiantProfilTest {
                 notificationService,
                 retourEvaluationService, perimetreFormateurService, noteModuleService,
                 releveNotesService, presenceService,
-                seanceService, supportCoursStorageService, forumVisibilite, "uploads");
+                seanceService, supportCoursStorageService, forumVisibilite, messagerieService, "uploads");
 
         user = new User();
         user.setId(12L);

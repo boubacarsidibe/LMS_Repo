@@ -96,6 +96,8 @@ class EspaceEtudiantForumModerationTest {
     @Mock
     private ForumVisibiliteService forumVisibilite;
     @Mock
+    private inpg.sn.lms.espace_etudiant.service.MessagerieService messagerieService;
+    @Mock
     private ReleveNotesService releveNotesService;
 
     private EspaceEtudiantController controller;
@@ -110,7 +112,7 @@ class EspaceEtudiantForumModerationTest {
                 forumSujetRepository, forumMessageRepository, certificatService, certificatPdfService,
                 notificationService, retourEvaluationService, perimetreFormateurService, noteModuleService,
                 releveNotesService, presenceService, seanceService, supportCoursStorageService, forumVisibilite,
-                "uploads");
+                messagerieService, "uploads");
 
         user = new User();
         user.setId(12L);

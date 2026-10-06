@@ -100,6 +100,7 @@ import inpg.sn.lms.espace_etudiant.service.PerimetreFormateurService;
 import inpg.sn.lms.espace_etudiant.service.RetourEvaluationService;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
+import inpg.sn.lms.espace_etudiant.service.MessagerieService;
 import inpg.sn.lms.espace_etudiant.service.NoteModuleService;
 import inpg.sn.lms.espace_etudiant.service.PresenceService;
 import inpg.sn.lms.espace_etudiant.service.ReleveNotesService;
@@ -135,6 +136,7 @@ public class EspaceEtudiantController {
     private final SeanceService seanceService;
     private final SupportCoursStorageService supportCoursStorageService;
     private final ForumVisibiliteService forumVisibilite;
+    private final MessagerieService messagerieService;
     private final Path uploadDirectory;
 
     public EspaceEtudiantController(
@@ -158,6 +160,7 @@ public class EspaceEtudiantController {
             SeanceService seanceService,
             SupportCoursStorageService supportCoursStorageService,
             ForumVisibiliteService forumVisibilite,
+            MessagerieService messagerieService,
             @Value("${app.upload.dir:uploads}") String uploadDirectory) {
         this.userRepository = userRepository;
         this.etudiantRepository = etudiantRepository;
@@ -179,6 +182,7 @@ public class EspaceEtudiantController {
         this.seanceService = seanceService;
         this.supportCoursStorageService = supportCoursStorageService;
         this.forumVisibilite = forumVisibilite;
+        this.messagerieService = messagerieService;
         this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize();
     }
 
@@ -1365,6 +1369,52 @@ public class EspaceEtudiantController {
             presenceService.marquerPresence(seance, etudiant, entree.present());
         }
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Relance tous les étudiants marqués absents à cette séance, par messagerie
+     * privée : ils y répondent pour se justifier, sans que le formateur ait à
+     * ouvrir une conversation par étudiant. Repose sur {@link MessagerieService}
+     * plutôt que de dupliquer la logique de conversation déjà écrite pour
+     * {@code MessagerieController}.
+     */
+    @PreAuthorize("hasRole('FORMATEUR')")
+    @Transactional
+    @PostMapping("/formateur/seances/{id}/relancer-absences")
+    public ResponseEntity<?> relancerAbsences(@PathVariable Long id, Authentication authentication) {
+        Formateur formateur = findAuthenticatedFormateur(authentication);
+        if (formateur == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Profil formateur introuvable."));
+        }
+        Seance seance = seanceService.findById(id).orElse(null);
+        if (seance == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!perimetreFormateurService.estFormateurDuCours(formateur, seance.getCours())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Vous n'êtes pas formateur de ce cours."));
+        }
+        List<Presence> absences = presenceService.getPresencesBySeanceId(id).stream()
+                .filter(p -> !p.isPresent())
+                .toList();
+        if (absences.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Aucun étudiant n'est marqué absent à cette séance."));
+        }
+        String contenu = "Vous avez été marqué(e) absent(e) à la séance « " + seance.getTitre() + " » du "
+                + seance.getDateHeure().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                + ". Merci de répondre à ce message pour en indiquer le motif.";
+        int envoyes = 0;
+        for (Presence absence : absences) {
+            User destinataire = absence.getEtudiant().getUser();
+            if (destinataire == null) {
+                continue; // fiche etudiant sans compte : rien a notifier
+            }
+            messagerieService.envoyer(formateur.getUser(), destinataire, contenu);
+            envoyes++;
+        }
+        return ResponseEntity.ok(Map.of("envoyes", envoyes));
     }
 
     @PreAuthorize("hasRole('FORMATEUR')")

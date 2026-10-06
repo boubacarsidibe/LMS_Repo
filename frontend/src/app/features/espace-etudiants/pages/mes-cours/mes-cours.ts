@@ -50,6 +50,15 @@ export class MesCours implements OnInit {
   isSavingSeance = false;
   isSavingPresences = false;
   presenceError = '';
+  presenceSuccess = '';
+  /** Vrai une fois les présences enregistrées pour la séance affichée : la relance
+   *  aux absents s'appuie sur ce qui est en base, pas sur des cases cochées à l'écran
+   *  et jamais envoyées — la autoriser avant ce premier enregistrement relancerait
+   *  d'anciennes absences, pas celles de la séance en cours. */
+  presencesEnregistrees = false;
+  isSendingRelanceAbsences = false;
+  relanceAbsencesMessage = '';
+  relanceAbsencesError = '';
 
   /** Séance dont le lien de visioconférence est en cours d'édition dans la liste (État 1). */
   seanceEnEditionLienId: number | null = null;
@@ -298,6 +307,10 @@ export class MesCours implements OnInit {
     this.seanceSelectionnee = null;
     this.rosterSeance = [];
     this.presenceError = '';
+    this.presenceSuccess = '';
+    this.presencesEnregistrees = false;
+    this.relanceAbsencesMessage = '';
+    this.relanceAbsencesError = '';
     this.nouvelleSeanceTitre = '';
     this.nouvelleSeanceDate = this.aujourdhuiIso();
     this.seanceEnEditionLienId = null;
@@ -363,6 +376,11 @@ export class MesCours implements OnInit {
   selectionnerSeance(seance: Seance) {
     this.seanceSelectionnee = seance;
     this.chargementRoster = true;
+    this.presenceError = '';
+    this.presenceSuccess = '';
+    this.presencesEnregistrees = false;
+    this.relanceAbsencesMessage = '';
+    this.relanceAbsencesError = '';
     this.presenceService.getRosterSeance(seance.id).subscribe({
       next: (roster) => {
         this.rosterSeance = roster;
@@ -381,6 +399,10 @@ export class MesCours implements OnInit {
 
   marquerPresence(etudiant: PresenceEtudiant, present: boolean) {
     etudiant.present = present;
+    // Un nouveau pointage invalide le precedent enregistrement : la relance doit
+    // porter sur ce qui vient d'etre coche, pas sur l'etat sauvegarde avant ce clic.
+    this.presencesEnregistrees = false;
+    this.presenceSuccess = '';
   }
 
   enregistrerPresences() {
@@ -392,13 +414,41 @@ export class MesCours implements OnInit {
 
     this.isSavingPresences = true;
     this.presenceError = '';
+    this.presenceSuccess = '';
     this.presenceService.enregistrer(this.seanceSelectionnee.id, presences).subscribe({
       next: () => {
         this.isSavingPresences = false;
+        // La page ne revient pas à la liste des séances après l'enregistrement : sans
+        // ce message, rien ne distingue un enregistrement réussi d'un clic resté sans
+        // effet, et on en vient à douter que la séance ait seulement été créée.
+        this.presenceSuccess = 'Présences enregistrées.';
+        this.presencesEnregistrees = true;
+        this.relanceAbsencesMessage = '';
+        this.relanceAbsencesError = '';
       },
       error: (error) => {
         this.isSavingPresences = false;
         this.presenceError = error.error?.message || "L'enregistrement des présences a échoué.";
+      },
+    });
+  }
+
+  /** Message de justification envoyé par messagerie privée à chaque étudiant marqué absent. */
+  envoyerRelanceAbsences() {
+    if (!this.seanceSelectionnee || !this.presencesEnregistrees) return;
+    this.isSendingRelanceAbsences = true;
+    this.relanceAbsencesMessage = '';
+    this.relanceAbsencesError = '';
+    this.presenceService.relancerAbsences(this.seanceSelectionnee.id).subscribe({
+      next: (res) => {
+        this.isSendingRelanceAbsences = false;
+        this.relanceAbsencesMessage = res.envoyes > 1
+          ? `Message de justification envoyé à ${res.envoyes} étudiants.`
+          : 'Message de justification envoyé.';
+      },
+      error: (error) => {
+        this.isSendingRelanceAbsences = false;
+        this.relanceAbsencesError = error.error?.message || "L'envoi du message de justification a échoué.";
       },
     });
   }

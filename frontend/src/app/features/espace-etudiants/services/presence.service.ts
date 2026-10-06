@@ -18,6 +18,11 @@ export class PresenceService {
     return this.http.post<void>(`${this.api}/formateur/seances/${seanceId}/presences`, { presences });
   }
 
+  /** Envoie une demande de justification aux étudiants marqués absents à cette séance. */
+  relancerAbsences(seanceId: number): Observable<{ envoyes: number }> {
+    return this.http.post<{ envoyes: number }>(`${this.api}/formateur/seances/${seanceId}/relancer-absences`, {});
+  }
+
   getByEtudiant(etudiantId: number): Observable<PresenceHistorique[]> {
     return this.http.get<PresenceHistorique[]>(`${this.api}/formateur/etudiants/${etudiantId}/presences`);
   }
