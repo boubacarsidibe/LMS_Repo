@@ -2007,3 +2007,41 @@ Tests ciblés au vert (`EspaceEtudiantForumModerationTest`,
 `ForumSujetRepositoryVisibiliteTest`, `ForumVisibiliteServiceTest`). Données de
 test nettoyées après coup (sujet et messages créés pour la vérification,
 fichiers temporaires). Commit `0447279`.
+
+### 72. Présences : confirmation d'enregistrement et relance des absents par message
+
+Signalement direct de l'utilisateur : après « Enregistrer les présences », aucun
+retour visible — pas de retour à la liste des séances, pas de message — ce qui
+se lit comme un échec silencieux de l'enregistrement.
+
+**Message de confirmation** (« Présences enregistrées. »), affiché dans le même
+panneau plutôt que de fermer ou de renvoyer à l'écran précédent — le formateur
+reste sur la prise de présence, ce que la demande n'évoque pas comme un défaut.
+Réinitialisé dès qu'une présence est recochée sans ré-enregistrer, pour ne
+jamais laisser croire qu'un pointage non sauvegardé l'a été.
+
+**Nouveau bouton « Demander une justification aux absents »**, activé une fois
+les présences enregistrées pour la séance affichée (pas avant : la relance lit
+ce qui est en base, pas les cases cochées à l'écran). Envoie un message privé à
+chaque étudiant marqué absent, sur lequel il peut directement répondre — la
+messagerie existante plutôt qu'une notification à sens unique, une absence
+appelant une réponse. Nouveau endpoint `POST /formateur/seances/{id}/relancer-absences`.
+
+**`MessagerieService` extrait de `MessagerieController`** : la relance et
+`démarrerConversation`/`repondre` doivent ouvrir une conversation selon la même
+règle (trouver-ou-créer, notifier, lien selon le rôle du destinataire) —
+dupliquer cette logique dans `EspaceEtudiantController` aurait fait deux
+sources de vérité. Piège rencontré en écrivant le test : `repondre` a sa
+conversation déjà en main (`findById` sur l'URL), `envoyer()` (trouver-ou-créer
+par participants) lui aurait fait refaire une recherche redondante — et, en
+test, une recherche non préparée aurait renvoyé une conversation `null` que le
+code suivant aurait déréférencée. Scindé en `envoyer` (depuis un destinataire)
+et `deposerDans` (depuis une conversation déjà connue).
+
+**Vérifié bout en bout sur la stack Docker, Playwright à l'appui** (captures
+réelles, pas seulement lecture de code) : création de séance, pointage,
+message de confirmation visible, bouton de relance affiché après coup, clic →
+confirmation, réponse de l'étudiant absent reçue par le formateur, étudiant
+présent non contacté, 400 si aucun absent, 403 si le formateur n'enseigne pas
+le cours. Tests ciblés au vert. Données de test nettoyées après coup (séances,
+conversations, notifications). Commit `d0d9161`.
