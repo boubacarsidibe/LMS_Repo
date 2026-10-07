@@ -7,5 +7,20 @@
         "anthropic.claude-code"
       ]
     }
+  },
+  "forwardPorts": [4200, 8080, 5432],
+  "portsAttributes": {
+    "4200": {
+      "label": "Frontend (Angular)",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Backend (Spring Boot)",
+      "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
+    }
   }
 }
