@@ -11,8 +11,10 @@ import { roleGuard } from '../../core/auth/guards/role-guard';
  * « Formations », une liste de cours et un détail de cours — avec sa propre barre
  * horizontale. Il doublait la barre latérale écran pour écran, sur des composants
  * distincts qu'il fallait maintenir en parallèle, et c'est là qu'atterrissait
- * l'étudiant après sa connexion. Seule « Formations » n'avait pas d'équivalent :
- * elle a été déplacée sous le shell plutôt que supprimée.
+ * l'étudiant après sa connexion. « Formations » (catalogue de l'offre) y avait été
+ * conservée, puis retirée à son tour (2026-10-08) : l'étudiant suit déjà sa formation
+ * par « Mes cours » et « Ma promotion ». Idem pour « Rendez-vous », propre au
+ * recrutement et à l'accréditation, pas à la vie d'un étudiant inscrit.
  *
  * <p>Ce qui reste hors du shell relève du seul formateur, qui dispose du sien.
  */
@@ -81,12 +83,6 @@ export const routes: Routes = [
             {
                 path: 'phototheque',
                 loadComponent: () => import('./pages/phototheque/phototheque').then(m => m.Phototheque)
-            },
-            {
-                path: 'rendez-vous',
-                loadComponent: () =>
-                    import('../rendez-vous/pages/rendez-vous/rendez-vous.component').then(
-                        m => m.RendezVousComponent)
             }
         ]
     },
@@ -143,13 +139,6 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/ma-promotion/ma-promotion').then(m => m.MaPromotionPage)
             },
             {
-                // Catalogue de l'offre de formation. Seule rubrique de l'ancien
-                // parcours sans equivalent dans la barre laterale : deplacee ici
-                // plutot que retiree.
-                path: 'mes-formations',
-                loadComponent: () => import('./pages/mes-formations/mes-formations').then(m => m.MesFormations)
-            },
-            {
                 path: 'mes-evaluations',
                 loadComponent: () => import('./pages/mes-evaluations/mes-evaluations').then(m => m.MesEvaluations)
             },
@@ -160,12 +149,6 @@ export const routes: Routes = [
             {
                 path: 'mon-profil',
                 loadComponent: () => import('./pages/mon-profil-etudiant/mon-profil-etudiant').then(m => m.MonProfilEtudiant)
-            },
-            {
-                path: 'rendez-vous',
-                loadComponent: () =>
-                    import('../rendez-vous/pages/rendez-vous/rendez-vous.component').then(
-                        m => m.RendezVousComponent)
             }
         ]
     }

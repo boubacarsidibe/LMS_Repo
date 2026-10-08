@@ -44,11 +44,9 @@ export class EtudiantLayout implements OnInit, OnDestroy {
     { libelle: 'Forum', lien: 'forum', icone: 'forum' },
     { libelle: 'Messagerie', lien: 'messagerie', icone: 'chat' },
     { libelle: 'Photothèque', lien: 'photheque', icone: 'photo_library' },
-    { libelle: 'Formations', lien: 'mes-formations', icone: 'school' },
     { libelle: 'Ma promotion', lien: 'ma-promotion', icone: 'groups' },
     { libelle: 'Mes évaluations', lien: 'mes-evaluations', icone: 'reviews' },
     { libelle: 'Mes résultats', lien: 'mes-resultats', icone: 'workspace_premium' },
-    { libelle: 'Rendez-vous', lien: 'rendez-vous', icone: 'event' },
   ];
 
   private sondage?: Subscription;
