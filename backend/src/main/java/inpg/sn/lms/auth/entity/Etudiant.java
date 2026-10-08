@@ -1,5 +1,7 @@
 package inpg.sn.lms.auth.entity;
 
+import java.time.LocalDate;
+
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -61,6 +63,17 @@ public class Etudiant  {
     @MapsId
     @JoinColumn(name = "id_user")
     private User user;
+
+    /**
+     * « Monsieur », « Madame » ou « Mademoiselle » : imprimée avant le nom sur le certificat.
+     * Nullable, renseignée à la première délivrance (migration {@code V202610081200}).
+     */
+    @Column(length = 20)
+    private String civilite;
+
+    /** Imprimée sur le certificat (« né le … »). Nullable, comme {@link #civilite}. */
+    @Column(name = "date_naissance")
+    private LocalDate dateNaissance;
 
     public Etudiant(User user, String nom, String prenom, String telephone) {
         this.user = user;

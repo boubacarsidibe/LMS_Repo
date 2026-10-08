@@ -168,8 +168,14 @@ export class PedagogieService {
     return this.http.get<Certificat[]>(`${this.api}/certificats`);
   }
 
-  delivrerCertificat(demande: DemandeCertificat): Observable<Certificat> {
-    return this.http.post<Certificat>(`${this.api}/certificats`, demande);
+  /** Formation de la promotion, période probable, et éligibilité de chacun de ses étudiants. */
+  getApercuCertificats(promotionId: number): Observable<ApercuCertificats> {
+    return this.http.get<ApercuCertificats>(`${this.api}/certificats/apercu`, { params: { promotionId } });
+  }
+
+  /** Délivre à toute une promotion, ou à toute la promotion sauf quelques étudiants. */
+  delivrerCertificatsLot(demande: DemandeCertificatsLot): Observable<ResultatCertificatsLot> {
+    return this.http.post<ResultatCertificatsLot>(`${this.api}/certificats/lot`, demande);
   }
 
   /** PDF au modèle INPG (Blob : nom de fichier posé par le serveur). */
@@ -395,16 +401,48 @@ export interface ResultatRappel {
   echecs: string[];
 }
 
-/** Champs du certificat au modèle INPG ; les dates sont au format ISO (AAAA-MM-JJ). */
-export interface DemandeCertificat {
-  etudiantId: number;
-  intituleFormation: string;
-  cohorteId: number | null;
+export type ModeCertificats = 'TOUS' | 'TOUS_SAUF' | 'UN_SEUL';
+
+/** Étudiant d'une promotion tel que l'aperçu le décrit ; `coursNonTermines` est vide si `eligible`. */
+export interface EtudiantApercuCertificat {
+  id: number;
+  nom: string;
+  matricule: string | null;
   civilite: string | null;
   dateNaissance: string | null;
+  eligible: boolean;
+  coursNonTermines: string[];
+}
+
+/** `formationIntitule` est null si la promotion n'est rattachée à aucune formation. */
+export interface ApercuCertificats {
+  promotionId: number;
+  promotionLibelle: string;
+  formationIntitule: string | null;
   dateDebut: string | null;
   dateFin: string | null;
-  code: string | null;
+  etudiants: EtudiantApercuCertificat[];
+}
+
+/**
+ * Délivrance par promotion. Pas d'intitulé : il vient de la formation de la promotion.
+ * `exclusIds` ne sert qu'en « TOUS_SAUF », `etudiantId` qu'en « UN_SEUL » (où `codeSession`
+ * est imprimé tel quel, sans numéro d'ordre). Les dates sont au format ISO (AAAA-MM-JJ).
+ */
+export interface DemandeCertificatsLot {
+  promotionId: number;
+  mode: ModeCertificats;
+  exclusIds: number[];
+  etudiantId: number | null;
+  dateDebut: string;
+  dateFin: string;
+  codeSession: string | null;
+  identites: { etudiantId: number; civilite: string | null; dateNaissance: string | null }[];
+}
+
+export interface ResultatCertificatsLot {
+  delivres: { certificatId: number; reference: string; etudiantId: number; etudiantNom: string }[];
+  refuses: { etudiantId: number; etudiantNom: string; raison: string; coursNonTermines: string[] }[];
 }
 
 export interface Certificat {

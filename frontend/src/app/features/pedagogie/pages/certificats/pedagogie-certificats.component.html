@@ -4,7 +4,7 @@
       <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Scolarité</span>
       <h1 class="font-display text-display text-on-surface leading-none -ml-1">Certificats</h1>
       <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">
-        Les attestations délivrées par l’institut, et le registre de leurs références.
+        Les attestations délivrées par l’institut, promotion par promotion, et le registre de leurs références.
       </p>
     </div>
     <button type="button" (click)="ouvrirFormulaire()"
@@ -14,6 +14,18 @@
   </header>
 
   <p *ngIf="messageSucces" class="font-body-sm text-body-sm text-on-surface bg-secondary-container/30 rounded-lg px-4 py-3">{{ messageSucces }}</p>
+  <div *ngIf="refusesDernierLot.length" class="bg-error-container/20 rounded-lg px-4 py-3 space-y-2" role="status">
+    <p class="font-body-sm text-body-sm text-error flex items-start gap-2">
+      <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">error</span>
+      <span>{{ refusesDernierLot.length }} étudiant(s) n’ont pas reçu de certificat :</span>
+    </p>
+    <ul class="list-disc list-inside font-body-sm text-body-sm text-error/90 pl-1 space-y-1">
+      <li *ngFor="let r of refusesDernierLot">
+        <span class="font-semibold">{{ r.etudiantNom }}</span> — {{ r.raison }}
+        <span *ngIf="r.coursNonTermines.length">&nbsp;À compléter : {{ r.coursNonTermines.join(', ') }}.</span>
+      </li>
+    </ul>
+  </div>
   <!-- Erreur de page : seulement hors modale, sinon elle s'affiche derrière l'overlay. -->
   <p *ngIf="messageErreur && !formulaireOuvert" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3">{{ messageErreur }}</p>
 
@@ -68,91 +80,219 @@
 </div>
 
 <div *ngIf="formulaireOuvert" class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="formulaireOuvert = false">
-  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm w-full max-w-lg" (click)="$event.stopPropagation()">
-    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant">
-      <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
-        <span class="material-symbols-outlined text-secondary">workspace_premium</span>Délivrer un certificat
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm w-full max-w-3xl max-h-[92vh] flex flex-col"
+       role="dialog" aria-modal="true" aria-labelledby="titre-delivrance" (click)="$event.stopPropagation()">
+    <header class="flex items-center justify-between px-stack-lg py-stack-md border-b border-outline-variant shrink-0">
+      <h2 id="titre-delivrance" class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">workspace_premium</span>Délivrer des certificats
       </h2>
       <button type="button" (click)="formulaireOuvert = false" aria-label="Fermer" class="p-1 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
         <span class="material-symbols-outlined">close</span>
       </button>
     </header>
-    <div class="p-stack-lg space-y-stack-md">
-      <label class="flex flex-col gap-1">
-        <span class="font-label-sm text-label-sm text-on-surface-variant">Étudiant</span>
-        <select [(ngModel)]="etudiantId" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
-          <option [ngValue]="null">Choisissez un étudiant…</option>
-          <option *ngFor="let e of etudiants" [ngValue]="e.id">{{ e.nom }} — {{ e.promotion }}</option>
-        </select>
-      </label>
 
-      <div class="grid grid-cols-3 gap-stack-md">
-        <label class="flex flex-col gap-1">
-          <span class="font-label-sm text-label-sm text-on-surface-variant">Civilité</span>
-          <select [(ngModel)]="civilite" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
-            <option value="">Choisir…</option>
-            <option *ngFor="let c of civilites" [value]="c">{{ c }}</option>
-          </select>
+    <div class="p-stack-lg space-y-stack-lg overflow-y-auto">
+      <!-- 1. Promotion : d'abord, et obligatoire -->
+      <section class="space-y-2">
+        <label for="champ-promotion" class="font-label-md text-label-md text-on-surface">
+          1. Promotion concernée <span class="text-error" aria-hidden="true">*</span>
         </label>
-        <label class="flex flex-col gap-1 col-span-2">
-          <span class="font-label-sm text-label-sm text-on-surface-variant">Date de naissance (facultative)</span>
-          <input type="date" [(ngModel)]="dateNaissance" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
-        </label>
-      </div>
+        <app-ui-combobox idChamp="champ-promotion"
+                         [options]="optionsPromotions"
+                         [selection]="promotionId == null ? [] : [promotionId]"
+                         (selectionChange)="surPromotion($event)"
+                         placeholder="Rechercher ou choisir une promotion…"
+                         libelleVide="Aucune promotion n’existe encore."></app-ui-combobox>
+        <p *ngIf="chargementApercu" class="font-body-sm text-body-sm text-on-surface-variant">Chargement des étudiants de la promotion…</p>
+        <p *ngIf="erreurApercu" class="font-body-sm text-body-sm text-error">{{ erreurApercu }}</p>
+      </section>
 
-      <label class="flex flex-col gap-1">
-        <span class="font-label-sm text-label-sm text-on-surface-variant">Formation intitulée</span>
-        <input type="text" [(ngModel)]="intitule" maxlength="150" placeholder="Comptage du gaz"
-               class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
-      </label>
+      <ng-container *ngIf="apercu">
+        <!-- Formation : déduite de la promotion, jamais saisie -->
+        <section class="space-y-2">
+          <span class="font-label-md text-label-md text-on-surface">Formation</span>
+          <div *ngIf="!formationManquante"
+               class="flex items-center gap-2 p-3 bg-surface-container rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
+            <span class="material-symbols-outlined text-[18px] text-on-surface-variant" aria-hidden="true">lock</span>
+            {{ apercu.formationIntitule }}
+          </div>
+          <p *ngIf="!formationManquante" class="font-body-sm text-body-sm text-on-surface-variant">
+            Déduite de la promotion : une formation correspond à une promotion. C’est cet intitulé qui est imprimé sur le certificat.
+          </p>
+          <p *ngIf="formationManquante" class="font-body-sm text-body-sm text-error bg-error-container/20 rounded-lg px-4 py-3 flex items-start gap-2">
+            <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">error</span>
+            <span>Cette promotion n’est rattachée à aucune formation : aucun certificat ne peut être délivré. Rattachez-la d’abord à sa formation dans « Promotions ».</span>
+          </p>
+        </section>
 
-      <div class="grid grid-cols-2 gap-stack-md">
-        <label class="flex flex-col gap-1">
-          <span class="font-label-sm text-label-sm text-on-surface-variant">Début de la formation</span>
-          <input type="date" [(ngModel)]="dateDebut" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
-        </label>
-        <label class="flex flex-col gap-1">
-          <span class="font-label-sm text-label-sm text-on-surface-variant">Fin de la formation</span>
-          <input type="date" [(ngModel)]="dateFin" [min]="dateDebut" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
-        </label>
-      </div>
-      <p *ngIf="periodeInversee" class="font-body-sm text-body-sm text-error -mt-2">La fin de la formation précède son début.</p>
+        <!-- 2. Bénéficiaires -->
+        <section class="space-y-3" *ngIf="!formationManquante">
+          <span id="titre-beneficiaires" class="font-label-md text-label-md text-on-surface">2. Bénéficiaires</span>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-stack-md" role="radiogroup" aria-labelledby="titre-beneficiaires">
+            <button type="button" role="radio" [attr.aria-checked]="mode === 'TOUS'" (click)="choisirMode('TOUS')"
+                    class="flex items-start gap-3 p-4 rounded-xl border text-left transition-colors"
+                    [ngClass]="mode === 'TOUS' ? 'border-secondary bg-secondary-container/30' : 'border-outline-variant hover:bg-surface-container-low'">
+              <span class="material-symbols-outlined text-secondary" aria-hidden="true">groups</span>
+              <span>
+                <span class="block font-label-md text-label-md text-on-surface">Tous les étudiants</span>
+                <span class="block font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Les {{ apercu.etudiants.length }} étudiant(s) de la promotion.
+                </span>
+              </span>
+            </button>
+            <button type="button" role="radio" [attr.aria-checked]="mode === 'TOUS_SAUF'" (click)="choisirMode('TOUS_SAUF')"
+                    class="flex items-start gap-3 p-4 rounded-xl border text-left transition-colors"
+                    [ngClass]="mode === 'TOUS_SAUF' ? 'border-secondary bg-secondary-container/30' : 'border-outline-variant hover:bg-surface-container-low'">
+              <span class="material-symbols-outlined text-secondary" aria-hidden="true">group_remove</span>
+              <span>
+                <span class="block font-label-md text-label-md text-on-surface">Tous les étudiants sauf…</span>
+                <span class="block font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Toute la promotion, en excluant certains étudiants.
+                </span>
+              </span>
+            </button>
+            <button type="button" role="radio" [attr.aria-checked]="mode === 'UN_SEUL'" (click)="choisirMode('UN_SEUL')"
+                    class="flex items-start gap-3 p-4 rounded-xl border text-left transition-colors"
+                    [ngClass]="mode === 'UN_SEUL' ? 'border-secondary bg-secondary-container/30' : 'border-outline-variant hover:bg-surface-container-low'">
+              <span class="material-symbols-outlined text-secondary" aria-hidden="true">person</span>
+              <span>
+                <span class="block font-label-md text-label-md text-on-surface">Un seul étudiant</span>
+                <span class="block font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Un retardataire, ou une délivrance isolée.
+                </span>
+              </span>
+            </button>
+          </div>
 
-      <label class="flex flex-col gap-1">
-        <span class="font-label-sm text-label-sm text-on-surface-variant">Code du certificat (facultatif)</span>
-        <input type="text" [(ngModel)]="code" maxlength="60" placeholder="CG1001260206/03" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
-      </label>
+          <div *ngIf="mode === 'UN_SEUL'" class="space-y-2">
+            <label for="champ-etudiant" class="font-label-sm text-label-sm text-on-surface-variant">Étudiant à certifier</label>
+            <app-ui-combobox idChamp="champ-etudiant"
+                             [options]="optionsEtudiants"
+                             [selection]="etudiantId == null ? [] : [etudiantId]"
+                             (selectionChange)="surEtudiant($event)"
+                             placeholder="Rechercher ou choisir un étudiant…"
+                             libelleVide="Cette promotion n’a aucun étudiant."></app-ui-combobox>
+          </div>
 
-      <label class="flex flex-col gap-1">
-        <span class="font-label-sm text-label-sm text-on-surface-variant">Promotion (facultative)</span>
-        <select [(ngModel)]="promotionId" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface">
-          <option [ngValue]="null">Celle de l’étudiant</option>
-          <option *ngFor="let p of promotions" [ngValue]="p.id">{{ p.libelle }}</option>
-        </select>
-      </label>
+          <div *ngIf="mode === 'TOUS_SAUF'" class="space-y-2">
+            <label for="champ-exclus" class="font-label-sm text-label-sm text-on-surface-variant">Étudiants à exclure</label>
+            <app-ui-combobox idChamp="champ-exclus"
+                             [multiple]="true"
+                             [options]="optionsEtudiants"
+                             [(selection)]="exclusIds"
+                             placeholder="Saisir le nom d’un étudiant à exclure…"
+                             libelleVide="Cette promotion n’a aucun étudiant."></app-ui-combobox>
+          </div>
+        </section>
 
-      <p class="font-body-sm text-body-sm text-on-surface-variant">
-        Le certificat suit le modèle officiel de l’institut. Il est daté du jour de sa création. Sans code saisi, sa
-        référence est imprimée en bas de page.
-      </p>
+        <!-- 3. Période et code -->
+        <section class="space-y-3" *ngIf="!formationManquante">
+          <span class="font-label-md text-label-md text-on-surface">3. Période et code</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-md">
+            <label class="flex flex-col gap-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">Début de la formation <span class="text-error" aria-hidden="true">*</span></span>
+              <input type="date" [(ngModel)]="dateDebut" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">Fin de la formation <span class="text-error" aria-hidden="true">*</span></span>
+              <input type="date" [(ngModel)]="dateFin" [min]="dateDebut" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+            </label>
+          </div>
+          <p *ngIf="periodeInversee" class="font-body-sm text-body-sm text-error">La fin de la formation précède son début.</p>
+          <p *ngIf="apercu.dateDebut && apercu.dateFin" class="font-body-sm text-body-sm text-on-surface-variant">
+            Proposée d’après les dates de la promotion : corrigez-les si la formation s’est tenue sur une période plus courte.
+          </p>
+          <label class="flex flex-col gap-1">
+            <span class="font-label-sm text-label-sm text-on-surface-variant">Code du certificat (facultatif)</span>
+            <input type="text" [(ngModel)]="codeSession" [attr.maxlength]="mode === 'UN_SEUL' ? 60 : 57" placeholder="CG1001260206"
+                   class="p-3 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+            <span class="font-body-sm text-body-sm text-on-surface-variant">
+              <ng-container *ngIf="mode !== 'UN_SEUL'">Chaque certificat reçoit ce code suivi d’un numéro d’ordre<ng-container *ngIf="exempleCode"> : {{ exempleCode }}</ng-container>.</ng-container>
+              <ng-container *ngIf="mode === 'UN_SEUL'">Le code est imprimé tel quel, numéro compris (par exemple CG1001260206/03).</ng-container>
+              Sans code, la référence du certificat est imprimée en bas de page.
+            </span>
+          </label>
+        </section>
 
-      <div *ngIf="messageErreur" class="bg-error-container/20 rounded-lg px-4 py-3 space-y-1">
+        <!-- 4. Étudiants concernés : civilité et naissance, propres à chacun -->
+        <section class="space-y-3" *ngIf="!formationManquante">
+          <span class="font-label-md text-label-md text-on-surface">4. Étudiants concernés</span>
+          <p class="font-body-sm text-body-sm text-on-surface-variant">
+            {{ destinataires.length }} certificat(s) seront délivrés<ng-container *ngIf="ecartes.length">, {{ ecartes.length }} étudiant(s) écarté(s)</ng-container>.
+            Le modèle de l’institut imprime la civilité avant le nom ; elle est retenue sur la fiche de l’étudiant pour ses prochains certificats.
+          </p>
+          <div class="overflow-x-auto max-h-72 overflow-y-auto border border-outline-variant rounded-lg">
+            <table class="w-full">
+              <thead class="sticky top-0 bg-surface-container-lowest">
+                <tr class="border-b border-outline-variant">
+                  <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-2">Étudiant</th>
+                  <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-2">Situation</th>
+                  <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-2">Civilité</th>
+                  <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-2">Naissance (facultative)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let e of beneficiaires" class="border-b border-outline-variant/50 last:border-0 align-top">
+                  <td class="px-3 py-2">
+                    <span class="block font-label-md text-label-md text-on-surface">{{ e.nom }}</span>
+                    <span *ngIf="e.matricule" class="block font-label-sm text-label-sm text-on-surface-variant">{{ e.matricule }}</span>
+                  </td>
+                  <td class="px-3 py-2">
+                    <app-ui-badge *ngIf="dejaDelivre(e)" variante="info" icone="verified">Déjà délivré</app-ui-badge>
+                    <app-ui-badge *ngIf="!dejaDelivre(e) && e.eligible" variante="succes" icone="check_circle">Éligible</app-ui-badge>
+                    <ng-container *ngIf="!e.eligible">
+                      <app-ui-badge variante="alerte" icone="hourglass_top">Programme non terminé</app-ui-badge>
+                      <span class="block font-label-sm text-label-sm text-on-surface-variant mt-1">{{ e.coursNonTermines.join(', ') }}</span>
+                    </ng-container>
+                  </td>
+                  <td class="px-3 py-2">
+                    <select *ngIf="e.eligible && !dejaDelivre(e)" [(ngModel)]="identites[e.id].civilite"
+                            [attr.aria-label]="'Civilité de ' + e.nom"
+                            class="p-2 bg-surface-container-low rounded-lg border font-body-sm text-body-sm text-on-surface"
+                            [ngClass]="identites[e.id].civilite ? 'border-outline-variant' : 'border-error'">
+                      <option value="">Choisir…</option>
+                      <option *ngFor="let c of civilites" [value]="c">{{ c }}</option>
+                    </select>
+                    <span *ngIf="!e.eligible || dejaDelivre(e)" class="font-body-sm text-body-sm text-on-surface-variant">—</span>
+                  </td>
+                  <td class="px-3 py-2">
+                    <input *ngIf="e.eligible && !dejaDelivre(e)" type="date" [(ngModel)]="identites[e.id].dateNaissance"
+                           [attr.aria-label]="'Date de naissance de ' + e.nom"
+                           class="p-2 bg-surface-container-low rounded-lg border border-outline-variant font-body-sm text-body-sm text-on-surface" />
+                    <span *ngIf="!e.eligible || dejaDelivre(e)" class="font-body-sm text-body-sm text-on-surface-variant">—</span>
+                  </td>
+                </tr>
+                <tr *ngIf="beneficiaires.length === 0">
+                  <td colspan="4" class="px-3 py-4 text-center font-body-sm text-body-sm text-on-surface-variant">
+                    {{ apercu.etudiants.length === 0 ? 'Cette promotion n’a aucun étudiant.' : 'Tous les étudiants sont exclus.' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <p class="font-body-sm text-body-sm text-on-surface-variant">
+          Les certificats suivent le modèle officiel de l’institut et sont datés du jour de leur création.
+        </p>
+      </ng-container>
+
+      <div *ngIf="messageErreur" class="bg-error-container/20 rounded-lg px-4 py-3">
         <p class="font-body-sm text-body-sm text-error flex items-start gap-2">
-          <span class="material-symbols-outlined text-[18px] shrink-0">error</span>
+          <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">error</span>
           <span>{{ messageErreur }}</span>
         </p>
-        <p *ngIf="coursNonTermines.length" class="font-body-sm text-body-sm text-error/90">Un cours est terminé quand tous ses supports sont consultés et qu'au moins une note est saisie. À compléter :</p>
-        <ul *ngIf="coursNonTermines.length" class="list-disc list-inside font-body-sm text-body-sm text-error/90 pl-1">
-          <li *ngFor="let c of coursNonTermines">{{ c }}</li>
-        </ul>
-      </div>
-
-      <div class="flex gap-stack-md pt-2">
-        <button type="button" (click)="formulaireOuvert = false" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Annuler</button>
-        <button type="button" [disabled]="!saisieValide || enregistrement" (click)="delivrer()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
-          {{ enregistrement ? 'Délivrance…' : 'Délivrer' }}
-        </button>
       </div>
     </div>
+
+    <footer class="px-stack-lg py-stack-md border-t border-outline-variant shrink-0 space-y-2">
+      <p *ngIf="obstacle" class="font-body-sm text-body-sm text-on-surface-variant" role="status">{{ obstacle }}</p>
+      <div class="flex gap-stack-md">
+        <button type="button" (click)="formulaireOuvert = false" class="flex-1 py-3 bg-surface-container text-on-surface rounded-lg font-label-md text-label-md hover:bg-outline-variant transition-colors">Annuler</button>
+        <button type="button" [disabled]="!saisieValide || enregistrement" (click)="delivrer()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50">
+          {{ enregistrement ? 'Délivrance…' : (destinataires.length > 0 ? 'Délivrer ' + destinataires.length + ' certificat(s)' : 'Délivrer') }}
+        </button>
+      </div>
+    </footer>
   </div>
 </div>
