@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,11 +33,13 @@ import inpg.sn.lms.espace_etudiant.dto.ForumMessageDto;
 import inpg.sn.lms.espace_etudiant.dto.ForumSujetCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.ForumSujetDto;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
+import inpg.sn.lms.espace_etudiant.entity.ForumLecture;
 import inpg.sn.lms.espace_etudiant.entity.ForumMessage;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.Notification;
 import inpg.sn.lms.espace_etudiant.entity.Promotion;
 import inpg.sn.lms.espace_etudiant.repository.CoursRepository;
+import inpg.sn.lms.espace_etudiant.repository.ForumLectureRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
@@ -68,6 +72,7 @@ public class ForumController {
 
     private final ForumSujetRepository sujetRepository;
     private final ForumMessageRepository messageRepository;
+    private final ForumLectureRepository lectureRepository;
     private final CoursRepository coursRepository;
     private final UtilisateurCourantService utilisateurCourant;
     private final HabilitationCoursService habilitation;
@@ -78,12 +83,13 @@ public class ForumController {
     private final Path uploadDirectory;
 
     public ForumController(ForumSujetRepository sujetRepository, ForumMessageRepository messageRepository,
-            CoursRepository coursRepository, UtilisateurCourantService utilisateurCourant,
+            ForumLectureRepository lectureRepository, CoursRepository coursRepository, UtilisateurCourantService utilisateurCourant,
             HabilitationCoursService habilitation, MentionForumService mentions, ForumVisibiliteService visibilite,
             NotificationRepository notificationRepository, PerimetreFormateurService perimetreFormateur,
             @Value("${app.upload.dir:uploads}") String uploadDirectory) {
         this.sujetRepository = sujetRepository;
         this.messageRepository = messageRepository;
+        this.lectureRepository = lectureRepository;
         this.coursRepository = coursRepository;
         this.utilisateurCourant = utilisateurCourant;
         this.habilitation = habilitation;
@@ -98,11 +104,15 @@ public class ForumController {
         this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize();
     }
 
-    /** Sujets accessibles au connecté, épinglés en tête. */
+    /** Sujets accessibles au connecté, épinglés en tête, avec leur nombre de messages non lus. */
     @GetMapping("/sujets")
     @Transactional(readOnly = true)
     public ResponseEntity<?> sujets(Authentication authentication) {
-        return ResponseEntity.ok(visibilite.sujetsVisibles(authentication).stream().map(this::toSujetDto).toList());
+        User lecteur = utilisateurCourant.utilisateur(authentication);
+        Map<Long, LocalDateTime> lectures = lecturesDe(lecteur);
+        return ResponseEntity.ok(visibilite.sujetsVisibles(authentication).stream()
+                .map(sujet -> toSujetDto(sujet, lecteur, lectures))
+                .toList());
     }
 
     /**
@@ -166,12 +176,15 @@ public class ForumController {
         if (!estVide(request.premierMessage())) {
             messageRepository.save(new ForumMessage(sujet, auteur, request.premierMessage().trim()));
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(toSujetDto(sujet));
+        return ResponseEntity.status(HttpStatus.CREATED).body(toSujetDto(sujet, auteur, Map.of()));
     }
 
-    /** Fil complet d'un sujet. */
+    /**
+     * Fil complet d'un sujet. L'ouvrir le marque comme lu : la pastille de non lus
+     * disparaît, comme dans WhatsApp, sans geste supplémentaire.
+     */
     @GetMapping("/sujets/{id}")
-    @Transactional(readOnly = true)
+    @Transactional
     public ResponseEntity<?> fil(@PathVariable Long id, Authentication authentication) {
         ForumSujet sujet = sujetRepository.findById(id).orElse(null);
         if (sujet == null) {
@@ -184,7 +197,12 @@ public class ForumController {
         List<ForumMessageDto> messages = messageRepository.findBySujetIdOrderByDateCreationAsc(id).stream()
                 .map(message -> toMessageDto(message, lecteur))
                 .toList();
-        return ResponseEntity.ok(Map.of("sujet", toSujetDto(sujet), "messages", messages));
+        LocalDateTime maintenant = LocalDateTime.now();
+        if (lecteur != null) {
+            lectureRepository.marquerLu(lecteur.getId(), id, maintenant);
+        }
+        return ResponseEntity.ok(Map.of("sujet", toSujetDto(sujet, lecteur, Map.of(id, maintenant)),
+                "messages", messages));
     }
 
     /**
@@ -338,7 +356,30 @@ public class ForumController {
 
     // ===================== Correspondances =====================
 
-    private ForumSujetDto toSujetDto(ForumSujet sujet) {
+    /** Instant de dernière ouverture, par sujet, pour le connecté — une requête pour toute la liste. */
+    private Map<Long, LocalDateTime> lecturesDe(User lecteur) {
+        Map<Long, LocalDateTime> lectures = new HashMap<>();
+        if (lecteur != null) {
+            for (ForumLecture lecture : lectureRepository.findByUserId(lecteur.getId())) {
+                lectures.put(lecture.getSujetId(), lecture.getDerniereLecture());
+            }
+        }
+        return lectures;
+    }
+
+    /**
+     * Messages d'un autre arrivés depuis la dernière ouverture du fil. Un fil jamais
+     * ouvert n'a pas de ligne de lecture : tout y est non lu (sauf ses propres messages).
+     */
+    private long nonLus(List<ForumMessage> messages, User lecteur, LocalDateTime derniereLecture) {
+        return messages.stream()
+                .filter(message -> derniereLecture == null || message.getDateCreation().isAfter(derniereLecture))
+                .filter(message -> lecteur == null || message.getAuteur() == null
+                        || !message.getAuteur().getId().equals(lecteur.getId()))
+                .count();
+    }
+
+    private ForumSujetDto toSujetDto(ForumSujet sujet, User lecteur, Map<Long, LocalDateTime> lectures) {
         List<ForumMessage> messages = messageRepository.findBySujetIdOrderByDateCreationAsc(sujet.getId());
         Cours cours = sujet.getCours();
         Promotion promotion = sujet.getPromotion();
@@ -354,7 +395,8 @@ public class ForumController {
                 sujet.isEpingle(),
                 sujet.isClos(),
                 messages.size(),
-                messages.isEmpty() ? sujet.getDateCreation() : messages.get(messages.size() - 1).getDateCreation());
+                messages.isEmpty() ? sujet.getDateCreation() : messages.get(messages.size() - 1).getDateCreation(),
+                nonLus(messages, lecteur, lectures.get(sujet.getId())));
     }
 
     private ForumMessageDto toMessageDto(ForumMessage message, User lecteur) {

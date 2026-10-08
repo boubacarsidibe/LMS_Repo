@@ -96,6 +96,8 @@ export interface ForumSujet {
   clos: boolean;
   nbMessages: number;
   dateDernierMessage: string;
+  /** Messages d'un autre arrivés depuis la dernière ouverture du fil (pastille façon WhatsApp). */
+  nbNonLus: number;
 }
 
 export interface ForumMessage {
