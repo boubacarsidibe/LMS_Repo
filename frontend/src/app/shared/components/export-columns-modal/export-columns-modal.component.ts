@@ -30,8 +30,8 @@ export interface ColonneExport {
           <p class="font-body-sm text-body-sm text-on-surface-variant pt-2">Un graphique de synthèse est automatiquement inclus dans le fichier exporté.</p>
         </div>
         <div class="p-6 border-t border-outline-variant flex justify-end gap-3">
-          <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="fermer()">Annuler</button>
-          <button type="button" [disabled]="selection.size === 0" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60" (click)="valider()">
+          <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors" (click)="fermer()">Annuler</button>
+          <button type="button" [disabled]="selection.size === 0" class="px-4 py-2 font-label-md text-label-md text-on-secondary bg-secondary rounded-lg hover:opacity-90 transition-colors disabled:opacity-60" (click)="valider()">
             Exporter
           </button>
         </div>

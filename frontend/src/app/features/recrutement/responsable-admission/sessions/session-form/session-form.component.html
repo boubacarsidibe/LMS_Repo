@@ -57,7 +57,7 @@
         <span class="font-label-md text-label-md text-on-surface font-bold">Filtre automatique de présélection</span>
         <button type="button" (click)="sessionForm.get('criteresActifs')!.setValue(!sessionForm.value.criteresActifs)" role="switch" [attr.aria-checked]="sessionForm.value.criteresActifs"
                 class="relative w-11 h-6 rounded-full transition-colors shrink-0" [class.bg-secondary]="sessionForm.value.criteresActifs" [class.bg-outline-variant]="!sessionForm.value.criteresActifs">
-          <span class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform" [class.translate-x-5]="sessionForm.value.criteresActifs"></span>
+          <span class="absolute top-1 left-1 w-4 h-4 rounded-full bg-surface-container-lowest shadow transition-transform" [class.translate-x-5]="sessionForm.value.criteresActifs"></span>
         </button>
       </label>
       <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
@@ -141,8 +141,8 @@
   </div>
 
   <div class="flex justify-end gap-3 mt-stack-lg">
-    <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="annuler()">Annuler</button>
-    <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+    <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors" (click)="annuler()">Annuler</button>
+    <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-secondary bg-secondary rounded-lg hover:opacity-90 transition-colors disabled:opacity-60">
       {{ isSubmitting ? 'Enregistrement…' : (sessionId ? 'Enregistrer' : 'Créer la session') }}
     </button>
   </div>

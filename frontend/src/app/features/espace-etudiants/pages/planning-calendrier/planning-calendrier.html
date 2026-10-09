@@ -4,14 +4,14 @@
   <div class="flex flex-col gap-stack-md mb-stack-lg px-margin-desktop pt-stack-lg">
     <div class="flex min-w-0 flex-1 flex-col gap-1">
       <span class="text-label-sm font-bold text-secondary tracking-widest uppercase">Espace Formateur</span>
-      <h1 class="w-full font-display text-headline-md md:text-headline-lg text-primary leading-tight">Calendrier pédagogique &amp; classes virtuelles</h1>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1 w-full">Calendrier pédagogique &amp; classes virtuelles</h1>
     </div>
     <div class="flex items-center gap-stack-md self-start md:self-end">
       <div class="bg-surface-container-low p-1 rounded-lg flex items-center shadow-sm">
-        <button (click)="changerVue('mois')" class="px-4 py-2 rounded-md text-label-md transition-all" [class.font-bold]="vueActive === 'mois'" [class.font-medium]="vueActive !== 'mois'" [class.bg-surface-container-lowest]="vueActive === 'mois'" [class.text-primary]="vueActive === 'mois'" [class.shadow-sm]="vueActive === 'mois'" [class.text-on-surface-variant]="vueActive !== 'mois'">Mois</button>
-        <button (click)="changerVue('semaine')" class="px-4 py-2 rounded-md text-label-md transition-all" [class.font-bold]="vueActive === 'semaine'" [class.font-medium]="vueActive !== 'semaine'" [class.bg-surface-container-lowest]="vueActive === 'semaine'" [class.text-primary]="vueActive === 'semaine'" [class.shadow-sm]="vueActive === 'semaine'" [class.text-on-surface-variant]="vueActive !== 'semaine'">Semaine</button>
-        <button (click)="changerVue('jour')" class="px-4 py-2 rounded-md text-label-md transition-all" [class.font-bold]="vueActive === 'jour'" [class.font-medium]="vueActive !== 'jour'" [class.bg-surface-container-lowest]="vueActive === 'jour'" [class.text-primary]="vueActive === 'jour'" [class.shadow-sm]="vueActive === 'jour'" [class.text-on-surface-variant]="vueActive !== 'jour'">Jour</button>
-        <button (click)="changerVue('liste')" class="px-4 py-2 rounded-md text-label-md transition-all" [class.font-bold]="vueActive === 'liste'" [class.font-medium]="vueActive !== 'liste'" [class.bg-surface-container-lowest]="vueActive === 'liste'" [class.text-primary]="vueActive === 'liste'" [class.shadow-sm]="vueActive === 'liste'" [class.text-on-surface-variant]="vueActive !== 'liste'">Liste</button>
+        <button (click)="changerVue('mois')" class="px-4 py-2 rounded-lg text-label-md transition-all" [class.font-bold]="vueActive === 'mois'" [class.font-medium]="vueActive !== 'mois'" [class.bg-surface-container-lowest]="vueActive === 'mois'" [class.text-primary]="vueActive === 'mois'" [class.shadow-sm]="vueActive === 'mois'" [class.text-on-surface-variant]="vueActive !== 'mois'">Mois</button>
+        <button (click)="changerVue('semaine')" class="px-4 py-2 rounded-lg text-label-md transition-all" [class.font-bold]="vueActive === 'semaine'" [class.font-medium]="vueActive !== 'semaine'" [class.bg-surface-container-lowest]="vueActive === 'semaine'" [class.text-primary]="vueActive === 'semaine'" [class.shadow-sm]="vueActive === 'semaine'" [class.text-on-surface-variant]="vueActive !== 'semaine'">Semaine</button>
+        <button (click)="changerVue('jour')" class="px-4 py-2 rounded-lg text-label-md transition-all" [class.font-bold]="vueActive === 'jour'" [class.font-medium]="vueActive !== 'jour'" [class.bg-surface-container-lowest]="vueActive === 'jour'" [class.text-primary]="vueActive === 'jour'" [class.shadow-sm]="vueActive === 'jour'" [class.text-on-surface-variant]="vueActive !== 'jour'">Jour</button>
+        <button (click)="changerVue('liste')" class="px-4 py-2 rounded-lg text-label-md transition-all" [class.font-bold]="vueActive === 'liste'" [class.font-medium]="vueActive !== 'liste'" [class.bg-surface-container-lowest]="vueActive === 'liste'" [class.text-primary]="vueActive === 'liste'" [class.shadow-sm]="vueActive === 'liste'" [class.text-on-surface-variant]="vueActive !== 'liste'">Liste</button>
       </div>
       <button (click)="ouvrirFormulaire()" class="flex items-center gap-2 bg-secondary text-on-secondary px-6 py-3 rounded-lg font-label-md text-label-md transition-all">
         <span class="material-symbols-outlined text-[20px]">add_circle</span>
@@ -72,7 +72,7 @@
              [class.ring-secondary]="estAujourdhui(j.date)"
              [class.ring-inset]="estAujourdhui(j.date)">
           <span class="mb-2 block" [class.font-bold]="estAujourdhui(j.date)" [class.text-secondary]="estAujourdhui(j.date)">{{ j.numero }}</span>
-          <div *ngFor="let s of j.seances" (click)="ouvrirEdition(s)" class="p-1.5 rounded-md text-[11px] font-bold leading-tight mb-1 cursor-pointer hover:brightness-110" [ngClass]="classeEvenement(s.type)">
+          <div *ngFor="let s of j.seances" (click)="ouvrirEdition(s)" class="p-1.5 rounded-lg text-[11px] font-bold leading-tight mb-1 cursor-pointer hover:brightness-110" [ngClass]="classeEvenement(s.type)">
             {{ s.heure }} - {{ s.titre }}
           </div>
         </div>
@@ -88,7 +88,7 @@
              [class.ring-secondary]="estAujourdhui(j.date)"
              [class.ring-inset]="estAujourdhui(j.date)">
           <span class="mb-2 block" [class.font-bold]="estAujourdhui(j.date)" [class.text-secondary]="estAujourdhui(j.date)">{{ j.numero }}</span>
-          <div *ngFor="let s of j.seances" (click)="ouvrirEdition(s)" class="p-1.5 rounded-md text-[11px] font-bold leading-tight mb-1 cursor-pointer hover:brightness-110" [ngClass]="classeEvenement(s.type)">
+          <div *ngFor="let s of j.seances" (click)="ouvrirEdition(s)" class="p-1.5 rounded-lg text-[11px] font-bold leading-tight mb-1 cursor-pointer hover:brightness-110" [ngClass]="classeEvenement(s.type)">
             {{ s.heure }} - {{ s.titre }}
           </div>
           <p *ngIf="!j.seances.length" class="text-[11px] text-outline italic">Aucune séance</p>
@@ -193,7 +193,7 @@
       <form [formGroup]="seanceForm" (ngSubmit)="onSubmit()" class="p-6 space-y-base">
         <div class="space-y-1">
           <label for="seance-cours" class="font-label-md text-label-md text-on-surface-variant">Cours</label>
-          <select id="seance-cours" formControlName="coursId" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+          <select id="seance-cours" formControlName="coursId" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface">
             <option *ngFor="let c of mesCours" [value]="c.id">{{ c.titre }}</option>
           </select>
           <p *ngIf="!mesCours.length" class="text-body-sm text-error">
@@ -203,7 +203,7 @@
 
         <div class="space-y-1">
           <label for="seance-titre" class="font-label-md text-label-md text-on-surface-variant">Titre</label>
-          <input id="seance-titre" formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Macroéconomie" type="text">
+          <input id="seance-titre" formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Macroéconomie" type="text">
           <p *ngIf="seanceForm.get('titre')?.invalid && seanceForm.get('titre')?.touched" class="text-body-sm text-error">
             Le titre est requis.
           </p>
@@ -211,7 +211,7 @@
 
         <div class="space-y-1">
           <label for="seance-date" class="font-label-md text-label-md text-on-surface-variant">Date</label>
-          <input id="seance-date" formControlName="date" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
+          <input id="seance-date" formControlName="date" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" type="date">
           <p *ngIf="seanceForm.get('date')?.invalid && seanceForm.get('date')?.touched" class="text-body-sm text-error">
             La date est requise.
           </p>
@@ -219,7 +219,7 @@
 
         <div class="space-y-1">
           <label for="seance-heure" class="font-label-md text-label-md text-on-surface-variant">Heure</label>
-          <input id="seance-heure" formControlName="heure" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="time">
+          <input id="seance-heure" formControlName="heure" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" type="time">
           <p *ngIf="seanceForm.get('heure')?.invalid && seanceForm.get('heure')?.touched" class="text-body-sm text-error">
             L'heure est requise.
           </p>
@@ -227,7 +227,7 @@
 
         <div class="space-y-1">
           <label for="seance-duree" class="font-label-md text-label-md text-on-surface-variant">Durée (minutes)</label>
-          <input id="seance-duree" formControlName="dureeMinutes" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="number" min="1">
+          <input id="seance-duree" formControlName="dureeMinutes" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" type="number" min="1">
           <p *ngIf="seanceForm.get('dureeMinutes')?.invalid && seanceForm.get('dureeMinutes')?.touched" class="text-body-sm text-error">
             La durée doit être un nombre de minutes positif.
           </p>
@@ -235,7 +235,7 @@
 
         <div class="space-y-1">
           <label for="seance-type" class="font-label-md text-label-md text-on-surface-variant">Type</label>
-          <select id="seance-type" formControlName="type" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+          <select id="seance-type" formControlName="type" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface">
             <option value="cours">Classe virtuelle</option>
             <option value="echeance">Échéance</option>
             <option value="tutorat">Tutorat</option>
@@ -244,7 +244,7 @@
 
         <div class="space-y-1" *ngIf="seanceForm.get('type')?.value === 'cours'">
           <label for="seance-lien" class="font-label-md text-label-md text-on-surface-variant">Lien de la classe virtuelle (optionnel)</label>
-          <input id="seance-lien" formControlName="lieuOuLien" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="https://meet.google.com/..." type="url">
+          <input id="seance-lien" formControlName="lieuOuLien" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" placeholder="https://meet.google.com/..." type="url">
         </div>
 
         <p *ngIf="errorMessage" class="text-body-sm text-error">{{ errorMessage }}</p>
@@ -256,7 +256,7 @@
           <button type="button" (click)="fermerFormulaire()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
             Annuler
           </button>
-          <button [disabled]="isSubmitting || !mesCours.length" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+          <button [disabled]="isSubmitting || !mesCours.length" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
             {{ isSubmitting ? 'Enregistrement…' : (seanceEnEdition ? 'Enregistrer' : 'Programmer') }}
           </button>
         </div>

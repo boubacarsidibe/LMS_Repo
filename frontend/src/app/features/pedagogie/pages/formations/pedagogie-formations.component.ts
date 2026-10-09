@@ -81,12 +81,12 @@ export class PedagogieFormationsComponent implements OnInit {
 
   statut(d: FormationDetail): { libelle: string; classe: string } {
     if (d.cours.length > 0 && d.promotions.length > 0) {
-      return { libelle: 'Active', classe: 'bg-success/15 text-success' };
+      return { libelle: 'Active', classe: 'bg-success/15 text-success-strong' };
     }
     if (d.cours.length === 0 && d.promotions.length === 0) {
       return { libelle: 'Sans contenu', classe: 'bg-surface-container text-on-surface-variant' };
     }
-    return { libelle: d.cours.length === 0 ? 'Sans cours' : 'Sans promotion', classe: 'bg-warning/15 text-warning' };
+    return { libelle: d.cours.length === 0 ? 'Sans cours' : 'Sans promotion', classe: 'bg-warning/15 text-warning-strong' };
   }
 
   get filtres(): { valeur: Filtre; libelle: string; nombre: number }[] {

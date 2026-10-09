@@ -1,12 +1,12 @@
 <section class="p-6">
-  <h2 class="text-lg font-semibold mb-4">Gestion des rôles utilisateurs</h2>
-  <p class="text-xs text-gray-500 mb-4">Un compte ne peut détenir qu'un seul rôle à la fois. Changer le rôle retire automatiquement l'ancien.</p>
+  <h2 class="font-body-lg text-body-lg font-semibold mb-4">Gestion des rôles utilisateurs</h2>
+  <p class="text-xs text-on-surface-variant mb-4">Un compte ne peut détenir qu'un seul rôle à la fois. Changer le rôle retire automatiquement l'ancien.</p>
 
-  <div *ngIf="loading" class="text-sm text-gray-600">Chargement...</div>
+  <div *ngIf="loading" class="font-body-sm text-body-sm text-on-surface-variant">Chargement...</div>
 
-  <table class="w-full table-auto text-sm" *ngIf="!loading">
+  <table class="w-full table-auto font-body-sm text-body-sm" *ngIf="!loading">
     <thead>
-      <tr class="text-left text-xs text-gray-500">
+      <tr class="text-left text-xs text-on-surface-variant">
         <th class="p-2">Utilisateur</th>
         <th class="p-2">E-mail</th>
         <th class="p-2">Rôle</th>
@@ -17,7 +17,7 @@
         <td class="p-2">{{ u.username }}</td>
         <td class="p-2">{{ u.email }}</td>
         <td class="p-2">
-          <select class="border border-gray-300 rounded px-2 py-1 text-sm"
+          <select class="border border-outline-variant rounded-lg px-2 py-1 font-body-sm text-body-sm"
                   [attr.aria-label]="'Rôle de ' + u.username"
                   [attr.title]="'Rôle de ' + u.username"
                   [ngModel]="currentRole(u)"

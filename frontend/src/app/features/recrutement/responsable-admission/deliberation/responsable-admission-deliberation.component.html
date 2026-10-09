@@ -1,11 +1,11 @@
 <!-- ==================== CONTENU SEUL ==================== -->
 <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5 mb-stack-lg">
   <div class="max-w-3xl">
-    <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Délibération</h1>
+    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Délibération</h1>
     <p class="font-body-md text-body-md text-on-surface-variant mt-2">Décision finale pour les candidats admis à l'entretien, classés par moyenne (test + entretien).</p>
   </div>
   <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-    <button type="button" [disabled]="exporting" (click)="exporter()" [title]="exporting ? 'Export en cours…' : 'Exporter la liste'" class="flex items-center justify-center gap-2 h-10 px-4 bg-secondary text-on-secondary border border-secondary rounded-lg hover:opacity-90 transition-colors shadow-sm disabled:opacity-60 font-label-md text-label-md">
+    <button type="button" [disabled]="exporting" (click)="exporter()" [title]="exporting ? 'Export en cours…' : 'Exporter la liste'" class="flex items-center justify-center gap-2 h-10 px-4 bg-secondary text-on-secondary border border-secondary rounded-lg hover:opacity-90 transition-colors disabled:opacity-60 font-label-md text-label-md">
       <span class="material-symbols-outlined text-[20px]">ios_share</span>
       {{ exporting ? 'Export…' : 'Exporter les résultats' }}
     </button>
@@ -19,7 +19,7 @@
     <label class="w-full sm:w-52"><span class="sr-only">Filtrer par statut</span><select [(ngModel)]="filtre" class="w-full h-9 px-3 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-sm text-on-surface"><option value="EN_ATTENTE">En attente ({{ nbEnAttente }})</option><option value="ADMIS">Admis ({{ nbAdmis }})</option><option value="LISTE_ATTENTE">Liste complémentaire ({{ nbListeAttente }})</option><option value="REJETES">Non retenus ({{ nbRejetes }})</option><option value="TOUS">Tous ({{ lignes.length }})</option></select></label>
     <div class="relative w-full sm:w-64">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-      <input #rechercheBox [value]="recherche" (keyup.enter)="recherche = rechercheBox.value" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher un candidat... (Entrée)" type="text">
+      <input #rechercheBox [value]="recherche" (keyup.enter)="recherche = rechercheBox.value" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-sm text-body-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Rechercher un candidat... (Entrée)" type="text">
     </div>
   </div>
 
@@ -40,10 +40,10 @@
               </div>
               <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border whitespace-nowrap"
                     [ngClass]="{
-                      'bg-[#ecfdf5] text-[#065f46] border-[#a7f3d0]': l.candidature.statut === 'ADMIS3',
+                      'bg-success-container text-on-success-container border-success-outline': l.candidature.statut === 'ADMIS3',
                       'bg-error-container/20 text-error border-transparent': l.candidature.statut === 'REJETE',
-                      'bg-blue-50 text-blue-800 border-blue-200': l.candidature.statut === 'LISTE_ATTENTE',
-                      'bg-[#fffbeb] text-[#92400e] border-[#fde68a]': l.candidature.statut === 'ADMIS2'
+                      'bg-primary-container/40 text-primary border-primary-fixed-dim': l.candidature.statut === 'LISTE_ATTENTE',
+                      'bg-warning-container text-on-warning-container border-warning-outline': l.candidature.statut === 'ADMIS2'
                     }">
                 {{ l.candidature.statut === 'ADMIS3' ? 'Admis'
                    : (l.candidature.statut === 'REJETE' ? 'Non retenu'
@@ -58,13 +58,13 @@
             </dl>
 
             <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-outline-variant" *ngIf="l.candidature.statut === 'ADMIS2' || l.candidature.statut === 'LISTE_ATTENTE'" (click)="$event.stopPropagation()">
-              <button type="button" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-md bg-secondary text-on-secondary text-[11px] font-semibold disabled:opacity-50">
+              <button type="button" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-secondary text-on-secondary text-[11px] font-semibold disabled:opacity-50">
                 <span class="material-symbols-outlined text-[15px]">check</span>Admettre
               </button>
-              <button type="button" *ngIf="l.candidature.statut === 'ADMIS2'" [disabled]="actionEnCours" (click)="placerEnListeAttente(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-md border border-outline-variant text-blue-700 bg-surface text-[11px] font-semibold disabled:opacity-50">
+              <button type="button" *ngIf="l.candidature.statut === 'ADMIS2'" [disabled]="actionEnCours" (click)="placerEnListeAttente(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-outline-variant text-primary bg-surface-container-lowest text-[11px] font-semibold disabled:opacity-50">
                 <span class="material-symbols-outlined text-[15px]">hourglass_top</span>Liste compl.
               </button>
-              <button type="button" [disabled]="actionEnCours" (click)="rejeter(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-md border border-outline-variant text-error bg-surface text-[11px] font-semibold disabled:opacity-50">
+              <button type="button" [disabled]="actionEnCours" (click)="rejeter(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-outline-variant text-error bg-surface-container-lowest text-[11px] font-semibold disabled:opacity-50">
                 <span class="material-symbols-outlined text-[15px]">close</span>Rejeter
               </button>
             </div>
@@ -89,7 +89,7 @@
           <div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">{{ l.candidature.candidatPrenom | slice:0:1 }}{{ l.candidature.candidatNom | slice:0:1 }}</div>
           <div>
             <div class="font-label-md text-label-md text-primary">{{ l.candidature.candidatPrenom }} {{ l.candidature.candidatNom }}</div>
-            <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ l.candidature.numeroDossier }}</div>
+            <div class="font-label-sm text-label-sm text-on-surface-variant">{{ l.candidature.numeroDossier }}</div>
           </div>
         </div>
         <div class="col-span-2 text-right font-body-sm text-body-sm text-primary">{{ l.noteTest ?? '—' }}</div>
@@ -98,10 +98,10 @@
         <div class="col-span-2 flex justify-center">
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border"
                 [ngClass]="{
-                  'bg-[#ecfdf5] text-[#065f46] border-[#a7f3d0]': l.candidature.statut === 'ADMIS3',
+                  'bg-success-container text-on-success-container border-success-outline': l.candidature.statut === 'ADMIS3',
                   'bg-error-container/20 text-error border-transparent': l.candidature.statut === 'REJETE',
-                  'bg-blue-50 text-blue-800 border-blue-200': l.candidature.statut === 'LISTE_ATTENTE',
-                  'bg-[#fffbeb] text-[#92400e] border-[#fde68a]': l.candidature.statut === 'ADMIS2'
+                  'bg-primary-container/40 text-primary border-primary-fixed-dim': l.candidature.statut === 'LISTE_ATTENTE',
+                  'bg-warning-container text-on-warning-container border-warning-outline': l.candidature.statut === 'ADMIS2'
                 }">
             {{ l.candidature.statut === 'ADMIS3' ? 'Admis'
                : (l.candidature.statut === 'REJETE' ? 'Non retenu'
@@ -115,7 +115,7 @@
           <button type="button" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Admettre" aria-label="Admettre">
             <span class="material-symbols-outlined text-[18px]">check</span>
           </button>
-          <button type="button" *ngIf="l.candidature.statut === 'ADMIS2'" [disabled]="actionEnCours" (click)="placerEnListeAttente(l)" class="p-1.5 rounded text-on-surface-variant hover:text-blue-700 hover:bg-blue-50 transition-colors" title="Placer sur liste complémentaire" aria-label="Placer sur liste complémentaire">
+          <button type="button" *ngIf="l.candidature.statut === 'ADMIS2'" [disabled]="actionEnCours" (click)="placerEnListeAttente(l)" class="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary-container/40 transition-colors" title="Placer sur liste complémentaire" aria-label="Placer sur liste complémentaire">
             <span class="material-symbols-outlined text-[18px]">hourglass_top</span>
           </button>
           <button type="button" [disabled]="actionEnCours" (click)="rejeter(l)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Rejeter" aria-label="Rejeter">

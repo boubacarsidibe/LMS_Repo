@@ -4,7 +4,7 @@
   <p *ngIf="error" class="p-4 bg-error-container text-error rounded-lg">{{ error }}</p>
   <section *ngIf="entretien" class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
     <div class="p-6 border-b border-outline-variant flex flex-col sm:flex-row gap-4 sm:items-start sm:justify-between">
-      <div><h1 class="font-headline-lg text-headline-lg text-primary">Entretien</h1><p class="text-body-sm text-on-surface-variant mt-1">{{ groupe.length }} candidat{{ groupe.length > 1 ? 's' : '' }} convoqué{{ groupe.length > 1 ? 's' : '' }}</p></div>
+      <div><h1 class="font-display text-display text-on-surface leading-none -ml-1">Entretien</h1><p class="text-body-sm text-on-surface-variant mt-1">{{ groupe.length }} candidat{{ groupe.length > 1 ? 's' : '' }} convoqué{{ groupe.length > 1 ? 's' : '' }}</p></div>
       <button type="button" (click)="supprimer()" class="h-10 w-10 border border-outline-variant rounded-lg text-error" title="Supprimer l’entretien"><span class="material-symbols-outlined">delete</span></button>
     </div>
     <dl class="p-6 grid sm:grid-cols-2 gap-6 text-body-md"><div><dt class="text-on-surface-variant">Date et heure</dt><dd class="text-on-surface mt-1">{{ entretien.dateHeure | date:'dd MMMM y, HH:mm' }}</dd></div><div><dt class="text-on-surface-variant">Lieu ou lien</dt><dd class="text-on-surface mt-1">{{ entretien.lieuOuLien }}</dd></div></dl>

@@ -22,7 +22,7 @@
         </div>
         <div class="flex-1 text-center md:text-left">
           <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
-            <h1 class="font-headline-lg text-headline-lg text-on-surface">{{ profil.nom }}</h1>
+            <h1 class="font-display text-display text-on-surface leading-none -ml-1">{{ profil.nom }}</h1>
             <span class="px-3 py-1 bg-secondary-container/20 text-on-secondary-container text-label-sm rounded-full border border-secondary-container/30">Actif</span>
           </div>
           <p class="text-body-lg text-on-surface-variant font-medium mb-4">Formateur</p>
@@ -42,7 +42,7 @@
             *ngIf="!edition"
             type="button"
             (click)="ouvrirEdition()"
-            class="px-6 py-2.5 bg-primary text-on-primary font-label-md text-label-md rounded-lg flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors">
+            class="px-6 py-2.5 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-colors">
             <span class="material-symbols-outlined" aria-hidden="true">edit</span>
             Modifier le profil
           </button>
@@ -136,7 +136,7 @@
 
           <div class="flex flex-wrap gap-3 mt-stack-lg">
             <button type="submit" [disabled]="enregistrement"
-                    class="px-6 py-2.5 bg-primary text-on-primary font-label-md text-label-md rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                    class="px-6 py-2.5 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg flex items-center gap-2 hover:opacity-90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
               <span class="material-symbols-outlined" aria-hidden="true">save</span>
               {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
             </button>

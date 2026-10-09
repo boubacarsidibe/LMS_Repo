@@ -212,8 +212,8 @@ export class CandidatureDetailComponent implements OnInit {
   classeStatut(statut: string): string {
     switch (statut) {
       case 'REJETE': return 'bg-error-container/20 text-error';
-      case 'ADMIS3': return 'bg-green-100 text-green-800';
-      case 'LISTE_ATTENTE': return 'bg-blue-100 text-blue-800';
+      case 'ADMIS3': return 'bg-success/15 text-success-strong';
+      case 'LISTE_ATTENTE': return 'bg-primary-container text-primary';
       case 'ADMIS1':
       case 'ADMIS2': return 'bg-primary-fixed text-on-primary-fixed-variant';
       case 'SOUMIS':

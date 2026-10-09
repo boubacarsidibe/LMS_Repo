@@ -10,7 +10,7 @@
         {{ etudiant.initiales }}
       </div>
       <div>
-        <h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">{{ etudiant.nom }}</h1>
+        <h1 class="font-display text-display text-on-surface leading-none -ml-1">{{ etudiant.nom }}</h1>
         <p class="text-body-md text-on-surface-variant">{{ etudiant.promotion }}</p>
         <p *ngIf="etudiant.matricule" class="text-label-sm text-outline font-mono mt-1">{{ etudiant.matricule }}</p>
       </div>
@@ -128,20 +128,20 @@
       <div class="border-t border-outline-variant pt-stack-lg">
         <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide mb-stack-md">Ajouter une note</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-stack-md mb-stack-md">
-          <select [(ngModel)]="nouvelleNoteCoursId" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+          <select [(ngModel)]="nouvelleNoteCoursId" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface">
             <option [ngValue]="null">Sélectionnez un cours...</option>
             <option *ngFor="let c of mesCours" [ngValue]="c.id">{{ c.titre }} ({{ c.code }})</option>
           </select>
-          <input [(ngModel)]="nouvelleNoteModule" type="text" placeholder="Nom du module (ex: Module 3)" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+          <input [(ngModel)]="nouvelleNoteModule" type="text" placeholder="Nom du module (ex: Module 3)" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface">
           <input [(ngModel)]="nouvelleNoteTexte" type="text" inputmode="decimal" autocomplete="off" placeholder="Note / 100" aria-label="Note sur 100"
-                 class="p-3 bg-surface-container-low rounded-xl outline-none font-body-sm text-body-sm text-on-surface tabular-nums border"
+                 class="p-3 bg-surface-container-low rounded-lg outline-none font-body-sm text-body-sm text-on-surface tabular-nums border"
                  [class.border-error]="messageNoteSaisie" [class.border-transparent]="!messageNoteSaisie">
-          <input [(ngModel)]="nouvelleNoteCommentaire" type="text" placeholder="Commentaire (optionnel)" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+          <input [(ngModel)]="nouvelleNoteCommentaire" type="text" placeholder="Commentaire (optionnel)" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface">
         </div>
         <p *ngIf="messageNoteSaisie" class="text-body-sm text-error mb-stack-md">{{ messageNoteSaisie }}</p>
         <button [disabled]="!nouvelleNoteCoursId || !nouvelleNoteModule.trim() || nouvelleNoteValeur === null || isSavingNote"
                 (click)="ajouterNote()"
-                class="px-6 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+                class="px-6 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
           {{ isSavingNote ? 'Enregistrement…' : 'Ajouter la note' }}
         </button>
         <p *ngIf="noteErrorMessage" class="text-body-sm text-error mt-2">{{ noteErrorMessage }}</p>

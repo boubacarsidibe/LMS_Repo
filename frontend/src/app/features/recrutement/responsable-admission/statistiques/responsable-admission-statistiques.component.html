@@ -1,7 +1,7 @@
 <div class="stats-page">
 <div class="stats-header mb-4 md:mb-6 flex flex-col xl:flex-row xl:items-end justify-between gap-3">
   <div class="max-w-3xl"><p class="eyebrow">RECRUTEMENT / ANALYSE</p>
-    <h2 class="font-headline-lg-mobile md:font-headline-lg text-2xl sm:text-headline-lg-mobile md:text-headline-lg text-primary mb-1">Statistiques</h2>
+    <h1 class="font-display text-display text-on-surface leading-none -ml-1 mb-1">Statistiques</h1>
     <p class="font-body-md text-body-md text-on-surface-variant">Vos candidatures et vos décisions, en un regard.</p>
   </div>
   <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -9,7 +9,7 @@
       <span class="material-symbols-outlined text-[18px]">tune</span>
       Personnaliser
     </button>
-    <button type="button" [disabled]="exporting" (click)="exporter()" [title]="exporting ? 'Export en cours…' : 'Exporter les candidatures'" class="flex items-center justify-center gap-2 h-10 px-4 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors shadow-sm disabled:opacity-60 font-label-md text-label-md">
+    <button type="button" [disabled]="exporting" (click)="exporter()" [title]="exporting ? 'Export en cours…' : 'Exporter les candidatures'" class="flex items-center justify-center gap-2 h-10 px-4 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors disabled:opacity-60 font-label-md text-label-md">
       <span class="material-symbols-outlined text-[18px]">download</span>
       {{ exporting ? 'Export…' : 'Exporter' }}
     </button>

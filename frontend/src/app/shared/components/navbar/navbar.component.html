@@ -43,23 +43,23 @@
          ne plus la faire varier selon l'écran) ; seuls le padding et l'espacement entre
          onglets se resserrent jusqu'à xl (1280 px) pour compenser l'absence du logo. -->
     <nav class="hidden md:flex flex-1 justify-center items-center gap-1 xl:gap-6">
-      <a *ngIf="contexte === 'etudiant'" routerLink="/accueil" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Accueil</a>
-      <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
-      <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
+      <a *ngIf="contexte === 'etudiant'" routerLink="/accueil" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 font-body-sm text-body-sm font-medium text-on-surface-variant hover:text-primary">Accueil</a>
+      <a routerLink="/institut" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 font-body-sm text-body-sm font-medium text-on-surface-variant hover:text-primary">Institut</a>
+      <a routerLink="/recrutement/catalogue" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 font-body-sm text-body-sm font-medium text-on-surface-variant hover:text-primary">Formations</a>
       <!-- Le seul onglet qui change selon le public : sessions d'admission (étudiant),
            offres de recrutement (formateur), accréditation (école), espace entreprise. -->
-      <a [routerLink]="ongletSpecifique.lien" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">{{ ongletSpecifique.libelle }}</a>
-      <a routerLink="/contact" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Contact</a>
+      <a [routerLink]="ongletSpecifique.lien" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 font-body-sm text-body-sm font-medium text-on-surface-variant hover:text-primary">{{ ongletSpecifique.libelle }}</a>
+      <a routerLink="/contact" routerLinkActive="text-primary border-b-2 border-primary" class="whitespace-nowrap px-2 xl:px-3 py-2 font-body-sm text-body-sm font-medium text-on-surface-variant hover:text-primary">Contact</a>
     </nav>
 
     <!-- Actions (Desktop) -->
     <div class="flex items-center gap-3">
       <!-- Non connecté : boutons Connexion / Inscription -->
       <ng-container *ngIf="!isLoggedIn">
-        <a routerLink="/auth/login" class="hidden md:inline-flex items-center px-3 xl:px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg transition-all duration-200 no-underline">
+        <a routerLink="/auth/login" class="hidden md:inline-flex items-center px-3 xl:px-4 py-2 font-body-sm text-body-sm font-medium text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg transition-all duration-200 no-underline">
           Se connecter
         </a>
-        <a routerLink="/auth/register" class="inline-flex items-center px-4 xl:px-5 py-2 xl:py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-[#254d7d] active:scale-95 transition-all duration-200 shadow-sm shadow-primary/20 no-underline">
+        <a routerLink="/auth/register" class="inline-flex items-center px-4 xl:px-5 py-2 xl:py-2.5 bg-secondary text-on-secondary font-body-sm text-body-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 no-underline">
           S'inscrire
         </a>
       </ng-container>
@@ -87,18 +87,18 @@
           <div
             *ngIf="notifDropdownOpen"
             id="notif-dropdown"
-            class="absolute right-0 mt-2 w-80 bg-white border border-outline-variant rounded-xl shadow-lg z-50 origin-top-right">
+            class="absolute right-0 mt-2 w-80 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg z-50 origin-top-right">
             <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant/40">
-              <p class="text-sm font-semibold text-[#000002]">Notifications</p>
+              <p class="font-body-sm text-body-sm font-semibold text-on-surface">Notifications</p>
               <button *ngIf="nbNonLues > 0" (click)="marquerToutLu()"
-                      class="text-xs font-medium text-primary hover:text-[#254d7d] bg-transparent border-0 cursor-pointer">
+                      class="text-xs font-medium text-primary hover:opacity-80 bg-transparent border-0 cursor-pointer">
                 Tout marquer lu
               </button>
             </div>
             <div class="max-h-80 overflow-y-auto">
               <div *ngIf="notifications.length === 0" class="px-4 py-10 text-center">
                 <span class="material-symbols-outlined text-4xl text-outline-variant mb-2" style="font-variation-settings: 'FILL' 0;">inbox</span>
-                <p class="text-sm text-outline">Aucune notification</p>
+                <p class="font-body-sm text-body-sm text-outline">Aucune notification</p>
                 <p class="text-xs text-outline-variant mt-1">Les mises à jour de votre candidature apparaîtront ici.</p>
               </div>
               <div *ngFor="let notif of notifications"
@@ -116,7 +116,7 @@
                   </span>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm text-on-surface leading-snug" [title]="notif.message"
+                  <p class="font-body-sm text-body-sm text-on-surface leading-snug" [title]="notif.message"
                      [class.font-semibold]="!notif.lu">{{ notif.message }}</p>
                   <p class="text-xs text-outline mt-1">{{ getRelativeTime(notif.dateCreation) }}</p>
                 </div>
@@ -138,7 +138,7 @@
             (click)="toggleDropdown()"
             class="flex items-center gap-3 p-1.5 rounded-full hover:bg-surface-container-low transition-colors cursor-pointer border-0 bg-transparent"
             aria-label="Menu utilisateur">
-            <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+            <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-body-sm text-body-sm font-semibold shadow-sm">
               {{ userInitials }}
             </div>
             <!-- Nom + rôle : masqués jusqu'à xl (donc en tablette aussi, pas seulement en
@@ -148,7 +148,7 @@
                  Le cercle seul (+ chevron) suffit pour ouvrir le menu ; le nom complet est
                  dans son en-tête. -->
             <div class="hidden xl:flex flex-col items-start leading-tight">
-              <span class="text-sm font-medium text-on-surface">{{ userDisplayName }}</span>
+              <span class="font-body-sm text-body-sm font-medium text-on-surface">{{ userDisplayName }}</span>
               <span class="text-xs uppercase text-outline">{{ getUserRoleLabel() }}</span>
             </div>
             <span class="material-symbols-outlined text-outline text-[20px]" style="font-variation-settings: 'FILL' 0;">
@@ -160,18 +160,18 @@
           <div
             *ngIf="dropdownOpen"
             id="profile-dropdown"
-            class="absolute right-0 mt-2 w-56 bg-white border border-outline-variant rounded-xl shadow-lg py-1 z-50 origin-top-right animate-in fade-in zoom-in-95">
+            class="absolute right-0 mt-2 w-56 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg py-1 z-50 origin-top-right animate-in fade-in zoom-in-95">
             <div class="px-4 py-3 border-b border-outline-variant/40">
-              <p class="text-sm font-semibold text-[#000002] capitalize">{{ userDisplayName }}</p>
+              <p class="font-body-sm text-body-sm font-semibold text-on-surface capitalize">{{ userDisplayName }}</p>
             </div>
             <!-- Menu selon le type du compte (école, entreprise, candidat formateur,
                  candidat/étudiant) : voir entreesMenu. -->
-            <a *ngFor="let entree of entreesMenu()" [routerLink]="entree.lien" (click)="closeDropdown()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors no-underline">
+            <a *ngFor="let entree of entreesMenu()" [routerLink]="entree.lien" (click)="closeDropdown()" class="flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors no-underline">
               <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">{{ entree.icone }}</span>
               {{ entree.libelle }}
             </a>
             <hr class="my-1 border-outline-variant/40">
-            <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
+            <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
               <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">logout</span>
               Déconnexion
             </a>
@@ -182,15 +182,15 @@
   </div>
 
   <!-- Menu de navigation (mobile uniquement) -->
-  <nav *ngIf="mobileMenuOpen" class="md:hidden border-t border-outline-variant/40 bg-white px-4 py-3 space-y-1" aria-label="Navigation">
-    <a *ngIf="contexte === 'etudiant'" routerLink="/accueil" (click)="closeMobileMenu()" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Accueil</a>
-    <a routerLink="/institut" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Institut</a>
-    <a routerLink="/recrutement/catalogue" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Formations</a>
-    <a [routerLink]="ongletSpecifique.lien" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">{{ ongletSpecifique.libelle }}</a>
-    <a routerLink="/contact" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Contact</a>
+  <nav *ngIf="mobileMenuOpen" class="md:hidden border-t border-outline-variant/40 bg-surface-container-lowest px-4 py-3 space-y-1" aria-label="Navigation">
+    <a *ngIf="contexte === 'etudiant'" routerLink="/accueil" (click)="closeMobileMenu()" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg font-body-sm text-body-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Accueil</a>
+    <a routerLink="/institut" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg font-body-sm text-body-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Institut</a>
+    <a routerLink="/recrutement/catalogue" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg font-body-sm text-body-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Formations</a>
+    <a [routerLink]="ongletSpecifique.lien" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg font-body-sm text-body-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">{{ ongletSpecifique.libelle }}</a>
+    <a routerLink="/contact" (click)="closeMobileMenu()" routerLinkActive="text-primary bg-surface-container-low" class="block px-3 py-2.5 rounded-lg font-body-sm text-body-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Contact</a>
     <ng-container *ngIf="!isLoggedIn">
       <hr class="my-2 border-outline-variant/40">
-      <a routerLink="/auth/login" (click)="closeMobileMenu()" class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Se connecter</a>
+      <a routerLink="/auth/login" (click)="closeMobileMenu()" class="block px-3 py-2.5 rounded-lg font-body-sm text-body-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Se connecter</a>
     </ng-container>
   </nav>
 </header>
@@ -205,7 +205,7 @@
 <!-- Bouton flottant : suivi de candidature (visible dès que le rôle Candidat est acquis) -->
 <a *ngIf="isLoggedIn && isCandidatRole"
    [routerLink]="candidatureUrl()"
-   class="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-primary hover:bg-[#254d7d] active:scale-95 rounded-full shadow-lg shadow-primary/30 transition-all duration-200 no-underline">
+   class="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 px-5 py-3 font-body-sm text-body-sm font-semibold text-on-secondary bg-secondary hover:opacity-90 rounded-full transition-all duration-200 no-underline">
   <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">description</span>
   <span class="hidden sm:inline">Suivre ma candidature</span>
 </a>

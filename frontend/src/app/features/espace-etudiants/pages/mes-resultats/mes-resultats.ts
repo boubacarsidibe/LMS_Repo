@@ -26,7 +26,7 @@ import { ScolariteService } from '../../services/scolarite.service';
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header>
-        <h1 class="font-display text-display text-on-surface leading-tight">Mes résultats</h1>
+        <h1 class="font-display text-display text-on-surface leading-none -ml-1">Mes résultats</h1>
         <p class="font-body-md text-body-md text-on-surface-variant mt-1">
           Vos notes par cours et les certificats qui vous ont été délivrés.
         </p>

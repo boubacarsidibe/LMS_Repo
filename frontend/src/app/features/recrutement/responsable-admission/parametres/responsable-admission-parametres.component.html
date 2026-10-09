@@ -1,6 +1,6 @@
 <!-- ==================== CONTENU SEUL ==================== -->
 <div class="mb-stack-lg">
-  <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Paramètres</h1>
+  <h1 class="font-display text-display text-on-surface leading-none -ml-1">Paramètres</h1>
   <p class="font-body-md text-body-md text-on-surface-variant mt-2">Informations de votre compte et sécurité.</p>
 </div>
 
@@ -46,7 +46,7 @@
         <label for="parametres-mdp-confirmer" class="block font-label-md text-label-md text-on-surface-variant mb-1">Confirmer le nouveau mot de passe</label>
         <input id="parametres-mdp-confirmer" formControlName="confirmPassword" type="password" aria-label="Confirmer le nouveau mot de passe" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
       </div>
-      <button type="submit" [disabled]="isSubmitting" class="w-full py-2.5 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+      <button type="submit" [disabled]="isSubmitting" class="w-full py-2.5 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-60">
         {{ isSubmitting ? 'Enregistrement…' : 'Mettre à jour le mot de passe' }}
       </button>
     </form>
@@ -102,7 +102,7 @@
       </div>
     </div>
 
-    <button type="button" (click)="enregistrerDashboardPrefs()" class="px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm">
+    <button type="button" (click)="enregistrerDashboardPrefs()" class="px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors">
       Enregistrer mes préférences
     </button>
   </div>

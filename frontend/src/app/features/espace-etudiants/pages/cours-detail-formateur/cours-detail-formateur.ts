@@ -31,11 +31,11 @@ import { SupportService } from '../../services/support.service';
       </section>
 
       <ng-container *ngIf="!chargement && cours">
-        <header class="rounded-2xl bg-surface-container-lowest border border-outline-variant/40 p-stack-lg shadow-sm">
+        <header class="rounded-xl bg-surface-container-lowest border border-outline-variant/40 p-stack-lg shadow-sm">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p class="font-label-md text-label-md text-secondary">{{ cours.code }} <span *ngIf="cours.semestre">· {{ cours.semestre }}</span></p>
-              <h1 class="mt-1 font-display text-display text-on-surface leading-tight">{{ cours.titre }}</h1>
+              <h1 class="font-display text-display text-on-surface leading-none -ml-1 mt-1">{{ cours.titre }}</h1>
               <p *ngIf="cours.description" class="mt-3 max-w-3xl font-body-md text-body-md text-on-surface-variant">{{ cours.description }}</p>
             </div>
             <a [routerLink]="['/espace-etudiant/formateur/mes-cours']" [queryParams]="{ cours: cours.id }"
@@ -61,7 +61,7 @@ import { SupportService } from '../../services/support.service';
         </header>
 
         <section class="grid grid-cols-1 gap-gutter lg:grid-cols-3">
-          <div class="lg:col-span-2 rounded-2xl bg-surface-container-lowest border border-outline-variant/40 p-stack-lg shadow-sm">
+          <div class="lg:col-span-2 rounded-xl bg-surface-container-lowest border border-outline-variant/40 p-stack-lg shadow-sm">
             <div class="flex items-center justify-between gap-3">
               <div>
                 <h2 class="font-headline-sm text-headline-sm text-on-surface">Ressources du cours</h2>
@@ -85,7 +85,7 @@ import { SupportService } from '../../services/support.service';
           </div>
 
           <aside class="space-y-4">
-            <section class="rounded-2xl bg-surface-container-lowest border border-outline-variant/40 p-stack-lg shadow-sm">
+            <section class="rounded-xl bg-surface-container-lowest border border-outline-variant/40 p-stack-lg shadow-sm">
               <h2 class="font-headline-sm text-headline-sm text-on-surface">Promotions concernées</h2>
               <p *ngIf="!cours.promotions.length" class="mt-3 font-body-sm text-body-sm text-on-surface-variant">Aucune promotion n'est indiquée.</p>
               <ul *ngIf="cours.promotions.length" class="mt-3 space-y-2">
@@ -93,13 +93,13 @@ import { SupportService } from '../../services/support.service';
               </ul>
               <p class="mt-4 font-body-sm text-body-sm text-on-surface-variant">Les affectations sont gérées par le responsable pédagogique.</p>
             </section>
-            <a routerLink="/espace-etudiant/formateur/suivi-etudiants" class="flex items-center justify-between rounded-2xl border border-outline-variant/40 bg-surface-container-lowest p-4 font-label-md text-label-md text-on-surface hover:border-secondary hover:text-secondary">
+            <a routerLink="/espace-etudiant/formateur/suivi-etudiants" class="flex items-center justify-between rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-4 font-label-md text-label-md text-on-surface hover:border-secondary hover:text-secondary">
               Suivre les étudiants <span class="material-symbols-outlined">arrow_forward</span>
             </a>
           </aside>
         </section>
 
-        <section class="rounded-2xl bg-surface-container-lowest border border-outline-variant/40 p-stack-lg shadow-sm">
+        <section class="rounded-xl bg-surface-container-lowest border border-outline-variant/40 p-stack-lg shadow-sm">
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 class="font-headline-sm text-headline-sm text-on-surface">Modules, devoirs et évaluations</h2>
@@ -132,7 +132,7 @@ import { SupportService } from '../../services/support.service';
           <section *ngIf="activitePourCorrection" class="mt-6 border-t border-outline-variant/35 pt-6">
             <div class="flex items-start justify-between gap-3"><div><h3 class="font-headline-sm text-headline-sm text-on-surface">Remises — {{ activitePourCorrection.titre }}</h3><p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">Barème : {{ activitePourCorrection.bareme }} points.</p></div><button type="button" (click)="fermerCorrections()" class="p-1 text-on-surface-variant hover:text-secondary" title="Fermer"><span class="material-symbols-outlined">close</span></button></div>
             <p *ngIf="chargementRemises" class="mt-4 font-body-sm text-body-sm text-on-surface-variant">Chargement des remises…</p>
-            <p *ngIf="erreurRemises" class="mt-4 rounded-lg bg-error-container/20 p-3 font-body-sm text-error">{{ erreurRemises }}</p>
+            <p *ngIf="erreurRemises" class="mt-4 rounded-lg bg-error-container/20 p-3 font-body-sm text-body-sm text-error">{{ erreurRemises }}</p>
             <p *ngIf="!chargementRemises && !erreurRemises && remises.length === 0" class="mt-4 rounded-lg bg-surface-container-low p-4 font-body-sm text-body-sm text-on-surface-variant">Aucune remise n’a encore été déposée.</p>
             <div *ngFor="let remise of remises" class="mt-4 rounded-xl border border-outline-variant/35 p-4"><div class="flex justify-between gap-3"><div><p class="font-label-md text-label-md text-on-surface">{{ remise.etudiant }}</p><p class="font-body-sm text-body-sm text-on-surface-variant">Remis le {{ remise.remiseLe | date:'d MMM y, HH:mm' }}</p></div><span *ngIf="remise.note != null" class="rounded-full bg-secondary-container px-3 py-1 font-label-sm text-label-sm text-on-secondary-container">{{ remise.note }}/{{ activitePourCorrection.bareme }}</span></div><p class="mt-3 whitespace-pre-wrap font-body-sm text-body-sm text-on-surface">{{ remise.contenu }}</p><div class="mt-4 grid gap-3 sm:grid-cols-[120px_1fr_auto]"><input type="number" min="0" [max]="activitePourCorrection.bareme" [(ngModel)]="remise.note" [name]="'note-' + remise.id" class="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2" placeholder="Note"/><input [(ngModel)]="remise.commentaireCorrection" [name]="'commentaire-' + remise.id" class="rounded-lg border border-outline-variant bg-surface-container-low px-3 py-2" placeholder="Commentaire de correction"/><button type="button" [disabled]="correctionEnCoursId === remise.id" (click)="corrigerRemise(remise)" class="rounded-lg bg-secondary px-4 py-2 font-label-md text-label-md text-on-secondary disabled:opacity-50">{{ correctionEnCoursId === remise.id ? 'Enregistrement…' : 'Enregistrer' }}</button></div></div>
           </section>

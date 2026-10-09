@@ -48,7 +48,7 @@ import { AccreditationService } from '../../services/accreditation.service';
         <!-- Bouton plutôt qu'un onglet permanent du navbar : une école ne prend
              rendez-vous qu'à certains moments précis du dossier, pas en continu. -->
         <a routerLink="rendez-vous"
-           class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity no-underline shrink-0 shadow-sm">
+           class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity no-underline shrink-0">
           <span class="material-symbols-outlined text-[20px]">event</span>
           Prendre rendez-vous
         </a>
@@ -195,7 +195,7 @@ import { AccreditationService } from '../../services/accreditation.service';
           <div class="flex flex-col gap-2">
             <span class="px-3 py-1 rounded-full text-label-sm w-fit" [ngClass]="heroClasses">{{ heroPill }}</span>
             <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">{{ heroTitre }}</h2>
-            <p class="text-lg text-on-surface-variant max-w-2xl">{{ heroParagraphe }}</p>
+            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">{{ heroParagraphe }}</p>
           </div>
 
           <ol class="flex items-center w-full mt-6" *ngIf="demande.statut !== 'REJETE'">
@@ -230,8 +230,8 @@ import { AccreditationService } from '../../services/accreditation.service';
               [ngClass]="{
                 'bg-surface-container text-on-surface-variant': demande.statut === 'SOUMISE',
                 'bg-secondary-container text-on-secondary-container': demande.statut === 'EN_COURS_EVALUATION',
-                'bg-success/15 text-success': demande.statut === 'ACCREDITE',
-                'bg-warning/15 text-warning': demande.statut === 'ACCREDITE_SOUS_RESERVE',
+                'bg-success/15 text-success-strong': demande.statut === 'ACCREDITE',
+                'bg-warning/15 text-warning-strong': demande.statut === 'ACCREDITE_SOUS_RESERVE',
                 'bg-error-container text-on-error-container': demande.statut === 'REJETE'
               }"
             >
@@ -265,7 +265,7 @@ import { AccreditationService } from '../../services/accreditation.service';
           </p>
           <div *ngIf="demande.statut === 'ACCREDITE'"
                class="mt-4 p-3 rounded-lg bg-success/10 border border-success/30 font-body-sm text-body-sm space-y-1">
-            <p class="text-success">Félicitations, ce programme est accrédité par l'INPG.</p>
+            <p class="text-success-strong">Félicitations, ce programme est accrédité par l'INPG.</p>
             <p *ngIf="demande.dateExpiration" class="text-on-surface-variant">
               Accréditation valable jusqu'au {{ demande.dateExpiration | date: 'd MMMM y' }} (3 ans).
             </p>
@@ -275,7 +275,7 @@ import { AccreditationService } from '../../services/accreditation.service';
           </div>
           <div *ngIf="demande.statut === 'ACCREDITE_SOUS_RESERVE'"
                class="mt-4 p-3 rounded-lg bg-warning/10 border border-warning/40 font-body-sm text-body-sm space-y-1">
-            <p class="text-warning">Ce programme bénéficie d'une accréditation conditionnelle (sous réserve).</p>
+            <p class="text-warning-strong">Ce programme bénéficie d'une accréditation conditionnelle (sous réserve).</p>
             <p *ngIf="demande.dateExpiration" class="text-on-surface-variant">
               Accréditation valable jusqu'au {{ demande.dateExpiration | date: 'd MMMM y' }} (3 ans).
             </p>
@@ -296,7 +296,7 @@ import { AccreditationService } from '../../services/accreditation.service';
             <span
               class="px-3 py-1.5 rounded-full font-label-sm text-label-sm"
               [ngClass]="dossierComplet
-                ? 'bg-success/15 text-success'
+                ? 'bg-success/15 text-success-strong'
                 : 'bg-error-container/40 text-on-error-container'"
             >
               {{ dossierComplet
@@ -317,7 +317,7 @@ import { AccreditationService } from '../../services/accreditation.service';
                 [class.border-l-success]="pieceDeType(type)"
                 [class.border-l-transparent]="!pieceDeType(type)">
               <span class="material-symbols-outlined shrink-0"
-                    [class.text-success]="pieceDeType(type)"
+                    [class.text-success-strong]="pieceDeType(type)"
                     [class.text-outline]="!pieceDeType(type)">
                 {{ pieceDeType(type) ? 'check_circle' : 'radio_button_unchecked' }}
               </span>
@@ -357,7 +357,7 @@ import { AccreditationService } from '../../services/accreditation.service';
                   [class.border-l-success]="pieceDeType(type)"
                   [class.border-l-transparent]="!pieceDeType(type)">
                 <span class="material-symbols-outlined shrink-0"
-                      [class.text-success]="pieceDeType(type)"
+                      [class.text-success-strong]="pieceDeType(type)"
                       [class.text-outline]="!pieceDeType(type)">
                   {{ pieceDeType(type) ? 'check_circle' : 'radio_button_unchecked' }}
                 </span>
@@ -519,13 +519,13 @@ export class DemandeAccreditationComponent implements OnInit {
       pill: 'Accréditée',
       titre: 'Félicitations, votre programme est accrédité !',
       paragraphe: "Toute l'équipe de l'INPG vous félicite pour la qualité de votre dossier et de votre programme.",
-      classes: 'bg-success/15 text-success',
+      classes: 'bg-success/15 text-success-strong',
     },
     ACCREDITE_SOUS_RESERVE: {
       pill: 'Accréditation conditionnelle',
       titre: 'Votre programme est accrédité sous réserve.',
       paragraphe: "Votre programme est accrédité, sous réserve de la mise en œuvre du plan d'actions détaillé ci-dessous.",
-      classes: 'bg-warning/15 text-warning',
+      classes: 'bg-warning/15 text-warning-strong',
     },
     REJETE: {
       pill: 'Dossier rejeté',

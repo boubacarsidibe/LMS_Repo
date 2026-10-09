@@ -167,7 +167,7 @@ import { AdminRecrutementFormateurService } from '../../services/admin-recruteme
 
           <!-- Récap post-décision -->
           <div *ngIf="selection.statut === 'TERMINE'" class="pt-3 border-t border-outline-variant space-y-2">
-            <p class="font-label-md text-label-md" [ngClass]="selection.decision === 'RETENU' ? 'text-success' : 'text-error'">
+            <p class="font-label-md text-label-md" [ngClass]="selection.decision === 'RETENU' ? 'text-success-strong' : 'text-error'">
               {{ selection.decision ? libellesDecision[selection.decision] : 'Terminé' }}
               <span class="font-body-sm text-body-sm text-on-surface-variant">le {{ selection.dateDecision | date: 'd MMM y' }}</span>
             </p>
@@ -235,7 +235,7 @@ export class CandidaturesAdminFormateursComponent implements OnInit {
   badge(c: CandidatureFormateur): string {
     if (c.statut === 'DOSSIER_RECU') return 'bg-surface-container text-on-surface-variant';
     if (c.statut === 'EN_COURS_DE_TRAITEMENT') return 'bg-secondary-container text-on-secondary-container';
-    if (c.decision === 'RETENU') return 'bg-success/15 text-success';
+    if (c.decision === 'RETENU') return 'bg-success/15 text-success-strong';
     if (c.decision === 'NON_RETENU') return 'bg-error-container text-on-error-container';
     return 'bg-surface-container-high text-on-surface';
   }

@@ -43,14 +43,14 @@ export class PedagogieEntreprisesComponent implements OnInit {
   readonly classesStatutDemande: Record<StatutDemandeEntreprise, string> = {
     SOUMISE: 'bg-surface-container text-on-surface-variant',
     EN_COURS: 'bg-secondary-container text-on-secondary-container',
-    REPONDUE: 'bg-success/15 text-success',
+    REPONDUE: 'bg-success/15 text-success-strong',
     CLOTUREE: 'bg-outline-variant/40 text-on-surface-variant',
   };
 
   readonly classesStatutFiche: Record<StatutFicheModule, string> = {
     BROUILLON: 'bg-surface-container text-on-surface-variant',
     TRANSMISE: 'bg-secondary-container text-on-secondary-container',
-    ACCEPTEE: 'bg-success/15 text-success',
+    ACCEPTEE: 'bg-success/15 text-success-strong',
     AJUSTEMENTS_DEMANDES: 'bg-error-container/40 text-on-error-container',
   };
 

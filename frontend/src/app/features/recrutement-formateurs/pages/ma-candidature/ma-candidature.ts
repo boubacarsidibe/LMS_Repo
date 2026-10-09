@@ -143,7 +143,7 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
               [ngClass]="{
                 'bg-surface-container text-on-surface-variant': candidature.statut === 'DOSSIER_RECU',
                 'bg-secondary-container text-on-secondary-container': candidature.statut === 'EN_COURS_DE_TRAITEMENT',
-                'bg-success/15 text-success': candidature.statut === 'TERMINE' && candidature.decision === 'RETENU',
+                'bg-success/15 text-success-strong': candidature.statut === 'TERMINE' && candidature.decision === 'RETENU',
                 'bg-error-container text-on-error-container': candidature.statut === 'TERMINE' && candidature.decision === 'NON_RETENU',
                 'bg-surface-container-high text-on-surface': candidature.statut === 'TERMINE' && !candidature.decision
               }">
@@ -168,7 +168,7 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
 
           <div *ngIf="candidature.statut === 'TERMINE' && candidature.decision === 'RETENU'"
                class="mt-4 p-3 rounded-lg bg-success/10 border border-success/30 font-body-sm text-body-sm space-y-1">
-            <p class="text-success">Félicitations, votre candidature a été retenue.</p>
+            <p class="text-success-strong">Félicitations, votre candidature a été retenue.</p>
             <p class="text-on-surface-variant">Votre espace formateur est activé — reconnectez-vous avec les mêmes identifiants.</p>
           </div>
           <div *ngIf="candidature.statut === 'TERMINE' && candidature.decision === 'NON_RETENU'"
@@ -184,7 +184,7 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
               <span class="material-symbols-outlined text-secondary">description</span>Pièces du dossier
             </h2>
             <span class="px-3 py-1.5 rounded-full font-label-sm text-label-sm"
-              [ngClass]="dossierComplet ? 'bg-success/15 text-success' : 'bg-error-container/40 text-on-error-container'">
+              [ngClass]="dossierComplet ? 'bg-success/15 text-success-strong' : 'bg-error-container/40 text-on-error-container'">
               {{ dossierComplet ? 'Pièces requises fournies' : typesRequisManquants.length + ' pièce(s) requise(s) manquante(s)' }}
             </span>
           </div>
@@ -196,7 +196,7 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
             <li *ngFor="let type of typesRequis" class="flex items-center gap-3 p-3 border-l-4"
                 [class.border-l-success]="pieceDeType(type)" [class.border-l-transparent]="!pieceDeType(type)">
               <span class="material-symbols-outlined shrink-0"
-                    [class.text-success]="pieceDeType(type)" [class.text-outline]="!pieceDeType(type)">
+                    [class.text-success-strong]="pieceDeType(type)" [class.text-outline]="!pieceDeType(type)">
                 {{ pieceDeType(type) ? 'check_circle' : 'radio_button_unchecked' }}
               </span>
               <div class="flex-1 min-w-0">
@@ -228,7 +228,7 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
               <li *ngFor="let type of typesRecommandes" class="flex items-center gap-3 p-3 border-l-4"
                   [class.border-l-success]="pieceDeType(type)" [class.border-l-transparent]="!pieceDeType(type)">
                 <span class="material-symbols-outlined shrink-0"
-                      [class.text-success]="pieceDeType(type)" [class.text-outline]="!pieceDeType(type)">
+                      [class.text-success-strong]="pieceDeType(type)" [class.text-outline]="!pieceDeType(type)">
                   {{ pieceDeType(type) ? 'check_circle' : 'radio_button_unchecked' }}
                 </span>
                 <div class="flex-1 min-w-0">

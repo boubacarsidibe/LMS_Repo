@@ -1,13 +1,13 @@
 <!-- ============================================================
   PAGE DÉTAIL FORMATION – PLEINE LARGEUR
   ============================================================ -->
-<div class="min-h-screen flex flex-col bg-[#F8FAFC]">
+<div class="min-h-screen flex flex-col bg-surface">
   <app-navbar></app-navbar>
 
   <main class="flex-grow w-full" *ngIf="formation; else notFoundTpl">
 
     <!-- ========== HERO SECTION ========== -->
-    <section class="relative bg-white border-b border-[#c7c5d0]/40 overflow-hidden">
+    <section class="relative bg-surface-container-lowest border-b border-outline-variant/40 overflow-hidden">
       <div class="absolute inset-0 z-0">
         <div class="bg-cover bg-center w-full h-full opacity-10"
              [style.background-image]="'url(' + formation.imageUrl + ')'"></div>
@@ -15,18 +15,18 @@
       </div>
       <div class="relative z-10 max-w-[1280px] mx-auto px-4 md:px-10 py-12 md:py-20">
         <div class="max-w-3xl">
-          <div *ngIf="formation.badgeLabel" class="inline-flex items-center gap-2 px-3 py-1 bg-[#d4e3ff]/40 text-[#0e4781] rounded-full text-xs tracking-[0.05em] font-semibold mb-4 border border-[#d4e3ff]/60">
+          <div *ngIf="formation.badgeLabel" class="inline-flex items-center gap-2 px-3 py-1 bg-primary-container/40 text-on-secondary-fixed-variant rounded-full text-xs tracking-[0.05em] font-semibold mb-4 border border-primary-container/60">
             <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 0;">{{ formation.badgeIcon || 'school' }}</span>
             {{ formation.badgeLabel }}
           </div>
-          <h1 class="text-3xl md:text-[48px] leading-[1.15] md:leading-[56px] tracking-[-0.02em] font-bold text-[#000002] mb-4">{{ formation.libelle }}</h1>
-          <p class="text-base md:text-lg leading-6 md:leading-7 text-[#46464e] mb-6 max-w-2xl">{{ formation.description }}</p>
+          <h1 class="font-display text-display text-on-surface leading-none -ml-1 mb-4">{{ formation.libelle }}</h1>
+          <p class="font-body-md text-body-md md:text-lg md:leading-7 text-on-surface-variant mb-6 max-w-2xl">{{ formation.description }}</p>
           <div *ngIf="formation.heroMeta?.length" class="flex flex-wrap gap-4 mt-6">
-            <div *ngFor="let meta of formation.heroMeta" class="flex items-center gap-2 bg-[#f2f4f6] px-4 py-2 rounded border border-[#c7c5d0]">
-              <span class="material-symbols-outlined text-[#30609a] text-lg" style="font-variation-settings: 'FILL' 0;">{{ meta.icon }}</span>
+            <div *ngFor="let meta of formation.heroMeta" class="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded border border-outline-variant">
+              <span class="material-symbols-outlined text-primary font-body-lg text-body-lg" style="font-variation-settings: 'FILL' 0;">{{ meta.icon }}</span>
               <div class="flex flex-col">
-                <span class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-[#46464e]">{{ meta.label }}</span>
-                <span class="text-sm leading-4 tracking-[0.01em] font-medium text-[#191c1e]">{{ meta.value }}</span>
+                <span class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-on-surface-variant">{{ meta.label }}</span>
+                <span class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-on-surface">{{ meta.value }}</span>
               </div>
             </div>
           </div>
@@ -42,45 +42,45 @@
         <div class="flex-1 min-w-0 space-y-16">
 
           <!-- ===== CONFORMITÉ AU RÉFÉRENTIEL DRCQ (§3) ===== -->
-          <section *ngIf="conformiteReferentielVisible" class="bg-white border border-[#c7c5d0] rounded-xl p-6">
-            <h2 class="text-xl font-semibold text-[#000002] mb-4 flex items-center gap-2">
-              <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 1;">verified</span>
+          <section *ngIf="conformiteReferentielVisible" class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-6">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
               Conforme au référentiel DRCQ
             </h2>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div *ngIf="formation.heuresSimulationLabo" class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">science</span>
+                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">science</span>
                 <div>
-                  <div class="text-[12px] tracking-[0.05em] font-semibold text-[#46464e] uppercase">Simulation / labo</div>
-                  <div class="text-sm text-[#191c1e] font-medium">{{ formation.heuresSimulationLabo }} h</div>
+                  <div class="text-[12px] tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Simulation / labo</div>
+                  <div class="font-body-sm text-body-sm text-on-surface font-medium">{{ formation.heuresSimulationLabo }} h</div>
                 </div>
               </div>
               <div *ngIf="formation.anglaisProfessionnel" class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">translate</span>
+                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">translate</span>
                 <div>
-                  <div class="text-[12px] tracking-[0.05em] font-semibold text-[#46464e] uppercase">Anglais professionnel</div>
-                  <div class="text-sm text-[#191c1e] font-medium">Inclus</div>
+                  <div class="text-[12px] tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Anglais professionnel</div>
+                  <div class="font-body-sm text-body-sm text-on-surface font-medium">Inclus</div>
                 </div>
               </div>
               <div *ngIf="formation.softSkills" class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">groups</span>
+                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">groups</span>
                 <div>
-                  <div class="text-[12px] tracking-[0.05em] font-semibold text-[#46464e] uppercase">Soft skills</div>
-                  <div class="text-sm text-[#191c1e] font-medium">Inclus</div>
+                  <div class="text-[12px] tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Soft skills</div>
+                  <div class="font-body-sm text-body-sm text-on-surface font-medium">Inclus</div>
                 </div>
               </div>
               <div *ngIf="formation.creditsTotaux" class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">workspace_premium</span>
+                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">workspace_premium</span>
                 <div>
-                  <div class="text-[12px] tracking-[0.05em] font-semibold text-[#46464e] uppercase">Crédits</div>
-                  <div class="text-sm text-[#191c1e] font-medium">{{ formation.creditsTotaux }}</div>
+                  <div class="text-[12px] tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Crédits</div>
+                  <div class="font-body-sm text-body-sm text-on-surface font-medium">{{ formation.creditsTotaux }}</div>
                 </div>
               </div>
               <div *ngIf="formation.volumeHoraireTotal" class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 0;">schedule</span>
+                <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">schedule</span>
                 <div>
-                  <div class="text-[12px] tracking-[0.05em] font-semibold text-[#46464e] uppercase">Volume horaire total</div>
-                  <div class="text-sm text-[#191c1e] font-medium">{{ formation.volumeHoraireTotal }} h</div>
+                  <div class="text-[12px] tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Volume horaire total</div>
+                  <div class="font-body-sm text-body-sm text-on-surface font-medium">{{ formation.volumeHoraireTotal }} h</div>
                 </div>
               </div>
             </div>
@@ -88,28 +88,28 @@
 
           <!-- ===== MODULES (Bento Grid) ===== -->
           <section *ngIf="formation.modules?.length">
-            <h2 class="text-2xl md:text-[32px] leading-8 md:leading-10 tracking-[-0.01em] font-semibold text-[#000002] mb-6 border-b border-[#c7c5d0]/40 pb-3">Programmes Inclus</h2>
+            <h2 class="font-headline-md text-headline-md md:text-[32px] md:leading-10 tracking-[-0.01em] text-on-surface mb-6 border-b border-outline-variant/40 pb-3">Programmes Inclus</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               <div
                 *ngFor="let module of formation.modules"
-                class="bg-white border border-[#c7c5d0] rounded-lg p-5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-shadow group flex flex-col h-full relative overflow-hidden"
+                class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-shadow group flex flex-col h-full relative overflow-hidden"
                 [class.lg:col-span-2]="module.colSpan === 2">
                 <!-- Badge -->
                 <div *ngIf="module.badge" class="flex justify-between items-start mb-3">
-                  <span class="bg-[#f2f4f6] text-[#46464e] text-[11px] tracking-[0.05em] font-semibold px-2 py-1 rounded border border-[#c7c5d0]">{{ module.badge }}</span>
+                  <span class="bg-surface-container-low text-on-surface-variant text-[11px] tracking-[0.05em] font-semibold px-2 py-1 rounded border border-outline-variant">{{ module.badge }}</span>
                 </div>
                 <!-- Icon -->
-                <div class="w-10 h-10 bg-[#f2f4f6] rounded flex items-center justify-center mb-3 group-hover:bg-[#d4e3ff]/50 transition-colors">
-                  <span class="material-symbols-outlined text-[#30609a] text-xl" style="font-variation-settings: 'FILL' 0;">{{ module.icon }}</span>
+                <div class="w-10 h-10 bg-surface-container-low rounded flex items-center justify-center mb-3 group-hover:bg-primary-container/50 transition-colors">
+                  <span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 0;">{{ module.icon }}</span>
                 </div>
                 <!-- Titre -->
-                <h3 class="text-lg leading-7 font-semibold text-[#000002] mb-2 group-hover:text-[#30609a] transition-colors">{{ module.titre }}</h3>
+                <h3 class="font-body-lg text-body-lg font-semibold text-on-surface mb-2 group-hover:text-primary transition-colors">{{ module.titre }}</h3>
                 <!-- Description -->
-                <p *ngIf="module.description" class="text-sm text-[#46464e] mb-3 line-clamp-3">{{ module.description }}</p>
+                <p *ngIf="module.description" class="font-body-sm text-body-sm text-on-surface-variant mb-3 line-clamp-3">{{ module.description }}</p>
                 <!-- Items -->
-                <ul class="text-sm text-[#46464e] space-y-1.5 mt-auto">
+                <ul class="font-body-sm text-body-sm text-on-surface-variant space-y-1.5 mt-auto">
                   <li *ngFor="let item of module.items" class="flex items-start gap-2">
-                    <span class="material-symbols-outlined text-[16px] text-[#77767f] mt-0.5 shrink-0" style="font-variation-settings: 'FILL' 0;">check</span>
+                    <span class="material-symbols-outlined text-[16px] text-outline mt-0.5 shrink-0" style="font-variation-settings: 'FILL' 0;">check</span>
                     {{ item }}
                   </li>
                 </ul>
@@ -119,14 +119,14 @@
 
           <!-- ===== POINTS CLÉS ===== -->
           <section *ngIf="formation.pointsCles?.length">
-            <h2 class="text-2xl md:text-[32px] leading-8 md:leading-10 tracking-[-0.01em] font-semibold text-[#000002] mb-6 border-b border-[#c7c5d0]/40 pb-3">Points clés du programme</h2>
+            <h2 class="font-headline-md text-headline-md md:text-[32px] md:leading-10 tracking-[-0.01em] text-on-surface mb-6 border-b border-outline-variant/40 pb-3">Points clés du programme</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div *ngFor="let point of formation.pointsCles" class="bg-white border border-[#c7c5d0] rounded-lg p-6 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all group">
-                <div class="w-12 h-12 rounded bg-[#f2f4f6] flex items-center justify-center mb-4 group-hover:bg-[#d4e3ff] transition-colors">
-                  <span class="material-symbols-outlined text-[#30609a] text-2xl" style="font-variation-settings: 'FILL' 0;">{{ point.icon }}</span>
+              <div *ngFor="let point of formation.pointsCles" class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all group">
+                <div class="w-12 h-12 rounded bg-surface-container-low flex items-center justify-center mb-4 group-hover:bg-primary-container transition-colors">
+                  <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 0;">{{ point.icon }}</span>
                 </div>
-                <h3 class="text-xl leading-7 font-semibold text-[#000002] mb-2">{{ point.titre }}</h3>
-                <p class="text-base leading-6 text-[#46464e]">{{ point.description }}</p>
+                <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">{{ point.titre }}</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant">{{ point.description }}</p>
               </div>
             </div>
           </section>
@@ -134,18 +134,18 @@
           <!-- ===== SECTIONS DYNAMIQUES ===== -->
           <ng-container *ngIf="formation.sections?.length">
             <section *ngFor="let section of formation.sections">
-              <h2 class="text-2xl md:text-[32px] leading-8 md:leading-10 tracking-[-0.01em] font-semibold text-[#000002] mb-6 border-b border-[#c7c5d0]/40 pb-3 flex items-center gap-2">
-                <span class="material-symbols-outlined text-[#30609a] text-[28px]" style="font-variation-settings: 'FILL' 0;">{{ section.icon }}</span>
+              <h2 class="font-headline-md text-headline-md md:text-[32px] md:leading-10 tracking-[-0.01em] text-on-surface mb-6 border-b border-outline-variant/40 pb-3 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 0;">{{ section.icon }}</span>
                 {{ section.titre }}
               </h2>
 
               <!-- TYPE: list -->
-              <div *ngIf="section.type === 'list'" class="bg-white border border-[#c7c5d0] rounded-lg overflow-hidden">
-                <ul class="divide-y divide-[#c7c5d0]/40">
+              <div *ngIf="section.type === 'list'" class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden">
+                <ul class="divide-y divide-outline-variant/40">
                   <li *ngFor="let it of section.items" class="p-4 flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                      <span *ngIf="it.icon" class="material-symbols-outlined text-[#77767f]" style="font-variation-settings: 'FILL' 0;">{{ it.icon }}</span>
-                      <span class="text-base text-[#191c1e]">{{ it.titre }}</span>
+                      <span *ngIf="it.icon" class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 0;">{{ it.icon }}</span>
+                      <span class="font-body-md text-body-md text-on-surface">{{ it.titre }}</span>
                     </div>
                   </li>
                 </ul>
@@ -153,38 +153,38 @@
 
               <!-- TYPE: cards -->
               <div *ngIf="section.type === 'cards'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div *ngFor="let it of section.items" class="bg-white border border-[#c7c5d0] border-l-4 rounded-r-lg p-5" [class.border-l-[#ba1a1a]]="it.icon === 'policy'" [class.border-l-[#000000]]="it.icon !== 'policy'">
-                  <h3 class="text-base font-semibold text-[#000002] mb-2 flex items-center gap-2">
-                    <span *ngIf="it.icon" class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;" [class.text-[#ba1a1a]]="it.icon === 'policy'" [class.text-[#000000]]="it.icon !== 'policy'">{{ it.icon }}</span>
+                <div *ngFor="let it of section.items" class="bg-surface-container-lowest border border-outline-variant border-l-4 rounded-r-lg p-5" [class.border-l-error]="it.icon === 'policy'" [class.border-l-on-surface]="it.icon !== 'policy'">
+                  <h3 class="font-body-md text-body-md font-semibold text-on-surface mb-2 flex items-center gap-2">
+                    <span *ngIf="it.icon" class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;" [class.text-error]="it.icon === 'policy'" [class.text-on-surface]="it.icon !== 'policy'">{{ it.icon }}</span>
                     {{ it.titre }}
                   </h3>
-                  <p class="text-sm text-[#46464e]" *ngIf="it.description">{{ it.description }}</p>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant" *ngIf="it.description">{{ it.description }}</p>
                 </div>
               </div>
 
               <!-- TYPE: grid (icône + texte) -->
               <div *ngIf="section.type === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div *ngFor="let it of section.items" class="flex items-center p-4 bg-[#f2f4f6] rounded border border-[#c7c5d0]">
-                  <span class="material-symbols-outlined text-[#30609a] text-[24px] mr-3" style="font-variation-settings: 'FILL' 0;">{{ it.icon }}</span>
-                  <span class="text-base text-[#191c1e]">{{ it.titre }}</span>
+                <div *ngFor="let it of section.items" class="flex items-center p-4 bg-surface-container-low rounded border border-outline-variant">
+                  <span class="material-symbols-outlined text-primary text-[24px] mr-3" style="font-variation-settings: 'FILL' 0;">{{ it.icon }}</span>
+                  <span class="font-body-md text-body-md text-on-surface">{{ it.titre }}</span>
                 </div>
               </div>
 
               <!-- TYPE: accordion -->
-              <div *ngIf="section.type === 'accordion'" class="flex flex-col border border-[#c7c5d0] rounded-lg bg-white overflow-hidden">
-                <details *ngFor="let it of section.items; let last = last" class="group" [class.border-b]="!last" [class.border-[#c7c5d0]/40]="!last" [attr.open]="it.badge === 'Semestre 1' ? '' : null">
-                  <summary class="flex justify-between items-center text-lg font-semibold text-[#000002] p-5 cursor-pointer hover:bg-[#f8fafc] transition-colors">
+              <div *ngIf="section.type === 'accordion'" class="flex flex-col border border-outline-variant rounded-lg bg-surface-container-lowest overflow-hidden">
+                <details *ngFor="let it of section.items; let last = last" class="group" [class.border-b]="!last" [class.border-outline-variant/40]="!last" [attr.open]="it.badge === 'Semestre 1' ? '' : null">
+                  <summary class="flex justify-between items-center font-body-lg text-body-lg font-semibold text-on-surface p-5 cursor-pointer hover:bg-surface transition-colors">
                     <div class="flex items-center gap-4">
-                      <span *ngIf="it.badge" class="bg-[#e0e3e5] text-[#191c1e] px-3 py-1 rounded text-xs tracking-[0.05em] font-semibold uppercase">{{ it.badge }}</span>
+                      <span *ngIf="it.badge" class="bg-surface-variant text-on-surface px-3 py-1 rounded text-xs tracking-[0.05em] font-semibold uppercase">{{ it.badge }}</span>
                       {{ it.titre }}
                     </div>
-                    <span class="material-symbols-outlined text-[#77767f] transition-transform group-open:rotate-180" style="font-variation-settings: 'FILL' 0;">expand_more</span>
+                    <span class="material-symbols-outlined text-outline transition-transform group-open:rotate-180" style="font-variation-settings: 'FILL' 0;">expand_more</span>
                   </summary>
-                  <div class="p-5 pt-0 text-sm text-[#46464e] bg-white">
+                  <div class="p-5 pt-0 font-body-sm text-body-sm text-on-surface-variant bg-surface-container-lowest">
                     <p *ngIf="it.description" class="mb-3">{{ it.description }}</p>
-                    <ul *ngIf="it.sousItems?.length" class="flex flex-col gap-3 ml-2 border-l-2 border-[#e0e3e5] pl-4">
+                    <ul *ngIf="it.sousItems?.length" class="flex flex-col gap-3 ml-2 border-l-2 border-surface-variant pl-4">
                       <li *ngFor="let si of it.sousItems; let i = index" class="relative">
-                        <div class="absolute w-2 h-2 rounded-full bg-[#30609a] -left-[21px] top-1.5 border-2 border-white" [class.bg-[#c7c5d0]]="i > 0"></div>
+                        <div class="absolute w-2 h-2 rounded-full bg-primary -left-[21px] top-1.5 border-2 border-white" [class.bg-outline-variant]="i > 0"></div>
                         {{ si }}
                       </li>
                     </ul>
@@ -195,26 +195,26 @@
           </ng-container>
 
           <!-- ===== MÉTHODE PÉDAGOGIQUE ===== -->
-          <section *ngIf="formation.methodePedagogique" class="bg-[#f2f4f6] border border-[#c7c5d0]/40 rounded-xl p-6 md:p-10">
+          <section *ngIf="formation.methodePedagogique" class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-6 md:p-10">
             <div class="flex flex-col md:flex-row gap-12 items-start">
               <div class="md:w-1/3">
-                <h2 class="text-2xl md:text-[32px] leading-8 md:leading-10 tracking-[-0.01em] font-semibold text-[#000002] mb-4">Méthode Pédagogique</h2>
-                <p class="text-base leading-6 text-[#46464e]">{{ formation.methodePedagogique.description }}</p>
+                <h2 class="font-headline-md text-headline-md md:text-[32px] md:leading-10 tracking-[-0.01em] text-on-surface mb-4">Méthode Pédagogique</h2>
+                <p class="font-body-md text-body-md text-on-surface-variant">{{ formation.methodePedagogique.description }}</p>
               </div>
               <div class="md:w-2/3">
                 <div *ngIf="formation.methodePedagogique.items.length" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <div *ngFor="let item of formation.methodePedagogique.items" class="flex items-center gap-3 p-3 bg-white border border-[#c7c5d0] rounded">
-                    <span class="material-symbols-outlined text-[#30609a] text-[20px] shrink-0" style="font-variation-settings: 'FILL' 0;">{{ methodeIcon(item) }}</span>
-                    <span class="text-sm leading-4 tracking-[0.01em] font-medium text-[#191c1e]">{{ item }}</span>
+                  <div *ngFor="let item of formation.methodePedagogique.items" class="flex items-center gap-3 p-3 bg-surface-container-lowest border border-outline-variant rounded">
+                    <span class="material-symbols-outlined text-primary text-[20px] shrink-0" style="font-variation-settings: 'FILL' 0;">{{ methodeIcon(item) }}</span>
+                    <span class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-on-surface">{{ item }}</span>
                   </div>
                 </div>
                 <div *ngIf="formation.methodePedagogique.sousSections?.length" class="space-y-6">
                   <div *ngFor="let ss of formation.methodePedagogique.sousSections" class="flex flex-col gap-3">
-                    <h4 class="text-sm leading-4 tracking-[0.01em] font-medium text-[#30609a] uppercase font-bold">{{ ss.titre }}</h4>
+                    <h4 class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-primary uppercase font-bold">{{ ss.titre }}</h4>
                     <ul class="flex flex-col gap-2">
                       <li *ngFor="let it of ss.items" class="flex items-start gap-2">
-                        <span class="material-symbols-outlined text-[#30609a] text-sm mt-1 shrink-0" style="font-variation-settings: 'FILL' 0;">check_circle</span>
-                        <span class="text-sm text-[#46464e]">{{ it }}</span>
+                        <span class="material-symbols-outlined text-primary font-body-sm text-body-sm mt-1 shrink-0" style="font-variation-settings: 'FILL' 0;">check_circle</span>
+                        <span class="font-body-sm text-body-sm text-on-surface-variant">{{ it }}</span>
                       </li>
                     </ul>
                   </div>
@@ -225,22 +225,22 @@
 
           <!-- ===== DÉBOUCHÉS ===== -->
           <section *ngIf="formation.debouches?.length">
-            <h2 class="text-2xl md:text-[32px] leading-8 md:leading-10 tracking-[-0.01em] font-semibold text-[#000002] mb-6 border-b border-[#c7c5d0]/40 pb-3">Débouchés</h2>
+            <h2 class="font-headline-md text-headline-md md:text-[32px] md:leading-10 tracking-[-0.01em] text-on-surface mb-6 border-b border-outline-variant/40 pb-3">Débouchés</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div *ngFor="let d of formation.debouches" class="bg-white border border-[#c7c5d0] rounded-lg p-5 flex items-start gap-3 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-shadow">
-                <span class="material-symbols-outlined text-[#30609a] mt-0.5 shrink-0" style="font-variation-settings: 'FILL' 0;">{{ d.icon }}</span>
+              <div *ngFor="let d of formation.debouches" class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 flex items-start gap-3 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-shadow">
+                <span class="material-symbols-outlined text-primary mt-0.5 shrink-0" style="font-variation-settings: 'FILL' 0;">{{ d.icon }}</span>
                 <div>
-                  <h4 class="text-sm leading-4 tracking-[0.01em] font-medium text-[#191c1e]">{{ d.titre }}</h4>
-                  <p class="text-sm text-[#46464e] mt-1">{{ d.description }}</p>
+                  <h4 class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-on-surface">{{ d.titre }}</h4>
+                  <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ d.description }}</p>
                 </div>
               </div>
             </div>
           </section>
 
           <!-- ===== CTA Full-width ===== -->
-          <div *ngIf="formation.ctaText && !formation.sidebar" class="text-center bg-white border border-[#c7c5d0] rounded-xl p-8">
-            <p class="text-sm text-[#46464e] mb-3">{{ formation.ctaText }}</p>
-            <button type="button" routerLink="/recrutement/sessions" class="bg-[#30609a] text-white px-6 py-2.5 rounded text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#254d7d] transition-colors border-t border-[#a5c8ff]/40">
+          <div *ngIf="formation.ctaText && !formation.sidebar" class="text-center bg-surface-container-lowest border border-outline-variant rounded-xl p-8">
+            <p class="font-body-sm text-body-sm text-on-surface-variant mb-3">{{ formation.ctaText }}</p>
+            <button type="button" routerLink="/recrutement/sessions" class="bg-secondary text-on-secondary px-6 py-2.5 rounded-lg font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium hover:opacity-90 transition-colors border-t border-secondary-fixed-dim/40">
               Postuler maintenant
             </button>
           </div>
@@ -248,77 +248,77 @@
 
         <!-- ===== SIDEBAR (optional) ===== -->
         <aside *ngIf="formation.sidebar" class="lg:w-[340px] shrink-0">
-          <div class="sticky top-24 bg-white border border-[#c7c5d0] rounded-xl p-6 space-y-5">
+          <div class="sticky top-24 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 space-y-5">
             <!-- Key data points -->
             <div class="flex flex-col gap-4">
               <div *ngIf="formation.sidebar.duree" class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-[#30609a] mt-0.5" style="font-variation-settings: 'FILL' 1;">schedule</span>
+                <span class="material-symbols-outlined text-primary mt-0.5" style="font-variation-settings: 'FILL' 1;">schedule</span>
                 <div>
-                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-[#46464e] uppercase">Durée</div>
-                  <div class="text-base text-[#191c1e] font-medium">{{ formation.sidebar.duree }}</div>
+                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Durée</div>
+                  <div class="font-body-md text-body-md text-on-surface font-medium">{{ formation.sidebar.duree }}</div>
                 </div>
               </div>
               <div *ngIf="formation.sidebar.tarif" class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-[#30609a] mt-0.5" style="font-variation-settings: 'FILL' 1;">euro_symbol</span>
+                <span class="material-symbols-outlined text-primary mt-0.5" style="font-variation-settings: 'FILL' 1;">euro_symbol</span>
                 <div>
-                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-[#46464e] uppercase">Frais de scolarité</div>
-                  <div class="text-base text-[#191c1e] font-medium">{{ formation.sidebar.tarif }}</div>
+                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Frais de scolarité</div>
+                  <div class="font-body-md text-body-md text-on-surface font-medium">{{ formation.sidebar.tarif }}</div>
                 </div>
               </div>
               <div *ngIf="formation.sidebar.prochaineRentree" class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-[#30609a] mt-0.5" style="font-variation-settings: 'FILL' 1;">event</span>
+                <span class="material-symbols-outlined text-primary mt-0.5" style="font-variation-settings: 'FILL' 1;">event</span>
                 <div>
-                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-[#46464e] uppercase">Prochaine Rentrée</div>
-                  <div class="text-base text-[#191c1e] font-medium">{{ formation.sidebar.prochaineRentree }}</div>
+                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Prochaine Rentrée</div>
+                  <div class="font-body-md text-body-md text-on-surface font-medium">{{ formation.sidebar.prochaineRentree }}</div>
                 </div>
               </div>
               <div *ngIf="formation.sidebar.lieu" class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-[#30609a] mt-0.5" style="font-variation-settings: 'FILL' 1;">location_on</span>
+                <span class="material-symbols-outlined text-primary mt-0.5" style="font-variation-settings: 'FILL' 1;">location_on</span>
                 <div>
-                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-[#46464e] uppercase">Lieu</div>
-                  <div class="text-base text-[#191c1e] font-medium">{{ formation.sidebar.lieu }}</div>
+                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Lieu</div>
+                  <div class="font-body-md text-body-md text-on-surface font-medium">{{ formation.sidebar.lieu }}</div>
                 </div>
               </div>
               <div *ngIf="formation.sidebar.langue" class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-[#30609a] mt-0.5" style="font-variation-settings: 'FILL' 1;">translate</span>
+                <span class="material-symbols-outlined text-primary mt-0.5" style="font-variation-settings: 'FILL' 1;">translate</span>
                 <div>
-                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-[#46464e] uppercase">Langue</div>
-                  <div class="text-base text-[#191c1e] font-medium">{{ formation.sidebar.langue }}</div>
+                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Langue</div>
+                  <div class="font-body-md text-body-md text-on-surface font-medium">{{ formation.sidebar.langue }}</div>
                 </div>
               </div>
               <div *ngIf="formation.sidebar.format" class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-[#30609a] mt-0.5" style="font-variation-settings: 'FILL' 1;">school</span>
+                <span class="material-symbols-outlined text-primary mt-0.5" style="font-variation-settings: 'FILL' 1;">school</span>
                 <div>
-                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-[#46464e] uppercase">Format</div>
-                  <div class="text-base text-[#191c1e] font-medium">{{ formation.sidebar.format }}</div>
+                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Format</div>
+                  <div class="font-body-md text-body-md text-on-surface font-medium">{{ formation.sidebar.format }}</div>
                 </div>
               </div>
               <div *ngIf="formation.sidebar.certificat" class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-[#30609a] mt-0.5" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+                <span class="material-symbols-outlined text-primary mt-0.5" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
                 <div>
-                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-[#46464e] uppercase">Certification</div>
-                  <div class="text-base text-[#191c1e] font-medium">{{ formation.sidebar.certificat }}</div>
+                  <div class="text-[12px] leading-4 tracking-[0.05em] font-semibold text-on-surface-variant uppercase">Certification</div>
+                  <div class="font-body-md text-body-md text-on-surface font-medium">{{ formation.sidebar.certificat }}</div>
                 </div>
               </div>
             </div>
 
-            <hr class="border-[#c7c5d0]/40">
+            <hr class="border-outline-variant/40">
 
             <!-- Actions -->
             <div class="flex flex-col gap-3">
-              <button *ngIf="formation.sidebar.boutonTexte" type="button" routerLink="/recrutement/sessions" class="w-full bg-[#30609a] text-white px-4 py-3 rounded text-sm leading-4 tracking-[0.01em] font-medium hover:bg-[#254d7d] transition-colors border-t border-[#a5c8ff]/40 flex items-center justify-center gap-2">
+              <button *ngIf="formation.sidebar.boutonTexte" type="button" routerLink="/recrutement/sessions" class="w-full bg-secondary text-on-secondary px-4 py-3 rounded-lg font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium hover:opacity-90 transition-colors border-t border-secondary-fixed-dim/40 flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">how_to_reg</span>
                 {{ formation.sidebar.boutonTexte }}
               </button>
               <!-- Aucune brochure n'est encore générée côté serveur : le bouton
                    l'annonce honnêtement au lieu d'ouvrir une boîte de dialogue. -->
-              <button *ngIf="formation.sidebar.brochure" type="button" disabled title="Brochure PDF à venir" class="w-full bg-white text-[#77767f] border border-[#c7c5d0] px-4 py-3 rounded text-sm leading-4 tracking-[0.01em] font-medium flex items-center justify-center gap-2 cursor-not-allowed opacity-70">
+              <button *ngIf="formation.sidebar.brochure" type="button" disabled title="Brochure PDF à venir" class="w-full bg-surface-container-lowest text-outline border border-outline-variant px-4 py-3 rounded-lg font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium flex items-center justify-center gap-2 cursor-not-allowed opacity-70">
                 <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">download</span>
                 Brochure (PDF) — bientôt
               </button>
             </div>
 
-            <div *ngIf="formation.sidebar.dateLimite" class="text-center text-sm text-[#46464e] flex items-center justify-center gap-1">
+            <div *ngIf="formation.sidebar.dateLimite" class="text-center font-body-sm text-body-sm text-on-surface-variant flex items-center justify-center gap-1">
               <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 0;">info</span>
               Date limite de candidature : {{ formation.sidebar.dateLimite }}
             </div>
@@ -331,11 +331,11 @@
   <!-- ========== NOT FOUND TEMPLATE ========== -->
   <ng-template #notFoundTpl>
     <main class="flex-grow w-full flex items-center justify-center py-20">
-      <div class="text-center text-[#77767f]">
+      <div class="text-center text-outline">
         <span class="material-symbols-outlined text-5xl block mb-3" style="font-variation-settings: 'FILL' 0;">search_off</span>
-        <p class="text-lg font-medium">Formation non trouvée</p>
-        <p class="text-sm mt-1">La formation que vous recherchez n'existe pas ou a été retirée.</p>
-        <a routerLink="/recrutement/catalogue" class="inline-block mt-4 text-[#30609a] text-sm font-medium hover:underline">
+        <p class="font-body-lg text-body-lg font-medium">Formation non trouvée</p>
+        <p class="font-body-sm text-body-sm mt-1">La formation que vous recherchez n'existe pas ou a été retirée.</p>
+        <a routerLink="/recrutement/catalogue" class="inline-block mt-4 text-primary font-body-sm text-body-sm font-medium hover:underline">
           ← Retour au catalogue
         </a>
       </div>

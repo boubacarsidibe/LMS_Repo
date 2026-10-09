@@ -23,7 +23,7 @@
       (openChange)="exportModalOpen = $event"
       (exporter)="exporter($event)">
     </app-export-columns-modal>
-    <button type="button" title="Nouvelle Session" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-secondary px-4 font-label-md text-label-md text-on-secondary transition-colors hover:bg-secondary/90" (click)="nouvelleSession()">
+    <button type="button" title="Nouvelle Session" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-secondary px-4 font-label-md text-label-md text-on-secondary transition-colors hover:opacity-90" (click)="nouvelleSession()">
       <span class="material-symbols-outlined text-[18px]">add</span>
       Nouvelle session
     </button>
@@ -96,7 +96,7 @@
       </p>
     </div>
     <div class="flex flex-wrap items-center gap-2 shrink-0">
-      <button type="button" (click)="modifierSession(sessionDetail)" class="inline-flex items-center justify-center gap-2 h-10 px-4 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">edit</span>Modifier</button>
+      <button type="button" (click)="modifierSession(sessionDetail)" class="inline-flex items-center justify-center gap-2 h-10 px-4 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">edit</span>Modifier</button>
       <button type="button" (click)="supprimer(sessionDetail)" class="inline-flex items-center justify-center gap-2 h-10 px-4 bg-error text-on-primary rounded-lg hover:bg-error/90 transition-colors shadow-sm font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">delete</span>Supprimer</button>
     </div>
   </div>

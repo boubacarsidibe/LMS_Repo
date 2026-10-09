@@ -26,7 +26,7 @@ import { MessagerieService } from '../../services/messagerie.service';
 
       <ng-container *ngIf="!chargement && conversation">
         <header class="border-b border-outline-variant pb-4">
-          <h1 class="font-display text-display text-on-surface leading-tight">{{ conversation.autrePersonneNom }}</h1>
+          <h1 class="font-display text-display text-on-surface leading-none -ml-1">{{ conversation.autrePersonneNom }}</h1>
         </header>
 
         <ul class="space-y-stack-md">

@@ -37,7 +37,7 @@
     </div>
     <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">
       <div class="flex items-center gap-2 text-on-surface-variant">
-        <span class="material-symbols-outlined text-success">verified</span>
+        <span class="material-symbols-outlined text-success-strong">verified</span>
         <span class="font-label-sm text-label-sm uppercase tracking-wider">Accréditées</span>
       </div>
       <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">{{ compteAccreditees }}</p>
@@ -79,8 +79,8 @@
             [ngClass]="{
               'bg-surface-container text-on-surface-variant': d.statut === 'SOUMISE',
               'bg-secondary-container text-on-secondary-container': d.statut === 'EN_COURS_EVALUATION',
-              'bg-success/15 text-success': d.statut === 'ACCREDITE',
-              'bg-warning/15 text-warning': d.statut === 'ACCREDITE_SOUS_RESERVE',
+              'bg-success/15 text-success-strong': d.statut === 'ACCREDITE',
+              'bg-warning/15 text-warning-strong': d.statut === 'ACCREDITE_SOUS_RESERVE',
               'bg-error-container text-on-error-container': d.statut === 'REJETE'
             }"
           >
@@ -108,8 +108,8 @@
             [ngClass]="{
               'bg-surface-container text-on-surface-variant': selection.statut === 'SOUMISE',
               'bg-secondary-container text-on-secondary-container': selection.statut === 'EN_COURS_EVALUATION',
-              'bg-success/15 text-success': selection.statut === 'ACCREDITE',
-              'bg-warning/15 text-warning': selection.statut === 'ACCREDITE_SOUS_RESERVE',
+              'bg-success/15 text-success-strong': selection.statut === 'ACCREDITE',
+              'bg-warning/15 text-warning-strong': selection.statut === 'ACCREDITE_SOUS_RESERVE',
               'bg-error-container text-on-error-container': selection.statut === 'REJETE'
             }"
           >
@@ -166,14 +166,14 @@
           <div class="flex items-center justify-between gap-2">
             <h3 class="font-label-md text-label-md text-on-surface">Pièces du dossier</h3>
             <span class="font-label-sm text-label-sm"
-                  [ngClass]="typesRequisManquants.length === 0 ? 'text-success' : 'text-error'">
+                  [ngClass]="typesRequisManquants.length === 0 ? 'text-success-strong' : 'text-error'">
               {{ typesRequisManquants.length === 0 ? 'Requis : complet' : typesRequisManquants.length + ' requise(s) manquante(s)' }}
             </span>
           </div>
           <ul class="mt-2 divide-y divide-outline-variant/50 border border-outline-variant rounded-lg overflow-hidden">
             <li *ngFor="let type of typesRequis" class="flex items-center gap-2 p-2.5 font-body-sm text-body-sm">
               <span class="material-symbols-outlined text-[18px] shrink-0"
-                    [class.text-success]="pieceDeType(type)" [class.text-outline]="!pieceDeType(type)">
+                    [class.text-success-strong]="pieceDeType(type)" [class.text-outline]="!pieceDeType(type)">
                 {{ pieceDeType(type) ? 'check_circle' : 'radio_button_unchecked' }}
               </span>
               <span class="flex-1 min-w-0 truncate text-on-surface">
@@ -190,7 +190,7 @@
           <ul class="divide-y divide-outline-variant/50 border border-outline-variant rounded-lg overflow-hidden">
             <li *ngFor="let type of typesRecommandes" class="flex items-center gap-2 p-2.5 font-body-sm text-body-sm">
               <span class="material-symbols-outlined text-[18px] shrink-0"
-                    [class.text-success]="pieceDeType(type)" [class.text-outline]="!pieceDeType(type)">
+                    [class.text-success-strong]="pieceDeType(type)" [class.text-outline]="!pieceDeType(type)">
                 {{ pieceDeType(type) ? 'check_circle' : 'radio_button_unchecked' }}
               </span>
               <span class="flex-1 min-w-0 truncate text-on-surface">
@@ -242,7 +242,7 @@
               <div class="flex items-center justify-between gap-2">
                 <p class="font-label-sm text-label-sm text-primary">{{ s.nom }}</p>
                 <span class="font-label-sm text-label-sm"
-                      [ngClass]="s.jugees === s.total ? 'text-success' : 'text-on-surface-variant'">
+                      [ngClass]="s.jugees === s.total ? 'text-success-strong' : 'text-on-surface-variant'">
                   {{ s.jugees }} / {{ s.total }} évalué(s)
                 </span>
               </div>
@@ -260,7 +260,7 @@
                     (click)="evaluerCritere(c.id, a)"
                     class="px-3 py-1.5 rounded-full font-label-sm text-label-sm border transition-colors"
                     [ngClass]="appreciationDe(c.id) === a
-                      ? (a === 'CONFORME' ? 'bg-success/15 border-success text-success'
+                      ? (a === 'CONFORME' ? 'bg-success/15 border-success text-success-strong'
                          : a === 'NON_CONFORME' ? 'bg-error-container border-error text-on-error-container'
                          : 'bg-surface-container border-outline text-on-surface-variant')
                       : 'border-outline-variant text-on-surface-variant hover:border-secondary'"
@@ -293,7 +293,7 @@
                   <span class="font-label-sm text-label-sm text-on-surface">
                     {{ a.evaluateurNom }}<span *ngIf="estMonAvis(a)" class="text-on-surface-variant"> (vous)</span>
                   </span>
-                  <span class="font-label-sm text-label-sm" [ngClass]="a.avis === 'FAVORABLE' ? 'text-success' : 'text-error'">
+                  <span class="font-label-sm text-label-sm" [ngClass]="a.avis === 'FAVORABLE' ? 'text-success-strong' : 'text-error'">
                     {{ libellesAvis[a.avis] }}
                   </span>
                 </div>
@@ -348,7 +348,7 @@
                 Accréditer
               </button>
               <button type="button" (click)="ouvrirDecision('ACCREDITE_SOUS_RESERVE')" [disabled]="selection.avis.length === 0"
-                      class="px-4 py-2 rounded-lg bg-warning/20 text-warning border border-warning/50 font-label-md text-label-md hover:bg-warning/30 transition-colors disabled:opacity-50">
+                      class="px-4 py-2 rounded-lg bg-warning/20 text-warning-strong border border-warning/50 font-label-md text-label-md hover:bg-warning/30 transition-colors disabled:opacity-50">
                 Accréditer sous réserve
               </button>
               <button type="button" (click)="ouvrirDecision('REJETE')" [disabled]="selection.avis.length === 0"
@@ -409,7 +409,7 @@
         <div *ngIf="selection.statut === 'ACCREDITE' || selection.statut === 'ACCREDITE_SOUS_RESERVE' || selection.statut === 'REJETE'"
              class="pt-3 border-t border-outline-variant space-y-2">
           <p class="font-label-md text-label-md"
-             [ngClass]="selection.statut === 'REJETE' ? 'text-error' : selection.statut === 'ACCREDITE_SOUS_RESERVE' ? 'text-warning' : 'text-success'">
+             [ngClass]="selection.statut === 'REJETE' ? 'text-error' : selection.statut === 'ACCREDITE_SOUS_RESERVE' ? 'text-warning-strong' : 'text-success-strong'">
             {{ libellesStatut[selection.statut] }}
             <span class="font-body-sm text-body-sm text-on-surface-variant">
               le {{ selection.dateDecision | date: 'd MMM y' }}
@@ -437,7 +437,7 @@
             <ul class="mt-1 space-y-1">
               <li *ngFor="let a of selection.avis" class="font-body-sm text-body-sm text-on-surface">
                 {{ a.evaluateurNom }} —
-                <span [ngClass]="a.avis === 'FAVORABLE' ? 'text-success' : 'text-error'">{{ libellesAvis[a.avis] }}</span>
+                <span [ngClass]="a.avis === 'FAVORABLE' ? 'text-success-strong' : 'text-error'">{{ libellesAvis[a.avis] }}</span>
                 <span *ngIf="a.commentaire" class="text-on-surface-variant"> · {{ a.commentaire }}</span>
               </li>
             </ul>

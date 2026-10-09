@@ -25,7 +25,7 @@ import { AlumniService } from '../../services/alumni.service';
 
       <ng-container *ngIf="!chargement && sujet">
         <header class="border-b border-outline-variant pb-4">
-          <h1 class="font-display text-display text-on-surface leading-tight">{{ sujet.titre }}</h1>
+          <h1 class="font-display text-display text-on-surface leading-none -ml-1">{{ sujet.titre }}</h1>
           <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
             Ouvert par {{ sujet.auteur }} · {{ sujet.dateCreation | date: 'd MMMM y' }}
           </p>

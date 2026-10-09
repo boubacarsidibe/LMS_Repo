@@ -48,7 +48,7 @@ interface SectionReferentiel {
           <div class="flex flex-wrap gap-x-6 gap-y-1 font-body-sm text-body-sm text-on-surface-variant">
             <span><strong class="text-on-surface tabular-nums">{{ criteres.length }}</strong> conditions</span>
             <span><strong class="text-on-surface tabular-nums">{{ sections.length }}</strong> sections</span>
-            <span><strong class="text-success tabular-nums">{{ nombreActifs }}</strong> actives</span>
+            <span><strong class="text-success-strong tabular-nums">{{ nombreActifs }}</strong> actives</span>
             <span *ngIf="nombreActifs < criteres.length">
               <strong class="text-on-surface-variant tabular-nums">{{ criteres.length - nombreActifs }}</strong> désactivées
             </span>
@@ -140,7 +140,7 @@ interface SectionReferentiel {
                 <div class="flex items-start gap-3">
                   <span
                     *ngIf="c.code"
-                    class="shrink-0 mt-0.5 px-2 py-0.5 rounded-md bg-secondary-container text-on-secondary-container font-label-sm text-label-sm tabular-nums"
+                    class="shrink-0 mt-0.5 px-2 py-0.5 rounded-lg bg-secondary-container text-on-secondary-container font-label-sm text-label-sm tabular-nums"
                   >{{ c.code }}</span>
                   <p class="flex-1 font-label-md text-label-md text-on-surface leading-snug">{{ c.libelle }}</p>
                   <div class="flex items-center gap-1 shrink-0">
@@ -150,7 +150,7 @@ interface SectionReferentiel {
                       class="p-2 rounded-full transition-colors"
                       [ngClass]="c.actif
                         ? 'text-on-surface-variant hover:bg-surface-container'
-                        : 'text-success hover:bg-success/10'"
+                        : 'text-success-strong hover:bg-success/10'"
                       [title]="c.actif ? 'Désactiver' : 'Réactiver'"
                       [attr.aria-label]="c.actif ? 'Désactiver' : 'Réactiver'"
                     >
@@ -173,7 +173,7 @@ interface SectionReferentiel {
                 <div class="flex items-center gap-2 pl-0.5">
                   <span
                     class="px-2 py-0.5 rounded-full font-label-sm text-label-sm"
-                    [ngClass]="c.actif ? 'bg-success/15 text-success' : 'bg-surface-container text-on-surface-variant'"
+                    [ngClass]="c.actif ? 'bg-success/15 text-success-strong' : 'bg-surface-container text-on-surface-variant'"
                   >{{ c.actif ? 'Active' : 'Désactivée' }}</span>
                   <span *ngIf="!c.actif" class="font-body-sm text-body-sm text-on-surface-variant">
                     absente de la grille des nouveaux dossiers

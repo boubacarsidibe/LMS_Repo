@@ -7,7 +7,7 @@
         <span class="w-8 h-[1px] bg-secondary"></span>
         Certification
       </div>
-      <h1 class="font-display text-display text-on-surface leading-tight">Certificats</h1>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Certificats</h1>
       <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
         {{ isFormateurRole ? 'Consultez les certificats délivrés par l’institut aux étudiants.' : 'Retrouvez et téléchargez vos certificats de formation.' }}
       </p>
@@ -31,7 +31,7 @@
         <p class="text-body-sm text-on-surface-variant mb-1">Délivré le {{ c.dateEmission | date:'dd/MM/yyyy' }}</p>
         <p class="text-label-sm text-outline font-mono">{{ c.codeCertificat || c.reference }}</p>
       </div>
-      <button [disabled]="telechargementEnCoursId === c.id" (click)="telecharger(c)" class="mt-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+      <button [disabled]="telechargementEnCoursId === c.id" (click)="telecharger(c)" class="mt-4 flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
         <span class="material-symbols-outlined text-[18px]">download</span>
         {{ telechargementEnCoursId === c.id ? 'Génération…' : 'Télécharger le PDF' }}
       </button>

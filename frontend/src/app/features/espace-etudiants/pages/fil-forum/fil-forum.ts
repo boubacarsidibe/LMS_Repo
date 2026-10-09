@@ -25,7 +25,7 @@ import { CommunicationService, Mentionnable } from '../../services/communication
 
       <ng-container *ngIf="!chargement && sujet">
         <header class="border-b border-outline-variant pb-4">
-          <h1 class="font-display text-display text-on-surface leading-tight">{{ sujet.titre }}</h1>
+          <h1 class="font-display text-display text-on-surface leading-none -ml-1">{{ sujet.titre }}</h1>
           <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
             {{ sujet.coursTitre || 'Salon général' }} · ouvert par {{ sujet.auteur }} ·
             {{ sujet.dateCreation | date: 'd MMMM y' }}
@@ -68,7 +68,7 @@ import { CommunicationService, Mentionnable } from '../../services/communication
             </p>
             <button *ngIf="m.pieceJointeNom" type="button" (click)="telechargerPieceJointe(m)"
                     [disabled]="telechargementEnCoursId === m.id"
-                    class="mt-3 flex items-center gap-2 px-3 py-2 bg-surface-container rounded-lg border border-outline-variant/50 hover:bg-surface-container-high transition-colors text-left disabled:opacity-60">
+                    class="mt-3 flex items-center gap-2 px-3 py-2 bg-surface-container-lowest rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors text-left disabled:opacity-60">
               <span class="material-symbols-outlined text-[20px] text-secondary">attach_file</span>
               <span class="font-label-sm text-label-sm text-on-surface truncate max-w-[220px]">{{ m.pieceJointeNom }}</span>
               <span class="material-symbols-outlined text-[18px] text-outline ml-1">{{ telechargementEnCoursId === m.id ? 'hourglass_empty' : 'download' }}</span>

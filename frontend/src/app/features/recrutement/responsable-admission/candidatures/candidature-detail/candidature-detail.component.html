@@ -13,14 +13,14 @@
 <div *ngIf="!loading && errorMessage" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
   <span class="material-symbols-outlined text-4xl text-outline mb-2 block">error_outline</span>
   <p class="font-body-md text-body-md text-on-surface-variant">{{ errorMessage }}</p>
-  <button type="button" (click)="retour()" class="mt-4 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm">Retour à la liste</button>
+  <button type="button" (click)="retour()" class="mt-4 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors">Retour à la liste</button>
 </div>
 
 <ng-container *ngIf="!loading && candidature as sel">
   <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-stack-lg">
     <div>
       <span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Dossier</span>
-      <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">{{ sel.candidatPrenom }} {{ sel.candidatNom }}</h1>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">{{ sel.candidatPrenom }} {{ sel.candidatNom }}</h1>
       <p class="font-body-md text-body-md text-on-surface-variant mt-1">{{ sel.numeroDossier }} — {{ sel.candidatEmail }}</p>
     </div>
     <button type="button" (click)="retour()" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors shadow-sm shrink-0" title="Retour à la liste" aria-label="Retour à la liste">
@@ -42,11 +42,11 @@
         <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 relative z-10"
              [ngClass]="item.erreur ? 'bg-error text-white'
                         : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
-          <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
+          <span *ngIf="item.erreur" class="material-symbols-outlined font-body-sm text-body-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
           <ng-container *ngIf="!item.erreur">
-            <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;">check</span>
+            <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined font-body-sm text-body-sm" style="font-variation-settings:'FILL' 0;">check</span>
             <span *ngIf="item.pending" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
-            <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+            <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-surface-container-lowest animate-pulse"></span>
           
   <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
     <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
@@ -64,7 +64,7 @@
           <h4 class="font-label-md text-label-md font-bold" [class.text-error]="item.erreur" [class.text-on-surface]="!item.erreur">{{ item.label }}</h4>
           <p *ngIf="item.desc" class="font-body-sm text-body-sm text-on-surface-variant">{{ item.desc }}</p>
           <ng-container *ngIf="i === 2 && item.active">
-            <p *ngIf="paiementEnAttente" class="font-body-sm text-body-sm text-[#b7791f] mt-1">Paiement enregistré par le candidat, en attente de confirmation.</p>
+            <p *ngIf="paiementEnAttente" class="font-body-sm text-body-sm text-warning-strong mt-1">Paiement enregistré par le candidat, en attente de confirmation.</p>
             <p *ngIf="paiementEchoue" class="font-body-sm text-body-sm text-error mt-1">La précédente tentative de paiement du candidat n'a pas abouti.</p>
             <p *ngIf="!paiementEnAttente && !paiementEchoue" class="font-body-sm text-body-sm text-on-surface-variant mt-1">En attente du règlement des frais de dossier par le candidat.</p>
           
@@ -107,7 +107,7 @@
         <div *ngFor="let p of sel.piecesJustificatives" class="py-3 border-b border-outline-variant last:border-0 text-body-sm">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="text-on-surface">{{ p.typeDocument }}<span *ngIf="p.moyenneDeclaree !== null" class="text-on-surface-variant"> — Moyenne déclarée : {{ p.moyenneDeclaree }}/20</span></span>
-            <span class="px-2 py-1 rounded-full text-label-sm" [ngClass]="p.statutVerification === 'CONFORME' ? 'bg-emerald-100 text-emerald-700' : (p.statutVerification === 'A_REMPLACER' ? 'bg-error-container text-on-error-container' : 'bg-amber-100 text-amber-800')">{{ libelleVerificationPiece(p) }}</span>
+            <span class="px-2 py-1 rounded-full text-label-sm" [ngClass]="p.statutVerification === 'CONFORME' ? 'bg-success/15 text-success-strong' : (p.statutVerification === 'A_REMPLACER' ? 'bg-error-container text-on-error-container' : 'bg-warning/15 text-warning-strong')">{{ libelleVerificationPiece(p) }}</span>
           </div>
           <p *ngIf="p.motifNonConformite" class="mt-2 text-error">Motif communiqué au candidat : {{ p.motifNonConformite }}</p>
           <div class="mt-2 flex items-center justify-end gap-2">
@@ -163,7 +163,7 @@
       <span *ngIf="actionSuivante(sel) && sel.statut === 'SOUMIS' && dossierVide(sel)" class="ml-auto text-body-sm text-error flex items-center gap-1" title="Aucune pièce jointe : la présélection est bloquée tant que le candidat n'a pas déposé son dossier.">
         <span class="material-symbols-outlined text-[18px]">error</span> Dossier vide — présélection impossible
       </span>
-      <button *ngIf="actionSuivante(sel) && !(sel.statut === 'SOUMIS' && dossierVide(sel))" type="button" [disabled]="actionEnCours" (click)="actionSuivante(sel)!.action()" class="ml-auto px-4 py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg shadow-sm hover:bg-secondary/90 transition-colors flex items-center gap-2 disabled:opacity-60">
+      <button *ngIf="actionSuivante(sel) && !(sel.statut === 'SOUMIS' && dossierVide(sel))" type="button" [disabled]="actionEnCours" (click)="actionSuivante(sel)!.action()" class="ml-auto px-4 py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 disabled:opacity-60">
         <span class="material-symbols-outlined text-[18px]">how_to_reg</span> {{ actionSuivante(sel)!.libelle }}
       </button>
     </div>
@@ -171,7 +171,7 @@
 
   <div *ngIf="pieceARefuser" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
     <section role="dialog" aria-modal="true" aria-labelledby="titre-remplacement-piece" class="w-full max-w-lg rounded-xl bg-surface-container-lowest shadow-xl p-6">
-      <h2 id="titre-remplacement-piece" class="text-xl font-semibold text-on-surface">Demander le remplacement du document</h2>
+      <h2 id="titre-remplacement-piece" class="font-headline-sm text-headline-sm text-on-surface">Demander le remplacement du document</h2>
       <p class="mt-2 text-body-sm text-on-surface-variant">Le candidat recevra ce motif dans son espace et par notification.</p>
       <label class="block mt-5 font-label-md text-label-md text-on-surface" for="motif-remplacement-piece">Motif <span aria-hidden="true">*</span></label>
       <textarea id="motif-remplacement-piece" [(ngModel)]="motifNonConformite" maxlength="500" rows="4" class="mt-2 w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-on-surface outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Ex. Le document est illisible ou incomplet."></textarea>

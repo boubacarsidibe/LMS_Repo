@@ -5,7 +5,7 @@
         <span class="material-symbols-outlined text-[18px]">arrow_back</span>
         Retour au test
       </a>
-      <h1 class="mt-2 font-headline-lg text-headline-lg text-primary">{{ nomTest }}</h1>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1 mt-2">{{ nomTest }}</h1>
     </div>
     <div class="flex gap-2">
       <button type="button" (click)="annuler()" [disabled]="!modifie"
@@ -13,7 +13,7 @@
         Annuler
       </button>
       <button type="button" (click)="enregistrer()" [disabled]="saving || !modifie"
-        class="h-9 rounded-lg bg-secondary px-4 font-label-md text-on-secondary disabled:opacity-50">
+        class="h-9 rounded-lg bg-secondary px-4 font-label-md text-label-md text-on-secondary disabled:opacity-50">
         {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
       </button>
     </div>
@@ -50,11 +50,11 @@
       <tbody class="divide-y divide-outline-variant">
         <tr *ngFor="let ligne of affichees; index as i" class="hover:bg-surface-container-low">
           <td class="px-4 py-3 text-body-sm text-on-surface-variant">{{ i + 1 }}</td>
-          <td class="px-4 py-3 font-label-md text-on-surface">{{ ligne.candidat }}</td>
+          <td class="px-4 py-3 font-label-md text-label-md text-on-surface">{{ ligne.candidat }}</td>
           <td class="px-4 py-3 text-body-sm text-on-surface-variant">{{ ligne.numeroDossierAffiche }}</td>
           <td class="px-4 py-3">
             <input [(ngModel)]="ligne.noteObtenue" type="number" min="0" [max]="maximum" step="0.01"
-              class="h-9 w-28 rounded-md border border-outline-variant bg-surface px-2 text-on-surface focus:border-secondary focus:outline-none">
+              class="h-9 w-28 rounded-lg border border-outline-variant bg-surface px-2 text-on-surface focus:border-secondary focus:outline-none">
           </td>
         </tr>
         <tr *ngIf="affichees.length === 0">

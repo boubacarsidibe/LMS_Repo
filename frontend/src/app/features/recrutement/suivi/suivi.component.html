@@ -4,8 +4,8 @@
   <!-- ==================== LOADING ==================== -->
   <main *ngIf="loading" class="flex-grow flex justify-center py-20">
     <div class="flex items-center gap-3">
-      <div class="w-8 h-8 border-2 border-[#30609a] border-t-transparent rounded-full animate-spin"></div>
-      <span class="text-sm text-[#46464e]">Chargement de votre dossier...</span>
+      <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <span class="font-body-sm text-body-sm text-on-surface-variant">Chargement de votre dossier...</span>
     </div>
   </main>
 
@@ -13,8 +13,8 @@
   <main *ngIf="!loading && !candidature" class="flex-grow flex justify-center py-20 px-4">
     <div class="text-center">
       <span class="material-symbols-outlined text-6xl text-on-surface-variant/40" style="font-variation-settings:'FILL' 0;">inbox</span>
-      <p class="mt-4 text-lg text-on-surface-variant">Aucune candidature trouvée.</p>
-      <a routerLink="/recrutement/sessions" class="mt-4 inline-block bg-secondary text-white px-6 py-2 rounded text-sm font-medium hover:bg-secondary/90 transition-colors">Démarrer une candidature</a>
+      <p class="mt-4 font-body-lg text-body-lg text-on-surface-variant">Aucune candidature trouvée.</p>
+      <a routerLink="/recrutement/sessions" class="mt-4 inline-block bg-secondary text-on-secondary px-6 py-2 rounded-lg font-body-sm text-body-sm font-medium hover:opacity-90 transition-colors">Démarrer une candidature</a>
     </div>
   </main>
 
@@ -22,7 +22,7 @@
   <main *ngIf="!loading && candidature && isStatut(STATUT_SOUMIS, STATUT_PRESELECTION)" class="flex-grow flex justify-center py-10 px-4 md:px-10">
     <div class="w-full max-w-full space-y-8">
       <!-- HEADER avec Stepper -->
-      <section class="bg-white rounded-xl border border-outline-variant shadow-sm p-8 relative overflow-hidden">
+      <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-8 relative overflow-hidden">
         <div class="absolute top-0 right-0 w-64 h-64 opacity-5 pointer-events-none">
           <span class="material-symbols-outlined text-[160px]" style="font-variation-settings:'FILL' 0;">school</span>
         </div>
@@ -30,7 +30,7 @@
           <div class="flex flex-col gap-2">
             <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-label-sm w-fit">Candidature en cours</span>
             <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">Votre dossier est en cours d'évaluation.</h2>
-            <p class="text-lg text-on-surface-variant max-w-2xl">Félicitations pour avoir complété la première étape. Notre jury d'admission examine actuellement vos documents avec la plus grande attention.</p>
+            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Félicitations pour avoir complété la première étape. Notre jury d'admission examine actuellement vos documents avec la plus grande attention.</p>
           </div>
           <!-- Stepper : mêmes données que la Timeline détaillée plus bas (timelineItems), pour ne jamais diverger -->
           <div class="flex items-start justify-between w-full pt-4">
@@ -41,10 +41,10 @@
               <div class="w-6 h-6 rounded-full flex items-center justify-center z-10 shadow-sm"
                    [ngClass]="item.erreur ? 'bg-error text-white'
                               : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
-                <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
+                <span *ngIf="item.erreur" class="material-symbols-outlined font-body-sm text-body-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
                 <ng-container *ngIf="!item.erreur">
-                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;font-weight:700;">check</span>
-                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined font-body-sm text-body-sm" style="font-variation-settings:'FILL' 0;font-weight:700;">check</span>
+                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-surface-container-lowest animate-pulse"></span>
                   <span *ngIf="item.pending && !item.active" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
                 </ng-container>
               </div>
@@ -58,13 +58,13 @@
       </section>
 
       <!-- STATUT -->
-      <div class="bg-white border border-outline-variant rounded-xl p-8 flex gap-8 items-start hover:shadow-md transition-all">
-        <div class="w-16 h-16 bg-surface-container rounded-2xl flex items-center justify-center shrink-0">
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-8 flex gap-8 items-start hover:shadow-md transition-all">
+        <div class="w-16 h-16 bg-surface-container rounded-xl flex items-center justify-center shrink-0">
           <span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings:'FILL' 0;">task_alt</span>
         </div>
         <div class="space-y-4">
-          <h3 class="text-xl font-semibold text-on-surface">Examen en cours par le comité</h3>
-          <p class="text-base text-on-surface-variant leading-relaxed">Les membres de la commission académique d'INPG passent actuellement en revue votre parcours académique, vos expériences professionnelles ainsi que votre lettre de motivation. Ce processus garantit l'alignement de votre projet avec l'excellence de nos programmes.</p>
+          <h3 class="font-headline-sm text-headline-sm text-on-surface">Examen en cours par le comité</h3>
+          <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">Les membres de la commission académique d'INPG passent actuellement en revue votre parcours académique, vos expériences professionnelles ainsi que votre lettre de motivation. Ce processus garantit l'alignement de votre projet avec l'excellence de nos programmes.</p>
           <div class="bg-surface-container-low p-4 rounded-lg flex items-center gap-4">
             <span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">info</span>
             <p class="text-label-md text-on-surface-variant">N° Dossier : <span class="text-on-surface font-bold">{{ candidature.numeroDossier }}</span> · Temps moyen de réponse : <span class="text-on-surface font-bold">3 à 5 jours ouvrés</span></p>
@@ -73,16 +73,16 @@
       </div>
 
       <!-- PAIEMENT REQUIS : dossier validé, frais de dossier pas encore réglés -->
-      <div *ngIf="candidature.statut === STATUT_PRESELECTION && !paiementConfirme" class="bg-white border border-outline-variant rounded-xl p-8 flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between hover:shadow-md transition-all">
+      <div *ngIf="candidature.statut === STATUT_PRESELECTION && !paiementConfirme" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between hover:shadow-md transition-all">
         <div class="flex gap-6 items-start">
-          <div class="w-16 h-16 bg-secondary-container rounded-2xl flex items-center justify-center shrink-0">
+          <div class="w-16 h-16 bg-secondary-container rounded-xl flex items-center justify-center shrink-0">
             <span class="material-symbols-outlined text-on-secondary-container text-3xl" style="font-variation-settings:'FILL' 1;">payments</span>
           </div>
           <div class="space-y-2">
-            <h3 class="text-xl font-semibold text-on-surface">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface">
               {{ paiementEchoue ? "Le règlement précédent n'a pas abouti" : (paiementEnAttente ? 'Paiement en cours de confirmation' : 'Réglez les frais de dossier') }}
             </h3>
-            <p class="text-base text-on-surface-variant leading-relaxed max-w-xl">
+            <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed max-w-xl">
               <ng-container *ngIf="!paiementEnAttente && !paiementEchoue">Votre dossier a été validé et est en cours de présélection. Merci de régler les frais de dossier pour poursuivre votre parcours d'admission.</ng-container>
               <ng-container *ngIf="paiementEnAttente">Votre paiement a été enregistré ; le service admission le confirme dès réception. Vous serez notifié(e) dès sa validation.</ng-container>
               <ng-container *ngIf="paiementEchoue">La tentative précédente n'a pas pu être finalisée. Vous pouvez réessayer ci-dessous.</ng-container>
@@ -98,9 +98,9 @@
 
       <!-- GRILLE -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white border border-outline-variant rounded-xl p-6 h-full">
-          <h3 class="text-xl font-semibold text-on-surface mb-2">Documents requis</h3>
-          <p class="text-sm text-on-surface-variant mb-6">Suivez les pièces à fournir ou à remplacer. Un document déposé est contrôlé par le service admission avant validation.</p>
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-6 h-full">
+          <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Documents requis</h3>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mb-6">Suivez les pièces à fournir ou à remplacer. Un document déposé est contrôlé par le service admission avant validation.</p>
           <div class="space-y-3">
             <div *ngFor="let piece of checklistDocuments" class="p-3 bg-surface rounded-lg border border-outline-variant">
               <div class="flex items-center gap-3">
@@ -134,30 +134,30 @@
               </label>
             </div>
             <p *ngIf="ajoutPieceErreur" class="text-body-sm text-error mt-2">{{ ajoutPieceErreur }}</p>
-            <p *ngIf="ajoutPieceSucces" class="text-body-sm text-emerald-600 mt-2 flex items-center gap-1">
+            <p *ngIf="ajoutPieceSucces" class="text-body-sm text-success mt-2 flex items-center gap-1">
               <span class="material-symbols-outlined text-[16px]">check_circle</span> Document ajouté avec succès.
             </p>
           </div>
         </div>
-        <div class="bg-white border border-outline-variant rounded-xl p-6 h-full">
-          <h3 class="text-xl font-semibold text-on-surface mb-6">Timeline détaillée</h3>
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-6 h-full">
+          <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Timeline détaillée</h3>
           <ul class="space-y-5">
             <li *ngFor="let item of timelineItems; let i = index" class="flex gap-4 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
               <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 relative z-10"
                    [ngClass]="item.erreur ? 'bg-error text-white'
                               : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
-                <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
+                <span *ngIf="item.erreur" class="material-symbols-outlined font-body-sm text-body-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
                 <ng-container *ngIf="!item.erreur">
-                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;">check</span>
+                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined font-body-sm text-body-sm" style="font-variation-settings:'FILL' 0;">check</span>
                   <span *ngIf="item.pending" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
-                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-surface-container-lowest animate-pulse"></span>
                 </ng-container>
               </div>
               <div>
                 <h4 class="text-label-md font-bold" [class.text-error]="item.erreur" [class.text-on-surface]="!item.erreur">{{ item.label }}</h4>
                 <p *ngIf="item.desc" class="text-body-sm text-on-surface-variant">{{ item.desc }}</p>
                 <ng-container *ngIf="i === 2 && item.active">
-                  <p *ngIf="paiementEnAttente" class="text-body-sm text-[#b7791f] mt-1">Paiement enregistré, en attente de confirmation par l'admission.</p>
+                  <p *ngIf="paiementEnAttente" class="text-body-sm text-warning-strong mt-1">Paiement enregistré, en attente de confirmation par l'admission.</p>
                   <p *ngIf="paiementEchoue" class="text-body-sm text-error mt-1">La précédente tentative n'a pas abouti.</p>
                   <a [routerLink]="['/recrutement/candidature/paiement']" [queryParams]="{ candidatureId: candidature.id }"
                      class="inline-flex items-center gap-1.5 mt-2 text-label-sm font-semibold text-secondary hover:underline no-underline">
@@ -170,42 +170,42 @@
             </li>
           </ul>
         </div>
-        <div class="bg-white border border-outline-variant rounded-xl p-6 h-full">
-          <h3 class="text-xl font-semibold text-on-surface mb-6">Prochaines étapes</h3>
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-6 h-full">
+          <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Prochaines étapes</h3>
           <div class="space-y-6">
             <div><div class="flex items-center gap-4 mb-2"><div class="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center text-secondary"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 0;">quiz</span></div><h4 class="text-label-md font-bold">Test Académique</h4></div><p class="text-body-sm text-on-surface-variant ml-14">Test de 45 minutes portant sur le raisonnement logique et l'anglais des affaires.</p></div>
             <div><div class="flex items-center gap-4 mb-2"><div class="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center text-secondary"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 0;">groups</span></div><h4 class="text-label-md font-bold">Entretien d'Admission</h4></div><p class="text-body-sm text-on-surface-variant ml-14">Rencontre de 30 minutes avec un jury mixte pour évaluer votre projet.</p></div>
           </div>
         </div>
-        <div class="bg-white border border-outline-variant rounded-xl p-6 h-full">
-          <h3 class="text-xl font-semibold text-on-surface mb-6">Conseils pour la suite</h3>
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-6 h-full">
+          <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Conseils pour la suite</h3>
           <ul class="space-y-4">
-            <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary text-sm mt-0.5" style="font-variation-settings:'FILL' 0;">lightbulb</span><p class="text-body-sm text-on-surface-variant">Révisez les bases du raisonnement logique pour le test digital.</p></li>
-            <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary text-sm mt-0.5" style="font-variation-settings:'FILL' 0;">lightbulb</span><p class="text-body-sm text-on-surface-variant">Préparez une présentation courte de votre projet professionnel pour l'entretien.</p></li>
+            <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary font-body-sm text-body-sm mt-0.5" style="font-variation-settings:'FILL' 0;">lightbulb</span><p class="text-body-sm text-on-surface-variant">Révisez les bases du raisonnement logique pour le test digital.</p></li>
+            <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary font-body-sm text-body-sm mt-0.5" style="font-variation-settings:'FILL' 0;">lightbulb</span><p class="text-body-sm text-on-surface-variant">Préparez une présentation courte de votre projet professionnel pour l'entretien.</p></li>
           </ul>
         </div>
         <div class="bg-secondary p-6 rounded-xl text-on-secondary shadow-lg relative overflow-hidden group h-full">
           <div class="relative z-10 space-y-4">
-            <h4 class="text-xl font-semibold">Besoin d'aide ?</h4>
+            <h4 class="font-headline-sm text-headline-sm">Besoin d'aide ?</h4>
             <p class="text-body-sm opacity-90">Votre conseillère admission est disponible pour répondre à toutes vos questions concernant les prochaines étapes.</p>
             <div class="flex items-center gap-3 py-4">
               <div class="w-12 h-12 rounded-full border-2 border-white/20 bg-white/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 0;">person</span></div>
               <div><p class="text-label-md font-bold">{{ responsableAdmissions }}</p><p class="text-label-sm opacity-80">Responsable Admissions</p></div>
             </div>
-            <a href="mailto:contact@inpg.sn" class="w-full bg-white text-secondary py-3 rounded-lg text-label-md font-bold hover:bg-opacity-90 transition-all text-center block no-underline">Contacter le service</a>
+            <a href="mailto:contact@inpg.sn" class="w-full bg-surface-container-lowest text-secondary py-3 rounded-lg text-label-md font-bold hover:bg-opacity-90 transition-all text-center block no-underline">Contacter le service</a>
           </div>
           <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
         </div>
-        <div class="bg-white border border-outline-variant rounded-xl p-6 h-full">
-          <h3 class="text-xl font-semibold text-on-surface mb-6">Détails de votre formation</h3>
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-6 h-full">
+          <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Détails de votre formation</h3>
           <div class="space-y-4">
             <div class="flex items-center gap-4 p-3 bg-surface-container-low rounded-lg"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">school</span><div><p class="text-label-sm text-on-surface-variant">Programme</p><p class="text-label-md font-semibold text-on-surface">{{ candidature.sessionCandidatureLibelle || 'Formation INPG' }}</p></div></div>
             <div class="flex items-center gap-4 p-3 bg-surface-container-low rounded-lg"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">calendar_today</span><div><p class="text-label-sm text-on-surface-variant">Rentrée prévue</p><p class="text-label-md font-semibold text-on-surface">Prochaine session</p></div></div>
             <div class="flex items-center gap-4 p-3 bg-surface-container-low rounded-lg"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">location_on</span><div><p class="text-label-sm text-on-surface-variant">Campus</p><p class="text-label-md font-semibold text-on-surface">Campus principal</p></div></div>
           </div>
         </div>
-        <div class="bg-white border border-outline-variant rounded-xl p-6 h-full">
-          <h3 class="text-xl font-semibold text-on-surface mb-6">Questions fréquentes</h3>
+        <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-6 h-full">
+          <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Questions fréquentes</h3>
           <div class="space-y-4">
             <details class="group border border-outline-variant rounded-lg"><summary class="flex items-center justify-between p-4 cursor-pointer text-label-md font-semibold text-on-surface hover:text-secondary transition-colors">Quel est le délai de traitement ?<span class="material-symbols-outlined text-secondary group-open:rotate-180 transition-transform" style="font-variation-settings:'FILL' 0;">expand_more</span></summary><p class="px-4 pb-4 text-body-sm text-on-surface-variant">Le délai moyen de traitement est de 3 à 5 jours ouvrés après soumission complète du dossier.</p></details>
             <details class="group border border-outline-variant rounded-lg"><summary class="flex items-center justify-between p-4 cursor-pointer text-label-md font-semibold text-on-surface hover:text-secondary transition-colors">Comment se déroule l'entretien ?<span class="material-symbols-outlined text-secondary group-open:rotate-180 transition-transform" style="font-variation-settings:'FILL' 0;">expand_more</span></summary><p class="px-4 pb-4 text-body-sm text-on-surface-variant">L'entretien dure 30 minutes avec un jury mixte. Il porte sur votre parcours, votre projet professionnel et vos motivations.</p></details>
@@ -220,7 +220,7 @@
   <main *ngIf="!loading && candidature && isStatut(STATUT_REJETE)" class="flex-grow flex justify-center py-16 px-4 md:px-10">
     <div class="max-w-4xl w-full space-y-8">
       <!-- Header Section with Progress -->
-      <section class="bg-white rounded-xl border border-outline-variant shadow-sm p-8 relative overflow-hidden">
+      <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-8 relative overflow-hidden">
         <div class="absolute top-0 right-0 w-64 h-64 opacity-5 pointer-events-none">
           <span class="material-symbols-outlined text-[160px]" style="font-variation-settings:'FILL' 0;">school</span>
         </div>
@@ -228,7 +228,7 @@
           <div class="flex flex-col gap-2">
             <span class="bg-error-container text-on-error-container px-3 py-1 rounded-full text-label-sm w-fit font-bold">Test non concluant</span>
             <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">Résultats du Test Académique</h2>
-            <p class="text-lg text-on-surface-variant max-w-2xl">Malgré tout l'intérêt que nous portons à votre candidature pour le Bachelor in Strategic Management, nous regrettons de vous informer que vos résultats au test ne nous permettent pas de poursuivre le processus d'admission pour cette session.</p>
+            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Malgré tout l'intérêt que nous portons à votre candidature pour le Bachelor in Strategic Management, nous regrettons de vous informer que vos résultats au test ne nous permettent pas de poursuivre le processus d'admission pour cette session.</p>
           </div>
           <!-- Progress Stepper : mêmes données que la page principale (timelineItems) -->
           <div class="flex items-start justify-between w-full pt-6">
@@ -236,10 +236,10 @@
               <div class="w-6 h-6 rounded-full flex items-center justify-center z-10 shadow-sm"
                    [ngClass]="item.erreur ? 'bg-error text-white'
                               : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
-                <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">close</span>
+                <span *ngIf="item.erreur" class="material-symbols-outlined font-body-sm text-body-sm" style="font-variation-settings:'wght' 700;">close</span>
                 <ng-container *ngIf="!item.erreur">
-                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span>
-                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined font-body-sm text-body-sm" style="font-variation-settings:'wght' 700;">check</span>
+                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-surface-container-lowest animate-pulse"></span>
                   <span *ngIf="item.pending && !item.active" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
                 </ng-container>
               </div>
@@ -254,29 +254,29 @@
       <!-- Main Content Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-6">
-          <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6">
-            <h3 class="text-xl font-semibold text-on-surface mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">analytics</span>Bilan de l'évaluation</h3>
-            <p class="text-base text-on-surface-variant leading-relaxed mb-4">Nos standards d'admission sont conçus pour garantir que tous les étudiants possèdent les connaissances fondamentales nécessaires pour réussir dans notre cursus rigoureux.</p>
+          <div class="bg-surface-container-lowest border border-outline-variant shadow-sm rounded-xl p-6">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">analytics</span>Bilan de l'évaluation</h3>
+            <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed mb-4">Nos standards d'admission sont conçus pour garantir que tous les étudiants possèdent les connaissances fondamentales nécessaires pour réussir dans notre cursus rigoureux.</p>
             <div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-error mb-4">
-              <p class="text-sm text-on-surface-variant" *ngIf="aDesResultats; else scoreEnAttente">Score global : <strong class="text-on-surface">{{ noteGlobale }}</strong><span *ngIf="seuilScore !== null"><br><span class="italic opacity-80">Seuil requis pour cette session : {{ seuilScore }}</span></span></p>
-              <ng-template #scoreEnAttente><p class="text-sm text-on-surface-variant italic">Vos résultats ne sont pas encore publiés.</p></ng-template>
+              <p class="font-body-sm text-body-sm text-on-surface-variant" *ngIf="aDesResultats; else scoreEnAttente">Score global : <strong class="text-on-surface">{{ noteGlobale }}</strong><span *ngIf="seuilScore !== null"><br><span class="italic opacity-80">Seuil requis pour cette session : {{ seuilScore }}</span></span></p>
+              <ng-template #scoreEnAttente><p class="font-body-sm text-body-sm text-on-surface-variant italic">Vos résultats ne sont pas encore publiés.</p></ng-template>
             </div>
-            <p class="text-sm text-on-surface-variant">Bien que ce résultat soit défavorable, nous vous encourageons à considérer cela comme une pause momentanée dans votre parcours plutôt que comme une conclusion définitive.</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">Bien que ce résultat soit défavorable, nous vous encourageons à considérer cela comme une pause momentanée dans votre parcours plutôt que comme une conclusion définitive.</p>
           </div>
         </div>
         <div class="space-y-6">
-          <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6">
-            <h3 class="text-xl font-semibold text-on-surface mb-6">Prochaines opportunités</h3>
+          <div class="bg-surface-container-lowest border border-outline-variant shadow-sm rounded-xl p-6">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Prochaines opportunités</h3>
             <div class="space-y-6">
-              <div><div class="flex items-center gap-4 mb-2"><div class="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 0;">event_repeat</span></div><h4 class="text-label-md font-bold">Prochaine session d'admission</h4></div><p class="text-sm text-on-surface-variant ml-14">Vous êtes éligible pour vous représenter lors de la prochaine session de recrutement dans 6 mois.</p></div>
-              <div><div class="flex items-center gap-4 mb-2"><div class="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 0;">menu_book</span></div><h4 class="text-label-md font-bold">Programme Tremplin (4 semaines)</h4></div><p class="text-sm text-on-surface-variant ml-14">Découvrez notre cours intensif conçu pour combler l'écart dans les fondamentaux en management et analyse quantitative.</p></div>
+              <div><div class="flex items-center gap-4 mb-2"><div class="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 0;">event_repeat</span></div><h4 class="text-label-md font-bold">Prochaine session d'admission</h4></div><p class="font-body-sm text-body-sm text-on-surface-variant ml-14">Vous êtes éligible pour vous représenter lors de la prochaine session de recrutement dans 6 mois.</p></div>
+              <div><div class="flex items-center gap-4 mb-2"><div class="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 0;">menu_book</span></div><h4 class="text-label-md font-bold">Programme Tremplin (4 semaines)</h4></div><p class="font-body-sm text-body-sm text-on-surface-variant ml-14">Découvrez notre cours intensif conçu pour combler l'écart dans les fondamentaux en management et analyse quantitative.</p></div>
             </div>
           </div>
-          <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6">
-            <h3 class="text-xl font-semibold text-on-surface mb-6">Conseils pour la suite</h3>
+          <div class="bg-surface-container-lowest border border-outline-variant shadow-sm rounded-xl p-6">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Conseils pour la suite</h3>
             <ul class="space-y-4">
-              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary text-sm mt-0.5" style="font-variation-settings:'FILL' 0;">lightbulb</span><p class="text-sm text-on-surface-variant">Profitez de ce délai pour renforcer vos compétences fondamentales en théorie du management.</p></li>
-              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary text-sm mt-0.5" style="font-variation-settings:'FILL' 0;">lightbulb</span><p class="text-sm text-on-surface-variant">Pratiquez régulièrement des exercices d'analyse quantitative pour améliorer votre rapidité.</p></li>
+              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary font-body-sm text-body-sm mt-0.5" style="font-variation-settings:'FILL' 0;">lightbulb</span><p class="font-body-sm text-body-sm text-on-surface-variant">Profitez de ce délai pour renforcer vos compétences fondamentales en théorie du management.</p></li>
+              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary font-body-sm text-body-sm mt-0.5" style="font-variation-settings:'FILL' 0;">lightbulb</span><p class="font-body-sm text-body-sm text-on-surface-variant">Pratiquez régulièrement des exercices d'analyse quantitative pour améliorer votre rapidité.</p></li>
             </ul>
           </div>
         </div>
@@ -285,13 +285,13 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-secondary p-6 rounded-xl text-on-secondary shadow-sm relative overflow-hidden group h-full">
           <div class="relative z-10 space-y-4">
-            <h4 class="text-xl font-semibold">Besoin d'aide ?</h4>
-            <p class="text-sm opacity-90">Votre conseillère admission est disponible pour répondre à vos questions et discuter de vos options futures.</p>
+            <h4 class="font-headline-sm text-headline-sm">Besoin d'aide ?</h4>
+            <p class="font-body-sm text-body-sm opacity-90">Votre conseillère admission est disponible pour répondre à vos questions et discuter de vos options futures.</p>
             <div class="flex items-center gap-3 py-4">
               <div class="w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 bg-white/10"><span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 0;">person</span></div>
               <div><p class="text-label-md font-bold">{{ responsableAdmissions }}</p><p class="text-xs opacity-80">Responsable Admissions</p></div>
             </div>
-            <button routerLink="/contact" class="w-full bg-white text-secondary py-3 rounded-xl text-label-md font-bold hover:bg-opacity-90 transition-all">Réserver un entretien de conseil</button>
+            <button routerLink="/contact" class="w-full bg-surface-container-lowest text-secondary py-3 rounded-xl text-label-md font-bold hover:bg-opacity-90 transition-all">Réserver un entretien de conseil</button>
           </div>
           <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
         </div>
@@ -302,24 +302,24 @@
   <!-- ==================== ADMIS1 (ADMIS À PASSER LE TEST ACADÉMIQUE) ==================== -->
   <main *ngIf="!loading && candidature && isStatut(STATUT_ADMIS1)" class="flex-grow flex justify-center py-16 px-4 md:px-10">
     <div class="max-w-4xl w-full space-y-8">
-      <section class="bg-white rounded-xl border border-outline-variant shadow-sm p-8 relative overflow-hidden">
+      <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-8 relative overflow-hidden">
         <div class="absolute top-0 right-0 w-64 h-64 opacity-5 pointer-events-none"><span class="material-symbols-outlined text-[160px]" style="font-variation-settings:'FILL' 0;">school</span></div>
         <div class="relative z-10 space-y-6">
           <div class="flex flex-col gap-2">
             <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-label-sm w-fit font-bold">Admis au Test Académique</span>
             <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">{{ aDesResultats ? 'Résultats du Test Académique' : 'Vous êtes convoqué(e) au Test Académique' }}</h2>
-            <p class="text-lg text-on-surface-variant max-w-2xl" *ngIf="!aDesResultats">Votre dossier a été retenu à l'issue de la présélection. Voici les modalités de votre convocation — présentez-vous muni(e) d'une pièce d'identité.</p>
-            <p class="text-lg text-on-surface-variant max-w-2xl" *ngIf="aDesResultats">Votre épreuve a été corrigée. Le résultat détaillé figure ci-dessous ; la suite du parcours (entretien) vous sera communiquée séparément.</p>
+            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl" *ngIf="!aDesResultats">Votre dossier a été retenu à l'issue de la présélection. Voici les modalités de votre convocation — présentez-vous muni(e) d'une pièce d'identité.</p>
+            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl" *ngIf="aDesResultats">Votre épreuve a été corrigée. Le résultat détaillé figure ci-dessous ; la suite du parcours (entretien) vous sera communiquée séparément.</p>
           </div>
           <div class="flex items-start justify-between w-full pt-6">
             <div *ngFor="let item of timelineItems; let i = index" class="flex flex-col items-center gap-3 flex-1 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
               <div class="w-6 h-6 rounded-full flex items-center justify-center z-10 shadow-sm"
                    [ngClass]="item.erreur ? 'bg-error text-white'
                               : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
-                <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">close</span>
+                <span *ngIf="item.erreur" class="material-symbols-outlined font-body-sm text-body-sm" style="font-variation-settings:'wght' 700;">close</span>
                 <ng-container *ngIf="!item.erreur">
-                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'wght' 700;">check</span>
-                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                  <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined font-body-sm text-body-sm" style="font-variation-settings:'wght' 700;">check</span>
+                  <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-surface-container-lowest animate-pulse"></span>
                   <span *ngIf="item.pending && !item.active" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
                 </ng-container>
               </div>
@@ -333,27 +333,27 @@
       </section>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-6">
-          <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6" *ngIf="!aDesResultats">
-            <h3 class="text-xl font-semibold text-on-surface mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">event_available</span>Convocation</h3>
+          <div class="bg-surface-container-lowest border border-outline-variant shadow-sm rounded-xl p-6" *ngIf="!aDesResultats">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">event_available</span>Convocation</h3>
             <div class="space-y-4" *ngIf="prochainTest; else convocationEnAttente">
               <div class="flex items-center gap-3"><span class="material-symbols-outlined text-secondary">schedule</span><div><p class="text-label-sm text-on-surface-variant">Date et heure</p><p class="text-label-md font-semibold text-on-surface">{{ prochainTest.dateEpreuve ? (prochainTest.dateEpreuve | date:'EEEE d MMMM, HH:mm') : 'À confirmer' }}</p></div></div>
               <div class="flex items-center gap-3"><span class="material-symbols-outlined text-secondary">location_on</span><div><p class="text-label-sm text-on-surface-variant">Lieu</p><p class="text-label-md font-semibold text-on-surface">{{ prochainTest.lieu || 'Communiqué par courriel' }}</p></div></div>
               <div class="flex items-center gap-3"><span class="material-symbols-outlined text-secondary">quiz</span><div><p class="text-label-sm text-on-surface-variant">Épreuve</p><p class="text-label-md font-semibold text-on-surface">{{ prochainTest.nomEpreuve }}</p></div></div>
             </div>
-            <ng-template #convocationEnAttente><p class="text-sm text-on-surface-variant italic">Votre convocation vous sera communiquée prochainement par e-mail.</p></ng-template>
+            <ng-template #convocationEnAttente><p class="font-body-sm text-body-sm text-on-surface-variant italic">Votre convocation vous sera communiquée prochainement par e-mail.</p></ng-template>
           </div>
-          <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6" *ngIf="aDesResultats">
-            <h3 class="text-xl font-semibold text-on-surface mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">analytics</span>Bilan de l'évaluation</h3>
-            <div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-secondary mb-4"><p class="text-sm text-on-surface-variant">Score global : <strong class="text-on-surface">{{ noteGlobale }}</strong><span *ngIf="seuilScore !== null"><br><span class="italic opacity-80">Seuil requis pour cette session : {{ seuilScore }}</span></span></p></div>
-            <p class="text-sm text-on-surface-variant">La suite du parcours (convocation à l'entretien) vous sera communiquée séparément par e-mail.</p>
+          <div class="bg-surface-container-lowest border border-outline-variant shadow-sm rounded-xl p-6" *ngIf="aDesResultats">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">analytics</span>Bilan de l'évaluation</h3>
+            <div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-secondary mb-4"><p class="font-body-sm text-body-sm text-on-surface-variant">Score global : <strong class="text-on-surface">{{ noteGlobale }}</strong><span *ngIf="seuilScore !== null"><br><span class="italic opacity-80">Seuil requis pour cette session : {{ seuilScore }}</span></span></p></div>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">La suite du parcours (convocation à l'entretien) vous sera communiquée séparément par e-mail.</p>
           </div>
         </div>
         <div class="space-y-6">
-          <div class="bg-white border border-outline-variant shadow-sm rounded-xl p-6">
-            <h3 class="text-xl font-semibold text-on-surface mb-6">À prévoir le jour J</h3>
+          <div class="bg-surface-container-lowest border border-outline-variant shadow-sm rounded-xl p-6">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">À prévoir le jour J</h3>
             <ul class="space-y-4">
-              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary text-sm mt-0.5" style="font-variation-settings:'FILL' 0;">badge</span><p class="text-sm text-on-surface-variant">Une pièce d'identité originale en cours de validité (CNI ou Passeport).</p></li>
-              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary text-sm mt-0.5" style="font-variation-settings:'FILL' 0;">schedule</span><p class="text-sm text-on-surface-variant">Présence 15 minutes avant l'heure fixée.</p></li>
+              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary font-body-sm text-body-sm mt-0.5" style="font-variation-settings:'FILL' 0;">badge</span><p class="font-body-sm text-body-sm text-on-surface-variant">Une pièce d'identité originale en cours de validité (CNI ou Passeport).</p></li>
+              <li class="flex gap-3 items-start"><span class="material-symbols-outlined text-secondary font-body-sm text-body-sm mt-0.5" style="font-variation-settings:'FILL' 0;">schedule</span><p class="font-body-sm text-body-sm text-on-surface-variant">Présence 15 minutes avant l'heure fixée.</p></li>
             </ul>
           </div>
         </div>
@@ -361,13 +361,13 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-secondary p-6 rounded-xl text-on-secondary shadow-sm relative overflow-hidden group h-full">
           <div class="relative z-10 space-y-4">
-            <h4 class="text-xl font-semibold">Besoin d'aide ?</h4>
-            <p class="text-sm opacity-90">Votre conseillère admission est disponible pour répondre à vos questions.</p>
+            <h4 class="font-headline-sm text-headline-sm">Besoin d'aide ?</h4>
+            <p class="font-body-sm text-body-sm opacity-90">Votre conseillère admission est disponible pour répondre à vos questions.</p>
             <div class="flex items-center gap-3 py-4">
               <div class="w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center shrink-0 bg-white/10"><span class="material-symbols-outlined text-2xl" style="font-variation-settings:'FILL' 0;">person</span></div>
               <div><p class="text-label-md font-bold">{{ responsableAdmissions }}</p><p class="text-xs opacity-80">Responsable Admissions</p></div>
             </div>
-            <a href="mailto:contact@inpg.sn" class="w-full bg-white text-secondary py-3 rounded-xl text-label-md font-bold hover:bg-opacity-90 transition-all text-center block no-underline">Contacter le service</a>
+            <a href="mailto:contact@inpg.sn" class="w-full bg-surface-container-lowest text-secondary py-3 rounded-xl text-label-md font-bold hover:bg-opacity-90 transition-all text-center block no-underline">Contacter le service</a>
           </div>
           <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
         </div>
@@ -379,87 +379,87 @@
   <main *ngIf="!loading && candidature && isStatut(STATUT_ADMIS2)" class="flex-grow overflow-y-auto p-10 relative">
     <div class="max-w-[1000px] mx-auto pb-12">
       <!-- Progress Header -->
-      <section class="mb-10 text-center relative overflow-hidden p-8 rounded-3xl bg-primary-container text-white shadow-sm">
+      <section class="mb-10 text-center relative overflow-hidden p-8 rounded-xl bg-secondary text-white shadow-sm">
         <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
         <div class="relative z-10">
           <div class="inline-flex items-center px-4 py-1.5 bg-white/10 rounded-full border border-white/20 mb-4 backdrop-blur-sm"><span class="text-label-sm">{{ etapeActuelle }}</span></div>
           <h2 class="text-4xl font-bold mb-2">Tu y es presque !</h2>
-          <p class="text-lg text-white/80 max-w-xl mx-auto">Ton parcours de sélection avance avec succès. Ton dossier a retenu toute notre attention.</p>
+          <p class="font-body-lg text-body-lg text-white/80 max-w-xl mx-auto">Ton parcours de sélection avance avec succès. Ton dossier a retenu toute notre attention.</p>
         </div>
         <div class="mt-8 flex justify-center gap-3 relative z-10">
-          <div class="w-24 h-1.5 bg-white rounded-full"></div>
-          <div class="w-24 h-1.5 bg-white rounded-full"></div>
-          <div class="w-24 h-1.5 bg-white/30 rounded-full overflow-hidden"><div class="w-1/2 h-full bg-white"></div></div>
+          <div class="w-24 h-1.5 bg-surface-container-lowest rounded-full"></div>
+          <div class="w-24 h-1.5 bg-surface-container-lowest rounded-full"></div>
+          <div class="w-24 h-1.5 bg-white/30 rounded-full overflow-hidden"><div class="w-1/2 h-full bg-surface-container-lowest"></div></div>
           <div class="w-24 h-1.5 bg-white/30 rounded-full"></div>
         </div>
       </section>
       <!-- Bento Layout -->
       <div class="grid grid-cols-12 gap-6">
         <!-- Success Status Card & Actions -->
-        <div class="col-span-12 bg-white border border-outline-variant rounded-3xl p-8 shadow-sm flex flex-col md:flex-row gap-8">
+        <div class="col-span-12 bg-surface-container-lowest border border-outline-variant rounded-xl p-8 shadow-sm flex flex-col md:flex-row gap-8">
           <div class="flex-1">
             <div class="flex items-center gap-4 mb-6">
-              <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">check_circle</span></div>
-              <div><h3 class="text-2xl font-semibold">Test Réussi</h3><p class="text-on-surface-variant text-sm" *ngIf="aDesResultats">Score : {{ noteGlobale }}<span *ngIf="seuilScore !== null"> (seuil : {{ seuilScore }})</span></p></div>
+              <div class="w-14 h-14 bg-success/15 text-success rounded-xl flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1;">check_circle</span></div>
+              <div><h3 class="font-headline-md text-headline-md">Test Réussi</h3><p class="text-on-surface-variant font-body-sm text-body-sm" *ngIf="aDesResultats">Score : {{ noteGlobale }}<span *ngIf="seuilScore !== null"> (seuil : {{ seuilScore }})</span></p></div>
             </div>
-            <h4 class="text-xl font-semibold mb-4">Félicitations, vous êtes invité à un Entretien de Motivation</h4>
-            <p class="text-base text-on-surface-variant mb-6 leading-relaxed">Cette étape est cruciale pour nous permettre de découvrir votre personnalité, vos ambitions et la cohérence de votre projet professionnel avec les valeurs de l'INPG.</p>
-            <div *ngIf="entretien?.confirmeParCandidat" class="flex items-center gap-2 mb-4 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium w-fit"><span class="material-symbols-outlined text-[18px]">check_circle</span>Présence confirmée</div>
-            <div *ngIf="entretien?.motifReport && !entretien?.confirmeParCandidat" class="flex items-center gap-2 mb-4 px-4 py-2 bg-amber-50 text-amber-700 rounded-lg text-sm font-medium w-fit"><span class="material-symbols-outlined text-[18px]">edit_calendar</span>Report demandé — en attente de réponse du service admission</div>
+            <h4 class="font-headline-sm text-headline-sm mb-4">Félicitations, vous êtes invité à un Entretien de Motivation</h4>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-6 leading-relaxed">Cette étape est cruciale pour nous permettre de découvrir votre personnalité, vos ambitions et la cohérence de votre projet professionnel avec les valeurs de l'INPG.</p>
+            <div *ngIf="entretien?.confirmeParCandidat" class="flex items-center gap-2 mb-4 px-4 py-2 bg-success/10 text-success-strong rounded-lg font-body-sm text-body-sm font-medium w-fit"><span class="material-symbols-outlined text-[18px]">check_circle</span>Présence confirmée</div>
+            <div *ngIf="entretien?.motifReport && !entretien?.confirmeParCandidat" class="flex items-center gap-2 mb-4 px-4 py-2 bg-warning/10 text-warning-strong rounded-lg font-body-sm text-body-sm font-medium w-fit"><span class="material-symbols-outlined text-[18px]">edit_calendar</span>Report demandé — en attente de réponse du service admission</div>
             <div class="flex flex-col sm:flex-row gap-4 mb-2">
-              <button (click)="confirmerPresence()" [disabled]="actionEntretienEnCours || entretien?.confirmeParCandidat" class="flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-white rounded-xl text-label-md font-bold hover:bg-secondary/90 transition-all shadow-sm disabled:opacity-50"><span class="material-symbols-outlined text-[20px]">how_to_reg</span>{{ entretien?.confirmeParCandidat ? 'Présence confirmée' : 'Confirmer ma présence' }}</button>
-              <button (click)="demanderReport()" [disabled]="actionEntretienEnCours" class="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-outline-variant text-on-surface rounded-xl text-label-md font-bold hover:bg-surface-container-low transition-all disabled:opacity-50"><span class="material-symbols-outlined text-[20px]">edit_calendar</span>Demander un report de créneau</button>
+              <button (click)="confirmerPresence()" [disabled]="actionEntretienEnCours || entretien?.confirmeParCandidat" class="flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-on-secondary rounded-lg text-label-md font-bold hover:opacity-90 transition-all disabled:opacity-50"><span class="material-symbols-outlined text-[20px]">how_to_reg</span>{{ entretien?.confirmeParCandidat ? 'Présence confirmée' : 'Confirmer ma présence' }}</button>
+              <button (click)="demanderReport()" [disabled]="actionEntretienEnCours" class="flex items-center justify-center gap-2 px-6 py-3 bg-surface-container-lowest border border-outline-variant text-on-surface rounded-xl text-label-md font-bold hover:bg-surface-container-low transition-all disabled:opacity-50"><span class="material-symbols-outlined text-[20px]">edit_calendar</span>Demander un report de créneau</button>
             </div>
           </div>
-          <div class="w-full md:w-72 shrink-0 bg-surface-container-low rounded-2xl p-6 border border-outline-variant/50 flex flex-col justify-center">
+          <div class="w-full md:w-72 shrink-0 bg-surface-container-low rounded-xl p-6 border border-outline-variant/50 flex flex-col justify-center">
             <div class="mb-6">
               <div class="flex items-center gap-2 text-on-surface-variant mb-1"><span class="material-symbols-outlined text-[20px]">event_available</span><span class="text-label-md">Date et Heure</span></div>
-              <p class="text-xl font-semibold text-secondary">{{ entretien?.dateHeure ? (entretien!.dateHeure | date: 'EEEE d MMMM') : 'Date à confirmer' }}</p>
-              <div class="flex items-center gap-2 mt-1"><span class="text-2xl font-semibold text-primary">{{ entretien?.dateHeure ? (entretien!.dateHeure | date: 'HH:mm') : '—' }}</span><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary/10 text-secondary">GMT</span></div>
+              <p class="font-headline-sm text-headline-sm text-secondary">{{ entretien?.dateHeure ? (entretien!.dateHeure | date: 'EEEE d MMMM') : 'Date à confirmer' }}</p>
+              <div class="flex items-center gap-2 mt-1"><span class="font-headline-md text-headline-md text-primary">{{ entretien?.dateHeure ? (entretien!.dateHeure | date: 'HH:mm') : '—' }}</span><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary/10 text-secondary">GMT</span></div>
             </div>
             <div class="flex flex-col gap-3">
-              <button (click)="telechargerConvocation()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl text-label-md font-bold hover:bg-primary/90 transition-all group relative overflow-hidden">
+              <button (click)="telechargerConvocation()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-secondary text-on-secondary rounded-lg text-label-md font-bold hover:opacity-90 transition-all group relative overflow-hidden">
                 <span class="material-symbols-outlined text-[20px]">download</span><span>Télécharger Convocation</span>
                 <span class="absolute top-0 right-0 transform translate-x-2 -translate-y-2 rotate-12 bg-error text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm opacity-90 group-hover:scale-110 transition-transform">PDF</span>
               </button>
-              <button (click)="ajouterAgenda()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-outline-variant text-on-surface rounded-xl text-label-md font-bold hover:bg-surface-container-lowest transition-all"><span class="material-symbols-outlined text-[20px]">calendar_add_on</span>Ajouter à mon agenda</button>
+              <button (click)="ajouterAgenda()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-surface-container-lowest border border-outline-variant text-on-surface rounded-xl text-label-md font-bold hover:bg-surface-container-lowest transition-all"><span class="material-symbols-outlined text-[20px]">calendar_add_on</span>Ajouter à mon agenda</button>
             </div>
           </div>
         </div>
         <!-- Modalities & Location -->
         <div class="col-span-12 lg:col-span-7 flex flex-col gap-6">
-          <div class="bg-white border border-outline-variant rounded-3xl p-6 shadow-sm">
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm">
             <div class="flex items-center justify-between mb-4">
-              <h4 class="text-xl font-semibold">Modalité de l'entretien</h4>
+              <h4 class="font-headline-sm text-headline-sm">Modalité de l'entretien</h4>
               <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high border border-outline-variant text-xs font-medium text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">timer</span>Durée : 30 minutes</span>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="relative flex rounded-2xl border p-4" [class.bg-secondary/5]="!estVisio" [class.border-secondary]="!estVisio" [class.border-outline-variant]="estVisio" [class.bg-white]="estVisio">
-                <span class="flex flex-1"><span class="flex flex-col"><span class="block text-sm font-medium text-on-surface flex items-center gap-2 mb-1"><span class="material-symbols-outlined" [class.text-secondary]="!estVisio" [class.text-on-surface-variant]="estVisio" [style.font-variation-settings]="!estVisio ? '\'FILL\' 1' : '\'FILL\' 0'">storefront</span>Présentiel</span><span class="block text-xs text-on-surface-variant">Sur campus à Dakar</span></span></span>
+              <div class="relative flex rounded-xl border p-4" [class.bg-secondary/5]="!estVisio" [class.border-secondary]="!estVisio" [class.border-outline-variant]="estVisio" [class.bg-surface-container-lowest]="estVisio">
+                <span class="flex flex-1"><span class="flex flex-col"><span class="block font-body-sm text-body-sm font-medium text-on-surface flex items-center gap-2 mb-1"><span class="material-symbols-outlined" [class.text-secondary]="!estVisio" [class.text-on-surface-variant]="estVisio" [style.font-variation-settings]="!estVisio ? '\'FILL\' 1' : '\'FILL\' 0'">storefront</span>Présentiel</span><span class="block text-xs text-on-surface-variant">Sur campus à Dakar</span></span></span>
                 <span class="material-symbols-outlined" [class.text-secondary]="!estVisio" [class.text-outline]="estVisio" [style.font-variation-settings]="!estVisio ? '\'FILL\' 1' : '\'FILL\' 0'">{{ !estVisio ? 'radio_button_checked' : 'radio_button_unchecked' }}</span>
               </div>
-              <div class="relative flex rounded-2xl border p-4" [class.bg-secondary/5]="estVisio" [class.border-secondary]="estVisio" [class.border-outline-variant]="!estVisio" [class.bg-white]="!estVisio">
-                <span class="flex flex-1"><span class="flex flex-col"><span class="block text-sm font-medium text-on-surface flex items-center gap-2 mb-1"><span class="material-symbols-outlined" [class.text-secondary]="estVisio" [class.text-on-surface-variant]="!estVisio">video_camera_front</span>Visioconférence</span><span class="block text-xs text-on-surface-variant">Lien communiqué par courriel</span></span></span>
+              <div class="relative flex rounded-xl border p-4" [class.bg-secondary/5]="estVisio" [class.border-secondary]="estVisio" [class.border-outline-variant]="!estVisio" [class.bg-surface-container-lowest]="!estVisio">
+                <span class="flex flex-1"><span class="flex flex-col"><span class="block font-body-sm text-body-sm font-medium text-on-surface flex items-center gap-2 mb-1"><span class="material-symbols-outlined" [class.text-secondary]="estVisio" [class.text-on-surface-variant]="!estVisio">video_camera_front</span>Visioconférence</span><span class="block text-xs text-on-surface-variant">Lien communiqué par courriel</span></span></span>
                 <span class="material-symbols-outlined" [class.text-secondary]="estVisio" [class.text-outline]="!estVisio" [style.font-variation-settings]="estVisio ? '\'FILL\' 1' : '\'FILL\' 0'">{{ estVisio ? 'radio_button_checked' : 'radio_button_unchecked' }}</span>
               </div>
             </div>
           </div>
-          <div class="bg-white border border-outline-variant rounded-3xl p-6 shadow-sm flex-1">
-            <h4 class="text-xl font-semibold mb-4">Check-list obligatoire pour le jour J</h4>
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex-1">
+            <h4 class="font-headline-sm text-headline-sm mb-4">Check-list obligatoire pour le jour J</h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="flex items-start gap-3 p-4 bg-surface-container-lowest border border-outline-variant rounded-2xl"><div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-secondary">badge</span></div><div><p class="text-label-md font-bold text-on-surface">Pièce d'Identité</p><p class="text-xs text-on-surface-variant mt-1">Nationale ou Passeport en cours de validité.</p></div></div>
-              <div class="flex items-start gap-3 p-4 bg-surface-container-lowest border border-outline-variant rounded-2xl"><div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-secondary">school</span></div><div><p class="text-label-md font-bold text-on-surface">Dossier Académique</p><p class="text-xs text-on-surface-variant mt-1">CV mis à jour & Relevés de notes originaux.</p></div></div>
-              <div class="flex items-start gap-3 p-4 bg-surface-container-lowest border border-outline-variant rounded-2xl"><div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-secondary">assignment</span></div><div><p class="text-label-md font-bold text-on-surface">Convocation</p><p class="text-xs text-on-surface-variant mt-1">Fiche de convocation officielle imprimée.</p></div></div>
-              <div class="flex items-start gap-3 p-4 bg-surface-container-lowest border border-outline-variant rounded-2xl"><div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-secondary">schedule</span></div><div><p class="text-label-md font-bold text-on-surface">Ponctualité</p><p class="text-xs text-on-surface-variant mt-1">Présence 15 minutes avant l'heure fixée.</p></div></div>
+              <div class="flex items-start gap-3 p-4 bg-surface-container-lowest border border-outline-variant rounded-xl"><div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-secondary">badge</span></div><div><p class="text-label-md font-bold text-on-surface">Pièce d'Identité</p><p class="text-xs text-on-surface-variant mt-1">Nationale ou Passeport en cours de validité.</p></div></div>
+              <div class="flex items-start gap-3 p-4 bg-surface-container-lowest border border-outline-variant rounded-xl"><div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-secondary">school</span></div><div><p class="text-label-md font-bold text-on-surface">Dossier Académique</p><p class="text-xs text-on-surface-variant mt-1">CV mis à jour & Relevés de notes originaux.</p></div></div>
+              <div class="flex items-start gap-3 p-4 bg-surface-container-lowest border border-outline-variant rounded-xl"><div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-secondary">assignment</span></div><div><p class="text-label-md font-bold text-on-surface">Convocation</p><p class="text-xs text-on-surface-variant mt-1">Fiche de convocation officielle imprimée.</p></div></div>
+              <div class="flex items-start gap-3 p-4 bg-surface-container-lowest border border-outline-variant rounded-xl"><div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-secondary">schedule</span></div><div><p class="text-label-md font-bold text-on-surface">Ponctualité</p><p class="text-xs text-on-surface-variant mt-1">Présence 15 minutes avant l'heure fixée.</p></div></div>
             </div>
           </div>
         </div>
         <!-- Right Column: Location -->
         <div class="col-span-12 lg:col-span-5 flex flex-col gap-6">
-          <div class="bg-white border border-outline-variant rounded-3xl overflow-hidden shadow-sm flex flex-col">
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm flex flex-col">
             <div class="p-6 pb-4">
-              <h4 class="text-xl font-semibold mb-2">Lieu de l'entretien</h4>
-              <div class="flex items-start gap-3 mt-3"><span class="material-symbols-outlined text-secondary mt-0.5" style="font-variation-settings:'FILL' 1;">location_on</span><div><p class="text-label-md text-on-surface">{{ lieuEntretien }}</p><a class="inline-block mt-2 text-secondary text-sm font-medium hover:underline" [href]="mapUrl" target="_blank" rel="noopener">Voir l'itinéraire</a></div></div>
+              <h4 class="font-headline-sm text-headline-sm mb-2">Lieu de l'entretien</h4>
+              <div class="flex items-start gap-3 mt-3"><span class="material-symbols-outlined text-secondary mt-0.5" style="font-variation-settings:'FILL' 1;">location_on</span><div><p class="text-label-md text-on-surface">{{ lieuEntretien }}</p><a class="inline-block mt-2 text-secondary font-body-sm text-body-sm font-medium hover:underline" [href]="mapUrl" target="_blank" rel="noopener">Voir l'itinéraire</a></div></div>
             </div>
             <div class="h-40 w-full relative bg-surface-dim"><div class="w-full h-full bg-surface-dim flex items-center justify-center"><span class="material-symbols-outlined text-4xl text-on-surface-variant/40">map</span></div></div>
           </div>
@@ -472,16 +472,16 @@
   <main *ngIf="!loading && candidature && isStatut(STATUT_ADMIS3)" class="flex-grow py-20 px-10 min-h-screen">
     <div class="max-w-7xl mx-auto">
       <!-- Global Admission Status Banner -->
-      <div class="relative overflow-hidden mb-10 p-8 rounded-xl bg-primary-container text-white shadow-lg border border-primary">
+      <div class="relative overflow-hidden mb-10 p-8 rounded-xl bg-secondary text-white shadow-lg border border-primary">
         <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <h2 class="text-[32px] font-bold leading-tight mb-2">Félicitations ! Bienvenue à l'INPG</h2>
-            <p class="text-lg opacity-90 max-w-xl">Votre candidature a été officiellement acceptée. Vous faites désormais partie de la promotion 2024-2025.</p>
+            <p class="font-body-lg text-body-lg opacity-90 max-w-xl">Votre candidature a été officiellement acceptée. Vous faites désormais partie de la promotion 2024-2025.</p>
           </div>
           <div class="flex items-center gap-4">
             <div class="bg-white/10 backdrop-blur-md px-6 py-4 rounded-lg border border-white/20 text-center">
               <span class="block text-xs uppercase tracking-widest text-white/70 mb-1">Status</span>
-              <span class="flex items-center justify-center gap-2 text-xl font-semibold text-white"><span class="material-symbols-outlined text-emerald-400" style="font-variation-settings:'FILL' 1;">check_circle</span>ADMIS</span>
+              <span class="flex items-center justify-center gap-2 font-headline-sm text-headline-sm text-white"><span class="material-symbols-outlined text-success" style="font-variation-settings:'FILL' 1;">check_circle</span>ADMIS</span>
             </div>
           </div>
         </div>
@@ -490,7 +490,7 @@
       <div class="grid grid-cols-12 gap-6">
         <div class="col-span-12 lg:col-span-8 space-y-6">
           <!-- Admission Letter Card -->
-          <section class="bg-white p-8 rounded-xl border border-outline-variant shadow-sm">
+          <section class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant shadow-sm">
             <div class="flex flex-col md:flex-row gap-8 items-start">
               <div class="w-full md:w-1/3 aspect-[4/5] rounded-lg overflow-hidden border border-outline-variant bg-surface-dim flex items-center justify-center">
                 <span class="material-symbols-outlined text-6xl text-on-surface-variant/40">school</span>
@@ -498,17 +498,17 @@
               <div class="flex-1 space-y-4">
                 <span class="inline-block px-3 py-1 rounded bg-secondary text-white text-label-sm">CONFIRMATION OFFICIELLE</span>
                 <h3 class="text-3xl font-semibold text-primary">Lettre d'Admission</h3>
-                <p class="text-on-surface-variant text-base leading-relaxed">Cher candidat, nous avons le plaisir de vous informer que votre dossier a été retenu par le jury d'admission de l'INPG pour la formation {{ candidature.sessionCandidatureLibelle || 'Bachelor in Strategic Management' }}.</p>
+                <p class="text-on-surface-variant font-body-md text-body-md leading-relaxed">Cher candidat, nous avons le plaisir de vous informer que votre dossier a été retenu par le jury d'admission de l'INPG pour la formation {{ candidature.sessionCandidatureLibelle || 'Bachelor in Strategic Management' }}.</p>
                 <div class="flex gap-3 pt-2">
-                  <button (click)="telechargerLettreAdmission()" class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-label-md font-bold hover:bg-primary/90 transition-all"><span class="material-symbols-outlined text-[20px]">download</span>Télécharger la lettre</button>
-                  <button (click)="partagerAdmission()" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-outline-variant text-on-surface rounded-lg text-label-md font-bold hover:bg-surface-container-low transition-all"><span class="material-symbols-outlined text-[20px]">share</span>Partager</button>
+                  <button (click)="telechargerLettreAdmission()" class="flex items-center gap-2 px-5 py-2.5 bg-secondary text-on-secondary rounded-lg text-label-md font-bold hover:opacity-90 transition-all"><span class="material-symbols-outlined text-[20px]">download</span>Télécharger la lettre</button>
+                  <button (click)="partagerAdmission()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-lowest border border-outline-variant text-on-surface rounded-lg text-label-md font-bold hover:bg-surface-container-low transition-all"><span class="material-symbols-outlined text-[20px]">share</span>Partager</button>
                 </div>
               </div>
             </div>
           </section>
           <!-- Next Steps -->
-          <section class="bg-white p-8 rounded-xl border border-outline-variant shadow-sm">
-            <h3 class="text-xl font-semibold text-on-surface mb-6">Prochaines étapes</h3>
+          <section class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant shadow-sm">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Prochaines étapes</h3>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div class="p-4 bg-surface-container-low rounded-xl border border-outline-variant text-center">
                 <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-secondary text-2xl">payments</span></div>
@@ -529,14 +529,14 @@
           </section>
         </div>
         <div class="col-span-12 lg:col-span-4 space-y-6">
-          <div class="bg-white p-6 rounded-xl border border-outline-variant shadow-sm">
-            <h3 class="text-xl font-semibold text-on-surface mb-4">Besoin d'aide ?</h3>
-            <p class="text-sm text-on-surface-variant mb-4">Votre responsable admission reste à votre disposition.</p>
+          <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-4">Besoin d'aide ?</h3>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Votre responsable admission reste à votre disposition.</p>
             <div class="flex items-center gap-3 mb-4">
               <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center"><span class="material-symbols-outlined text-secondary">person</span></div>
               <div><p class="text-label-md font-bold">{{ responsableAdmissions }}</p><p class="text-xs text-on-surface-variant">Responsable Admissions</p></div>
             </div>
-            <a href="mailto:contact@inpg.sn" class="w-full bg-secondary text-white py-2.5 rounded-lg text-label-md font-bold hover:bg-secondary/90 transition-all text-center block no-underline">Contacter</a>
+            <a href="mailto:contact@inpg.sn" class="w-full bg-secondary text-on-secondary py-2.5 rounded-lg text-label-md font-bold hover:opacity-90 transition-all text-center block no-underline">Contacter</a>
           </div>
         </div>
       </div>

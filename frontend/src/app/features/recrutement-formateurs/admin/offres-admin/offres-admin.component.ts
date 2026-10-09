@@ -65,7 +65,7 @@ import { AdminRecrutementFormateurService } from '../../services/admin-recruteme
               <span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm"
                 [ngClass]="{
                   'bg-surface-container text-on-surface-variant': o.statut === 'BROUILLON',
-                  'bg-success/15 text-success': o.statut === 'PUBLIEE',
+                  'bg-success/15 text-success-strong': o.statut === 'PUBLIEE',
                   'bg-error-container text-on-error-container': o.statut === 'CLOTUREE'
                 }">{{ libelleStatut(o.statut) }}</span>
             </div>
@@ -81,7 +81,7 @@ import { AdminRecrutementFormateurService } from '../../services/admin-recruteme
               <span class="material-symbols-outlined text-[20px]">edit</span>
             </a>
             <button *ngIf="o.statut !== 'PUBLIEE'" type="button" (click)="publier(o)"
-                    title="Publier" class="p-2 text-success hover:bg-success/10 rounded-full transition-colors">
+                    title="Publier" class="p-2 text-success-strong hover:bg-success/10 rounded-full transition-colors">
               <span class="material-symbols-outlined text-[20px]">publish</span>
             </button>
             <button *ngIf="o.statut === 'PUBLIEE'" type="button" (click)="cloturer(o)"

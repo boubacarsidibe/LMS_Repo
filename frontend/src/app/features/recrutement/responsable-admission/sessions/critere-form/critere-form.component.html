@@ -78,8 +78,8 @@
   </div>
 
   <div class="flex justify-end gap-3 mt-stack-lg">
-    <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="annuler()">Annuler</button>
-    <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
+    <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors" (click)="annuler()">Annuler</button>
+    <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-secondary bg-secondary rounded-lg hover:opacity-90 transition-colors disabled:opacity-60">
       {{ isSubmitting ? 'Enregistrement…' : 'Enregistrer' }}
     </button>
   </div>

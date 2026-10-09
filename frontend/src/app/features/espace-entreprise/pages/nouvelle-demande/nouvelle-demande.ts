@@ -41,7 +41,7 @@ import { EntrepriseService } from '../../services/entreprise.service';
         <!-- Bouton plutôt qu'un onglet permanent du navbar : une entreprise ne
              prend rendez-vous qu'à certains moments précis, pas en continu. -->
         <a routerLink="/espace-entreprise/rendez-vous"
-           class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity no-underline shrink-0 shadow-sm">
+           class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity no-underline shrink-0">
           <span class="material-symbols-outlined text-[20px]">event</span>
           Prendre rendez-vous
         </a>
@@ -210,7 +210,7 @@ import { EntrepriseService } from '../../services/entreprise.service';
                 [ngClass]="{
                   'bg-surface-container text-on-surface-variant': d.statut === 'SOUMISE',
                   'bg-secondary-container text-on-secondary-container': d.statut === 'EN_COURS',
-                  'bg-success/15 text-success': d.statut === 'REPONDUE',
+                  'bg-success/15 text-success-strong': d.statut === 'REPONDUE',
                   'bg-outline-variant/40 text-on-surface-variant': d.statut === 'CLOTUREE'
                 }"
               >
@@ -249,7 +249,7 @@ import { EntrepriseService } from '../../services/entreprise.service';
                   >
                     Vous avez demandé des ajustements : « {{ f.commentaireEntreprise }} ». L'équipe pédagogique révise la fiche.
                   </p>
-                  <p *ngIf="f.statut === 'ACCEPTEE'" class="font-body-sm text-body-sm text-success bg-success/10 rounded-lg px-4 py-3">
+                  <p *ngIf="f.statut === 'ACCEPTEE'" class="font-body-sm text-body-sm text-success-strong bg-success/10 rounded-lg px-4 py-3">
                     Vous avez accepté cette fiche technique.
                   </p>
 
@@ -381,7 +381,7 @@ export class NouvelleDemande implements OnInit {
   readonly classesStatutFiche: Record<StatutFicheModule, string> = {
     BROUILLON: 'bg-surface-container text-on-surface-variant',
     TRANSMISE: 'bg-secondary-container text-on-secondary-container',
-    ACCEPTEE: 'bg-success/15 text-success',
+    ACCEPTEE: 'bg-success/15 text-success-strong',
     AJUSTEMENTS_DEMANDES: 'bg-error-container/40 text-on-error-container',
   };
 

@@ -288,7 +288,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   classeStatut(statut: string): string {
     switch (statut) {
       case 'REJETE': return 'bg-error-container/20 text-error';
-      case 'ADMIS3': return 'bg-green-100 text-green-800';
+      case 'ADMIS3': return 'bg-success/15 text-success-strong';
       case 'ADMIS1':
       case 'ADMIS2': return 'bg-primary-fixed text-on-primary-fixed-variant';
       case 'SOUMIS':

@@ -355,8 +355,8 @@ export class SuiviComponent implements OnInit {
 
   classeEtatPiece(statut: DocumentChecklistItem['statut']): string {
     switch (statut) {
-      case 'CONFORME': return 'bg-emerald-100 text-emerald-700';
-      case 'A_VERIFIER': return 'bg-amber-100 text-amber-800';
+      case 'CONFORME': return 'bg-success/15 text-success-strong';
+      case 'A_VERIFIER': return 'bg-warning/15 text-warning-strong';
       case 'A_REMPLACER': return 'bg-error-container text-on-error-container';
       default: return 'bg-surface-container-high text-on-surface-variant';
     }
@@ -374,8 +374,8 @@ export class SuiviComponent implements OnInit {
   getStatutBadgeClass(): string {
     const s = this.candidature?.statut;
     if (s === this.STATUT_REJETE) return 'bg-error-container text-on-error-container';
-    if (s === this.STATUT_LISTE_ATTENTE) return 'bg-blue-100 text-blue-800';
-    if (s === this.STATUT_ADMIS1 || s === this.STATUT_ADMIS2 || s === this.STATUT_ADMIS3) return 'bg-emerald-100 text-emerald-700';
+    if (s === this.STATUT_LISTE_ATTENTE) return 'bg-primary-container text-primary';
+    if (s === this.STATUT_ADMIS1 || s === this.STATUT_ADMIS2 || s === this.STATUT_ADMIS3) return 'bg-success/15 text-success-strong';
     return 'bg-secondary-container text-on-secondary-container';
   }
 

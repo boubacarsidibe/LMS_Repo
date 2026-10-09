@@ -3,7 +3,7 @@
   <p *ngIf="loading" class="text-on-surface-variant">Chargement du test...</p><p *ngIf="error" class="p-4 bg-error-container text-error rounded-lg">{{ error }}</p>
   <section *ngIf="test" class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
     <div class="p-6 border-b border-outline-variant flex flex-col sm:flex-row gap-4 sm:items-start sm:justify-between">
-      <div><p class="text-label-md text-secondary">{{ test.sessionCandidatureLibelle || 'Session non renseignée' }}</p><h1 class="font-display text-display text-primary mt-1">{{ test.nomEpreuve }}</h1></div>
+      <div><p class="text-label-md text-secondary">{{ test.sessionCandidatureLibelle || 'Session non renseignée' }}</p><h1 class="font-display text-display text-on-surface leading-none -ml-1 mt-1">{{ test.nomEpreuve }}</h1></div>
       <div class="flex flex-wrap gap-2"><button type="button" (click)="edition = !edition" class="h-10 px-3 border border-outline-variant rounded-lg text-secondary font-label-md text-label-md"><span class="material-symbols-outlined text-[18px] align-middle">edit</span> Modifier le test</button><button type="button" (click)="exporterNotes()" class="h-10 px-3 border border-outline-variant rounded-lg text-secondary font-label-md text-label-md"><span class="material-symbols-outlined text-[18px] align-middle">download</span> Exporter les notes</button><button type="button" (click)="supprimer()" class="h-10 w-10 border border-outline-variant rounded-lg text-error" title="Supprimer le test"><span class="material-symbols-outlined">delete</span></button></div>
     </div>
     <form *ngIf="edition; else informations" [formGroup]="form" (ngSubmit)="enregistrer()" class="p-6 grid sm:grid-cols-2 gap-5">

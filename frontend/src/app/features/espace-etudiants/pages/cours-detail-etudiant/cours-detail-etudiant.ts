@@ -37,7 +37,7 @@ import { MediaProtegeService } from '../../services/media-protege.service';
           <p class="font-label-sm text-label-sm text-on-surface-variant">
             {{ cours.code }} · {{ cours.semestre }} · {{ cours.volumeHoraire }} h
           </p>
-          <h1 class="font-display text-display text-on-surface mt-1 leading-tight">{{ cours.titre }}</h1>
+          <h1 class="font-display text-display text-on-surface leading-none -ml-1 mt-1">{{ cours.titre }}</h1>
           <p class="font-body-md text-body-md text-on-surface-variant mt-2 max-w-3xl">
             {{ cours.description }}
           </p>

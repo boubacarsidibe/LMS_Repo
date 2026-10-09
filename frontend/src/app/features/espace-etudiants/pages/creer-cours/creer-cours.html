@@ -4,15 +4,15 @@
       <span class="w-8 h-[1px] bg-secondary"></span>
       Espace Enseignant
     </div>
-    <h1 class="font-display text-display text-on-surface">Créer un nouveau cours</h1>
+    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Créer un nouveau cours</h1>
     <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Renseignez les informations de base, vous pourrez ajouter les ressources ensuite.</p>
   </section>
 
   <section class="px-margin-desktop pb-stack-lg max-w-2xl">
-    <form [formGroup]="creerCoursForm" (ngSubmit)="onSubmit()" class="bg-surface-container-lowest p-stack-lg rounded-2xl shadow-sm space-y-stack-md">
+    <form [formGroup]="creerCoursForm" (ngSubmit)="onSubmit()" class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-sm space-y-stack-md">
       <div class="space-y-base">
         <label for="creer-cours-code" class="font-label-md text-label-md text-on-surface-variant">Code du cours</label>
-        <input id="creer-cours-code" formControlName="code" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: ECO-402" type="text">
+        <input id="creer-cours-code" formControlName="code" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: ECO-402" type="text">
         <p *ngIf="creerCoursForm.get('code')?.invalid && creerCoursForm.get('code')?.touched" class="text-body-sm text-error">
           Le code du cours est requis.
         </p>
@@ -20,7 +20,7 @@
 
       <div class="space-y-base">
         <label for="creer-cours-titre" class="font-label-md text-label-md text-on-surface-variant">Titre du cours</label>
-        <input id="creer-cours-titre" formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Théorie et Pratique Économiques" type="text">
+        <input id="creer-cours-titre" formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex: Théorie et Pratique Économiques" type="text">
         <p *ngIf="creerCoursForm.get('titre')?.invalid && creerCoursForm.get('titre')?.touched" class="text-body-sm text-error">
           Le titre est requis.
         </p>
@@ -42,7 +42,7 @@
 
       <div class="space-y-base">
         <label for="creer-cours-semestre" class="font-label-md text-label-md text-on-surface-variant">Semestre</label>
-        <select id="creer-cours-semestre" formControlName="semestre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+        <select id="creer-cours-semestre" formControlName="semestre" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface">
           <option value="">Sélectionnez un semestre...</option>
           <option value="Semestre 1 - 2024">Semestre 1 - 2024</option>
           <option value="Semestre 2 - 2023">Semestre 2 - 2023</option>
@@ -54,12 +54,12 @@
 
       <div class="space-y-base">
         <label for="creer-cours-description" class="font-label-md text-label-md text-on-surface-variant">Description (optionnel)</label>
-        <textarea id="creer-cours-description" formControlName="description" rows="4" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none" placeholder="Décrivez brièvement le contenu du cours..."></textarea>
+        <textarea id="creer-cours-description" formControlName="description" rows="4" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface resize-none" placeholder="Décrivez brièvement le contenu du cours..."></textarea>
       </div>
 
       <div class="space-y-base">
         <label for="creer-cours-volume-horaire" class="font-label-md text-label-md text-on-surface-variant">Volume horaire</label>
-        <input id="creer-cours-volume-horaire" formControlName="volumeHoraire" min="0" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="number">
+        <input id="creer-cours-volume-horaire" formControlName="volumeHoraire" min="0" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" type="number">
         <p *ngIf="creerCoursForm.get('volumeHoraire')?.invalid && creerCoursForm.get('volumeHoraire')?.touched" class="text-body-sm text-error">
           Le volume horaire doit être positif ou nul.
         </p>
@@ -83,7 +83,7 @@
         <button type="button" (click)="annuler()" class="flex-1 py-4 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
           Annuler
         </button>
-        <button [disabled]="isSubmitting" type="submit" class="flex-1 py-4 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+        <button [disabled]="isSubmitting" type="submit" class="flex-1 py-4 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
           {{ isSubmitting ? 'Création…' : 'Créer le cours' }}
         </button>
       </div>

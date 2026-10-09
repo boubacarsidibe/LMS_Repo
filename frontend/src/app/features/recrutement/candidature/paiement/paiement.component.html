@@ -1,4 +1,4 @@
-<div class="min-h-screen flex flex-col bg-[#f7f9fb]">
+<div class="min-h-screen flex flex-col bg-surface">
   <app-navbar></app-navbar>
 
   <!-- ========== VUE CONFIRMATION (Paiement réussi) ========== -->
@@ -7,48 +7,48 @@
       <div class="w-full flex flex-col gap-8">
         <!-- Progress Header -->
         <div class="text-center">
-          <span class="inline-block text-xs tracking-[0.05em] font-semibold text-[#30609a] uppercase bg-[#d4e3ff] px-3 py-1 rounded-full">Étape 3 sur 3</span>
-          <h1 class="text-2xl md:text-[32px] leading-8 md:leading-10 -tracking-[0.01em] font-semibold mt-4 text-[#191c1e]">Paiement effectué & Dossier transmis</h1>
+          <span class="inline-block text-xs tracking-[0.05em] font-semibold text-primary uppercase bg-primary-container px-3 py-1 rounded-full">Étape 3 sur 3</span>
+          <h1 class="font-display text-display text-on-surface leading-none -ml-1 mt-4">Paiement effectué & Dossier transmis</h1>
         </div>
 
         <!-- Main Content Card -->
-        <div class="bg-white rounded-xl border border-[#e0e3e5] p-6 md:p-10 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div class="bg-surface-container-lowest rounded-xl border border-surface-variant p-6 md:p-10 shadow-sm hover:shadow-md transition-shadow duration-300">
           <!-- Success Status -->
-          <div class="flex flex-col items-center text-center border-b border-[#e0e3e5] pb-8 mb-8">
-            <div class="w-20 h-20 bg-[#e8f5e9] rounded-full flex items-center justify-center mb-6">
-              <span class="material-symbols-outlined text-[#2e7d32] text-[40px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+          <div class="flex flex-col items-center text-center border-b border-surface-variant pb-8 mb-8">
+            <div class="w-20 h-20 bg-success-container rounded-full flex items-center justify-center mb-6">
+              <span class="material-symbols-outlined text-success-strong text-[40px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
             </div>
-            <h2 class="text-xl md:text-2xl leading-8 font-semibold text-[#191c1e] mb-2">Votre paiement a été validé avec succès !</h2>
-            <p class="text-base text-[#46464e]">Transaction : <span class="text-sm leading-4 tracking-[0.01em] font-medium text-[#191c1e]">{{ referenceTransaction }}</span></p>
-            <div class="mt-6 bg-[#f2f4f6] px-4 py-3 rounded-lg border border-[#e0e3e5] flex items-center gap-3 w-full max-w-md">
-              <span class="material-symbols-outlined text-[#30609a]">info</span>
-              <p class="text-sm text-[#46464e] text-left">Statut du dossier : <strong class="text-[#30609a]">En cours d'examen par la commission pédagogique</strong></p>
+            <h2 class="font-headline-sm text-headline-sm md:text-2xl leading-8 text-on-surface mb-2">Votre paiement a été validé avec succès !</h2>
+            <p class="font-body-md text-body-md text-on-surface-variant">Transaction : <span class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-on-surface">{{ referenceTransaction }}</span></p>
+            <div class="mt-6 bg-surface-container-low px-4 py-3 rounded-lg border border-surface-variant flex items-center gap-3 w-full max-w-md">
+              <span class="material-symbols-outlined text-primary">info</span>
+              <p class="font-body-sm text-body-sm text-on-surface-variant text-left">Statut du dossier : <strong class="text-primary">En cours d'examen par la commission pédagogique</strong></p>
             </div>
           </div>
 
           <!-- Receipt Summary -->
           <div class="mb-8">
-            <h3 class="text-xl leading-7 font-semibold text-[#191c1e] mb-4">Résumé du reçu</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 bg-[#f7f9fb] p-6 rounded-lg border border-[#e0e3e5]">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-4">Résumé du reçu</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 bg-surface p-6 rounded-lg border border-surface-variant">
               <div>
-                <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Candidat</p>
-                <p class="text-base font-medium text-[#191c1e]">{{ nomComplet || 'Amira Laurent' }}</p>
+                <p class="text-xs tracking-[0.05em] font-semibold text-on-surface-variant mb-1 uppercase">Candidat</p>
+                <p class="font-body-md text-body-md font-medium text-on-surface">{{ nomComplet || 'Amira Laurent' }}</p>
               </div>
               <div>
-                <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Formation</p>
-                <p class="text-base font-medium text-[#191c1e]">{{ libelleFormation }}</p>
+                <p class="text-xs tracking-[0.05em] font-semibold text-on-surface-variant mb-1 uppercase">Formation</p>
+                <p class="font-body-md text-body-md font-medium text-on-surface">{{ libelleFormation }}</p>
               </div>
               <div>
-                <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Montant</p>
-                <p class="text-base font-medium text-[#191c1e]">{{ montantFormate }}</p>
+                <p class="text-xs tracking-[0.05em] font-semibold text-on-surface-variant mb-1 uppercase">Montant</p>
+                <p class="font-body-md text-body-md font-medium text-on-surface">{{ montantFormate }}</p>
               </div>
               <div>
-                <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Méthode de paiement</p>
-                <p class="text-base font-medium text-[#191c1e]">{{ methodePaiement }}</p>
+                <p class="text-xs tracking-[0.05em] font-semibold text-on-surface-variant mb-1 uppercase">Méthode de paiement</p>
+                <p class="font-body-md text-body-md font-medium text-on-surface">{{ methodePaiement }}</p>
               </div>
               <div>
-                <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Date</p>
-                <p class="text-base font-medium text-[#191c1e]">{{ currentDate }}</p>
+                <p class="text-xs tracking-[0.05em] font-semibold text-on-surface-variant mb-1 uppercase">Date</p>
+                <p class="font-body-md text-body-md font-medium text-on-surface">{{ currentDate }}</p>
               </div>
             </div>
           </div>
@@ -56,7 +56,7 @@
           <!-- Action Button -->
           <div class="flex justify-center mb-10">
             <button (click)="telechargerRecu()" [disabled]="telechargementRecu"
-                    class="bg-[#30609a] text-white text-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-[#254d7b] transition-colors border-t border-[#4f7cb3] cursor-pointer disabled:opacity-50 disabled:cursor-default">
+                    class="bg-secondary text-on-secondary font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg flex items-center gap-2 hover:opacity-90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-default">
               <span class="material-symbols-outlined">download</span>
               {{ telechargementRecu ? 'Génération du reçu…' : 'Télécharger le reçu (PDF)' }}
             </button>
@@ -64,27 +64,27 @@
 
           <!-- Next Steps -->
           <div>
-            <h3 class="text-xl leading-7 font-semibold text-[#191c1e] mb-6">Prochaines étapes</h3>
-            <div class="relative border-l-2 border-[#e0e3e5] ml-4 space-y-8 pb-4">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Prochaines étapes</h3>
+            <div class="relative border-l-2 border-surface-variant ml-4 space-y-8 pb-4">
               <!-- Step 1 -->
               <div class="relative pl-8">
-                <div class="absolute w-4 h-4 bg-[#30609a] rounded-full -left-[9px] top-1 border-4 border-white"></div>
-                <h4 class="text-sm leading-4 tracking-[0.01em] font-medium text-[#191c1e]">Vérification des pièces justificatives</h4>
-                <span class="inline-block mt-1 bg-[#d4e3ff] text-[#0e4781] text-xs tracking-[0.05em] font-semibold px-2 py-0.5 rounded">En cours</span>
+                <div class="absolute w-4 h-4 bg-primary rounded-full -left-[9px] top-1 border-4 border-white"></div>
+                <h4 class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-on-surface">Vérification des pièces justificatives</h4>
+                <span class="inline-block mt-1 bg-primary-container text-on-secondary-fixed-variant text-xs tracking-[0.05em] font-semibold px-2 py-0.5 rounded">En cours</span>
               </div>
 
               <!-- Step 2 - No step 2 in design, kept for consistency -->
               <div class="relative pl-8">
-                <div class="absolute w-4 h-4 bg-[#e0e3e5] rounded-full -left-[9px] top-1 border-4 border-white"></div>
-                <h4 class="text-sm leading-4 tracking-[0.01em] font-medium text-[#77767f]">Entretien d'admission</h4>
-                <span class="inline-block mt-1 bg-[#e6e8ea] text-[#46464e] text-xs tracking-[0.05em] font-semibold px-2 py-0.5 rounded">À venir</span>
+                <div class="absolute w-4 h-4 bg-surface-variant rounded-full -left-[9px] top-1 border-4 border-white"></div>
+                <h4 class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-outline">Entretien d'admission</h4>
+                <span class="inline-block mt-1 bg-surface-container-high text-on-surface-variant text-xs tracking-[0.05em] font-semibold px-2 py-0.5 rounded">À venir</span>
               </div>
 
               <!-- Step 3 -->
               <div class="relative pl-8">
-                <div class="absolute w-4 h-4 bg-[#e0e3e5] rounded-full -left-[9px] top-1 border-4 border-white"></div>
-                <h4 class="text-sm leading-4 tracking-[0.01em] font-medium text-[#77767f]">Publication des résultats officiels</h4>
-                <span class="inline-block mt-1 bg-[#e6e8ea] text-[#46464e] text-xs tracking-[0.05em] font-semibold px-2 py-0.5 rounded">À venir</span>
+                <div class="absolute w-4 h-4 bg-surface-variant rounded-full -left-[9px] top-1 border-4 border-white"></div>
+                <h4 class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-outline">Publication des résultats officiels</h4>
+                <span class="inline-block mt-1 bg-surface-container-high text-on-surface-variant text-xs tracking-[0.05em] font-semibold px-2 py-0.5 rounded">À venir</span>
               </div>
             </div>
           </div>
@@ -93,7 +93,7 @@
         <!-- Secondary Action -->
         <div class="flex justify-center mt-2">
           <button (click)="accederEspaceCandidat()"
-                  class="bg-white text-[#0e4781] text-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg border border-[#c7c5d0] hover:bg-[#f2f4f6] transition-colors cursor-pointer">
+                  class="bg-surface-container-lowest text-on-secondary-fixed-variant font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
             Accéder à mon espace candidat
           </button>
         </div>
@@ -107,67 +107,67 @@
       <main class="flex-1 w-full max-w-[800px] mx-auto px-4 md:px-10 py-8 flex items-center justify-center">
         <div class="w-full flex flex-col gap-8">
           <div class="text-center">
-            <span class="inline-block text-xs tracking-[0.05em] font-semibold text-[#30609a] uppercase bg-[#d4e3ff] px-3 py-1 rounded-full">Étape 3 sur 3</span>
-            <h1 class="text-2xl md:text-[32px] leading-8 md:leading-10 -tracking-[0.01em] font-semibold mt-4 text-[#191c1e]">
+            <span class="inline-block text-xs tracking-[0.05em] font-semibold text-primary uppercase bg-primary-container px-3 py-1 rounded-full">Étape 3 sur 3</span>
+            <h1 class="font-display text-display text-on-surface leading-none -ml-1 mt-4">
               {{ paiementEchoue ? 'Paiement non abouti' : 'Paiement en cours de traitement' }}
             </h1>
           </div>
 
-          <div class="bg-white rounded-xl border border-[#e0e3e5] p-6 md:p-10 shadow-sm">
-            <div class="flex flex-col items-center text-center border-b border-[#e0e3e5] pb-8 mb-8">
+          <div class="bg-surface-container-lowest rounded-xl border border-surface-variant p-6 md:p-10 shadow-sm">
+            <div class="flex flex-col items-center text-center border-b border-surface-variant pb-8 mb-8">
               <div class="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-                   [class.bg-[#fdecea]]="paiementEchoue" [class.bg-[#fff4e5]]="!paiementEchoue">
+                   [class.bg-error-container]="paiementEchoue" [class.bg-warning-container]="!paiementEchoue">
                 <span class="material-symbols-outlined text-[40px]"
-                      [class.text-error]="paiementEchoue" [class.text-[#b7791f]]="!paiementEchoue"
+                      [class.text-error]="paiementEchoue" [class.text-warning-strong]="!paiementEchoue"
                       style="font-variation-settings: 'FILL' 1;">
                   {{ paiementEchoue ? 'error' : 'hourglass_top' }}
                 </span>
               </div>
-              <h2 class="text-xl md:text-2xl leading-8 font-semibold text-[#191c1e] mb-2">
+              <h2 class="font-headline-sm text-headline-sm md:text-2xl leading-8 text-on-surface mb-2">
                 {{ paiementEchoue ? "Le règlement n'a pas abouti" : 'Votre demande de paiement a bien été enregistrée' }}
               </h2>
-              <p class="text-base text-[#46464e]">Transaction : <span class="text-sm leading-4 tracking-[0.01em] font-medium text-[#191c1e]">{{ referenceTransaction }}</span></p>
-              <div class="mt-6 bg-[#f2f4f6] px-4 py-3 rounded-lg border border-[#e0e3e5] flex items-center gap-3 w-full max-w-md text-left">
-                <span class="material-symbols-outlined text-[#30609a]">info</span>
-                <p class="text-sm text-[#46464e]" *ngIf="!paiementEchoue">
+              <p class="font-body-md text-body-md text-on-surface-variant">Transaction : <span class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-on-surface">{{ referenceTransaction }}</span></p>
+              <div class="mt-6 bg-surface-container-low px-4 py-3 rounded-lg border border-surface-variant flex items-center gap-3 w-full max-w-md text-left">
+                <span class="material-symbols-outlined text-primary">info</span>
+                <p class="font-body-sm text-body-sm text-on-surface-variant" *ngIf="!paiementEchoue">
                   Le service admission confirme les règlements dès réception. Vous serez notifié par email et dans votre espace candidat dès la confirmation — aucune action supplémentaire n'est requise de votre part.
                 </p>
-                <p class="text-sm text-[#46464e]" *ngIf="paiementEchoue">
+                <p class="font-body-sm text-body-sm text-on-surface-variant" *ngIf="paiementEchoue">
                   La tentative précédente n'a pas pu être finalisée. Vous pouvez réessayer avec le même moyen de paiement ou en choisir un autre.
                 </p>
               </div>
             </div>
 
             <div class="mb-8">
-              <h3 class="text-xl leading-7 font-semibold text-[#191c1e] mb-4">Résumé</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 bg-[#f7f9fb] p-6 rounded-lg border border-[#e0e3e5]">
+              <h3 class="font-headline-sm text-headline-sm text-on-surface mb-4">Résumé</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 bg-surface p-6 rounded-lg border border-surface-variant">
                 <div>
-                  <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Candidat</p>
-                  <p class="text-base font-medium text-[#191c1e]">{{ nomComplet || '—' }}</p>
+                  <p class="text-xs tracking-[0.05em] font-semibold text-on-surface-variant mb-1 uppercase">Candidat</p>
+                  <p class="font-body-md text-body-md font-medium text-on-surface">{{ nomComplet || '—' }}</p>
                 </div>
                 <div>
-                  <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Formation</p>
-                  <p class="text-base font-medium text-[#191c1e]">{{ libelleFormation }}</p>
+                  <p class="text-xs tracking-[0.05em] font-semibold text-on-surface-variant mb-1 uppercase">Formation</p>
+                  <p class="font-body-md text-body-md font-medium text-on-surface">{{ libelleFormation }}</p>
                 </div>
                 <div>
-                  <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Montant</p>
-                  <p class="text-base font-medium text-[#191c1e]">{{ montantFormate }}</p>
+                  <p class="text-xs tracking-[0.05em] font-semibold text-on-surface-variant mb-1 uppercase">Montant</p>
+                  <p class="font-body-md text-body-md font-medium text-on-surface">{{ montantFormate }}</p>
                 </div>
                 <div>
-                  <p class="text-xs tracking-[0.05em] font-semibold text-[#46464e] mb-1 uppercase">Méthode de paiement</p>
-                  <p class="text-base font-medium text-[#191c1e]">{{ methodePaiement }}</p>
+                  <p class="text-xs tracking-[0.05em] font-semibold text-on-surface-variant mb-1 uppercase">Méthode de paiement</p>
+                  <p class="font-body-md text-body-md font-medium text-on-surface">{{ methodePaiement }}</p>
                 </div>
               </div>
             </div>
 
             <div class="flex flex-col sm:flex-row justify-center gap-3 mb-2">
               <button (click)="actualiserStatut()" [disabled]="actualisationEnCours"
-                      class="bg-white text-[#0e4781] text-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg border border-[#c7c5d0] hover:bg-[#f2f4f6] transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
+                      class="bg-surface-container-lowest text-on-secondary-fixed-variant font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">refresh</span>
                 {{ actualisationEnCours ? 'Actualisation…' : 'Actualiser le statut' }}
               </button>
               <button (click)="essayerAutreMoyen()"
-                      class="bg-[#30609a] text-white text-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg hover:bg-[#254d7b] transition-colors border-t border-[#4f7cb3] cursor-pointer">
+                      class="bg-secondary text-on-secondary font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg hover:opacity-90 transition-colors cursor-pointer">
                 {{ paiementEchoue ? 'Réessayer le paiement' : 'Changer de moyen de paiement' }}
               </button>
             </div>
@@ -175,7 +175,7 @@
 
           <div class="flex justify-center mt-2">
             <button (click)="accederEspaceCandidat()"
-                    class="bg-white text-[#0e4781] text-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg border border-[#c7c5d0] hover:bg-[#f2f4f6] transition-colors cursor-pointer">
+                    class="bg-surface-container-lowest text-on-secondary-fixed-variant font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium px-6 py-3 rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
               Accéder à mon espace candidat
             </button>
           </div>
@@ -187,31 +187,31 @@
   <!-- ========== VUE CHOIX DE PAIEMENT (par défaut) ========== -->
   <ng-template #choixPaiement>
     <main class="flex-1 w-full max-w-[1280px] mx-auto px-4 md:px-10 py-8">
-      <div *ngIf="paiementEchoue" class="max-w-[1280px] mb-4 p-3 bg-[#fdecea] border border-error rounded-lg text-sm text-error flex items-center gap-2">
+      <div *ngIf="paiementEchoue" class="max-w-[1280px] mb-4 p-3 bg-error-container border border-error rounded-lg font-body-sm text-body-sm text-error flex items-center gap-2">
         <span class="material-symbols-outlined text-[18px]">error</span>
         Le précédent règlement n'a pas abouti. Vous pouvez réessayer ci-dessous.
       </div>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-4">
-          <div class="bg-white rounded-xl border border-[#c7c5d0] p-6">
-            <h2 class="text-xl leading-7 font-semibold text-[#000002] mb-4">Déclarez votre moyen de règlement</h2>
+          <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6">
+            <h2 class="font-headline-sm text-headline-sm text-on-surface mb-4">Déclarez votre moyen de règlement</h2>
 
             <!-- MOBILE MONEY -->
             <div class="space-y-4">
-              <label class="relative flex cursor-pointer rounded-lg border p-4 shadow-sm hover:bg-[#f2f4f6] transition-colors duration-200"
-                     [class.border-[#30609a]]="paymentMethod === 'mobile_money'"
-                     [class.bg-[#f7f9fb]]="paymentMethod === 'mobile_money'"
-                     [class.border-[#c7c5d0]]="paymentMethod !== 'mobile_money'"
-                     [class.bg-white]="paymentMethod !== 'mobile_money'">
+              <label class="relative flex cursor-pointer rounded-lg border p-4 shadow-sm hover:bg-surface-container-low transition-colors duration-200"
+                     [class.border-primary]="paymentMethod === 'mobile_money'"
+                     [class.bg-surface]="paymentMethod === 'mobile_money'"
+                     [class.border-outline-variant]="paymentMethod !== 'mobile_money'"
+                     [class.bg-surface-container-lowest]="paymentMethod !== 'mobile_money'">
                 <input class="sr-only" name="payment_method" type="radio" value="mobile_money" [(ngModel)]="paymentMethod">
                 <div class="flex w-full items-center justify-between">
                   <div class="flex items-center">
-                    <div class="text-sm">
-                      <p class="text-sm leading-4 tracking-[0.01em] font-medium text-[#000002] font-bold">Mobile Money</p>
-                      <div class="text-[#46464e] text-sm mt-1">Wave, Orange Money, MTN, Free</div>
+                    <div class="font-body-sm text-body-sm">
+                      <p class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-on-surface font-bold">Mobile Money</p>
+                      <div class="text-on-surface-variant font-body-sm text-body-sm mt-1">Wave, Orange Money, MTN, Free</div>
                     </div>
                   </div>
-                  <div class="flex-shrink-0 text-[#30609a]">
+                  <div class="flex-shrink-0 text-primary">
                     <span class="material-symbols-outlined" [style.font-variation-settings]="'FILL' + (paymentMethod === 'mobile_money' ? ' 1' : ' 0')">
                       {{ paymentMethod === 'mobile_money' ? 'radio_button_checked' : 'radio_button_unchecked' }}
                     </span>
@@ -219,41 +219,41 @@
                 </div>
               </label>
 
-              <div *ngIf="paymentMethod === 'mobile_money'" class="pl-4 pr-4 pb-4 pt-4 ml-2 border-l-2 border-[#30609a] space-y-4">
+              <div *ngIf="paymentMethod === 'mobile_money'" class="pl-4 pr-4 pb-4 pt-4 ml-2 border-l-2 border-primary space-y-4">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <label *ngFor="let op of mobileOperators" class="relative cursor-pointer group">
                     <input type="radio" name="operator" [value]="op.code" [(ngModel)]="selectedOperator" class="peer sr-only">
-                    <div class="flex flex-col items-center p-3 rounded-lg border-2 border-[#c7c5d0] bg-white transition-all duration-200 peer-checked:border-[#30609a] peer-checked:bg-[#f7f9fb] hover:bg-[#f2f4f6]">
+                    <div class="flex flex-col items-center p-3 rounded-lg border-2 border-outline-variant bg-surface-container-lowest transition-all duration-200 peer-checked:border-primary peer-checked:bg-surface hover:bg-surface-container-low">
                       <div class="w-12 h-12 mb-2 flex items-center justify-center">
                         <img [src]="op.logo" [alt]="op.name" class="max-w-full max-h-full object-contain">
                       </div>
-                      <span class="text-xs tracking-[0.05em] font-semibold text-[#000002]">{{ op.name }}</span>
+                      <span class="text-xs tracking-[0.05em] font-semibold text-on-surface">{{ op.name }}</span>
                     </div>
                   </label>
                 </div>
 
-                <div class="p-3 bg-[#e0e0ff]/30 rounded-md border border-[#e0e0ff] flex gap-2 text-brand items-start">
+                <div class="p-3 bg-primary-container/40 rounded-lg border border-primary-container flex gap-2 text-brand items-start">
                   <span class="material-symbols-outlined text-[20px] mt-0.5" style="font-variation-settings: 'FILL' 0">info</span>
-                  <p class="text-sm">Après votre règlement, l'équipe admission vérifiera la transaction avant de valider votre dossier.</p>
+                  <p class="font-body-sm text-body-sm">Après votre règlement, l'équipe admission vérifiera la transaction avant de valider votre dossier.</p>
                 </div>
               </div>
             </div>
 
             <!-- VIREMENT BANCAIRE -->
             <div class="space-y-4 mt-4">
-              <label class="relative flex cursor-pointer rounded-lg border p-4 hover:bg-[#f2f4f6] transition-colors duration-200"
-                     [class.border-[#30609a]]="paymentMethod === 'transfer'"
-                     [class.bg-[#f7f9fb]]="paymentMethod === 'transfer'"
-                     [class.border-[#c7c5d0]]="paymentMethod !== 'transfer'"
-                     [class.bg-white]="paymentMethod !== 'transfer'">
+              <label class="relative flex cursor-pointer rounded-lg border p-4 hover:bg-surface-container-low transition-colors duration-200"
+                     [class.border-primary]="paymentMethod === 'transfer'"
+                     [class.bg-surface]="paymentMethod === 'transfer'"
+                     [class.border-outline-variant]="paymentMethod !== 'transfer'"
+                     [class.bg-surface-container-lowest]="paymentMethod !== 'transfer'">
                 <input class="sr-only" name="payment_method" type="radio" value="transfer" [(ngModel)]="paymentMethod">
                 <div class="flex w-full items-center justify-between">
                   <div class="flex items-center">
-                    <div class="text-sm">
-                      <p class="text-sm leading-4 tracking-[0.01em] font-medium text-[#000002]">Virement Bancaire</p>
+                    <div class="font-body-sm text-body-sm">
+                      <p class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-on-surface">Virement Bancaire</p>
                     </div>
                   </div>
-                  <div class="flex-shrink-0" [class.text-[#30609a]]="paymentMethod === 'transfer'" [class.text-[#c7c5d0]]="paymentMethod !== 'transfer'">
+                  <div class="flex-shrink-0" [class.text-primary]="paymentMethod === 'transfer'" [class.text-outline-variant]="paymentMethod !== 'transfer'">
                     <span class="material-symbols-outlined" [style.font-variation-settings]="'FILL' + (paymentMethod === 'transfer' ? ' 1' : ' 0')">
                       {{ paymentMethod === 'transfer' ? 'radio_button_checked' : 'radio_button_unchecked' }}
                     </span>
@@ -262,8 +262,8 @@
               </label>
             </div>
 
-            <div class="mt-6 flex items-center justify-center gap-2 text-[#46464e] text-sm bg-[#eceef0] p-3 rounded-lg">
-              <span class="material-symbols-outlined text-[#30609a]" style="font-variation-settings: 'FILL' 1">shield</span>
+            <div class="mt-6 flex items-center justify-center gap-2 text-on-surface-variant font-body-sm text-body-sm bg-surface-container p-3 rounded-lg">
+              <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">shield</span>
               Votre déclaration est enregistrée puis vérifiée par l'équipe admission.
             </div>
           </div>
@@ -271,32 +271,32 @@
 
         <!-- Sidebar -->
         <div class="lg:col-span-1">
-          <div class="bg-white rounded-xl border border-[#c7c5d0] p-6">
-            <h3 class="text-xl leading-7 font-semibold text-[#000002] mb-4 border-b border-[#c7c5d0] pb-4">Résumé de la demande</h3>
+          <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6">
+            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-4 border-b border-outline-variant pb-4">Résumé de la demande</h3>
             <div class="space-y-4 mb-6">
               <div class="flex flex-col">
-                <span class="text-xs tracking-[0.05em] font-semibold text-[#46464e] uppercase mb-1">Candidat</span>
-                <span class="text-base font-medium text-[#000002]">{{ nomComplet || '—' }}</span>
-                <span class="text-sm text-[#46464e]">Dossier : {{ candidature?.numeroDossier || '—' }}</span>
+                <span class="text-xs tracking-[0.05em] font-semibold text-on-surface-variant uppercase mb-1">Candidat</span>
+                <span class="font-body-md text-body-md font-medium text-on-surface">{{ nomComplet || '—' }}</span>
+                <span class="font-body-sm text-body-sm text-on-surface-variant">Dossier : {{ candidature?.numeroDossier || '—' }}</span>
               </div>
               <div class="flex flex-col">
-                <span class="text-xs tracking-[0.05em] font-semibold text-[#46464e] uppercase mb-1">Formation</span>
-                <span class="text-base font-medium text-[#000002]">{{ libelleFormation }}</span>
+                <span class="text-xs tracking-[0.05em] font-semibold text-on-surface-variant uppercase mb-1">Formation</span>
+                <span class="font-body-md text-body-md font-medium text-on-surface">{{ libelleFormation }}</span>
               </div>
             </div>
-            <div class="border-t border-[#c7c5d0] pt-4 mb-6">
+            <div class="border-t border-outline-variant pt-4 mb-6">
               <div class="flex justify-between items-center mt-4">
-                <span class="text-xl leading-7 font-semibold font-bold text-[#000002]">Total à payer</span>
-                <span class="text-2xl leading-8 font-semibold font-bold text-[#30609a]">{{ montantFormate }}</span>
+                <span class="font-headline-sm text-headline-sm text-on-surface">Total à payer</span>
+                <span class="font-headline-md text-headline-md text-primary">{{ montantFormate }}</span>
               </div>
             </div>
             <div class="space-y-3">
               <button (click)="initierPaiement()" [disabled]="loading"
-                      class="w-full bg-[#30609a] hover:bg-[#254d7d] text-white text-sm leading-4 tracking-[0.01em] font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors border-t border-[#4a7ec2] shadow-[0_4px_12px_rgba(0,0,0,0.05)] disabled:opacity-50 cursor-pointer">
+                      class="w-full bg-secondary hover:opacity-90 text-on-secondary font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50 cursor-pointer">
                 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">lock</span>
                 {{ loading ? 'Enregistrement...' : 'Déclarer ce règlement' }}
               </button>
-              <a routerLink="/recrutement/candidature" class="w-full bg-white border border-[#c7c5d0] hover:bg-[#f2f4f6] text-brand text-sm leading-4 tracking-[0.01em] font-medium py-3 px-4 rounded-lg transition-colors text-center block no-underline">
+              <a routerLink="/recrutement/candidature" class="w-full bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-brand font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium py-3 px-4 rounded-lg transition-colors text-center block no-underline">
                 Retour au formulaire
               </a>
             </div>

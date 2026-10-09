@@ -3,7 +3,7 @@
   <a routerLink="/responsable-admission/tests" class="hover:underline">Tests académiques</a><span class="material-symbols-outlined text-[16px]">chevron_right</span>
   <span class="font-medium text-on-surface">{{ creation ? 'Nouvelle épreuve' : 'Modifier' }}</span>
 </div>
-<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-stack-lg">{{ creation ? 'Planifier une épreuve' : 'Modifier l’épreuve' }}</h1>
+<h1 class="font-display text-display text-on-surface leading-none -ml-1 mb-stack-lg">{{ creation ? 'Planifier une épreuve' : 'Modifier l’épreuve' }}</h1>
 <div *ngIf="loading" class="p-10 text-center text-on-surface-variant">Chargement…</div>
 <form *ngIf="!loading" [formGroup]="testForm" (ngSubmit)="enregistrer()" class="max-w-3xl">
   <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 space-y-5">
@@ -12,11 +12,11 @@
       <div><label class="block font-label-md text-label-md text-on-surface-variant mb-1" for="session">Session</label>
         <select id="session" formControlName="sessionId" (change)="changerSession()" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface"><option [ngValue]="null">Choisir une session</option><option *ngFor="let session of sessions" [ngValue]="session.id">{{ session.libelle }}</option></select></div>
       <div class="border border-outline-variant rounded-lg p-4"><div class="flex items-center justify-between gap-3 mb-3"><div><p class="font-label-md text-label-md text-on-surface">Candidats admissibles ({{ candidatsEligibles.length }})</p><p class="font-body-sm text-body-sm text-on-surface-variant">Sélectionnez les candidats à convoquer.</p></div><button type="button" (click)="toutSelectionner()" [disabled]="candidatsEligibles.length === 0" class="text-secondary hover:underline disabled:opacity-50">Tout sélectionner</button></div>
-        <p *ngIf="candidatsEligibles.length === 0" class="text-on-surface-variant text-sm">Aucun candidat ADMIS1 pour cette session.</p>
+        <p *ngIf="candidatsEligibles.length === 0" class="text-on-surface-variant font-body-sm text-body-sm">Aucun candidat ADMIS1 pour cette session.</p>
         <label *ngFor="let candidat of candidatsEligibles" class="flex items-center gap-3 py-2 border-t border-outline-variant cursor-pointer"><input type="checkbox" [checked]="selectionCandidatIds.has(candidat.candidatId)" (change)="basculerSelection(candidat.candidatId)" class="w-4 h-4 accent-secondary" /><span>{{ candidat.candidatPrenom }} {{ candidat.candidatNom }} — {{ candidat.numeroDossier }}</span></label>
       </div>
     </ng-container>
-    <ng-template #candidatUnique><div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant"><div class="text-sm text-on-surface-variant">Candidat</div><div>{{ candidatAffiche }}</div><div *ngIf="sessionAffichee" class="text-sm text-on-surface-variant">{{ sessionAffichee }}</div></div></ng-template>
+    <ng-template #candidatUnique><div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant"><div class="font-body-sm text-body-sm text-on-surface-variant">Candidat</div><div>{{ candidatAffiche }}</div><div *ngIf="sessionAffichee" class="font-body-sm text-body-sm text-on-surface-variant">{{ sessionAffichee }}</div></div></ng-template>
     <div><label class="block mb-1" for="test-nom-epreuve">Nom de l’épreuve</label><input id="test-nom-epreuve" formControlName="nomEpreuve" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface" placeholder="Ex. Test de mathématiques" type="text" /></div>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4"><div><label class="block mb-1" for="test-date-epreuve">Date et heure</label><input id="test-date-epreuve" formControlName="dateEpreuve" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface" type="datetime-local" /></div><div><label class="block mb-1" for="test-lieu">Lieu ou lien</label><input id="test-lieu" formControlName="lieuOuLien" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface" placeholder="Salle B12 ou visio" type="text" /></div><div><label class="block mb-1" for="test-coefficient">Coefficient</label><input id="test-coefficient" formControlName="coefficient" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface" type="number" min="0.1" step="0.5" /></div></div>
   </div>

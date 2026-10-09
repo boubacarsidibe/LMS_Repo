@@ -78,7 +78,7 @@ import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-
           class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg flex items-start gap-3"
         >
           <span class="material-symbols-outlined text-[28px] shrink-0"
-                [class.text-secondary]="!e.sousReserve" [class.text-warning]="e.sousReserve">
+                [class.text-secondary]="!e.sousReserve" [class.text-warning-strong]="e.sousReserve">
             {{ e.sousReserve ? 'verified_user' : 'verified' }}
           </span>
           <div class="min-w-0">
@@ -92,7 +92,7 @@ import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-
               Accrédité le {{ e.dateAccreditation | date: 'd MMMM y' }}<span *ngIf="e.dateExpiration">, valable jusqu'au {{ e.dateExpiration | date: 'd MMMM y' }}</span>
             </p>
             <span *ngIf="e.sousReserve"
-                  class="inline-block mt-2 px-2 py-0.5 rounded-full bg-warning/15 text-warning font-label-sm text-label-sm">
+                  class="inline-block mt-2 px-2 py-0.5 rounded-full bg-warning/15 text-warning-strong font-label-sm text-label-sm">
               Sous réserve (plan d'actions en cours)
             </span>
           </div>

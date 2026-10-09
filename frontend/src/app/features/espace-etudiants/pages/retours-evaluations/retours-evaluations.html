@@ -7,14 +7,14 @@
         <span class="w-8 h-[1px] bg-secondary"></span>
         Performance Pédagogique
       </div>
-      <h1 class="font-display text-display text-on-surface leading-tight">Retours &amp; Évaluations des Enseignements</h1>
+      <h1 class="font-display text-display text-on-surface leading-none -ml-1">Retours &amp; Évaluations des Enseignements</h1>
       <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
         Analysez la satisfaction des étudiants et gérez les retours pédagogiques de vos promotions pour ajuster vos enseignements.
       </p>
     </div>
     <div class="flex gap-stack-md">
       <button type="button" (click)="exporter()"
-              class="flex items-center gap-2 px-6 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container transition-colors shadow-sm">
+              class="flex items-center gap-2 px-6 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors shadow-sm">
         <span class="material-symbols-outlined text-[20px]" aria-hidden="true">download</span>
         Exporter (CSV)
       </button>
@@ -100,9 +100,9 @@
       </div>
       <div class="h-8 w-[1px] bg-outline-variant hidden md:block"></div>
       <div class="flex bg-surface-container-highest p-1 rounded-lg">
-        <button (click)="filtreActif = 'recents'" [class.bg-surface-container-lowest]="filtreActif === 'recents'" [class.text-on-surface]="filtreActif === 'recents'" [class.shadow-sm]="filtreActif === 'recents'" [class.text-on-surface-variant]="filtreActif !== 'recents'" class="px-4 py-1.5 rounded-md font-label-md text-label-md transition-all">Plus récents</button>
-        <button (click)="filtreActif = 'notes-basses'" [class.bg-surface-container-lowest]="filtreActif === 'notes-basses'" [class.text-on-surface]="filtreActif === 'notes-basses'" [class.shadow-sm]="filtreActif === 'notes-basses'" [class.text-on-surface-variant]="filtreActif !== 'notes-basses'" class="px-4 py-1.5 rounded-md font-label-md text-label-md transition-all">Notes basses</button>
-        <button (click)="filtreActif = 'actions-requises'" [class.bg-surface-container-lowest]="filtreActif === 'actions-requises'" [class.text-on-surface]="filtreActif === 'actions-requises'" [class.shadow-sm]="filtreActif === 'actions-requises'" [class.text-on-surface-variant]="filtreActif !== 'actions-requises'" class="px-4 py-1.5 rounded-md font-label-md text-label-md transition-all relative">
+        <button (click)="filtreActif = 'recents'" [class.bg-surface-container-lowest]="filtreActif === 'recents'" [class.text-on-surface]="filtreActif === 'recents'" [class.shadow-sm]="filtreActif === 'recents'" [class.text-on-surface-variant]="filtreActif !== 'recents'" class="px-4 py-1.5 rounded-lg font-label-md text-label-md transition-all">Plus récents</button>
+        <button (click)="filtreActif = 'notes-basses'" [class.bg-surface-container-lowest]="filtreActif === 'notes-basses'" [class.text-on-surface]="filtreActif === 'notes-basses'" [class.shadow-sm]="filtreActif === 'notes-basses'" [class.text-on-surface-variant]="filtreActif !== 'notes-basses'" class="px-4 py-1.5 rounded-lg font-label-md text-label-md transition-all">Notes basses</button>
+        <button (click)="filtreActif = 'actions-requises'" [class.bg-surface-container-lowest]="filtreActif === 'actions-requises'" [class.text-on-surface]="filtreActif === 'actions-requises'" [class.shadow-sm]="filtreActif === 'actions-requises'" [class.text-on-surface-variant]="filtreActif !== 'actions-requises'" class="px-4 py-1.5 rounded-lg font-label-md text-label-md transition-all relative">
           Actions requises
           <span *ngIf="nbActionsRequises > 0" class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
         </button>
@@ -143,8 +143,8 @@
               <p class="text-label-sm text-on-surface-variant">{{ r.date }} • {{ r.cours }}</p>
             </div>
           </div>
-          <span *ngIf="r.statut === 'valide'" class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider rounded whitespace-nowrap">Avis Validé</span>
-          <span *ngIf="r.statut === 'action-requise'" class="px-2 py-1 bg-orange-100 text-orange-700 text-[10px] font-bold uppercase tracking-wider rounded whitespace-nowrap">Action Requise</span>
+          <span *ngIf="r.statut === 'valide'" class="px-2 py-1 bg-success/15 text-success-strong text-[10px] font-bold uppercase tracking-wider rounded whitespace-nowrap">Avis Validé</span>
+          <span *ngIf="r.statut === 'action-requise'" class="px-2 py-1 bg-warning/15 text-warning-strong text-[10px] font-bold uppercase tracking-wider rounded whitespace-nowrap">Action Requise</span>
         </div>
 
         <div class="flex gap-0.5 mb-3">

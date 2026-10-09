@@ -75,7 +75,7 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
       { statut: 'EN_COURS_DE_PRESELECTION', label: 'En présélection', couleur: 'bg-secondary' },
       { statut: 'ADMIS1', label: 'Admis au test', couleur: 'bg-primary' },
       { statut: 'ADMIS2', label: "Admis à l'entretien", couleur: 'bg-primary-fixed-dim' },
-      { statut: 'ADMIS3', label: 'Admis final', couleur: 'bg-green-600' },
+      { statut: 'ADMIS3', label: 'Admis final', couleur: 'bg-success' },
       { statut: 'REJETE', label: 'Rejeté', couleur: 'bg-error' },
     ];
     return definitions.map((d) => {
@@ -169,7 +169,7 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
       { statut: '20_25', label: '20-25 ans', couleur: 'bg-secondary', test: (a) => a >= 20 && a <= 25 },
       { statut: '26_30', label: '26-30 ans', couleur: 'bg-primary', test: (a) => a >= 26 && a <= 30 },
       { statut: '31_40', label: '31-40 ans', couleur: 'bg-primary-fixed-dim', test: (a) => a >= 31 && a <= 40 },
-      { statut: 'PLUS_40', label: '> 40 ans', couleur: 'bg-green-600', test: (a) => a > 40 },
+      { statut: 'PLUS_40', label: '> 40 ans', couleur: 'bg-success', test: (a) => a > 40 },
     ];
     const ages = this.candidatures.map((c) => this.age(c.candidatDateNaissance)).filter((a): a is number => a !== null);
     return tranches.map((t) => {
@@ -188,7 +188,7 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
       const cle = p.toLowerCase();
       compte.set(cle, (compte.get(cle) || 0) + 1);
     }
-    const couleurs = ['bg-primary', 'bg-secondary', 'bg-primary-fixed-dim', 'bg-green-600', 'bg-surface-tint', 'bg-error'];
+    const couleurs = ['bg-primary', 'bg-secondary', 'bg-primary-fixed-dim', 'bg-success', 'bg-surface-tint', 'bg-error'];
     return Array.from(compte.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
@@ -214,7 +214,7 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
       if (!n) continue;
       compte.set(n, (compte.get(n) || 0) + 1);
     }
-    const couleurs = ['bg-primary', 'bg-secondary', 'bg-primary-fixed-dim', 'bg-green-600', 'bg-surface-tint', 'bg-error'];
+    const couleurs = ['bg-primary', 'bg-secondary', 'bg-primary-fixed-dim', 'bg-success', 'bg-surface-tint', 'bg-error'];
     return Array.from(compte.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
