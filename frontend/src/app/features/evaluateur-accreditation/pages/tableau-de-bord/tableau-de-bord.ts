@@ -123,7 +123,15 @@ export class EvaluateurTableauDeBordComponent implements OnInit {
 
   demandes: DemandeAccreditationEvaluateur[] = [];
   chargement = true;
-  libellesStatut = LIBELLES_STATUT_DEMANDE;
+  /**
+   * Accesseur, pas un champ initialisé : `libellesStatut = LIBELLES_STATUT_DEMANDE` arrivait
+   * `undefined` dans les tests dès que ce fichier était assemblé avec `demandes.spec.ts`
+   * (build à froid, sans cache) — « Cannot read properties of undefined (reading 'SOUMISE') ».
+   * Lue au rendu, la constante est toujours résolue.
+   */
+  get libellesStatut() {
+    return LIBELLES_STATUT_DEMANDE;
+  }
 
   ngOnInit(): void {
     this.evaluateurService.getDemandes(undefined).subscribe({

@@ -26,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import inpg.sn.lms.auth.entity.Candidat;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.exception.BusinessException;
+import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.exception.DuplicateResourceException;
 import inpg.sn.lms.recrutement.dto.PaiementRequest;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
@@ -86,6 +87,8 @@ class PaiementServiceWorkflowTest {
         candidature.setId(ID_CANDIDATURE);
         candidature.setNumeroDossier("INPG-TEST0002");
         candidature.setCandidat(candidat);
+        // Le paiement n'est ouvert qu'après la présélection (workflow d'admission).
+        candidature.setStatut(EnumStatutCandidature.PRESELECTIONNE);
 
         requete = new PaiementRequest();
         requete.setCandidatureId(ID_CANDIDATURE);
@@ -105,6 +108,17 @@ class PaiementServiceWorkflowTest {
     }
 
     // ===================== Initiation =====================
+
+    /** Règle du workflow d'admission : pas de paiement avant la présélection du dossier. */
+    @Test
+    void un_dossier_non_preselectionne_ne_peut_pas_payer() {
+        candidature.setStatut(EnumStatutCandidature.SOUMIS);
+        when(candidatureRepository.findByIdForPayment(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+
+        org.junit.jupiter.api.Assertions.assertThrows(BusinessException.class,
+                () -> paiementService.initierPaiement(requete));
+        verify(paiementRepository, never()).save(any(Paiement.class));
+    }
 
     /** Le tarif est une donnée métier : il ne doit jamais provenir de la requête. */
     @Test

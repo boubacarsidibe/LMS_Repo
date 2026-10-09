@@ -103,6 +103,24 @@ class PaiementServiceRelanceTest {
         verify(notificationService, never()).notifierRappelPaiement(anyString(), anyString());
     }
 
+    /**
+     * Les frais ne se paient qu'après la présélection, et la convocation au test vient après le
+     * paiement confirmé : un dossier déjà convoqué ou admis n'est jamais « impayé », même sans
+     * ligne de paiement (donnée héritée). Le relancer enverrait un rappel absurde.
+     */
+    @Test
+    void un_dossier_au_dela_du_paiement_nest_jamais_relance() {
+        when(candidatureRepository.findAll()).thenReturn(List.of(
+                candidature(1L, EnumStatutCandidature.CONVOQUE_TEST, null, "a@example.sn"),
+                candidature(2L, EnumStatutCandidature.CONVOQUE_ENTRETIEN, null, "b@example.sn"),
+                candidature(3L, EnumStatutCandidature.ADMIS, null, "c@example.sn")));
+
+        Map<String, Object> resultat = paiementService.relancerImpayes();
+
+        assertThat(resultat.get("envoyes")).isEqualTo(0);
+        verify(notificationService, never()).notifierRappelPaiement(anyString(), anyString());
+    }
+
     /** Un candidat n'ayant jamais initié de paiement (aucune ligne Paiement) est bien impayé. */
     @Test
     void un_dossier_valide_sans_aucune_tentative_de_paiement_est_relance() {
@@ -116,10 +134,11 @@ class PaiementServiceRelanceTest {
         verify(notificationCandidatService).creerNotification(anyLong(), anyString(), anyString(), anyString());
     }
 
+    /** Après une tentative échouée, le dossier reste en PAIEMENT_EN_ATTENTE : il doit être relancé. */
     @Test
-    void un_dossier_admis_avec_paiement_en_echec_est_relance() {
+    void un_dossier_en_attente_de_paiement_avec_tentative_en_echec_est_relance() {
         when(candidatureRepository.findAll()).thenReturn(List.of(
-                candidature(2L, EnumStatutCandidature.CONVOQUE_ENTRETIEN, paiement(EnumStatutPaiement.ECHEC), "b@example.sn")));
+                candidature(2L, EnumStatutCandidature.PAIEMENT_EN_ATTENTE, paiement(EnumStatutPaiement.ECHEC), "b@example.sn")));
 
         Map<String, Object> resultat = paiementService.relancerImpayes();
 
@@ -130,7 +149,7 @@ class PaiementServiceRelanceTest {
     @Test
     void un_candidat_sans_adresse_email_est_compte_en_echec_pas_en_exception() {
         when(candidatureRepository.findAll()).thenReturn(
-                List.of(candidature(3L, EnumStatutCandidature.ADMIS, null, null)));
+                List.of(candidature(3L, EnumStatutCandidature.PRESELECTIONNE, null, null)));
 
         Map<String, Object> resultat = paiementService.relancerImpayes();
 
@@ -145,8 +164,8 @@ class PaiementServiceRelanceTest {
     void plusieurs_dossiers_eligibles_sont_tous_relances() {
         when(candidatureRepository.findAll()).thenReturn(List.of(
                 candidature(1L, EnumStatutCandidature.PRESELECTIONNE, null, "a@example.sn"),
-                candidature(2L, EnumStatutCandidature.CONVOQUE_TEST, paiement(EnumStatutPaiement.EN_ATTENTE), "b@example.sn"),
-                candidature(3L, EnumStatutCandidature.ADMIS, paiement(EnumStatutPaiement.SUCCES), "c@example.sn"),
+                candidature(2L, EnumStatutCandidature.PAIEMENT_EN_ATTENTE, paiement(EnumStatutPaiement.EN_ATTENTE), "b@example.sn"),
+                candidature(3L, EnumStatutCandidature.PAIEMENT_CONFIRME, paiement(EnumStatutPaiement.SUCCES), "c@example.sn"),
                 candidature(4L, EnumStatutCandidature.SOUMIS, null, "d@example.sn")));
 
         Map<String, Object> resultat = paiementService.relancerImpayes();

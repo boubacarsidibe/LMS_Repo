@@ -111,11 +111,17 @@ class MoyenneUniqueTest {
         assertThat(service.statutDeSuivi(null)).isEqualTo("À surveiller");
     }
 
+    /**
+     * Les notes sont saisies sur 100 depuis la migration V44 : le seuil est 60, soit 12/20.
+     * Ce test était écrit pour l'ancienne échelle de 20 (12.0 = « Actif ») et échouait depuis.
+     */
     @Test
-    @DisplayName("Le statut de suivi bascule à 12")
-    void le_statut_bascule_a_douze() {
-        assertThat(service.statutDeSuivi(11.9)).isEqualTo("À risque");
-        assertThat(service.statutDeSuivi(12.0)).isEqualTo("Actif");
-        assertThat(service.statutDeSuivi(18.0)).isEqualTo("Actif");
+    @DisplayName("Le statut de suivi bascule à 60/100, soit 12/20")
+    void le_statut_bascule_a_soixante_sur_cent() {
+        assertThat(service.statutDeSuivi(59.9)).isEqualTo("À risque");
+        assertThat(service.statutDeSuivi(60.0)).isEqualTo("Actif");
+        assertThat(service.statutDeSuivi(90.0)).isEqualTo("Actif");
+        // Une moyenne de 12 sur l'échelle de 100 est un très mauvais résultat, pas un passage.
+        assertThat(service.statutDeSuivi(12.0)).isEqualTo("À risque");
     }
 }

@@ -259,6 +259,15 @@ Ne jamais passer par `sed -i` ni `Path.write_text()` sur ces fichiers : ils
 normalisent les fins de ligne et transforment un correctif de 20 lignes en diff de
 2000.
 
+### Tests frontend : un test peut passer avec le cache et échouer à froid
+
+`ng test` réutilise `frontend/.angular/cache`. Le 2026-10-09, trois tests de l'évaluateur échouaient à chaque
+exécution à froid (et sur une intégration continue) mais passaient dès que le cache était chaud, ce qui les
+a fait passer pour « flottants » alors qu'ils étaient reproductibles. Vérifier **à froid** avant de conclure :
+`NG_BUILD_CACHE=0 npx ng test --watch=false`. Cause : un champ `x = CONSTANTE_IMPORTEE` arrivait `undefined`
+quand deux fichiers de test partageaient un bloc ; un accesseur (`get x() { return CONSTANTE; }`) l'évite.
+36 autres champs de ce motif existent (`libellesStatut = LIBELLES_…`) : à convertir si le défaut y réapparaît.
+
 ### `mvn test` touche la base de recette
 
 `LmsApplicationTests` démarre Spring contre `localhost:5432`, donc **Flyway applique
@@ -330,6 +339,18 @@ peuvent être perdues.
 répondaient à « cet étudiant suit-il ce cours ? » et avaient divergé au point de ne
 désigner aucun cours commun. La dérivation cours → formation → promotions vit dans
 `PromotionService` ; `PerimetreFormateurService` y délègue.
+
+**Les notes sont sur 100, pas sur 20** (migration `V44__notes_sur_100.sql`) : le statut de suivi bascule à
+60 (= 12/20), l'interface affiche `note / 5` pour le /20. Un test écrit avec des valeurs « sur 20 »
+échoue donc sans que le code soit en cause (`MoyenneUniqueTest` l'était).
+
+**Un dossier de candidature n'est « encore modifiable » que tant que l'admission ne s'est pas prononcée** :
+`STATUTS_ENCORE_MODIFIABLES` = `BROUILLON`, `SOUMIS`, `INCOMPLET` — pour déposer une pièce **et** pour
+re-soumettre. La refonte du workflow (22/09) l'avait remplacé par `PRESELECTIONNE` / `PAIEMENT_EN_ATTENTE`,
+soit exactement l'inverse : un dossier tout juste soumis, ou renvoyé « à compléter », ne pouvait plus rien
+ajouter. Les cinq tests de `CandidatControllerTeleverserPieceTest` le voyaient, mais on les tenait pour
+périmés. Le paiement, lui, n'est ouvert qu'après la présélection (`PRESELECTIONNE` / `PAIEMENT_EN_ATTENTE`) :
+là, c'étaient les tests qui étaient périmés.
 
 **Un seul système d'avis : `retour_evaluation`** (migration `V7`). `evaluations_cours`
 et `POST /retours` ont été supprimés : l'avis d'un étudiant n'atteignait jamais son
