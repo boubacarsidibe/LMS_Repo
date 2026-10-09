@@ -102,7 +102,11 @@ public class CandidatController {
      */
     private static final Set<EnumStatutCandidature> STATUTS_ENCORE_MODIFIABLES = Set.of(
             EnumStatutCandidature.BROUILLON,
-            EnumStatutCandidature.SOUMIS);
+            EnumStatutCandidature.SOUMIS,
+            // « Dossier incomplet » : l'admission a demandé un complément. Sans ce statut ici, le
+            // candidat n'avait aucun moyen de déposer la pièce manquante ni de re-soumettre
+            // (transition INCOMPLET -> SOUMIS, voir CandidatureService#estTransitionValide).
+            EnumStatutCandidature.INCOMPLET);
 
     /** Repli quand le formulaire ne fournit pas de date : la colonne est NOT NULL en base. */
     private static final LocalDate DATE_NAISSANCE_PAR_DEFAUT = LocalDate.of(2000, 1, 1);
@@ -498,8 +502,13 @@ public class CandidatController {
         // Une pièce est figée dès que le dossier a atteint une décision de sélection.
         // Un éventuel complément suit alors une réouverture tracée par le service admission,
         // plutôt que de modifier silencieusement le dossier examiné.
-        if (candidature.getStatut() != EnumStatutCandidature.PRESELECTIONNE
-                && candidature.getStatut() != EnumStatutCandidature.PAIEMENT_EN_ATTENTE) {
+        //
+        // La condition était inversée depuis la refonte du workflow (22/09) : elle n'autorisait
+        // l'ajout qu'aux statuts PRESELECTIONNE et PAIEMENT_EN_ATTENTE, soit APRÈS la décision, et
+        // refusait le dossier tout juste soumis ou à compléter. Elle réutilise désormais l'ensemble
+        // qui décide aussi si le dossier peut encore être re-soumis : une seule définition de
+        // « encore modifiable ».
+        if (!STATUTS_ENCORE_MODIFIABLES.contains(candidature.getStatut())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(
                     "message", "Vous ne pouvez plus ajouter de document à cette étape du dossier. "
                             + "Contactez le service admission si un complément est nécessaire."));

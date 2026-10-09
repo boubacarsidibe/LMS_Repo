@@ -114,6 +114,34 @@ class CandidatControllerTeleverserPieceTest {
         lenient().when(fichierStockeService.enregistrerFichier(any())).thenReturn(stocke);
     }
 
+    /** Dossier à compléter : l'admission attend justement une pièce, la refuser serait une impasse. */
+    @Test
+    void un_dossier_incomplet_accepte_une_piece() {
+        candidature.setStatut(EnumStatutCandidature.INCOMPLET);
+
+        ResponseEntity<?> reponse = controller.televerserPiece(
+                ID_CANDIDATURE, fichier, "CV", null, null, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    /** Une fois le dossier validé, présélectionné ou plus loin, les pièces sont figées. */
+    @Test
+    void un_dossier_apres_la_decision_est_fige() {
+        for (EnumStatutCandidature statut : new EnumStatutCandidature[] {
+                EnumStatutCandidature.DOSSIER_VALIDE, EnumStatutCandidature.PRESELECTIONNE,
+                EnumStatutCandidature.PAIEMENT_EN_ATTENTE, EnumStatutCandidature.CONVOQUE_TEST,
+                EnumStatutCandidature.ADMIS, EnumStatutCandidature.DOSSIER_REJETE }) {
+            candidature.setStatut(statut);
+
+            ResponseEntity<?> reponse = controller.televerserPiece(
+                    ID_CANDIDATURE, fichier, "CV", null, null, authentication);
+
+            assertThat(reponse.getStatusCode()).as("statut " + statut).isEqualTo(HttpStatus.CONFLICT);
+        }
+        verify(pieceJustificativeRepository, never()).save(any());
+    }
+
     @Test
     void un_diplome_sans_description_est_refuse() {
         ResponseEntity<?> reponse = controller.televerserPiece(
