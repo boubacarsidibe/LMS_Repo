@@ -45,6 +45,49 @@ que `text-[11px]` restait sur l'élément. Vérifier en cas de doute dans le CSS
 concurrente : c'est presque toujours elle l'ancien pis-aller que `text-<échelle>`
 remplace.
 
+**Titres de page (audit du 2026-10-08)** : tous les `<h1>` suivent la ligne du tableau ci-dessous, y
+compris l'espace candidat et les pages publiques — 48 px / 700, `text-on-surface`, jamais `text-primary`,
+jamais `text-2xl`/`text-3xl`. Un seul `<h1>` visible par page : les layouts qui portaient un
+`<h1 class="sr-only">` (admission, pédagogie) en dupliquaient un, ils utilisent un `<span class="sr-only">`.
+Exceptions voulues : le hero de l'accueil (échelle responsive propre) et le titre blanc du panneau de
+connexion. Famille et taille vont ensemble : `font-<échelle>` sans `text-<échelle>`, ou deux échelles
+différentes sur un élément, sont des erreurs — hors cas responsive (`text-2xl sm:text-headline-lg`).
+
+**Aucune couleur ni taille de texte en dur** (audit du 2026-10-08, espace candidat migré) : jamais
+`text-[#46464e]`, `border-[#c7c5d0]`, `text-slate-900`, `bg-white`… — le jeton existe. Équivalences :
+`#30609a` = `primary`, `#46464e` = `on-surface-variant`, `#191c1e` (et le noir `#000002`, abandonné) =
+`on-surface`, `#c7c5d0` = `outline-variant`, `#ba1a1a` = `error`, `bg-white` = `surface-container-lowest`.
+Tailles : `text-sm` / `text-base` / `text-lg` ne s'écrivent plus que `font-body-sm text-body-sm` /
+`-md` / `-lg` ; `text-xl font-semibold` = `headline-sm`, `text-2xl font-semibold` = `headline-md`.
+Restent volontairement en dur : les couleurs de **statut** sans jeton (teintes vertes, jaunes, rouges
+pâles des pastilles) et `text-xs`/`text-[Npx]` des icônes — à promouvoir en jetons plutôt que recopier.
+**Méthode de vérification d'une refonte de classes** : photographier les styles calculés (`getComputedStyle`)
+de chaque élément des pages concernées avant et après, puis comparer élément par élément — c'est ce qui a
+montré que 800 remplacements ne changeaient aucun pixel, et trouvé le seul vrai écart (un
+`font-semibold font-bold` contradictoire que le CSS arbitrait). Une connexion par compte et par série :
+l'application verrouille 15 minutes après trop de tentatives.
+
+**Cadres des espaces (audit du 2026-10-08)** : tous les espaces à menu latéral partagent la même
+charpente — menu `w-64` (256 px), en-tête `h-16` en `bg-surface-container-lowest/80 backdrop-blur-md`,
+élément actif `bg-primary-container text-on-primary-container! font-medium` (sans ombre ; le `!` est
+nécessaire : la classe de base `text-on-surface-variant` l'emporterait sinon), contenu décalé de
+`md:pl-64`. Chaque page pose elle-même son `p-margin-desktop` : ne jamais en remettre sur le `<main>` du
+layout, le double décalait les titres de 40 px chez le formateur. Un sur-titre (`label-sm`) au-dessus du
+`<h1>` ajoute 24 px à l'écart sous l'en-tête : c'est normal, pas un défaut.
+**Rayons** : 4 px (cases à cocher), 8 px (`rounded-lg` : boutons, champs), 12 px (`rounded-xl` : cartes),
+`full`. Ni `rounded-md`, ni `rounded-2xl`/`3xl`. **Carte** = `shadow-sm` toujours, y compris sur les pages
+publiques (le survol d'une carte cliquable peut l'élever). **Champ de saisie** : jamais `border-none`.
+**Bouton secondaire** : `bg-surface-container-lowest border border-outline-variant text-on-surface
+rounded-lg hover:bg-surface-container-low`. **Pas de relief** sur un bouton : ni `border-t` clair, ni
+filet `bg-white/10`, hérités de l'ancien bouton bleu moyen.
+**Jetons de statut** (au lieu de recopier des hexadécimaux) : `success-container` / `on-success-container` /
+`success-outline`, `warning-container` / `on-warning-container` / `warning-outline`, `on-brand-variant`
+(texte atténué sur le bleu nuit du pied de page).
+**Pièges rencontrés** : une couleur peut se cacher dans une liaison `[class.bg-primary]="…"` ou un
+`[ngClass]`, que les recherches par `class="…"` ne voient pas — chercher aussi `[class.`. Et
+`rounded` → `rounded-lg` ne doit **jamais** toucher une case à cocher (16 px de côté : elle deviendrait
+ronde).
+
 ### Règles à appliquer
 
 | Élément | Classes |
@@ -59,6 +102,11 @@ remplace.
 
 **L'ombre des cartes n'est pas décorative** : sans elle, les cartes blanches se
 confondent avec le fond clair et l'écran paraît plat.
+
+**Un seul bouton principal pour toute la plateforme : bleu nuit** (`bg-secondary`, `#1E3A5F`, décision du
+2026-10-08), y compris sur l'accueil, la navbar publique et le parcours candidat, qui étaient en
+`bg-primary` / `bg-[#30609a]` / `bg-blue-700`. `bg-primary` reste réservé aux avatars et aux accents (points,
+barres de progression). Survol : `hover:opacity-90`, jamais une seconde teinte codée en dur (`#254d7d`).
 
 **Les boutons sont plats.** L'espace étudiant leur ajoutait `shadow-md`,
 `hover:shadow-xl` et `active:scale-95` — retirés pour suivre l'espace candidat.
@@ -93,6 +141,13 @@ d'avatar et de l'icône du logo.
 > Jamais `text-primary-fixed`, jamais `text-on-primary`.
 
 L'avatar de profil est plein : `bg-primary`, initiales `text-white`, `shadow-sm`.
+
+**Vert et jaune : un jeton pour le fond, un autre pour le texte** (audit du 2026-10-08).
+`text-success` (3,3:1 sur blanc) et `text-warning` (1,9:1) sont sous le seuil de 4,5:1 ; ils
+restent valables pour des fonds et pastilles. Pour du **texte** : `text-success-strong` et
+`text-warning-strong`. Même logique pour `outline`, assombri à `#6b6a73` (4,07:1 → 4,84:1 sur
+`surface-container-low`). Un bandeau en texte blanc (`text-white`, `bg-white/10`) se pose sur
+`bg-secondary`, jamais sur `bg-primary-container` — ce jeton est pâle, le texte y disparaît.
 
 ### Chantier des icônes — résolu le 2026-08-25, deux causes superposées
 

@@ -37,7 +37,7 @@ module.exports = {
           "surface-container-highest": "#e0e3e5",
           "background": "#f7f9fb",
           "secondary-fixed-dim": "#a5c8ff",
-          "outline": "#77767f",
+          "outline": "#6b6a73",
           "on-tertiary-container": "#7b8685",
           "surface-tint": "#575b88",
           "secondary": "#1E3A5F",
@@ -58,8 +58,23 @@ module.exports = {
           // sans exister comme jeton, ce qui empechait les autres espaces de
           // reprendre la meme charte.
           "brand": "#131741",
+          // Vert et jaune VIFS : pour les fonds, pastilles et icônes décoratives.
           "success": "#16a34a",
-          "warning": "#eab308"
+          "warning": "#eab308",
+          // Variantes pour le TEXTE : text-success (3,3:1) et text-warning (1,9:1) sur
+          // blanc sont sous le seuil de lisibilité de 4,5:1. Ceux-ci passent à 7,1:1 et 6,9:1.
+          "success-strong": "#166534",
+          "warning-strong": "#854d0e",
+          // Pastilles de statut (fond + texte + bordure), jusqu'ici recopiées en hexadécimal
+          // dans chaque écran : paiement réussi / succès, en attente / alerte.
+          "success-container": "#ecfdf5",
+          "on-success-container": "#065f46",
+          "success-outline": "#a7f3d0",
+          "warning-container": "#fffbeb",
+          "on-warning-container": "#92400e",
+          "warning-outline": "#fde68a",
+          // Texte secondaire sur fond bleu nuit de la marque (pied de page).
+          "on-brand-variant": "#7c80b0"
         },
         spacing: {
           "stack-sm": "8px",
