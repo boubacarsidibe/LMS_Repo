@@ -1,7 +1,7 @@
 <div class="flex flex-col w-full">
 
   <!-- En-tête -->
-  <section class="px-margin-desktop pt-stack-lg">
+  <section class="relative overflow-hidden px-margin-desktop pt-stack-lg">
     <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary-fixed-dim/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
     <div class="grid grid-cols-12 items-center gap-gutter">
       <div class="col-span-12 lg:col-span-7">
@@ -9,7 +9,7 @@
           <span class="w-8 h-[1px] bg-secondary"></span>
           Espace Enseignant
         </div>
-        <h1 class="font-display text-display text-on-surface">Mes cours</h1>
+        <h1 class="font-display text-display text-on-surface leading-none -ml-1">Mes cours</h1>
         <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Gérez, organisez et partagez vos cours et supports pédagogiques.</p>
       </div>
       <div class="relative col-span-12 min-h-36 overflow-hidden rounded-xl bg-primary-container p-5 lg:col-span-5">
@@ -30,18 +30,18 @@
     <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/40 shadow-sm flex flex-wrap items-center gap-gutter">
       <div class="flex-1 min-w-[300px] relative group">
         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-secondary transition-colors">search</span>
-        <input [(ngModel)]="recherche" class="w-full pl-12 pr-4 py-3 bg-surface-container-low rounded-xl border-none focus:ring-2 focus:ring-secondary/20 outline-none font-body-sm text-body-sm transition-all" placeholder="Rechercher une ressource, un code ou un titre..." type="text">
+        <input [(ngModel)]="recherche" class="w-full pl-12 pr-4 py-3 bg-surface-container-low rounded-lg border border-outline-variant focus:ring-2 focus:ring-secondary/20 outline-none font-body-sm text-body-sm transition-all" placeholder="Rechercher une ressource, un code ou un titre..." type="text">
       </div>
       <div class="flex items-center gap-stack-sm">
         <div class="relative">
-          <select [(ngModel)]="semestreSelectionne" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+          <select [(ngModel)]="semestreSelectionne" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-lg font-label-md text-label-md text-on-surface-variant border border-outline-variant focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
             <option value="">Tous les semestres</option>
             <option *ngFor="let s of semestresDisponibles" [value]="s">{{ s }}</option>
           </select>
           <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
         </div>
         <div class="relative">
-          <select [(ngModel)]="promotionSelectionnee" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-xl font-label-md text-label-md text-on-surface-variant border-none focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
+          <select [(ngModel)]="promotionSelectionnee" class="appearance-none bg-surface-container-low px-5 py-3 pr-10 rounded-lg font-label-md text-label-md text-on-surface-variant border border-outline-variant focus:ring-2 focus:ring-secondary/20 outline-none cursor-pointer">
             <option value="">Toutes les promotions</option>
             <option *ngFor="let p of promotionsDisponibles" [value]="p.id">{{ p.libelle }}{{ p.annee ? ' (' + p.annee + ')' : '' }}</option>
           </select>
@@ -65,7 +65,7 @@
            role="link" tabindex="0"
            (click)="ouvrirCours(c)"
            (keydown.enter)="ouvrirCours(c)"
-           class="group bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden border cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
+           class="group bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden border cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2"
            [ngClass]="coursMisEnAvantId === c.id
                         ? 'border-secondary ring-2 ring-secondary/30'
                         : 'border-outline-variant/30'">
@@ -106,7 +106,7 @@
       </div>
 
       <!-- Ressources deposees -->
-      <div class="col-span-full bg-surface-container-lowest border border-outline-variant/30 p-stack-lg rounded-2xl shadow-sm">
+      <div class="col-span-full bg-surface-container-lowest border border-outline-variant/30 p-stack-lg rounded-xl shadow-sm">
         <div class="flex items-center justify-between mb-stack-md">
           <h4 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
             <span class="material-symbols-outlined text-secondary">folder_open</span>
@@ -157,7 +157,7 @@
 
     <!-- Panneau dépôt rapide -->
     <aside *ngIf="cours.length" #depotRapide class="col-span-12 lg:col-span-4 space-y-stack-lg">
-      <div id="depot-rapide" class="bg-surface-container-lowest p-stack-lg rounded-2xl shadow-sm border border-outline-variant/20 sticky top-24">
+      <div id="depot-rapide" class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-sm border border-outline-variant/20 sticky top-24">
         <div class="flex items-center gap-3 mb-stack-md">
           <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
             <span class="material-symbols-outlined">upload_file</span>
@@ -170,7 +170,7 @@
               <span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">1</span>
               <label class="font-label-md text-label-md text-on-surface" for="cours-cible">Cours concerné</label>
             </div>
-            <select *ngIf="cours.length" id="cours-cible" formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-xl border border-outline-variant/40 outline-none font-body-sm text-body-sm text-on-surface focus:border-secondary">
+            <select *ngIf="cours.length" id="cours-cible" formControlName="coursCible" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant/40 outline-none font-body-sm text-body-sm text-on-surface focus:border-secondary">
               <option value="">Choisissez le cours auquel ajouter cette ressource</option>
               <option *ngFor="let c of cours" [value]="c.id">{{ c.code }} — {{ c.titre }}</option>
             </select>
@@ -211,7 +211,7 @@
               <span class="font-label-md text-label-md text-on-surface">Fichier à déposer</span>
             </div>
             <div *ngIf="!fichierSelectionne" (click)="ouvrirExplorateur()" (dragover)="$event.preventDefault(); survolDepot = true" (dragleave)="survolDepot = false" (drop)="onFichierDepose($event)"
-                 class="border-2 border-dashed border-outline-variant rounded-2xl p-6 flex flex-col items-center justify-center gap-2 bg-surface-container-low/50 hover:bg-secondary/5 hover:border-secondary transition-all cursor-pointer group"
+                 class="border-2 border-dashed border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center gap-2 bg-surface-container-low/50 hover:bg-secondary/5 hover:border-secondary transition-all cursor-pointer group"
                  [class.border-secondary]="survolDepot" [ngClass]="{ 'bg-secondary/5': survolDepot }" role="button" tabindex="0" (keydown.enter)="ouvrirExplorateur()" aria-label="Choisir un fichier à déposer">
               <span class="material-symbols-outlined text-[36px] text-outline group-hover:text-secondary transition-colors">cloud_upload</span>
               <p class="font-label-md text-label-md text-on-surface text-center">Glissez le fichier ici ou cliquez pour le choisir</p>
@@ -232,19 +232,19 @@
             </div>
             <div class="space-y-base">
               <label class="font-label-md text-label-md text-on-surface-variant" for="titre-lien">Titre affiché</label>
-              <input id="titre-lien" formControlName="titreLien" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex. Replay du cours 1" type="text" maxlength="150">
+              <input id="titre-lien" formControlName="titreLien" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" placeholder="Ex. Replay du cours 1" type="text" maxlength="150">
               <p *ngIf="depotForm.get('titreLien')?.invalid && depotForm.get('titreLien')?.touched" class="text-body-sm text-error">Un titre est requis (150 caractères maximum).</p>
             </div>
             <div class="space-y-base">
               <label class="font-label-md text-label-md text-on-surface-variant" for="url-lien">Adresse du lien</label>
-              <input id="url-lien" formControlName="urlLien" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" placeholder="https://…" type="url" inputmode="url">
+              <input id="url-lien" formControlName="urlLien" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" placeholder="https://…" type="url" inputmode="url">
               <p *ngIf="depotForm.get('urlLien')?.invalid && depotForm.get('urlLien')?.touched" class="text-body-sm text-error">Saisissez une adresse qui commence par http:// ou https://.</p>
             </div>
           </div>
 
             <div class="space-y-base">
                 <div class="flex items-center gap-2"><span class="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm">4</span><label for="depot-date-publication" class="font-label-md text-label-md text-on-surface">Visibilité</label></div>
-                <input id="depot-date-publication" formControlName="datePublication" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="date">
+                <input id="depot-date-publication" formControlName="datePublication" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" type="date">
                 <p *ngIf="!publicationDifferee" class="text-body-sm text-on-surface-variant">
                 Publication immédiate. Choisissez une date future pour programmer la mise en ligne.
                 </p>
@@ -260,13 +260,13 @@
 
             <p *ngIf="uploadMessage" class="text-body-sm text-secondary font-medium">{{ uploadMessage }}</p>
             <p *ngIf="uploadError" class="text-body-sm text-error">{{ uploadError }}</p>
-            <button [disabled]="isUploading || !cours.length" class="w-full py-4 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all mt-4 disabled:opacity-60 disabled:cursor-not-allowed" type="submit">
+            <button [disabled]="isUploading || !cours.length" class="w-full py-4 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all mt-4 disabled:opacity-60 disabled:cursor-not-allowed" type="submit">
                 {{ isUploading ? 'Publication…' : publicationDifferee ? 'Programmer la publication' : 'Publier maintenant' }}
             </button>
             </form>
         </div>
 
-      <div class="p-stack-md bg-surface-container rounded-2xl space-y-stack-sm">
+      <div class="p-stack-md bg-surface-container rounded-xl space-y-stack-sm">
         <h4 class="font-label-md text-label-md text-on-surface flex items-center gap-2">
           <span class="material-symbols-outlined text-[18px]">info</span>
           Guide de publication
@@ -281,7 +281,7 @@
 
   <!-- Modal gestion des promotions d'un cours -->
   <div *ngIf="coursEnGestion" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerGestionPromotions()">
-    <div class="bg-surface-container-lowest rounded-2xl p-stack-lg max-w-md w-full space-y-stack-md" (click)="$event.stopPropagation()">
+    <div class="bg-surface-container-lowest rounded-xl p-stack-lg max-w-md w-full space-y-stack-md" (click)="$event.stopPropagation()">
       <h3 class="font-headline-sm text-headline-sm text-on-surface">Promotions du cours {{ coursEnGestion.code }}</h3>
       <p class="text-body-sm text-on-surface-variant">Sélectionnez les promotions dont les étudiants doivent apparaître dans votre suivi.</p>
       <div class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
@@ -300,7 +300,7 @@
         <button (click)="fermerGestionPromotions()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
           Annuler
         </button>
-        <button [disabled]="isSavingPromotions" (click)="enregistrerPromotions()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+        <button [disabled]="isSavingPromotions" (click)="enregistrerPromotions()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
           {{ isSavingPromotions ? 'Enregistrement…' : 'Enregistrer' }}
         </button>
       </div>
@@ -309,35 +309,35 @@
 
   <!-- Modal edition d'un cours -->
   <div *ngIf="coursEnEdition" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerEditionCours()">
-    <div class="bg-surface-container-lowest rounded-2xl p-stack-lg max-w-md w-full space-y-stack-md" (click)="$event.stopPropagation()">
+    <div class="bg-surface-container-lowest rounded-xl p-stack-lg max-w-md w-full space-y-stack-md" (click)="$event.stopPropagation()">
       <h3 class="font-headline-sm text-headline-sm text-on-surface">Modifier le cours</h3>
       <form [formGroup]="editionForm" (ngSubmit)="enregistrerEdition()" class="space-y-base">
         <div class="space-y-1">
           <label for="edition-cours-code" class="font-label-md text-label-md text-on-surface-variant">Code du cours</label>
-          <input id="edition-cours-code" formControlName="code" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
+          <input id="edition-cours-code" formControlName="code" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
           <label for="edition-cours-titre" class="font-label-md text-label-md text-on-surface-variant">Titre</label>
-          <input id="edition-cours-titre" formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
+          <input id="edition-cours-titre" formControlName="titre" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
           <label for="edition-cours-semestre" class="font-label-md text-label-md text-on-surface-variant">Semestre</label>
-          <input id="edition-cours-semestre" formControlName="semestre" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="text">
+          <input id="edition-cours-semestre" formControlName="semestre" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" type="text">
         </div>
         <div class="space-y-1">
           <label for="edition-cours-description" class="font-label-md text-label-md text-on-surface-variant">Description</label>
-          <textarea id="edition-cours-description" formControlName="description" rows="3" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface resize-none"></textarea>
+          <textarea id="edition-cours-description" formControlName="description" rows="3" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface resize-none"></textarea>
         </div>
         <div class="space-y-1">
           <label for="edition-cours-volume-horaire" class="font-label-md text-label-md text-on-surface-variant">Volume horaire</label>
-          <input id="edition-cours-volume-horaire" formControlName="volumeHoraire" min="0" class="w-full p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface" type="number">
+          <input id="edition-cours-volume-horaire" formControlName="volumeHoraire" min="0" class="w-full p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface" type="number">
         </div>
         <p *ngIf="editionError" class="text-body-sm text-error">{{ editionError }}</p>
         <div class="flex gap-stack-md pt-2">
           <button type="button" (click)="fermerEditionCours()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
             Annuler
           </button>
-          <button [disabled]="isSavingEdition" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+          <button [disabled]="isSavingEdition" type="submit" class="flex-1 py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
             {{ isSavingEdition ? 'Enregistrement…' : 'Enregistrer' }}
           </button>
         </div>
@@ -347,7 +347,7 @@
 
   <!-- Modal presence -->
   <div *ngIf="coursEnPresence" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="fermerPresence()">
-    <div class="bg-surface-container-lowest rounded-2xl p-stack-lg max-w-lg w-full space-y-stack-md max-h-[85vh] overflow-y-auto" (click)="$event.stopPropagation()">
+    <div class="bg-surface-container-lowest rounded-xl p-stack-lg max-w-lg w-full space-y-stack-md max-h-[85vh] overflow-y-auto" (click)="$event.stopPropagation()">
 
       <!-- Etat 1 : liste des seances + creation -->
       <ng-container *ngIf="!seanceSelectionnee">
@@ -386,12 +386,12 @@
         <div class="border-t border-outline-variant pt-stack-md">
           <h4 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide mb-stack-sm">Nouvelle séance</h4>
           <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-stack-sm">
-            <input [(ngModel)]="nouvelleSeanceTitre" type="text" placeholder="Titre (ex: Séance 3 - TP)" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
-            <input [(ngModel)]="nouvelleSeanceDate" type="date" class="p-3 bg-surface-container-low rounded-xl border-none outline-none font-body-sm text-body-sm text-on-surface">
+            <input [(ngModel)]="nouvelleSeanceTitre" type="text" placeholder="Titre (ex: Séance 3 - TP)" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface">
+            <input [(ngModel)]="nouvelleSeanceDate" type="date" class="p-3 bg-surface-container-low rounded-lg border border-outline-variant outline-none font-body-sm text-body-sm text-on-surface">
           </div>
           <button [disabled]="!nouvelleSeanceTitre.trim() || !nouvelleSeanceDate || isSavingSeance"
                   (click)="creerSeance()"
-                  class="w-full mt-stack-sm py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+                  class="w-full mt-stack-sm py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
             {{ isSavingSeance ? 'Création…' : 'Créer la séance' }}
           </button>
         </div>
@@ -442,7 +442,7 @@
           <span class="material-symbols-outlined text-[18px]">check_circle</span>{{ presenceSuccess }}
         </p>
         <button [disabled]="isSavingPresences" (click)="enregistrerPresences()"
-                class="w-full py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+                class="w-full py-3 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
           {{ isSavingPresences ? 'Enregistrement…' : 'Enregistrer les présences' }}
         </button>
 

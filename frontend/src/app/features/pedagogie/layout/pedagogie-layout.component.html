@@ -12,7 +12,7 @@
     [class.translate-x-0]="sidebarMobileOuverte"
     aria-label="Navigation de l’espace pédagogique">
     <div class="p-6">
-      <h1 class="sr-only">INPG Pédagogie</h1>
+      <span class="sr-only">INPG Pédagogie</span>
       <app-logo-inpg hauteur="h-10"></app-logo-inpg>
       <p class="mt-2 font-label-sm text-label-sm text-on-surface-variant">Responsable pédagogique</p>
     </div>
@@ -21,7 +21,7 @@
       <a
         *ngFor="let entree of navigation"
         [routerLink]="entree.lien"
-        routerLinkActive="bg-secondary-fixed text-secondary font-medium"
+        routerLinkActive="bg-primary-container text-on-primary-container! font-medium"
         class="flex items-center gap-3 px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-all duration-200">
         <span class="material-symbols-outlined">{{ entree.icone }}</span>
         {{ entree.libelle }}
@@ -81,11 +81,11 @@
               <p class="font-label-md text-label-md text-on-surface capitalize">{{ nomAffiche }}</p>
               <p class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ emailAffiche }}</p>
             </div>
-            <a routerLink="mon-profil" (click)="menuProfilOuvert = false" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
+            <a routerLink="mon-profil" (click)="menuProfilOuvert = false" class="flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
               <span class="material-symbols-outlined text-[20px]">account_circle</span> Mon profil
             </a>
             <hr class="my-1 border-outline-variant">
-            <a (click)="seDeconnecter()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
+            <a (click)="seDeconnecter()" class="flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
               <span class="material-symbols-outlined text-[20px]">logout</span> Déconnexion
             </a>
           </div>

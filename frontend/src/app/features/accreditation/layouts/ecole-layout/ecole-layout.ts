@@ -21,7 +21,7 @@ import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-
   standalone: true,
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, LogoInpgComponent],
   template: `
-    <header class="bg-white/95 backdrop-blur-sm border-b border-outline-variant/40 fixed top-0 left-0 right-0 z-50">
+    <header class="bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant fixed top-0 left-0 right-0 z-50">
       <div class="flex justify-between items-center w-full max-w-[1280px] mx-auto px-4 md:px-10 h-[72px]">
         <a routerLink="/accreditation" class="no-underline hover:opacity-80 transition-opacity" aria-label="INPG — accueil">
           <app-logo-inpg hauteur="h-10"></app-logo-inpg>
@@ -29,7 +29,7 @@ import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-
 
         <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
           <a routerLink="/accreditation" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary border-b-2 border-primary"
-             class="px-3 py-2 text-sm font-medium text-on-surface-variant hover:text-primary">Ma demande</a>
+             class="px-3 py-2 font-body-sm text-body-sm font-medium text-on-surface-variant hover:text-primary">Ma demande</a>
         </nav>
 
         <div class="flex items-center gap-3">
@@ -45,25 +45,25 @@ import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-
             <button type="button" (click)="toggleDropdown()"
                     class="flex items-center gap-3 p-1.5 rounded-full hover:bg-surface-container-low transition-colors cursor-pointer border-0 bg-transparent"
                     aria-label="Menu utilisateur">
-              <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+              <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-body-sm text-body-sm font-semibold shadow-sm">
                 {{ initiales }}
               </div>
               <div class="hidden sm:flex flex-col items-start leading-tight">
-                <span class="text-sm font-medium text-on-surface truncate max-w-[160px]">{{ auth.currentUser()?.username || 'École de formation' }}</span>
+                <span class="font-body-sm text-body-sm font-medium text-on-surface truncate max-w-[160px]">{{ auth.currentUser()?.username || 'École de formation' }}</span>
                 <span class="text-xs uppercase text-outline">École de formation</span>
               </div>
               <span class="material-symbols-outlined text-outline text-[20px]">{{ dropdownOpen ? 'expand_less' : 'expand_more' }}</span>
             </button>
 
-            <div *ngIf="dropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-outline-variant rounded-xl shadow-lg py-1 z-50 origin-top-right">
+            <div *ngIf="dropdownOpen" class="absolute right-0 mt-2 w-56 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg py-1 z-50 origin-top-right">
               <a routerLink="/accreditation/mon-profil" (click)="dropdownOpen = false"
-                 class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors no-underline">
+                 class="flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors no-underline">
                 <span class="material-symbols-outlined text-[20px]">account_circle</span>
                 Mon profil
               </a>
               <hr class="my-1 border-outline-variant/40">
               <a (click)="deconnexion()"
-                 class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
+                 class="flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
                 <span class="material-symbols-outlined text-[20px]">logout</span>
                 Déconnexion
               </a>
@@ -72,9 +72,9 @@ import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-
         </div>
       </div>
 
-      <nav *ngIf="mobileMenuOpen" class="md:hidden border-t border-outline-variant/40 bg-white px-4 py-3 space-y-1" aria-label="Navigation">
+      <nav *ngIf="mobileMenuOpen" class="md:hidden border-t border-outline-variant/40 bg-surface-container-lowest px-4 py-3 space-y-1" aria-label="Navigation">
         <a routerLink="/accreditation" (click)="mobileMenuOpen = false" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary bg-surface-container-low"
-           class="block px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Ma demande</a>
+           class="block px-3 py-2.5 rounded-lg font-body-sm text-body-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">Ma demande</a>
       </nav>
     </header>
     <div class="h-[72px]"></div>

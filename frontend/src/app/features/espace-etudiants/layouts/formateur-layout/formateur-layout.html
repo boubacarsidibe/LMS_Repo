@@ -5,7 +5,7 @@
       <span class="mt-2 block font-label-sm text-label-sm text-on-surface-variant">Espace formateur</span>
     </a>
     <nav class="flex-1 space-y-1 overflow-y-auto px-3 pb-6" aria-label="Navigation de l'espace formateur">
-      <a *ngFor="let item of navItems" [routerLink]="item.route" routerLinkActive="bg-secondary-fixed text-secondary font-semibold"
+      <a *ngFor="let item of navItems" [routerLink]="item.route" routerLinkActive="bg-primary-container text-on-primary-container! font-medium"
          class="flex items-center gap-3 rounded-lg px-3 py-2.5 font-label-md text-label-md text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary">
         <span class="material-symbols-outlined text-[20px]">{{ item.icon }}</span>
         {{ item.label }}
@@ -14,8 +14,8 @@
   </aside>
 
   <!-- TopNavBar -->
-  <header class="fixed top-0 left-0 right-0 z-40 border-b border-outline-variant/40 bg-white/95 backdrop-blur-sm md:left-64">
-    <div class="flex justify-between items-center w-full max-w-[1280px] mx-auto px-4 md:px-10 h-[72px] gap-4">
+  <header class="fixed top-0 left-0 right-0 z-40 h-16 border-b border-outline-variant bg-surface-container-lowest/80 backdrop-blur-md md:left-64">
+    <div class="flex justify-between items-center w-full max-w-[1280px] mx-auto px-4 md:px-10 h-full gap-4">
       <div class="hidden md:flex items-center flex-1 max-w-md">
         <div class="relative w-full">
           <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
@@ -104,11 +104,11 @@
           <button id="profile-btn" type="button" (click)="toggleDropdown('profile')"
                   class="flex items-center gap-3 p-1.5 rounded-full hover:bg-surface-container-low transition-colors cursor-pointer border-0 bg-transparent"
                   aria-label="Menu utilisateur">
-            <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+            <div class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-body-sm text-body-sm font-semibold shadow-sm">
               {{ userInitials }}
             </div>
             <div class="hidden lg:flex flex-col items-start leading-tight">
-              <span class="text-sm font-medium text-on-surface capitalize truncate max-w-[140px]">{{ userDisplayName }}</span>
+              <span class="font-body-sm text-body-sm font-medium text-on-surface capitalize truncate max-w-[140px]">{{ userDisplayName }}</span>
               <span class="text-xs uppercase text-outline">Formateur</span>
             </div>
             <span class="material-symbols-outlined text-outline text-[20px]">{{ profileOpen ? 'expand_less' : 'expand_more' }}</span>
@@ -118,11 +118,11 @@
               <p class="font-label-md text-label-md text-on-surface capitalize">{{ userDisplayName }}</p>
               <p class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ userEmail }}</p>
             </div>
-            <a routerLink="mon-profil" (click)="profileOpen = false" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
+            <a routerLink="mon-profil" (click)="profileOpen = false" class="flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
               <span class="material-symbols-outlined text-[20px]">account_circle</span> Mon profil
             </a>
             <hr class="my-1 border-outline-variant">
-            <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
+            <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
               <span class="material-symbols-outlined text-[20px]">logout</span> Déconnexion
             </a>
           </div>
@@ -131,13 +131,13 @@
     </div>
 
   </header>
-  <div class="h-[72px]"></div>
+  <div class="h-16"></div>
 
   <!-- Menu mobile : la sous-navigation devient une liste verticale -->
-  <nav *ngIf="mobileMenuOpen" id="mobile-nav-menu" class="md:hidden fixed top-[72px] left-0 right-0 z-40 border-t border-outline-variant/40 bg-white px-4 py-3 space-y-1 shadow-sm">
+  <nav *ngIf="mobileMenuOpen" id="mobile-nav-menu" class="md:hidden fixed top-[72px] left-0 right-0 z-40 border-t border-outline-variant/40 bg-surface-container-lowest px-4 py-3 space-y-1 shadow-sm">
     <a *ngFor="let item of navItems" [routerLink]="item.route" (click)="mobileMenuOpen = false"
        routerLinkActive="text-primary bg-surface-container-low"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">
+       class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-body-sm text-body-sm font-medium text-on-surface-variant hover:bg-surface-container-low hover:text-primary">
       <span class="material-symbols-outlined text-[20px]">{{ item.icon }}</span>
       {{ item.label }}
     </a>
@@ -146,7 +146,7 @@
   <div *ngIf="mobileMenuOpen" class="fixed inset-0 z-30" (click)="mobileMenuOpen = false"></div>
 
   <!-- Page Content via Router Outlet -->
-  <main class="w-full max-w-container-max overflow-x-hidden px-4 pb-12 md:ml-64 md:w-[calc(100%-16rem)] md:px-margin-desktop">
+  <main class="w-full overflow-x-hidden pb-12 md:ml-64 md:w-[calc(100%-16rem)]">
     <router-outlet></router-outlet>
   </main>
 </div>

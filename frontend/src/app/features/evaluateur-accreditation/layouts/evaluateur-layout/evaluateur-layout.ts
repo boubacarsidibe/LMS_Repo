@@ -25,7 +25,7 @@ interface EntreeNavigation {
   template: `
     <div *ngIf="sidebarMobileOpen" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-40 md:hidden" (click)="toggleSidebarMobile()"></div>
 
-    <aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col shadow-sm transition-transform duration-200 md:translate-x-0"
+    <aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col shadow-sm transition-transform duration-200 md:translate-x-0"
       [class.-translate-x-full]="!sidebarMobileOpen"
       [class.translate-x-0]="sidebarMobileOpen">
       <div class="p-margin-desktop mb-4 flex items-center">
@@ -36,7 +36,7 @@ interface EntreeNavigation {
         <a
           *ngFor="let entree of navigation"
           [routerLink]="entree.lien"
-          routerLinkActive="bg-primary-container text-on-primary-container shadow-sm"
+          routerLinkActive="bg-primary-container text-on-primary-container! font-medium"
           class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
         >
           <span class="material-symbols-outlined">{{ entree.icone }}</span>
@@ -54,8 +54,8 @@ interface EntreeNavigation {
       </div>
     </aside>
 
-    <div class="md:pl-72">
-      <header class="fixed top-0 left-0 md:left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-30 flex items-center justify-between px-4 md:px-margin-desktop">
+    <div class="md:pl-64">
+      <header class="fixed top-0 left-0 md:left-64 right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant z-30 flex items-center justify-between px-4 md:px-margin-desktop">
         <div class="flex items-center gap-3">
           <button type="button" (click)="toggleSidebarMobile()" class="md:hidden p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors" aria-label="Ouvrir le menu">
             <span class="material-symbols-outlined">menu</span>

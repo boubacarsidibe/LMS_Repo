@@ -6,7 +6,7 @@
   <nav id="mobile-sidebar" class="fixed left-0 top-0 h-full flex flex-col z-40 w-64 border-r border-outline-variant bg-surface-container-lowest transition-transform duration-200 md:translate-x-0 md:flex" [class.-translate-x-full]="!sidebarMobileOpen" [class.translate-x-0]="sidebarMobileOpen">
     <div class="p-6 flex items-center gap-4">
       <div>
-        <h1 class="sr-only">INPG LMS — Portail Admissions</h1>
+        <span class="sr-only">INPG LMS — Portail Admissions</span>
         <app-logo-inpg hauteur="h-10"></app-logo-inpg>
         <p class="mt-2 font-label-sm text-label-sm text-on-surface-variant">Portail Admissions</p>
       </div>
@@ -16,8 +16,8 @@
         *ngFor="let item of navItems"
         [routerLink]="item.route"
         class="flex items-center gap-3 px-4 py-2 rounded-lg font-label-md text-label-md transition-all duration-200"
-        [class.bg-secondary-fixed]="isActive(item.route)"
-        [class.text-secondary]="isActive(item.route)"
+        [class.bg-primary-container]="isActive(item.route)"
+        [class.text-on-primary-container]="isActive(item.route)"
         [class.font-medium]="isActive(item.route)"
         [class.text-on-surface-variant]="!isActive(item.route)"
         [class.hover:bg-surface-container-low]="!isActive(item.route)"
@@ -30,11 +30,11 @@
       </a>
     </div>
     <div class="p-4 border-t border-outline-variant space-y-1">
-      <a routerLink="/responsable-admission/parametres" routerLinkActive="bg-secondary-fixed text-secondary font-medium" class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 rounded-lg font-label-md text-label-md">
+      <a routerLink="/responsable-admission/parametres" routerLinkActive="bg-primary-container text-on-primary-container! font-medium" class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 rounded-lg font-label-md text-label-md">
         <span class="material-symbols-outlined">settings</span>
         Paramètres
       </a>
-      <a routerLink="/responsable-admission/aide" routerLinkActive="bg-secondary-fixed text-secondary font-medium" class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 rounded-lg font-label-md text-label-md">
+      <a routerLink="/responsable-admission/aide" routerLinkActive="bg-primary-container text-on-primary-container! font-medium" class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 rounded-lg font-label-md text-label-md">
         <span class="material-symbols-outlined">help</span>
         Aide
       </a>
@@ -104,14 +104,14 @@
               <p class="font-label-md text-label-md text-on-surface capitalize">{{ userDisplayName }}</p>
               <p class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ userEmail }}</p>
             </div>
-            <a routerLink="/responsable-admission/parametres" (click)="profileOpen = false" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
+            <a routerLink="/responsable-admission/parametres" (click)="profileOpen = false" class="flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
               <span class="material-symbols-outlined text-[20px]">settings</span> Paramètres
             </a>
-            <a routerLink="/responsable-admission/aide" (click)="profileOpen = false" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
+            <a routerLink="/responsable-admission/aide" (click)="profileOpen = false" class="flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
               <span class="material-symbols-outlined text-[20px]">help</span> Aide
             </a>
             <hr class="my-1 border-outline-variant">
-            <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
+            <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
               <span class="material-symbols-outlined text-[20px]">logout</span> Déconnexion
             </a>
           </div>
@@ -120,7 +120,7 @@
     </header>
 
     <!-- Page Content via Router Outlet -->
-    <main class="flex-1 pt-20 px-4 md:px-margin-desktop pb-12 overflow-x-hidden max-w-container-max mx-auto w-full">
+    <main class="flex-1 pt-26 px-4 md:px-margin-desktop pb-12 overflow-x-hidden max-w-container-max mx-auto w-full">
       <router-outlet></router-outlet>
     </main>
   </div>

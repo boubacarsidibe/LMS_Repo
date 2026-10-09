@@ -15,7 +15,7 @@ import { Auth } from '../../../../core/auth/services/authService';
   standalone: true,
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
-    <aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col shadow-sm">
+    <aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col shadow-sm">
       <div class="p-margin-desktop mb-4 flex items-center">
         <span class="text-2xl font-extrabold tracking-tight text-primary">INPG<span class="text-brand"> LMS</span></span>
       </div>
@@ -23,7 +23,7 @@ import { Auth } from '../../../../core/auth/services/authService';
       <nav class="flex-1 px-4 space-y-base overflow-y-auto" aria-label="Navigation de l'espace Candidat formateur">
         <a
           routerLink="/candidature-formateur"
-          routerLinkActive="bg-primary-container text-on-primary-container shadow-sm"
+          routerLinkActive="bg-primary-container text-on-primary-container! font-medium"
           [routerLinkActiveOptions]="{ exact: true }"
           class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
         >
@@ -32,7 +32,7 @@ import { Auth } from '../../../../core/auth/services/authService';
         </a>
         <a
           routerLink="/offres-formateurs"
-          routerLinkActive="bg-primary-container text-on-primary-container shadow-sm"
+          routerLinkActive="bg-primary-container text-on-primary-container! font-medium"
           class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
         >
           <span class="material-symbols-outlined">work</span>
@@ -50,8 +50,8 @@ import { Auth } from '../../../../core/auth/services/authService';
       </div>
     </aside>
 
-    <div class="pl-72">
-      <header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
+    <div class="pl-64">
+      <header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant z-40 flex items-center justify-between px-margin-desktop">
         <p class="font-label-md text-label-md text-on-surface-variant">Espace Candidat formateur — Recrutement des formateurs (QMS-007)</p>
         <div class="flex items-center gap-3">
           <a
