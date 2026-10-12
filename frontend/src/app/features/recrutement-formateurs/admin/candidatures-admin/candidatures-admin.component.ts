@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
 import { MediaProtegeService } from '../../../espace-etudiants/services/media-protege.service';
@@ -13,6 +13,7 @@ import {
   StatutCandidatureFormateur,
 } from '../../models/recrutement-formateur.models';
 import { AdminRecrutementFormateurService } from '../../services/admin-recrutement-formateur.service';
+import { TypeRecrutementComponent } from '../../../recrutement/responsable-admission/type-recrutement/type-recrutement.component';
 
 /**
  * Espace admission — onglet Formateurs, sous-page « Candidatures » : tri et
@@ -22,7 +23,7 @@ import { AdminRecrutementFormateurService } from '../../services/admin-recruteme
 @Component({
   selector: 'app-candidatures-admin-formateurs',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, UiSpinnerComponent, UiEmptyStateComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, UiSpinnerComponent, UiEmptyStateComponent, TypeRecrutementComponent],
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header>
@@ -30,16 +31,17 @@ import { AdminRecrutementFormateurService } from '../../services/admin-recruteme
           Recrutement des formateurs — QMS-007
         </p>
         <h1 class="font-display text-display text-on-surface leading-none -ml-1">Candidatures</h1>
+        <app-type-recrutement type="FORMATEUR" class="mt-4 block"></app-type-recrutement>
       </header>
 
       <nav class="flex gap-2 border-b border-outline-variant">
         <a routerLink="/responsable-admission/recrutement-formateurs/offres"
-           routerLinkActive="border-secondary text-primary"
+           routerLinkActive="border-secondary! text-primary!"
            class="px-4 py-2 border-b-2 border-transparent font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors no-underline">
           Offres
         </a>
         <a routerLink="/responsable-admission/recrutement-formateurs/candidatures"
-           routerLinkActive="border-secondary text-primary"
+           routerLinkActive="border-secondary! text-primary!"
            class="px-4 py-2 border-b-2 border-transparent font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors no-underline">
           Candidatures
         </a>

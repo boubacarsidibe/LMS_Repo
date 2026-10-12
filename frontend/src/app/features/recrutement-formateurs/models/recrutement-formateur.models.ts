@@ -64,6 +64,8 @@ export interface OffreFormateur {
   statut: StatutOffreFormateur;
   dateCreation: string;
   nombreCandidatures: number;
+  /** Nom du PDF de la fiche de poste jointe ; `null` si l'offre n'en a pas. */
+  fichePosteNom: string | null;
 }
 
 export interface PieceCandidatureFormateur {

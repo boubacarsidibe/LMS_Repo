@@ -24,6 +24,11 @@ export class RecrutementFormateurService {
     return this.http.get<OffreFormateur>(`${this.api}/public/offres/${id}`);
   }
 
+  /** Lien direct : la vitrine est publique, le navigateur n'a pas besoin de jeton. */
+  urlFichePoste(offreId: number): string {
+    return `${this.api}/public/offres/${offreId}/fiche-poste`;
+  }
+
   postuler(donnees: CandidatureFormateurSaisie): Observable<CandidatureFormateur> {
     return this.http.post<CandidatureFormateur>(`${this.api}/candidatures`, donnees);
   }

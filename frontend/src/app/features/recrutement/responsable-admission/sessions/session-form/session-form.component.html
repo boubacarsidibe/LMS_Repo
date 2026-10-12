@@ -8,9 +8,11 @@
   <span class="font-medium text-on-surface">{{ sessionId ? (session?.libelle || 'Modifier') : 'Nouvelle session' }}</span>
 </div>
 
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Recrutement des étudiants</p>
+
 <div class="flex items-center justify-between gap-4 mb-stack-lg">
   <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">
-    {{ sessionId ? 'Modifier la session' : 'Créer une session' }}
+    {{ sessionId ? 'Modifier la session' : "Créer une session d'étudiants" }}
   </h2>
   <a *ngIf="sessionId" [routerLink]="['/responsable-admission/sessions', sessionId, 'criteres']"
      class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-primary font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm">

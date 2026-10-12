@@ -241,7 +241,11 @@ public class CandidatFormateurController {
                 || !piece.getCandidature().getId().equals(candidatureId) || piece.getFichierStocke() == null) {
             return ResponseEntity.notFound().build();
         }
-        FichierStocke f = piece.getFichierStocke();
+        return servirFichier(piece.getFichierStocke());
+    }
+
+    /** Envoie un fichier stocké en téléchargement ; 404 s'il n'existe plus sur le disque. */
+    static ResponseEntity<?> servirFichier(FichierStocke f) {
         var chemin = Paths.get(f.getCheminStockage());
         if (!Files.isRegularFile(chemin)) {
             return ResponseEntity.notFound().build();

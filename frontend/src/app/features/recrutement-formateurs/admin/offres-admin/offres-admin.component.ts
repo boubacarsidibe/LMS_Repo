@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
 import {
@@ -9,6 +9,7 @@ import {
   StatutOffreFormateur,
 } from '../../models/recrutement-formateur.models';
 import { AdminRecrutementFormateurService } from '../../services/admin-recrutement-formateur.service';
+import { TypeRecrutementComponent } from '../../../recrutement/responsable-admission/type-recrutement/type-recrutement.component';
 
 /**
  * Espace admission — onglet Formateurs, sous-page « Offres » : cycle de vie des
@@ -18,7 +19,7 @@ import { AdminRecrutementFormateurService } from '../../services/admin-recruteme
 @Component({
   selector: 'app-offres-admin-formateurs',
   standalone: true,
-  imports: [CommonModule, RouterLink, UiSpinnerComponent, UiEmptyStateComponent],
+  imports: [CommonModule, RouterLink, RouterLinkActive, UiSpinnerComponent, UiEmptyStateComponent, TypeRecrutementComponent],
   template: `
     <div class="p-margin-desktop space-y-stack-lg max-w-container-max mx-auto">
       <header class="flex flex-wrap items-end justify-between gap-4">
@@ -27,21 +28,29 @@ import { AdminRecrutementFormateurService } from '../../services/admin-recruteme
             Recrutement des formateurs — QMS-007
           </p>
           <h1 class="font-display text-display text-on-surface leading-none -ml-1">Offres de recrutement</h1>
+        <app-type-recrutement type="FORMATEUR" class="mt-4 block"></app-type-recrutement>
         </div>
-        <a routerLink="/responsable-admission/recrutement-formateurs/offres/nouvelle"
-           class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity no-underline">
-          Nouvelle offre
-        </a>
+        <div class="flex flex-wrap items-center gap-3">
+          <a href="/offres-formateurs" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">open_in_new</span>
+            Voir la page publique
+          </a>
+          <a routerLink="/responsable-admission/recrutement-formateurs/offres/nouvelle"
+             class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity no-underline">
+            Nouvelle offre de formateur
+          </a>
+        </div>
       </header>
 
       <nav class="flex gap-2 border-b border-outline-variant">
         <a routerLink="/responsable-admission/recrutement-formateurs/offres"
-           routerLinkActive="border-secondary text-primary"
+           routerLinkActive="border-secondary! text-primary!"
            class="px-4 py-2 border-b-2 border-transparent font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors no-underline">
           Offres
         </a>
         <a routerLink="/responsable-admission/recrutement-formateurs/candidatures"
-           routerLinkActive="border-secondary text-primary"
+           routerLinkActive="border-secondary! text-primary!"
            class="px-4 py-2 border-b-2 border-transparent font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors no-underline">
           Candidatures
         </a>
@@ -73,6 +82,14 @@ import { AdminRecrutementFormateurService } from '../../services/admin-recruteme
               {{ libellesContrat[o.typeContrat] }}<span *ngIf="o.domaine"> · {{ o.domaine }}</span>
               · {{ o.nbPostes }} poste(s) · {{ o.nombreCandidatures }} candidature(s)
               <span *ngIf="o.dateLimiteCandidature"> · limite {{ o.dateLimiteCandidature | date: 'd MMM y' }}</span>
+              <span *ngIf="o.fichePosteNom" class="inline-flex items-center gap-0.5 align-middle" title="Fiche de poste jointe : {{ o.fichePosteNom }}">
+                · <span class="material-symbols-outlined text-[16px]" aria-hidden="true">attach_file</span>fiche de poste
+              </span>
+            </p>
+            <p *ngIf="o.statut === 'BROUILLON'"
+               class="mt-1 flex items-center gap-1 font-label-sm text-label-sm text-warning-strong">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">visibility_off</span>
+              Brouillon : les candidats ne voient pas cette offre tant qu'elle n'est pas publiée.
             </p>
           </div>
           <div class="flex items-center gap-1 shrink-0">
@@ -80,9 +97,9 @@ import { AdminRecrutementFormateurService } from '../../services/admin-recruteme
                title="Modifier" class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
               <span class="material-symbols-outlined text-[20px]">edit</span>
             </a>
-            <button *ngIf="o.statut !== 'PUBLIEE'" type="button" (click)="publier(o)"
-                    title="Publier" class="p-2 text-success-strong hover:bg-success/10 rounded-full transition-colors">
-              <span class="material-symbols-outlined text-[20px]">publish</span>
+            <button *ngIf="o.statut === 'BROUILLON'" type="button" (click)="publier(o)"
+                    class="inline-flex items-center gap-1 px-3 py-1.5 mr-1 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity">
+              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">publish</span>Publier
             </button>
             <button *ngIf="o.statut === 'PUBLIEE'" type="button" (click)="cloturer(o)"
                     title="Clôturer" class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">

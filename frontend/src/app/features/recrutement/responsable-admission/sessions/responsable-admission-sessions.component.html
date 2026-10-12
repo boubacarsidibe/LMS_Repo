@@ -9,7 +9,8 @@
       <span class="font-medium text-on-surface">Sessions</span>
     </div>
     <h1 class="font-display text-display text-on-surface leading-none -ml-1">Sessions de recrutement</h1>
-    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Planification, suivi des quotas et ouverture des appels à candidatures.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Planification, suivi des quotas et ouverture des appels à candidatures des étudiants.</p>
+    <app-type-recrutement type="ETUDIANT" class="mt-4 block"></app-type-recrutement>
   </div>
   <div class="flex flex-wrap items-center gap-3">
     <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" [title]="exporting ? 'Export en cours…' : 'Exporter la liste'" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-outline-variant/70 bg-surface-container-lowest px-4 font-label-md text-label-md text-primary transition-colors hover:bg-surface-container-low disabled:opacity-60">
@@ -23,9 +24,9 @@
       (openChange)="exportModalOpen = $event"
       (exporter)="exporter($event)">
     </app-export-columns-modal>
-    <button type="button" title="Nouvelle Session" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-secondary px-4 font-label-md text-label-md text-on-secondary transition-colors hover:opacity-90" (click)="nouvelleSession()">
+    <button type="button" title="Nouvelle session d'étudiants" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-secondary px-4 font-label-md text-label-md text-on-secondary transition-colors hover:opacity-90" (click)="nouvelleSession()">
       <span class="material-symbols-outlined text-[18px]">add</span>
-      Nouvelle session
+      Nouvelle session<span class="sr-only"> d'étudiants</span>
     </button>
   </div>
 </header>

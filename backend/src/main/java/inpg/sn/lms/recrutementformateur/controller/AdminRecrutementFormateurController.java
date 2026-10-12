@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import inpg.sn.lms.auth.entity.Formateur;
 import inpg.sn.lms.auth.entity.Role;
@@ -30,6 +32,9 @@ import inpg.sn.lms.auth.service.UserService;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
 import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
+import inpg.sn.lms.fichier.ValidationFichier;
+import inpg.sn.lms.recrutement.entity.FichierStocke;
+import inpg.sn.lms.recrutement.service.FichierStockeService;
 import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurDto;
 import inpg.sn.lms.recrutementformateur.dto.ChangementStatutRequest;
 import inpg.sn.lms.recrutementformateur.dto.DecisionCandidatureFormateurRequest;
@@ -64,6 +69,9 @@ import inpg.sn.lms.recrutementformateur.service.RecrutementFormateurNotification
 @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
 public class AdminRecrutementFormateurController {
 
+    /** Une fiche de poste est un document de quelques pages ; le plafond général d'envoi (500 Mo) est bien trop large. */
+    static final long TAILLE_MAX_FICHE_POSTE = 10L * 1024 * 1024;
+
     private final OffreRecrutementFormateurRepository offreRepository;
     private final CandidatureFormateurRepository candidatureRepository;
     private final PieceCandidatureFormateurRepository pieceRepository;
@@ -73,12 +81,13 @@ public class AdminRecrutementFormateurController {
     private final UserService userService;
     private final UtilisateurCourantService utilisateurCourant;
     private final RecrutementFormateurNotificationService notificationService;
+    private final FichierStockeService fichierStockeService;
 
     public AdminRecrutementFormateurController(OffreRecrutementFormateurRepository offreRepository,
             CandidatureFormateurRepository candidatureRepository, PieceCandidatureFormateurRepository pieceRepository,
             FormationRepository formationRepository, FormateurRepository formateurRepository,
             RoleRepository roleRepository, UserService userService, UtilisateurCourantService utilisateurCourant,
-            RecrutementFormateurNotificationService notificationService) {
+            RecrutementFormateurNotificationService notificationService, FichierStockeService fichierStockeService) {
         this.offreRepository = offreRepository;
         this.candidatureRepository = candidatureRepository;
         this.pieceRepository = pieceRepository;
@@ -88,6 +97,7 @@ public class AdminRecrutementFormateurController {
         this.userService = userService;
         this.utilisateurCourant = utilisateurCourant;
         this.notificationService = notificationService;
+        this.fichierStockeService = fichierStockeService;
     }
 
     // ===================== Offres (fiche de poste, QMS-007 §1) =====================
@@ -192,8 +202,76 @@ public class AdminRecrutementFormateurController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
                     "message", "Cette offre porte des candidatures : elle peut être clôturée, pas supprimée."));
         }
+        FichierStocke fichePoste = offre.getFichePoste();
         offreRepository.delete(offre);
+        if (fichePoste != null) {
+            fichierStockeService.supprimerFichier(fichePoste.getId());
+        }
         return ResponseEntity.noContent().build();
+    }
+
+    // ===================== Fiche de poste jointe =====================
+
+    /**
+     * Joint (ou remplace) la fiche de poste d'une offre. PDF uniquement : c'est le format que
+     * les candidats peuvent tous ouvrir, et celui dont {@code FichierStockeService} vérifie la
+     * signature binaire — un fichier renommé en {@code .pdf} est refusé.
+     */
+    @PostMapping(value = "/offres/{id}/fiche-poste", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Transactional
+    public ResponseEntity<?> joindreFichePoste(@PathVariable Long id, @RequestParam("fichier") MultipartFile fichier) {
+        OffreRecrutementFormateur offre = offreRepository.findById(id).orElse(null);
+        if (offre == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!ValidationFichier.nomSur(fichier, "").toLowerCase(java.util.Locale.ROOT).endsWith(".pdf")) {
+            return ResponseEntity.badRequest().body(Map.of("message", "La fiche de poste doit être un fichier PDF."));
+        }
+        if (fichier.getSize() > TAILLE_MAX_FICHE_POSTE) {
+            return ResponseEntity.badRequest().body(Map.of("message", "La fiche de poste ne doit pas dépasser 10 Mo."));
+        }
+        FichierStocke nouvelle;
+        try {
+            nouvelle = fichierStockeService.enregistrerFichier(fichier);
+        } catch (IllegalArgumentException invalide) {
+            return ResponseEntity.badRequest().body(Map.of("message", invalide.getMessage()));
+        } catch (RuntimeException erreur) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Le fichier n'a pas pu être enregistré."));
+        }
+        FichierStocke ancienne = offre.getFichePoste();
+        offre.setFichePoste(nouvelle);
+        OffreRecrutementFormateur enregistree = offreRepository.save(offre);
+        if (ancienne != null) {
+            fichierStockeService.supprimerFichier(ancienne.getId());
+        }
+        return ResponseEntity.ok(toOffreDto(enregistree));
+    }
+
+    @GetMapping("/offres/{id}/fiche-poste")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> telechargerFichePoste(@PathVariable Long id) {
+        OffreRecrutementFormateur offre = offreRepository.findById(id).orElse(null);
+        if (offre == null || offre.getFichePoste() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return CandidatFormateurController.servirFichier(offre.getFichePoste());
+    }
+
+    @DeleteMapping("/offres/{id}/fiche-poste")
+    @Transactional
+    public ResponseEntity<?> retirerFichePoste(@PathVariable Long id) {
+        OffreRecrutementFormateur offre = offreRepository.findById(id).orElse(null);
+        if (offre == null) {
+            return ResponseEntity.notFound().build();
+        }
+        FichierStocke ancienne = offre.getFichePoste();
+        if (ancienne != null) {
+            offre.setFichePoste(null);
+            offreRepository.save(offre);
+            fichierStockeService.supprimerFichier(ancienne.getId());
+        }
+        return ResponseEntity.ok(toOffreDto(offre));
     }
 
     // ===================== Candidatures (tri et sélection, QMS-007 §3-4) =====================
@@ -354,7 +432,8 @@ public class AdminRecrutementFormateurController {
                 o.getFormation() != null ? o.getFormation().getId() : null,
                 o.getFormation() != null ? o.getFormation().getIntitule() : null,
                 o.getDatePublication(), o.getDateLimiteCandidature(), o.getStatut().name(), o.getDateCreation(),
-                candidatureRepository.countByOffreId(o.getId()));
+                candidatureRepository.countByOffreId(o.getId()),
+                o.getFichePoste() != null ? o.getFichePoste().getNomOriginal() : null);
     }
 
     private CandidatureFormateurDto toCandidatureDto(CandidatureFormateur c) {

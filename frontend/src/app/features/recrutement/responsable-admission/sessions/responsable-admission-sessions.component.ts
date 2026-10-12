@@ -9,11 +9,12 @@ import {
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
+import { TypeRecrutementComponent } from '../type-recrutement/type-recrutement.component';
 
 @Component({
   selector: 'app-responsable-admission-sessions',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ExportColumnsModalComponent],
+  imports: [CommonModule, RouterModule, FormsModule, ExportColumnsModalComponent, TypeRecrutementComponent],
   templateUrl: './responsable-admission-sessions.component.html',
 })
 export class ResponsableAdmissionSessionsComponent implements OnInit {

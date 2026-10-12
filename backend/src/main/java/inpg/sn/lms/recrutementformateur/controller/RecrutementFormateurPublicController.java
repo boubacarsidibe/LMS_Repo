@@ -48,6 +48,17 @@ public class RecrutementFormateurPublicController {
         return ResponseEntity.ok(toDto(offre));
     }
 
+    /** Fiche de poste d'une offre publiée : un candidat doit pouvoir la lire avant de postuler. */
+    @GetMapping("/offres/{id}/fiche-poste")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> fichePoste(@PathVariable Long id) {
+        OffreRecrutementFormateur offre = offreRepository.findById(id).orElse(null);
+        if (offre == null || offre.getStatut() != EnumStatutOffreFormateur.PUBLIEE || offre.getFichePoste() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return CandidatFormateurController.servirFichier(offre.getFichePoste());
+    }
+
     /** Vue publique : pas de comptage de candidatures (0), rien de sensible dans une offre d'emploi. */
     static OffreFormateurDto toDto(OffreRecrutementFormateur o) {
         return new OffreFormateurDto(
@@ -65,6 +76,7 @@ public class RecrutementFormateurPublicController {
                 o.getDateLimiteCandidature(),
                 o.getStatut().name(),
                 o.getDateCreation(),
-                0L);
+                0L,
+                o.getFichePoste() != null ? o.getFichePoste().getNomOriginal() : null);
     }
 }

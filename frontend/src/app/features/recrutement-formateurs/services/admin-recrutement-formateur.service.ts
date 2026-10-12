@@ -45,6 +45,21 @@ export class AdminRecrutementFormateurService {
     return this.http.delete<void>(`${this.api}/offres/${id}`);
   }
 
+  // ----- Fiche de poste -----
+  joindreFichePoste(id: number, fichier: File): Observable<OffreFormateur> {
+    const donnees = new FormData();
+    donnees.append('fichier', fichier);
+    return this.http.post<OffreFormateur>(`${this.api}/offres/${id}/fiche-poste`, donnees);
+  }
+
+  retirerFichePoste(id: number): Observable<OffreFormateur> {
+    return this.http.delete<OffreFormateur>(`${this.api}/offres/${id}/fiche-poste`);
+  }
+
+  urlFichePoste(id: number): string {
+    return `/api/admin/recrutement-formateurs/offres/${id}/fiche-poste`;
+  }
+
   // ----- Candidatures -----
   getCandidatures(filtres?: { offreId?: number; statut?: StatutCandidatureFormateur }): Observable<CandidatureFormateur[]> {
     const params: Record<string, string> = {};

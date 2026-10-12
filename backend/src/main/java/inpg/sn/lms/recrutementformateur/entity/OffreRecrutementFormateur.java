@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.espace_etudiant.entity.Formation;
+import inpg.sn.lms.recrutement.entity.FichierStocke;
 import inpg.sn.lms.recrutementformateur.enums.EnumStatutOffreFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumTypeContratFormateur;
 import jakarta.persistence.Column;
@@ -17,6 +18,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -76,6 +78,15 @@ public class OffreRecrutementFormateur {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private EnumStatutOffreFormateur statut = EnumStatutOffreFormateur.BROUILLON;
+
+    /**
+     * Fiche de poste officielle (PDF), facultative. Volontairement sans {@code cascade} ni
+     * {@code orphanRemoval} : le fichier se retire par {@code FichierStockeService}, qui supprime
+     * aussi le fichier sur disque une fois la transaction validée.
+     */
+    @OneToOne
+    @JoinColumn(name = "fiche_poste_id")
+    private FichierStocke fichePoste;
 
     @Column(name = "date_creation", nullable = false)
     private LocalDateTime dateCreation = LocalDateTime.now();

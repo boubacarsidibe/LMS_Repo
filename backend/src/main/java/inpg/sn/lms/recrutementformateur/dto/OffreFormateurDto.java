@@ -19,5 +19,7 @@ public record OffreFormateurDto(
         LocalDate dateLimiteCandidature,
         String statut,
         LocalDateTime dateCreation,
-        long nombreCandidatures) {
+        long nombreCandidatures,
+        /** Nom du fichier de la fiche de poste jointe ; {@code null} si l'offre n'en a pas. */
+        String fichePosteNom) {
 }

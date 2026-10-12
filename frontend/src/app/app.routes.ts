@@ -151,13 +151,14 @@ export const routes: Routes = [
     ],
   },
 
-  // Recrutement des formateurs (procédure QMS-007) : tout utilisateur connecté
-  // peut consulter les offres et postuler (le rôle ROLE_CANDIDAT_FORMATEUR n'est
-  // accordé qu'au premier dépôt, cf. CandidatFormateurController) — même patron
-  // que /accreditation, authGuard seul.
+  // Recrutement des formateurs (procédure QMS-007). La vitrine des offres est
+  // publique, comme /recrutement/sessions pour les étudiants : l'API qui la sert est
+  // déjà ouverte à tous, et la bloquer derrière une connexion renvoyait le visiteur de
+  // la page Institut vers le formulaire de login. Seul le dépôt d'une candidature
+  // exige un compte (le rôle ROLE_CANDIDAT_FORMATEUR n'est accordé qu'au premier dépôt,
+  // cf. CandidatFormateurController) — même patron que /accreditation, authGuard seul.
   {
     path: 'offres-formateurs',
-    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/recrutement-formateurs/pages/offres-publiques/offres-publiques').then(
         (m) => m.OffresPubliquesComponent
