@@ -274,6 +274,19 @@ quand deux fichiers de test partageaient un bloc ; un accesseur (`get x() { retu
 les migrations** pendant les tests, avant tout déploiement. En tenir compte avant de
 lancer la suite sur une base qui sert à une démonstration.
 
+### Lancer `mvn` depuis le shell : JDK, variables, et `target/` périmé
+
+Trois pièges (2026-10-12), qui donnent chacun un échec sans rapport avec le code :
+
+- **Le shell est en Java 11**, le projet demande 17 (`release version 17 not supported`). SDKMAN a le 17 :
+  `JAVA_HOME=/usr/local/sdkman/candidates/java/17.0.15-ms PATH=$JAVA_HOME/bin:$PATH mvn -o test`.
+- **`LmsApplicationTests` a besoin de l'environnement du conteneur** : sans `SPRING_DATASOURCE_PASSWORD` et `JWT_SECRET`
+  (à lire dans `docker inspect demo-backend`, sans les afficher), `password authentication failed for user "admin"` ;
+  sans `APP_UPLOAD_DIR` pointant un dossier inscriptible, `Impossible de créer le dossier d'upload: /app/uploads`.
+- **`target/classes/db/migration` garde les migrations renommées ou supprimées** : `Found more than one migration with
+  version 37` alors que `src/` n'en a qu'une. Supprimer les fichiers en trop dans `target/` (ou `mvn clean`) ; le build Docker,
+  lui, repart de zéro et n'est pas concerné.
+
 ### Les e-mails partent, mais n'arrivent pas — SPF d'`inpg.sn` contre Brevo
 
 Diagnostiqué le 2026-09-08 : le code d'envoi fonctionne (SMTP Brevo authentifié,
@@ -531,6 +544,24 @@ docker exec -i demo-postgres psql -U admin -d myappdb < backend/db/seed-demo-cli
 
 Le second remplit les écrans qui sonnent creux en démonstration : progressions
 variées, photothèque, forum, tests et entretiens.
+
+**Données officielles de l'INPG** (questionnaire du 2026-09-30, `infos1.pdf`, exploité dans
+`docs/COLLECTE_DONNEES_INPG_2026-10-12.md` — qui liste aussi, en §4, ce qui reste à demander). À retenir :
+- Les **8 formations officielles** sont en base (migrations `V202610121500` et `V202610121700`) : le Mastère est la fiche
+  `ING-PET-GAZ-02` du site, le MBA `MBA-ECO-MAN-01`. Les 4 formations de **démonstration** (`DEMO-*`, `MPG`) sont hors catalogue
+  public (`publiee = false`, et créées ainsi par les initialiseurs). Ne pas masquer une formation **du catalogue du site** par
+  `publiee = false` : `CatalogueDataInitializer` les **republie à chaque démarrage**.
+- **L'attestation de diplôme est obligatoire, sauf pour un candidat de niveau « 4e secondaire »** (CPS) : règle écrite deux fois,
+  `diplomeRequis` (frontend) et `ApplicationController.piecesRequises` (serveur) — à garder identiques.
+- **Le barème n'est pas uniforme sur 20** (réponse « Non », système non précisé) : l'hypothèse « notes sur 100, affichées /20 »
+  de la migration `V44` n'est donc pas confirmée pour toutes les formations.
+- Le formulaire de contact écrit à `app.contact.email` (`training@inpg.sn`), **pas** à `app.admission.email` (alertes internes).
+- Les signataires ne sont connus que par leur **fonction** : Directeur général (certificats), Directeur Pédagogique Industriel
+  (relevés, imprimé via `RapportPdf.blocSignature`). N'inventer aucun nom.
+- Adresse officielle : « Boulevard de **l'Est** », Point E (site, personnel, annuaire) — le Word d'origine disait « Saint Louis »,
+  corrigé. Ministère de tutelle imprimé sur les relevés : « Ministère de l'Énergie et du Pétrole (MEP) ».
+- La liste des niveaux d'études (`niveaux-etudes.ts` ⇄ `SessionCandidature.NIVEAUX_ORDONNES`) est stockée telle quelle en base :
+  y ajouter des valeurs, jamais en renommer.
 
 ---
 

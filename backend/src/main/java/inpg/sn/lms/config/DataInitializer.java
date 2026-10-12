@@ -476,6 +476,8 @@ public class DataInitializer {
             formation.setCode(code);
             formation.setIntitule(intitule);
             formation.setDescription(description);
+            // Formation de démonstration : hors du catalogue public, qui ne présente que celles de l'INPG.
+            formation.setPubliee(false);
             return formationRepository.save(formation);
         });
     }

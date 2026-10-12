@@ -37,10 +37,11 @@ public class RelevePdfService {
 
     /**
      * Mentions demandées par l'INPG pour le relevé (questionnaire de collecte du 2026-09-30) : ministère de tutelle
-     * « MEP » — sigle repris tel que fourni, son intitulé complet reste à confirmer — et signature du Directeur
-     * Pédagogique Industriel (DPI), dont le nom n'a pas été communiqué : seule la fonction est imprimée.
+     * « MEP » — le Ministère de l'Énergie et du Pétrole, dont le décret d'attributions n° 2026-1151 du 11 juin 2026
+     * (JO du 27 juin 2026) porte ce nom — et signature du Directeur Pédagogique Industriel (DPI), dont le nom n'a pas
+     * été communiqué : seule la fonction est imprimée.
      */
-    static final String MINISTERE_TUTELLE = "MEP";
+    static final String MINISTERE_TUTELLE = "Ministère de l'Énergie et du Pétrole (MEP)";
 
     /** Place nécessaire à « Synthèse » (titre, trois lignes, mention) et au bloc de signature, en points PDF. */
     private static final float HAUTEUR_SYNTHESE_ET_SIGNATURE = 250f;

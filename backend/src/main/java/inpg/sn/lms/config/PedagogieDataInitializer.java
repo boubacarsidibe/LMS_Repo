@@ -127,6 +127,8 @@ public class PedagogieDataInitializer {
         formation.setDescription(
                 "Formation d'ingénierie couvrant l'exploration, la production et la gestion des ressources "
                         + "pétrolières et gazières, adossée aux besoins de la filière sénégalaise.");
+        // Formation de démonstration : hors du catalogue public, qui ne présente que celles de l'INPG.
+        formation.setPubliee(false);
         formation = formationRepository.save(formation);
 
         // Sans formateur rattaché (cours_formateur), ces cours resteraient invisibles

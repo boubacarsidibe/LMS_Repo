@@ -135,7 +135,7 @@ class RapportPdfTest {
                 extracteur.setEndPage(numero);
                 String texte = extracteur.getText(document).replaceAll("\\s+", " ");
                 assertThat(texte)
-                        .contains("Immeuble Adja Koone - Boulevard de Saint Louis, Point E, Dakar – Sénégal")
+                        .contains("Immeuble Adja Koone - Boulevard de l'Est, Point E, Dakar – Sénégal")
                         .contains("+221 33 865 91 48 / 49")
                         .contains("www.inpg.sn")
                         .contains("Page " + numero + " / " + total);

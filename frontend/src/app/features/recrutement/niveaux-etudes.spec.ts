@@ -1,4 +1,4 @@
-import { NIVEAUX_ETUDES, niveauInsuffisant, rangNiveau } from './niveaux-etudes';
+import { NIVEAUX_ETUDES, diplomeRequis, niveauInsuffisant, rangNiveau } from './niveaux-etudes';
 
 describe('niveaux d’études', () => {
   it('couvre les niveaux d’accès de l’INPG, du CPS (4e secondaire) au Mastère/MBA (Bac+5 = M2)', () => {
@@ -36,5 +36,18 @@ describe('niveaux d’études', () => {
     expect(niveauInsuffisant('Autre', 'Master 2 (M2)')).toBe(false);
     expect(niveauInsuffisant('Baccalauréat', null)).toBe(false);
     expect(niveauInsuffisant(undefined, 'Master 2 (M2)')).toBe(false);
+  });
+
+  it('exige une attestation de diplôme de tout candidat, sauf de niveau 4e secondaire (CPS)', () => {
+    expect(diplomeRequis('4e secondaire')).toBe(false);
+    for (const niveau of ['Baccalauréat', 'Bac+2 (DUT / BTS)', 'Licence (L3)', 'Master 1 (M1)', 'Master 2 (M2)', 'Autre']) {
+      expect(diplomeRequis(niveau)).toBe(true);
+    }
+  });
+
+  it('exige le diplôme tant que le niveau n’est pas renseigné : l’absence de réponse n’exonère personne', () => {
+    expect(diplomeRequis('')).toBe(true);
+    expect(diplomeRequis(null)).toBe(true);
+    expect(diplomeRequis(undefined)).toBe(true);
   });
 });

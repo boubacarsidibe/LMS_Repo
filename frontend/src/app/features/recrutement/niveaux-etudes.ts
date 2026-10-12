@@ -29,3 +29,17 @@ export function niveauInsuffisant(niveauCandidat: string | null | undefined, niv
   const seuil = rangNiveau(niveauMinimum);
   return seuil >= 0 && actuel >= 0 && actuel < seuil;
 }
+
+/**
+ * Niveau d'un candidat qui ne peut pas avoir de diplôme : l'accès aux CPS commence à la 4ᵉ secondaire.
+ * Tout autre niveau (y compris « Autre » ou une valeur absente) doit fournir une attestation de diplôme.
+ */
+export const NIVEAU_SANS_DIPLOME = NIVEAUX_ETUDES[0];
+
+/**
+ * L'INPG exige l'attestation de diplôme dans tout dossier (questionnaire du 2026-09-30), sauf pour un candidat de
+ * niveau « 4e secondaire », qui n'en a pas. À garder identique à `ApplicationController.piecesRequises` côté serveur.
+ */
+export function diplomeRequis(niveauEtude: string | null | undefined): boolean {
+  return niveauEtude !== NIVEAU_SANS_DIPLOME;
+}

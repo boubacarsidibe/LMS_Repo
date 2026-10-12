@@ -431,10 +431,12 @@
           <div class="mb-6">
             <div class="flex items-center gap-2 mb-3">
               <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">workspace_premium</span>
-              <h3 class="font-body-sm text-body-sm font-semibold text-on-surface">Diplômes et certificats obtenus antérieurement</h3>
-              <span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs tracking-[0.05em] font-semibold ml-auto">Facultatif</span>
+              <h3 class="font-body-sm text-body-sm font-semibold text-on-surface">{{ diplomeObligatoire ? 'Attestation de diplôme' : 'Diplômes et certificats obtenus antérieurement' }}</h3>
+              <span *ngIf="diplomeObligatoire" class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container text-xs tracking-[0.05em] font-semibold ml-auto">Requis</span>
+              <span *ngIf="!diplomeObligatoire" class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs tracking-[0.05em] font-semibold ml-auto">Facultatif</span>
             </div>
-            <p class="font-body-sm text-body-sm text-on-surface-variant mb-3">Ajoutez chaque diplôme ou certificat séparément, avec une courte description de son contenu.</p>
+            <p class="font-body-sm text-body-sm text-on-surface-variant mb-3">Ajoutez chaque diplôme ou certificat séparément, avec une courte description de son contenu.<span *ngIf="diplomeObligatoire"> Au moins une attestation de diplôme est exigée.</span></p>
+            <p *ngIf="showErrors && diplomeManquant" class="text-xs text-error mb-3" role="alert">Joignez au moins une attestation de diplôme, avec sa description.</p>
 
             <div *ngFor="let d of diplomes; let i = index" class="bg-surface-container-low border border-outline-variant p-4 rounded-lg flex flex-col gap-3 mb-3">
               <div class="flex items-center justify-between">

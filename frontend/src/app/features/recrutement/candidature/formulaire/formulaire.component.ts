@@ -8,7 +8,7 @@ import { FooterComponent } from '../../../../shared/components/footer/footer.com
 import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { Auth } from '../../../../core/auth/services/authService';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
-import { NIVEAUX_ETUDES, niveauInsuffisant } from '../../niveaux-etudes';
+import { NIVEAUX_ETUDES, diplomeRequis, niveauInsuffisant } from '../../niveaux-etudes';
 
 const STORAGE_KEY = 'candidature_brouillon';
 
@@ -458,7 +458,7 @@ export class FormulaireComponent implements OnInit {
       this.showErrors = true;
       return;
     }
-    if (this.documentsManquants.length > 0 || this.bulletinsIncomplets || !this.data.consentement) {
+    if (this.documentsManquants.length > 0 || this.diplomeManquant || this.bulletinsIncomplets || !this.data.consentement) {
       this.etape = 3;
       this.showErrors = true;
       return;
@@ -611,6 +611,16 @@ export class FormulaireComponent implements OnInit {
   }
 
   /** La dernière entrée doit être complète avant de pouvoir en ajouter une autre. */
+  /** Attestation de diplôme exigée, sauf d'un candidat de niveau 4e secondaire (CPS). */
+  get diplomeObligatoire(): boolean {
+    return diplomeRequis(this.data.niveauActuel);
+  }
+
+  /** Vrai si un diplôme est exigé et qu'aucune entrée n'a à la fois son fichier et sa description. */
+  get diplomeManquant(): boolean {
+    return this.diplomeObligatoire && !this.diplomes.some((d) => d.file && d.description.trim().length > 0);
+  }
+
   get dernierDiplomeComplet(): boolean {
     const dernier = this.diplomes[this.diplomes.length - 1];
     return !!dernier?.file && dernier.description.trim().length > 0;

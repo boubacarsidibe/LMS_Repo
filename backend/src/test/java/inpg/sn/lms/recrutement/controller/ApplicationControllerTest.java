@@ -61,12 +61,20 @@ class ApplicationControllerTest {
         return c;
     }
 
-    /** Les trois pièces exigées de tout candidat, toutes conformes : un dossier complet. */
+    /** Les quatre pièces exigées d'un candidat (identité, CV, relevé, diplôme), toutes conformes : un dossier complet. */
     private List<PieceJustificative> dossierComplet() {
         return List.of(
                 piece(EnumTypeDocument.PIECE_IDENTITE, true),
                 piece(EnumTypeDocument.CV, true),
-                piece(EnumTypeDocument.RELEVE_NOTES, true));
+                piece(EnumTypeDocument.RELEVE_NOTES, true),
+                piece(EnumTypeDocument.DIPLOME, true));
+    }
+
+    /** Dossier d'un candidat dont le niveau d'études déclaré est {@code niveau} (null : non renseigné). */
+    private Candidature candidatureDeNiveau(String niveau, List<PieceJustificative> pieces) {
+        Candidature c = candidature(1L, "a@example.sn", pieces);
+        c.getCandidat().setNiveauEtude(niveau);
+        return c;
     }
 
     private PieceJustificative piece(EnumTypeDocument type, boolean conforme) {
@@ -87,7 +95,10 @@ class ApplicationControllerTest {
         cv.setStatutVerification(EnumStatutVerificationPiece.A_VERIFIER);
         PieceJustificative releve = piece(EnumTypeDocument.RELEVE_NOTES, false);
         releve.setStatutVerification(EnumStatutVerificationPiece.A_VERIFIER);
-        when(candidatureRepo.findAll()).thenReturn(List.of(candidature(1L, "a@example.sn", List.of(identite, cv, releve))));
+        PieceJustificative diplome = piece(EnumTypeDocument.DIPLOME, false);
+        diplome.setStatutVerification(EnumStatutVerificationPiece.A_VERIFIER);
+        when(candidatureRepo.findAll()).thenReturn(List.of(
+                candidature(1L, "a@example.sn", List.of(identite, cv, releve, diplome))));
 
         ResponseEntity<Map<String, Object>> reponse = controller.sendReminder();
 
@@ -107,14 +118,15 @@ class ApplicationControllerTest {
     }
 
     @Test
-    void un_dossier_sans_aucune_piece_reclame_les_trois_pieces_requises() {
+    void un_dossier_sans_aucune_piece_reclame_les_quatre_pieces_requises() {
         when(candidatureRepo.findAll()).thenReturn(List.of(candidature(1L, "a@example.sn", List.of())));
 
         ResponseEntity<Map<String, Object>> reponse = controller.sendReminder();
 
         assertThat(reponse.getBody().get("envoyes")).isEqualTo(1);
         verify(notificationService).notifierRappelDossierIncomplet("a@example.sn", "INPG-TEST1",
-                "Pièce d'identité (non fournie), CV (non fournie), Relevé de notes (non fournie)");
+                "Pièce d'identité (non fournie), CV (non fournie), Relevé de notes (non fournie), "
+                        + "Diplôme (non fournie)");
         verify(notificationCandidatService).creerNotification(anyLong(), anyString(), anyString(), anyString());
     }
 
@@ -122,7 +134,8 @@ class ApplicationControllerTest {
     void une_piece_requise_absente_est_nommee_meme_si_les_autres_sont_conformes() {
         when(candidatureRepo.findAll()).thenReturn(List.of(candidature(1L, "a@example.sn", List.of(
                 piece(EnumTypeDocument.CV, true),
-                piece(EnumTypeDocument.RELEVE_NOTES, true)))));
+                piece(EnumTypeDocument.RELEVE_NOTES, true),
+                piece(EnumTypeDocument.DIPLOME, true)))));
 
         controller.sendReminder();
 
@@ -137,7 +150,8 @@ class ApplicationControllerTest {
         when(candidatureRepo.findAll()).thenReturn(List.of(candidature(1L, "a@example.sn", List.of(
                 piece(EnumTypeDocument.PIECE_IDENTITE, true),
                 piece(EnumTypeDocument.CV, false),
-                piece(EnumTypeDocument.RELEVE_NOTES, true)))));
+                piece(EnumTypeDocument.RELEVE_NOTES, true),
+                piece(EnumTypeDocument.DIPLOME, true)))));
 
         controller.sendReminder();
 
@@ -148,8 +162,59 @@ class ApplicationControllerTest {
     @Test
     void une_piece_facultative_refusee_est_signalee_aussi() {
         List<PieceJustificative> pieces = new java.util.ArrayList<>(dossierComplet());
-        pieces.add(piece(EnumTypeDocument.DIPLOME, false));
+        pieces.add(piece(EnumTypeDocument.LETTRE_MOTIVATION, false));
         when(candidatureRepo.findAll()).thenReturn(List.of(candidature(1L, "a@example.sn", pieces)));
+
+        controller.sendReminder();
+
+        verify(notificationService).notifierRappelDossierIncomplet("a@example.sn", "INPG-TEST1",
+                "Lettre de motivation (à remplacer : non conforme)");
+    }
+
+    // ---- Attestation de diplôme : exigée par l'INPG, sauf des candidats de niveau 4e secondaire (CPS) ----
+
+    private List<PieceJustificative> sansDiplome() {
+        return List.of(
+                piece(EnumTypeDocument.PIECE_IDENTITE, true),
+                piece(EnumTypeDocument.CV, true),
+                piece(EnumTypeDocument.RELEVE_NOTES, true));
+    }
+
+    @Test
+    void le_diplome_manquant_est_reclame_a_un_candidat_de_licence() {
+        when(candidatureRepo.findAll()).thenReturn(List.of(candidatureDeNiveau("Licence (L3)", sansDiplome())));
+
+        controller.sendReminder();
+
+        verify(notificationService).notifierRappelDossierIncomplet("a@example.sn", "INPG-TEST1",
+                "Diplôme (non fournie)");
+    }
+
+    @Test
+    void un_candidat_de_niveau_4e_secondaire_n_a_pas_de_diplome_a_fournir() {
+        when(candidatureRepo.findAll()).thenReturn(List.of(candidatureDeNiveau("4e secondaire", sansDiplome())));
+
+        ResponseEntity<Map<String, Object>> reponse = controller.sendReminder();
+
+        assertThat(reponse.getBody().get("envoyes")).isEqualTo(0);
+        verify(notificationService, never()).notifierRappelDossierIncomplet(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void un_niveau_non_renseigne_n_exonere_pas_du_diplome() {
+        when(candidatureRepo.findAll()).thenReturn(List.of(candidatureDeNiveau(null, sansDiplome())));
+
+        controller.sendReminder();
+
+        verify(notificationService).notifierRappelDossierIncomplet("a@example.sn", "INPG-TEST1",
+                "Diplôme (non fournie)");
+    }
+
+    @Test
+    void un_diplome_depose_par_un_candidat_de_4e_secondaire_reste_controle() {
+        List<PieceJustificative> pieces = new java.util.ArrayList<>(sansDiplome());
+        pieces.add(piece(EnumTypeDocument.DIPLOME, false));
+        when(candidatureRepo.findAll()).thenReturn(List.of(candidatureDeNiveau("4e secondaire", pieces)));
 
         controller.sendReminder();
 

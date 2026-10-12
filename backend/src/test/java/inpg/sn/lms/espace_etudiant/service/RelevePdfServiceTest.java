@@ -153,7 +153,7 @@ class RelevePdfServiceTest {
         try (PDDocument document = Loader.loadPDF(service.genererPdf(releve))) {
             String texte = new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
             assertThat(texte)
-                    .contains("Ministère de tutelle : MEP")
+                    .contains("Ministère de tutelle : Ministère de l'Énergie et du Pétrole (MEP)")
                     .contains("Fait à Dakar, le 12/10/2026")
                     .contains("Le Directeur Pédagogique Industriel");
             // La fonction se lit après la synthèse : la signature clôt le document.

@@ -30,7 +30,7 @@ public final class PapierEnTeteOpenPdf extends PdfPageEventHelper {
     private static final float PIED_Y = 24f;
     private static final float ICONE_HAUTEUR = 10f;
 
-    private static final String ADRESSE = "Immeuble Adja Koone - Boulevard de Saint Louis, Point E, Dakar – Sénégal";
+    private static final String ADRESSE = "Immeuble Adja Koone - Boulevard de l'Est, Point E, Dakar – Sénégal";
     private static final String TELEPHONE = "+221 33 865 91 48 / 49";
     private static final String SITE = "www.inpg.sn";
     private static final String SITE_URL = "https://www.inpg.sn";

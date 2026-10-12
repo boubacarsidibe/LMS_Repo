@@ -95,15 +95,33 @@ public class ApplicationController {
     }
 
     /**
-     * Pièces exigées de tout candidat, dans l'ordre où le formulaire les demande.
-     *
-     * <p>Le diplôme n'y figure pas : il reste facultatif, ajoutable après coup depuis
-     * l'espace candidat. La lettre de motivation non plus, elle n'est plus collectée.
+     * Pièces exigées de tout candidat, dans l'ordre où le formulaire les demande : pièce d'identité, CV, relevés
+     * de notes — auxquelles s'ajoute le diplôme, sauf pour un candidat de niveau « 4e secondaire »
+     * ({@link #piecesRequises}). La lettre de motivation n'est plus collectée.
      */
-    private static final List<EnumTypeDocument> PIECES_REQUISES = List.of(
+    private static final List<EnumTypeDocument> PIECES_DE_BASE = List.of(
             EnumTypeDocument.PIECE_IDENTITE,
             EnumTypeDocument.CV,
             EnumTypeDocument.RELEVE_NOTES);
+
+    /** Niveau d'accès des CPS : un candidat de ce niveau n'a pas de diplôme à présenter. */
+    static final String NIVEAU_SANS_DIPLOME = "4e secondaire";
+
+    /**
+     * L'INPG exige l'attestation de diplôme dans tout dossier (questionnaire de collecte du 2026-09-30). Le
+     * diplôme restait jusque-là facultatif ; il ne peut pas l'être moins qu'avant pour les CPS, ouverts dès la
+     * 4ᵉ secondaire, d'où l'exception. À garder identique à {@code diplomeRequis} du frontend
+     * ({@code recrutement/niveaux-etudes.ts}) : un niveau absent ou inconnu n'exonère pas.
+     */
+    static List<EnumTypeDocument> piecesRequises(Candidature c) {
+        String niveau = c.getCandidat() != null ? c.getCandidat().getNiveauEtude() : null;
+        if (NIVEAU_SANS_DIPLOME.equals(niveau)) {
+            return PIECES_DE_BASE;
+        }
+        List<EnumTypeDocument> requises = new ArrayList<>(PIECES_DE_BASE);
+        requises.add(EnumTypeDocument.DIPLOME);
+        return requises;
+    }
 
     /**
      * Statuts pour lesquels réclamer une pièce a encore un sens.
@@ -147,8 +165,9 @@ public class ApplicationController {
                 .filter(p -> p.getTypeDocument() != null)
                 .collect(Collectors.groupingBy(PieceJustificative::getTypeDocument));
 
+        List<EnumTypeDocument> piecesRequises = piecesRequises(c);
         List<String> manques = new ArrayList<>();
-        for (EnumTypeDocument requis : PIECES_REQUISES) {
+        for (EnumTypeDocument requis : piecesRequises) {
             List<PieceJustificative> deposees = parType.get(requis);
             if (deposees == null || deposees.isEmpty()) {
                 manques.add(requis.libelle() + " (non fournie)");
@@ -160,7 +179,7 @@ public class ApplicationController {
         // Une pièce facultative déposée puis refusée se signale aussi : le candidat l'a
         // fournie, elle n'est pas exploitable, il doit le savoir.
         parType.forEach((type, deposees) -> {
-            if (!PIECES_REQUISES.contains(type) && deposees.stream().anyMatch(
+            if (!piecesRequises.contains(type) && deposees.stream().anyMatch(
                     p -> p.getStatutVerification() == EnumStatutVerificationPiece.A_REMPLACER)) {
                 manques.add(type.libelle() + " (à remplacer : non conforme)");
             }

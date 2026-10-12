@@ -39,7 +39,11 @@ public final class PapierEnTete {
     private static final float PIED_Y = 24f;
     private static final float ICONE_HAUTEUR = 10f;
 
-    private static final String ADRESSE = "Immeuble Adja Koone - Boulevard de Saint Louis, Point E, Dakar – Sénégal";
+    /**
+     * « Boulevard de l'Est » : adresse du site officiel de l'INPG et confirmée par son personnel (questionnaire du
+     * 2026-09-30). Le document Word d'origine portait « Boulevard de Saint Louis », écart corrigé le 2026-10-12.
+     */
+    private static final String ADRESSE = "Immeuble Adja Koone - Boulevard de l'Est, Point E, Dakar – Sénégal";
     private static final String TELEPHONE = "+221 33 865 91 48 / 49";
     private static final String SITE = "www.inpg.sn";
     private static final String SITE_URL = "https://www.inpg.sn";
