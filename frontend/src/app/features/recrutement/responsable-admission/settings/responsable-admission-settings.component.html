@@ -69,17 +69,6 @@
                 [class.left-1]="!candidaturesSpontanees"></span>
         </button>
       </div>
-      <div class="flex items-center justify-between">
-        <span class="font-body-sm text-body-sm font-medium">Activer les paiements en ligne</span>
-        <button class="w-10 h-5 rounded-full relative transition-colors cursor-pointer"
-                [class.bg-primary]="paiementEnLigne"
-                [class.bg-surface-container-highest]="!paiementEnLigne"
-                (click)="paiementEnLigne = !paiementEnLigne">
-          <span class="absolute top-1 w-3 h-3 bg-surface-container-lowest rounded-full transition-all"
-                [class.right-1]="paiementEnLigne"
-                [class.left-1]="!paiementEnLigne"></span>
-        </button>
-      </div>
     </div>
     <div class="mt-8 flex justify-end">
       <button class="px-6 py-2 bg-secondary text-on-secondary font-bold rounded-lg hover:opacity-90 transition-opacity cursor-pointer" (click)="saveSettings('Paramètres enregistrés avec succès.')">Enregistrer</button>

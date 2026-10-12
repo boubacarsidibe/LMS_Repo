@@ -10,7 +10,7 @@
   </main>
 
   <!-- ==================== EMPTY STATE ==================== -->
-  <main *ngIf="!loading && !candidature" class="flex-grow flex justify-center py-20 px-4">
+  <main *ngIf="!loading && (!candidature || !phase)" class="flex-grow flex justify-center py-20 px-4">
     <div class="text-center">
       <span class="material-symbols-outlined text-6xl text-on-surface-variant/40" style="font-variation-settings:'FILL' 0;">inbox</span>
       <p class="mt-4 font-body-lg text-body-lg text-on-surface-variant">Aucune candidature trouvée.</p>
@@ -19,7 +19,7 @@
   </main>
 
   <!-- ==================== SOUMIS / EN_COURS_DE_PRESELECTION ==================== -->
-  <main *ngIf="!loading && candidature && isStatut(STATUT_SOUMIS, STATUT_PRESELECTION)" class="flex-grow flex justify-center py-10 px-4 md:px-10">
+  <main *ngIf="!loading && candidature && isStatut(STATUT_SOUMIS, STATUT_INCOMPLET, STATUT_PRESELECTION)" class="flex-grow flex justify-center py-10 px-4 md:px-10">
     <div class="w-full max-w-full space-y-8">
       <!-- HEADER avec Stepper -->
       <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-8 relative overflow-hidden">
@@ -28,9 +28,9 @@
         </div>
         <div class="relative z-10 space-y-6">
           <div class="flex flex-col gap-2">
-            <span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-label-sm w-fit">Candidature en cours</span>
-            <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">Votre dossier est en cours d'évaluation.</h2>
-            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Félicitations pour avoir complété la première étape. Notre jury d'admission examine actuellement vos documents avec la plus grande attention.</p>
+            <span class="px-3 py-1 rounded-full text-label-sm w-fit" [ngClass]="entete.classeBadge">{{ entete.badge }}</span>
+            <h2 class="font-headline-lg text-headline-lg text-on-surface">{{ entete.titre }}</h2>
+            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">{{ entete.texte }}</p>
           </div>
           <!-- Stepper : mêmes données que la Timeline détaillée plus bas (timelineItems), pour ne jamais diverger -->
           <div class="flex items-start justify-between w-full pt-4">
@@ -57,8 +57,9 @@
         </div>
       </section>
 
-      <!-- STATUT -->
-      <div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-8 flex gap-8 items-start hover:shadow-md transition-all">
+      <!-- STATUT : « examen en cours » n'a de sens que pour un dossier réellement en examen
+           (ni à compléter, ni déjà présélectionné — l'en-tête dit alors l'inverse). -->
+      <div *ngIf="phase === STATUT_SOUMIS" class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-8 flex gap-8 items-start hover:shadow-md transition-all">
         <div class="w-16 h-16 bg-surface-container rounded-xl flex items-center justify-center shrink-0">
           <span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings:'FILL' 0;">task_alt</span>
         </div>
@@ -70,30 +71,6 @@
             <p class="text-label-md text-on-surface-variant">N° Dossier : <span class="text-on-surface font-bold">{{ candidature.numeroDossier }}</span> · Temps moyen de réponse : <span class="text-on-surface font-bold">3 à 5 jours ouvrés</span></p>
           </div>
         </div>
-      </div>
-
-      <!-- PAIEMENT REQUIS : dossier validé, frais de dossier pas encore réglés -->
-      <div *ngIf="candidature.statut === STATUT_PRESELECTION && !paiementConfirme" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between hover:shadow-md transition-all">
-        <div class="flex gap-6 items-start">
-          <div class="w-16 h-16 bg-secondary-container rounded-xl flex items-center justify-center shrink-0">
-            <span class="material-symbols-outlined text-on-secondary-container text-3xl" style="font-variation-settings:'FILL' 1;">payments</span>
-          </div>
-          <div class="space-y-2">
-            <h3 class="font-headline-sm text-headline-sm text-on-surface">
-              {{ paiementEchoue ? "Le règlement précédent n'a pas abouti" : (paiementEnAttente ? 'Paiement en cours de confirmation' : 'Réglez les frais de dossier') }}
-            </h3>
-            <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed max-w-xl">
-              <ng-container *ngIf="!paiementEnAttente && !paiementEchoue">Votre dossier a été validé et est en cours de présélection. Merci de régler les frais de dossier pour poursuivre votre parcours d'admission.</ng-container>
-              <ng-container *ngIf="paiementEnAttente">Votre paiement a été enregistré ; le service admission le confirme dès réception. Vous serez notifié(e) dès sa validation.</ng-container>
-              <ng-container *ngIf="paiementEchoue">La tentative précédente n'a pas pu être finalisée. Vous pouvez réessayer ci-dessous.</ng-container>
-            </p>
-          </div>
-        </div>
-        <a [routerLink]="['/recrutement/candidature/paiement']" [queryParams]="{ candidatureId: candidature.id }"
-           class="shrink-0 inline-flex items-center gap-2 bg-secondary text-on-secondary px-6 py-3 rounded-lg font-label-md text-label-md hover:opacity-90 transition-colors no-underline">
-          <span class="material-symbols-outlined text-[20px]">payments</span>
-          {{ paiementEchoue ? 'Réessayer le paiement' : (paiementEnAttente ? 'Suivre mon paiement' : 'Payer maintenant') }}
-        </a>
       </div>
 
       <!-- GRILLE -->
@@ -156,15 +133,6 @@
               <div>
                 <h4 class="text-label-md font-bold" [class.text-error]="item.erreur" [class.text-on-surface]="!item.erreur">{{ item.label }}</h4>
                 <p *ngIf="item.desc" class="text-body-sm text-on-surface-variant">{{ item.desc }}</p>
-                <ng-container *ngIf="i === 2 && item.active">
-                  <p *ngIf="paiementEnAttente" class="text-body-sm text-warning-strong mt-1">Paiement enregistré, en attente de confirmation par l'admission.</p>
-                  <p *ngIf="paiementEchoue" class="text-body-sm text-error mt-1">La précédente tentative n'a pas abouti.</p>
-                  <a [routerLink]="['/recrutement/candidature/paiement']" [queryParams]="{ candidatureId: candidature.id }"
-                     class="inline-flex items-center gap-1.5 mt-2 text-label-sm font-semibold text-secondary hover:underline no-underline">
-                    <span class="material-symbols-outlined text-[16px]">payments</span>
-                    {{ paiementEchoue ? 'Réessayer le paiement' : (paiementEnAttente ? 'Suivre mon paiement' : 'Payer les frais de dossier') }}
-                  </a>
-                </ng-container>
               </div>
               <div *ngIf="i < timelineItems.length - 1" class="absolute -bottom-5 left-4 h-4 w-[2px] bg-outline-variant"></div>
             </li>
@@ -217,7 +185,7 @@
   </main>
 
   <!-- ==================== REJETE (TEST NON CONCLUANT - Template 1) ==================== -->
-  <main *ngIf="!loading && candidature && isStatut(STATUT_REJETE)" class="flex-grow flex justify-center py-16 px-4 md:px-10">
+  <main *ngIf="!loading && candidature && isStatut(STATUT_REJETE, STATUT_LISTE_ATTENTE)" class="flex-grow flex justify-center py-16 px-4 md:px-10">
     <div class="max-w-4xl w-full space-y-8">
       <!-- Header Section with Progress -->
       <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-8 relative overflow-hidden">
@@ -226,9 +194,9 @@
         </div>
         <div class="relative z-10 space-y-6">
           <div class="flex flex-col gap-2">
-            <span class="bg-error-container text-on-error-container px-3 py-1 rounded-full text-label-sm w-fit font-bold">Test non concluant</span>
-            <h2 class="text-[32px] leading-[40px] font-semibold text-on-surface">Résultats du Test Académique</h2>
-            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Malgré tout l'intérêt que nous portons à votre candidature pour le Bachelor in Strategic Management, nous regrettons de vous informer que vos résultats au test ne nous permettent pas de poursuivre le processus d'admission pour cette session.</p>
+            <span class="px-3 py-1 rounded-full text-label-sm w-fit font-bold" [ngClass]="entete.classeBadge">{{ entete.badge }}</span>
+            <h2 class="font-headline-lg text-headline-lg text-on-surface">{{ entete.titre }}</h2>
+            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">{{ entete.texte }}</p>
           </div>
           <!-- Progress Stepper : mêmes données que la page principale (timelineItems) -->
           <div class="flex items-start justify-between w-full pt-6">
@@ -254,7 +222,7 @@
       <!-- Main Content Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-6">
-          <div class="bg-surface-container-lowest border border-outline-variant shadow-sm rounded-xl p-6">
+          <div *ngIf="afficherBilanTest" class="bg-surface-container-lowest border border-outline-variant shadow-sm rounded-xl p-6">
             <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-secondary" style="font-variation-settings:'FILL' 0;">analytics</span>Bilan de l'évaluation</h3>
             <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed mb-4">Nos standards d'admission sont conçus pour garantir que tous les étudiants possèdent les connaissances fondamentales nécessaires pour réussir dans notre cursus rigoureux.</p>
             <div class="bg-surface-container-low p-4 rounded-xl border-l-4 border-error mb-4">
@@ -503,27 +471,6 @@
                   <button (click)="telechargerLettreAdmission()" class="flex items-center gap-2 px-5 py-2.5 bg-secondary text-on-secondary rounded-lg text-label-md font-bold hover:opacity-90 transition-all"><span class="material-symbols-outlined text-[20px]">download</span>Télécharger la lettre</button>
                   <button (click)="partagerAdmission()" class="flex items-center gap-2 px-5 py-2.5 bg-surface-container-lowest border border-outline-variant text-on-surface rounded-lg text-label-md font-bold hover:bg-surface-container-low transition-all"><span class="material-symbols-outlined text-[20px]">share</span>Partager</button>
                 </div>
-              </div>
-            </div>
-          </section>
-          <!-- Next Steps -->
-          <section class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant shadow-sm">
-            <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Prochaines étapes</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div class="p-4 bg-surface-container-low rounded-xl border border-outline-variant text-center">
-                <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-secondary text-2xl">payments</span></div>
-                <p class="text-label-md font-bold text-on-surface">Frais de scolarité</p>
-                <p class="text-xs text-on-surface-variant mt-1">{{ candidature.sessionInfoFraisScolarite || 'Information à venir, contactez le service des admissions.' }}</p>
-              </div>
-              <div class="p-4 bg-surface-container-low rounded-xl border border-outline-variant text-center">
-                <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-secondary text-2xl">badge</span></div>
-                <p class="text-label-md font-bold text-on-surface">Carte étudiante</p>
-                <p class="text-xs text-on-surface-variant mt-1">{{ candidature.sessionInfoCarteEtudiante || 'Information à venir, contactez le service des admissions.' }}</p>
-              </div>
-              <div class="p-4 bg-surface-container-low rounded-xl border border-outline-variant text-center">
-                <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-secondary text-2xl">calendar_today</span></div>
-                <p class="text-label-md font-bold text-on-surface">Rentrée</p>
-                <p class="text-xs text-on-surface-variant mt-1">{{ candidature.sessionInfoRentree || 'Information à venir, contactez le service des admissions.' }}</p>
               </div>
             </div>
           </section>

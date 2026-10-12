@@ -14,14 +14,9 @@ import { FooterComponent } from '../../../shared/components/footer/footer.compon
 import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
 import { downloadBlob } from '../../../shared/utils/download-file';
 import { NotificationService } from '../../../shared/components/ui/notification.service';
+import { EtapeFrise, PhaseSuivi, friseCandidature, phaseDeStatut } from '../parcours-candidature';
 
-interface TimelineItem {
-  label: string;
-  desc: string;
-  pending: boolean;
-  active: boolean;
-  erreur: boolean;
-}
+type TimelineItem = EtapeFrise;
 
 interface DocumentChecklistItem {
   type: string;
@@ -42,14 +37,20 @@ export class SuiviComponent implements OnInit {
   candidature: CandidatureResponse | null = null;
   loading = true;
 
-  /** Étapes disponibles selon le statut */
-  readonly STATUT_SOUMIS = 'SOUMIS';
-  readonly STATUT_PRESELECTION = 'EN_COURS_DE_PRESELECTION';
-  readonly STATUT_REJETE = 'REJETE';
-  readonly STATUT_ADMIS1 = 'ADMIS1';
-  readonly STATUT_ADMIS2 = 'ADMIS2';
-  readonly STATUT_ADMIS3 = 'ADMIS3';
-  readonly STATUT_LISTE_ATTENTE = 'LISTE_ATTENTE';
+  /** Phases d'affichage (pas des statuts du backend : voir {@link phaseDeStatut}). */
+  readonly STATUT_SOUMIS: PhaseSuivi = 'SOUMIS';
+  readonly STATUT_INCOMPLET: PhaseSuivi = 'INCOMPLET';
+  readonly STATUT_PRESELECTION: PhaseSuivi = 'PRESELECTION';
+  readonly STATUT_REJETE: PhaseSuivi = 'REJETE';
+  readonly STATUT_ADMIS1: PhaseSuivi = 'ADMIS1';
+  readonly STATUT_ADMIS2: PhaseSuivi = 'ADMIS2';
+  readonly STATUT_ADMIS3: PhaseSuivi = 'ADMIS3';
+  readonly STATUT_LISTE_ATTENTE: PhaseSuivi = 'LISTE_ATTENTE';
+
+  /** Phase du dossier courant, ou `null` s'il n'y a rien à suivre (aucun dossier, ou brouillon). */
+  get phase(): PhaseSuivi | null {
+    return phaseDeStatut(this.candidature?.statut);
+  }
 
   /** Même liste que la relance serveur : aucun document requis n'est caché au candidat. */
   private readonly documentsRequis = [
@@ -154,18 +155,6 @@ export class SuiviComponent implements OnInit {
     });
   }
 
-  get paiementConfirme(): boolean {
-    return this.candidature?.paiement?.statut === 'SUCCES';
-  }
-
-  get paiementEnAttente(): boolean {
-    return this.candidature?.paiement?.statut === 'EN_ATTENTE';
-  }
-
-  get paiementEchoue(): boolean {
-    return this.candidature?.paiement?.statut === 'ECHEC';
-  }
-
   get noteGlobale(): number | null {
     const tests = (this.parcours?.tests ?? []).filter((t) => t.noteObtenue != null);
     if (tests.length === 0) return null;
@@ -240,86 +229,15 @@ export class SuiviComponent implements OnInit {
     });
   }
 
-  /** Vérifie si le statut courant correspond à l'un des statuts listés */
-  isStatut(...statuts: string[]): boolean {
-    return statuts.includes(this.candidature?.statut ?? '');
+  /** Vérifie si la phase courante correspond à l'une des phases listées. */
+  isStatut(...phases: PhaseSuivi[]): boolean {
+    const phase = this.phase;
+    return phase !== null && phases.includes(phase);
   }
 
-  /**
-   * Ordre réel du parcours (TDR) : dépôt → évaluation/présélection → paiement des frais
-   * de dossier → test académique → entretien. « Paiement confirmé » et « Dossier soumis »
-   * étaient auparavant codés en dur comme toujours acquis (jamais mis à jour selon le
-   * statut réel) et affichés AVANT « Dossier soumis » — un candidat qui n'avait encore
-   * rien déposé ni payé voyait déjà les deux coches vertes.
-   */
+  /** Frise de progression : définition partagée avec le détail côté admission. */
   get timelineItems(): TimelineItem[] {
-    const statut = this.candidature?.statut;
-    const paiementConfirme = this.paiementConfirme;
-    const items: TimelineItem[] = [
-      { label: 'Dossier', desc: 'Tous les documents requis téléchargés.', pending: true, active: false, erreur: false },
-      { label: 'Présélection', desc: 'Le jury examine votre candidature.', pending: true, active: false, erreur: false },
-      { label: 'Paiement', desc: 'Frais de dossier réglés.', pending: true, active: false, erreur: false },
-      { label: 'Test Académique', desc: '', pending: true, active: false, erreur: false },
-      { label: 'Entretien', desc: 'Rencontre avec le jury.', pending: true, active: false, erreur: false },
-    ];
-
-    if (!statut || statut === 'BROUILLON') {
-      items[0].active = true;
-      return items;
-    }
-    items[0].pending = false; // dossier déposé
-
-    if (statut === this.STATUT_SOUMIS || statut === this.STATUT_PRESELECTION) {
-      items[1].pending = false;
-      items[1].active = true;
-      return items;
-    }
-    items[1].pending = false; // évaluation/présélection franchie
-
-    if (statut === this.STATUT_REJETE && !paiementConfirme) {
-      // Rejeté dès le filtrage ou la présélection, avant tout paiement.
-      items[1].erreur = true;
-      return items;
-    }
-
-    if (!paiementConfirme) {
-      items[2].pending = false;
-      items[2].active = true;
-      return items;
-    }
-    items[2].pending = false; // paiement confirmé
-
-    if (statut === this.STATUT_REJETE) {
-      // Rejeté après paiement : la note insuffisante au test reste la cause la plus
-      // fréquente, faute d'un champ dédié à l'étape exacte du rejet.
-      // `pending` doit retomber à false comme pour l'échec de présélection plus haut :
-      // une étape en échec est franchie, pas en attente. Sans cela le gabarit affichait
-      // à la fois le numéro d'étape et la croix, et l'étape était grisée au lieu de rouge.
-      items[3].pending = false;
-      items[3].erreur = true;
-      return items;
-    }
-
-    if (statut === this.STATUT_ADMIS1) {
-      items[3].pending = false;
-      items[3].active = true;
-      return items;
-    }
-    items[3].pending = false; // test académique franchi
-
-    if (statut === this.STATUT_ADMIS2) {
-      items[4].pending = false;
-      items[4].active = true;
-      return items;
-    }
-
-    // ADMIS3 (admis final) ou LISTE_ATTENTE (entretien passé, décision en attente d'une place)
-    if (statut === this.STATUT_ADMIS3 || statut === this.STATUT_LISTE_ATTENTE) {
-      items[4].pending = false;
-      return items;
-    }
-
-    return items;
+    return friseCandidature(this.candidature?.statut, 'candidat');
   }
 
   getDocIcon(type: string): string {
@@ -371,65 +289,59 @@ export class SuiviComponent implements OnInit {
     }
   }
 
-  getStatutBadgeClass(): string {
-    const s = this.candidature?.statut;
-    if (s === this.STATUT_REJETE) return 'bg-error-container text-on-error-container';
-    if (s === this.STATUT_LISTE_ATTENTE) return 'bg-primary-container text-primary';
-    if (s === this.STATUT_ADMIS1 || s === this.STATUT_ADMIS2 || s === this.STATUT_ADMIS3) return 'bg-success/15 text-success-strong';
-    return 'bg-secondary-container text-on-secondary-container';
-  }
-
-  getStatutBadgeLabel(): string {
-    const s = this.candidature?.statut;
-    switch (s) {
-      case this.STATUT_SOUMIS: return 'Candidature en cours';
-      case this.STATUT_PRESELECTION: return 'En cours de présélection';
-      case this.STATUT_REJETE: return 'Test non concluant';
-      case this.STATUT_ADMIS1: return 'Test réussi';
-      case this.STATUT_ADMIS2: return 'Entretien réussi';
-      case this.STATUT_LISTE_ATTENTE: return 'Liste complémentaire';
-      case this.STATUT_ADMIS3: return 'ADMIS';
-      default: return 'Candidature en cours';
+  /**
+   * Badge, titre et texte du bandeau d'en-tête, d'après le statut réel : un refus avant le test
+   * ne doit pas annoncer « test non concluant », ni un dossier présélectionné « en cours d'évaluation ».
+   */
+  get entete(): { badge: string; titre: string; texte: string; classeBadge: string } {
+    const neutre = 'bg-secondary-container text-on-secondary-container';
+    const negatif = 'bg-error-container text-on-error-container';
+    const positif = 'bg-success/15 text-success-strong';
+    switch (this.candidature?.statut) {
+      case 'INCOMPLET':
+        return { badge: 'Dossier à compléter', titre: 'Votre dossier est incomplet.', classeBadge: negatif,
+          texte: 'Le service admission a besoin d\'un complément. Déposez les documents indiqués « À fournir » ou « À remplacer » dans la liste ci-dessous : votre dossier sera de nouveau examiné.' };
+      case 'PRESELECTIONNE':
+      case 'PAIEMENT_EN_ATTENTE':
+        return { badge: 'Dossier présélectionné', titre: 'Votre dossier est présélectionné.', classeBadge: positif,
+          texte: 'Félicitations. Votre dossier a été retenu à l\'issue de la présélection. Le service des admissions vous communiquera les prochaines étapes (frais de dossier, puis convocation au test académique).' };
+      case 'TEST_ECHOUE':
+        return { badge: 'Test non concluant', titre: 'Résultats du Test Académique', classeBadge: negatif,
+          texte: 'Malgré tout l\'intérêt que nous portons à votre candidature pour le Bachelor in Strategic Management, nous regrettons de vous informer que vos résultats au test ne nous permettent pas de poursuivre le processus d\'admission pour cette session.' };
+      case 'ABSENT_TEST':
+        return { badge: 'Absence au test', titre: 'Test académique non passé', classeBadge: negatif,
+          texte: 'Vous ne vous êtes pas présenté(e) au test académique : votre candidature ne peut pas poursuivre le processus d\'admission pour cette session. Contactez le service admission si votre absence était justifiée.' };
+      case 'ABSENT_ENTRETIEN':
+        return { badge: 'Absence à l\'entretien', titre: 'Entretien non passé', classeBadge: negatif,
+          texte: 'Vous ne vous êtes pas présenté(e) à l\'entretien : votre candidature ne peut pas poursuivre le processus d\'admission pour cette session. Contactez le service admission si votre absence était justifiée.' };
+      case 'NON_ADMIS':
+        return { badge: 'Candidature non retenue', titre: 'Décision du jury', classeBadge: negatif,
+          texte: 'À l\'issue du processus de sélection, nous regrettons de vous informer que votre candidature n\'a pas été retenue pour cette session.' };
+      case 'DOSSIER_REJETE':
+        return { badge: 'Dossier non retenu', titre: 'Décision sur votre dossier', classeBadge: negatif,
+          texte: 'Après examen de votre dossier, nous regrettons de vous informer que votre candidature n\'a pas été retenue pour cette session.' };
+      case 'DESISTEMENT':
+        return { badge: 'Candidature retirée', titre: 'Votre candidature est clôturée', classeBadge: neutre,
+          texte: 'Vous avez renoncé à cette candidature. Vous pouvez en déposer une nouvelle lors d\'une prochaine session.' };
+      case 'LISTE_ATTENTE':
+        return { badge: 'Liste complémentaire', titre: 'Vous êtes sur liste complémentaire', classeBadge: 'bg-primary-container text-primary',
+          texte: 'Votre dossier a été jugé valable par le jury, mais aucune place n\'est disponible pour l\'instant. Nous reviendrons vers vous si une place se libère.' };
+      default:
+        return { badge: 'Candidature en cours', titre: 'Votre dossier est en cours d\'évaluation.', classeBadge: neutre,
+          texte: 'Félicitations pour avoir complété la première étape. Notre jury d\'admission examine actuellement vos documents avec la plus grande attention.' };
     }
   }
 
-  getHeaderTitle(): string {
+  /** Le bilan du test n'a de sens que si le parcours s'est arrêté au test. */
+  get afficherBilanTest(): boolean {
     const s = this.candidature?.statut;
-    switch (s) {
-      case this.STATUT_REJETE: return 'Résultats du Test Académique';
-      case this.STATUT_ADMIS1: return 'Résultats du Test Académique';
-      case this.STATUT_ADMIS2: return 'Tu y es presque !';
-      case this.STATUT_LISTE_ATTENTE: return 'Vous êtes sur liste complémentaire';
-      case this.STATUT_ADMIS3: return 'Félicitations ! Bienvenue à l\'INPG';
-      default: return 'Votre dossier est en cours d\'évaluation.';
-    }
+    return s === 'TEST_ECHOUE' || s === 'ABSENT_TEST';
   }
 
-  getHeaderDescription(): string {
-    const s = this.candidature?.statut;
-    switch (s) {
-      case this.STATUT_SOUMIS:
-      case this.STATUT_PRESELECTION:
-        return 'Félicitations pour avoir complété la première étape. Notre jury d\'admission examine actuellement vos documents avec la plus grande attention.';
-      case this.STATUT_REJETE:
-        return 'Malgré tout l\'intérêt que nous portons à votre candidature pour le Bachelor in Strategic Management, nous regrettons de vous informer que vos résultats au test ne nous permettent pas de poursuivre le processus d\'admission pour cette session.';
-      case this.STATUT_ADMIS1:
-        return 'Félicitations ! Vous avez brillamment réussi le test académique. La prochaine étape est l\'entretien.';
-      case this.STATUT_ADMIS2:
-        return 'Ton parcours de sélection avance avec succès. Ton dossier a retenu toute notre attention.';
-      case this.STATUT_LISTE_ATTENTE:
-        return 'Votre dossier a été jugé valable par le jury, mais aucune place n\'est disponible pour l\'instant. Nous reviendrons vers vous si une place se libère.';
-      case this.STATUT_ADMIS3:
-        return 'Votre candidature a été officiellement acceptée. Vous faites désormais partie de la promotion 2024-2025.';
-      default: return '';
-    }
-  }
-
-  /** Étape actuelle dans le parcours (pour admis2/admis3) — synchronisée avec timelineItems (5 étapes). */
+  /** Étape actuelle dans le parcours (pour admis2/admis3) — synchronisée avec timelineItems (4 étapes). */
   get etapeActuelle(): string {
-    const s = this.candidature?.statut;
-    if (s === this.STATUT_ADMIS2) return 'Étape 4 sur 5';
-    if (s === this.STATUT_LISTE_ATTENTE || s === this.STATUT_ADMIS3) return 'Étape 5 sur 5';
+    const phase = this.phase;
+    if (phase === this.STATUT_ADMIS2 || phase === this.STATUT_LISTE_ATTENTE || phase === this.STATUT_ADMIS3) return 'Étape 4 sur 4';
     return '';
   }
 

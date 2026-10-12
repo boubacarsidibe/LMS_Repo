@@ -36,7 +36,6 @@ export class ResponsableAdmissionSettingsComponent implements OnInit {
   institutName = "INPG Dakar - Institut National du Pétrole et du Gaz";
   contactEmail = "admissions@inpg.sn";
   candidaturesSpontanees = true;
-  paiementEnLigne = true;
 
   // Rules — seuil de réussite (note/20) de la session de candidature ouverte,
   // seule donnée réelle de cette page (le reste reste éditée en mémoire, cf.

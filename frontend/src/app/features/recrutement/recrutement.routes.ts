@@ -29,11 +29,6 @@ export const RECRUTEMENT_ROUTES: Routes = [
     loadComponent: () => import('./candidature/formulaire/formulaire.component').then(m => m.FormulaireComponent),
     canActivate: [authGuard]
   },
-  {
-    path: 'candidature/paiement',
-    loadComponent: () => import('./candidature/paiement/paiement.component').then(m => m.PaiementComponent),
-    canActivate: [authGuard]
-  },
 
   // Candidat - Suivi : nécessite une candidature réellement soumise, donc ROLE_CANDIDAT.
   {

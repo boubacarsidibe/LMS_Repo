@@ -5,14 +5,9 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CandidatureResponse, EtapeDossierResponse, PieceJustificativeResponse, RecrutementService } from '../../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../../shared/components/ui/notification.service';
+import { EtapeFrise, friseCandidature } from '../../../parcours-candidature';
 
-interface TimelineItem {
-  label: string;
-  desc: string;
-  pending: boolean;
-  active: boolean;
-  erreur: boolean;
-}
+type TimelineItem = EtapeFrise;
 
 /**
  * Page dédiée au détail d'une candidature — remplace le panneau latéral de la
@@ -60,10 +55,6 @@ export class CandidatureDetailComponent implements OnInit {
   readonly STATUT_ADMIS3 = 'ADMIS3';
   readonly STATUT_LISTE_ATTENTE = 'LISTE_ATTENTE';
 
-  get paiementConfirme(): boolean {
-    return this.candidature?.paiement?.statut === 'SUCCES';
-  }
-
   get paiementEnAttente(): boolean {
     return this.candidature?.paiement?.statut === 'EN_ATTENTE';
   }
@@ -73,74 +64,11 @@ export class CandidatureDetailComponent implements OnInit {
   }
 
   /**
-   * Reprend telle quelle la logique de SuiviComponent#timelineItems : même
-   * ordre (dépôt → présélection → paiement → test → entretien), mêmes règles
-   * de statut. Le responsable admission doit voir exactement l'étape que voit
-   * le candidat — toute divergence entre les deux copies serait un bug muet.
+   * Frise de progression : la même fonction que celle du candidat (`friseCandidature`), pour que
+   * l'admission voie exactement l'étape que voit le candidat — plus de deux copies à garder alignées.
    */
   get timelineItems(): TimelineItem[] {
-    const statut = this.candidature?.statut;
-    const paiementConfirme = this.paiementConfirme;
-    const items: TimelineItem[] = [
-      { label: 'Dossier', desc: 'Tous les documents requis téléchargés.', pending: true, active: false, erreur: false },
-      { label: 'Présélection', desc: 'Le jury examine la candidature.', pending: true, active: false, erreur: false },
-      { label: 'Paiement', desc: 'Frais de dossier réglés.', pending: true, active: false, erreur: false },
-      { label: 'Test Académique', desc: '', pending: true, active: false, erreur: false },
-      { label: 'Entretien', desc: '', pending: true, active: false, erreur: false },
-    ];
-
-    if (!statut || statut === 'BROUILLON') {
-      items[0].active = true;
-      return items;
-    }
-    items[0].pending = false; // dossier déposé
-
-    if (statut === this.STATUT_SOUMIS || statut === this.STATUT_PRESELECTION) {
-      items[1].pending = false;
-      items[1].active = true;
-      return items;
-    }
-    items[1].pending = false; // évaluation/présélection franchie
-
-    if (statut === this.STATUT_REJETE && !paiementConfirme) {
-      items[1].erreur = true;
-      return items;
-    }
-
-    if (!paiementConfirme) {
-      items[2].pending = false;
-      items[2].active = true;
-      return items;
-    }
-    items[2].pending = false; // paiement confirmé
-
-    if (statut === this.STATUT_REJETE) {
-      // Comme pour l'échec de présélection plus haut : une étape en échec est franchie,
-      // pas en attente. Laisser `pending` à true faisait cohabiter deux états contraires.
-      items[3].pending = false;
-      items[3].erreur = true;
-      return items;
-    }
-
-    if (statut === this.STATUT_ADMIS1) {
-      items[3].pending = false;
-      items[3].active = true;
-      return items;
-    }
-    items[3].pending = false; // test académique franchi
-
-    if (statut === this.STATUT_ADMIS2) {
-      items[4].pending = false;
-      items[4].active = true;
-      return items;
-    }
-
-    if (statut === this.STATUT_ADMIS3 || statut === this.STATUT_LISTE_ATTENTE) {
-      items[4].pending = false;
-      return items;
-    }
-
-    return items;
+    return friseCandidature(this.candidature?.statut, 'admission');
   }
 
   constructor(
