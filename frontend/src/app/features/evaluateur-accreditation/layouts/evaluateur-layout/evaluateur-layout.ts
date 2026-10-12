@@ -27,7 +27,7 @@ interface EntreeNavigation {
 
     <aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant z-50 flex flex-col shadow-sm transition-transform duration-200 md:translate-x-0"
       [class.-translate-x-full]="!sidebarMobileOpen"
-      [class.translate-x-0]="sidebarMobileOpen">
+      [class.translate-x-0]="sidebarMobileOpen" (click)="fermerSidebarSiLien($event)">
       <div class="p-margin-desktop mb-4 flex items-center">
         <app-logo-inpg hauteur="h-10"></app-logo-inpg>
       </div>
@@ -109,5 +109,16 @@ export class EvaluateurLayout {
 
   toggleSidebarMobile(): void {
     this.sidebarMobileOpen = !this.sidebarMobileOpen;
+  }
+
+  /**
+   * Referme la barre latérale mobile dès qu'on choisit une rubrique. Branché sur la barre entière (délégation) :
+   * un clic sur la page déjà ouverte ne déclenche aucune navigation, donc un simple écouteur de
+   * `NavigationEnd` laisserait la barre ouverte devant le contenu.
+   */
+  fermerSidebarSiLien(evenement: Event): void {
+    if ((evenement.target as HTMLElement).closest('a')) {
+      this.sidebarMobileOpen = false;
+    }
   }
 }

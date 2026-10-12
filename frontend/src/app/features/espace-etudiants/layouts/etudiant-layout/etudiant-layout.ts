@@ -122,4 +122,15 @@ export class EtudiantLayout implements OnInit, OnDestroy {
   toggleSidebarMobile(): void {
     this.sidebarMobileOpen = !this.sidebarMobileOpen;
   }
+
+  /**
+   * Referme la barre latérale mobile dès qu'on choisit une rubrique. Branché sur la barre entière (délégation) :
+   * un clic sur la page déjà ouverte ne déclenche aucune navigation, donc un simple écouteur de
+   * `NavigationEnd` laisserait la barre ouverte devant le contenu.
+   */
+  fermerSidebarSiLien(evenement: Event): void {
+    if ((evenement.target as HTMLElement).closest('a')) {
+      this.sidebarMobileOpen = false;
+    }
+  }
 }

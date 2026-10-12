@@ -52,7 +52,6 @@ import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-
                 <span class="font-body-sm text-body-sm font-medium text-on-surface truncate max-w-[160px]">{{ auth.currentUser()?.username || 'École de formation' }}</span>
                 <span class="text-xs uppercase text-outline">École de formation</span>
               </div>
-              <span class="material-symbols-outlined text-outline text-[20px]">{{ dropdownOpen ? 'expand_less' : 'expand_more' }}</span>
             </button>
 
             <div *ngIf="dropdownOpen" class="absolute right-0 mt-2 w-56 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg py-1 z-50 origin-top-right">

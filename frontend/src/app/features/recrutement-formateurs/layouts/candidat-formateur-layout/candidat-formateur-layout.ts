@@ -62,7 +62,6 @@ import { Auth } from '../../../../core/auth/services/authService';
             <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-sm group-hover:opacity-90 transition-opacity">
               <span class="text-white font-label-md text-label-md">{{ initiales }}</span>
             </div>
-            <span class="material-symbols-outlined text-on-surface-variant text-[20px] group-hover:text-primary transition-colors">expand_more</span>
           </a>
           <button
             type="button"

@@ -7,7 +7,8 @@ describe('ProfileMenuComponent', () => {
   let composant: ProfileMenuComponent;
   const el = () => fixture.nativeElement as HTMLElement;
   const bouton = () => el().querySelector('button[aria-haspopup="menu"]') as HTMLButtonElement;
-  const chevron = () => el().querySelectorAll('.material-symbols-outlined')[0].textContent!.trim();
+  /** Aucun chevron à côté du cercle de profil (retiré à la demande du 2026-10-12). */
+  const chevrons = () => Array.from(el().querySelectorAll('.material-symbols-outlined')).map(i => i.textContent!.trim()).filter(t => t.startsWith('expand_'));
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [ProfileMenuComponent], providers: [provideRouter([])] }).compileComponents();
@@ -20,16 +21,16 @@ describe('ProfileMenuComponent', () => {
     fixture.detectChanges();
   });
 
-  it('est fermé au départ, chevron vers le bas', () => {
+  it('est fermé au départ, et n\'affiche aucun chevron', () => {
     expect(el().querySelector('[role="menu"]')).toBeNull();
-    expect(chevron()).toBe('expand_more');
+    expect(chevrons()).toEqual([]);
   });
 
-  it('un clic sur le cercle ouvre la liste et retourne le chevron', () => {
+  it('un clic sur le cercle ouvre la liste, toujours sans chevron', () => {
     bouton().click();
     fixture.detectChanges();
     expect(el().querySelector('[role="menu"]')).not.toBeNull();
-    expect(chevron()).toBe('expand_less');
+    expect(chevrons()).toEqual([]);
     const items = Array.from(el().querySelectorAll('[role="menuitem"]')).map(i => i.textContent!.trim());
     expect(items.some(t => t.includes('Mon profil'))).toBe(true);
     expect(items.some(t => t.includes('Déconnexion'))).toBe(true);
