@@ -254,7 +254,7 @@
             <div class="flex flex-col gap-1.5">
               <label class="font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium text-on-surface-variant">Niveau d'études actuel <span class="text-error">*</span></label>
               <div class="flex flex-wrap gap-2">
-                <label *ngFor="let n of ['Baccalauréat','Licence (L3)','Master 1 (M1)','Master 2 (M2)','Autre']" class="cursor-pointer">
+                <label *ngFor="let n of niveauxProposes" class="cursor-pointer">
                   <input type="radio" name="niveauActuel" [value]="n" [(ngModel)]="data.niveauActuel" (ngModelChange)="saveDraft()" class="sr-only peer">
                   <span class="peer-checked:bg-primary peer-checked:text-white px-4 py-2 rounded border border-outline-variant font-body-sm text-body-sm font-medium text-on-surface-variant hover:bg-surface-container-low transition-colors inline-block">
                     {{ n }}

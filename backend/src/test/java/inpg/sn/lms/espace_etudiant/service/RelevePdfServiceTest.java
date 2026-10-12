@@ -45,6 +45,17 @@ class RelevePdfServiceTest {
         return releve;
     }
 
+    /** La date d'émission est posée à la persistance, sans setter : on la fixe comme le fait déjà ce test pour la référence. */
+    private static void fixerDateEmission(ReleveNotes releve, java.time.LocalDate date) {
+        try {
+            var champ = ReleveNotes.class.getDeclaredField("dateEmission");
+            champ.setAccessible(true);
+            champ.set(releve, date);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     @Test
     @DisplayName("génère un PDF non vide et bien formé")
     void genere_un_pdf_valide() {
@@ -120,12 +131,80 @@ class RelevePdfServiceTest {
                 extracteur.setEndPage(page);
                 String texte = extracteur.getText(document).replaceAll("\\s+", " ");
                 assertThat(texte).as("page %d", page)
-                        .contains("Intitulé du cours")
                         .contains("Immeuble Adja Koone")
                         .contains("Page " + page + " / " + pages);
+                // L'en-tête du tableau se répète sur toute page qui porte des lignes de cours ; la dernière page peut
+                // ne porter que la synthèse et la signature.
+                if (texte.matches(".*\\bC-\\d+\\b.*")) {
+                    assertThat(texte).as("page %d : lignes de cours", page).contains("Intitulé du cours");
+                }
             }
             String tout = new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
             assertThat(tout).contains("(FIN-60)").doesNotContain("...").contains("Mention");
+        }
+    }
+
+    @Test
+    @DisplayName("mentions demandées par l'INPG : ministère de tutelle, lieu et date, fonction du signataire")
+    void releve_porte_les_mentions_officielles() throws Exception {
+        ReleveNotes releve = releveComplet();
+        fixerDateEmission(releve, java.time.LocalDate.of(2026, 10, 12));
+
+        try (PDDocument document = Loader.loadPDF(service.genererPdf(releve))) {
+            String texte = new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
+            assertThat(texte)
+                    .contains("Ministère de tutelle : MEP")
+                    .contains("Fait à Dakar, le 12/10/2026")
+                    .contains("Le Directeur Pédagogique Industriel");
+            // La fonction se lit après la synthèse : la signature clôt le document.
+            assertThat(texte.indexOf("Le Directeur Pédagogique Industriel")).isGreaterThan(texte.indexOf("Synthèse"));
+        }
+    }
+
+    @Test
+    @DisplayName("sans date d'émission, « Fait à Dakar » n'invente pas de date")
+    void signature_sans_date() throws Exception {
+        try (PDDocument document = Loader.loadPDF(service.genererPdf(releveComplet()))) {
+            String texte = new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
+            assertThat(texte).contains("Fait à Dakar").doesNotContain("Fait à Dakar, le");
+        }
+    }
+
+    @Test
+    @DisplayName("le bloc de signature reste d'un seul tenant, avec sa fonction, sur la dernière page d'un relevé long")
+    void signature_jamais_coupee_entre_deux_pages() throws Exception {
+        // Plusieurs longueurs : l'une d'elles place forcément la fin du tableau près du bas de page.
+        for (int nbLignes = 38; nbLignes <= 52; nbLignes++) {
+            ReleveNotes releve = releveComplet();
+            fixerDateEmission(releve, java.time.LocalDate.of(2026, 10, 12));
+            for (int i = 1; i <= nbLignes; i++) {
+                ReleveLigne ligne = new ReleveLigne();
+                ligne.setCoursCode("C-" + i);
+                ligne.setCoursTitre("Cours " + i);
+                ligne.setCoefficient(1);
+                ligne.setMoyenne(60.0);
+                releve.ajouterLigne(ligne);
+            }
+            try (PDDocument document = Loader.loadPDF(service.genererPdf(releve))) {
+                int pages = document.getNumberOfPages();
+                for (int page = 1; page <= pages; page++) {
+                    PDFTextStripper extracteur = new PDFTextStripper();
+                    extracteur.setStartPage(page);
+                    extracteur.setEndPage(page);
+                    String texte = extracteur.getText(document).replaceAll("\\s+", " ");
+                    boolean date = texte.contains("Fait à Dakar");
+                    boolean fonction = texte.contains("Le Directeur Pédagogique Industriel");
+                    assertThat(date).as("%d lignes, page %d : date et fonction ensemble", nbLignes, page).isEqualTo(fonction);
+                    if (date) {
+                        assertThat(texte).as("%d lignes, page %d : signature avec la synthèse", nbLignes, page)
+                                .contains("Synthèse");
+                    }
+                }
+                PDFTextStripper derniere = new PDFTextStripper();
+                derniere.setStartPage(pages);
+                assertThat(derniere.getText(document)).as("%d lignes : signature sur la dernière page", nbLignes)
+                        .contains("Le Directeur Pédagogique Industriel");
+            }
         }
     }
 }

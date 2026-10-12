@@ -28,6 +28,56 @@ class SessionCandidatureCriteresTest {
         return candidat;
     }
 
+    // ---- Critères de présélection communiqués par l'INPG (questionnaire du 2026-09-30) ----
+
+    private Candidat candidat(String niveau, int age) {
+        Candidat candidat = new Candidat();
+        candidat.setNiveauEtude(niveau);
+        candidat.setDateNaissance(LocalDate.now().minusYears(age));
+        return candidat;
+    }
+
+    private SessionCandidature session(String niveauMinimum, Integer ageMaximum) {
+        SessionCandidature session = new SessionCandidature();
+        session.setCriteresActifs(true);
+        session.setCriteresNiveauEtudeMinimum(niveauMinimum);
+        session.setCriteresAgeMaximum(ageMaximum);
+        return session;
+    }
+
+    @Test
+    void cps_niveau_4e_secondaire_minimum_et_30_ans_au_plus() {
+        SessionCandidature cps = session("4e secondaire", 30);
+
+        assertTrue(cps.respecteCriteres(candidat("4e secondaire", 30), Map.of()));
+        assertTrue(cps.respecteCriteres(candidat("Baccalauréat", 22), Map.of()));
+        assertFalse(cps.respecteCriteres(candidat("4e secondaire", 31), Map.of()));
+    }
+
+    @Test
+    void licence_bac_plus_2_minimum_et_28_ans_au_plus() {
+        SessionCandidature licence = session("Bac+2 (DUT / BTS)", 28);
+
+        assertTrue(licence.respecteCriteres(candidat("Bac+2 (DUT / BTS)", 24), Map.of()));
+        assertTrue(licence.respecteCriteres(candidat("Licence (L3)", 28), Map.of()));
+        assertFalse(licence.respecteCriteres(candidat("Baccalauréat", 20), Map.of()));
+        assertFalse(licence.respecteCriteres(candidat("4e secondaire", 19), Map.of()));
+        assertFalse(licence.respecteCriteres(candidat("Licence (L3)", 29), Map.of()));
+    }
+
+    @Test
+    void mastere_et_mba_bac_plus_5_sans_limite_d_age_pour_le_mba() {
+        SessionCandidature mba = session("Master 2 (M2)", null);
+
+        assertTrue(mba.respecteCriteres(candidat("Master 2 (M2)", 55), Map.of()));
+        assertFalse(mba.respecteCriteres(candidat("Master 1 (M1)", 30), Map.of()));
+    }
+
+    @Test
+    void un_niveau_hors_liste_ne_bloque_jamais() {
+        assertTrue(session("Master 2 (M2)", null).respecteCriteres(candidat("Autre", 30), Map.of()));
+    }
+
     @Test
     void filtre_desactive_accepte_tout_le_monde() {
         SessionCandidature session = new SessionCandidature();

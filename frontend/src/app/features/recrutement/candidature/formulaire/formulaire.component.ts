@@ -8,6 +8,7 @@ import { FooterComponent } from '../../../../shared/components/footer/footer.com
 import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { Auth } from '../../../../core/auth/services/authService';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { NIVEAUX_ETUDES, niveauInsuffisant } from '../../niveaux-etudes';
 
 const STORAGE_KEY = 'candidature_brouillon';
 
@@ -61,6 +62,9 @@ interface BulletinAnnuel {
   templateUrl: './formulaire.component.html'
 })
 export class FormulaireComponent implements OnInit {
+  /** Niveaux d'études, puis « Autre » : une valeur hors liste ne déclenche jamais de rejet automatique. */
+  readonly niveauxProposes = [...NIVEAUX_ETUDES, 'Autre'];
+
   sessions: SessionCandidatureResponse[] = [];
   loading = false;
   /** État de vérification initiale : empêche le flash du formulaire avant la redirection */
@@ -312,13 +316,8 @@ export class FormulaireComponent implements OnInit {
     if (!session || !session.criteresActifs) return [];
     const avertissements: string[] = [];
 
-    if (session.criteresNiveauEtudeMinimum && this.data.niveauActuel) {
-      const niveaux = ['Baccalauréat', 'Licence (L3)', 'Master 1 (M1)', 'Master 2 (M2)'];
-      const seuil = niveaux.indexOf(session.criteresNiveauEtudeMinimum);
-      const actuel = niveaux.indexOf(this.data.niveauActuel);
-      if (seuil >= 0 && actuel >= 0 && actuel < seuil) {
-        avertissements.push(`Niveau d'études minimum requis pour cette session : ${session.criteresNiveauEtudeMinimum}.`);
-      }
+    if (session.criteresNiveauEtudeMinimum && niveauInsuffisant(this.data.niveauActuel, session.criteresNiveauEtudeMinimum)) {
+      avertissements.push(`Niveau d'études minimum requis pour cette session : ${session.criteresNiveauEtudeMinimum}.`);
     }
 
     const age = this.calculerAge(this.data.dateNaissance);

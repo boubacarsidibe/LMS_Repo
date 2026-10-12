@@ -38,8 +38,9 @@ public class PublicController {
     private final FormationRepository formationRepository;
     private final ObjectMapper objectMapper;
 
-    @Value("${app.admission.email:admin@inpg.sn}")
-    private String emailAdmission;
+    /** Destinataire du formulaire de contact public ; distinct des alertes internes d'admission. */
+    @Value("${app.contact.email:training@inpg.sn}")
+    private String emailContact;
 
     public PublicController(SessionCandidatureService sessionCandidatureService,
                              NotificationService notificationService,
@@ -142,10 +143,10 @@ public class PublicController {
             return ResponseEntity.badRequest().body(Map.of("message", "L'adresse email est requise pour vous répondre."));
         }
 
-        // Envoi de l'email au service admission avec l'email du visiteur en objet,
-        // afin que le responsable admission puisse identifier et répondre facilement.
+        // L'email du visiteur figure en objet, afin que le destinataire puisse identifier
+        // l'expéditeur et lui répondre facilement.
         boolean envoye = notificationService.envoyerEmail(
-                emailAdmission,
+                emailContact,
                 "Nouvelle question du site (" + email + ")",
                 "Une nouvelle question a été posée depuis le site public.\n\n"
                         + "Email du visiteur : " + email + "\n\n"

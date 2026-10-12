@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { NIVEAUX_ETUDES } from '../../../niveaux-etudes';
 import {
   RecrutementService,
   SessionCandidatureRequest,
@@ -29,7 +30,7 @@ export class SessionFormComponent implements OnInit {
 
   sessionForm: FormGroup;
 
-  readonly niveaux = ['Baccalauréat', 'Licence (L3)', 'Master 1 (M1)', 'Master 2 (M2)'];
+  readonly niveaux = NIVEAUX_ETUDES;
 
   constructor(
     private recrutementService: RecrutementService,

@@ -79,6 +79,14 @@ public final class RapportPdf implements AutoCloseable {
     }
 
     /**
+     * Garantit {@code hauteur} points libres à partir d'ici, quitte à passer à la page suivante. À poser devant un
+     * ensemble qui doit rester d'un seul tenant (une synthèse et sa signature, par exemple).
+     */
+    public void reserver(float hauteur) throws IOException {
+        assurerEspace(hauteur);
+    }
+
+    /**
      * Titre de section : texte puis filet <strong>en dessous</strong>. Reste solidaire du contenu qui suit (une
      * section ne se retrouve jamais seule en bas de page).
      */
@@ -137,6 +145,30 @@ public final class RapportPdf implements AutoCloseable {
 
     public void texteItalique(String texte) throws IOException {
         paragraphe(polices.italique, 10, GRIS, texte, 0f, 0f, 2f);
+    }
+
+    /**
+     * Bloc de signature, aligné à droite : « Fait à …, le … », la fonction du signataire, puis un espace laissé
+     * libre pour la signature et le cachet. Le bloc ne se coupe jamais entre deux pages : s'il ne tient pas, il passe
+     * entier à la page suivante plutôt que de laisser la fonction sans sa place de signature.
+     */
+    public void blocSignature(String lieuEtDate, String fonction) throws IOException {
+        final float espaceSignatureEtCachet = 70f;
+        final float x = PapierEnTete.MARGE_GAUCHE + largeurUtile * 0.5f;
+        final float largeurBloc = largeurUtile * 0.5f;
+        assurerEspace(60f + espaceSignatureEtCachet);
+        y -= 16f;
+        float hauteurLigne = 10f * INTERLIGNE;
+        for (String ligne : couper(polices.regulier, 10, PolicesPdf.sur(polices.regulier, lieuEtDate), largeurBloc)) {
+            ecrire(polices.regulier, 10, TEXTE, ligne, x, y - 10f);
+            y -= hauteurLigne;
+        }
+        y -= 2f;
+        for (String ligne : couper(polices.gras, 10, PolicesPdf.sur(polices.gras, fonction), largeurBloc)) {
+            ecrire(polices.gras, 10, NAVY, ligne, x, y - 10f);
+            y -= hauteurLigne;
+        }
+        y -= espaceSignatureEtCachet;
     }
 
     /** Rangée de tuiles de chiffres clés : {@code { { "2", "Formateurs" }, ... }}. */

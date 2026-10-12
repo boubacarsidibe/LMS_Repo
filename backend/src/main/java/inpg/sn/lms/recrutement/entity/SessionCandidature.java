@@ -34,9 +34,14 @@ import lombok.Setter;
 @AllArgsConstructor
 public class SessionCandidature {
 
-    /** Ordre croissant des niveaux d'études proposés dans le formulaire de candidature (frontend). */
+    /**
+     * Ordre croissant des niveaux d'études proposés dans le formulaire de candidature. À garder identique à
+     * {@code NIVEAUX_ETUDES} du frontend ({@code recrutement/niveaux-etudes.ts}). Niveaux d'accès de l'INPG : CPS dès
+     * la 4e secondaire, Licence dès le Bac+2 (DUT/BTS), Mastère et MBA dès le Bac+5 (= Master 2). Les libellés sont
+     * stockés tels quels : n'en renommer aucun, seulement en ajouter.
+     */
     private static final List<String> NIVEAUX_ORDONNES = List.of(
-            "Baccalauréat", "Licence (L3)", "Master 1 (M1)", "Master 2 (M2)");
+            "4e secondaire", "Baccalauréat", "Bac+2 (DUT / BTS)", "Licence (L3)", "Master 1 (M1)", "Master 2 (M2)");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
