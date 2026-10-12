@@ -49,10 +49,6 @@ export class SessionFormComponent implements OnInit {
       criteresGenre: [null],
       criteresExperienceMinimale: [null],
       seuilReussiteTest: [10],
-      infoFraisScolarite: [null],
-      infoCarteEtudiante: [null],
-      infoRentree: [null],
-      montantFraisDossier: [null],
     });
   }
 
@@ -76,10 +72,6 @@ export class SessionFormComponent implements OnInit {
           criteresGenre: session.criteresGenre,
           criteresExperienceMinimale: session.criteresExperienceMinimale,
           seuilReussiteTest: session.seuilReussiteTest ?? 10,
-          infoFraisScolarite: session.infoFraisScolarite,
-          infoCarteEtudiante: session.infoCarteEtudiante,
-          infoRentree: session.infoRentree,
-          montantFraisDossier: session.montantFraisDossier,
         });
         this.loading = false;
       },
