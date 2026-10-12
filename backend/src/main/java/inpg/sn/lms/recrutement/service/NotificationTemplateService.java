@@ -56,8 +56,8 @@ public class NotificationTemplateService {
                 t.setSujet("Votre dossier de candidature a été validé");
                 t.setCorps("Bonjour {{nomCandidat}},\n\nNous vous informons que votre dossier de candidature n°{{numeroDossier}} a "
                         + "été validé avec succès et qu'il est désormais en cours de présélection. Merci de bien "
-                        + "vouloir procéder au règlement des frais de dossier depuis votre espace candidat afin de "
-                        + "poursuivre votre parcours d'admission." + signature);
+                        + "vouloir procéder au règlement des frais de dossier auprès du service des admissions "
+                        + "afin de poursuivre votre parcours d'admission." + signature);
             }
             case REJET_DOSSIER -> {
                 t.setSujet("Votre dossier de candidature n'a pas été retenu");
@@ -145,8 +145,8 @@ public class NotificationTemplateService {
                 t.setSujet("Rappel : frais de dossier en attente de règlement");
                 t.setCorps("Bonjour {{nomCandidat}},\n\nNous vous rappelons que votre dossier de candidature n°{{numeroDossier}} a "
                         + "été retenu, mais que les frais de dossier restent à ce jour impayés. Merci de bien "
-                        + "vouloir procéder à leur règlement depuis votre espace candidat afin de poursuivre votre "
-                        + "parcours d'admission." + signature);
+                        + "vouloir procéder à leur règlement auprès du service des admissions afin de poursuivre "
+                        + "votre parcours d'admission." + signature);
             }
         }
         return t;
