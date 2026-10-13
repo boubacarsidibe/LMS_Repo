@@ -11,6 +11,7 @@ import {
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { estAdmis, peutFaire, peutRejeter } from '../../statuts-admission';
 
 interface LigneDeliberation {
   candidature: CandidatureResponse;
@@ -92,10 +93,11 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
   }
 
   get lignes(): LigneDeliberation[] {
-    // Seules les candidatures ayant atteint l'étape entretien (ADMIS2), ou déjà décidées
-    // à cette étape (ADMIS3 / REJETE), ont leur place en délibération.
+    // Seules les candidatures dont l'entretien a eu lieu (ENTRETIEN_EFFECTUE), ou déjà tranchées à cette étape
+    // (admises, sur liste complémentaire, non admises), ont leur place en délibération. Un dossier rejeté dès
+    // l'examen (DOSSIER_REJETE) n'a jamais été jugé par le jury : il n'y figure pas.
     const eligibles = this.candidatures.filter((c) =>
-      c.statut === 'ADMIS2' || c.statut === 'ADMIS3' || c.statut === 'LISTE_ATTENTE' || c.statut === 'REJETE'
+      c.statut === 'ENTRETIEN_EFFECTUE' || estAdmis(c.statut) || c.statut === 'LISTE_ATTENTE' || c.statut === 'NON_ADMIS'
     );
 
     return eligibles
@@ -117,29 +119,52 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
         if (!texte.includes(q)) return false;
       }
       switch (this.filtre) {
-        case 'EN_ATTENTE': return l.candidature.statut === 'ADMIS2';
-        case 'ADMIS': return l.candidature.statut === 'ADMIS3';
+        case 'EN_ATTENTE': return l.candidature.statut === 'ENTRETIEN_EFFECTUE';
+        case 'ADMIS': return estAdmis(l.candidature.statut);
         case 'LISTE_ATTENTE': return l.candidature.statut === 'LISTE_ATTENTE';
-        case 'REJETES': return l.candidature.statut === 'REJETE';
+        case 'REJETES': return l.candidature.statut === 'NON_ADMIS';
         default: return true;
       }
     });
   }
 
   get nbEnAttente(): number {
-    return this.lignes.filter((l) => l.candidature.statut === 'ADMIS2').length;
+    return this.lignes.filter((l) => l.candidature.statut === 'ENTRETIEN_EFFECTUE').length;
   }
 
   get nbAdmis(): number {
-    return this.lignes.filter((l) => l.candidature.statut === 'ADMIS3').length;
+    return this.lignes.filter((l) => estAdmis(l.candidature.statut)).length;
   }
 
   get nbRejetes(): number {
-    return this.lignes.filter((l) => l.candidature.statut === 'REJETE').length;
+    return this.lignes.filter((l) => l.candidature.statut === 'NON_ADMIS').length;
   }
 
   get nbListeAttente(): number {
     return this.lignes.filter((l) => l.candidature.statut === 'LISTE_ATTENTE').length;
+  }
+
+  /** Ce que le jury peut encore faire de ce dossier : décidé par le serveur, comme partout dans l'espace admission. */
+  peutAdmettre(l: LigneDeliberation): boolean { return peutFaire(l.candidature, 'ADMETTRE_FINAL'); }
+  peutMettreEnListe(l: LigneDeliberation): boolean { return peutFaire(l.candidature, 'PLACER_LISTE_ATTENTE'); }
+  peutRefuser(l: LigneDeliberation): boolean { return peutRejeter(l.candidature); }
+  /** Une décision reste à prendre (ou à reprendre, pour la liste complémentaire). */
+  decisionEncorePossible(l: LigneDeliberation): boolean { return this.peutAdmettre(l) || this.peutMettreEnListe(l) || this.peutRefuser(l); }
+
+  /** Pastille du statut : admis, non retenu, liste complémentaire, ou en attente de la décision du jury. */
+  libelleDecision(l: LigneDeliberation): string {
+    const s = l.candidature.statut;
+    return estAdmis(s) ? 'Admis' : s === 'NON_ADMIS' ? 'Non retenu' : s === 'LISTE_ATTENTE' ? 'Liste complémentaire' : 'En attente';
+  }
+
+  classeDecision(l: LigneDeliberation): Record<string, boolean> {
+    const s = l.candidature.statut;
+    return {
+      'bg-success-container text-on-success-container border-success-outline': estAdmis(s),
+      'bg-error-container/20 text-error border-transparent': s === 'NON_ADMIS',
+      'bg-primary-container/40 text-primary border-primary-fixed-dim': s === 'LISTE_ATTENTE',
+      'bg-warning-container text-on-warning-container border-warning-outline': s === 'ENTRETIEN_EFFECTUE',
+    };
   }
 
   /** Retenu par le jury mais sans place disponible (TDR §3.1.C) : ni admis, ni rejeté. */

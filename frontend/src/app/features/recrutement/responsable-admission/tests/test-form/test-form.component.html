@@ -12,7 +12,7 @@
       <div><label class="block font-label-md text-label-md text-on-surface-variant mb-1" for="session">Session</label>
         <select id="session" formControlName="sessionId" (change)="changerSession()" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface"><option [ngValue]="null">Choisir une session</option><option *ngFor="let session of sessions" [ngValue]="session.id">{{ session.libelle }}</option></select></div>
       <div class="border border-outline-variant rounded-lg p-4"><div class="flex items-center justify-between gap-3 mb-3"><div><p class="font-label-md text-label-md text-on-surface">Candidats admissibles ({{ candidatsEligibles.length }})</p><p class="font-body-sm text-body-sm text-on-surface-variant">Sélectionnez les candidats à convoquer.</p></div><button type="button" (click)="toutSelectionner()" [disabled]="candidatsEligibles.length === 0" class="text-secondary hover:underline disabled:opacity-50">Tout sélectionner</button></div>
-        <p *ngIf="candidatsEligibles.length === 0" class="text-on-surface-variant font-body-sm text-body-sm">Aucun candidat ADMIS1 pour cette session.</p>
+        <p *ngIf="candidatsEligibles.length === 0" class="text-on-surface-variant font-body-sm text-body-sm">Aucun candidat convoqué au test pour cette session.</p>
         <label *ngFor="let candidat of candidatsEligibles" class="flex items-center gap-3 py-2 border-t border-outline-variant cursor-pointer"><input type="checkbox" [checked]="selectionCandidatIds.has(candidat.candidatId)" (change)="basculerSelection(candidat.candidatId)" class="w-4 h-4 accent-secondary" /><span>{{ candidat.candidatPrenom }} {{ candidat.candidatNom }} — {{ candidat.numeroDossier }}</span></label>
       </div>
     </ng-container>

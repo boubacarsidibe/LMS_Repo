@@ -127,6 +127,13 @@
         <ul class="list-disc list-inside">
           <li *ngFor="let d of documentsAFournir">{{ d.libelle }} ({{ d.etat === 'A_FOURNIR' ? 'non fourni' : 'à remplacer' }})</li>
         </ul>
+        <p *ngIf="sel.statut === 'SOUMIS'" class="mt-1">
+          La présélection est impossible tant que le dossier est incomplet : « Demander un complément » met le dossier en attente
+          du candidat et lui indique ce qu'il doit fournir. Il revient ici dès que le dernier document est reçu.
+        </p>
+        <p *ngIf="sel.statut === 'INCOMPLET'" class="mt-1">
+          Le candidat a été informé. Ce dossier revient à l'examen dès qu'il aura fourni ces documents.
+        </p>
       </div>
       <div class="space-y-2" *ngIf="sel.piecesJustificatives.length; else aucunePiece">
         <div *ngFor="let p of sel.piecesJustificatives" class="py-3 border-b border-outline-variant last:border-0 text-body-sm">
@@ -182,19 +189,29 @@
       <button *ngIf="peutAnnuler(sel)" type="button" [disabled]="actionEnCours" (click)="annuler(sel)" [title]="'Revenir à : ' + libelleStatut(sel.statutPrecedent!)" class="px-4 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-60 flex items-center gap-2">
         <span class="material-symbols-outlined text-[18px]">undo</span> Annuler la dernière décision
       </button>
-      <div *ngIf="sel.statut !== 'ADMIS3'" class="flex items-center gap-1.5">
-        <select #cibleReculerDetail class="px-3 py-2 bg-surface border border-outline-variant rounded-lg font-body-sm text-body-sm outline-none" [disabled]="actionEnCours">
-          <option *ngFor="let cible of ciblesReculer" [value]="cible.valeur" [disabled]="!peutReculerVers(sel, cible.valeur)">{{ cible.libelle }}</option>
+      <div *ngIf="ciblesReculerPossibles.length" class="flex items-center gap-1.5">
+        <select #cibleReculerDetail aria-label="Étape de retour" class="px-3 py-2 bg-surface border border-outline-variant rounded-lg font-body-sm text-body-sm outline-none" [disabled]="actionEnCours">
+          <option *ngFor="let cible of ciblesReculerPossibles" [value]="cible.valeur">{{ cible.libelle }}</option>
         </select>
         <button type="button" [disabled]="actionEnCours" (click)="reculerVers(sel, cibleReculerDetail.value)" class="px-3 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-60" title="Faire reculer ce dossier vers le statut choisi">
           Reculer vers
         </button>
       </div>
-      <span *ngIf="actionSuivante(sel) && sel.statut === 'SOUMIS' && dossierVide(sel)" class="ml-auto text-body-sm text-error flex items-center gap-1" title="Aucune pièce jointe : la présélection est bloquée tant que le candidat n'a pas déposé son dossier.">
-        <span class="material-symbols-outlined text-[18px]">error</span> Dossier vide — présélection impossible
-      </span>
-      <button *ngIf="actionSuivante(sel) && !(sel.statut === 'SOUMIS' && dossierVide(sel))" type="button" [disabled]="actionEnCours" (click)="actionSuivante(sel)!.action()" class="ml-auto px-4 py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 disabled:opacity-60">
-        <span class="material-symbols-outlined text-[18px]">how_to_reg</span> {{ actionSuivante(sel)!.libelle }}
+      <!-- Résultat d'une étape : un geste du responsable. Le candidat est convoqué ; la moyenne aide à décider, le jury tranche. -->
+      <div *ngIf="resultatAChoisir as etape" class="ml-auto flex flex-wrap items-center gap-2" role="group" [attr.aria-label]="etape === 'TEST' ? 'Résultat du test' : 'Résultat de l\'entretien'">
+        <span class="font-label-md text-label-md text-on-surface-variant">{{ etape === 'TEST' ? 'Résultat du test :' : "Résultat de l'entretien :" }}</span>
+        <ng-container *ngIf="etape === 'TEST'">
+          <button type="button" [disabled]="actionEnCours" (click)="enregistrerResultatTest(sel, 'REUSSI')" class="px-4 py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60">Réussi</button>
+          <button type="button" [disabled]="actionEnCours" (click)="enregistrerResultatTest(sel, 'ECHOUE')" class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-60">Échoué</button>
+          <button type="button" [disabled]="actionEnCours" (click)="enregistrerResultatTest(sel, 'ABSENT')" class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-60">Absent</button>
+        </ng-container>
+        <ng-container *ngIf="etape === 'ENTRETIEN'">
+          <button type="button" [disabled]="actionEnCours" (click)="enregistrerResultatEntretien(sel, 'EFFECTUE')" class="px-4 py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60">Entretien effectué</button>
+          <button type="button" [disabled]="actionEnCours" (click)="enregistrerResultatEntretien(sel, 'ABSENT')" class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-60">Absent</button>
+        </ng-container>
+      </div>
+      <button *ngIf="!resultatAChoisir && actionSuivante(sel) as suivante" type="button" [disabled]="actionEnCours" (click)="lancerActionSuivante(sel)" class="ml-auto px-4 py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60">
+        {{ suivante.libelle }}
       </button>
     </div>
   </div>

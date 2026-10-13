@@ -60,6 +60,8 @@ export interface FiltreCriteresResponse {
   preselectionnes: number;
   rejetes: number;
   dossiersVides: number;
+  /** Dossiers qui ont des pièces mais auxquels il en manque : exclus du filtre, ils restent à examiner. */
+  dossiersIncomplets: number;
 }
 
 export type EnumEtapeQms = 'RECEPTION' | 'FILTRE_INITIAL' | 'EVALUATION' | 'SELECTION' | 'INSCRIPTION' | 'PUBLICATION';
@@ -136,6 +138,10 @@ export interface CandidatureResponse {
   documentsAttendus: DocumentAttendu[];
   paiement: PaiementResponse | null;
   reponsesCriteres: ReponseCritereResponse[];
+  /** Ce que l'admission peut faire de ce dossier maintenant, décidé par le serveur (voir `statuts-admission.ts`). */
+  actionsPossibles: string[];
+  /** Statuts antérieurs vers lesquels ce dossier peut être ramené (correction, mot de passe exigé). */
+  reculsPossibles: string[];
 }
 
 export interface DocumentAttendu {
@@ -206,7 +212,7 @@ export type EnumTypeNotification =
   | 'CONVOCATION_TEST' | 'CONVOCATION_ENTRETIEN'
   | 'ADMISSION_TEST' | 'ADMISSION_ENTRETIEN' | 'ADMISSION_FINALE' | 'LISTE_ATTENTE' | 'NON_ADMISSION'
   | 'DOCUMENT_CONFORME' | 'DOCUMENT_NON_CONFORME'
-  | 'RAPPEL_DOSSIER_INCOMPLET' | 'RAPPEL_PAIEMENT';
+  | 'DEMANDE_COMPLEMENT' | 'RAPPEL_DOSSIER_INCOMPLET' | 'RAPPEL_PAIEMENT';
 
 export interface NotificationTemplate {
   type: EnumTypeNotification;
@@ -721,20 +727,38 @@ export class RecrutementService {
     return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/admettre-final`, {});
   }
 
+  /**
+   * Met un dossier incomplet en attente du candidat (SOUMIS → INCOMPLET) et lui indique ce qu'il doit fournir.
+   * Remplace la présélection d'un dossier incomplet, que le serveur refuse.
+   */
+  demanderComplement(id: number): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/demander-complement`, {});
+  }
+
+  /** Issue du test académique d'un candidat convoqué. */
+  enregistrerResultatTest(id: number, resultat: 'REUSSI' | 'ECHOUE' | 'ABSENT'): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/resultat-test`, { resultat });
+  }
+
+  /** Issue de l'entretien d'un candidat convoqué : effectué (le jury délibère ensuite) ou absent. */
+  enregistrerResultatEntretien(id: number, resultat: 'EFFECTUE' | 'ABSENT'): Observable<CandidatureResponse> {
+    return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/resultat-entretien`, { resultat });
+  }
+
   /** Liste complémentaire (TDR §3.1.C) : retenu par le jury, en attente qu'une place se libère. */
   placerEnListeAttente(id: number): Observable<CandidatureResponse> {
     return this.http.put<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/liste-attente`, {});
   }
 
   /**
-   * Étape 6 de QMS-009 : ouvre l'accès étudiant d'un dossier ADMIS3. Distincte de
+   * Étape 6 de QMS-009 : ouvre l'accès étudiant d'un dossier ADMIS. Distincte de
    * {@link admettreFinal}, qui ne fait plus que la sélection (voir LOG_BLOQUANT §QMS-009).
    */
   finaliserInscription(id: number): Observable<CandidatureResponse> {
     return this.http.post<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/finaliser-inscription`, {});
   }
 
-  /** Dossiers ADMIS3 dont l'inscription (étape 6) n'a pas encore été finalisée. */
+  /** Dossiers ADMIS dont l'inscription (étape 6) n'a pas encore été finalisée. */
   getCandidaturesEnAttenteInscription(): Observable<CandidatureResponse[]> {
     return this.http.get<CandidatureResponse[]>(`${this.baseUrl}/admin/recrutement/candidatures/en-attente-inscription`);
   }

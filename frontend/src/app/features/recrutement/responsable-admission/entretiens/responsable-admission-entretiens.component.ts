@@ -129,9 +129,9 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
     });
   }
 
-  /** Candidats admis à l'entretien (ADMIS2), éligibles pour une planification. */
+  /** Candidats convoqués à l'entretien (CONVOQUE_ENTRETIEN), éligibles pour une planification. */
   get candidatsEligibles(): CandidatureResponse[] {
-    return this.candidatures.filter((c) => c.statut === 'ADMIS2');
+    return this.candidatures.filter((c) => c.statut === 'CONVOQUE_ENTRETIEN');
   }
 
   get totalEntretiens(): number {

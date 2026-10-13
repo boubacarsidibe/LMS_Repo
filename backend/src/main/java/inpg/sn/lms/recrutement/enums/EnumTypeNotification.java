@@ -15,6 +15,8 @@ public enum EnumTypeNotification {
     NON_ADMISSION,
     DOCUMENT_CONFORME,
     DOCUMENT_NON_CONFORME,
+    /** Complément demandé par l'admission à un dossier soumis auquel il manque des pièces. */
+    DEMANDE_COMPLEMENT,
     RAPPEL_DOSSIER_INCOMPLET,
     RAPPEL_PAIEMENT
 }

@@ -66,4 +66,13 @@ public class CandidatureResponse {
     private List<DocumentAttenduDto> documentsAttendus;
     private PaiementResponse paiement;
     private List<ReponseCritereResponse> reponsesCriteres;
+
+    /**
+     * Ce que l'admission peut faire de ce dossier <strong>maintenant</strong>, décidé par le serveur (voir
+     * {@code CandidatureService#actionsPossibles}) : les écrans n'ont plus à recopier la table des transitions,
+     * dont les anciennes copies avaient cessé de correspondre aux statuts réels.
+     */
+    private List<String> actionsPossibles;
+    /** Statuts antérieurs vers lesquels l'admission peut faire reculer ce dossier (correction, mot de passe exigé). */
+    private List<EnumStatutCandidature> reculsPossibles;
 }

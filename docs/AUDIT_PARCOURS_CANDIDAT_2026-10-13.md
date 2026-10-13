@@ -97,10 +97,10 @@ pièces. C'est le point de fragilité central ; tout le reste en découle.
 ## 4. Ce qui reste à décider ou à surveiller
 
 - **Déployer `9e28fa0` sur `main`/`preprod`** : tant que ce n'est pas fait, les environnements concernés ont la garde inversée.
-- **L'admission peut présélectionner un dossier incomplet** : seul le dossier *entièrement vide* est bloqué. Décision
-  métier à prendre (bloquer, ou avertir).
-- **Statuts hérités côté admission** (`candidature-detail`, délibération : `'REJETE'`, `'ADMIS3'`, `'ADMIS2'`…) : mêmes
-  noms périmés que ceux corrigés dans le formulaire. Non traités ici (autre processus) : à auditer.
+- ~~**L'admission peut présélectionner un dossier incomplet**~~ — **tranché et corrigé le même jour** : un dossier incomplet ne se
+  présélectionne plus ; il se met en attente du candidat (« demander un complément ») et revient seul à l'examen. Voir
+  [`AUDIT_ADMISSION_STATUTS_ET_COMPLETUDE_2026-10-13.md`](AUDIT_ADMISSION_STATUTS_ET_COMPLETUDE_2026-10-13.md), qui trace aussi les recherches.
+- ~~**Statuts hérités côté admission**~~ — **audités et corrigés** dans le même document (neuf écrans, une définition unique décidée par le serveur).
 - **Fichier orphelin possible** : `FichierStockeService` écrit le fichier avant la pièce ; une erreur entre les deux
   laisse un fichier sans pièce. Le script d'audit (section 5) les liste ; aucune purge automatique.
 - **Pas de limitation de débit** sur l'envoi de pièces ni sur le dépôt.

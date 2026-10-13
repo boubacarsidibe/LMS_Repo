@@ -108,6 +108,28 @@ class CandidatureServiceFiltreCriteresTest {
         assertEquals(EnumStatutCandidature.SOUMIS, soumisVide.getStatut());
     }
 
+    @Test
+    void un_dossier_incomplet_n_est_ni_preselectionne_ni_rejete_par_le_filtre() {
+        Candidature complet = candidature(EnumStatutCandidature.SOUMIS, 25);
+        Candidature sansDiplome = candidature(EnumStatutCandidature.SOUMIS, 25);
+        sansDiplome.getPiecesJustificatives()
+                .removeIf(p -> p.getTypeDocument() == inpg.sn.lms.recrutement.enums.EnumTypeDocument.DIPLOME);
+        Candidature incompletEtTropJeune = candidature(EnumStatutCandidature.SOUMIS, 10);
+        incompletEtTropJeune.getPiecesJustificatives().removeIf(
+                p -> p.getTypeDocument() == inpg.sn.lms.recrutement.enums.EnumTypeDocument.CV);
+        when(candidatureRepository.findBySessionCandidatureId(ID_SESSION))
+                .thenReturn(List.of(complet, sansDiplome, incompletEtTropJeune));
+
+        FiltreCriteresResponse resultat = service.appliquerFiltreCriteres(ID_SESSION, null);
+
+        assertEquals(1, resultat.getPreselectionnes());
+        assertEquals(0, resultat.getRejetes(), "on ne rejette pas un dossier que le candidat peut encore compléter");
+        assertEquals(2, resultat.getDossiersIncomplets());
+        assertEquals(0, resultat.getDossiersVides());
+        assertEquals(EnumStatutCandidature.SOUMIS, sansDiplome.getStatut());
+        assertEquals(EnumStatutCandidature.SOUMIS, incompletEtTropJeune.getStatut());
+    }
+
     private Candidature candidature(EnumStatutCandidature statut, int ageCandidat) {
         Candidat candidat = new Candidat();
         candidat.setDateNaissance(java.time.LocalDate.now().minusYears(ageCandidat));
@@ -116,9 +138,8 @@ class CandidatureServiceFiltreCriteresTest {
         candidature.setStatut(statut);
         candidature.setCandidat(candidat);
         candidature.setSessionCandidature(session);
-        // Un dossier vide est exclu du filtre (CandidatureService#appliquerFiltreCriteres) :
-        // sans pièce jointe, aucune candidature de ce fixture ne serait jamais évaluée.
-        candidature.getPiecesJustificatives().add(new PieceJustificative());
-        return candidature;
+        // Seul un dossier complet est évalué par le filtre (CandidatureService#appliquerFiltreCriteres) :
+        // sans ses quatre pièces, aucune candidature de ce fixture ne serait jamais évaluée.
+        return DossiersDeTest.completer(candidature);
     }
 }

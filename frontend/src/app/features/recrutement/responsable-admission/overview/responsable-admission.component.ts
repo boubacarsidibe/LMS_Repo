@@ -9,6 +9,7 @@ import {
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { DashboardPreferences, DashboardPreferencesService } from '../services/dashboard-preferences.service';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { classeStatut, estAdmis, estDecide, estEngageDansLaSelection, estRefuse, libelleStatut } from '../../statuts-admission';
 
 @Component({
   selector: 'app-responsable-admission',
@@ -54,26 +55,26 @@ export class ResponsableAdmissionComponent implements OnInit {
     return this.candidatures.length;
   }
 
+  /** Dossiers déposés qui attendent l'examen de l'admission (les dossiers « à compléter » attendent le candidat). */
   get validationEnCours(): number {
-    return this.candidatures.filter((c) => c.statut === 'SOUMIS').length;
+    return this.candidatures.filter((c) => c.statut === 'SOUMIS' || c.statut === 'DOSSIER_VALIDE').length;
   }
 
+  /** Dossiers retenus et engagés dans la sélection : présélection, test, entretien. */
   get preselectionnes(): number {
-    return this.candidatures.filter((c) =>
-      ['EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2'].includes(c.statut)
-    ).length;
+    return this.candidatures.filter((c) => estEngageDansLaSelection(c.statut)).length;
   }
 
-  /** Candidatures ayant reçu une décision finale (admises ou rejetées). */
+  /** Candidatures ayant reçu une décision de l'INPG (admises ou refusées). */
   get candidaturesDecidees(): number {
-    return this.candidatures.filter((c) => c.statut === 'ADMIS3' || c.statut === 'REJETE').length;
+    return this.candidatures.filter((c) => estDecide(c.statut)).length;
   }
 
   /** Taux d'admission parmi les dossiers déjà tranchés (0 si aucune décision encore prise). */
   get tauxAdmission(): number {
     const decidees = this.candidaturesDecidees;
     if (decidees === 0) return 0;
-    const admis = this.candidatures.filter((c) => c.statut === 'ADMIS3').length;
+    const admis = this.candidatures.filter((c) => estAdmis(c.statut)).length;
     return Math.round((admis / decidees) * 100);
   }
 
@@ -91,30 +92,8 @@ export class ResponsableAdmissionComponent implements OnInit {
     return this.candidatures.filter((c) => c.sessionCandidatureId === sessionId).length;
   }
 
-  libelleStatut(statut: string): string {
-    switch (statut) {
-      case 'BROUILLON': return 'Brouillon';
-      case 'SOUMIS': return 'Soumis';
-      case 'EN_COURS_DE_PRESELECTION': return 'En présélection';
-      case 'ADMIS1': return 'Admis au test';
-      case 'ADMIS2': return "Admis à l'entretien";
-      case 'ADMIS3': return 'Admis (final)';
-      case 'REJETE': return 'Rejeté';
-      default: return statut;
-    }
-  }
-
-  classeStatut(statut: string): string {
-    switch (statut) {
-      case 'REJETE': return 'bg-error-container/20 text-error';
-      case 'ADMIS3': return 'bg-success/15 text-success-strong';
-      case 'ADMIS1':
-      case 'ADMIS2': return 'bg-primary-fixed text-on-primary-fixed-variant';
-      case 'SOUMIS':
-      case 'EN_COURS_DE_PRESELECTION': return 'bg-secondary-container/30 text-on-secondary-container';
-      default: return 'bg-surface-container text-on-surface-variant';
-    }
-  }
+  readonly libelleStatut = libelleStatut;
+  readonly classeStatut = classeStatut;
 
   exporterSessions(): void {
     this.exporting = true;

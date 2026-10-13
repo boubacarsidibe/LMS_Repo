@@ -39,15 +39,8 @@
                 <p class="text-[11px] text-on-surface-variant truncate">{{ l.candidature.numeroDossier }}</p>
               </div>
               <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border whitespace-nowrap"
-                    [ngClass]="{
-                      'bg-success-container text-on-success-container border-success-outline': l.candidature.statut === 'ADMIS3',
-                      'bg-error-container/20 text-error border-transparent': l.candidature.statut === 'REJETE',
-                      'bg-primary-container/40 text-primary border-primary-fixed-dim': l.candidature.statut === 'LISTE_ATTENTE',
-                      'bg-warning-container text-on-warning-container border-warning-outline': l.candidature.statut === 'ADMIS2'
-                    }">
-                {{ l.candidature.statut === 'ADMIS3' ? 'Admis'
-                   : (l.candidature.statut === 'REJETE' ? 'Non retenu'
-                   : (l.candidature.statut === 'LISTE_ATTENTE' ? 'Liste complémentaire' : 'En attente')) }}
+                    [ngClass]="classeDecision(l)">
+                {{ libelleDecision(l) }}
               </span>
             </div>
 
@@ -57,14 +50,14 @@
               <div><dt class="text-[10px] text-on-surface-variant">Moyenne</dt><dd class="text-xs font-bold text-primary mt-0.5">{{ l.moyenne ?? '—' }}</dd></div>
             </dl>
 
-            <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-outline-variant" *ngIf="l.candidature.statut === 'ADMIS2' || l.candidature.statut === 'LISTE_ATTENTE'" (click)="$event.stopPropagation()">
-              <button type="button" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-secondary text-on-secondary text-[11px] font-semibold disabled:opacity-50">
+            <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-outline-variant" *ngIf="decisionEncorePossible(l)" (click)="$event.stopPropagation()">
+              <button type="button" *ngIf="peutAdmettre(l)" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-secondary text-on-secondary text-[11px] font-semibold disabled:opacity-50">
                 <span class="material-symbols-outlined text-[15px]">check</span>Admettre
               </button>
-              <button type="button" *ngIf="l.candidature.statut === 'ADMIS2'" [disabled]="actionEnCours" (click)="placerEnListeAttente(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-outline-variant text-primary bg-surface-container-lowest text-[11px] font-semibold disabled:opacity-50">
+              <button type="button" *ngIf="peutMettreEnListe(l)" [disabled]="actionEnCours" (click)="placerEnListeAttente(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-outline-variant text-primary bg-surface-container-lowest text-[11px] font-semibold disabled:opacity-50">
                 <span class="material-symbols-outlined text-[15px]">hourglass_top</span>Liste compl.
               </button>
-              <button type="button" [disabled]="actionEnCours" (click)="rejeter(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-outline-variant text-error bg-surface-container-lowest text-[11px] font-semibold disabled:opacity-50">
+              <button type="button" *ngIf="peutRefuser(l)" [disabled]="actionEnCours" (click)="rejeter(l)" class="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-outline-variant text-error bg-surface-container-lowest text-[11px] font-semibold disabled:opacity-50">
                 <span class="material-symbols-outlined text-[15px]">close</span>Rejeter
               </button>
             </div>
@@ -97,28 +90,21 @@
         <div class="col-span-1 text-right font-label-md text-label-md text-primary font-bold">{{ l.moyenne ?? '—' }}</div>
         <div class="col-span-2 flex justify-center">
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border"
-                [ngClass]="{
-                  'bg-success-container text-on-success-container border-success-outline': l.candidature.statut === 'ADMIS3',
-                  'bg-error-container/20 text-error border-transparent': l.candidature.statut === 'REJETE',
-                  'bg-primary-container/40 text-primary border-primary-fixed-dim': l.candidature.statut === 'LISTE_ATTENTE',
-                  'bg-warning-container text-on-warning-container border-warning-outline': l.candidature.statut === 'ADMIS2'
-                }">
-            {{ l.candidature.statut === 'ADMIS3' ? 'Admis'
-               : (l.candidature.statut === 'REJETE' ? 'Non retenu'
-               : (l.candidature.statut === 'LISTE_ATTENTE' ? 'Liste complémentaire' : 'En attente')) }}
+                [ngClass]="classeDecision(l)">
+            {{ libelleDecision(l) }}
           </span>
         </div>
         <!-- Trois issues possibles après l'entretien (TDR §3.1.C) : admis, liste
              complémentaire, non retenu. Un dossier déjà sur liste complémentaire garde
              les deux issues restantes : une place peut se libérer, ou non. -->
-        <div class="col-span-1 flex justify-end gap-1" *ngIf="l.candidature.statut === 'ADMIS2' || l.candidature.statut === 'LISTE_ATTENTE'" (click)="$event.stopPropagation()">
-          <button type="button" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Admettre" aria-label="Admettre">
+        <div class="col-span-1 flex justify-end gap-1" *ngIf="decisionEncorePossible(l)" (click)="$event.stopPropagation()">
+          <button type="button" *ngIf="peutAdmettre(l)" [disabled]="actionEnCours" (click)="admettreFinal(l)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Admettre" aria-label="Admettre">
             <span class="material-symbols-outlined text-[18px]">check</span>
           </button>
-          <button type="button" *ngIf="l.candidature.statut === 'ADMIS2'" [disabled]="actionEnCours" (click)="placerEnListeAttente(l)" class="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary-container/40 transition-colors" title="Placer sur liste complémentaire" aria-label="Placer sur liste complémentaire">
+          <button type="button" *ngIf="peutMettreEnListe(l)" [disabled]="actionEnCours" (click)="placerEnListeAttente(l)" class="p-1.5 rounded text-on-surface-variant hover:text-primary hover:bg-primary-container/40 transition-colors" title="Placer sur liste complémentaire" aria-label="Placer sur liste complémentaire">
             <span class="material-symbols-outlined text-[18px]">hourglass_top</span>
           </button>
-          <button type="button" [disabled]="actionEnCours" (click)="rejeter(l)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Rejeter" aria-label="Rejeter">
+          <button type="button" *ngIf="peutRefuser(l)" [disabled]="actionEnCours" (click)="rejeter(l)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Rejeter" aria-label="Rejeter">
             <span class="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>

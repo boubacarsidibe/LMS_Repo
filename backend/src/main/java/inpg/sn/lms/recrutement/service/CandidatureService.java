@@ -3,6 +3,8 @@ package inpg.sn.lms.recrutement.service;
 import inpg.sn.lms.exception.BusinessException;
 import inpg.sn.lms.exception.ResourceNotFoundException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -84,12 +86,19 @@ public class CandidatureService {
         int preselectionnes = 0;
         int rejetes = 0;
         int dossiersVides = 0;
+        int dossiersIncomplets = 0;
         for (Candidature candidature : soumis) {
-            if (candidature.getPiecesJustificatives().isEmpty()) {
-                // Dossier vide : exclu du filtre, reste SOUMIS pour que le candidat puisse
+            if (!CompletudeDossier.manques(candidature).isEmpty()) {
+                // Dossier vide ou incomplet : exclu du filtre, reste SOUMIS pour que le candidat puisse
                 // encore joindre ses pièces (TDR 3.1.A : "dossier incomplet peut revenir
-                // plus tard pour le finaliser").
-                dossiersVides++;
+                // plus tard pour le finaliser"). Le filtre ne juge que des dossiers complets : présélectionner
+                // un dossier auquel il manque son diplôme, ou le rejeter alors que le candidat peut encore
+                // l'ajouter, serait décider sur une partie du dossier.
+                if (candidature.getPiecesJustificatives().isEmpty()) {
+                    dossiersVides++;
+                } else {
+                    dossiersIncomplets++;
+                }
                 continue;
             }
             Map<Long, String> reponses = candidature.getReponsesCriteres().stream()
@@ -115,6 +124,7 @@ public class CandidatureService {
                 .preselectionnes(preselectionnes)
                 .rejetes(rejetes)
                 .dossiersVides(dossiersVides)
+                .dossiersIncomplets(dossiersIncomplets)
                 .build();
     }
 
@@ -138,10 +148,16 @@ public class CandidatureService {
             throw new BusinessException("Transition de statut non autorisée: "
                     + candidature.getStatut() + " → " + nouveauStatut);
         }
+        // Un dossier n'est présélectionné ou validé que complet : le jury examine un dossier qu'il a pu lire en entier.
+        // Jusqu'ici seul le dossier totalement vide était refusé ; un dossier sans diplôme passait. Le rejet, lui, reste
+        // possible à tout moment (candidat inéligible, dossier abandonné) : seule la décision favorable est gardée.
         if (nouveauStatut == EnumStatutCandidature.PRESELECTIONNE
-                && candidature.getPiecesJustificatives().isEmpty()) {
-            throw new BusinessException(
-                    "Ce dossier ne contient aucune pièce justificative : impossible de le présélectionner.");
+                || nouveauStatut == EnumStatutCandidature.DOSSIER_VALIDE) {
+            List<String> manques = CompletudeDossier.manques(candidature);
+            if (!manques.isEmpty()) {
+                throw new BusinessException("Dossier incomplet : " + String.join(" ; ", manques)
+                        + ". Demandez un complément au candidat avant de le présélectionner.");
+            }
         }
 
         candidature.setStatutPrecedent(candidature.getStatut());
@@ -157,6 +173,66 @@ public class CandidatureService {
 
         Candidature saved = candidatureRepository.save(candidature);
         return toResponse(saved);
+    }
+
+    /**
+     * Demande au candidat de compléter un dossier soumis auquel il manque des pièces (SOUMIS → INCOMPLET).
+     *
+     * <p>C'est le geste qui remplace la présélection d'un dossier incomplet : le dossier sort de la pile « à examiner »
+     * et attend le candidat. Il y revient seul dès que la dernière pièce est fournie (voir
+     * {@code CandidatController#televerserPiece}). Refusé pour un dossier complet : une pièce illisible ou non
+     * conforme se traite pièce par pièce, par « demander le remplacement ».
+     */
+    public CandidatureResponse demanderComplement(Long candidatureId) {
+        Candidature candidature = candidatureRepository.findById(candidatureId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée avec l'ID: " + candidatureId));
+        if (candidature.getStatut() != EnumStatutCandidature.SOUMIS) {
+            throw new BusinessException("Un complément ne se demande que pour un dossier soumis, en attente d'examen.");
+        }
+        if (CompletudeDossier.manques(candidature).isEmpty()) {
+            throw new BusinessException("Ce dossier est complet : aucun document à réclamer. Pour une pièce illisible "
+                    + "ou non conforme, demandez son remplacement depuis la liste des pièces.");
+        }
+        return changerStatut(candidatureId, EnumStatutCandidature.INCOMPLET, null);
+    }
+
+    /**
+     * Enregistre l'issue du test académique d'un candidat convoqué.
+     *
+     * <p>Aucune route ne posait jamais TEST_REUSSI / TEST_ECHOUE / ABSENT_TEST : un dossier convoqué au test ne
+     * pouvait ni avancer ni être refusé (la table des transitions les exigeait, personne ne les écrivait). C'est un
+     * geste du responsable, et non un effet de la saisie des notes : la moyenne aide à décider, le jury décide.
+     *
+     * @param resultat {@code REUSSI}, {@code ECHOUE} ou {@code ABSENT}
+     */
+    public CandidatureResponse enregistrerResultatTest(Long candidatureId, String resultat) {
+        EnumStatutCandidature cible = switch (normaliserResultat(resultat)) {
+            case "REUSSI" -> EnumStatutCandidature.TEST_REUSSI;
+            case "ECHOUE" -> EnumStatutCandidature.TEST_ECHOUE;
+            case "ABSENT" -> EnumStatutCandidature.ABSENT_TEST;
+            default -> throw new BusinessException(
+                    "Résultat de test inconnu : « " + resultat + " » (attendu : REUSSI, ECHOUE ou ABSENT).");
+        };
+        return changerStatut(candidatureId, cible, null);
+    }
+
+    /**
+     * Enregistre l'issue de l'entretien d'un candidat convoqué : effectué (le jury délibère ensuite) ou absent.
+     *
+     * @param resultat {@code EFFECTUE} ou {@code ABSENT}
+     */
+    public CandidatureResponse enregistrerResultatEntretien(Long candidatureId, String resultat) {
+        EnumStatutCandidature cible = switch (normaliserResultat(resultat)) {
+            case "EFFECTUE" -> EnumStatutCandidature.ENTRETIEN_EFFECTUE;
+            case "ABSENT" -> EnumStatutCandidature.ABSENT_ENTRETIEN;
+            default -> throw new BusinessException(
+                    "Résultat d'entretien inconnu : « " + resultat + " » (attendu : EFFECTUE ou ABSENT).");
+        };
+        return changerStatut(candidatureId, cible, null);
+    }
+
+    private static String normaliserResultat(String resultat) {
+        return resultat == null ? "" : resultat.trim().toUpperCase(java.util.Locale.ROOT);
     }
 
     /**
@@ -215,16 +291,8 @@ public class CandidatureService {
             throw new BusinessException(
                     "L'admission finale a déjà ouvert l'accès étudiant du candidat : son statut ne peut plus être modifié automatiquement.");
         }
-        // REJETE et LISTE_ATTENTE sortent du parcours linéaire : on autorise à les
-        // défaire vers n'importe quelle étape (« dé-rejeter », « dé-lister »), au-delà
-        // de la fenêtre d'annulation immédiate qu'offre annulerDerniereAction.
-        if (actuel != EnumStatutCandidature.DOSSIER_REJETE
-                && actuel != EnumStatutCandidature.NON_ADMIS
-                && actuel != EnumStatutCandidature.LISTE_ATTENTE) {
-            Integer rangActuel = rangParcours(actuel);
-            if (rangActuel == null || rangParcours(cible) >= rangActuel) {
-                throw new BusinessException("On ne peut reculer que vers un statut antérieur dans le parcours.");
-            }
+        if (!peutReculerVers(actuel, cible)) {
+            throw new BusinessException("On ne peut reculer que vers un statut antérieur dans le parcours.");
         }
 
         candidature.setStatut(cible);
@@ -232,6 +300,78 @@ public class CandidatureService {
         candidature.setMotifRejet(null);
 
         return toResponse(candidatureRepository.save(candidature));
+    }
+
+    /**
+     * La règle du recul, écrite une seule fois : {@link #reculerStatut} l'applique, {@link #reculsPossibles} la
+     * propose aux écrans.
+     *
+     * <p>REJETE, NON_ADMIS et LISTE_ATTENTE sortent du parcours linéaire : on autorise à les défaire vers n'importe
+     * quelle étape (« dé-rejeter », « dé-lister »), au-delà de la fenêtre d'annulation immédiate qu'offre
+     * {@link #annulerDerniereAction}. Un dossier dont l'inscription est finalisée ne recule plus : l'accès étudiant
+     * est ouvert.
+     */
+    private boolean peutReculerVers(EnumStatutCandidature actuel, EnumStatutCandidature cible) {
+        if (cible == actuel || rangParcours(cible) == null || actuel == EnumStatutCandidature.INSCRIPTION_FINALISEE) {
+            return false;
+        }
+        if (actuel == EnumStatutCandidature.DOSSIER_REJETE
+                || actuel == EnumStatutCandidature.NON_ADMIS
+                || actuel == EnumStatutCandidature.LISTE_ATTENTE) {
+            return true;
+        }
+        Integer rangActuel = rangParcours(actuel);
+        return rangActuel != null && rangParcours(cible) < rangActuel;
+    }
+
+    /**
+     * Les statuts vers lesquels l'admission peut ramener ce dossier. {@code DOSSIER_VALIDE}, statut intermédiaire
+     * qu'aucune action ne pose, n'est pas proposé : il ne mènerait nulle part que le candidat comprenne.
+     */
+    public List<EnumStatutCandidature> reculsPossibles(Candidature c) {
+        return Arrays.stream(EnumStatutCandidature.values())
+                .filter(cible -> cible != EnumStatutCandidature.DOSSIER_VALIDE)
+                .filter(cible -> peutReculerVers(c.getStatut(), cible))
+                .toList();
+    }
+
+    /**
+     * Ce que l'admission peut faire de ce dossier maintenant — une seule source pour tous les écrans.
+     *
+     * <p>Les écrans recopiaient chacun la table des transitions avec l'ancien vocabulaire (ADMIS1/2/3,
+     * EN_COURS_DE_PRESELECTION) : à partir de la présélection, aucun bouton ne s'affichait plus. Le serveur, qui
+     * décide de toute façon de ce qui est permis ({@link #estTransitionValide}), le dit désormais lui-même.
+     *
+     * <p>Un dossier soumis auquel il manque un document n'offre pas la présélection mais « demander un complément ».
+     * Le rejet reste proposé tant que la transition l'autorise.
+     */
+    public List<String> actionsPossibles(Candidature c) {
+        List<String> actions = new ArrayList<>();
+        EnumStatutCandidature statut = c.getStatut();
+        boolean complet = CompletudeDossier.manques(c).isEmpty();
+        switch (statut) {
+            case SOUMIS -> actions.add(complet ? "PRESELECTIONNER" : "DEMANDER_COMPLEMENT");
+            case DOSSIER_VALIDE -> {
+                if (complet) actions.add("PRESELECTIONNER");
+            }
+            case PRESELECTIONNE, PAIEMENT_EN_ATTENTE -> actions.add("ENREGISTRER_REGLEMENT");
+            case PAIEMENT_CONFIRME, ABSENT_TEST -> actions.add("CONVOQUER_TEST");
+            case CONVOQUE_TEST -> actions.add("ENREGISTRER_RESULTAT_TEST");
+            case TEST_REUSSI, ABSENT_ENTRETIEN -> actions.add("ADMETTRE_ENTRETIEN");
+            case CONVOQUE_ENTRETIEN -> actions.add("ENREGISTRER_RESULTAT_ENTRETIEN");
+            case ENTRETIEN_EFFECTUE -> {
+                actions.add("ADMETTRE_FINAL");
+                actions.add("PLACER_LISTE_ATTENTE");
+            }
+            case LISTE_ATTENTE -> actions.add("ADMETTRE_FINAL");
+            case ADMIS -> actions.add("FINALISER_INSCRIPTION");
+            default -> { }
+        }
+        if (estTransitionValide(statut, EnumStatutCandidature.DOSSIER_REJETE)
+                || estTransitionValide(statut, EnumStatutCandidature.NON_ADMIS)) {
+            actions.add("REJETER");
+        }
+        return actions;
     }
 
     /**
@@ -344,6 +484,33 @@ public class CandidatureService {
             EnumStatutCandidature.ADMIS,
             EnumStatutCandidature.LISTE_ATTENTE,
             EnumStatutCandidature.NON_ADMIS);
+
+    /** Libellé lisible d'un statut, dans l'ordre du parcours : exports et rapports ne montrent plus de nom technique. */
+    public static final Map<EnumStatutCandidature, String> LIBELLES_STATUTS;
+    static {
+        Map<EnumStatutCandidature, String> m = new java.util.LinkedHashMap<>();
+        m.put(EnumStatutCandidature.BROUILLON, "Brouillon");
+        m.put(EnumStatutCandidature.SOUMIS, "Soumis");
+        m.put(EnumStatutCandidature.INCOMPLET, "À compléter");
+        m.put(EnumStatutCandidature.DOSSIER_VALIDE, "Dossier validé");
+        m.put(EnumStatutCandidature.PRESELECTIONNE, "Présélectionné");
+        m.put(EnumStatutCandidature.PAIEMENT_EN_ATTENTE, "Paiement en attente");
+        m.put(EnumStatutCandidature.PAIEMENT_CONFIRME, "Paiement confirmé");
+        m.put(EnumStatutCandidature.CONVOQUE_TEST, "Convoqué au test");
+        m.put(EnumStatutCandidature.TEST_REUSSI, "Test réussi");
+        m.put(EnumStatutCandidature.TEST_ECHOUE, "Test échoué");
+        m.put(EnumStatutCandidature.ABSENT_TEST, "Absent au test");
+        m.put(EnumStatutCandidature.CONVOQUE_ENTRETIEN, "Convoqué à l'entretien");
+        m.put(EnumStatutCandidature.ENTRETIEN_EFFECTUE, "Entretien effectué");
+        m.put(EnumStatutCandidature.ABSENT_ENTRETIEN, "Absent à l'entretien");
+        m.put(EnumStatutCandidature.ADMIS, "Admis");
+        m.put(EnumStatutCandidature.LISTE_ATTENTE, "Liste complémentaire");
+        m.put(EnumStatutCandidature.INSCRIPTION_FINALISEE, "Inscription finalisée");
+        m.put(EnumStatutCandidature.DOSSIER_REJETE, "Dossier rejeté");
+        m.put(EnumStatutCandidature.NON_ADMIS, "Non admis");
+        m.put(EnumStatutCandidature.DESISTEMENT, "Désistement");
+        LIBELLES_STATUTS = java.util.Collections.unmodifiableMap(m);
+    }
 
     private static final Map<EnumStatutCandidature, String> LIBELLES_ETAPES = Map.ofEntries(
             Map.entry(EnumStatutCandidature.SOUMIS, "Soumis"),
@@ -503,6 +670,8 @@ public class CandidatureService {
                 .piecesJustificatives(pieces)
                 .documentsAttendus(CompletudeDossier.documentsAttendus(c))
                 .paiement(paiementResponse)
+                .actionsPossibles(actionsPossibles(c))
+                .reculsPossibles(reculsPossibles(c))
                 .reponsesCriteres(c.getReponsesCriteres().stream()
                         .map(r -> ReponseCritereResponse.builder()
                                 .critereId(r.getCritere().getId())

@@ -128,3 +128,28 @@ SELECT candidat_id, COUNT(*) AS dossiers_actifs, array_agg(numero_dossier ORDER 
 FROM candidatures
 WHERE statut NOT IN ('DOSSIER_REJETE', 'NON_ADMIS')
 GROUP BY candidat_id HAVING COUNT(*) > 1;
+
+\echo
+\echo '=== 14. Dossiers « à compléter » dont toutes les pièces exigées sont fournies (le retour automatique à l\'examen a manqué) ==='
+SELECT c.id, c.numero_dossier, ca.niveau_etude
+FROM candidatures c
+JOIN candidats ca ON ca.id_user = c.candidat_id
+WHERE c.statut = 'INCOMPLET'
+  AND NOT EXISTS (
+        SELECT 1 FROM unnest(ARRAY['PIECE_IDENTITE', 'CV', 'RELEVE_NOTES', 'DIPLOME']) AS t
+        WHERE (t <> 'DIPLOME' OR COALESCE(ca.niveau_etude, '') <> '4e secondaire')
+          AND NOT EXISTS (SELECT 1 FROM pieces_justificatives p WHERE p.candidature_id = c.id AND p.type_document = t));
+
+\echo
+\echo '=== 15. Dossiers présélectionnés (ou plus loin) auxquels il manque un document exigé : décision prise avant la règle du 2026-10-13 ==='
+SELECT c.id, c.numero_dossier, c.statut, string_agg(r.type_requis, ', ' ORDER BY r.type_requis) AS manquants
+FROM candidatures c
+JOIN candidats ca ON ca.id_user = c.candidat_id
+CROSS JOIN LATERAL (
+    SELECT t AS type_requis FROM unnest(ARRAY['PIECE_IDENTITE', 'CV', 'RELEVE_NOTES', 'DIPLOME']) AS t
+    WHERE (t <> 'DIPLOME' OR COALESCE(ca.niveau_etude, '') <> '4e secondaire')
+      AND NOT EXISTS (SELECT 1 FROM pieces_justificatives p WHERE p.candidature_id = c.id AND p.type_document = t)
+) r
+WHERE c.statut IN ('PRESELECTIONNE', 'PAIEMENT_EN_ATTENTE', 'PAIEMENT_CONFIRME', 'CONVOQUE_TEST', 'TEST_REUSSI', 'CONVOQUE_ENTRETIEN', 'ENTRETIEN_EFFECTUE', 'ADMIS', 'LISTE_ATTENTE')
+GROUP BY c.id, c.numero_dossier, c.statut
+ORDER BY c.id;

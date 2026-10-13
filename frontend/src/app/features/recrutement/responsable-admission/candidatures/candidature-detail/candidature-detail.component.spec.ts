@@ -1,3 +1,5 @@
+import { of } from 'rxjs';
+import { vi } from 'vitest';
 import { CandidatureDetailComponent } from './candidature-detail.component';
 
 /** La fiche de l'admission lit le même calcul de complétude que le suivi du candidat et la relance par e-mail. */
@@ -58,4 +60,58 @@ describe('CandidatureDetailComponent — documents et parcours du candidat', () 
   it('donne un libellé lisible aux types de documents', () => {
     expect(fiche([]).libelleTypeDocument('PIECE_IDENTITE')).toBe("Pièce d'identité");
   });
+
+  // ===================== Les gestes viennent du serveur =====================
+
+  const avecActions = (statut: string, actionsPossibles: string[], extra: object = {}) =>
+    fiche([], { statut, actionsPossibles, ...extra });
+
+  it('le geste suivant est celui que le serveur autorise, plus un menu de retour réellement utilisable', () => {
+    const c = avecActions('PRESELECTIONNE', ['ENREGISTRER_REGLEMENT', 'REJETER'], { reculsPossibles: ['SOUMIS', 'INCOMPLET'] });
+
+    expect(c.actionSuivante(c.candidature!)?.libelle).toBe('Enregistrer le règlement');
+    expect(c.peutRejeter(c.candidature!)).toBe(true);
+    expect(c.ciblesReculerPossibles).toEqual([
+      { valeur: 'SOUMIS', libelle: 'Soumis' },
+      { valeur: 'INCOMPLET', libelle: 'À compléter' },
+    ]);
+  });
+
+  /** Un dossier convoqué ne pouvait ni avancer ni être refusé : le résultat de l'étape est un geste à choisir. */
+  it('un candidat convoqué appelle le choix du résultat, pas un simple bouton', () => {
+    expect(avecActions('CONVOQUE_TEST', ['ENREGISTRER_RESULTAT_TEST']).resultatAChoisir).toBe('TEST');
+    expect(avecActions('CONVOQUE_ENTRETIEN', ['ENREGISTRER_RESULTAT_ENTRETIEN']).resultatAChoisir).toBe('ENTRETIEN');
+    expect(avecActions('PAIEMENT_CONFIRME', ['CONVOQUER_TEST']).resultatAChoisir).toBeNull();
+    expect(avecActions('SOUMIS', ['PRESELECTIONNER', 'REJETER']).resultatAChoisir).toBeNull();
+  });
+
+  it('enregistrer un résultat appelle le serveur puis relit la fiche au lieu de quitter la page', () => {
+    const resultat = vi.fn(() => of({}));
+    const charger = vi.fn();
+    const c = new CandidatureDetailComponent({} as never, {} as never,
+      { enregistrerResultatTest: resultat, getCandidatureAdmin: () => of({}) } as never, {} as never);
+    c.candidature = { id: 9, statut: 'CONVOQUE_TEST', actionsPossibles: ['ENREGISTRER_RESULTAT_TEST'] } as never;
+    (c as unknown as { charger: typeof charger }).charger = charger;
+
+    c.enregistrerResultatTest(c.candidature!, 'REUSSI');
+
+    expect(resultat).toHaveBeenCalledWith(9, 'REUSSI');
+    expect(charger).toHaveBeenCalledWith(9);
+  });
+
+  it('un dossier incomplet se met en attente du candidat après confirmation, et seulement alors', () => {
+    const demander = vi.fn(() => of({}));
+    const c = new CandidatureDetailComponent({} as never, {} as never, { demanderComplement: demander } as never, {} as never);
+    c.candidature = { id: 4, numeroDossier: 'INPG-4', statut: 'SOUMIS', documentsAttendus: [{ type: 'CV', libelle: 'CV', etat: 'A_FOURNIR' }] } as never;
+    (c as unknown as { charger: () => void }).charger = () => undefined;
+
+    vi.spyOn(window, 'confirm').mockReturnValueOnce(false);
+    c.demanderComplement(c.candidature!);
+    expect(demander).not.toHaveBeenCalled();
+
+    vi.spyOn(window, 'confirm').mockReturnValueOnce(true);
+    c.demanderComplement(c.candidature!);
+    expect(demander).toHaveBeenCalledWith(4);
+  });
 });
+

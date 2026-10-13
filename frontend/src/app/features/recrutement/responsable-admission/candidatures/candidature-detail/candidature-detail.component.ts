@@ -7,6 +7,10 @@ import { downloadBlob } from '../../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../../shared/components/ui/notification.service';
 import { EtapeFrise, friseCandidature } from '../../../parcours-candidature';
 import { FormationDeclaree, ParcoursDeclare, libelleTypeDocument, lireParcoursDeclare } from '../../../parcours-declare';
+import {
+  ActionAdmission, actionSuivante as actionSuivanteDe, classeStatut, libelleStatut, peutAnnuler as peutAnnulerDossier,
+  peutFaire, peutRejeter as peutRejeterDossier, reculsPossibles,
+} from '../../../statuts-admission';
 
 type TimelineItem = EtapeFrise;
 
@@ -41,20 +45,8 @@ export class CandidatureDetailComponent implements OnInit {
   journal: EtapeDossierResponse[] = [];
   journalChargement = false;
 
-  /** ADMIS3 dont l'inscription (étape 6, QMS-009) reste à finaliser. */
-  get inscriptionEnAttente(): boolean {
-    return this.candidature?.statut === this.STATUT_ADMIS3
-      && !this.journal.some((e) => e.etape === 'INSCRIPTION');
-  }
-
-  /** Étapes disponibles selon le statut — mêmes codes que côté candidat (SuiviComponent). */
-  readonly STATUT_SOUMIS = 'SOUMIS';
-  readonly STATUT_PRESELECTION = 'EN_COURS_DE_PRESELECTION';
-  readonly STATUT_REJETE = 'REJETE';
-  readonly STATUT_ADMIS1 = 'ADMIS1';
-  readonly STATUT_ADMIS2 = 'ADMIS2';
-  readonly STATUT_ADMIS3 = 'ADMIS3';
-  readonly STATUT_LISTE_ATTENTE = 'LISTE_ATTENTE';
+  readonly libelleStatut = libelleStatut;
+  readonly classeStatut = classeStatut;
 
   get paiementEnAttente(): boolean {
     return this.candidature?.paiement?.statut === 'EN_ATTENTE';
@@ -124,34 +116,6 @@ export class CandidatureDetailComponent implements OnInit {
     this.router.navigate(['/responsable-admission/candidatures']);
   }
 
-  libelleStatut(statut: string): string {
-    switch (statut) {
-      case 'BROUILLON': return 'Brouillon';
-      case 'SOUMIS': return 'Soumis';
-      case 'EN_COURS_DE_PRESELECTION': return 'En présélection';
-      case 'ADMIS1': return 'Admis au test';
-      case 'ADMIS2': return 'Admis à l\'entretien';
-      case 'ADMIS3': return 'Admis (final)';
-      case 'REJETE': return 'Rejeté';
-      case 'LISTE_ATTENTE': return 'Liste complémentaire';
-      default: return statut;
-    }
-  }
-
-  classeStatut(statut: string): string {
-    switch (statut) {
-      case 'REJETE': return 'bg-error-container/20 text-error';
-      case 'ADMIS3': return 'bg-success/15 text-success-strong';
-      case 'LISTE_ATTENTE': return 'bg-primary-container text-primary';
-      case 'ADMIS1':
-      case 'ADMIS2': return 'bg-primary-fixed text-on-primary-fixed-variant';
-      case 'SOUMIS':
-      case 'EN_COURS_DE_PRESELECTION': return 'bg-secondary-container/30 text-on-secondary-container';
-      default: return 'bg-surface-container text-on-surface-variant';
-    }
-  }
-
-  /** Dossier sans aucune pièce jointe : la présélection est bloquée côté backend (CandidatureService#changerStatut). */
   /** Parcours académique et situation professionnelle que le candidat a déclarés à l'étape 2 du formulaire. */
   get parcoursDeclare(): ParcoursDeclare {
     return lireParcoursDeclare(this.candidature?.informationsAcademiques, this.candidature?.informationsProfessionnelles);
@@ -176,56 +140,69 @@ export class CandidatureDetailComponent implements OnInit {
     return [f.etablissement, f.diplome, f.anneeObtention, f.pays].filter((v) => v).join(' · ');
   }
 
-  dossierVide(c: CandidatureResponse): boolean {
-    return !c.piecesJustificatives || c.piecesJustificatives.length === 0;
-  }
-
-  /** Libellé + capacité d'action selon l'étape actuelle du workflow (cf. CandidatureService#estTransitionValide côté backend). */
-  actionSuivante(c: CandidatureResponse): { libelle: string; action: () => void } | null {
-    switch (c.statut) {
-      case 'SOUMIS':
-        return { libelle: 'Valider présélection', action: () => this.validerPreselection(c) };
-      case 'EN_COURS_DE_PRESELECTION':
-        return { libelle: 'Admettre au test', action: () => this.admettreTest(c) };
-      case 'ADMIS1':
-        return { libelle: 'Admettre à l\'entretien', action: () => this.admettreEntretien(c) };
-      case 'ADMIS2':
-        return { libelle: 'Admettre (final)', action: () => this.admettreFinal(c) };
-      case 'ADMIS3':
-        // Étape 6 de QMS-009 : la sélection (admettre-final) n'ouvre plus l'accès étudiant
-        // elle-même — voir finaliserInscription().
-        return this.inscriptionEnAttente
-          ? { libelle: 'Finaliser l\'inscription', action: () => this.finaliserInscription(c) }
-          : null;
-      default:
-        return null;
-    }
+  /** Le geste suivant du dossier, décidé par le serveur (`actionsPossibles`) : voir `statuts-admission.ts`. */
+  actionSuivante(c: CandidatureResponse): { action: ActionAdmission; libelle: string } | null {
+    return actionSuivanteDe(c);
   }
 
   peutRejeter(c: CandidatureResponse): boolean {
-    return c.statut !== 'ADMIS3' && c.statut !== 'REJETE' && c.statut !== 'BROUILLON';
+    return peutRejeterDossier(c);
   }
 
-  /** ADMIS3 exclu : l'admission finale a déjà ouvert l'accès étudiant, non annulable ici. */
+  /** Annulable tant que l'accès étudiant n'est pas ouvert. */
   peutAnnuler(c: CandidatureResponse): boolean {
-    return c.statutPrecedent != null && c.statut !== 'ADMIS3';
+    return peutAnnulerDossier(c);
   }
 
-  /** Cibles valides pour "faire reculer vers" — mêmes règles que CandidatureService#rangParcours côté backend. */
-  readonly ciblesReculer = [
-    { valeur: 'SOUMIS', libelle: 'Soumis' },
-    { valeur: 'EN_COURS_DE_PRESELECTION', libelle: 'En présélection' },
-    { valeur: 'ADMIS1', libelle: 'Admis au test' },
-    { valeur: 'ADMIS2', libelle: 'Admis à l\'entretien' },
-  ];
-  private readonly rangParcours: Record<string, number> = {
-    SOUMIS: 1, EN_COURS_DE_PRESELECTION: 2, ADMIS1: 3, ADMIS2: 4,
-  };
+  /**
+   * Étapes vers lesquelles ce dossier peut être ramené, d'après le serveur. La liste était écrite ici avec
+   * quatre anciens statuts qui n'existent plus : le menu « Reculer vers » ne proposait rien d'utilisable.
+   */
+  get ciblesReculerPossibles(): { valeur: string; libelle: string }[] {
+    return this.candidature ? reculsPossibles(this.candidature).map((s) => ({ valeur: s, libelle: libelleStatut(s) })) : [];
+  }
+
+  /** Vrai quand le geste suivant est un résultat à choisir (réussi / échoué / absent…) plutôt qu'un simple bouton. */
+  get resultatAChoisir(): 'TEST' | 'ENTRETIEN' | null {
+    const suivante = this.candidature ? this.actionSuivante(this.candidature) : null;
+    return suivante?.action === 'ENREGISTRER_RESULTAT_TEST' ? 'TEST'
+      : suivante?.action === 'ENREGISTRER_RESULTAT_ENTRETIEN' ? 'ENTRETIEN' : null;
+  }
+
+  /** Lance le geste suivant ; un résultat à choisir passe par ses propres boutons, un règlement par la page Paiements. */
+  lancerActionSuivante(c: CandidatureResponse): void {
+    const suivante = this.actionSuivante(c);
+    if (!suivante) return;
+    switch (suivante.action) {
+      case 'PRESELECTIONNER': return this.validerPreselection(c);
+      case 'DEMANDER_COMPLEMENT': return this.demanderComplement(c);
+      case 'CONVOQUER_TEST': return this.admettreTest(c);
+      case 'ADMETTRE_ENTRETIEN': return this.admettreEntretien(c);
+      case 'ADMETTRE_FINAL': return this.admettreFinal(c);
+      case 'PLACER_LISTE_ATTENTE': return this.executer(this.recrutementService.placerEnListeAttente(c.id), true);
+      case 'FINALISER_INSCRIPTION': return this.finaliserInscription(c);
+      case 'ENREGISTRER_REGLEMENT': void this.router.navigate(['/responsable-admission/paiements']); return;
+      default: return;
+    }
+  }
+
+  /** Met le dossier en attente du candidat et lui dit quoi fournir (e-mail + cloche). */
+  demanderComplement(c: CandidatureResponse): void {
+    const liste = this.documentsAFournir.map((d) => d.libelle).join(', ');
+    if (!window.confirm(`Demander un complément au candidat pour le dossier ${c.numeroDossier} ?\n\nIl recevra la liste : ${liste}.`)) return;
+    this.executer(this.recrutementService.demanderComplement(c.id), true);
+  }
+
+  enregistrerResultatTest(c: CandidatureResponse, resultat: 'REUSSI' | 'ECHOUE' | 'ABSENT'): void {
+    this.executer(this.recrutementService.enregistrerResultatTest(c.id, resultat), true);
+  }
+
+  enregistrerResultatEntretien(c: CandidatureResponse, resultat: 'EFFECTUE' | 'ABSENT'): void {
+    this.executer(this.recrutementService.enregistrerResultatEntretien(c.id, resultat), true);
+  }
 
   peutReculerVers(c: CandidatureResponse, cible: string): boolean {
-    if (c.statut === 'ADMIS3') return false;
-    if (c.statut === 'REJETE') return true;
-    return this.rangParcours[cible] < this.rangParcours[c.statut];
+    return reculsPossibles(c).includes(cible);
   }
 
   annuler(c: CandidatureResponse): void {
@@ -262,12 +239,17 @@ export class CandidatureDetailComponent implements OnInit {
     });
   }
 
-  private executer(obs: import('rxjs').Observable<CandidatureResponse>): void {
+  /** @param rester reste sur la fiche, relue, quand l'écran doit montrer le geste suivant (résultats, complément). */
+  private executer(obs: import('rxjs').Observable<CandidatureResponse>, rester = false): void {
     this.actionEnCours = true;
     obs.subscribe({
       next: () => {
         this.actionEnCours = false;
-        this.retour();
+        if (rester && this.candidature) {
+          this.charger(this.candidature.id);
+        } else {
+          this.retour();
+        }
       },
       error: (err) => {
         this.actionEnCours = false;

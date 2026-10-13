@@ -404,9 +404,23 @@ là, c'étaient les tests qui étaient périmés.
 - **Plus aucun brouillon après le dépôt** : `saveDraft()` est neutralisé côté client et le serveur ignore un brouillon quand un dossier
   est déposé — la sauvegarde différée d'une seconde recréait sinon le brouillon que le dépôt venait de supprimer.
 La règle « un nouveau dépôt est possible après un brouillon, un refus de dossier ou une non-admission » (`depotPossibleApres`, frontend) est
-celle de `soumettreCandidature` : `'REJETE'` n'est plus un statut depuis le 22/09 (le test ne retenait personne). Il en reste des occurrences
-côté admission (`candidature-detail`, délibération) : à auditer. `backend/db/audit-candidatures.sql` (lecture seule) détecte dossiers sans pièce,
-pièces manquantes, fichiers orphelins, doublons et brouillons survivants.
+celle de `soumettreCandidature` : `'REJETE'` n'est plus un statut depuis le 22/09 (le test ne retenait personne). `backend/db/audit-candidatures.sql`
+(lecture seule) détecte dossiers sans pièce, pièces manquantes, fichiers orphelins, doublons et brouillons survivants.
+
+**Un dossier incomplet ne se présélectionne pas : il se met en attente du candidat** (audit du 2026-10-13,
+`docs/AUDIT_ADMISSION_STATUTS_ET_COMPLETUDE_2026-10-13.md`, avec les recherches qui fondent ce choix). `changerStatut` refuse `PRESELECTIONNE` et
+`DOSSIER_VALIDE` tant que `CompletudeDossier.manques` n'est pas vide (le rejet reste possible) ; « demander un complément » (`SOUMIS → INCOMPLET`)
+prévient le candidat ; `CandidatController#televerserPiece` ramène seul le dossier à `SOUMIS` quand la dernière pièce arrive ; le filtre automatique
+ne juge que des dossiers complets. Une pièce refusée est « remplacée » par un dépôt **postérieur** du même type — ne pas la compter indéfiniment.
+
+**Les écrans de l'admission ne recopient plus la table des statuts : le serveur dit ce qui est possible.** `CandidatureResponse.actionsPossibles` et
+`reculsPossibles` viennent de `CandidatureService` (un test garantit que chaque action proposée correspond à une transition acceptée) ; le frontend
+n'a que `recrutement/statuts-admission.ts` (libellés, tons, groupes d'onglets, indicateurs). Les 20 statuts du serveur, jamais `ADMIS1/2/3`,
+`EN_COURS_DE_PRESELECTION` ni `REJETE` (ce dernier ne subsiste que dans l'accréditation, autre domaine). Un nouveau statut ou une nouvelle action :
+l'ajouter au serveur **et** à ce fichier, sinon l'écran l'affiche en nom technique. Le résultat d'un test ou d'un entretien est un **geste du
+responsable** (`resultat-test`, `resultat-entretien`), pas un effet de la saisie des notes : sans lui, un dossier convoqué ne pouvait ni avancer ni être refusé.
+Chaque nouveau type d'e-mail (`EnumTypeNotification`) demande une migration : la contrainte `notification_templates_type_check` liste les valeurs
+(elle en avait oublié trois, qu'on ne pouvait donc pas enregistrer).
 
 **Un seul système d'avis : `retour_evaluation`** (migration `V7`). `evaluations_cours`
 et `POST /retours` ont été supprimés : l'avis d'un étudiant n'atteignait jamais son

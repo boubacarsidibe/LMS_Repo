@@ -73,6 +73,7 @@ import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.FichierStocke;
 import inpg.sn.lms.recrutement.entity.NotificationTemplate;
 import inpg.sn.lms.recrutement.entity.PieceJustificative;
+import inpg.sn.lms.recrutement.dto.DocumentAttenduDto;
 import inpg.sn.lms.recrutement.enums.EnumEtapeQms;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.enums.EnumStatutPaiement;
@@ -369,9 +370,7 @@ public class AdminRecrutementController {
     public ResponseEntity<byte[]> exporterCandidatures(
             @RequestParam(required = false) String statut,
             @RequestParam(required = false) List<String> colonnes) {
-        List<CandidatureResponse> candidatures = (statut == null || statut.isBlank())
-                ? candidatureService.getAllCandidatures()
-                : candidatureService.getCandidaturesByStatut(EnumStatutCandidature.valueOf(statut.toUpperCase()));
+        List<CandidatureResponse> candidatures = listerParStatuts(statut);
 
         List<String> cles = (colonnes == null || colonnes.isEmpty())
                 ? List.of("numeroDossier", "nom", "prenom", "email", "session", "statut", "dateSoumission", "motifRejet")
@@ -388,17 +387,11 @@ public class AdminRecrutementController {
             lignes.add(ligne);
         }
 
-        List<String> categories = List.of("Soumis", "En présélection", "Admis test", "Admis entretien",
-                "Admis final", "Rejeté");
-        List<EnumStatutCandidature> statutsCategories = List.of(EnumStatutCandidature.SOUMIS,
-                EnumStatutCandidature.INCOMPLET, EnumStatutCandidature.DOSSIER_VALIDE,
-                EnumStatutCandidature.PRESELECTIONNE, EnumStatutCandidature.PAIEMENT_EN_ATTENTE,
-                EnumStatutCandidature.PAIEMENT_CONFIRME, EnumStatutCandidature.CONVOQUE_TEST,
-                EnumStatutCandidature.TEST_REUSSI, EnumStatutCandidature.TEST_ECHOUE,
-                EnumStatutCandidature.ABSENT_TEST, EnumStatutCandidature.CONVOQUE_ENTRETIEN,
-                EnumStatutCandidature.ENTRETIEN_EFFECTUE, EnumStatutCandidature.ABSENT_ENTRETIEN,
-                EnumStatutCandidature.ADMIS, EnumStatutCandidature.LISTE_ATTENTE,
-                EnumStatutCandidature.NON_ADMIS, EnumStatutCandidature.DESISTEMENT);
+        // Le graphique portait 6 libellés pour 17 valeurs : chaque barre était mal nommée. Un libellé par statut, dans
+        // l'ordre du parcours, sans le brouillon (jamais une candidature déposée).
+        List<EnumStatutCandidature> statutsCategories = CandidatureService.LIBELLES_STATUTS.keySet().stream()
+                .filter(s -> s != EnumStatutCandidature.BROUILLON).toList();
+        List<String> categories = statutsCategories.stream().map(CandidatureService.LIBELLES_STATUTS::get).toList();
         List<Double> valeurs = statutsCategories.stream()
                 .map(s -> (double) candidatures.stream().filter(c -> c.getStatut() == s).count())
                 .toList();
@@ -415,9 +408,7 @@ public class AdminRecrutementController {
      */
     @GetMapping("/candidatures/documents/export")
     public ResponseEntity<byte[]> exporterDocuments(@RequestParam(required = false) String statut) throws IOException {
-        List<CandidatureResponse> candidatures = (statut == null || statut.isBlank())
-                ? candidatureService.getAllCandidatures()
-                : candidatureService.getCandidaturesByStatut(EnumStatutCandidature.valueOf(statut.toUpperCase()));
+        List<CandidatureResponse> candidatures = listerParStatuts(statut);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int nbFichiers = 0;
@@ -462,6 +453,25 @@ public class AdminRecrutementController {
         return telechargerPdf(pdf, "rapport_qualite_recrutement_" + LocalDate.now() + ".pdf");
     }
 
+    /**
+     * Candidatures d'un ou de plusieurs statuts ({@code SOUMIS,INCOMPLET}), ou toutes si le filtre est vide : un
+     * onglet de l'écran regroupe plusieurs statuts, et son export doit en contenir autant que ce qu'il affiche.
+     */
+    private List<CandidatureResponse> listerParStatuts(String statuts) {
+        if (statuts == null || statuts.isBlank()) {
+            return candidatureService.getAllCandidatures();
+        }
+        java.util.Set<EnumStatutCandidature> voulus = new java.util.HashSet<>();
+        for (String brut : statuts.split(",")) {
+            try {
+                voulus.add(EnumStatutCandidature.valueOf(brut.trim().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new BusinessException("Statut inconnu : « " + brut.trim() + " ».");
+            }
+        }
+        return candidatureService.getAllCandidatures().stream().filter(c -> voulus.contains(c.getStatut())).toList();
+    }
+
     /** Nom de dossier sûr (sans caractères interdits dans un chemin de fichier) pour l'archive de documents. */
     private String nomDossierZip(CandidatureResponse c) {
         String brut = nvl(c.getNumeroDossier()) + "_" + nvl(c.getCandidatNom()) + "_" + nvl(c.getCandidatPrenom());
@@ -475,7 +485,7 @@ public class AdminRecrutementController {
             case "prenom" -> nvl(c.getCandidatPrenom());
             case "email" -> nvl(c.getCandidatEmail());
             case "session" -> nvl(c.getSessionCandidatureLibelle());
-            case "statut" -> c.getStatut() != null ? c.getStatut().name() : "";
+            case "statut" -> c.getStatut() != null ? CandidatureService.LIBELLES_STATUTS.get(c.getStatut()) : "";
             case "dateSoumission" -> c.getDateSoumission() != null ? c.getDateSoumission().format(DATETIME_FORMAT) : "";
             case "motifRejet" -> nvl(c.getMotifRejet());
             case "genre" -> nvl(c.getCandidatGenre());
@@ -534,6 +544,59 @@ public class AdminRecrutementController {
         }
         notifierCandidatEnLigne(response, "Votre dossier n°" + response.getNumeroDossier()
                 + " a été validé et est en cours de présélection.");
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Met un dossier soumis auquel il manque des pièces en attente du candidat (SOUMIS → INCOMPLET) et lui dit
+     * précisément quoi fournir. Le dossier revient seul à l'examen dès qu'il est complet (voir
+     * {@code CandidatController#televerserPiece}). C'est l'alternative à la présélection d'un dossier incomplet,
+     * que le serveur refuse.
+     */
+    @PutMapping("/candidatures/{id}/demander-complement")
+    public ResponseEntity<CandidatureResponse> demanderComplement(@PathVariable Long id,
+            Authentication authentication) {
+        CandidatureResponse response = candidatureService.demanderComplement(id);
+        List<String> manques = response.getDocumentsAttendus().stream()
+                .filter(d -> d.etat() != DocumentAttenduDto.Etat.FOURNI)
+                .map(d -> d.libelle() + (d.etat() == DocumentAttenduDto.Etat.A_REMPLACER ? " (à remplacer)" : " (non fourni)"))
+                .toList();
+        String liste = String.join(", ", manques);
+        candidatureService.journaliser(id, EnumEtapeQms.FILTRE_INITIAL, response.getStatut(),
+                agentCourant(authentication), "Complément demandé au candidat : " + liste + ".");
+        if (response.getCandidatEmail() != null) {
+            notificationService.notifierDemandeComplement(response.getCandidatEmail(),
+                    response.getNumeroDossier(), liste);
+        }
+        notifierCandidatEnLigne(response, "Votre dossier n°" + response.getNumeroDossier()
+                + " doit être complété : " + liste + ".");
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Enregistre l'issue du test académique d'un candidat convoqué (REUSSI, ECHOUE, ABSENT). Sans ce geste, un
+     * dossier convoqué au test ne pouvait ni avancer ni être refusé.
+     */
+    @PutMapping("/candidatures/{id}/resultat-test")
+    public ResponseEntity<CandidatureResponse> enregistrerResultatTest(@PathVariable Long id,
+            @RequestBody Map<String, String> body, Authentication authentication) {
+        CandidatureResponse response = candidatureService.enregistrerResultatTest(id, body.get("resultat"));
+        candidatureService.journaliser(id, EnumEtapeQms.EVALUATION, response.getStatut(),
+                agentCourant(authentication), "Résultat du test académique : "
+                        + CandidatureService.LIBELLES_STATUTS.get(response.getStatut()) + ".");
+        notifierCandidatEnLigne(response, "Le résultat de votre test académique est disponible dans votre espace de suivi.");
+        return ResponseEntity.ok(response);
+    }
+
+    /** Enregistre l'issue de l'entretien d'un candidat convoqué (EFFECTUE, ABSENT). */
+    @PutMapping("/candidatures/{id}/resultat-entretien")
+    public ResponseEntity<CandidatureResponse> enregistrerResultatEntretien(@PathVariable Long id,
+            @RequestBody Map<String, String> body, Authentication authentication) {
+        CandidatureResponse response = candidatureService.enregistrerResultatEntretien(id, body.get("resultat"));
+        candidatureService.journaliser(id, EnumEtapeQms.EVALUATION, response.getStatut(),
+                agentCourant(authentication), "Entretien : "
+                        + CandidatureService.LIBELLES_STATUTS.get(response.getStatut()) + ".");
+        notifierCandidatEnLigne(response, "Votre entretien d'admission a été enregistré ; la décision du jury suivra.");
         return ResponseEntity.ok(response);
     }
 

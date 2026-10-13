@@ -101,6 +101,14 @@ d'inscription ; la page de suivi du candidat et celle de l'admission partagent d
 5. Retirer ou brancher les éléments décoratifs (I4), renommer « Notifications » en « Modèles d'e-mails » (I5).
 6. Trancher la place du recrutement des formateurs (I1b).
 
+## 8. Suite — 2026-10-13
+
+- **C1 résolu** : routes `resultat-test` et `resultat-entretien` ; la fiche du dossier propose Réussi / Échoué / Absent (et Entretien effectué / Absent).
+  Le parcours va désormais jusqu'à l'admission (vérifié en exécution réelle).
+- **C2 résolu** : les neuf écrans lisent les statuts réels ; le serveur dit lui-même quelles actions sont possibles (`actionsPossibles`,
+  `reculsPossibles`). Voir [`AUDIT_ADMISSION_STATUTS_ET_COMPLETUDE_2026-10-13.md`](AUDIT_ADMISSION_STATUTS_ET_COMPLETUDE_2026-10-13.md).
+- **C3 reste ouvert** (changement de rôle par le responsable admission), ainsi que I1b, I3, I4.
+
 ## 7. Modifications faites le 2026-10-12 en marge de cet audit
 
 - Formulaire de session : champ « Frais de dossier » et bloc « Prochaines étapes » (frais de scolarité, carte

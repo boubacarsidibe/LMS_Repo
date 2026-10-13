@@ -8,27 +8,43 @@
 
   <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
     <h2 class="font-headline-sm text-headline-sm text-primary mb-3">Parcours d'une candidature</h2>
-    <p class="font-body-md text-body-md text-on-surface-variant mb-4">Chaque dossier suit ces étapes dans l'ordre. Une candidature peut être rejetée à n'importe quelle étape (sauf une fois admise définitivement) ; il n'y a pas de retour en arrière possible une fois une décision prise.</p>
+    <p class="font-body-md text-body-md text-on-surface-variant mb-4">Chaque dossier suit ces étapes dans l'ordre. Sur chaque ligne de l'onglet <em>Candidatures</em> (et dans la fiche du dossier), le bouton proposé est toujours le geste qui convient à l'étape en cours : si aucun bouton n'apparaît, c'est que le dossier attend quelqu'un d'autre (le candidat, ou une autre étape). Un dossier peut être rejeté jusqu'à la décision du jury ; « Annuler la dernière décision » et « Reculer vers » corrigent une erreur (mot de passe exigé).</p>
     <ol class="space-y-3">
       <li class="flex items-start gap-3">
-        <span class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-xs font-bold text-on-surface-variant shrink-0 mt-0.5">1</span>
-        <div><span class="font-label-md text-label-md text-on-surface">Soumis</span><p class="text-body-sm text-on-surface-variant">Le candidat a déposé son dossier depuis le site public. Onglet <em>Candidatures</em>, bouton « Valider présélection ».</p></div>
+        <span class="w-6 h-6 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
+        <div><span class="font-label-md text-label-md text-on-surface">Soumis</span><p class="text-body-sm text-on-surface-variant">Le candidat a déposé son dossier. Si tous les documents exigés sont fournis : « Valider présélection ». S'il en manque, la présélection est refusée : utilisez « Demander un complément ».</p></div>
       </li>
       <li class="flex items-start gap-3">
-        <span class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-xs font-bold text-on-surface-variant shrink-0 mt-0.5">2</span>
-        <div><span class="font-label-md text-label-md text-on-surface">En présélection</span><p class="text-body-sm text-on-surface-variant">Dossier validé. Bouton « Admettre au test » pour passer à l'étape suivante.</p></div>
+        <span class="w-6 h-6 rounded-full bg-warning-container text-on-warning-container flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">↺</span>
+        <div><span class="font-label-md text-label-md text-on-surface">À compléter</span><p class="text-body-sm text-on-surface-variant">Le dossier attend le candidat, qui reçoit par e-mail et dans l'application la liste de ce qu'il doit fournir. Il revient à l'examen (statut Soumis) dès que son dernier document arrive. Les relances (menu Actions) visent d'abord ces dossiers.</p></div>
       </li>
       <li class="flex items-start gap-3">
-        <span class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-xs font-bold text-on-surface-variant shrink-0 mt-0.5">3</span>
-        <div><span class="font-label-md text-label-md text-on-surface">Admis au test</span><p class="text-body-sm text-on-surface-variant">Le candidat peut passer une épreuve académique (notée dans un module séparé). Bouton « Admettre à l'entretien ».</p></div>
+        <span class="w-6 h-6 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
+        <div><span class="font-label-md text-label-md text-on-surface">Présélectionné</span><p class="text-body-sm text-on-surface-variant">Dossier validé. Les frais de dossier se règlent auprès du service des admissions : « Enregistrer le règlement » (page Paiements) confirme le paiement.</p></div>
       </li>
       <li class="flex items-start gap-3">
-        <span class="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center text-xs font-bold text-on-surface-variant shrink-0 mt-0.5">4</span>
-        <div><span class="font-label-md text-label-md text-on-surface">Admis à l'entretien</span><p class="text-body-sm text-on-surface-variant">C'est à ce statut que le candidat devient sélectionnable dans l'onglet <em>Entretiens</em> pour planifier son passage.</p></div>
+        <span class="w-6 h-6 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
+        <div><span class="font-label-md text-label-md text-on-surface">Paiement confirmé</span><p class="text-body-sm text-on-surface-variant">Bouton « Convoquer au test ».</p></div>
       </li>
       <li class="flex items-start gap-3">
-        <span class="w-6 h-6 rounded-full bg-secondary-fixed flex items-center justify-center text-xs font-bold text-secondary shrink-0 mt-0.5">5</span>
-        <div><span class="font-label-md text-label-md text-on-surface">Délibération</span><p class="text-body-sm text-on-surface-variant">Une fois l'entretien noté, le candidat apparaît dans <em>Délibération</em>, classé par moyenne (test + entretien), pour la décision finale : Admis ou Rejeté.</p></div>
+        <span class="w-6 h-6 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</span>
+        <div><span class="font-label-md text-label-md text-on-surface">Convoqué au test</span><p class="text-body-sm text-on-surface-variant">Le candidat passe l'épreuve académique (notes saisies dans l'onglet <em>Tests académiques</em>). Dans la fiche du dossier, enregistrez ensuite le résultat : <strong>Réussi</strong>, <strong>Échoué</strong> ou <strong>Absent</strong>. La moyenne des notes aide à décider ; c'est vous qui tranchez.</p></div>
+      </li>
+      <li class="flex items-start gap-3">
+        <span class="w-6 h-6 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">5</span>
+        <div><span class="font-label-md text-label-md text-on-surface">Test réussi</span><p class="text-body-sm text-on-surface-variant">Bouton « Convoquer à l'entretien ». Un candidat échoué se rejette ; un absent peut être reconvoqué.</p></div>
+      </li>
+      <li class="flex items-start gap-3">
+        <span class="w-6 h-6 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">6</span>
+        <div><span class="font-label-md text-label-md text-on-surface">Convoqué à l'entretien</span><p class="text-body-sm text-on-surface-variant">C'est à ce statut que le candidat devient sélectionnable dans l'onglet <em>Entretiens</em> pour planifier son passage. Après l'entretien, enregistrez dans la fiche : <strong>Entretien effectué</strong> ou <strong>Absent</strong>.</p></div>
+      </li>
+      <li class="flex items-start gap-3">
+        <span class="w-6 h-6 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">7</span>
+        <div><span class="font-label-md text-label-md text-on-surface">Délibération</span><p class="text-body-sm text-on-surface-variant">Une fois l'entretien effectué, le candidat apparaît dans <em>Délibération</em>, classé par moyenne (test + entretien), pour la décision du jury : Admettre, Liste complémentaire ou Rejeter.</p></div>
+      </li>
+      <li class="flex items-start gap-3">
+        <span class="w-6 h-6 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">8</span>
+        <div><span class="font-label-md text-label-md text-on-surface">Admis</span><p class="text-body-sm text-on-surface-variant">« Finaliser l'inscription » ouvre l'accès étudiant ; le responsable pédagogique affecte ensuite la promotion.</p></div>
       </li>
     </ol>
   </div>
@@ -88,7 +104,7 @@
         <span class="material-symbols-outlined text-on-surface-variant transition-transform group-open:rotate-180">expand_more</span>
       </summary>
       <div class="mt-2 text-body-sm text-on-surface-variant space-y-2">
-        <p>Bouton <strong>Nouvel Entretien</strong> : la liste des candidats proposée ne contient que ceux au statut « Admis à l'entretien ». Si le bouton est grisé, c'est qu'aucun candidat n'a encore atteint cette étape.</p>
+        <p>Bouton <strong>Nouvel Entretien</strong> : la liste des candidats proposée ne contient que ceux au statut « Convoqué à l'entretien ». Si le bouton est grisé, c'est qu'aucun candidat n'a encore atteint cette étape.</p>
         <p>Renseignez la date/heure, le lieu (salle ou lien visio), et — une fois l'entretien passé — revenez sur la fiche (icône crayon) pour saisir la note sur 20 et l'appréciation. C'est cette note qui alimente le classement de la Délibération.</p>
       </div>
     </details>
@@ -162,7 +178,7 @@
     <dl class="space-y-4">
       <div>
         <dt class="font-label-md text-label-md text-on-surface">Pourquoi je ne trouve pas un candidat dans la liste « Nouvel Entretien » ?</dt>
-        <dd class="text-body-sm text-on-surface-variant mt-1">Seuls les candidats déjà au statut « Admis à l'entretien » y apparaissent. Vérifiez son statut actuel dans l'onglet Candidatures et faites-le progresser si besoin.</dd>
+        <dd class="text-body-sm text-on-surface-variant mt-1">Seuls les candidats déjà au statut « Convoqué à l'entretien » y apparaissent. Vérifiez son statut actuel dans l'onglet Candidatures et faites-le progresser si besoin.</dd>
       </div>
       <div>
         <dt class="font-label-md text-label-md text-on-surface">J'ai fermé une session par erreur, comment la rouvrir ?</dt>
@@ -170,7 +186,7 @@
       </div>
       <div>
         <dt class="font-label-md text-label-md text-on-surface">Le taux d'admission de la Vue d'ensemble affiche 0 %, est-ce normal ?</dt>
-        <dd class="text-body-sm text-on-surface-variant mt-1">Oui si aucune décision finale (Admis ou Rejeté) n'a encore été prise en délibération — le taux ne se calcule que sur les dossiers déjà tranchés.</dd>
+        <dd class="text-body-sm text-on-surface-variant mt-1">Oui si aucune décision (admis ou refusé) n'a encore été prise — le taux ne se calcule que sur les dossiers déjà tranchés.</dd>
       </div>
       <div>
         <dt class="font-label-md text-label-md text-on-surface">Les préférences d'affichage du dashboard sont-elles partagées entre mes appareils ?</dt>

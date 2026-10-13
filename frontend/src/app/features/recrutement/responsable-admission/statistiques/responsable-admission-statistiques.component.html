@@ -27,21 +27,21 @@
       <p class="font-label-md text-label-md text-on-surface-variant mb-1">Candidatures reçues</p>
       <h3 class="font-headline-lg text-2xl sm:text-headline-lg text-primary">{{ totalCandidats }}</h3>
     </a>
-    <a *ngIf="prefs.showValidationEnCours" routerLink="/responsable-admission/candidatures" [queryParams]="{ statut: 'SOUMIS' }" class="metric block min-w-0 bg-surface-container-lowest p-3 sm:p-4 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group no-underline">
+    <a *ngIf="prefs.showValidationEnCours" routerLink="/responsable-admission/candidatures" [queryParams]="{ statut: 'A_EXAMINER' }" class="metric block min-w-0 bg-surface-container-lowest p-3 sm:p-4 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group no-underline">
       <div class="flex justify-between items-start mb-2">
         <div class="w-8 h-8 rounded-lg bg-secondary-fixed/50 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">hourglass_empty</span></div>
       </div>
       <p class="font-label-md text-label-md text-on-surface-variant mb-1">Validation en cours</p>
       <h3 class="font-headline-lg text-2xl sm:text-headline-lg text-primary">{{ validationEnCours }}</h3>
     </a>
-    <a *ngIf="prefs.showPreselectionnes" routerLink="/responsable-admission/candidatures" [queryParams]="{ statut: 'EN_COURS_DE_PRESELECTION' }" class="metric block min-w-0 bg-surface-container-lowest p-3 sm:p-4 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group relative overflow-hidden no-underline">
+    <a *ngIf="prefs.showPreselectionnes" routerLink="/responsable-admission/candidatures" [queryParams]="{ statut: 'PRESELECTION' }" class="metric block min-w-0 bg-surface-container-lowest p-3 sm:p-4 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group relative overflow-hidden no-underline">
       <div class="flex justify-between items-start mb-2 relative z-10">
         <div class="w-8 h-8 rounded-lg bg-surface-variant flex items-center justify-center text-on-surface-variant group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">how_to_reg</span></div>
       </div>
       <p class="font-label-md text-label-md text-on-surface-variant mb-1 relative z-10">Présélectionnés</p>
       <h3 class="font-headline-lg text-2xl sm:text-headline-lg text-primary relative z-10">{{ preselectionnes }}</h3>
     </a>
-    <a *ngIf="prefs.showRejetes" routerLink="/responsable-admission/candidatures" [queryParams]="{ statut: 'REJETE' }" class="metric block min-w-0 bg-surface-container-lowest p-3 sm:p-4 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group no-underline">
+    <a *ngIf="prefs.showRejetes" routerLink="/responsable-admission/candidatures" [queryParams]="{ statut: 'ECARTE' }" class="metric block min-w-0 bg-surface-container-lowest p-3 sm:p-4 rounded-xl border border-outline-variant shadow-sm hover:border-secondary transition-colors group no-underline">
       <div class="flex justify-between items-start mb-2">
         <div class="w-8 h-8 rounded-lg bg-error-container flex items-center justify-center text-error group-hover:scale-110 transition-transform"><span class="material-symbols-outlined filled">cancel</span></div>
       </div>

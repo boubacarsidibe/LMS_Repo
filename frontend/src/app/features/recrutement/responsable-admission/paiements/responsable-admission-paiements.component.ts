@@ -7,7 +7,8 @@ import { CandidatureResponse, PaiementResponse, RecrutementService, ResultatRela
 import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 
 /** Statuts à partir desquels le dossier est validé et le paiement des frais attendu. */
-const STATUTS_DOSSIER_VALIDE = ['EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 'ADMIS3'];
+/** Dossiers sur lesquels un règlement peut être enregistré : présélectionnés, règlement attendu (PaiementService). */
+const STATUTS_REGLEMENT_ATTENDU = ['PRESELECTIONNE', 'PAIEMENT_EN_ATTENTE'];
 
 @Component({
   selector: 'app-responsable-admission-paiements',
@@ -61,7 +62,7 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
    */
   get candidaturesImpayees(): CandidatureResponse[] {
     return this.candidatures.filter(
-      (c) => STATUTS_DOSSIER_VALIDE.includes(c.statut) && c.paiement?.statut !== 'SUCCES'
+      (c) => STATUTS_REGLEMENT_ATTENDU.includes(c.statut) && c.paiement?.statut !== 'SUCCES'
     );
   }
 

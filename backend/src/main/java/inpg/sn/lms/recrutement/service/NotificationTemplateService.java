@@ -133,6 +133,13 @@ public class NotificationTemplateService {
                         + "Merci de bien vouloir vous connecter à votre espace candidat afin de le remplacer dans "
                         + "les meilleurs délais." + signature);
             }
+            case DEMANDE_COMPLEMENT -> {
+                t.setSujet("Votre dossier de candidature doit être complété");
+                t.setCorps("Bonjour {{nomCandidat}},\n\nVotre dossier de candidature n°{{numeroDossier}} a bien été reçu, mais "
+                        + "il ne peut pas être examiné en l'état : {{piecesManquantes}}.\n\nMerci de bien vouloir vous "
+                        + "connecter à votre espace candidat et d'ajouter les documents demandés. Dès que votre dossier "
+                        + "sera complet, il reviendra automatiquement à l'examen de la commission." + signature);
+            }
             case RAPPEL_DOSSIER_INCOMPLET -> {
                 t.setSujet("Rappel : votre dossier de candidature est incomplet");
                 t.setCorps("Bonjour {{nomCandidat}},\n\nNous vous rappelons que votre dossier de candidature n°{{numeroDossier}} "

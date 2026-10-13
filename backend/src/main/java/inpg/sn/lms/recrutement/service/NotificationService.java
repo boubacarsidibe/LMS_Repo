@@ -177,6 +177,11 @@ public class NotificationService {
                 Map.of("numeroDossier", numeroDossier, "typeDocument", typeDocument));
     }
 
+    public void notifierDemandeComplement(String emailCandidat, String numeroDossier, String piecesManquantes) {
+        envoyerNotification(EnumTypeNotification.DEMANDE_COMPLEMENT, emailCandidat,
+                Map.of("numeroDossier", numeroDossier, "piecesManquantes", piecesManquantes));
+    }
+
     public void notifierRappelDossierIncomplet(String emailCandidat, String numeroDossier, String piecesManquantes) {
         envoyerNotification(EnumTypeNotification.RAPPEL_DOSSIER_INCOMPLET, emailCandidat,
                 Map.of("numeroDossier", numeroDossier, "piecesManquantes", piecesManquantes));

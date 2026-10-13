@@ -73,7 +73,7 @@ export class TestFormComponent implements OnInit {
 
   get candidatsEligibles(): CandidatureResponse[] {
     const sessionId = Number(this.testForm.getRawValue().sessionId);
-    return this.candidatures.filter((c) => c.statut === 'ADMIS1' && c.sessionCandidatureId === sessionId);
+    return this.candidatures.filter((c) => c.statut === 'CONVOQUE_TEST' && c.sessionCandidatureId === sessionId);
   }
   get sessionAffichee(): string | null { return this.test?.sessionCandidatureLibelle ?? null; }
   get candidatAffiche(): string {

@@ -5,6 +5,7 @@ import { CandidatureResponse, RecrutementService } from '../../../../core/recrut
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
 import { DashboardPreferences, DashboardPreferencesService } from '../services/dashboard-preferences.service';
+import { GroupeStatut, estAdmis, estDecide, estEngageDansLaSelection, estRefuse, groupeDeStatut } from '../../statuts-admission';
 
 interface SegmentStatut {
   statut: string;
@@ -53,47 +54,50 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
     return this.candidatures.length;
   }
 
+  /** Dossiers déposés qui attendent l'examen de l'admission (les dossiers « à compléter » attendent le candidat). */
   get validationEnCours(): number {
-    return this.candidatures.filter((c) => c.statut === 'SOUMIS').length;
+    return this.candidatures.filter((c) => c.statut === 'SOUMIS' || c.statut === 'DOSSIER_VALIDE').length;
   }
 
+  /** Dossiers retenus et engagés dans la sélection : présélection, test, entretien. */
   get preselectionnes(): number {
-    return this.candidatures.filter((c) =>
-      ['EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2'].includes(c.statut)
-    ).length;
+    return this.candidatures.filter((c) => estEngageDansLaSelection(c.statut)).length;
   }
 
+  /** Dossiers refusés par l'INPG (rejetés, ou non admis après évaluation). */
   get rejetes(): number {
-    return this.candidatures.filter((c) => c.statut === 'REJETE').length;
+    return this.candidatures.filter((c) => estRefuse(c.statut)).length;
   }
 
   /** Répartition réelle des candidatures par étape du workflow, pour le graphique en barres. */
   get repartitionStatuts(): SegmentStatut[] {
     const total = this.candidatures.length || 1;
-    const definitions: Array<{ statut: string; label: string; couleur: string }> = [
-      { statut: 'SOUMIS', label: 'Soumis', couleur: 'bg-surface-tint' },
-      { statut: 'EN_COURS_DE_PRESELECTION', label: 'En présélection', couleur: 'bg-secondary' },
-      { statut: 'ADMIS1', label: 'Admis au test', couleur: 'bg-primary' },
-      { statut: 'ADMIS2', label: "Admis à l'entretien", couleur: 'bg-primary-fixed-dim' },
-      { statut: 'ADMIS3', label: 'Admis final', couleur: 'bg-success' },
-      { statut: 'REJETE', label: 'Rejeté', couleur: 'bg-error' },
+    const definitions: Array<{ groupe: GroupeStatut; label: string; couleur: string }> = [
+      { groupe: 'A_EXAMINER', label: 'À examiner', couleur: 'bg-surface-tint' },
+      { groupe: 'A_COMPLETER', label: 'À compléter', couleur: 'bg-warning' },
+      { groupe: 'PRESELECTION', label: 'Présélection', couleur: 'bg-secondary' },
+      { groupe: 'TEST', label: 'Test académique', couleur: 'bg-primary' },
+      { groupe: 'ENTRETIEN', label: 'Entretien', couleur: 'bg-primary-fixed-dim' },
+      { groupe: 'LISTE_ATTENTE', label: 'Liste complémentaire', couleur: 'bg-primary-container' },
+      { groupe: 'ADMIS', label: 'Admis', couleur: 'bg-success' },
+      { groupe: 'ECARTE', label: 'Écartés', couleur: 'bg-error' },
     ];
     return definitions.map((d) => {
-      const count = this.candidatures.filter((c) => c.statut === d.statut).length;
-      return { ...d, count, pourcentage: Math.round((count / total) * 100) };
+      const count = this.candidatures.filter((c) => groupeDeStatut(c.statut) === d.groupe).length;
+      return { statut: d.groupe, label: d.label, couleur: d.couleur, count, pourcentage: Math.round((count / total) * 100) };
     });
   }
 
-  /** Candidatures ayant reçu une décision finale (admises ou rejetées). */
+  /** Candidatures ayant reçu une décision de l'INPG (admises ou refusées). */
   get candidaturesDecidees(): number {
-    return this.candidatures.filter((c) => c.statut === 'ADMIS3' || c.statut === 'REJETE').length;
+    return this.candidatures.filter((c) => estDecide(c.statut)).length;
   }
 
   /** Taux d'admission parmi les dossiers déjà tranchés (0 si aucune décision encore prise). */
   get tauxAdmission(): number {
     const decidees = this.candidaturesDecidees;
     if (decidees === 0) return 0;
-    const admis = this.candidatures.filter((c) => c.statut === 'ADMIS3').length;
+    const admis = this.candidatures.filter((c) => estAdmis(c.statut)).length;
     return Math.round((admis / decidees) * 100);
   }
 

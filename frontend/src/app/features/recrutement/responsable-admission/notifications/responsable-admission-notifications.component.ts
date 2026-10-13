@@ -24,6 +24,7 @@ const LIBELLES: Record<EnumTypeNotification, string> = {
   NON_ADMISSION: 'Non-admission',
   DOCUMENT_CONFORME: 'Document validé',
   DOCUMENT_NON_CONFORME: 'Document non conforme',
+  DEMANDE_COMPLEMENT: 'Complément demandé (dossier à compléter)',
   RAPPEL_DOSSIER_INCOMPLET: 'Rappel : dossier incomplet',
   RAPPEL_PAIEMENT: 'Rappel : paiement en attente',
 };
@@ -43,6 +44,7 @@ const PLACEHOLDERS: Record<EnumTypeNotification, string[]> = {
   NON_ADMISSION: ['nomCandidat', 'numeroDossier'],
   DOCUMENT_CONFORME: ['nomCandidat', 'numeroDossier', 'typeDocument'],
   DOCUMENT_NON_CONFORME: ['nomCandidat', 'numeroDossier', 'typeDocument'],
+  DEMANDE_COMPLEMENT: ['nomCandidat', 'numeroDossier', 'piecesManquantes'],
   RAPPEL_DOSSIER_INCOMPLET: ['nomCandidat', 'numeroDossier', 'piecesManquantes'],
   RAPPEL_PAIEMENT: ['nomCandidat', 'numeroDossier'],
 };
