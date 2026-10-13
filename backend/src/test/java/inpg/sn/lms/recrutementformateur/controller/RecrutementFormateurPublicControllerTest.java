@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import inpg.sn.lms.espace_etudiant.entity.Formation;
+import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
 import inpg.sn.lms.recrutement.entity.FichierStocke;
 import inpg.sn.lms.recrutementformateur.dto.OffreFormateurDto;
 import inpg.sn.lms.recrutementformateur.entity.OffreRecrutementFormateur;
@@ -30,6 +33,7 @@ import inpg.sn.lms.recrutementformateur.repository.OffreRecrutementFormateurRepo
 class RecrutementFormateurPublicControllerTest {
 
     @Mock private OffreRecrutementFormateurRepository offreRepository;
+    @Mock private FormationRepository formationRepository;
 
     @TempDir Path dossier;
 
@@ -37,7 +41,7 @@ class RecrutementFormateurPublicControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new RecrutementFormateurPublicController(offreRepository);
+        controller = new RecrutementFormateurPublicController(offreRepository, formationRepository);
     }
 
     private OffreRecrutementFormateur offre(EnumStatutOffreFormateur statut, FichierStocke fiche) {
@@ -101,5 +105,24 @@ class RecrutementFormateurPublicControllerTest {
         OffreFormateurDto sans = RecrutementFormateurPublicController
                 .toDto(offre(EnumStatutOffreFormateur.PUBLIEE, null));
         assertThat(sans.fichePosteNom()).isNull();
+    }
+
+    @Test
+    @DisplayName("Domaines d'expertise proposés au candidat : ceux des offres et des formations, sans doublon ni casse, triés")
+    void domaines_sont_derives_du_catalogue() {
+        OffreRecrutementFormateur a = offre(EnumStatutOffreFormateur.PUBLIEE, null);
+        a.setDomaine("Sécurité");
+        OffreRecrutementFormateur b = offre(EnumStatutOffreFormateur.BROUILLON, null);
+        b.setDomaine("  Ingénierie ");
+        OffreRecrutementFormateur sans = offre(EnumStatutOffreFormateur.PUBLIEE, null);
+        sans.setDomaine("   ");
+        Formation f = new Formation();
+        f.setDomaine("sécurité"); // même domaine, autre casse : une seule entrée
+        Formation g = new Formation();
+        g.setDomaine("Technique");
+        when(offreRepository.findAll()).thenReturn(List.of(a, b, sans));
+        when(formationRepository.findAll()).thenReturn(List.of(f, g));
+
+        assertThat(controller.domaines().getBody()).containsExactly("Ingénierie", "Sécurité", "Technique");
     }
 }

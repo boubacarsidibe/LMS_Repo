@@ -36,12 +36,20 @@ import inpg.sn.lms.fichier.ValidationFichier;
 import inpg.sn.lms.recrutement.entity.FichierStocke;
 import inpg.sn.lms.recrutement.service.FichierStockeService;
 import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurDto;
+import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurDto.CertificationDto;
+import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurDto.ExperienceDto;
+import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurDto.FormationDto;
+import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurDto.LangueDto;
 import inpg.sn.lms.recrutementformateur.dto.ChangementStatutRequest;
 import inpg.sn.lms.recrutementformateur.dto.DecisionCandidatureFormateurRequest;
 import inpg.sn.lms.recrutementformateur.dto.OffreFormateurDto;
 import inpg.sn.lms.recrutementformateur.dto.OffreFormateurRequest;
 import inpg.sn.lms.recrutementformateur.dto.PieceCandidatureFormateurDto;
 import inpg.sn.lms.recrutementformateur.entity.CandidatureFormateur;
+import inpg.sn.lms.recrutementformateur.entity.CertificationCandidatureFormateur;
+import inpg.sn.lms.recrutementformateur.entity.ExperienceCandidatureFormateur;
+import inpg.sn.lms.recrutementformateur.entity.FormationCandidatureFormateur;
+import inpg.sn.lms.recrutementformateur.entity.LangueCandidatureFormateur;
 import inpg.sn.lms.recrutementformateur.entity.OffreRecrutementFormateur;
 import inpg.sn.lms.recrutementformateur.entity.PieceCandidatureFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumDecisionCandidatureFormateur;
@@ -49,6 +57,10 @@ import inpg.sn.lms.recrutementformateur.enums.EnumStatutCandidatureFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumStatutOffreFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumTypeContratFormateur;
 import inpg.sn.lms.recrutementformateur.repository.CandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.CertificationCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.ExperienceCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.FormationCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.LangueCandidatureFormateurRepository;
 import inpg.sn.lms.recrutementformateur.repository.OffreRecrutementFormateurRepository;
 import inpg.sn.lms.recrutementformateur.repository.PieceCandidatureFormateurRepository;
 import inpg.sn.lms.recrutementformateur.service.RecrutementFormateurNotificationService;
@@ -75,6 +87,10 @@ public class AdminRecrutementFormateurController {
     private final OffreRecrutementFormateurRepository offreRepository;
     private final CandidatureFormateurRepository candidatureRepository;
     private final PieceCandidatureFormateurRepository pieceRepository;
+    private final FormationCandidatureFormateurRepository formationCandidatureRepository;
+    private final ExperienceCandidatureFormateurRepository experienceRepository;
+    private final LangueCandidatureFormateurRepository langueRepository;
+    private final CertificationCandidatureFormateurRepository certificationRepository;
     private final FormationRepository formationRepository;
     private final FormateurRepository formateurRepository;
     private final RoleRepository roleRepository;
@@ -85,12 +101,20 @@ public class AdminRecrutementFormateurController {
 
     public AdminRecrutementFormateurController(OffreRecrutementFormateurRepository offreRepository,
             CandidatureFormateurRepository candidatureRepository, PieceCandidatureFormateurRepository pieceRepository,
+            FormationCandidatureFormateurRepository formationCandidatureRepository,
+            ExperienceCandidatureFormateurRepository experienceRepository,
+            LangueCandidatureFormateurRepository langueRepository,
+            CertificationCandidatureFormateurRepository certificationRepository,
             FormationRepository formationRepository, FormateurRepository formateurRepository,
             RoleRepository roleRepository, UserService userService, UtilisateurCourantService utilisateurCourant,
             RecrutementFormateurNotificationService notificationService, FichierStockeService fichierStockeService) {
         this.offreRepository = offreRepository;
         this.candidatureRepository = candidatureRepository;
         this.pieceRepository = pieceRepository;
+        this.formationCandidatureRepository = formationCandidatureRepository;
+        this.experienceRepository = experienceRepository;
+        this.langueRepository = langueRepository;
+        this.certificationRepository = certificationRepository;
         this.formationRepository = formationRepository;
         this.formateurRepository = formateurRepository;
         this.roleRepository = roleRepository;
@@ -437,14 +461,38 @@ public class AdminRecrutementFormateurController {
     }
 
     private CandidatureFormateurDto toCandidatureDto(CandidatureFormateur c) {
-        return candidatureDto(c, pieceRepository.findByCandidatureId(c.getId()));
+        return candidatureDto(c, pieceRepository.findByCandidatureId(c.getId()),
+                formationCandidatureRepository.findByCandidatureId(c.getId()),
+                experienceRepository.findByCandidatureId(c.getId()),
+                langueRepository.findByCandidatureId(c.getId()),
+                certificationRepository.findByCandidatureId(c.getId()));
     }
 
     /** Partagé avec {@link CandidatFormateurController}. */
-    static CandidatureFormateurDto candidatureDto(CandidatureFormateur c, List<PieceCandidatureFormateur> pieces) {
+    static CandidatureFormateurDto candidatureDto(CandidatureFormateur c, List<PieceCandidatureFormateur> pieces,
+            List<FormationCandidatureFormateur> formations, List<ExperienceCandidatureFormateur> experiences,
+            List<LangueCandidatureFormateur> langues, List<CertificationCandidatureFormateur> certifications) {
         List<PieceCandidatureFormateurDto> piecesDto = pieces.stream()
                 .map(p -> new PieceCandidatureFormateurDto(p.getId(), p.getTypeDocument().name(),
                         p.getFichierStocke() != null ? p.getFichierStocke().getNomOriginal() : null))
+                .toList();
+        List<FormationDto> formationsDto = formations.stream()
+                .map(f -> new FormationDto(f.getId(), f.getNiveauEtude(), f.getPays(), f.getVille(),
+                        f.getEtablissement(), f.getIntituleDiplome(), f.getMatierePrincipale(), f.getDateDebut(),
+                        f.getDateObtention()))
+                .toList();
+        List<ExperienceDto> experiencesDto = experiences.stream()
+                .map(e -> new ExperienceDto(e.getId(), e.getEmployeur(), e.getPays(), e.getVille(), e.isPosteActuel(),
+                        e.getIntitulePoste(), e.getDateDebut(), e.getDateFin(), e.getNomSuperviseur(),
+                        e.getTitreSuperviseur(), e.getTelephoneSuperviseur(), e.getEmailSuperviseur(),
+                        e.getContactAutorise(), e.getMotifNonContact(), e.getMotifDepart()))
+                .toList();
+        List<LangueDto> languesDto = langues.stream()
+                .map(l -> new LangueDto(l.getId(), l.getLangue(), l.getNiveau().name()))
+                .toList();
+        List<CertificationDto> certificationsDto = certifications.stream()
+                .map(cert -> new CertificationDto(cert.getId(), cert.getIntitule(), cert.getOrganisme(),
+                        cert.getDateObtention(), cert.getDateExpiration()))
                 .toList();
         OffreRecrutementFormateur o = c.getOffre();
         return new CandidatureFormateurDto(
@@ -453,12 +501,20 @@ public class AdminRecrutementFormateurController {
                 o != null ? o.getIntitule() : null,
                 o != null && o.getTypeContrat() != null ? o.getTypeContrat().name() : null,
                 c.getNom(), c.getPrenom(), c.getEmail(), c.getTelephone(),
-                c.getDiplomePrincipal(), c.getAnneesExperience(), c.getLettreMotivation(),
+                c.getDiplomePrincipal(), c.getAnneesExperience(),
                 c.getStatut().name(),
                 c.getDecision() != null ? c.getDecision().name() : null,
                 c.getMotifDecision(),
                 c.getDateSoumission(), c.getDateDecision(), c.isFormateurCree(),
-                piecesDto);
+                piecesDto,
+                c.getCivilite(), c.getGenre(), c.getDateNaissance(), c.getPaysNaissance(), c.getLieuNaissance(),
+                c.getNationalite(), c.getNationaliteSecondaire(), c.getNiveauEtude(), c.getTelephoneSecondaire(),
+                c.getEmailAlternatif(), c.getAdresseLigne1(), c.getAdresseLigne2(), c.getVille(),
+                c.getPaysResidence(),
+                formationsDto, experiencesDto, languesDto, certificationsDto,
+                // Copie matérialisée : open-in-view=false, la collection paresseuse de
+                // l'entité ne doit pas fuir hors de cette méthode transactionnelle.
+                java.util.Set.copyOf(c.getDomainesExpertise()));
     }
 
     private LocalDate parseDate(String v) {

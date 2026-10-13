@@ -1,8 +1,11 @@
 package inpg.sn.lms.recrutementformateur.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -10,7 +13,9 @@ import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.recrutementformateur.enums.EnumDecisionCandidatureFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumStatutCandidatureFormateur;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -73,9 +78,6 @@ public class CandidatureFormateur {
     @Column(name = "annees_experience")
     private Integer anneesExperience;
 
-    @Column(name = "lettre_motivation", length = 4000)
-    private String lettreMotivation;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private EnumStatutCandidatureFormateur statut = EnumStatutCandidatureFormateur.DOSSIER_RECU;
@@ -100,9 +102,84 @@ public class CandidatureFormateur {
     @Column(name = "formateur_cree", nullable = false)
     private boolean formateurCree = false;
 
+    // ===================== État civil et adresse (V39) =====================
+    // Chaînes libres, jamais de liste déroulante fermée — même convention que
+    // recrutement.dto.InfosPersonnellesDto. Toutes facultatives.
+
+    @Column(length = 20)
+    private String civilite;
+
+    @Column(length = 20)
+    private String genre;
+
+    @Column(name = "date_naissance")
+    private LocalDate dateNaissance;
+
+    @Column(name = "pays_naissance", length = 100)
+    private String paysNaissance;
+
+    @Column(name = "lieu_naissance", length = 150)
+    private String lieuNaissance;
+
+    @Column(length = 100)
+    private String nationalite;
+
+    @Column(name = "nationalite_secondaire", length = 100)
+    private String nationaliteSecondaire;
+
+    @Column(name = "niveau_etude", length = 150)
+    private String niveauEtude;
+
+    @Column(name = "telephone_secondaire", length = 30)
+    private String telephoneSecondaire;
+
+    @Column(name = "email_alternatif", length = 200)
+    private String emailAlternatif;
+
+    @Column(name = "adresse_ligne1", length = 200)
+    private String adresseLigne1;
+
+    @Column(name = "adresse_ligne2", length = 200)
+    private String adresseLigne2;
+
+    @Column(length = 120)
+    private String ville;
+
+    @Column(name = "pays_residence", length = 100)
+    private String paysResidence;
+
+    // ===================== Collections répétables (V39) =====================
+
     @OneToMany(mappedBy = "candidature", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<PieceCandidatureFormateur> pieces = new ArrayList<>();
+
+    @OneToMany(mappedBy = "candidature", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<FormationCandidatureFormateur> formations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "candidature", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ExperienceCandidatureFormateur> experiences = new ArrayList<>();
+
+    @OneToMany(mappedBy = "candidature", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<LangueCandidatureFormateur> langues = new ArrayList<>();
+
+    @OneToMany(mappedBy = "candidature", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<CertificationCandidatureFormateur> certifications = new ArrayList<>();
+
+    /**
+     * Domaines d'expertise cochés par le candidat, dérivés du catalogue déjà
+     * utilisé par les offres/formations (pas de liste propre à maintenir) —
+     * exposés via {@code GET /public/domaines}.
+     */
+    @ElementCollection
+    @CollectionTable(name = "candidature_formateur_domaines_expertise", joinColumns = @JoinColumn(name = "candidature_id"))
+    @Column(name = "domaine")
+    @JsonIgnore
+    private Set<String> domainesExpertise = new HashSet<>();
 
     public CandidatureFormateur(OffreRecrutementFormateur offre, User candidat, String nom, String prenom,
             String email, String telephone) {

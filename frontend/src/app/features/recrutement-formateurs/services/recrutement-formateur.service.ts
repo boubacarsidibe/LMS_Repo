@@ -29,6 +29,11 @@ export class RecrutementFormateurService {
     return `${this.api}/public/offres/${offreId}/fiche-poste`;
   }
 
+  /** Domaines d'expertise proposés dans le dossier, dérivés du catalogue (offres + formations). */
+  getDomainesExpertise(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.api}/public/domaines`);
+  }
+
   postuler(donnees: CandidatureFormateurSaisie): Observable<CandidatureFormateur> {
     return this.http.post<CandidatureFormateur>(`${this.api}/candidatures`, donnees);
   }

@@ -290,6 +290,19 @@ Trois pièges (2026-10-12), qui donnent chacun un échec sans rapport avec le co
   version 37` alors que `src/` n'en a qu'une. Supprimer les fichiers en trop dans `target/` (ou `mvn clean`) ; le build Docker,
   lui, repart de zéro et n'est pas concerné.
 
+### Une fonctionnalité « disparue » peut n'avoir jamais été sur `develop`
+
+Le dossier de candidature enrichi du formateur (formations, expériences, langues, certifications, domaines d'expertise,
+sections rétractables, façon portail de l'UNESCO/SuccessFactors) n'était **jamais passé sur `develop`** : il vivait seulement sur
+la branche `origin/codespace-literate-system-g4rvw7j74rrjfw9pq`, travaillée depuis d'autres Codespaces. `develop` en gardait la
+version simple du 8 septembre, et on a pris cela pour une perte. Rapatrié le 2026-10-13 (commits `ab7b5ae`, `14afc5d`, partie
+formulaire de `a455698`). Avant de chercher une régression dans l'historique d'un fichier, vérifier **où** vit le commit :
+`git branch -a --contains <commit>` ; `git merge-base --is-ancestor <commit> HEAD`. Un `git log -- <fichier>` ne montre pas les
+fusions qui n'ont rien changé au fichier : ajouter `--full-history`. Cette branche garde d'autres commits absents de `develop`
+(53 au 2026-10-13, dont certains déjà repris sous un autre identifiant) : à trier avant de les croire perdus ou à reprendre.
+Une migration rapatriée d'une branche reçoit un **nouvel horodatage postérieur à la dernière migration appliquée** : une version plus
+basse que celles déjà passées est refusée par Flyway (« hors ordre »).
+
 ### Les e-mails partent, mais n'arrivent pas — SPF d'`inpg.sn` contre Brevo
 
 Diagnostiqué le 2026-09-08 : le code d'envoi fonctionne (SMTP Brevo authentifié,

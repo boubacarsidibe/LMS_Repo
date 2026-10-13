@@ -2045,3 +2045,54 @@ confirmation, réponse de l'étudiant absent reçue par le formateur, étudiant
 présent non contacté, 400 si aucun absent, 403 si le formateur n'enseigne pas
 le cours. Tests ciblés au vert. Données de test nettoyées après coup (séances,
 conversations, notifications). Commit `d0d9161`.
+
+### 68. Dossier de candidature formateur enrichi, sur le format d'un portail de référence (SAP SuccessFactors)
+
+Demande directe de l'utilisateur, captures d'écran d'un portail de recrutement
+SAP SuccessFactors à l'appui : le dossier du point 67 (nom/prénom/téléphone,
+diplôme en texte libre, années d'expérience, lettre de motivation) était bien
+plus pauvre que l'état civil, l'adresse, et les blocs **répétables**
+(formation, expérience professionnelle avec référence du supérieur
+hiérarchique, langues, certifications) attendus d'un dossier RH. Deux
+décisions produit ont cadré la reprise : garder « l'essentiel » (pas les
+champs propres à l'ONU comme « Grade for UN staff »), et dériver le domaine
+d'expertise du catalogue déjà utilisé par les offres/formations plutôt que
+d'inventer une nouvelle liste à maintenir.
+
+**Migration V39** : colonnes scalaires sur `candidatures_formateur` (civilité,
+genre, naissance, nationalités, niveau d'étude, adresse — toutes VARCHAR
+libres et nullable, même parti pris que `InfosPersonnellesDto` : pas de liste
+déroulante fermée façon SuccessFactors). Quatre tables répétables
+(`formations_candidature_formateur`, `experiences_candidature_formateur`,
+`langues_candidature_formateur`, `certifications_candidature_formateur`),
+patron exact de `pieces_candidature_formateur` (V38) : FK `ON DELETE CASCADE`,
+une entité par table, `@OneToMany(cascade = ALL, orphanRemoval = true)` sur
+`CandidatureFormateur`. Seul le niveau de langue est un enum
+(`EnumNiveauLangue`) — seul champ du lot assez borné pour le justifier. Les
+domaines d'expertise cochés sont un simple `@ElementCollection<String>`
+(`candidature_formateur_domaines_expertise`), sans entité ni contrainte de
+référence — le catalogue proposé au candidat vient d'un nouvel endpoint `GET
+/api/recrutement-formateurs/public/domaines` (union live des `domaine` de
+`offres_recrutement_formateur` et `formation`, pas une table à maintenir).
+
+**Tout l'enrichissement est facultatif** : nom/prénom/téléphone restent les
+seuls champs obligatoires, contrairement à SuccessFactors (asterisques rouges
+partout). But : enrichir le dossier plutôt que dresser un mur de champs
+obligatoires qui ferait fuir les candidatures — ce dépôt reste une seule
+soumission (pas d'assistant multi-étapes comme SuccessFactors).
+
+**Front** : nouveau patron visuel pour ce dépôt — sections **rétractables**
+(carte + en-tête cliquable + chevron `expand_more`/`expand_less`) dans
+`MaCandidatureComponent`, pas de composants enfants séparés (la logique reste
+assez simple pour tenir dans le composant existant). Panneau d'instruction de
+l'espace admission (`CandidaturesAdminFormateursComponent`) étendu en lecture
+seule avec les mêmes informations.
+
+**Vérifié bout en bout sur la stack Docker** : Flyway V39 appliqué, schéma
+validé par Hibernate (`ddl-auto=validate`) sans écart. Dépôt d'une candidature
+avec les quatre blocs répétables peuplés (formation, expérience + référence,
+deux langues, une certification) et un domaine d'expertise coché → restituée
+intacte côté candidat et côté admission. `ng build` OK, chaînes du nouveau
+formulaire retrouvées dans le bundle déployé. 18 tests unitaires ciblés verts
+(1 nouveau sur `CandidatFormateurControllerTest`, couvrant la persistance d'un
+bloc répétable).

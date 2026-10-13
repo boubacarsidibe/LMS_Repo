@@ -26,12 +26,17 @@ import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 import inpg.sn.lms.recrutement.service.FichierStockeService;
 import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurCreateRequest;
+import inpg.sn.lms.recrutementformateur.dto.CandidatureFormateurCreateRequest.LangueRequest;
 import inpg.sn.lms.recrutementformateur.entity.CandidatureFormateur;
 import inpg.sn.lms.recrutementformateur.entity.OffreRecrutementFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumStatutCandidatureFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumStatutOffreFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumTypeContratFormateur;
 import inpg.sn.lms.recrutementformateur.repository.CandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.CertificationCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.ExperienceCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.FormationCandidatureFormateurRepository;
+import inpg.sn.lms.recrutementformateur.repository.LangueCandidatureFormateurRepository;
 import inpg.sn.lms.recrutementformateur.repository.OffreRecrutementFormateurRepository;
 import inpg.sn.lms.recrutementformateur.repository.PieceCandidatureFormateurRepository;
 import inpg.sn.lms.recrutementformateur.service.RecrutementFormateurNotificationService;
@@ -46,6 +51,10 @@ class CandidatFormateurControllerTest {
     @Mock private OffreRecrutementFormateurRepository offreRepository;
     @Mock private CandidatureFormateurRepository candidatureRepository;
     @Mock private PieceCandidatureFormateurRepository pieceRepository;
+    @Mock private FormationCandidatureFormateurRepository formationRepository;
+    @Mock private ExperienceCandidatureFormateurRepository experienceRepository;
+    @Mock private LangueCandidatureFormateurRepository langueRepository;
+    @Mock private CertificationCandidatureFormateurRepository certificationRepository;
     @Mock private RoleRepository roleRepository;
     @Mock private FichierStockeService fichierStockeService;
     @Mock private UtilisateurCourantService utilisateurCourant;
@@ -58,6 +67,7 @@ class CandidatFormateurControllerTest {
     @BeforeEach
     void setUp() {
         controller = new CandidatFormateurController(offreRepository, candidatureRepository, pieceRepository,
+                formationRepository, experienceRepository, langueRepository, certificationRepository,
                 roleRepository, fichierStockeService, utilisateurCourant, notificationService);
         user = new User();
         user.setId(7L);
@@ -75,7 +85,9 @@ class CandidatFormateurControllerTest {
 
     private static CandidatureFormateurCreateRequest requete(Long offreId) {
         return new CandidatureFormateurCreateRequest(offreId, "Diallo", "Awa", "770000000",
-                "Ingénieur pétrole", 8, "Lettre de motivation");
+                "Ingénieur pétrole", 8,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null);
     }
 
     @Test
@@ -152,6 +164,30 @@ class CandidatFormateurControllerTest {
         assertThat(user.getRoles()).extracting(Role::getCode).containsExactly("ROLE_CANDIDAT_FORMATEUR");
         verify(notificationService).notifierNouvelleCandidature("Formateur Forage");
         verify(notificationService).notifierDossierRecu(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Dépôt avec une langue déclarée : persistée")
+    void postuler_avec_langue_est_persiste() {
+        when(utilisateurCourant.utilisateur(authentication)).thenReturn(user);
+        when(offreRepository.findById(1L)).thenReturn(Optional.of(offrePubliee()));
+        when(candidatureRepository.findByOffreIdAndCandidatIdAndStatutNot(any(), any(), any())).thenReturn(List.of());
+        when(candidatureRepository.save(any())).thenAnswer(inv -> {
+            CandidatureFormateur c = inv.getArgument(0);
+            c.setId(5L);
+            return c;
+        });
+        when(roleRepository.findByCode("ROLE_CANDIDAT_FORMATEUR"))
+                .thenReturn(new Role(9, "ROLE_CANDIDAT_FORMATEUR", "Candidat formateur", null));
+        CandidatureFormateurCreateRequest requete = new CandidatureFormateurCreateRequest(1L, "Diallo", "Awa",
+                "770000000", "Ingénieur pétrole", 8,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, List.of(new LangueRequest("Anglais", "COURANT")), null, null);
+
+        ResponseEntity<?> reponse = controller.postuler(requete, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        verify(langueRepository).save(any());
     }
 
     @Test

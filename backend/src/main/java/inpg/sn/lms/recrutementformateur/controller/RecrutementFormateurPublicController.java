@@ -1,6 +1,7 @@
 package inpg.sn.lms.recrutementformateur.controller;
 
 import java.util.List;
+import java.util.TreeSet;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import inpg.sn.lms.espace_etudiant.repository.FormationRepository;
 import inpg.sn.lms.recrutementformateur.dto.OffreFormateurDto;
 import inpg.sn.lms.recrutementformateur.entity.OffreRecrutementFormateur;
 import inpg.sn.lms.recrutementformateur.enums.EnumStatutOffreFormateur;
@@ -24,9 +26,12 @@ import inpg.sn.lms.recrutementformateur.repository.OffreRecrutementFormateurRepo
 public class RecrutementFormateurPublicController {
 
     private final OffreRecrutementFormateurRepository offreRepository;
+    private final FormationRepository formationRepository;
 
-    public RecrutementFormateurPublicController(OffreRecrutementFormateurRepository offreRepository) {
+    public RecrutementFormateurPublicController(OffreRecrutementFormateurRepository offreRepository,
+            FormationRepository formationRepository) {
         this.offreRepository = offreRepository;
+        this.formationRepository = formationRepository;
     }
 
     @GetMapping("/offres")
@@ -57,6 +62,22 @@ public class RecrutementFormateurPublicController {
             return ResponseEntity.notFound().build();
         }
         return CandidatFormateurController.servirFichier(offre.getFichePoste());
+    }
+
+    /**
+     * Domaines d'expertise proposés au candidat dans son dossier : union des
+     * domaines déjà utilisés par les offres et les formations du catalogue —
+     * pas de liste propre à maintenir (QMS-007, dossier façon SuccessFactors).
+     */
+    @GetMapping("/domaines")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<String>> domaines() {
+        TreeSet<String> domaines = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        offreRepository.findAll().stream().map(OffreRecrutementFormateur::getDomaine)
+                .filter(d -> d != null && !d.isBlank()).forEach(d -> domaines.add(d.trim()));
+        formationRepository.findAll().stream().map(f -> f.getDomaine())
+                .filter(d -> d != null && !d.isBlank()).forEach(d -> domaines.add(d.trim()));
+        return ResponseEntity.ok(List.copyOf(domaines));
     }
 
     /** Vue publique : pas de comptage de candidatures (0), rien de sensible dans une offre d'emploi. */

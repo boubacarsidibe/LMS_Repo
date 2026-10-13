@@ -8,6 +8,7 @@ import { MediaProtegeService } from '../../../espace-etudiants/services/media-pr
 import {
   CandidatureFormateur,
   LIBELLES_DECISION,
+  LIBELLES_NIVEAU_LANGUE,
   LIBELLES_STATUT_CANDIDATURE,
   LIBELLES_TYPE_DOCUMENT,
   StatutCandidatureFormateur,
@@ -101,9 +102,74 @@ import { TypeRecrutementComponent } from '../../../recrutement/responsable-admis
               <dd class="text-on-surface">{{ selection.anneesExperience != null ? selection.anneesExperience + ' an(s)' : '—' }}</dd></div>
           </dl>
 
-          <div *ngIf="selection.lettreMotivation">
-            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Lettre de motivation</p>
-            <p class="font-body-sm text-body-sm text-on-surface whitespace-pre-line mt-1">{{ selection.lettreMotivation }}</p>
+          <!-- État civil et adresse -->
+          <div *ngIf="civilRenseigne(selection)">
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">État civil et adresse</p>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-body-sm font-body-sm bg-surface-container-low rounded-lg p-3">
+              <div *ngIf="selection.civilite"><dt class="text-on-surface-variant text-label-sm font-label-sm">Civilité</dt><dd class="text-on-surface">{{ selection.civilite }}</dd></div>
+              <div *ngIf="selection.genre"><dt class="text-on-surface-variant text-label-sm font-label-sm">Genre</dt><dd class="text-on-surface">{{ selection.genre }}</dd></div>
+              <div *ngIf="selection.dateNaissance"><dt class="text-on-surface-variant text-label-sm font-label-sm">Naissance</dt><dd class="text-on-surface">{{ selection.dateNaissance | date: 'd MMM y' }}<span *ngIf="selection.lieuNaissance"> — {{ selection.lieuNaissance }}</span></dd></div>
+              <div *ngIf="selection.nationalite"><dt class="text-on-surface-variant text-label-sm font-label-sm">Nationalité</dt><dd class="text-on-surface">{{ selection.nationalite }}<span *ngIf="selection.nationaliteSecondaire"> / {{ selection.nationaliteSecondaire }}</span></dd></div>
+              <div *ngIf="selection.niveauEtude"><dt class="text-on-surface-variant text-label-sm font-label-sm">Niveau d'étude</dt><dd class="text-on-surface">{{ selection.niveauEtude }}</dd></div>
+              <div *ngIf="selection.telephoneSecondaire"><dt class="text-on-surface-variant text-label-sm font-label-sm">Tél. secondaire</dt><dd class="text-on-surface">{{ selection.telephoneSecondaire }}</dd></div>
+              <div *ngIf="selection.emailAlternatif"><dt class="text-on-surface-variant text-label-sm font-label-sm">E-mail alternatif</dt><dd class="text-on-surface break-all">{{ selection.emailAlternatif }}</dd></div>
+              <div *ngIf="selection.adresseLigne1 || selection.ville" class="sm:col-span-2"><dt class="text-on-surface-variant text-label-sm font-label-sm">Adresse</dt>
+                <dd class="text-on-surface">{{ selection.adresseLigne1 }}<span *ngIf="selection.adresseLigne2"> {{ selection.adresseLigne2 }}</span><span *ngIf="selection.ville">, {{ selection.ville }}</span><span *ngIf="selection.paysResidence"> ({{ selection.paysResidence }})</span></dd>
+              </div>
+            </dl>
+          </div>
+
+          <!-- Domaines d'expertise -->
+          <div *ngIf="selection.domainesExpertise.length > 0">
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Domaines d'expertise</p>
+            <div class="flex flex-wrap gap-1.5">
+              <span *ngFor="let d of selection.domainesExpertise" class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">{{ d }}</span>
+            </div>
+          </div>
+
+          <!-- Formations -->
+          <div *ngIf="selection.formations.length > 0">
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Formation</p>
+            <ul class="space-y-1.5">
+              <li *ngFor="let f of selection.formations" class="p-2.5 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface">
+                <span class="font-label-sm text-label-sm">{{ f.intituleDiplome || f.niveauEtude || 'Formation' }}</span>
+                <span *ngIf="f.etablissement" class="text-on-surface-variant"> — {{ f.etablissement }}</span>
+                <span *ngIf="f.dateObtention" class="text-on-surface-variant"> ({{ f.dateObtention | date: 'y' }})</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Expériences -->
+          <div *ngIf="selection.experiences.length > 0">
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Expérience professionnelle</p>
+            <ul class="space-y-1.5">
+              <li *ngFor="let e of selection.experiences" class="p-2.5 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface space-y-0.5">
+                <p><span class="font-label-sm text-label-sm">{{ e.intitulePoste || 'Poste' }}</span><span *ngIf="e.employeur" class="text-on-surface-variant"> — {{ e.employeur }}</span><span *ngIf="e.posteActuel" class="text-secondary"> (poste actuel)</span></p>
+                <p *ngIf="e.nomSuperviseur" class="text-on-surface-variant">Référence : {{ e.nomSuperviseur }}<span *ngIf="e.titreSuperviseur"> ({{ e.titreSuperviseur }})</span><span *ngIf="e.telephoneSuperviseur"> — {{ e.telephoneSuperviseur }}</span><span *ngIf="e.contactAutorise === false" class="text-error"> — contact non autorisé</span></p>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Langues -->
+          <div *ngIf="selection.langues.length > 0">
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Compétences linguistiques</p>
+            <div class="flex flex-wrap gap-1.5">
+              <span *ngFor="let l of selection.langues" class="px-2.5 py-1 rounded-full bg-surface-container-low border border-outline-variant font-label-sm text-label-sm text-on-surface">
+                {{ l.langue }} — {{ libellesNiveauLangue[l.niveau] }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Certifications -->
+          <div *ngIf="selection.certifications.length > 0">
+            <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Certifications</p>
+            <ul class="space-y-1.5">
+              <li *ngFor="let c of selection.certifications" class="p-2.5 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface">
+                <span class="font-label-sm text-label-sm">{{ c.intitule }}</span>
+                <span *ngIf="c.organisme" class="text-on-surface-variant"> — {{ c.organisme }}</span>
+                <span *ngIf="c.dateExpiration" class="text-on-surface-variant"> (expire {{ c.dateExpiration | date: 'MMM y' }})</span>
+              </li>
+            </ul>
           </div>
 
           <!-- Pièces -->
@@ -199,6 +265,7 @@ export class CandidaturesAdminFormateursComponent implements OnInit {
   libellesStatut = LIBELLES_STATUT_CANDIDATURE;
   libellesDecision = LIBELLES_DECISION;
   libellesType = LIBELLES_TYPE_DOCUMENT;
+  libellesNiveauLangue = LIBELLES_NIVEAU_LANGUE;
   statuts: StatutCandidatureFormateur[] = ['DOSSIER_RECU', 'EN_COURS_DE_TRAITEMENT', 'TERMINE'];
 
   decisionCible: 'RETENU' | 'NON_RETENU' | null = null;
@@ -245,6 +312,11 @@ export class CandidaturesAdminFormateursComponent implements OnInit {
   etiquette(c: CandidatureFormateur): string {
     if (c.statut === 'TERMINE' && c.decision) return this.libellesDecision[c.decision];
     return this.libellesStatut[c.statut];
+  }
+
+  civilRenseigne(c: CandidatureFormateur): boolean {
+    return !!(c.civilite || c.genre || c.dateNaissance || c.nationalite || c.niveauEtude
+      || c.telephoneSecondaire || c.emailAlternatif || c.adresseLigne1 || c.ville);
   }
 
   consulter(pieceId: number): void {
