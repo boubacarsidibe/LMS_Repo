@@ -63,6 +63,10 @@ public class Candidature {
     @Column(columnDefinition = "text")
     private String informationsProfessionnelles;
 
+    /** Instant où le candidat a certifié sur l'honneur l'exactitude de son dossier ; nul s'il ne l'a pas fait enregistrer. */
+    @Column(name = "consentement_le")
+    private LocalDateTime consentementLe;
+
     @ManyToOne
     @JoinColumn(name = "candidat_id", nullable = false)
     private Candidat candidat;

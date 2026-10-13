@@ -5,12 +5,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
-import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
-import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
+import inpg.sn.lms.recrutement.service.CompletudeDossier;
 import inpg.sn.lms.recrutement.service.NotificationCandidatService;
 import inpg.sn.lms.recrutement.service.NotificationService;
 
@@ -95,35 +92,6 @@ public class ApplicationController {
     }
 
     /**
-     * Pièces exigées de tout candidat, dans l'ordre où le formulaire les demande : pièce d'identité, CV, relevés
-     * de notes — auxquelles s'ajoute le diplôme, sauf pour un candidat de niveau « 4e secondaire »
-     * ({@link #piecesRequises}). La lettre de motivation n'est plus collectée.
-     */
-    private static final List<EnumTypeDocument> PIECES_DE_BASE = List.of(
-            EnumTypeDocument.PIECE_IDENTITE,
-            EnumTypeDocument.CV,
-            EnumTypeDocument.RELEVE_NOTES);
-
-    /** Niveau d'accès des CPS : un candidat de ce niveau n'a pas de diplôme à présenter. */
-    static final String NIVEAU_SANS_DIPLOME = "4e secondaire";
-
-    /**
-     * L'INPG exige l'attestation de diplôme dans tout dossier (questionnaire de collecte du 2026-09-30). Le
-     * diplôme restait jusque-là facultatif ; il ne peut pas l'être moins qu'avant pour les CPS, ouverts dès la
-     * 4ᵉ secondaire, d'où l'exception. À garder identique à {@code diplomeRequis} du frontend
-     * ({@code recrutement/niveaux-etudes.ts}) : un niveau absent ou inconnu n'exonère pas.
-     */
-    static List<EnumTypeDocument> piecesRequises(Candidature c) {
-        String niveau = c.getCandidat() != null ? c.getCandidat().getNiveauEtude() : null;
-        if (NIVEAU_SANS_DIPLOME.equals(niveau)) {
-            return PIECES_DE_BASE;
-        }
-        List<EnumTypeDocument> requises = new ArrayList<>(PIECES_DE_BASE);
-        requises.add(EnumTypeDocument.DIPLOME);
-        return requises;
-    }
-
-    /**
      * Statuts pour lesquels réclamer une pièce a encore un sens.
      *
      * <p>Sans ce filtre, durcir la définition d'un dossier incomplet enverrait un rappel
@@ -132,6 +100,8 @@ public class ApplicationController {
      */
     private static final Set<EnumStatutCandidature> STATUTS_RELANCABLES = EnumSet.of(
             EnumStatutCandidature.SOUMIS,
+            // Dossier mis en attente du candidat par « demander un complément » : c'est le premier à relancer.
+            EnumStatutCandidature.INCOMPLET,
             EnumStatutCandidature.PRESELECTIONNE,
             EnumStatutCandidature.PAIEMENT_EN_ATTENTE);
 
@@ -145,7 +115,7 @@ public class ApplicationController {
      * lui donnait tort et ne lui disait pas quoi faire.
      */
     private String piecesManquantes(Candidature c) {
-        return String.join(", ", manques(c));
+        return String.join(", ", CompletudeDossier.manques(c));
     }
 
     /**
@@ -156,34 +126,6 @@ public class ApplicationController {
      * relancé.
      */
     private boolean isDossierIncomplet(Candidature c) {
-        return !manques(c).isEmpty();
-    }
-
-    /** Une entrée par pièce à fournir ou à remplacer, prête à être lue par le candidat. */
-    private List<String> manques(Candidature c) {
-        Map<EnumTypeDocument, List<PieceJustificative>> parType = c.getPiecesJustificatives().stream()
-                .filter(p -> p.getTypeDocument() != null)
-                .collect(Collectors.groupingBy(PieceJustificative::getTypeDocument));
-
-        List<EnumTypeDocument> piecesRequises = piecesRequises(c);
-        List<String> manques = new ArrayList<>();
-        for (EnumTypeDocument requis : piecesRequises) {
-            List<PieceJustificative> deposees = parType.get(requis);
-            if (deposees == null || deposees.isEmpty()) {
-                manques.add(requis.libelle() + " (non fournie)");
-            } else if (deposees.stream().anyMatch(
-                    p -> p.getStatutVerification() == EnumStatutVerificationPiece.A_REMPLACER)) {
-                manques.add(requis.libelle() + " (à remplacer : non conforme)");
-            }
-        }
-        // Une pièce facultative déposée puis refusée se signale aussi : le candidat l'a
-        // fournie, elle n'est pas exploitable, il doit le savoir.
-        parType.forEach((type, deposees) -> {
-            if (!piecesRequises.contains(type) && deposees.stream().anyMatch(
-                    p -> p.getStatutVerification() == EnumStatutVerificationPiece.A_REMPLACER)) {
-                manques.add(type.libelle() + " (à remplacer : non conforme)");
-            }
-        });
-        return manques;
+        return !CompletudeDossier.manques(c).isEmpty();
     }
 }

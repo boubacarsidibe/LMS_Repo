@@ -52,6 +52,10 @@ public class Candidat  {
     @Column
     private Integer anneesExperience;
 
+    /** Adresse postale saisie au dépôt (le formulaire l'exige) ; nulle pour un dossier antérieur à son enregistrement. */
+    @Column(length = 500)
+    private String adresse;
+
     @OneToOne
     @MapsId
     @JoinColumn(name = "id_user")

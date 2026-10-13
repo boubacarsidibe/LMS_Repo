@@ -50,8 +50,65 @@
         {{ successMessage }}
       </div>
 
+      <!-- ========== DÉPÔT EFFECTUÉ : suivi de l'envoi des pièces ==========
+           Dès que le serveur a enregistré le dossier, le formulaire disparaît : on ne peut plus le soumettre une
+           seconde fois, et l'écran dit exactement ce qui a été reçu — pas une alerte qui s'efface avant d'être lue. -->
+      <div *ngIf="candidature" class="p-6 space-y-5" aria-live="polite">
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined text-[28px] text-success-strong" aria-hidden="true">check_circle</span>
+          <div>
+            <h2 class="font-headline-sm text-headline-sm text-on-surface">Votre dossier est enregistré</h2>
+            <p class="font-body-sm text-body-sm text-on-surface-variant">
+              Numéro de dossier : <strong class="text-on-surface">{{ candidature.numeroDossier }}</strong>.
+              Conservez-le pour toute correspondance avec le service des admissions.
+            </p>
+          </div>
+        </div>
+
+        <!-- Envoi en cours -->
+        <div *ngIf="envoiEnCours" role="status">
+          <div class="flex justify-between font-body-sm text-body-sm text-on-surface-variant mb-1">
+            <span>Envoi des documents…</span>
+            <span>{{ progressionEnvoi.faites }} / {{ progressionEnvoi.total }}</span>
+          </div>
+          <div class="h-2 rounded-full bg-surface-variant overflow-hidden">
+            <div class="h-full bg-primary transition-all duration-300" [style.width.%]="progressionEnvoiPourcent"></div>
+          </div>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">Ne fermez pas cette page avant la fin de l'envoi.</p>
+        </div>
+
+        <!-- Des pièces n'ont pas été reçues : la liste, la raison, et de quoi les renvoyer -->
+        <div *ngIf="!envoiEnCours && (piecesEnEchec.length > 0 || documentsEncoreManquants.length > 0)"
+             class="p-4 rounded-lg bg-warning-container text-on-warning-container space-y-3" role="alert">
+          <p class="font-body-md text-body-md font-semibold flex items-center gap-2">
+            <span class="material-symbols-outlined text-[20px]" aria-hidden="true">warning</span>
+            Votre dossier est enregistré, mais tous les documents ne sont pas arrivés.
+          </p>
+          <ul *ngIf="piecesEnEchec.length > 0" class="list-disc list-inside font-body-sm text-body-sm space-y-1">
+            <li *ngFor="let e of piecesEnEchec"><strong>{{ e.piece.libelle }}</strong> — {{ e.raison }}</li>
+          </ul>
+          <ul *ngIf="documentsEncoreManquants.length > 0" class="list-disc list-inside font-body-sm text-body-sm space-y-1">
+            <li *ngFor="let d of documentsEncoreManquants">{{ d }} : non reçu</li>
+          </ul>
+          <p class="font-body-sm text-body-sm">
+            Rien n'est perdu : ce que vous avez saisi est conservé. Renvoyez les documents avec le bouton ci-dessous, ou ajoutez-les plus tard
+            depuis votre espace de suivi — le service des admissions a besoin de l'ensemble des pièces pour examiner votre dossier.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            <button *ngIf="piecesEnEchec.length > 0 && aDesEchecsRenvoyables" type="button" (click)="reessayerEnvoi()"
+                    class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity cursor-pointer">
+              Renvoyer les documents
+            </button>
+            <button type="button" (click)="continuerVersLeSuivi()"
+                    class="px-4 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors cursor-pointer">
+              Aller à mon suivi
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- ========== FORM CONTENT ========== -->
-      <div class="p-6">
+      <div *ngIf="!candidature" class="p-6">
 
         <!-- === ÉTAPE 1 : PROFIL === -->
         <ng-container *ngIf="etape === 1">
@@ -486,15 +543,15 @@
           </div>
 
           <!-- Bouton de soumission finale -->
-          <button (click)="soumettre()" [disabled]="loading"
-                  class="w-full bg-success-strong text-white px-6 py-3 rounded font-body-sm text-body-sm font-medium hover:bg-success-strong transition-colors disabled:opacity-50 border-t border-white/20 cursor-pointer">
+          <button type="button" (click)="soumettre()" [disabled]="loading"
+                  class="w-full bg-secondary text-on-secondary px-6 py-3 rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer">
             {{ loading ? 'Soumission...' : 'Soumettre la candidature' }}
           </button>
         </ng-container>
       </div>
 
       <!-- ========== FOOTER NAVIGATION ========== -->
-      <div class="p-6 border-t border-outline-variant/40 bg-surface rounded-b-xl flex justify-between items-center">
+      <div *ngIf="!candidature" class="p-6 border-t border-outline-variant/40 bg-surface rounded-b-xl flex justify-between items-center">
         <button (click)="precedent()"
                 [disabled]="etape === 1"
                 class="px-4 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface font-body-sm text-body-sm font-medium hover:bg-surface-container-low transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">

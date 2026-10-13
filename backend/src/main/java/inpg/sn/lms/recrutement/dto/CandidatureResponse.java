@@ -38,6 +38,13 @@ public class CandidatureResponse {
     private LocalDate candidatDateNaissance;
     private String candidatNiveauEtude;
     private String candidatNationalite;
+
+    /** Coordonnées saisies au dépôt, pour l'examen du dossier par l'admission (et la relecture par le candidat). */
+    private String candidatTelephone;
+    private String candidatAdresse;
+
+    /** Instant où le candidat a certifié sur l'honneur l'exactitude de son dossier ; nul s'il n'a pas été enregistré. */
+    private LocalDateTime consentementLe;
     private Long sessionCandidatureId;
     private String sessionCandidatureLibelle;
 
@@ -54,6 +61,9 @@ public class CandidatureResponse {
     private String informationsAcademiques;
     private String informationsProfessionnelles;
     private List<PieceJustificativeResponse> piecesJustificatives;
+
+    /** Pièces exigées et leur état, calculés par le serveur : seule définition, lue par le suivi et l'admission. */
+    private List<DocumentAttenduDto> documentsAttendus;
     private PaiementResponse paiement;
     private List<ReponseCritereResponse> reponsesCriteres;
 }

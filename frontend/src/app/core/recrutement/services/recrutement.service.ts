@@ -87,6 +87,8 @@ export interface CandidatureRequest {
   informationsProfessionnelles: string;
   /** Réponses aux critères personnalisés de la session : clé = id du critère. */
   reponsesCriteres?: { [critereId: number]: string };
+  /** Certification sur l'honneur cochée à l'étape finale : le serveur en date l'acceptation. */
+  consentement?: boolean;
 }
 
 export interface ReponseCritereResponse {
@@ -113,15 +115,33 @@ export interface CandidatureResponse {
   candidatDateNaissance: string | null;
   candidatNiveauEtude: string | null;
   candidatNationalite: string | null;
+  candidatTelephone: string | null;
+  candidatAdresse: string | null;
+  /** Date de la certification sur l'honneur ; null pour un dossier déposé avant son enregistrement. */
+  consentementLe: string | null;
   sessionCandidatureId: number;
   sessionCandidatureLibelle: string;
   /** Informations "Prochaines étapes" de la session, saisies par le responsable admission. */
   sessionInfoFraisScolarite: string | null;
   sessionInfoCarteEtudiante: string | null;
   sessionInfoRentree: string | null;
+  /** Parcours académique et situation professionnelle déclarés, en JSON (voir `lireParcoursDeclare`). */
+  informationsAcademiques: string | null;
+  informationsProfessionnelles: string | null;
   piecesJustificatives: PieceJustificativeResponse[];
+  /**
+   * Les documents exigés de ce candidat et où ils en sont, calculés par le serveur : seule définition de ce qui
+   * « manque » au dossier, partagée par le suivi, la fiche d'admission et la relance par e-mail.
+   */
+  documentsAttendus: DocumentAttendu[];
   paiement: PaiementResponse | null;
   reponsesCriteres: ReponseCritereResponse[];
+}
+
+export interface DocumentAttendu {
+  type: string;
+  libelle: string;
+  etat: 'FOURNI' | 'A_FOURNIR' | 'A_REMPLACER';
 }
 
 export interface PieceJustificativeResponse {

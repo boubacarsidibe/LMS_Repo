@@ -1,14 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RecrutementService, SessionCandidatureResponse, CandidatureRequest, CandidatureResponse, CritereAdmissionResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
 import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { Auth } from '../../../../core/auth/services/authService';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
 import { NIVEAUX_ETUDES, diplomeRequis, niveauInsuffisant } from '../../niveaux-etudes';
+import { EchecEnvoi, PieceAEnvoyer, envoyerPieces } from '../../envoi-pieces';
+import { depotPossibleApres } from '../../parcours-candidature';
 
 const STORAGE_KEY = 'candidature_brouillon';
 
@@ -69,9 +71,21 @@ export class FormulaireComponent implements OnInit {
   loading = false;
   /** État de vérification initiale : empêche le flash du formulaire avant la redirection */
   verifierCandidatureExistante = true;
+  /**
+   * Le dossier tel que le serveur l'a enregistré. Non nul dès que le dépôt a réussi : le formulaire n'est alors plus
+   * un formulaire mais le suivi de l'envoi des pièces, et il ne peut plus être soumis une seconde fois.
+   */
   candidature: CandidatureResponse | null = null;
   successMessage = '';
   showErrors = false;
+
+  /** Envoi des pièces vers le dossier déposé : pièces terminées / total, pour la barre de progression. */
+  progressionEnvoi = { faites: 0, total: 0 };
+  /** Pièces que le serveur n'a pas reçues, avec la raison : le candidat peut les renvoyer sans rien ressaisir. */
+  piecesEnEchec: EchecEnvoi[] = [];
+  /** Documents exigés que le serveur déclare encore manquants une fois l'envoi terminé (contrôle final). */
+  documentsEncoreManquants: string[] = [];
+  envoiEnCours = false;
 
   /** Stocke les vrais fichiers sélectionnés (pas juste leurs noms) */
   filesToUpload: Map<string, File[]> = new Map();
@@ -132,7 +146,7 @@ export class FormulaireComponent implements OnInit {
     // Vérification immédiate : si une candidature active existe, rediriger sans afficher le formulaire
     this.recrutementService.getMesCandidatures().subscribe({
       next: (candidatures) => {
-        const active = candidatures.find(c => c.statut !== 'REJETE' && c.statut !== 'BROUILLON');
+        const active = candidatures.find(c => !depotPossibleApres(c.statut));
         if (active) {
           this.router.navigate(['/recrutement/suivi'], { replaceUrl: true });
           return;
@@ -431,6 +445,9 @@ export class FormulaireComponent implements OnInit {
   private brouillonServeurTimer?: ReturnType<typeof setTimeout>;
 
   saveDraft(): void {
+    // Une fois le dossier déposé, plus rien ne doit recréer de brouillon : l'écriture serveur est différée d'une
+    // seconde, et la dernière frappe partait après le dépôt — qui venait justement de supprimer le brouillon.
+    if (this.candidature) return;
     this.data.etape = this.etape;
     const json = JSON.stringify(this.data);
     localStorage.setItem(STORAGE_KEY, json);
@@ -444,6 +461,8 @@ export class FormulaireComponent implements OnInit {
   }
 
   soumettre(): void {
+    // Deux clics rapprochés, ou un second clic pendant l'envoi des pièces, ne déposent pas deux fois le dossier.
+    if (this.loading || this.candidature) return;
     // Un brouillon restauré depuis le localStorage peut contenir des données
     // invalides sans être repassé par peutAvancer() : on revérifie ici avant
     // d'envoyer quoi que ce soit au backend.
@@ -484,12 +503,14 @@ export class FormulaireComponent implements OnInit {
         estProfessionnel: this.data.estProfessionnel,
       }),
       reponsesCriteres: this.data.reponsesCriteres,
+      consentement: this.data.consentement,
     };
     this.recrutementService.soumettreCandidature(request).subscribe({
       next: (response) => {
         this.candidature = response;
-        this.successMessage = 'Candidature soumise ! Téléversement des pièces en cours...';
-        this.uploadAllFiles(response.id);
+        this.abandonnerBrouillon();
+        this.successMessage = 'Candidature enregistrée ! Envoi des pièces en cours...';
+        this.envoyerLesPieces();
       },
       error: (err) => {
         this.loading = false;
@@ -499,92 +520,137 @@ export class FormulaireComponent implements OnInit {
     });
   }
 
-  private readonly libelleTypePiece: Record<string, string> = {
-    'identite': "Pièce d'identité",
-    'cv': 'CV',
-  };
+  /** Le dossier est déposé : le brouillon, local comme serveur, n'a plus lieu d'être et ne doit pas ressusciter. */
+  private abandonnerBrouillon(): void {
+    if (this.brouillonServeurTimer) clearTimeout(this.brouillonServeurTimer);
+    this.brouillonServeurTimer = undefined;
+    localStorage.removeItem(STORAGE_KEY);
+  }
 
-  private uploadAllFiles(candidatureId: number): void {
-    const typeMap: Record<string, string> = {
-      'identite': 'PIECE_IDENTITE',
-      'cv': 'CV',
+  /** Les pièces choisies dans le formulaire, chacune avec le type de document que le serveur attend. */
+  private piecesAEnvoyer(): PieceAEnvoyer[] {
+    const typeServeur: Record<string, { type: string; libelle: string }> = {
+      identite: { type: 'PIECE_IDENTITE', libelle: "Pièce d'identité" },
+      cv: { type: 'CV', libelle: 'CV' },
     };
-    // Échecs suivis explicitement : un upload qui échoue silencieusement laissait
-    // afficher « Candidature soumise avec succès ! » alors que le dossier restait
-    // sans pièces, sans que le candidat n'en sache jamais rien.
-    const echecs: string[] = [];
-    const uploads: Promise<any>[] = [];
-    this.filesToUpload.forEach((files, type) => {
-      files.forEach(file => {
-        const docType = typeMap[type] || 'PIECE_IDENTITE';
-        const upload$ = this.recrutementService.televerserPiece(candidatureId, file, docType);
-        uploads.push(
-          firstValueFrom(upload$).catch((err) => {
-            console.error(`[uploadAllFiles] Échec upload "${type}" (${file.name}) comme ${docType}:`, err);
-            echecs.push(`${this.libelleTypePiece[type] || type} (${file.name})`);
-            return null;
-          })
-        );
-      });
+    const pieces: PieceAEnvoyer[] = [];
+    this.filesToUpload.forEach((files, cle) => {
+      const attendu = typeServeur[cle];
+      if (!attendu) return;
+      files.forEach((file) => pieces.push({ libelle: `${attendu.libelle} (${file.name})`, file, typeDocument: attendu.type }));
     });
     // Bulletins annuels : chacun est un relevé de notes distinct, avec sa moyenne déclarée.
     this.data.bulletinsParAnnee.forEach((annee, ai) => {
       annee.bulletins.forEach((bulletin, bi) => {
         const file = this.bulletinFiles[ai]?.[bi];
         if (!file) return;
-        const upload$ = this.recrutementService.televerserPiece(candidatureId, file, 'RELEVE_NOTES', bulletin.moyenne);
-        uploads.push(
-          firstValueFrom(upload$).catch((err) => {
-            console.error(`[uploadAllFiles] Échec upload relevé année ${ai + 1}, bulletin ${bi + 1} (${file.name}):`, err);
-            echecs.push(`Relevé de notes — année ${ai + 1}, bulletin ${bi + 1} (${file.name})`);
-            return null;
-          })
-        );
+        pieces.push({
+          libelle: `Relevé de notes — année ${ai + 1}, bulletin ${bi + 1} (${file.name})`,
+          file, typeDocument: 'RELEVE_NOTES', moyenne: bulletin.moyenne,
+        });
       });
     });
     this.diplomes
       .filter((d) => d.file && d.description.trim())
-      .forEach((d) => {
-        const upload$ = this.recrutementService.televerserPiece(candidatureId, d.file!, 'DIPLOME', d.description.trim());
-        uploads.push(
-          firstValueFrom(upload$).catch((err) => {
-            console.error(`[uploadAllFiles] Échec upload diplôme (${d.file!.name}):`, err);
-            echecs.push(`Diplôme ou certification (${d.file!.name})`);
-            return Promise.resolve(null);
-          })
-        );
-      });
+      .forEach((d) => pieces.push({
+        libelle: `Diplôme ou certification (${d.file!.name})`,
+        file: d.file!, typeDocument: 'DIPLOME', description: d.description.trim(),
+      }));
+    return pieces;
+  }
 
-    if (uploads.length > 0) {
-      Promise.all(uploads).finally(() => this.onSubmitComplete(echecs));
+  private envoyerUnePiece(piece: PieceAEnvoyer) {
+    const id = this.candidature!.id;
+    if (piece.typeDocument === 'DIPLOME') {
+      return this.recrutementService.televerserPiece(id, piece.file, piece.typeDocument, piece.description);
+    }
+    return this.recrutementService.televerserPiece(id, piece.file, piece.typeDocument, piece.moyenne);
+  }
+
+  /**
+   * Envoie les pièces vers le dossier déposé, puis interroge le serveur pour savoir ce qu'il a réellement reçu.
+   *
+   * <p>Les pièces partent après le dépôt, une requête chacune : une coupure peut en perdre une. L'ancien code
+   * l'annonçait par une alerte fugitive, puis redirigeait aussitôt vers le suivi — qui redemandait les
+   * documents au candidat sans qu'il ait compris pourquoi. Désormais : pannes passagères reprises
+   * automatiquement, échecs listés avec leur raison, bouton pour renvoyer, et jamais « tout est transmis »
+   * sans que le serveur le confirme.
+   */
+  private async envoyerLesPieces(
+    pieces: PieceAEnvoyer[] = this.piecesAEnvoyer(),
+    refusDefinitifs: EchecEnvoi[] = [],
+  ): Promise<void> {
+    this.loading = false;
+    this.envoiEnCours = true;
+    this.piecesEnEchec = [];
+    this.documentsEncoreManquants = [];
+    this.progressionEnvoi = { faites: 0, total: pieces.length };
+
+    const bilan = await envoyerPieces(pieces, (piece) => this.envoyerUnePiece(piece), {
+      surProgression: (faites, total) => (this.progressionEnvoi = { faites, total }),
+    });
+    this.piecesEnEchec = [...bilan.echecs, ...refusDefinitifs];
+
+    await this.controlerAupresDuServeur();
+    this.envoiEnCours = false;
+
+    if (this.piecesEnEchec.length === 0 && this.documentsEncoreManquants.length === 0) {
+      this.successMessage = 'Candidature soumise avec succès ! N° ' + (this.candidature?.numeroDossier || '');
+      this.continuerVersLeSuivi(1500);
     } else {
-      this.onSubmitComplete(echecs);
+      this.successMessage = '';
     }
   }
 
-  private onSubmitComplete(echecsUpload: string[] = []): void {
-    this.loading = false;
-    const numero = this.candidature?.numeroDossier || '';
-    if (echecsUpload.length > 0) {
-      this.notifications.erreur(
-        `Candidature n°${numero} enregistrée, mais ${echecsUpload.length} document(s) n'ont pas été transmis : `
-        + `${echecsUpload.join(', ')}. Vous pourrez les ajouter depuis l'espace candidat.`
-      );
-      this.successMessage = '';
-    } else {
-      this.successMessage = 'Candidature soumise avec succès ! N° ' + numero;
+  /**
+   * Relit le dossier côté serveur : c'est lui, et non le compte rendu du navigateur, qui dit si le dossier est complet.
+   * Si la lecture échoue, on s'en tient au bilan de l'envoi.
+   */
+  private async controlerAupresDuServeur(): Promise<void> {
+    try {
+      const dossiers = await firstValueFrom(this.recrutementService.getMesCandidatures());
+      const enregistre = dossiers.find((c) => c.id === this.candidature?.id);
+      if (!enregistre) return;
+      this.candidature = enregistre;
+      this.documentsEncoreManquants = (enregistre.documentsAttendus ?? [])
+        .filter((d) => d.etat !== 'FOURNI')
+        // Une pièce que l'on vient de signaler en échec est déjà listée plus haut : ne pas la compter deux fois.
+        .filter((d) => !this.piecesEnEchec.some((e) => e.piece.typeDocument === d.type))
+        .map((d) => d.libelle);
+    } catch {
+      /* contrôle indisponible : le bilan de l'envoi fait foi */
     }
-    localStorage.removeItem(STORAGE_KEY);
-    // La soumission vient d'accorder ROLE_CANDIDAT côté backend : on rafraîchit
-    // currentUser AVANT de naviguer vers /suivi (gardée par candidatGuard), sinon
-    // le signal encore obsolète ferait rejeter l'utilisateur qui vient de réussir.
+  }
+
+  /** Renvoie uniquement ce que le serveur n'a pas reçu, avec les fichiers encore en mémoire. */
+  reessayerEnvoi(): void {
+    if (this.envoiEnCours) return;
+    const aRenvoyer = this.piecesEnEchec.filter((e) => !e.definitif).map((e) => e.piece);
+    // Un refus définitif ne se règle pas en renvoyant : il reste affiché tant que la page est ouverte.
+    const definitifs = this.piecesEnEchec.filter((e) => e.definitif);
+    void this.envoyerLesPieces(aRenvoyer, definitifs);
+  }
+
+  /**
+   * Quitte le formulaire pour le suivi, où le candidat peut compléter ce qui manque.
+   * La soumission vient d'accorder ROLE_CANDIDAT côté backend : on rafraîchit currentUser AVANT de naviguer vers
+   * /suivi (gardée par candidatGuard), sinon le signal encore obsolète ferait rejeter l'utilisateur qui vient de réussir.
+   */
+  continuerVersLeSuivi(delaiMs = 0): void {
     this.auth.getCurrentUser().subscribe({
-      next: () => {
-        setTimeout(() => {
-          this.router.navigate(['/recrutement/suivi']);
-        }, echecsUpload.length > 0 ? 200 : 1500);
-      },
+      next: () => setTimeout(() => this.router.navigate(['/recrutement/suivi']), delaiMs),
+      error: () => this.router.navigate(['/recrutement/suivi']),
     });
+  }
+
+  /** Au moins une pièce en échec peut être renvoyée : un refus définitif (format, dossier figé) ne le peut pas. */
+  get aDesEchecsRenvoyables(): boolean {
+    return this.piecesEnEchec.some((e) => !e.definitif);
+  }
+
+  get progressionEnvoiPourcent(): number {
+    const { faites, total } = this.progressionEnvoi;
+    return total === 0 ? 100 : Math.round((faites / total) * 100);
   }
 
   onFileSelected(event: Event, type: string): void {

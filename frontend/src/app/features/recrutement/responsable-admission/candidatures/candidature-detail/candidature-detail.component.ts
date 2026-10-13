@@ -6,6 +6,7 @@ import { CandidatureResponse, EtapeDossierResponse, PieceJustificativeResponse, 
 import { downloadBlob } from '../../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../../shared/components/ui/notification.service';
 import { EtapeFrise, friseCandidature } from '../../../parcours-candidature';
+import { FormationDeclaree, ParcoursDeclare, libelleTypeDocument, lireParcoursDeclare } from '../../../parcours-declare';
 
 type TimelineItem = EtapeFrise;
 
@@ -68,7 +69,7 @@ export class CandidatureDetailComponent implements OnInit {
    * l'admission voie exactement l'étape que voit le candidat — plus de deux copies à garder alignées.
    */
   get timelineItems(): TimelineItem[] {
-    return friseCandidature(this.candidature?.statut, 'admission');
+    return friseCandidature(this.candidature?.statut, 'admission', this.documentsAFournir.length);
   }
 
   constructor(
@@ -151,6 +152,30 @@ export class CandidatureDetailComponent implements OnInit {
   }
 
   /** Dossier sans aucune pièce jointe : la présélection est bloquée côté backend (CandidatureService#changerStatut). */
+  /** Parcours académique et situation professionnelle que le candidat a déclarés à l'étape 2 du formulaire. */
+  get parcoursDeclare(): ParcoursDeclare {
+    return lireParcoursDeclare(this.candidature?.informationsAcademiques, this.candidature?.informationsProfessionnelles);
+  }
+
+  /** Documents exigés que le serveur juge manquants ou à remplacer (même calcul que la relance et le suivi du candidat). */
+  get documentsAFournir(): { libelle: string; etat: 'A_FOURNIR' | 'A_REMPLACER' }[] {
+    return (this.candidature?.documentsAttendus ?? [])
+      .filter((d): d is typeof d & { etat: 'A_FOURNIR' | 'A_REMPLACER' } => d.etat !== 'FOURNI')
+      .map((d) => ({ libelle: d.libelle, etat: d.etat }));
+  }
+
+  /** Vrai seulement si le serveur a répondu sur les documents exigés et que rien n'en manque. */
+  get dossierComplet(): boolean {
+    return (this.candidature?.documentsAttendus?.length ?? 0) > 0 && this.documentsAFournir.length === 0;
+  }
+
+  readonly libelleTypeDocument = libelleTypeDocument;
+
+  /** « CFPT · Attestation · 2021 · Sénégal » : ce que la formation déclarée précise, sans les champs vides. */
+  detailsFormation(f: FormationDeclaree): string {
+    return [f.etablissement, f.diplome, f.anneeObtention, f.pays].filter((v) => v).join(' · ');
+  }
+
   dossierVide(c: CandidatureResponse): boolean {
     return !c.piecesJustificatives || c.piecesJustificatives.length === 0;
   }

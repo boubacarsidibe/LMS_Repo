@@ -49,6 +49,16 @@ export function phaseDeStatut(statut: string | null | undefined): PhaseSuivi | n
   return PHASE_PAR_STATUT[statut] ?? 'SOUMIS';
 }
 
+/**
+ * Un candidat peut-il déposer un nouveau dossier alors que celui-ci existe ? Oui s'il n'est qu'un brouillon, refusé
+ * à l'examen du dossier, ou non admis — c'est la règle du serveur (`CandidatController#soumettreCandidature` écarte
+ * ces trois statuts du verrou). Le formulaire testait `'REJETE'`, un statut qui n'existe plus depuis la refonte du
+ * workflow (22/09) : le test ne retenait jamais personne et un dossier refusé renvoyait vers le suivi.
+ */
+export function depotPossibleApres(statut: string | null | undefined): boolean {
+  return statut === 'BROUILLON' || statut === 'DOSSIER_REJETE' || statut === 'NON_ADMIS';
+}
+
 export interface EtapeFrise {
   label: string;
   desc: string;
@@ -67,9 +77,18 @@ export interface EtapeFrise {
  * fait hors plateforme est enregistré à la main par le responsable admission, qui doit voir où en est
  * ce règlement. `pointDeVue` change aussi la tournure des descriptions (« votre candidature » / « la
  * candidature »).
+ *
+ * <p>`documentsAFournir` : nombre de pièces exigées que le serveur dit manquantes ou à remplacer
+ * (`documentsAttendus`). La description de l'étape « Dossier » était figée sur « Tous les documents requis
+ * téléchargés », y compris pour un dossier à qui il en manquait : le candidat lisait cette phrase juste
+ * au-dessus de la liste qui lui en réclamait. `null` = inconnu, la description reste neutre.
  */
-export function friseCandidature(statut: string | null | undefined, pointDeVue: 'candidat' | 'admission'): EtapeFrise[] {
-  const base = friseSansPaiement(statut, pointDeVue === 'candidat');
+export function friseCandidature(
+  statut: string | null | undefined,
+  pointDeVue: 'candidat' | 'admission',
+  documentsAFournir: number | null = null,
+): EtapeFrise[] {
+  const base = friseSansPaiement(statut, pointDeVue === 'candidat', documentsAFournir);
   if (pointDeVue === 'candidat') return base;
 
   const phase = phaseDeStatut(statut);
@@ -87,10 +106,18 @@ export function friseCandidature(statut: string | null | undefined, pointDeVue: 
   return [base[0], base[1], paiement, test, base[3]];
 }
 
-function friseSansPaiement(statut: string | null | undefined, candidat: boolean): EtapeFrise[] {
+/** Ce que l'étape « Dossier » affirme : jamais plus que ce que le serveur sait du contenu du dossier. */
+function descriptionDossier(candidat: boolean, documentsAFournir: number | null): string {
+  if (documentsAFournir === null) return 'Dossier déposé.';
+  if (documentsAFournir === 0) return 'Tous les documents requis téléchargés.';
+  const documents = `${documentsAFournir} document${documentsAFournir > 1 ? 's' : ''}`;
+  return candidat ? `${documents} à fournir ou à remplacer.` : `${documents} à fournir ou à remplacer par le candidat.`;
+}
+
+function friseSansPaiement(statut: string | null | undefined, candidat: boolean, documentsAFournir: number | null): EtapeFrise[] {
   const phase = phaseDeStatut(statut);
   const items: EtapeFrise[] = [
-    { label: 'Dossier', desc: 'Tous les documents requis téléchargés.', pending: true, active: false, erreur: false },
+    { label: 'Dossier', desc: descriptionDossier(candidat, documentsAFournir), pending: true, active: false, erreur: false },
     { label: 'Présélection', desc: candidat ? 'Le jury examine votre candidature.' : 'Le jury examine la candidature.', pending: true, active: false, erreur: false },
     { label: 'Test Académique', desc: '', pending: true, active: false, erreur: false },
     { label: 'Entretien', desc: candidat ? 'Rencontre avec le jury.' : '', pending: true, active: false, erreur: false },

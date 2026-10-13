@@ -1,7 +1,10 @@
 package inpg.sn.lms.recrutement.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -366,6 +369,214 @@ class CandidatControllerSoumissionTest {
         c.setObligatoire(obligatoire);
         c.setActif(true);
         return c;
+    }
+
+    // ===================== Ce que le candidat saisit est enregistré =====================
+
+    /** Prépare le dépôt d'un tout premier dossier : aucun dossier existant, session ouverte. */
+    private void preparerPremierDepot() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of());
+        when(sessionRepository.findById(ID_SESSION)).thenReturn(Optional.of(sessionActive()));
+        when(brouillonRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.empty());
+        when(candidatureService.getCandidatureById(any())).thenReturn(new CandidatureResponse());
+        when(candidatureRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+    }
+
+    private Candidature candidatureEnregistree() {
+        ArgumentCaptor<Candidature> capture = ArgumentCaptor.forClass(Candidature.class);
+        verify(candidatureRepository).save(capture.capture());
+        return capture.getValue();
+    }
+
+    /**
+     * Audit du 2026-10-13 : la requête portait le parcours académique (établissement, diplôme, année, formations
+     * suivies) et la situation professionnelle ; l'entité avait ses colonnes, la réponse les renvoyait — mais
+     * aucun code ne copiait la requête dans l'entité. Tout ce que l'étudiant saisissait à l'étape 2 était perdu.
+     */
+    @Test
+    void le_parcours_academique_et_professionnel_saisis_sont_enregistres() {
+        preparerPremierDepot();
+        requete.setInformationsAcademiques("{\"niveauActuel\":\"Licence (L3)\",\"etablissement\":\"UCAD\",\"anneeObtention\":2023}");
+        requete.setInformationsProfessionnelles("{\"estProfessionnel\":\"Non\"}");
+
+        assertEquals(HttpStatus.OK, controller.soumettreCandidature(requete, authentication).getStatusCode());
+
+        Candidature enregistree = candidatureEnregistree();
+        assertEquals("{\"niveauActuel\":\"Licence (L3)\",\"etablissement\":\"UCAD\",\"anneeObtention\":2023}",
+                enregistree.getInformationsAcademiques());
+        assertEquals("{\"estProfessionnel\":\"Non\"}", enregistree.getInformationsProfessionnelles());
+    }
+
+    @Test
+    void une_re_soumission_met_a_jour_le_parcours_deja_enregistre() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        Candidature enAttente = candidature(EnumStatutCandidature.SOUMIS);
+        enAttente.setInformationsAcademiques("{\"etablissement\":\"Ancien\"}");
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of(enAttente));
+        when(brouillonRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.empty());
+        when(candidatureService.getCandidatureById(any())).thenReturn(new CandidatureResponse());
+        requete.setInformationsAcademiques("{\"etablissement\":\"Nouveau\"}");
+
+        controller.soumettreCandidature(requete, authentication);
+
+        assertEquals("{\"etablissement\":\"Nouveau\"}", enAttente.getInformationsAcademiques());
+    }
+
+    /** Un client plus ancien, ou un renvoi partiel, ne doit pas effacer ce qui a déjà été enregistré. */
+    @Test
+    void un_parcours_absent_de_la_requete_ne_vide_pas_celui_qui_existe() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        Candidature enAttente = candidature(EnumStatutCandidature.SOUMIS);
+        enAttente.setInformationsAcademiques("{\"etablissement\":\"UCAD\"}");
+        enAttente.setInformationsProfessionnelles("{\"estProfessionnel\":\"Oui\"}");
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of(enAttente));
+        when(brouillonRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.empty());
+        when(candidatureService.getCandidatureById(any())).thenReturn(new CandidatureResponse());
+
+        controller.soumettreCandidature(requete, authentication);
+
+        assertEquals("{\"etablissement\":\"UCAD\"}", enAttente.getInformationsAcademiques());
+        assertEquals("{\"estProfessionnel\":\"Oui\"}", enAttente.getInformationsProfessionnelles());
+    }
+
+    @Test
+    void un_parcours_illisible_ou_qui_n_est_pas_un_objet_est_refuse_sans_rien_ecrire() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of());
+
+        for (String invalide : new String[] { "{pas du json", "[1,2,3]", "\"texte\"", "42" }) {
+            requete.setInformationsAcademiques(invalide);
+            assertThrows(BusinessException.class,
+                    () -> controller.soumettreCandidature(requete, authentication), invalide);
+        }
+        verify(candidatRepository, never()).save(any());
+        verify(candidatureRepository, never()).save(any());
+    }
+
+    @Test
+    void un_parcours_demesure_est_refuse() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of());
+        requete.setInformationsProfessionnelles("{\"x\":\"" + "a".repeat(21_000) + "\"}");
+
+        assertThrows(BusinessException.class, () -> controller.soumettreCandidature(requete, authentication));
+        verify(candidatureRepository, never()).save(any());
+    }
+
+    /** Le formulaire exige l'adresse ; le DTO d'état civil l'ignorait sans erreur et aucune colonne ne l'accueillait. */
+    @Test
+    void l_adresse_postale_est_enregistree_sans_espaces_superflus() {
+        preparerPremierDepot();
+        requete.setInformationsPersonnelles("{\"adresse\":\"  Immeuble Adja Koone, Point E, Dakar \"}");
+
+        controller.soumettreCandidature(requete, authentication);
+
+        assertEquals("Immeuble Adja Koone, Point E, Dakar", candidat.getAdresse());
+    }
+
+    @Test
+    void une_adresse_de_plus_de_500_caracteres_est_refusee() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of());
+        requete.setInformationsPersonnelles("{\"adresse\":\"" + "x".repeat(501) + "\"}");
+
+        assertThrows(BusinessException.class, () -> controller.soumettreCandidature(requete, authentication));
+        verify(candidatRepository, never()).save(any());
+    }
+
+    @Test
+    void la_certification_sur_l_honneur_est_datee_quand_elle_est_cochee() {
+        preparerPremierDepot();
+        requete.setConsentement(true);
+
+        controller.soumettreCandidature(requete, authentication);
+
+        assertNotNull(candidatureEnregistree().getConsentementLe());
+    }
+
+    /** Non exigée côté serveur : refuser le dépôt d'un client qui ne l'envoie pas encore serait pire. */
+    @Test
+    void sans_certification_le_depot_reste_accepte_et_la_date_reste_vide() {
+        preparerPremierDepot();
+
+        assertEquals(HttpStatus.OK, controller.soumettreCandidature(requete, authentication).getStatusCode());
+
+        assertNull(candidatureEnregistree().getConsentementLe());
+    }
+
+    // ---- Téléphone déjà porté par un autre candidat ----
+
+    /**
+     * Le téléphone est unique en base. La violation n'éclatait qu'en fin de transaction et le candidat lisait un
+     * conflit générique, sans savoir quoi changer ; elle est maintenant détectée avant toute écriture.
+     */
+    @Test
+    void un_telephone_deja_utilise_par_un_autre_candidat_est_signale_clairement() {
+        utilisateur.addRole(role("ROLE_CANDIDAT", "Candidat"));
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of());
+        when(candidatRepository.existsByTelephoneAndIdNot("+221 771234567", ID_UTILISATEUR)).thenReturn(true);
+        requete.setInformationsPersonnelles("{\"telephone\":\"+221 771234567\",\"nom\":\"Usurpe\"}");
+
+        ResponseEntity<?> reponse = controller.soumettreCandidature(requete, authentication);
+
+        assertEquals(HttpStatus.CONFLICT, reponse.getStatusCode());
+        assertTrue(((Map<?, ?>) reponse.getBody()).get("message").toString().contains("téléphone"));
+        assertEquals("Diop", candidat.getNom(), "rien ne doit avoir été écrit");
+        verify(candidatRepository, never()).save(any());
+        verify(candidatureRepository, never()).save(any());
+    }
+
+    // ===================== Brouillon =====================
+
+    /**
+     * Constaté en exécution réelle : le formulaire sauvegarde son brouillon avec une seconde de délai, et le dernier
+     * partait 0,6 s après le dépôt — recréant, avec toutes les données saisies, le brouillon que le dépôt venait de
+     * supprimer.
+     */
+    @Test
+    void un_brouillon_n_est_plus_conserve_une_fois_le_dossier_depose() {
+        for (EnumStatutCandidature statut : new EnumStatutCandidature[] { EnumStatutCandidature.SOUMIS,
+                EnumStatutCandidature.INCOMPLET, EnumStatutCandidature.PRESELECTIONNE }) {
+            when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+            when(candidatureRepository.findByCandidatId(ID_UTILISATEUR)).thenReturn(List.of(candidature(statut)));
+
+            ResponseEntity<?> reponse = controller.sauvegarderBrouillon(Map.of("donneesJson", "{}"), authentication);
+
+            assertEquals(HttpStatus.OK, reponse.getStatusCode(), "statut " + statut);
+            assertEquals(true, ((Map<?, ?>) reponse.getBody()).get("ignore"), "statut " + statut);
+        }
+        verify(brouillonRepository, never()).save(any());
+    }
+
+    @Test
+    void un_brouillon_est_conserve_tant_qu_aucun_dossier_n_est_depose() {
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.empty());
+        when(brouillonRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.empty());
+
+        controller.sauvegarderBrouillon(Map.of("donneesJson", "{\"etape\":2}"), authentication);
+
+        verify(brouillonRepository).save(any());
+    }
+
+    /** Un dossier rejeté laisse déposer à nouveau : son brouillon doit pouvoir être gardé. */
+    @Test
+    void un_dossier_rejete_n_empeche_pas_de_garder_un_brouillon() {
+        when(candidatRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.of(candidat));
+        when(candidatureRepository.findByCandidatId(ID_UTILISATEUR))
+                .thenReturn(List.of(candidature(EnumStatutCandidature.DOSSIER_REJETE)));
+        when(brouillonRepository.findByUserId(ID_UTILISATEUR)).thenReturn(Optional.empty());
+
+        controller.sauvegarderBrouillon(Map.of("donneesJson", "{}"), authentication);
+
+        verify(brouillonRepository).save(any());
     }
 
     // ===================== Fabriques =====================

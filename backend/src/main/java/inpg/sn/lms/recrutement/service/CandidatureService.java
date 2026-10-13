@@ -259,11 +259,16 @@ public class CandidatureService {
     }
 
     /**
-     * Récupère toutes les candidatures d'un candidat
+     * Récupère toutes les candidatures d'un candidat, de la plus ancienne à la plus récente.
+     *
+     * <p>Le tri est explicite : la requête n'en porte aucun, et le suivi du candidat lit la <em>dernière</em>
+     * entrée comme « son dossier actuel ». Sans cela, l'ordre de retour de la base décidait de l'écran.
      */
     public List<CandidatureResponse> getCandidaturesByCandidatId(Long candidatId) {
         return candidatureRepository.findByCandidatId(candidatId)
                 .stream()
+                .sorted(java.util.Comparator.comparing(Candidature::getId,
+                        java.util.Comparator.nullsFirst(java.util.Comparator.naturalOrder())))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -485,6 +490,9 @@ public class CandidatureService {
                 .candidatDateNaissance(c.getCandidat().getDateNaissance())
                 .candidatNiveauEtude(c.getCandidat().getNiveauEtude())
                 .candidatNationalite(c.getCandidat().getNationalite())
+                .candidatTelephone(c.getCandidat().getTelephone())
+                .candidatAdresse(c.getCandidat().getAdresse())
+                .consentementLe(c.getConsentementLe())
                 .sessionCandidatureId(c.getSessionCandidature().getId())
                 .sessionCandidatureLibelle(c.getSessionCandidature().getLibelle())
                 .sessionInfoFraisScolarite(c.getSessionCandidature().getInfoFraisScolarite())
@@ -493,6 +501,7 @@ public class CandidatureService {
                 .informationsAcademiques(c.getInformationsAcademiques())
                 .informationsProfessionnelles(c.getInformationsProfessionnelles())
                 .piecesJustificatives(pieces)
+                .documentsAttendus(CompletudeDossier.documentsAttendus(c))
                 .paiement(paiementResponse)
                 .reponsesCriteres(c.getReponsesCriteres().stream()
                         .map(r -> ReponseCritereResponse.builder()

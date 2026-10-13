@@ -32,7 +32,8 @@ public record InfosPersonnellesDto(
         String niveauEtude,
         String genre,
         String profession,
-        Integer anneesExperience) {
+        Integer anneesExperience,
+        String adresse) {
 
     /** {@code true} si la valeur est utilisable, c'est-à-dire ni absente ni vide. */
     private static boolean renseigne(String valeur) {
@@ -52,4 +53,6 @@ public record InfosPersonnellesDto(
     public boolean aGenre() { return renseigne(genre); }
 
     public boolean aProfession() { return renseigne(profession); }
+
+    public boolean aAdresse() { return renseigne(adresse); }
 }

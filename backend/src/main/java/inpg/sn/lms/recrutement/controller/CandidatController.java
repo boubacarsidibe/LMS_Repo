@@ -7,9 +7,11 @@ import inpg.sn.lms.auth.repository.CandidatRepository;
 import inpg.sn.lms.auth.repository.RoleRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import inpg.sn.lms.exception.BusinessException;
+import inpg.sn.lms.fichier.ValidationFichier;
 import inpg.sn.lms.recrutement.dto.CandidatureRequest;
 import inpg.sn.lms.recrutement.dto.CandidatureResponse;
 import inpg.sn.lms.recrutement.dto.InfosPersonnellesDto;
@@ -23,6 +25,7 @@ import inpg.sn.lms.recrutement.entity.PieceJustificative;
 import inpg.sn.lms.recrutement.entity.ReponseCritereCandidature;
 import inpg.sn.lms.recrutement.entity.SessionCandidature;
 import inpg.sn.lms.recrutement.enums.EnumEtapeQms;
+import inpg.sn.lms.recrutement.service.CompletudeDossier;
 import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.enums.EnumStatutVerificationPiece;
 import inpg.sn.lms.recrutement.enums.EnumTypeDocument;
@@ -57,12 +60,19 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -124,6 +134,12 @@ public class CandidatController {
      * arbitraire. Jamais un nombre illimité.
      */
     private static final int MAX_RELEVES_PAR_CANDIDATURE = 9;
+
+    /** Longueur maximale de l'adresse postale (colonne {@code candidats.adresse}). */
+    private static final int ADRESSE_MAX = 500;
+
+    /** Plafond des parcours académique et professionnel reçus en JSON : large pour un formulaire, borné contre l'abus. */
+    private static final int INFORMATIONS_JSON_MAX = 20_000;
 
     private final CandidatureService candidatureService;
     private final CandidatRepository candidatRepository;
@@ -267,8 +283,26 @@ public class CandidatController {
                     "statut", verrouille.getStatut().name()));
         }
 
-        // 3. Chercher ou créer le Candidat avec les infos du formulaire
+        // 2 bis. Tous les contrôles de ce qui a été saisi, avant la moindre écriture : un refus ne doit rien
+        //    laisser de modifié (voir l'étape 2).
         InfosPersonnellesDto infos = lireInfosPersonnelles(request.getInformationsPersonnelles());
+        String informationsAcademiques = lireInformationsJson(request.getInformationsAcademiques(), "académiques");
+        String informationsProfessionnelles =
+                lireInformationsJson(request.getInformationsProfessionnelles(), "professionnelles");
+        if (infos != null && infos.aAdresse() && infos.adresse().trim().length() > ADRESSE_MAX) {
+            throw new BusinessException("L'adresse ne doit pas dépasser " + ADRESSE_MAX + " caractères.");
+        }
+        if (infos != null && infos.aTelephone()
+                && candidatRepository.existsByTelephoneAndIdNot(infos.telephone().trim(), user.getId())) {
+            // Le téléphone est unique en base. Sans ce contrôle, la violation n'éclatait qu'en fin de transaction,
+            // et le candidat lisait un conflit générique sans savoir ce qu'il devait changer.
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "message", "Ce numéro de téléphone est déjà associé à un autre compte. Utilisez le vôtre, ou "
+                            + "connectez-vous avec le compte qui a déjà déposé un dossier ; sinon contactez le "
+                            + "service des admissions."));
+        }
+
+        // 3. Chercher ou créer le Candidat avec les infos du formulaire
         Candidat candidat;
         if (candidatExistant.isPresent()) {
             candidat = candidatExistant.get();
@@ -295,6 +329,8 @@ public class CandidatController {
             // méthode depuis un autre chemin sans reproduire ce contrôle.
             enregistrerReponsesCriteres(existante, existante.getSessionCandidature(), request.getReponsesCriteres());
             existante.soumettre(); // passe le statut à SOUMIS + date
+            conserverInformationsDeposees(existante, informationsAcademiques, informationsProfessionnelles);
+            enregistrerCertification(existante, request);
             candidatureRepository.save(existante);
             garantirRoleCandidat(user);
             brouillonRepository.findByUserId(user.getId()).ifPresent(brouillonRepository::delete);
@@ -320,6 +356,11 @@ public class CandidatController {
         candidature.setDateSoumission(LocalDateTime.now());
         candidature.setCandidat(candidat);
         candidature.setSessionCandidature(session);
+        // Le parcours académique et la situation professionnelle saisis à l'étape 2 : la requête les portait, la
+        // colonne existait, la réponse les renvoyait — mais rien ne les copiait entre les deux, et ils étaient
+        // perdus à chaque dépôt sans la moindre erreur.
+        conserverInformationsDeposees(candidature, informationsAcademiques, informationsProfessionnelles);
+        enregistrerCertification(candidature, request);
         enregistrerReponsesCriteres(candidature, session, request.getReponsesCriteres());
 
         Candidature saved = candidatureRepository.save(candidature);
@@ -412,6 +453,13 @@ public class CandidatController {
     public ResponseEntity<?> sauvegarderBrouillon(@RequestBody Map<String, String> body,
             Authentication authentication) {
         inpg.sn.lms.auth.entity.User user = findUser(authentication);
+        // Le formulaire sauvegarde ses brouillons avec un délai d'une seconde : le dernier peut donc partir APRÈS le
+        // dépôt, qui venait de supprimer le brouillon, et en recréer un avec toutes les données saisies (constaté :
+        // 0,6 s après la soumission). Une fois un dossier déposé, il n'y a plus rien à reprendre.
+        if (aUnDossierDepose(user)) {
+            return ResponseEntity.ok(Map.of(
+                    "message", "Dossier déjà déposé : le brouillon n'est plus conservé.", "ignore", true));
+        }
         String donneesJson = body.getOrDefault("donneesJson", "");
         BrouillonCandidature brouillon = brouillonRepository.findByUserId(user.getId())
                 .orElseGet(() -> new BrouillonCandidature(user, donneesJson));
@@ -545,9 +593,23 @@ public class CandidatController {
                     .body(java.util.Map.of("message", "Le fichier dépasse la taille maximale autorisée (5 Mo)."));
         }
 
-        // Un releve de notes n'est plus accepte sans limite : au plus 3 (une, deux ou
-        // trois annees recentes), verifie cote serveur pour ne pas dependre du seul
-        // formulaire candidat.
+        // Un même document renvoyé tel quel n'est enregistré qu'une fois. Le formulaire relance lui-même un envoi
+        // qui a échoué sans réponse (coupure, délai dépassé) : si le premier essai avait en réalité abouti, le
+        // second créerait sinon une pièce en double. Placé avant le plafond des relevés : le renvoi du neuvième
+        // relevé, déjà reçu, doit être reconnu et non refusé comme un dixième.
+        Optional<PieceJustificative> dejaRecue = pieceJustificativeRepository
+                .findByCandidatureIdAndTypeDocument(candidatureId, typeDocument).stream()
+                .filter(existante -> estLeMemeDepot(existante, typeDocument, file, description, moyenneDeclaree))
+                .findFirst();
+        if (dejaRecue.isPresent()) {
+            return ResponseEntity.ok(java.util.Map.of(
+                    "message", "Pièce déjà reçue.",
+                    "fichierId", dejaRecue.get().getFichierStocke().getId().toString(),
+                    "doublon", "true"));
+        }
+
+        // Un releve de notes n'est plus accepte sans limite : au plus 9 (jusqu'a trois annees recentes de trois
+        // bulletins), verifie cote serveur pour ne pas dependre du seul formulaire candidat.
         if (typeDocument == EnumTypeDocument.RELEVE_NOTES) {
             long dejaDeposes = pieceJustificativeRepository.countByCandidatureIdAndTypeDocument(
                     candidatureId, EnumTypeDocument.RELEVE_NOTES);
@@ -574,6 +636,19 @@ public class CandidatController {
         piece.setCandidature(candidature);
         piece.setMoyenneDeclaree(typeDocument == EnumTypeDocument.RELEVE_NOTES ? moyenneDeclaree : null);
         pieceJustificativeRepository.save(piece);
+        candidature.getPiecesJustificatives().add(piece);
+
+        // Dossier mis en attente par « demander un complément » : dès que la dernière pièce arrive, il retourne à
+        // l'examen sans que le candidat ait autre chose à faire (la page de suivi le lui promet : « votre dossier sera
+        // de nouveau examiné »). Rien ne le faisait revenir, et le formulaire ne permettait pas de le re-soumettre.
+        if (candidature.getStatut() == EnumStatutCandidature.INCOMPLET
+                && CompletudeDossier.manques(candidature).isEmpty()) {
+            candidature.setStatut(EnumStatutCandidature.SOUMIS);
+            candidature.setStatutPrecedent(null);
+            candidatureRepository.save(candidature);
+            candidatureService.journaliser(candidature.getId(), EnumEtapeQms.RECEPTION, EnumStatutCandidature.SOUMIS,
+                    user, "Complément reçu : le dossier est complet et revient à l'examen.");
+        }
 
         return ResponseEntity.ok(java.util.Map.of(
                 "message", "Pièce téléversée avec succès.",
@@ -814,6 +889,103 @@ public class CandidatController {
         if (infos.aGenre()) candidat.setGenre(infos.genre());
         if (infos.aProfession()) candidat.setProfession(infos.profession());
         if (infos.anneesExperience() != null) candidat.setAnneesExperience(infos.anneesExperience());
+        if (infos.aAdresse()) candidat.setAdresse(infos.adresse().trim());
+    }
+
+    /**
+     * Le candidat a-t-il un dossier déposé, c'est-à-dire ni brouillon ni refusé ? Même notion de « dossier actif »
+     * que le verrou de {@link #soumettreCandidature} : un dossier rejeté (ou non admis) laisse déposer à nouveau.
+     */
+    private boolean aUnDossierDepose(inpg.sn.lms.auth.entity.User user) {
+        return candidatRepository.findByUserId(user.getId())
+                .map(c -> candidatureRepository.findByCandidatId(c.getId()))
+                .orElseGet(List::of)
+                .stream()
+                .anyMatch(c -> c.getStatut() != EnumStatutCandidature.BROUILLON
+                        && c.getStatut() != EnumStatutCandidature.DOSSIER_REJETE
+                        && c.getStatut() != EnumStatutCandidature.NON_ADMIS);
+    }
+
+    /**
+     * Cette pièce déjà enregistrée est-elle exactement ce que le candidat envoie à nouveau ? Même nom, même taille,
+     * même description, même moyenne déclarée, et surtout même contenu octet pour octet : deux relevés différents
+     * qui porteraient le même nom restent deux pièces. Un fichier disparu du disque n'est jamais « le même » : le
+     * renvoi le rétablit.
+     */
+    private boolean estLeMemeDepot(PieceJustificative existante, EnumTypeDocument type, MultipartFile file,
+            String description, Double moyenneDeclaree) {
+        FichierStocke stocke = existante.getFichierStocke();
+        if (stocke == null || stocke.getTailleOctets() == null || stocke.getTailleOctets() != file.getSize()) {
+            return false;
+        }
+        if (!Objects.equals(stocke.getNomOriginal(), ValidationFichier.nomSur(file, "document"))) {
+            return false;
+        }
+        String descriptionRecue = description != null && !description.isBlank() ? description.trim() : null;
+        if (!Objects.equals(existante.getDescription(), descriptionRecue)) {
+            return false;
+        }
+        Double moyenneRecue = type == EnumTypeDocument.RELEVE_NOTES ? moyenneDeclaree : null;
+        if (!Objects.equals(existante.getMoyenneDeclaree(), moyenneRecue)) {
+            return false;
+        }
+        return contenuIdentique(file, stocke);
+    }
+
+    private boolean contenuIdentique(MultipartFile file, FichierStocke stocke) {
+        Path chemin = Paths.get(stocke.getCheminStockage());
+        if (!Files.isRegularFile(chemin)) {
+            return false;
+        }
+        try (InputStream recu = file.getInputStream(); InputStream enregistre = Files.newInputStream(chemin)) {
+            // Au plus 5 Mo de chaque côté (plafond par pièce), et la taille est déjà égale.
+            return Arrays.equals(recu.readAllBytes(), enregistre.readAllBytes());
+        } catch (IOException e) {
+            log.warn("Comparaison impossible avec la pièce déjà enregistrée ({}) : {}", chemin, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Un parcours académique ou professionnel reçu en JSON : objet JSON valide et de taille raisonnable, conservé tel
+     * quel (le formulaire en fait l'unique juge de sa structure). Absent ou vide : {@code null}, c'est-à-dire « ne
+     * rien changer » — un client plus ancien, ou une re-soumission partielle, ne doit pas effacer ce qui existe.
+     */
+    private String lireInformationsJson(String json, String rubrique) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        if (json.length() > INFORMATIONS_JSON_MAX) {
+            throw new BusinessException("Les informations " + rubrique + " transmises sont trop volumineuses.");
+        }
+        try {
+            JsonNode noeud = objectMapper.readTree(json);
+            if (noeud == null || !noeud.isObject()) {
+                throw new BusinessException(
+                        "Les informations " + rubrique + " transmises n'ont pas pu être lues. Vérifiez le formulaire.");
+            }
+            return json;
+        } catch (JsonProcessingException e) {
+            log.warn("Informations {} illisibles : {}", rubrique, e.getOriginalMessage());
+            throw new BusinessException(
+                    "Les informations " + rubrique + " transmises n'ont pas pu être lues. Vérifiez le formulaire.");
+        }
+    }
+
+    private void conserverInformationsDeposees(Candidature candidature, String academiques, String professionnelles) {
+        if (academiques != null) {
+            candidature.setInformationsAcademiques(academiques);
+        }
+        if (professionnelles != null) {
+            candidature.setInformationsProfessionnelles(professionnelles);
+        }
+    }
+
+    /** Date la certification sur l'honneur quand le candidat l'a cochée ; sans elle, rien n'est modifié. */
+    private void enregistrerCertification(Candidature candidature, CandidatureRequest request) {
+        if (Boolean.TRUE.equals(request.getConsentement())) {
+            candidature.setConsentementLe(LocalDateTime.now());
+        }
     }
 
     /**

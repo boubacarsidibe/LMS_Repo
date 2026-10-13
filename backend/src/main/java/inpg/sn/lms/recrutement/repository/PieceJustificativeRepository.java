@@ -15,6 +15,9 @@ public interface PieceJustificativeRepository extends JpaRepository<PieceJustifi
 
     void deleteByCandidatureId(Long candidatureId);
 
-    /** Sert a plafonner le nombre de releves de notes deposes par candidature (au plus 3). */
+    /** Sert a plafonner le nombre de releves de notes deposes par candidature (au plus 9). */
     long countByCandidatureIdAndTypeDocument(Long candidatureId, EnumTypeDocument typeDocument);
+
+    /** Sert à reconnaître un envoi répété du même document (nouvel essai après une réponse perdue). */
+    List<PieceJustificative> findByCandidatureIdAndTypeDocument(Long candidatureId, EnumTypeDocument typeDocument);
 }

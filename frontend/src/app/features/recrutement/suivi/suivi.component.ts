@@ -22,7 +22,10 @@ interface DocumentChecklistItem {
   type: string;
   label: string;
   statut: 'A_FOURNIR' | 'A_VERIFIER' | 'CONFORME' | 'A_REMPLACER';
+  /** Nom du premier fichier déposé pour ce type, `null` tant que rien n'est déposé. */
   fichierNomOriginal: string | null;
+  /** Nombre de fichiers déposés pour ce type (plusieurs relevés de notes, plusieurs diplômes). */
+  nbFichiers: number;
   moyenneDeclaree: number | null;
   motifNonConformite: string | null;
 }
@@ -52,42 +55,43 @@ export class SuiviComponent implements OnInit {
     return phaseDeStatut(this.candidature?.statut);
   }
 
-  /** Même liste que la relance serveur : aucun document requis n'est caché au candidat. */
-  private readonly documentsRequis = [
-    { type: 'PIECE_IDENTITE', label: "Pièce d'identité" },
-    { type: 'CV', label: 'CV' },
-    { type: 'RELEVE_NOTES', label: 'Relevé de notes' },
-  ];
-
   /**
    * Une pièce déposée ne signifie pas « validée ». La checklist présente une action
    * claire : fournir, attendre le contrôle, ou remplacer avec le motif de l'agent.
+   *
+   * <p>La liste des documents exigés vient du serveur (`documentsAttendus`) : elle était recopiée ici avec trois
+   * types seulement — sans le diplôme que la relance par e-mail réclamait — et le candidat voyait « à jour » un
+   * dossier que le service admission jugeait incomplet. Le serveur reste seul juge de ce qui est exigé, y compris
+   * l'exemption du diplôme pour un candidat de niveau « 4e secondaire ».
    */
   get checklistDocuments(): DocumentChecklistItem[] {
     const pieces = this.candidature?.piecesJustificatives ?? [];
-    return this.documentsRequis.map((document) => {
-      const duType = pieces.filter((piece) => piece.typeDocument === document.type);
-      const conforme = duType.find((piece) => piece.statutVerification === 'CONFORME');
-      const aVerifier = duType.find((piece) => piece.statutVerification === 'A_VERIFIER');
+    return (this.candidature?.documentsAttendus ?? []).map((attendu) => {
+      const duType = pieces.filter((piece) => piece.typeDocument === attendu.type);
       const aRemplacer = duType.find((piece) => piece.statutVerification === 'A_REMPLACER');
-      const piece = conforme ?? aVerifier ?? aRemplacer;
-      const statut = conforme
-        ? 'CONFORME'
-        : aVerifier
-          ? 'A_VERIFIER'
-          : aRemplacer
-            ? 'A_REMPLACER'
-            : 'A_FOURNIR';
+      const toutesConformes = duType.length > 0 && duType.every((piece) => piece.statutVerification === 'CONFORME');
+      const statut: DocumentChecklistItem['statut'] =
+        attendu.etat === 'A_FOURNIR' ? 'A_FOURNIR'
+        : attendu.etat === 'A_REMPLACER' ? 'A_REMPLACER'
+        : toutesConformes ? 'CONFORME' : 'A_VERIFIER';
+      const piece = aRemplacer ?? duType[0];
 
       return {
-        type: document.type,
-        label: document.label,
+        type: attendu.type,
+        label: attendu.libelle,
         statut,
         fichierNomOriginal: piece?.fichierNomOriginal ?? null,
-        moyenneDeclaree: piece?.moyenneDeclaree ?? null,
-        motifNonConformite: statut === 'A_REMPLACER' ? piece?.motifNonConformite ?? null : null,
+        nbFichiers: duType.length,
+        moyenneDeclaree: duType.length === 1 ? duType[0].moyenneDeclaree ?? null : null,
+        motifNonConformite: statut === 'A_REMPLACER' ? aRemplacer?.motifNonConformite ?? null : null,
       };
     });
+  }
+
+  /** Nombre de documents exigés encore à fournir ou à remplacer ; `null` si le serveur n'a rien répondu. */
+  get documentsAFournir(): number | null {
+    const attendus = this.candidature?.documentsAttendus;
+    return attendus ? attendus.filter((d) => d.etat !== 'FOURNI').length : null;
   }
 
   /**
@@ -111,14 +115,29 @@ export class SuiviComponent implements OnInit {
    * rattraper un document qui aurait échoué silencieusement au dépôt initial.
    */
   typeDocumentAAjouter = '';
+  /** Obligatoire pour un diplôme : rien d'autre ne dit ensuite à quoi correspond le document. */
+  descriptionAAjouter = '';
   ajoutPieceEnCours = false;
   ajoutPieceErreur = '';
   ajoutPieceSucces = false;
 
+  /** « Ajouter » depuis une ligne de la liste : choisit le type, il ne reste qu'à désigner le fichier. */
+  preparerAjout(type: string): void {
+    this.typeDocumentAAjouter = type;
+    this.ajoutPieceErreur = '';
+    this.ajoutPieceSucces = false;
+  }
+
+  /** Le diplôme exige sa description ; les autres types n'en ont pas besoin. */
+  get ajoutPossible(): boolean {
+    if (!this.typeDocumentAAjouter || this.ajoutPieceEnCours) return false;
+    return this.typeDocumentAAjouter !== 'DIPLOME' || this.descriptionAAjouter.trim().length > 0;
+  }
+
   ajouterPiece(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file || !this.candidature?.id || !this.typeDocumentAAjouter) return;
+    if (!file || !this.candidature?.id || !this.ajoutPossible) return;
 
     const MAX_SIZE_MO = 5;
     if (file.size > MAX_SIZE_MO * 1024 * 1024) {
@@ -131,11 +150,13 @@ export class SuiviComponent implements OnInit {
     this.ajoutPieceEnCours = true;
     this.ajoutPieceErreur = '';
     this.ajoutPieceSucces = false;
-    this.recrutementService.televerserPiece(this.candidature.id, file, this.typeDocumentAAjouter).subscribe({
+    const description = this.typeDocumentAAjouter === 'DIPLOME' ? this.descriptionAAjouter.trim() : undefined;
+    this.recrutementService.televerserPiece(this.candidature.id, file, this.typeDocumentAAjouter, description).subscribe({
       next: () => {
         this.ajoutPieceEnCours = false;
         this.ajoutPieceSucces = true;
         this.typeDocumentAAjouter = '';
+        this.descriptionAAjouter = '';
         input.value = '';
         this.rafraichirCandidature();
       },
@@ -237,7 +258,7 @@ export class SuiviComponent implements OnInit {
 
   /** Frise de progression : définition partagée avec le détail côté admission. */
   get timelineItems(): TimelineItem[] {
-    return friseCandidature(this.candidature?.statut, 'candidat');
+    return friseCandidature(this.candidature?.statut, 'candidat', this.documentsAFournir);
   }
 
   getDocIcon(type: string): string {
@@ -327,6 +348,12 @@ export class SuiviComponent implements OnInit {
         return { badge: 'Liste complémentaire', titre: 'Vous êtes sur liste complémentaire', classeBadge: 'bg-primary-container text-primary',
           texte: 'Votre dossier a été jugé valable par le jury, mais aucune place n\'est disponible pour l\'instant. Nous reviendrons vers vous si une place se libère.' };
       default:
+        // Dossier déposé mais incomplet : « félicitations, examen en cours » contredirait la liste de documents juste dessous.
+        if (this.candidature?.statut === 'SOUMIS' && (this.documentsAFournir ?? 0) > 0) {
+          const n = this.documentsAFournir!;
+          return { badge: 'Documents manquants', titre: 'Il manque des documents à votre dossier.', classeBadge: negatif,
+            texte: `Votre dossier est bien enregistré, mais ${n} document${n > 1 ? 's' : ''} ne nous ${n > 1 ? 'sont' : 'est'} pas parvenu${n > 1 ? 's' : ''} ou ${n > 1 ? 'sont' : 'est'} à remplacer. Ajoutez-${n > 1 ? 'les' : 'le'} depuis la liste « Documents requis » ci-dessous : le service des admissions a besoin de l'ensemble des pièces pour examiner votre candidature.` };
+        }
         return { badge: 'Candidature en cours', titre: 'Votre dossier est en cours d\'évaluation.', classeBadge: neutre,
           texte: 'Félicitations pour avoir complété la première étape. Notre jury d\'admission examine actuellement vos documents avec la plus grande attention.' };
     }

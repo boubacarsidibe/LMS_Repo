@@ -106,6 +106,19 @@ class ApplicationControllerTest {
         verify(notificationService, never()).notifierRappelDossierIncomplet(anyString(), anyString(), anyString());
     }
 
+    /** Un dossier mis « à compléter » par l'admission est celui qu'il faut relancer en premier. */
+    @Test
+    void un_dossier_a_completer_est_relance() {
+        Candidature enAttente = candidature(1L, "a@example.sn", List.of(piece(EnumTypeDocument.CV, true)));
+        enAttente.setStatut(EnumStatutCandidature.INCOMPLET);
+        when(candidatureRepo.findAll()).thenReturn(List.of(enAttente));
+
+        ResponseEntity<Map<String, Object>> reponse = controller.sendReminder();
+
+        assertThat(reponse.getBody().get("envoyes")).isEqualTo(1);
+        verify(notificationService).notifierRappelDossierIncomplet(anyString(), anyString(), anyString());
+    }
+
     @Test
     void un_dossier_complet_nest_pas_relance() {
         when(candidatureRepo.findAll()).thenReturn(List.of(

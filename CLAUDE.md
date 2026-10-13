@@ -271,6 +271,12 @@ a fait passer pour « flottants » alors qu'ils étaient reproductibles. Vérifi
 quand deux fichiers de test partageaient un bloc ; un accesseur (`get x() { return CONSTANTE; }`) l'évite.
 36 autres champs de ce motif existent (`libellesStatut = LIBELLES_…`) : à convertir si le défaut y réapparaît.
 
+### Le terminal refuse `rm` dans un `docker exec … sh -c`
+
+Les fichiers téléversés (`/app/uploads/<UUID>_<nom>`, dans `demo-backend`) ne se suppriment pas depuis une session Claude : le garde-fou
+bloque tout `docker exec … sh -c "rm …"` et la commande **entière** n'est pas exécutée, y compris le SQL qui l'accompagnait. Faire le nettoyage
+SQL seul, noter les chemins (`select chemin_stockage from fichiers_stockes …` *avant* le `DELETE`) et laisser la suppression des fichiers à une personne.
+
 ### `mvn test` touche la base de recette
 
 `LmsApplicationTests` démarre Spring contre `localhost:5432`, donc **Flyway applique
@@ -356,7 +362,8 @@ sudo /usr/local/share/docker-init.sh true &    # si le démon Docker est tombé
 
 `docker compose up -d --build backend` recrée le conteneur : toute variable passée en ligne de commande
 (ex. `APP_CORS_ORIGINS` pour un tunnel Cloudflare, dont l'URL change à chaque lancement) est perdue et doit
-être repassée. Les redémarrages du Codespace arrêtent Postgres sans arrêt propre : les écritures récentes
+être repassée. **`docker compose up -d --build frontend` recrée aussi le backend** (dépendance) et lui fait perdre ces variables :
+reconstruire le frontend avec `--no-deps`. Les redémarrages du Codespace arrêtent Postgres sans arrêt propre : les écritures récentes
 peuvent être perdues.
 
 ---
@@ -380,6 +387,26 @@ soit exactement l'inverse : un dossier tout juste soumis, ou renvoyé « à comp
 ajouter. Les cinq tests de `CandidatControllerTeleverserPieceTest` le voyaient, mais on les tenait pour
 périmés. Le paiement, lui, n'est ouvert qu'après la présélection (`PRESELECTIONNE` / `PAIEMENT_EN_ATTENTE`) :
 là, c'étaient les tests qui étaient périmés.
+
+**Déposer un dossier et envoyer ses pièces sont deux appels séparés** (`POST …/candidature/soumettre`, puis une requête
+`…/pieces` par fichier) : un dossier peut exister sans l'une de ses pièces — c'est là que se perdent les documents (audit du
+2026-10-13, `docs/AUDIT_PARCOURS_CANDIDAT_2026-10-13.md`). Quatre règles à ne pas défaire :
+- **`CompletudeDossier` est la seule définition des pièces exigées** (identité, CV, relevé, diplôme sauf « 4e secondaire »). Le serveur
+  la sert dans `documentsAttendus` ; le suivi, la fiche d'admission et la relance par e-mail la lisent. Ne jamais recopier la liste
+  côté Angular : il y en avait trois copies, divergentes (le suivi n'affichait pas le diplôme).
+- **Un renvoi de pièce est sans danger parce que le serveur reconnaît un doublon** (même type, nom, taille, description, moyenne et
+  mêmes octets → réponse `doublon`, rien de créé). Le formulaire s'appuie dessus pour relancer un envoi dont la réponse s'est perdue :
+  retirer cette détection ferait des pièces en double. Il ne dit « tout est transmis » qu'après avoir relu le dossier côté serveur.
+- **Un champ ajouté au formulaire doit l'être aussi au DTO et à une colonne** : `InfosPersonnellesDto` porte
+  `@JsonIgnoreProperties(ignoreUnknown = true)`, donc un champ inconnu est jeté sans erreur (l'adresse l'a été des mois). Le parcours
+  académique/professionnel est du JSON conservé tel quel (`informations_academiques`, `informations_professionnelles`) ; une requête
+  qui n'en porte pas ne doit jamais effacer l'existant.
+- **Plus aucun brouillon après le dépôt** : `saveDraft()` est neutralisé côté client et le serveur ignore un brouillon quand un dossier
+  est déposé — la sauvegarde différée d'une seconde recréait sinon le brouillon que le dépôt venait de supprimer.
+La règle « un nouveau dépôt est possible après un brouillon, un refus de dossier ou une non-admission » (`depotPossibleApres`, frontend) est
+celle de `soumettreCandidature` : `'REJETE'` n'est plus un statut depuis le 22/09 (le test ne retenait personne). Il en reste des occurrences
+côté admission (`candidature-detail`, délibération) : à auditer. `backend/db/audit-candidatures.sql` (lecture seule) détecte dossiers sans pièce,
+pièces manquantes, fichiers orphelins, doublons et brouillons survivants.
 
 **Un seul système d'avis : `retour_evaluation`** (migration `V7`). `evaluations_cours`
 et `POST /retours` ont été supprimés : l'avis d'un étudiant n'atteignait jamais son

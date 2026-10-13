@@ -80,12 +80,63 @@
       </div>
     </div>
 
+    <!-- Ce que le candidat a saisi : jusqu'ici, aucune de ces informations n'était lisible par l'admission. -->
+    <div class="mb-stack-lg">
+      <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Informations du candidat</div>
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 font-body-sm text-body-sm">
+        <div><dt class="text-on-surface-variant">Téléphone</dt><dd class="text-on-surface font-medium">{{ sel.candidatTelephone || '—' }}</dd></div>
+        <div><dt class="text-on-surface-variant">E-mail</dt><dd class="text-on-surface font-medium break-all">{{ sel.candidatEmail || '—' }}</dd></div>
+        <div class="sm:col-span-2"><dt class="text-on-surface-variant">Adresse</dt><dd class="text-on-surface font-medium">{{ sel.candidatAdresse || '—' }}</dd></div>
+        <div><dt class="text-on-surface-variant">Date de naissance</dt><dd class="text-on-surface font-medium">{{ sel.candidatDateNaissance ? (sel.candidatDateNaissance | date:'dd/MM/yyyy') : '—' }}</dd></div>
+        <div><dt class="text-on-surface-variant">Nationalité</dt><dd class="text-on-surface font-medium">{{ sel.candidatNationalite || '—' }}</dd></div>
+        <div><dt class="text-on-surface-variant">Genre</dt><dd class="text-on-surface font-medium">{{ sel.candidatGenre || '—' }}</dd></div>
+        <div><dt class="text-on-surface-variant">Niveau d'études</dt><dd class="text-on-surface font-medium">{{ sel.candidatNiveauEtude || '—' }}</dd></div>
+        <div><dt class="text-on-surface-variant">Profession</dt><dd class="text-on-surface font-medium">{{ sel.candidatProfession || '—' }}</dd></div>
+        <div><dt class="text-on-surface-variant">Années d'expérience</dt><dd class="text-on-surface font-medium">{{ sel.candidatAnneesExperience ?? '—' }}</dd></div>
+        <div class="sm:col-span-2">
+          <dt class="text-on-surface-variant">Certification sur l'honneur</dt>
+          <dd class="text-on-surface font-medium">
+            {{ sel.consentementLe ? 'Acceptée le ' + (sel.consentementLe | date:'dd/MM/yyyy à HH:mm') : 'Non enregistrée (dossier déposé avant son enregistrement)' }}
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="mb-stack-lg" *ngIf="parcoursDeclare.champs.length || parcoursDeclare.formations.length">
+      <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Parcours déclaré</div>
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 font-body-sm text-body-sm">
+        <div *ngFor="let champ of parcoursDeclare.champs"><dt class="text-on-surface-variant">{{ champ.libelle }}</dt><dd class="text-on-surface font-medium">{{ champ.valeur }}</dd></div>
+      </dl>
+      <ul *ngIf="parcoursDeclare.formations.length" class="mt-3 space-y-1 font-body-sm text-body-sm text-on-surface">
+        <li class="text-on-surface-variant">Formations et certifications suivies</li>
+        <li *ngFor="let f of parcoursDeclare.formations" class="pl-3 border-l-2 border-outline-variant">
+          <span class="font-medium">{{ f.nom }}</span>
+          <span *ngIf="detailsFormation(f)" class="text-on-surface-variant"> — {{ detailsFormation(f) }}</span>
+        </li>
+      </ul>
+    </div>
+
     <div class="mb-stack-lg">
       <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Pièces justificatives</div>
+      <!-- Même calcul que la relance et le suivi du candidat : l'admission voit ce que le candidat voit. -->
+      <p *ngIf="dossierComplet" class="mb-2 font-body-sm text-body-sm text-success-strong flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">check_circle</span> Tous les documents exigés sont fournis.
+      </p>
+      <div *ngIf="documentsAFournir.length" class="mb-3 p-3 rounded-lg bg-warning-container text-on-warning-container font-body-sm text-body-sm" role="status">
+        <p class="font-semibold">Dossier incomplet — {{ documentsAFournir.length }} document{{ documentsAFournir.length > 1 ? 's' : '' }} à fournir ou à remplacer :</p>
+        <ul class="list-disc list-inside">
+          <li *ngFor="let d of documentsAFournir">{{ d.libelle }} ({{ d.etat === 'A_FOURNIR' ? 'non fourni' : 'à remplacer' }})</li>
+        </ul>
+      </div>
       <div class="space-y-2" *ngIf="sel.piecesJustificatives.length; else aucunePiece">
         <div *ngFor="let p of sel.piecesJustificatives" class="py-3 border-b border-outline-variant last:border-0 text-body-sm">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <span class="text-on-surface">{{ p.typeDocument }}<span *ngIf="p.moyenneDeclaree !== null" class="text-on-surface-variant"> — Moyenne déclarée : {{ p.moyenneDeclaree }}/20</span></span>
+            <span class="text-on-surface">
+              <span class="font-medium">{{ libelleTypeDocument(p.typeDocument) }}</span>
+              <span *ngIf="p.fichierNomOriginal" class="text-on-surface-variant"> — {{ p.fichierNomOriginal }}</span>
+              <span *ngIf="p.description" class="text-on-surface-variant"> ({{ p.description }})</span>
+              <span *ngIf="p.moyenneDeclaree !== null" class="text-on-surface-variant"> — Moyenne déclarée : {{ p.moyenneDeclaree }}/20</span>
+            </span>
             <span class="px-2 py-1 rounded-full text-label-sm" [ngClass]="p.statutVerification === 'CONFORME' ? 'bg-success/15 text-success-strong' : (p.statutVerification === 'A_REMPLACER' ? 'bg-error-container text-on-error-container' : 'bg-warning/15 text-warning-strong')">{{ libelleVerificationPiece(p) }}</span>
           </div>
           <p *ngIf="p.motifNonConformite" class="mt-2 text-error">Motif communiqué au candidat : {{ p.motifNonConformite }}</p>
