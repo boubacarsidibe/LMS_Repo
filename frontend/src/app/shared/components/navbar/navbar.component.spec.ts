@@ -172,6 +172,27 @@ describe('NavbarComponent', () => {
       expect(liensDuMenu()).toEqual(['/recrutement/catalogue', '/recrutement/sessions']);
     });
 
+    it("étudiant : « Mon espace » en tête, pour revenir d'où le logo l'a emmené", () => {
+      connecter(['ROLE_ETUDIANT']);
+      expect(liensDuMenu()).toEqual(['/espace-etudiant/dashboard', '/recrutement/catalogue', '/recrutement/sessions']);
+    });
+
+    // Un test par rôle : liensDuMenu() clique sur le cercle de profil, un second appel refermerait le menu.
+    it('responsable admission : son espace en tête du menu', () => {
+      connecter(['ROLE_RESPONSABLE_ADMISSION']);
+      expect(liensDuMenu()[0]).toBe('/responsable-admission');
+    });
+
+    it('responsable pédagogique : son espace en tête du menu', () => {
+      connecter(['ROLE_RESPONSABLE_PEDAGOGIQUE']);
+      expect(liensDuMenu()[0]).toBe('/pedagogie');
+    });
+
+    it('évaluateur d\'accréditation : son espace en tête du menu', () => {
+      connecter(['ROLE_EVALUATEUR_ACCREDITATION']);
+      expect(liensDuMenu()[0]).toBe('/evaluateur-accreditation');
+    });
+
     it('un étudiant qui consulte les offres formateur garde SON menu (le compte prime sur la page)', () => {
       connecter(['ROLE_CANDIDAT'], 'CANDIDAT');
       TestBed.inject(ContexteNavbarService).contexte.set('formateur');
@@ -183,7 +204,7 @@ describe('NavbarComponent', () => {
     it("le lien du logo mène à l'accueil et montre l'image officielle, plus l'écriture « INPG Connect »", () => {
       fixture.detectChanges();
 
-      const lien = fixture.nativeElement.querySelector('a[aria-label="INPG — accueil"]') as HTMLAnchorElement;
+      const lien = fixture.nativeElement.querySelector('a[aria-label$="retour à l\'accueil"]') as HTMLAnchorElement;
       expect(lien.getAttribute('href')).toBe('/accueil');
       expect(lien.querySelector('img')?.getAttribute('src')).toBe('/images/logo-inpg.png');
       expect(lien.textContent).not.toContain('INPG');

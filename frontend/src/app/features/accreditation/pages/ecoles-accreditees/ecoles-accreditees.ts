@@ -28,9 +28,7 @@ import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-
   template: `
     <header class="bg-white/95 backdrop-blur-sm border-b border-outline-variant/40 sticky top-0 z-50">
       <div class="flex justify-between items-center w-full max-w-container-max mx-auto px-4 md:px-margin-desktop h-[72px]">
-        <a routerLink="/accueil" class="no-underline hover:opacity-80 transition-opacity" aria-label="INPG — accueil">
-          <app-logo-inpg hauteur="h-10"></app-logo-inpg>
-        </a>
+        <app-logo-inpg hauteur="h-10"></app-logo-inpg>
         <a [routerLink]="retourUrl"
            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:border-secondary hover:text-secondary transition-colors no-underline">
           <span class="material-symbols-outlined text-[18px]">arrow_back</span>

@@ -29,6 +29,9 @@ const ONGLET_PAR_CONTEXTE: Record<ProfilCompte | 'etudiant', Omit<EntreeNavigati
   entreprise: { libelle: 'Espace entreprise', lien: '/espace-entreprise' },
 };
 
+/** Page d'accueil d'un candidat (`Auth.getHomeUrl`) : le suivi de sa candidature, déjà proposé par le menu. */
+const ESPACE_CANDIDAT = '/recrutement/suivi';
+
 /** Menu du cercle de profil des comptes qui ont leur propre espace. */
 const MENU_PAR_PROFIL: Record<ProfilCompte, EntreeNavigation[]> = {
   ecole: [
@@ -101,10 +104,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (profil) {
       return MENU_PAR_PROFIL[profil];
     }
-    return [
+    const entrees: EntreeNavigation[] = [
       { libelle: 'Tableau de bord', icone: 'dashboard', lien: '/recrutement/catalogue' },
       { libelle: 'Mes candidatures', icone: 'description', lien: this.candidatureUrl() },
     ];
+    // Le logo de chaque espace ramène à cette page d'accueil : un compte qui a son propre espace (étudiant,
+    // formateur, alumni, responsables, évaluateur) doit pouvoir y revenir d'ici. Le candidat, dont la « maison »
+    // est le suivi de sa candidature, l'a déjà par « Mes candidatures ».
+    const espace = this.auth.getHomeUrl();
+    return espace && espace !== ESPACE_CANDIDAT
+      ? [{ libelle: 'Mon espace', icone: 'dashboard', lien: espace }, ...entrees]
+      : entrees;
   });
 
   dropdownOpen = false;

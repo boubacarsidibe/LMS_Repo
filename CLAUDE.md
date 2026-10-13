@@ -122,10 +122,13 @@ n'existe plus nulle part — identique dans tous les espaces :
 
 `LogoInpgComponent` (`shared/components/logo-inpg/`) est l'unique source de l'image
 (`frontend/public/images/logo-inpg.png`, 640 × 174) et de son texte alternatif : ne pas recopier un `<img>`
-ailleurs, ni recomposer un logotype en texte. Le fichier est détouré (fond transparent) et le logo est bleu
+ailleurs, ni recomposer un logotype en texte. **Le logo est cliquable partout et ramène à `/accueil`** (2026-10-13) :
+le lien vit dans `LogoInpgComponent` (`[cliquable]="false"` pose l'image seule) — ne jamais entourer `<app-logo-inpg>` d'un `<a>`
+(lien dans un lien). Un clic sort de l'espace : c'est le menu du cercle de profil du navbar public qui ramène (« Mon espace »,
+`Auth.getHomeUrl`). Le fichier est détouré (fond transparent) et le logo est bleu
 nuit : sur un fond sombre (panneau de connexion, pied de page), le poser dans une pastille blanche arrondie,
 sans quoi il disparaît. **Exception voulue** : le layout de connexion/inscription (`auth-layout`) garde le
-texte « INPG LMS » (`text-2xl font-extrabold text-primary`, suffixe en `text-brand`) en haut de sa partie
+texte « INPG LMS » (`text-2xl font-extrabold text-primary`, suffixe en `text-brand`, lien vers `/accueil` lui aussi) en haut de sa partie
 blanche, et le panneau sombre n'a plus de logo — choix esthétique du 2026-09-25. Le nom de l'espace (« Espace formateur », « Portail Admissions », « Espace
 pédagogique ») reste écrit **sous** le logo, en `font-label-sm`. Le même logo coiffe les PDF (voir §3, papier
 à en-tête).

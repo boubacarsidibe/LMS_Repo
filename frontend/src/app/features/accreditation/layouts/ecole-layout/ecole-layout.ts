@@ -23,9 +23,7 @@ import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-
   template: `
     <header class="bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant fixed top-0 left-0 right-0 z-50">
       <div class="flex justify-between items-center w-full max-w-[1280px] mx-auto px-4 md:px-10 h-[72px]">
-        <a routerLink="/accreditation" class="no-underline hover:opacity-80 transition-opacity" aria-label="INPG — accueil">
-          <app-logo-inpg hauteur="h-10"></app-logo-inpg>
-        </a>
+        <app-logo-inpg hauteur="h-10"></app-logo-inpg>
 
         <nav class="hidden md:flex flex-1 justify-center items-center gap-6">
           <a routerLink="/accreditation" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="text-primary border-b-2 border-primary"

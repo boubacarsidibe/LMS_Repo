@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { LogoInpgComponent } from './logo-inpg.component';
 
@@ -10,9 +11,10 @@ describe('LogoInpgComponent', () => {
   let fixture: ComponentFixture<LogoInpgComponent>;
 
   const image = () => fixture.nativeElement.querySelector('img') as HTMLImageElement;
+  const lien = () => fixture.nativeElement.querySelector('a') as HTMLAnchorElement | null;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [LogoInpgComponent] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [LogoInpgComponent], providers: [provideRouter([])] }).compileComponents();
     fixture = TestBed.createComponent(LogoInpgComponent);
   });
 
@@ -42,5 +44,42 @@ describe('LogoInpgComponent', () => {
     fixture.detectChanges();
 
     expect(image().classList).toContain('h-10');
+  });
+
+  it("est cliquable et ramène à la page d'accueil", () => {
+    fixture.detectChanges();
+
+    expect(lien()).not.toBeNull();
+    expect(lien()!.getAttribute('href')).toBe('/accueil');
+    expect(lien()!.contains(image())).toBe(true);
+  });
+
+  it("le lien se nomme pour un lecteur d'écran et annonce sa destination", () => {
+    fixture.detectChanges();
+
+    expect(lien()!.getAttribute('aria-label')).toContain("retour à l'accueil");
+    expect(lien()!.getAttribute('aria-label')).toContain('Institut National du Pétrole et du Gaz');
+    expect(lien()!.title).toBe("Retour à l'accueil");
+  });
+
+  it("n'écrit toujours rien : le lien n'ajoute aucun texte visible", () => {
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement.textContent as string).trim()).toBe('');
+  });
+
+  it("[cliquable]=false pose l'image seule, sans lien (pour un logo déjà dans un lien)", () => {
+    fixture.componentRef.setInput('cliquable', false);
+    fixture.detectChanges();
+
+    expect(lien()).toBeNull();
+    expect(image().getAttribute('src')).toBe('/images/logo-inpg.png');
+  });
+
+  it("la zone cliquable épouse le logo : un bloc qui s'étire ferait naviguer en cliquant à côté", () => {
+    fixture.detectChanges();
+
+    expect(lien()!.classList).toContain('flex');
+    expect(lien()!.classList).toContain('w-fit');
   });
 });
