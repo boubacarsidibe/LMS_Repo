@@ -422,6 +422,27 @@ responsable** (`resultat-test`, `resultat-entretien`), pas un effet de la saisie
 Chaque nouveau type d'e-mail (`EnumTypeNotification`) demande une migration : la contrainte `notification_templates_type_check` liste les valeurs
 (elle en avait oublié trois, qu'on ne pouvait donc pas enregistrer).
 
+**Une installation neuve doit démarrer et avoir des comptes** (audit complet du 2026-10-14, `docs/AUDIT_COMPLET_2026-10-14.md`).
+Deux défauts invisibles en recette, parce que l'initialisation ne tourne que sur une base vide : `DataInitializer` écrivait des statuts
+de session refusés par `sessions_candidature_status_check` (le serveur ne démarrait plus sur une base neuve avec démonstration), et une base
+neuve de production n'avait **aucun compte**. Règles : le statut d'une session passe par les constantes `SessionCandidature.STATUT_*`
+(`StatutsSessionEcritsTest` relit le code) ; les comptes du personnel naissent au démarrage par `ComptesInitiaux` (`APP_INIT_PASSWORD`,
+`APP_INIT_ADMISSION_EMAIL`, `APP_INIT_PEDAGOGIE_EMAIL`, `APP_INIT_EVALUATEUR_EMAIL`), idempotent, jamais réinitialisé. Vérifier une
+modification de l'initialisation **sur une base vierge** (`create database …`, conteneur du serveur sur un autre port) : la recette ne le dira pas.
+
+**Le responsable admission n'attribue que candidat, étudiant, formateur** (`RoleManagementService.ROLES_ATTRIBUABLES`) : il pouvait donner
+n'importe quel rôle, y compris responsable pédagogique, et rétrograder les autres responsables. Les comptes du personnel ne se modifient pas
+depuis l'application, le sien non plus.
+
+**La clé des certificats est obligatoire et distincte du secret JWT** (`CERTIFICAT_SIGNATURE_SECRET`, sans repli) : un même secret
+signait jetons et certificats, et changer le premier aurait invalidé tous les certificats imprimés. Rotation : nouvelle clé dans
+`CERTIFICAT_SIGNATURE_SECRET`, ancienne(s) dans `CERTIFICAT_SIGNATURE_SECRETS_ANCIENS` (acceptées pour vérifier, jamais pour signer). La
+recette recopie encore le secret JWT (avertissement au démarrage) : à séparer de cette façon.
+
+**Un étudiant ne lit un cours que par la scolarité** (`/scolarite/mes-cours…`, chaîne d'habilitation). Les routes générales
+`/espace-etudiant/cours`, `/cours/{id}`, `/cours/{id}/supports`, `/cohortes` montraient tout cours à tout étudiant ; inutilisées, elles ont
+été retirées — ne pas les recréer sans `HabilitationCoursService`.
+
 **Un seul système d'avis : `retour_evaluation`** (migration `V7`). `evaluations_cours`
 et `POST /retours` ont été supprimés : l'avis d'un étudiant n'atteignait jamais son
 formateur. Unicité `(étudiant, cours)` — redéposer met à jour.
@@ -582,7 +603,7 @@ Mot de passe commun aux comptes de recette : `Test@2026`.
 | Candidat (sans dossier) | `test.candidat@inpg.sn` |
 | Candidat (avec dossier) | `test.candidat2@inpg.sn` |
 | Étudiant | `test.etudiant@inpg.sn` |
-| Formateur *(sans cours — cobaye de cloisonnement)* | `test.formateur@inpg.sn` |
+| Formateur *(un seul cours, le n° 8 de la formation MPG — cobaye de cloisonnement)* | `test.formateur@inpg.sn` |
 | Responsable admission | `test.admission@inpg.sn` |
 | Responsable pédagogique | `test.pedago@inpg.sn` |
 | Alumni | `test.alumni@inpg.sn` |

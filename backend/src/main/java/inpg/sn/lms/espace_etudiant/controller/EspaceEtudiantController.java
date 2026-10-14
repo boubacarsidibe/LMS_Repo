@@ -71,7 +71,6 @@ import inpg.sn.lms.espace_etudiant.dto.PresenceBulkUpdateRequest;
 import inpg.sn.lms.espace_etudiant.dto.PresenceEtudiantDto;
 import inpg.sn.lms.espace_etudiant.dto.PresenceHistoriqueDto;
 import inpg.sn.lms.espace_etudiant.dto.PromotionDto;
-import inpg.sn.lms.espace_etudiant.dto.SupportDetailDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportDto;
 import inpg.sn.lms.espace_etudiant.dto.SupportLienCreateRequest;
 import inpg.sn.lms.espace_etudiant.dto.SeanceDto;
@@ -323,25 +322,10 @@ public class EspaceEtudiantController {
         return ResponseEntity.ok(list);
     }
 
-    @PreAuthorize("hasRole('ETUDIANT')")
-    @Transactional(readOnly = true)
-    @GetMapping("/cours")
-    public ResponseEntity<List<CoursDto>> listCours() {
-        return ResponseEntity.ok(toCoursDtoList(coursService.getAll()));
-    }
-
-    // Le formateur dispose de /formateur/cohortes, filtre par les cours qui lui
-    // sont attribués. Cette route générale ne doit pas exposer le référentiel de
-    // toutes les promotions à un formateur.
-    @PreAuthorize("hasRole('ETUDIANT')")
-    @Transactional(readOnly = true)
-    @GetMapping("/cohortes")
-    public ResponseEntity<List<PromotionDto>> listPromotions() {
-        List<PromotionDto> list = promotionService.getAll().stream()
-                .map(this::toPromotionDto)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(list);
-    }
+    // GET /cours, /cohortes, /cours/{id} et /cours/{id}/supports ont été retirés (audit du 2026-10-14) : aucun écran
+    // ne les appelait, et ils montraient à tout étudiant la fiche, les supports (titres, liens) de n'importe quel cours
+    // et la liste de toutes les promotions. L'étudiant passe par ScolariteController (/scolarite/mes-cours…), qui
+    // applique la chaîne d'habilitation Étudiant → Promotion → Formation → Cours.
 
     @PreAuthorize("hasRole('FORMATEUR')")
     @Transactional(readOnly = true)
@@ -535,32 +519,6 @@ public class EspaceEtudiantController {
         }
         forumSujetRepository.deleteById(id);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * Contenu d'un cours vu par l'étudiant : la fiche du cours et ses supports.
-     * Les endpoints /formateur/cours/{id}/supports existants sont réservés au
-     * propriétaire du cours et ne conviennent donc pas ici.
-     */
-    @PreAuthorize("hasRole('ETUDIANT')")
-    @Transactional(readOnly = true)
-    @GetMapping("/cours/{id}")
-    public ResponseEntity<?> getCours(@PathVariable Long id) {
-        return coursService.findById(id)
-                .<ResponseEntity<?>>map(cours -> ResponseEntity.ok(toCoursDto(cours)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @PreAuthorize("hasRole('ETUDIANT')")
-    @Transactional(readOnly = true)
-    @GetMapping("/cours/{id}/supports")
-    public ResponseEntity<List<SupportDetailDto>> listSupportsOfCours(@PathVariable Long id) {
-        if (coursService.findById(id).isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(supportService.getCourseSupports(id).stream()
-                .map(this::toSupportDetailDto)
-                .toList());
     }
 
     @PreAuthorize("hasRole('ETUDIANT')")
@@ -1827,16 +1785,6 @@ public class EspaceEtudiantController {
         } catch (URISyntaxException exception) {
             return false;
         }
-    }
-
-    private SupportDetailDto toSupportDetailDto(SupportCours support) {
-        return new SupportDetailDto(
-                support.getId(),
-                support.getTitre(),
-                support.getTypeRessource(),
-                support.getUrl(),
-                support.getDatePublication(),
-                support.getFichierStocke() != null && !support.getFichierStocke().isBlank());
     }
 
     private EtudiantSuiviDto toEtudiantSuiviDto(Etudiant etudiant) {

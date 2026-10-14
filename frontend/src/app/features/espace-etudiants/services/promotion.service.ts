@@ -10,15 +10,6 @@ export class PromotionService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Route héritée de « Cohorte », le nom d'avant la fusion du 14/08/2026
-   * (voir migration V4__supprimer_vestiges_cohorte). Renommer l'URL est un
-   * changement de contrat plus risqué que de renommer le code qui l'appelle.
-   */
-  getAll(): Observable<Promotion[]> {
-    return this.http.get<Promotion[]>(`${this.api}/cohortes`);
-  }
-
   /** Promotions accessibles à partir des cours attribués au formateur connecté. */
   getMesPromotionsFormateur(): Observable<Promotion[]> {
     return this.http.get<Promotion[]>(`${this.api}/formateur/cohortes`);

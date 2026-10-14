@@ -1,18 +1,11 @@
 package inpg.sn.lms.recrutement.controller;
 
-import inpg.sn.lms.exception.ResourceNotFoundException;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -126,72 +119,9 @@ public class DashboardController {
         return ResponseEntity.ok(dto);
     }
 
-    /**
-     * POST /api/dashboard/sessions/new
-     * Crée une nouvelle session de recrutement.
-     */
-    @PostMapping("/sessions/new")
-    @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    public ResponseEntity<SessionSummaryDTO> createSession(@RequestBody Map<String, Object> body) {
-        String libelle = (String) body.getOrDefault("libelle", "Nouvelle Session");
-        LocalDate dateOuverture = body.get("dateOuverture") != null
-                ? LocalDate.parse((String) body.get("dateOuverture"))
-                : LocalDate.now();
-        LocalDate dateFermeture = body.get("dateFermeture") != null
-                ? LocalDate.parse((String) body.get("dateFermeture"))
-                : LocalDate.now().plusMonths(3);
-        int quotaMax = body.get("quotaMax") != null ? ((Number) body.get("quotaMax")).intValue() : 220;
-        String status = (String) body.getOrDefault("status", "OUVERT");
-
-        SessionCandidature session = new SessionCandidature();
-        session.setLibelle(libelle);
-        session.setDateOuverture(dateOuverture);
-        session.setDateFermeture(dateFermeture);
-        session.setEstOuverte("OUVERT".equalsIgnoreCase(status));
-        session.setQuotaMax(quotaMax);
-        session.setStatus(status);
-
-        // Associer un programme si fourni
-        if (body.get("programId") != null) {
-            Long programId = ((Number) body.get("programId")).longValue();
-            programRepo.findById(programId).ifPresent(session::setProgram);
-        }
-
-        session = sessionRepo.save(session);
-
-        SessionSummaryDTO dto = new SessionSummaryDTO();
-        dto.setId(session.getId());
-        dto.setLibelle(session.getLibelle());
-        dto.setEstOuverte(session.isEstOuverte());
-        dto.setDateOuverture(session.getDateOuverture());
-        dto.setDateFermeture(session.getDateFermeture());
-        dto.setQuotaMax(session.getQuotaMax());
-        dto.setQuotaActuel((int) candidatureRepo.countBySessionCandidatureId(session.getId()));
-        return ResponseEntity.ok(dto);
-    }
-
-    /**
-     * PATCH /api/dashboard/sessions/:id/close
-     * Clôture une session de recrutement.
-     */
-    @PatchMapping("/sessions/{id}/close")
-    @PreAuthorize("hasRole('RESPONSABLE_ADMISSION')")
-    public ResponseEntity<SessionSummaryDTO> closeSession(@PathVariable Long id) {
-        SessionCandidature session = sessionRepo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Session introuvable"));
-        session.setEstOuverte(false);
-        session = sessionRepo.save(session);
-
-        SessionSummaryDTO dto = new SessionSummaryDTO();
-        dto.setId(session.getId());
-        dto.setLibelle(session.getLibelle());
-        dto.setEstOuverte(session.isEstOuverte());
-        dto.setDateOuverture(session.getDateOuverture());
-        dto.setDateFermeture(session.getDateFermeture());
-        dto.setQuotaMax(session.getQuotaMax());
-        dto.setQuotaActuel((int) candidatureRepo.countBySessionCandidatureId(session.getId()));
-        return ResponseEntity.ok(dto);
-    }
+    // POST /sessions/new et PATCH /sessions/{id}/close ont été retirés (audit du 2026-10-14) : aucun écran ne les
+    // appelait, et la création écrivait le statut « OUVERT », refusé par la base. Les sessions se gèrent par
+    // AdminRecrutementController (/api/admin/recrutement/sessions), qui passe par SessionCandidatureService.
 
     /**
      * GET /api/dashboard/applications/recent?limit=5

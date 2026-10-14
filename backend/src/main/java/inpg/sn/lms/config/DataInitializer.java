@@ -183,7 +183,7 @@ public class DataInitializer {
                 s1.setDateFermeture(LocalDate.of(2026, 9, 30));
                 s1.setEstOuverte(true);
                 s1.setQuotaMax(220);
-                s1.setStatus("OUVERT");
+                s1.setStatus(SessionCandidature.STATUT_OUVERTE);
                 s1.setProgram(p1);
                 sessionRepository.save(s1);
 
@@ -193,7 +193,7 @@ public class DataInitializer {
                 s2.setDateFermeture(LocalDate.of(2027, 5, 30));
                 s2.setEstOuverte(true);
                 s2.setQuotaMax(150);
-                s2.setStatus("OUVERT");
+                s2.setStatus(SessionCandidature.STATUT_OUVERTE);
                 s2.setProgram(p2);
                 sessionRepository.save(s2);
 
@@ -203,7 +203,7 @@ public class DataInitializer {
                 s3.setDateFermeture(LocalDate.of(2027, 1, 31));
                 s3.setEstOuverte(false);
                 s3.setQuotaMax(60);
-                s3.setStatus("BROUILLON");
+                s3.setStatus(SessionCandidature.STATUT_BROUILLON);
                 s3.setProgram(p3);
                 sessionRepository.save(s3);
 
@@ -213,7 +213,7 @@ public class DataInitializer {
                 s4.setDateFermeture(LocalDate.of(2026, 3, 15));
                 s4.setEstOuverte(false);
                 s4.setQuotaMax(100);
-                s4.setStatus("CLOTURE");
+                s4.setStatus(SessionCandidature.STATUT_CLOTUREE);
                 s4.setProgram(p4);
                 sessionRepository.save(s4);
 
@@ -570,7 +570,9 @@ public class DataInitializer {
         }
         AlbumPhoto album = new AlbumPhoto(titre, null, promotion, LocalDate.now().minusDays(1));
         album = albumPhotoRepository.save(album);
-        Photo photo = new Photo(album, nomFichier, nomFichier, titre);
+        // Chemin relatif à la racine des téléversements, comme pour toute photo publiée par un formateur
+        // (« photos/… ») : enregistré sans ce préfixe, le fichier écrit ci-dessus n'était jamais retrouvé (404).
+        Photo photo = new Photo(album, "photos/" + nomFichier, nomFichier, titre);
         photoRepository.save(photo);
     }
 

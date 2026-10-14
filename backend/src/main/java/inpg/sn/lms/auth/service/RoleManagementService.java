@@ -1,7 +1,9 @@
 package inpg.sn.lms.auth.service;
 
 import java.util.List;
+import java.util.Set;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,9 +35,28 @@ public class RoleManagementService {
         this.etudiantRepository = etudiantRepository;
     }
 
+    /**
+     * Rôles que le responsable admission peut attribuer depuis l'application.
+     *
+     * <p>La route acceptait tout rôle existant : un responsable admission pouvait faire de n'importe quel compte un
+     * responsable pédagogique, un évaluateur ou un autre responsable admission, et retirer leur rôle aux autres
+     * responsables (audit du 2026-10-12, C3, reproduit le 2026-10-14). Les rôles du personnel naissent désormais au
+     * démarrage, par {@code ComptesInitiaux} ; l'alumni est promu par la pédagogie, l'école et l'entreprise par leur
+     * propre dépôt.
+     */
+    static final Set<String> ROLES_ATTRIBUABLES = Set.of("ROLE_CANDIDAT", "ROLE_ETUDIANT", "ROLE_FORMATEUR");
+
+    /** Comptes du personnel : leur rôle ne se modifie pas depuis l'application, le sien compris. */
+    static final Set<String> ROLES_PROTEGES = Set.of(
+            "ROLE_RESPONSABLE_ADMISSION", "ROLE_RESPONSABLE_PEDAGOGIQUE", "ROLE_EVALUATEUR_ACCREDITATION");
+
     @Transactional
-    public User changerRole(Long userId, RoleChangeRequest request) {
+    public User changerRole(Long userId, RoleChangeRequest request, String auteur) {
         String roleCode = roleUniqueDemandé(request);
+        if (!ROLES_ATTRIBUABLES.contains(roleCode)) {
+            throw new AccessDeniedException("Ce rôle ne s'attribue pas depuis l'application. Rôles possibles : "
+                    + "candidat, étudiant, formateur.");
+        }
         Role role = roleRepository.findByCode(roleCode);
         if (role == null) {
             throw new IllegalArgumentException("Le rôle demandé n'existe pas.");
@@ -43,6 +64,13 @@ public class RoleManagementService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur", "id", userId));
+        if (auteur != null && (auteur.equalsIgnoreCase(user.getUsername()) || auteur.equalsIgnoreCase(user.getEmail()))) {
+            throw new AccessDeniedException("Vous ne pouvez pas modifier le rôle de votre propre compte.");
+        }
+        if (user.getRoles().stream().anyMatch(r -> ROLES_PROTEGES.contains(r.getCode()))) {
+            throw new AccessDeniedException("Le rôle d'un compte du personnel (admission, pédagogie, évaluation) "
+                    + "ne se modifie pas depuis l'application.");
+        }
 
         user.getRoles().clear();
         user.addRole(role);

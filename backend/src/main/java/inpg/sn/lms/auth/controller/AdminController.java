@@ -36,7 +36,9 @@ public class AdminController {
 
     @PutMapping("/users/{id}/roles")
     @PreAuthorize("hasAuthority('ROLE_RESPONSABLE_ADMISSION')")
-    public ResponseEntity<?> changeUserRoles(@PathVariable Long id, @RequestBody RoleChangeRequest request) {
-        return ResponseEntity.ok(roleManagementService.changerRole(id, request));
+    public ResponseEntity<?> changeUserRoles(@PathVariable Long id, @RequestBody RoleChangeRequest request,
+            org.springframework.security.core.Authentication authentication) {
+        return ResponseEntity.ok(roleManagementService.changerRole(id, request,
+                authentication != null ? authentication.getName() : null));
     }
 }

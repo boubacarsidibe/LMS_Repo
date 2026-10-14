@@ -454,11 +454,18 @@ APP_MAIL_FROM=no-reply@inpg.sn
 APP_ADMISSION_EMAIL=admission@inpg.sn
 APP_ACCREDITATION_EMAIL=accreditation@inpg.sn
 APP_FRONTEND_URL=http://localhost:4200
-CERTIFICAT_SIGNATURE_SECRET=<mets la MÊME valeur que JWT_SECRET>
+CERTIFICAT_SIGNATURE_SECRET=<clé propre : openssl rand -base64 48>
+CERTIFICAT_SIGNATURE_SECRETS_ANCIENS=<valeur précédente, si des certificats ont déjà été délivrés avec elle>
+# Base neuve de production : comptes du personnel créés au premier démarrage (puis jamais modifiés)
+APP_INIT_PASSWORD=<mot de passe initial robuste, à changer à la première connexion>
+APP_INIT_ADMISSION_EMAIL=
+APP_INIT_PEDAGOGIE_EMAIL=
+APP_INIT_EVALUATEUR_EMAIL=
 ```
-> Piège connu : `certificat.signature.secret` a un fallback `${jwt.secret}` qui ne
-> se déclenche que si la variable est ABSENTE, pas si elle est vide — d'où la
-> recopie explicite.
+> Depuis le 2026-10-14, `CERTIFICAT_SIGNATURE_SECRET` est **obligatoire** et n'a plus de repli sur `JWT_SECRET`
+> (le serveur refuse de démarrer sans elle). Un environnement où elle recopiait `JWT_SECRET` (consigne d'avant)
+> garde la même valeur pour l'instant ; pour la rendre propre sans invalider les certificats imprimés : nouvelle
+> valeur dans `CERTIFICAT_SIGNATURE_SECRET`, ancienne dans `CERTIFICAT_SIGNATURE_SECRETS_ANCIENS`.
 
 ### `docker-compose.override.yml`  (racine)
 ```yaml

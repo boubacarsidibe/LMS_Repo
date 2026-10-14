@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Cours, CoursCreation } from '../models/cours';
 import { Support } from '../models/support';
-import { SupportDetail } from '../../pedagogie/services/pedagogie.service';
 
 @Injectable({ providedIn: 'root' })
 export class CoursService {
@@ -45,22 +44,5 @@ export class CoursService {
     const formData = new FormData();
     formData.append('image', image);
     return this.http.post<Cours>(`${this.api}/formateur/cours/${id}/image`, formData);
-  }
-
-  /**
-   * Vue étudiant d'un cours et de ses supports. Les endpoints /formateur/**
-   * ci-dessus sont réservés au propriétaire du cours et renvoient 404 à un
-   * étudiant, d'où ces deux appels distincts.
-   */
-  getAllPublic(): Observable<Cours[]> {
-    return this.http.get<Cours[]>(`${this.api}/cours`);
-  }
-
-  getCoursPublic(id: number): Observable<Cours> {
-    return this.http.get<Cours>(`${this.api}/cours/${id}`);
-  }
-
-  getSupportsPublic(id: number): Observable<SupportDetail[]> {
-    return this.http.get<SupportDetail[]>(`${this.api}/cours/${id}/supports`);
   }
 }

@@ -159,4 +159,36 @@ class CertificatSignatureServiceTest {
         existant.assurerReferenceEtDate();
         assertThat(existant.getDateEmission()).isEqualTo(LocalDate.of(2026, 9, 7));
     }
+
+    // ===================== Rotation de la clé (audit du 2026-10-14) =====================
+
+    /** Changer de clé ne doit pas rendre « altérés » les certificats déjà imprimés. */
+    @Test
+    void un_certificat_signe_avec_l_ancienne_cle_reste_authentique_apres_rotation() {
+        Certificat certificat = this.certificat;
+        certificat.setSignature(new CertificatSignatureService("ancienne-cle").signer(certificat));
+
+        CertificatSignatureService apresRotation = new CertificatSignatureService("nouvelle-cle", "ancienne-cle", "");
+
+        assertThat(apresRotation.estAlteree(certificat)).isFalse();
+        assertThat(apresRotation.signer(certificat)).as("les nouveaux certificats sont signés avec la nouvelle clé").isNotEqualTo(certificat.getSignature());
+    }
+
+    @Test
+    void une_signature_d_une_cle_inconnue_reste_detectee() {
+        Certificat certificat = this.certificat;
+        certificat.setSignature(new CertificatSignatureService("cle-du-faussaire").signer(certificat));
+
+        assertThat(new CertificatSignatureService("nouvelle-cle", "ancienne-cle, autre", "").estAlteree(certificat)).isTrue();
+    }
+
+    /** Plus de repli silencieux sur le secret des jetons : sans clé, le serveur refuse de démarrer. */
+    @Test
+    void une_cle_absente_est_refusee() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> new CertificatSignatureService("", "", "secret-jwt"))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("CERTIFICAT_SIGNATURE_SECRET");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> new CertificatSignatureService("  ", "", "secret-jwt"))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
+

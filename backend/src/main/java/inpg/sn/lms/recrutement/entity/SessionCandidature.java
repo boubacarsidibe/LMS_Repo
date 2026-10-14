@@ -77,7 +77,20 @@ public class SessionCandidature {
     private String description;
 
     @Column(nullable = false)
-    private String status = "BROUILLON"; // BROUILLON, OUVERT, CLOTURE, SUSPENDU
+    /**
+     * Statuts acceptés par la contrainte {@code sessions_candidature_status_check}. Le commentaire d'origine annonçait
+     * « OUVERT, CLOTURE » : l'initialiseur de démonstration les écrivait, et le serveur ne démarrait plus sur une base
+     * neuve (audit du 2026-10-14). Toujours passer par ces constantes.
+     */
+    public static final String STATUT_BROUILLON = "BROUILLON";
+    public static final String STATUT_OUVERTE = "OUVERTE";
+    public static final String STATUT_SUSPENDUE = "SUSPENDUE";
+    public static final String STATUT_CLOTUREE = "CLOTUREE";
+    public static final String STATUT_TERMINEE = "TERMINEE";
+    public static final java.util.Set<String> STATUTS = java.util.Set.of(
+            STATUT_BROUILLON, STATUT_OUVERTE, STATUT_SUSPENDUE, STATUT_CLOTUREE, STATUT_TERMINEE);
+
+    private String status = STATUT_BROUILLON;
 
     @ManyToOne
     @JoinColumn(name = "program_id")

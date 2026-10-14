@@ -15,6 +15,32 @@ export class ResponsableUsersComponent implements OnInit {
   users: User[] = [];
   loading = false;
 
+  /** Même liste que RoleManagementService.ROLES_ATTRIBUABLES (serveur) : le serveur refuse tout autre rôle. */
+  readonly rolesAttribuables = [
+    { code: 'ROLE_CANDIDAT', libelle: 'Candidat' },
+    { code: 'ROLE_ETUDIANT', libelle: 'Étudiant' },
+    { code: 'ROLE_FORMATEUR', libelle: 'Formateur' },
+  ];
+  private readonly rolesPersonnel = ['ROLE_RESPONSABLE_ADMISSION', 'ROLE_RESPONSABLE_PEDAGOGIQUE', 'ROLE_EVALUATEUR_ACCREDITATION'];
+  private readonly libelles: Record<string, string> = {
+    ROLE_RESPONSABLE_ADMISSION: 'Responsable admission', ROLE_RESPONSABLE_PEDAGOGIQUE: 'Responsable pédagogique',
+    ROLE_EVALUATEUR_ACCREDITATION: 'Évaluateur accréditation', ROLE_ALUMNI: 'Alumni', ROLE_ECOLE_FORMATION: 'École de formation',
+    ROLE_ENTREPRISE: 'Entreprise', ROLE_CANDIDAT_FORMATEUR: 'Candidat formateur',
+    ROLE_CANDIDAT: 'Candidat', ROLE_ETUDIANT: 'Étudiant', ROLE_FORMATEUR: 'Formateur',
+  };
+
+  estPersonnel(user: User): boolean {
+    return (user.roles || []).some((r) => this.rolesPersonnel.includes(r as string));
+  }
+
+  estAttribuable(code: string): boolean {
+    return this.rolesAttribuables.some((r) => r.code === code);
+  }
+
+  libelleRole(code: string): string {
+    return code ? this.libelles[code] ?? code : 'Aucun rôle';
+  }
+
   constructor(private admin: AdminService, private notifications: NotificationService) {}
 
   ngOnInit(): void {
@@ -45,7 +71,7 @@ export class ResponsableUsersComponent implements OnInit {
     const roles = newRoleCode ? [newRoleCode] : [];
     this.admin.changeRoles(user.id, roles).subscribe({
       next: (updated: any) => { user.roles = (updated.roles || []).map((r: any) => typeof r === 'string' ? r : r.code); },
-      error: () => { this.notifications.erreur('Erreur lors de la mise à jour des rôles'); this.loadUsers(); }
+      error: (err) => { this.notifications.erreur(err?.error?.message || 'Erreur lors de la mise à jour des rôles'); this.loadUsers(); }
     });
   }
 }

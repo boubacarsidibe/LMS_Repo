@@ -31,14 +31,44 @@ public class CertificatSignatureService {
 
     private static final String ALGORITHME = "HmacSHA256";
 
-    private final String cle;
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CertificatSignatureService.class);
 
-    public CertificatSignatureService(@Value("${certificat.signature.secret}") String cle) {
+    private final String cle;
+    /** Clés précédentes, acceptées pour vérifier un certificat déjà délivré, jamais pour signer. */
+    private final java.util.List<String> clesAnciennes;
+
+    /**
+     * La clé est obligatoire et n'a plus de repli sur {@code jwt.secret} (audit du 2026-10-14) : un même secret servait à
+     * signer les jetons de connexion et les certificats, si bien que changer le premier (rotation, fuite) aurait
+     * invalidé tous les certificats imprimés. Pour changer de clé sans perdre les certificats existants : nouvelle valeur
+     * dans {@code CERTIFICAT_SIGNATURE_SECRET}, ancienne dans {@code CERTIFICAT_SIGNATURE_SECRETS_ANCIENS} (séparées
+     * par des virgules).
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public CertificatSignatureService(@Value("${certificat.signature.secret:}") String cle,
+            @Value("${certificat.signature.secrets-anciens:}") String clesAnciennes,
+            @Value("${jwt.secret:}") String cleJwt) {
+        if (cle == null || cle.isBlank()) {
+            throw new IllegalStateException("CERTIFICAT_SIGNATURE_SECRET est obligatoire (clé de signature des certificats). "
+                    + "Pour garder valides les certificats déjà délivrés, reprenez la valeur utilisée jusqu'ici "
+                    + "(celle de JWT_SECRET si la variable était recopiée).");
+        }
         this.cle = cle;
+        this.clesAnciennes = java.util.Arrays.stream(clesAnciennes == null ? new String[0] : clesAnciennes.split(","))
+                .map(String::trim).filter(c -> !c.isEmpty()).toList();
+        if (cle.equals(cleJwt)) {
+            log.warn("CERTIFICAT_SIGNATURE_SECRET est identique à JWT_SECRET : changer l'un invaliderait l'autre usage. "
+                    + "Donnez-lui une valeur propre et passez l'ancienne dans CERTIFICAT_SIGNATURE_SECRETS_ANCIENS.");
+        }
+    }
+
+    /** Pour les tests : une seule clé, aucune ancienne. */
+    public CertificatSignatureService(String cle) {
+        this(cle, "", "");
     }
 
     public String signer(Certificat certificat) {
-        return hmacHex(contenuCanonique(certificat));
+        return hmacHex(contenuCanonique(certificat), cle);
     }
 
     /**
@@ -48,7 +78,15 @@ public class CertificatSignatureService {
      * une alteration.
      */
     public boolean estAlteree(Certificat certificat) {
-        return certificat.getSignature() != null && !certificat.getSignature().equals(signer(certificat));
+        if (certificat.getSignature() == null) {
+            return false;
+        }
+        String contenu = contenuCanonique(certificat);
+        if (certificat.getSignature().equals(hmacHex(contenu, cle))) {
+            return false;
+        }
+        // Signé avant un changement de clé : toujours authentique.
+        return clesAnciennes.stream().noneMatch(ancienne -> certificat.getSignature().equals(hmacHex(contenu, ancienne)));
     }
 
     private String contenuCanonique(Certificat certificat) {
@@ -83,7 +121,7 @@ public class CertificatSignatureService {
         return valeur == null ? "" : valeur;
     }
 
-    private String hmacHex(String message) {
+    private static String hmacHex(String message, String cle) {
         try {
             Mac mac = Mac.getInstance(ALGORITHME);
             mac.init(new SecretKeySpec(cle.getBytes(StandardCharsets.UTF_8), ALGORITHME));

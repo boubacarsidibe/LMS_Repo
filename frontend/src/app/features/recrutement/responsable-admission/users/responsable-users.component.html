@@ -1,6 +1,6 @@
 <section class="p-6">
   <h2 class="font-body-lg text-body-lg font-semibold mb-4">Gestion des rôles utilisateurs</h2>
-  <p class="text-xs text-on-surface-variant mb-4">Un compte ne peut détenir qu'un seul rôle à la fois. Changer le rôle retire automatiquement l'ancien.</p>
+  <p class="text-xs text-on-surface-variant mb-4">Un compte ne peut détenir qu'un seul rôle à la fois. Changer le rôle retire automatiquement l'ancien. Seuls les rôles candidat, étudiant et formateur s'attribuent ici ; les comptes du personnel ne se modifient pas.</p>
 
   <div *ngIf="loading" class="font-body-sm text-body-sm text-on-surface-variant">Chargement...</div>
 
@@ -17,18 +17,15 @@
         <td class="p-2">{{ u.username }}</td>
         <td class="p-2">{{ u.email }}</td>
         <td class="p-2">
-          <select class="border border-outline-variant rounded-lg px-2 py-1 font-body-sm text-body-sm"
+          <!-- Compte du personnel : rôle non modifiable depuis l'application (créé au démarrage, voir ComptesInitiaux). -->
+          <span *ngIf="estPersonnel(u)" class="font-body-sm text-body-sm text-on-surface-variant">{{ libelleRole(currentRole(u)) }}</span>
+          <select *ngIf="!estPersonnel(u)" class="border border-outline-variant rounded-lg px-2 py-1 font-body-sm text-body-sm"
                   [attr.aria-label]="'Rôle de ' + u.username"
                   [attr.title]="'Rôle de ' + u.username"
                   [ngModel]="currentRole(u)"
                   (ngModelChange)="onRoleChange(u, $event)">
-            <option value="">Aucun rôle</option>
-            <option value="ROLE_CANDIDAT">Candidat</option>
-            <option value="ROLE_ETUDIANT">Étudiant</option>
-            <option value="ROLE_FORMATEUR">Formateur</option>
-            <option value="ROLE_RESPONSABLE_ADMISSION">Responsable Admission</option>
-            <option value="ROLE_RESPONSABLE_PEDAGOGIQUE">Responsable Pédagogique</option>
-            <option value="ROLE_EVALUATEUR_ACCREDITATION">Évaluateur Accréditation</option>
+            <option *ngIf="!estAttribuable(currentRole(u))" [value]="currentRole(u)" disabled>{{ libelleRole(currentRole(u)) }}</option>
+            <option *ngFor="let r of rolesAttribuables" [value]="r.code">{{ r.libelle }}</option>
           </select>
         </td>
       </tr>
