@@ -87,11 +87,11 @@ public class SecurityConfig {
                 // pointe le QR code imprimé) : destinée à un tiers sans compte, qui n'obtient
                 // qu'une DTO restreinte (voir CertificatPublicController), jamais l'entité.
                 .requestMatchers("/api/certificats/public/**").permitAll()
-                // Liste des écoles accréditées (voir AccreditationPublicController) : le TDR §F
-                // demandait une liste publique (« processus transparent »), mais décision produit
-                // du 2026-08-25 (LOG_BLOQUANT.md) de la réserver aux comptes connectés — tout rôle
-                // confondu, pas de restriction par rôle, d'où la chute sur .anyRequest().authenticated()
-                // plus bas plutôt qu'un permitAll ici.
+                // Liste des écoles accréditées (voir AccreditationPublicController) : réservée aux
+                // comptes connectés, décision produit du 2026-08-25 (LOG_BLOQUANT.md, n° 21) conforme
+                // au TDR §F, qui demande une « base de données des écoles accréditées » sans exiger
+                // qu'elle soit publique — tout rôle confondu, pas de restriction par rôle, d'où la
+                // chute sur .anyRequest().authenticated() plus bas plutôt qu'un permitAll ici.
                 // Administration des comptes : création de formateurs, listings nominatifs,
                 // inscription directe d'un candidat ou d'un étudiant. Ces opérations
                 // attribuent des rôles ou exposent des données personnelles.

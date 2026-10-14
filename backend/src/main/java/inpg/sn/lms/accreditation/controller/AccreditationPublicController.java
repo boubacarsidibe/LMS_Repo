@@ -18,8 +18,9 @@ import inpg.sn.lms.accreditation.repository.DemandeAccreditationRepository;
  *
  * <p>Réservée aux comptes connectés — tout rôle confondu, aucune restriction
  * par rôle — depuis la décision produit du 2026-08-25 (voir
- * {@code LOG_BLOQUANT.md}) : le TDR demandait une liste réellement publique,
- * mais l'accès a été resserré à la demande de l'utilisateur. Réponse toujours
+ * {@code LOG_BLOQUANT.md}, n° 21), à la demande de l'utilisateur. Le TDR §F
+ * demande une base des écoles accréditées et un processus « transparent » (celui
+ * des demandes) : il n'exige pas que la liste soit publique. Réponse toujours
  * restreinte (voir {@link EcoleAccrediteeDto}), jamais l'entité ni les
  * coordonnées de l'école.
  */

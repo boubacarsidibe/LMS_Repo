@@ -104,8 +104,11 @@ export const routes: Routes = [
   },
 
   // Liste des écoles accréditées (TDR §F) : réservée aux comptes connectés,
-  // tout rôle confondu — décision produit du 2026-08-25 (LOG_BLOQUANT.md),
-  // le TDR demandait initialement une liste réellement publique.
+  // tout rôle confondu — décision produit du 2026-08-25 (LOG_BLOQUANT.md, n° 21).
+  // Le TDR demande une « base de données des écoles accréditées » et un processus
+  // « transparent » (celui des demandes) : il n'exige nulle part une liste publique.
+  // Un visiteur y arrive par la connexion (`?retour=`, voir Login), qui lui explique
+  // pourquoi puis le ramène ici.
   {
     path: 'ecoles-accreditees',
     canActivate: [authGuard],

@@ -26,8 +26,12 @@
                en permanence dans la navbar public poussait son nombre d'entrées trop haut,
                et ce contenu est réservé aux comptes connectés (authGuard) - un bouton
                explicite, au même endroit que les autres appels à l'action, évite qu'un
-               visiteur non connecté tombe dessus par surprise dans le menu. -->
-          <a routerLink="/ecoles-accreditees" class="px-6 py-3 bg-transparent text-primary font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium rounded-lg border border-outline-variant hover:bg-surface-container-low transition-all no-underline">
+               visiteur non connecté tombe dessus par surprise dans le menu.
+               Un visiteur passe par la connexion (audit du 2026-10-14, M-6) : elle lui dit
+               pourquoi, puis le ramène à la liste (`retour`) au lieu de son tableau de bord. -->
+          <a [routerLink]="connecte ? lienEcolesAccreditees : '/auth/login'"
+             [queryParams]="connecte ? null : { retour: lienEcolesAccreditees }"
+             class="px-6 py-3 bg-transparent text-primary font-body-sm text-body-sm leading-4 tracking-[0.01em] font-medium rounded-lg border border-outline-variant hover:bg-surface-container-low transition-all no-underline">
             Voir les écoles accréditées
           </a>
         </div>

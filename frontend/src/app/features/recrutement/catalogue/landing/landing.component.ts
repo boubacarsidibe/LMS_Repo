@@ -5,6 +5,7 @@ import { FooterComponent } from '../../../../shared/components/footer/footer.com
 import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { Program } from '../../models/program';
 import { RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
+import { Auth } from '../../../../core/auth/services/authService';
 import { RecrutementModule } from '../../recrutement.module';
 
 @Component({
@@ -25,7 +26,19 @@ export class LandingComponent implements OnInit {
 
   private static readonly NB_PHARES = 6;
 
-  constructor(private router: Router, private recrutementService: RecrutementService) {}
+  /** Page réservée aux comptes connectés (`authGuard`) ; la connexion y ramène un visiteur (`?retour=`). */
+  readonly lienEcolesAccreditees = '/ecoles-accreditees';
+
+  constructor(
+    private router: Router,
+    private recrutementService: RecrutementService,
+    private auth: Auth,
+  ) {}
+
+  /** Même définition que le navbar : un jeton et un compte chargé. */
+  get connecte(): boolean {
+    return this.auth.isLoggedIn() && this.auth.currentUser() != null;
+  }
 
   ngOnInit(): void {
     this.recrutementService.getFormationsPubliques().subscribe({

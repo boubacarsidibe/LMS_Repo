@@ -7,6 +7,18 @@ import { finalize, tap, catchError } from 'rxjs/operators';
 import { Auth } from '../../../core/auth/services/authService';
 import { AuthResponse } from '../../../core/auth/models/auth-response';
 
+/**
+ * Pages qu'un visiteur peut demander avant de se connecter (`/auth/login?retour=/chemin`), avec la raison
+ * affichée. Liste fermée, jamais une adresse libre : `retour` vient de l'URL, donc de n'importe qui — une valeur
+ * inconnue est ignorée (ni message, ni redirection), et l'utilisateur arrive à l'accueil de son rôle.
+ */
+const RETOURS_AUTORISES = new Map<string, string>([
+  [
+    '/ecoles-accreditees',
+    'La liste des écoles accréditées est réservée aux comptes connectés. Connectez-vous pour la consulter.',
+  ],
+]);
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -25,6 +37,12 @@ export class Login {
   form: FormGroup;
 
   errorMessage: string = '';
+
+  /** Pourquoi on passe par la connexion quand ce n'est pas une panne (voir `RETOURS_AUTORISES`). */
+  infoMessage: string = '';
+
+  /** Page à rouvrir une fois connecté ; sans elle, l'accueil du rôle. */
+  private retour: string | null = null;
 
   loginLoading = false;
 
@@ -46,6 +64,14 @@ export class Login {
 
     if (this.route.snapshot.queryParamMap.has('passwordChanged')) {
       this.errorMessage = 'Votre mot de passe a été modifié. Connectez-vous avec votre nouveau mot de passe.';
+    }
+
+    // Venu d'une page réservée aux comptes (bouton de l'accueil) : lui dire pourquoi, puis l'y ramener.
+    const retour = this.route.snapshot.queryParamMap.get('retour') ?? '';
+    const raison = RETOURS_AUTORISES.get(retour);
+    if (raison) {
+      this.retour = retour;
+      this.infoMessage = raison;
     }
 
     this.form = this.formBuilder.group({
@@ -113,7 +139,11 @@ export class Login {
       )
       .subscribe({
         next: () => {
+          if (this.retour) {
+            this.router.navigateByUrl(this.retour);
+          } else {
             this.authService.redirectByRole(this.router);
+          }
         },
         error: () => {
           this.errorMessage = 'Une erreur inattendue est survenue.';

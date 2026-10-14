@@ -7,7 +7,7 @@
     <a 
       routerLink="/auth/login" 
       routerLinkActive="text-secondary font-bold border-b-2 border-secondary"
-      [routerLinkActiveOptions]="{ exact: true }"
+      [routerLinkActiveOptions]="{ paths: 'exact', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' }"
       class="flex-1 pb-3 text-center font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors">
       Se connecter
     </a>
@@ -17,6 +17,12 @@
       class="flex-1 pb-3 text-center font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors">
       S'inscrire
     </a>
+  </div>
+
+  <!-- Détour par la connexion (page réservée aux comptes) : une explication, pas une erreur -->
+  <div *ngIf="infoMessage" role="status" class="mb-6 p-3 rounded-lg bg-primary-container text-on-primary-container text-body-sm flex items-start gap-2">
+    <span class="material-symbols-outlined text-[20px] shrink-0" aria-hidden="true">info</span>
+    <span>{{ infoMessage }}</span>
   </div>
 
   <!-- Message d'erreur -->
