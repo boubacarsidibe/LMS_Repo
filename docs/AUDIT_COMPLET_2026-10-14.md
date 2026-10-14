@@ -104,7 +104,9 @@ Frontend : **aucun test** pour l'accréditation, l'espace alumni, l'espace entre
 
 ### M-6 — L'accueil renvoie vers une page « Écoles accréditées » réservée aux comptes
 Choix produit du 2026-08-25 (liste réservée aux connectés), mais le lien de l'accueil public mène le visiteur à l'écran de connexion
-sans explication. Retirer le lien de l'accueil, ou rouvrir la liste (le TDR la voulait publique).
+sans explication. Deux sorties étaient envisagées : retirer le lien de l'accueil, ou rouvrir la liste (« le TDR la voulait publique » —
+**inexact** : relu, le TDR §F ne demande pas une liste publique, voir le correctif plus bas). Constat aggravant, mesuré : même après
+s'être connecté, le visiteur arrivait sur son tableau de bord, jamais sur la liste.
 
 ## Faible
 
@@ -155,11 +157,14 @@ résultat de test automatique ou manuel ; candidat désisté qui ne peut pas red
 | E-3 | clé des certificats obligatoire, sans repli ; anciennes clés acceptées pour vérifier (rotation) ; avertissement si identique au JWT | sans clé : refus de démarrer avec message ; recette : avertissement affiché |
 | M-1 | routes générales `/cours`, `/cours/{id}`, `/cours/{id}/supports`, `/cohortes` retirées (inutilisées) | 0 fuite sur les 21 essais d'accès croisés |
 | M-2 | chemin `photos/` dans `DataInitializer` + migration `V202610141000` pour les bases existantes | photothèques étudiant et formateur : plus aucune erreur |
-
-Tests : 596 serveur et 288 frontend verts ; contrôles de mutation (liste blanche, statut « OUVERT », anciennes clés) détectés.
 | E-2 | `LimiteDebitFilter` : inscription 10/h, question publique 5/15 min, vérification de certificat 30/10 min, par adresse (dernière adresse de `X-Forwarded-For`), 429 + `Retry-After`, mémoire bornée, réglable par `APP_RATE_LIMIT_*` | via nginx : 10 inscriptions puis 429 ; question limitée à partir de la 6ᵉ ; 30 vérifications puis 429 ; falsification d'adresse sans effet ; routes non visées libres |
+| E-4 | Angular 21.2.18 → **21.2.25** (`core`, `common`, `compiler`, `forms`, `platform-browser`, `router`, `compiler-cli`), `build` et `cli` en 21.2.26, `vitest` 4.1.11, puis `npm audit fix` | `npm audit` : **23 alertes → 0** (dont 6 en production) ; `ngc` propre, 288 tests frontend à froid, image reconstruite (le build Docker réinstalle les paquets), exploration des 106 pages identique sur bureau, dépôt de candidature de bout en bout 9/9 |
+| M-4 | règle globale sous 768 px dans `styles.css` (marge de page 16 px au lieu de 40, titre de page 32 px au lieu de 48) + 7 gabarits ciblés : `sr-only` ramené dans son conteneur défilant (il élargissait la page des certificats à 935 px), `shrink-0` → `sm:shrink-0`, tuiles et grilles qui passent à la ligne | **106 pages à 320, 360 et 390 px : 0 défilement horizontal** (avant : 11, 5 et 8 pages) ; bureau inchangé (0 écart de constat sur 106 pages) |
+| M-6 | le bouton de l'accueil envoie un visiteur à `/auth/login?retour=/ecoles-accreditees` ; la connexion affiche pourquoi (« réservée aux comptes connectés ») puis le ramène à la liste ; `retour` n'accepte qu'une liste fermée de pages. **La décision du 2026-08-25 est conservée** : le TDR §F demande une « base de données des écoles accréditées » et un processus « transparent » (celui des demandes), pas une liste publique — précision ajoutée à `LOG_BLOQUANT.md` n° 21, trois commentaires corrigés | visiteur : explication affichée, puis arrivée sur la liste (avant : tableau de bord) ; compte connecté : accès direct, inchangé ; `retour` étranger (`https://…`, `//…`, autre page de l'application) ignoré ; 9 tests de connexion et 2 d'accueil, celui du visiteur échoue sur l'ancien code |
 
-Restent ouverts : E-4 (mise à jour Angular), M-3 à M-6 et les points faibles. Tests après E-2 : 608 serveur.
+Tests : 608 serveur et 299 frontend verts (à froid) ; contrôles de mutation (liste blanche, statut « OUVERT », anciennes clés) détectés.
+
+Restent ouverts : M-3 (donnée à corriger par la pédagogie : affecter un formateur aux 4 cours de la formation MPG), M-5 et les points faibles.
 
 **À faire avant le prochain déploiement en production** : vérifier que `CERTIFICAT_SIGNATURE_SECRET` y est défini (sinon le serveur refuse
 désormais de démarrer — reprendre la valeur actuelle, celle de `JWT_SECRET` si elle était recopiée), et renseigner les `APP_INIT_*` si la base est neuve.

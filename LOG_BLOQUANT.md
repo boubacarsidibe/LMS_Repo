@@ -479,6 +479,15 @@ casser l'appel frontend existant ni élargir le diff — seule l'autorisation
 change ; les commentaires du contrôleur et de la route sont mis à jour pour
 refléter l'état réel plutôt que le nom.
 
+**Précision du 2026-10-14 (audit complet, constat M-6)** : relu mot à mot, le TDR §F ne demande **pas** une
+liste publique. Il demande « une base de données des écoles accréditées » (dernière ligne des besoins spécifiques)
+et que « ce processus » — le traitement des demandes : dépôt, suivi d'état, notifications à chaque étape,
+décisions des évaluateurs — soit « transparent » pour l'école qui candidate. Réserver la liste aux comptes
+connectés n'est donc pas un écart au TDR, et rien n'oblige à la rouvrir. Ce qui restait à corriger était
+ailleurs : le bouton « Voir les écoles accréditées » de l'accueil, visible de tous, menait un visiteur à la
+connexion sans un mot, puis le déposait sur son tableau de bord. Il passe désormais par
+`/auth/login?retour=/ecoles-accreditees` : l'écran de connexion explique, puis ramène à la liste.
+
 ### 22. Nettoyage navigation : rien à retirer, un orphelin repéré mais non supprimé
 
 Audit systématique de tous les layouts/barres latérales de l'application

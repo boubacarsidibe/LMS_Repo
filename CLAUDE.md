@@ -88,6 +88,18 @@ filet `bg-white/10`, hérités de l'ancien bouton bleu moyen.
 `rounded` → `rounded-lg` ne doit **jamais** toucher une case à cocher (16 px de côté : elle deviendrait
 ronde).
 
+**Affichage sur téléphone (audit du 2026-10-14 : 106 pages, 0 défilement horizontal à 320, 360 et 390 px).**
+Une règle **globale** de `styles.css` (section 5, sous 768 px) ramène `p-margin-desktop` / `px-margin-desktop`
+à 16 px (`margin-mobile`) et `h1.text-display` à 32 px / 40 px (`headline-lg`) : 65 gabarits posaient la marge de
+bureau (40 px) telle quelle, et un titre de 48 px dépasse dès qu'un mot est long (« d'accréditation »,
+« Communications »). Ne pas ajouter de variante `max-md:` page par page : un nouveau `<h1>` ou une nouvelle page
+qui suit la charte est déjà couvert. Trois pièges restent côté gabarit : (1) un `sr-only` (positionné en
+`absolute`) dans un conteneur `overflow-x-auto` **sans ancêtre positionné** s'échappe du défilement et élargit
+toute la page (certificats : 935 px) — poser `relative` sur le conteneur ; (2) `shrink-0` sur une rangée
+d'actions l'empêche de passer à la ligne : `sm:shrink-0` ; (3) une grille à colonnes fixes ou une rangée de
+tuiles sans `flex-wrap` déborde sous 360 px : `grid-cols-1` (= `minmax(0, 1fr)`) ou `flex-wrap`. Vérifier en
+exécution réelle : `document.documentElement.scrollWidth` doit valoir la largeur de la fenêtre.
+
 ### Règles à appliquer
 
 | Élément | Classes |
@@ -271,6 +283,27 @@ a fait passer pour « flottants » alors qu'ils étaient reproductibles. Vérifi
 quand deux fichiers de test partageaient un bloc ; un accesseur (`get x() { return CONSTANTE; }`) l'évite.
 36 autres champs de ce motif existent (`libellesStatut = LIBELLES_…`) : à convertir si le défaut y réapparaît.
 
+### Mettre à jour une dépendance du frontend : npm 11 obligatoire, le Codespace a npm 9
+
+`frontend/package.json` déclare `"packageManager": "npm@11.11.1"` ; le Codespace livre **npm 9.8.1**. Les paquets
+Angular s'épinglent mutuellement en version exacte (`@angular/common@21.2.25` exige `@angular/core@21.2.25`) :
+avec npm 9, monter un seul d'entre eux donne `ERESOLVE` (rapport dans `~/.npm/_logs/*-eresolve-report.txt`), et
+forcer le passage réécrit des centaines de lignes **sans rapport** du `package-lock.json` (354 lignes essayées le
+2026-10-14). La méthode qui ne touche que ce qu'on veut :
+
+```bash
+cd frontend
+npx --yes npm@11 install --save --force @angular/common@^21.2.25 @angular/compiler@^21.2.25 …   # tous ensemble
+git diff --stat package-lock.json     # quelques dizaines de lignes (80 pour les sept paquets du 2026-10-14)
+npx --yes npm@11 audit                # 0 vulnérabilité attendue
+```
+
+Monter **tous** les paquets `@angular/*` en même temps (core, common, compiler, forms, platform-browser, router,
+compiler-cli ; `@angular/build` et `@angular/cli` suivent leur propre numérotation de correctif), puis contrôler à
+froid : `npx ngc --noEmit -p tsconfig.app.json`, `NG_BUILD_CACHE=0 npx ng test --watch=false`, et reconstruire
+l'image (`docker compose up -d --build --no-deps frontend` : le build Docker réinstalle les paquets depuis le
+verrou, c'est lui qui prouve que le verrou est cohérent).
+
 ### Le terminal refuse `rm` dans un `docker exec … sh -c`
 
 Les fichiers téléversés (`/app/uploads/<UUID>_<nom>`, dans `demo-backend`) ne se suppriment pas depuis une session Claude : le garde-fou
@@ -449,6 +482,14 @@ recette recopie encore le secret JWT (avertissement au démarrage) : à séparer
 **Un étudiant ne lit un cours que par la scolarité** (`/scolarite/mes-cours…`, chaîne d'habilitation). Les routes générales
 `/espace-etudiant/cours`, `/cours/{id}`, `/cours/{id}/supports`, `/cohortes` montraient tout cours à tout étudiant ; inutilisées, elles ont
 été retirées — ne pas les recréer sans `HabilitationCoursService`.
+
+**La liste des écoles accréditées est réservée aux comptes connectés, et c'est conforme au TDR** (décision du 2026-08-25,
+`LOG_BLOQUANT.md` n° 21, précisée le 2026-10-14). Le TDR §F demande une « base de données des écoles accréditées » et un processus
+« transparent » (celui des demandes), jamais une liste publique : ne pas la rouvrir « pour se conformer au TDR ». Le bouton de
+l'accueil reste visible de tous (demande directe du 2026-08-25) ; un visiteur passe par `/auth/login?retour=/ecoles-accreditees`, dont
+l'écran (`Login`, liste fermée `RETOURS_AUTORISES`) explique pourquoi puis le ramène à la liste au lieu de son tableau de bord. Toute
+autre valeur de `retour` est ignorée : ne jamais la remplacer par une adresse libre (elle vient de l'URL, donc de n'importe qui). Une
+nouvelle page réservée mise en avant par une page publique s'ajoute à cette liste, avec sa raison.
 
 **Un seul système d'avis : `retour_evaluation`** (migration `V7`). `evaluations_cours`
 et `POST /retours` ont été supprimés : l'avis d'un étudiant n'atteignait jamais son
