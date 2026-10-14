@@ -157,7 +157,9 @@ résultat de test automatique ou manuel ; candidat désisté qui ne peut pas red
 | M-2 | chemin `photos/` dans `DataInitializer` + migration `V202610141000` pour les bases existantes | photothèques étudiant et formateur : plus aucune erreur |
 
 Tests : 596 serveur et 288 frontend verts ; contrôles de mutation (liste blanche, statut « OUVERT », anciennes clés) détectés.
-Restent ouverts : E-2 (limitation de débit), E-4 (mise à jour Angular), M-3 à M-6 et les points faibles.
+| E-2 | `LimiteDebitFilter` : inscription 10/h, question publique 5/15 min, vérification de certificat 30/10 min, par adresse (dernière adresse de `X-Forwarded-For`), 429 + `Retry-After`, mémoire bornée, réglable par `APP_RATE_LIMIT_*` | via nginx : 10 inscriptions puis 429 ; question limitée à partir de la 6ᵉ ; 30 vérifications puis 429 ; falsification d'adresse sans effet ; routes non visées libres |
+
+Restent ouverts : E-4 (mise à jour Angular), M-3 à M-6 et les points faibles. Tests après E-2 : 608 serveur.
 
 **À faire avant le prochain déploiement en production** : vérifier que `CERTIFICAT_SIGNATURE_SECRET` y est défini (sinon le serveur refuse
 désormais de démarrer — reprendre la valeur actuelle, celle de `JWT_SECRET` si elle était recopiée), et renseigner les `APP_INIT_*` si la base est neuve.

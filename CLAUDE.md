@@ -430,6 +430,13 @@ neuve de production n'avait **aucun compte**. Règles : le statut d'une session 
 `APP_INIT_ADMISSION_EMAIL`, `APP_INIT_PEDAGOGIE_EMAIL`, `APP_INIT_EVALUATEUR_EMAIL`), idempotent, jamais réinitialisé. Vérifier une
 modification de l'initialisation **sur une base vierge** (`create database …`, conteneur du serveur sur un autre port) : la recette ne le dira pas.
 
+**Les trois routes ouvertes à tous sont limitées par adresse** (`LimiteDebitFilter`, audit du 2026-10-14) : inscription 10 par heure,
+question publique 5 par 15 minutes, vérification de certificat 30 par 10 minutes ; réponse 429 avec `Retry-After`. L'adresse retenue est
+la **dernière** de `X-Forwarded-For` (celle qu'ajoute le proxy ; les précédentes sont écrites par le client). Les compteurs sont en mémoire :
+ils repartent à zéro à chaque redémarrage, et **en recette tous les visiteurs partagent une adresse** (nginx local) — dix inscriptions de test
+en une heure suffisent à bloquer les suivantes ; régler `APP_RATE_LIMIT_INSCRIPTION` (ou `APP_RATE_LIMIT_ENABLED=false`) pour une campagne d'essais.
+Toute nouvelle route publique sensible s'ajoute à la liste des règles de ce filtre.
+
 **Le responsable admission n'attribue que candidat, étudiant, formateur** (`RoleManagementService.ROLES_ATTRIBUABLES`) : il pouvait donner
 n'importe quel rôle, y compris responsable pédagogique, et rétrograder les autres responsables. Les comptes du personnel ne se modifient pas
 depuis l'application, le sien non plus.
@@ -576,8 +583,8 @@ public et permanent de l'INPG (un QR imprimé ne se corrige pas), pas `localhost
 est aussi imprimée sous le QR pour une saisie manuelle. La page publique qu'il ouvre (`CertificatPublicController`,
 sans connexion) restitue ce qu'un faussaire retoucherait sur un vrai document — nom, formation, **période**,
 **code**, date d'émission, validité de la signature — mais jamais la date de naissance, pourtant imprimée :
-c'est une donnée d'identité. Aucune limitation de débit n'y protège le balayage des références (8 caractères
-hexadécimaux aléatoires) : à ajouter avant la mise en production.
+c'est une donnée d'identité. Le balayage des références (8 caractères hexadécimaux aléatoires) est freiné par
+`LimiteDebitFilter` (30 vérifications par 10 minutes et par adresse) ; une limite plus stricte reste possible si besoin.
 
 **Tout PDF sort sur le papier à en-tête de l'INPG, par un moteur commun — ne pas réécrire de mini-moteur dans
 un service.** `pdf/PapierEnTete` (PDFBox) pose sur chaque page le logo, le pied de page (adresse, téléphone,
