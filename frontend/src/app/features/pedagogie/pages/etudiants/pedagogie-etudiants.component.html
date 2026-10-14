@@ -7,7 +7,7 @@
         Le répertoire des inscrits, leur promotion et leur matricule.
       </p>
     </div>
-    <div class="flex gap-stack-md shrink-0 flex-wrap">
+    <div class="flex gap-stack-md sm:shrink-0 flex-wrap">
       <!-- Même géométrie que l'espace admission : hauteur 40 px, icône 20 px, action
            principale en dernier. Les tailles variaient ici de px-4 py-3 à px-6 py-3. -->
       <button type="button" (click)="exporter()"
@@ -41,17 +41,17 @@
 
   <!-- Filtres -->
   <div class="flex gap-stack-md flex-wrap items-center">
-    <div class="relative">
+    <div class="relative max-w-full">
       <select [(ngModel)]="filtrePromotion"
-              class="appearance-none bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-2.5 pr-9 rounded-lg font-body-sm text-body-sm text-on-surface-variant outline-none cursor-pointer">
+              class="w-full appearance-none bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-2.5 pr-9 rounded-lg font-body-sm text-body-sm text-on-surface-variant outline-none cursor-pointer">
         <option value="">Toutes les promotions</option>
         <option *ngFor="let p of promotions" [value]="p.libelle">{{ p.libelle }}</option>
       </select>
       <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-outline text-[18px]">expand_more</span>
     </div>
-    <div class="relative">
+    <div class="relative max-w-full">
       <select [(ngModel)]="filtreStatut"
-              class="appearance-none bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-2.5 pr-9 rounded-lg font-body-sm text-body-sm text-on-surface-variant outline-none cursor-pointer">
+              class="w-full appearance-none bg-surface-container-lowest border border-outline-variant shadow-sm px-4 py-2.5 pr-9 rounded-lg font-body-sm text-body-sm text-on-surface-variant outline-none cursor-pointer">
         <option value="">Tous les statuts</option>
         <option *ngFor="let s of statutsDisponibles" [value]="s">{{ s }}</option>
       </select>

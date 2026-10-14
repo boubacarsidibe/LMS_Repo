@@ -32,7 +32,9 @@
   <p *ngIf="chargement" class="font-body-md text-body-md text-on-surface-variant">Chargement…</p>
 
   <div *ngIf="!chargement" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-    <div class="overflow-x-auto">
+    <!-- « relative » : sans ancêtre positionné, le <span class="sr-only"> (position: absolute) de la dernière colonne
+         n'est pas retenu par ce conteneur et élargit toute la page (935 px sur un téléphone). -->
+    <div class="relative overflow-x-auto">
       <table class="w-full">
         <thead>
           <tr class="border-b border-outline-variant">

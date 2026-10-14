@@ -63,7 +63,9 @@
     description="Aucune demande d'accréditation ne correspond à ce filtre."
   ></app-ui-empty-state>
 
-  <div class="grid lg:grid-cols-2 gap-base" *ngIf="!chargement && demandes.length > 0">
+  <!-- grid-cols-1 : la colonne unique devient « minmax(0, 1fr) » et peut rétrécir ; sans elle, la plus large des cartes
+       imposait sa largeur et la page défilait horizontalement sur téléphone. -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-base" *ngIf="!chargement && demandes.length > 0">
     <!-- Liste -->
     <ul class="space-y-base">
       <li

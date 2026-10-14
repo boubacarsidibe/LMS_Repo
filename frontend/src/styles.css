@@ -63,3 +63,31 @@ tr[class*="cursor-pointer"], tr[class*="group"] {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/*
+ * 5. Adaptation téléphone (audit du 2026-10-14)
+ *
+ * Les 65 gabarits de page posent `p-margin-desktop` (40 px de chaque côté) quel que soit l'écran : sur 360 px il ne
+ * reste que 280 px au contenu, et un titre de page en 48 px dont le mot le plus long fait 339 px (« d'accréditation »,
+ * « Communications ») déborde — la page défile horizontalement. Le jeton `margin-mobile` (16 px) existait sans être posé.
+ * Plutôt que 65 gabarits modifiés un à un (et tous ceux à venir), deux règles sous le seuil `md` du reste de l'interface :
+ *   - la marge de page prend le jeton mobile ;
+ *   - le titre de page (`h1.text-display`) passe de 48 à 32 px. Les gros chiffres des tableaux de bord, qui utilisent aussi
+ *     `text-display` mais ne sont pas des `h1`, ne changent pas.
+ * Au-dessus de 768 px, rien ne change. Dans la couche `utilities`, après Tailwind : ces règles l'emportent sur les classes.
+ */
+@layer utilities {
+  @media (max-width: 767px) {
+    .p-margin-desktop {
+      padding: theme(spacing.margin-mobile);
+    }
+    .px-margin-desktop {
+      padding-left: theme(spacing.margin-mobile);
+      padding-right: theme(spacing.margin-mobile);
+    }
+    h1.text-display {
+      font-size: theme(fontSize.headline-lg);
+      line-height: 40px;
+    }
+  }
+}
