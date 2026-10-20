@@ -6,7 +6,7 @@ import { seConnecter } from './_communs.mjs';
 const accueil = async (a) => { await a.aller('/espace-entreprise'); };
 
 export default {
-  id: '09-entreprise',
+  id: '10-entreprise',
   titre: "Espace entreprise — exprimer un besoin de formation et suivre la réponse",
   depart: '/auth/login',
   ouverture: {

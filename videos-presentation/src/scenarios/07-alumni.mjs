@@ -17,7 +17,7 @@ async function regler(a, selecteur, valeur) {
 }
 
 export default {
-  id: '06-alumni',
+  id: '07-alumni',
   titre: "Espace alumni — rester en lien avec l'institut après le diplôme",
   depart: '/auth/login',
   ouverture: {

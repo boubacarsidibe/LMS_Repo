@@ -3,7 +3,7 @@
 const DOC = '/work/donnees/documents';
 
 export default {
-  id: '10-candidat-formateur',
+  id: '11-candidat-formateur',
   titre: 'Candidat formateur — répondre à une offre de recrutement',
   depart: '/accueil',
   ouverture: {

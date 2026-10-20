@@ -6,7 +6,7 @@ import { seConnecter, valeurOption } from './_communs.mjs';
 const lien = (chemin) => `a[href="/pedagogie/${chemin}"]`;
 
 export default {
-  id: '03-pedagogie',
+  id: '04-pedagogie',
   titre: 'Espace pédagogique — offre de formation, scolarité, relevés et certificats',
   depart: '/auth/login',
   ouverture: {

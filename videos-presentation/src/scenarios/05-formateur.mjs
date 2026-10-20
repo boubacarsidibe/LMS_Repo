@@ -10,7 +10,7 @@ const dansJours = (n) => {
 };
 
 export default {
-  id: '04-formateur',
+  id: '05-formateur',
   titre: 'Espace formateur — piloter ses cours, suivre ses étudiants, animer sa promotion',
   depart: '/auth/login',
   ouverture: {

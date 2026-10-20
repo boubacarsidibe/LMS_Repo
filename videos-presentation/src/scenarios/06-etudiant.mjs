@@ -5,7 +5,7 @@ import { seConnecter } from './_communs.mjs';
 const lien = (chemin) => `a[href="/espace-etudiant/${chemin}"]`;
 
 export default {
-  id: '05-etudiant',
+  id: '06-etudiant',
   titre: 'Espace étudiant — suivre sa formation, de la première séance au certificat',
   depart: '/auth/login',
   ouverture: {

@@ -10,7 +10,7 @@ const DOC = '/work/donnees/accreditation';
 const references = () => JSON.parse(readFileSync('/work/cache/references.json', 'utf8'));
 
 export default {
-  id: '07-ecole',
+  id: '08-ecole',
   titre: "Espace école de formation — obtenir l'accréditation d'un programme",
   depart: '/accueil',
   ouverture: {
