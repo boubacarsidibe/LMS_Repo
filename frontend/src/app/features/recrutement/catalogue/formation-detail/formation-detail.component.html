@@ -3,7 +3,7 @@
   ============================================================ -->
 <div class="min-h-screen flex flex-col bg-[#F8FAFC]">
 
-  <main class="flex-grow w-full" *ngIf="formation; else notFoundTpl">
+  <main class="flex-grow w-full" *ngIf="formation; else etatAbsentTpl">
 
     <!-- ========== HERO SECTION ========== -->
     <section class="relative bg-white border-b border-[#c7c5d0]/40 overflow-hidden">
@@ -326,6 +326,13 @@
       </div>
     </div>
   </main>
+
+  <!-- ========== SANS FICHE : CHARGEMENT, PUIS « NON TROUVÉE » SEULEMENT SI L'API A RÉPONDU PAR UNE ERREUR ========== -->
+  <ng-template #etatAbsentTpl>
+    <main *ngIf="chargement; else notFoundTpl" class="flex-grow w-full flex items-center justify-center py-20" role="status">
+      <p class="text-sm text-[#77767f]">Chargement de la formation…</p>
+    </main>
+  </ng-template>
 
   <!-- ========== NOT FOUND TEMPLATE ========== -->
   <ng-template #notFoundTpl>

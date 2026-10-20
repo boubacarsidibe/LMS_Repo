@@ -41,10 +41,14 @@ dans l'application, avec un test de non-régression vérifié **rouge sur l'anci
 21. Paiements : après « Valider », la liste « en attente de paiement » restait périmée (même dossier payé dans un tableau, impayé dans l'autre).
 22. **Six boîtes natives `confirm()`/`prompt()`** malgré la convention du projet → `ConfirmationService` (invisibles d'un partage d'écran).
 23. Admission : la recherche de candidatures ne trouvait pas « Rama Kane » (prénom + nom, tel qu'affiché).
+24. **Fiche d'une formation : « Formation non trouvée » affiché pendant le chargement** — repéré en relisant la vidéo du candidat (le
+    clic sur « Certifications HSE » montrait une erreur pendant ~2 s avant la fiche). Le gabarit lisait `formation` seul et ignorait
+    `chargement`. Même défaut sur le profil étudiant du formateur (« Étudiant introuvable. »). Corrigé avec un état « Chargement… »,
+    deux tests de non-régression par page (échec constaté sur l'ancien code), vérifié en navigateur avec une réponse retardée de 2,5 s.
 
 ## Gravité
 - **Bloquants** (fonction inutilisable) : 17, 18, 11, 10, 2.
-- **Incohérences visibles** : 7, 9, 13, 20, 21, 12, 15.
+- **Incohérences visibles** : 7, 9, 13, 20, 21, 12, 15, 24.
 - **Ergonomie / hygiène** : 4, 5, 6, 14, 19, 22, 23.
 
 ## Recommandations restantes (non traitées)
