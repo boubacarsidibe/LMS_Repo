@@ -19,19 +19,20 @@ Prérequis : la pile Docker tourne (`docker compose up -d`), le serveur de dev d
 
 | Fichier | Public | Parcours |
 |---|---|---|
+| `00-presentation-generale` | Tous publics | site public, les dix profils, parcours d'ensemble, documents vérifiables |
 | `01-candidat` | Candidat | catalogue → compte → dossier en 3 étapes → suivi → paiement → convocation → admission |
 | `02-admission` | Responsable admission (1/2) | sessions, instruction pièce par pièce, présélection, rejet motivé, paiements, statistiques |
 | `03-admission-suite` | Responsable admission (2/2) | tests notés, entretiens, délibération, inscription, courriels |
-| `03-pedagogie` | Responsable pédagogique | offre, scolarité, relevés, certificats, qualité, entreprises, activités |
-| `04-formateur` | Formateur | tableau de bord, ressources, suivi, planning, forum, retours, annonces |
-| `05-etudiant` | Étudiant | cours, évaluation, calendrier, forum, résultats, certificat, rendez-vous |
-| `06-alumni` | Alumni | parcours, relevés, enquêtes, forum, documents |
-| `07-ecole` | École de formation | inscription, demande d'accréditation, pièces, attestation, liste publique |
-| `08-evaluateur` | Évaluateur | référentiel, grille de 31 critères, avis, décision |
-| `09-entreprise` | Entreprise | catalogue, demande, messagerie, rendez-vous |
-| `10-candidat-formateur` | Candidat formateur | offres, compte, dossier, pièces, suivi |
+| `04-pedagogie` | Responsable pédagogique | offre, scolarité, relevés, certificats, qualité, entreprises, activités |
+| `05-formateur` | Formateur | tableau de bord, ressources, suivi, planning, forum, retours, annonces |
+| `06-etudiant` | Étudiant | cours, évaluation, calendrier, forum, résultats, certificat, rendez-vous |
+| `07-alumni` | Alumni | parcours, relevés, enquêtes, forum, documents |
+| `08-ecole` | École de formation | inscription, demande d'accréditation, pièces, attestation, liste des écoles accréditées |
+| `09-evaluateur` | Évaluateur | référentiel, grille de 31 critères, avis, décision |
+| `10-entreprise` | Entreprise | catalogue, demande, messagerie, rendez-vous |
+| `11-candidat-formateur` | Candidat formateur | offres, compte, dossier, pièces, suivi |
 
-(La numérotation sera harmonisée à la livraison : `00-presentation-generale`, puis 01…11.)
+`./produire-tout.sh` produit toute la série, une vidéo après l'autre ; `./produire-tout.sh 05-formateur …` seulement celles indiquées.
 
 ## Contenu du dossier
 

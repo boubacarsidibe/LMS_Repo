@@ -16,7 +16,7 @@ export default {
   etapes: [
     {
       chapitre: 'Le site public',
-      dire: "Tout commence par le site public de l'institut. Sans compte, on y découvre l'institut, le catalogue des formations, les offres de recrutement de formateurs, les écoles accréditées, et on peut contacter l'équipe.",
+      dire: "Tout commence par le site public de l'institut. Sans compte, on y découvre l'institut, le catalogue des formations et les offres de recrutement de formateurs, et on peut contacter l'équipe.",
       faire: async (a) => {
         await a.surligner('text=Découvrir les formations', { duree: 1700 });
         await a.defiler(520, { duree: 1700 });
@@ -57,13 +57,13 @@ export default {
       },
     },
     {
-      chapitre: 'Offres et écoles accréditées',
-      dire: "Les offres de recrutement de formateurs sont publiques, tout comme la liste des écoles dont un programme est accrédité par l'institut : un repère pour les candidats, les entreprises et les partenaires.",
+      chapitre: 'Offres de recrutement',
+      dire: "Les offres de recrutement de formateurs sont publiques : chacune précise le domaine, le contrat, le nombre de postes et le profil recherché. Pour postuler, il faut un compte. La liste des écoles dont un programme est accrédité est, elle, réservée aux comptes connectés.",
       faire: async (a) => {
         await a.aller('/offres-formateurs');
-        await a.pause(1400);
-        await a.aller('/ecoles-accreditees');
-        await a.pause(1600);
+        await a.pause(1800);
+        await a.defiler(250, { duree: 1200 });
+        await a.pause(800);
       },
     },
     {

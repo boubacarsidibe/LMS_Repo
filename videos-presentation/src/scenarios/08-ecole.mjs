@@ -1,6 +1,6 @@
 // Vidéo 7 — L'école de formation : demander l'accréditation d'un programme, déposer son dossier, suivre la décision.
 // Une école NOUVELLE s'inscrit en direct (Académie Sahélienne des Hydrocarbures). Le Centre Régional de Formation
-// Pétrolière, accrédité d'avance par l'API réelle, sert à montrer l'aboutissement : attestation et liste publique.
+// Pétrolière, accrédité d'avance par l'API réelle, sert à montrer l'aboutissement : attestation et liste des écoles accréditées.
 import { readFileSync } from 'node:fs';
 import { seConnecter, seDeconnecter } from './_communs.mjs';
 
@@ -115,7 +115,7 @@ export default {
       },
     },
     {
-      dire: "Enfin, les écoles accréditées figurent dans une liste publique, accessible depuis le site de l'institut : un repère pour les candidats comme pour les entreprises.",
+      dire: "Enfin, les écoles accréditées figurent dans une liste accessible à tous les comptes connectés : un repère pour les candidats comme pour les entreprises.",
       faire: async (a) => {
         await a.aller('/ecoles-accreditees');
         await a.pause(1500);
@@ -129,7 +129,7 @@ export default {
       'Joindre les pièces requises et recommandées',
       "Suivre l'instruction, étape par étape",
       "Télécharger une attestation signée et vérifiable",
-      'Figurer dans la liste publique des écoles accréditées',
+      'Figurer dans la liste des écoles accréditées',
     ],
     dire: "Voilà le parcours d'une école : un dossier suivi de bout en bout, une décision motivée et une attestation que n'importe qui peut vérifier.",
   },
