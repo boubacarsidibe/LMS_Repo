@@ -133,7 +133,8 @@ class PedagogieScolariteImportTest {
                 alumniProfilRepository, alumniProfilService, enqueteSuiviRepository, reponseEnqueteSuiviRepository,
                 notificationRepository, rapportQualitePdfService,
                 new inpg.sn.lms.espace_etudiant.service.RelevePdfService(), completionProgrammeService,
-                new inpg.sn.lms.espace_etudiant.service.CertificatPdfService("https://lms.inpg.sn"));
+                new inpg.sn.lms.espace_etudiant.service.CertificatPdfService("https://lms.inpg.sn"),
+                org.mockito.Mockito.mock(inpg.sn.lms.espace_etudiant.service.ActiviteEtudiantService.class));
     }
 
     private Etudiant etudiantCree(long id) {

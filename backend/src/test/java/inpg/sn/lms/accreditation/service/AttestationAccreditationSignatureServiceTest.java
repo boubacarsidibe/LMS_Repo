@@ -30,7 +30,7 @@ class AttestationAccreditationSignatureServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AttestationAccreditationSignatureService(CLE);
+        service = new AttestationAccreditationSignatureService(CLE, "secret-jwt-de-test-suffisamment-long");
 
         User ecoleUser = new User();
         ecoleUser.setId(1L);
@@ -129,7 +129,7 @@ class AttestationAccreditationSignatureServiceTest {
     @DisplayName("Deux clés différentes produisent des signatures différentes pour le même contenu")
     void clesDifferentesProduisentDesSignaturesDifferentes() {
         AttestationAccreditationSignatureService autreService =
-                new AttestationAccreditationSignatureService("une-autre-cle-tout-a-fait-differente");
+                new AttestationAccreditationSignatureService("une-autre-cle-tout-a-fait-differente", "secret-jwt-de-test-suffisamment-long");
 
         assertThat(service.signer(demande)).isNotEqualTo(autreService.signer(demande));
     }

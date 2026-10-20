@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import inpg.sn.lms.auth.entity.Etudiant;
+import inpg.sn.lms.config.CleSignature;
 import inpg.sn.lms.espace_etudiant.entity.Certificat;
 
 /**
@@ -33,8 +34,10 @@ public class CertificatSignatureService {
 
     private final String cle;
 
-    public CertificatSignatureService(@Value("${certificat.signature.secret}") String cle) {
-        this.cle = cle;
+    public CertificatSignatureService(
+            @Value("${certificat.signature.secret:}") String cle,
+            @Value("${jwt.secret}") String secretJwt) {
+        this.cle = CleSignature.effective(cle, secretJwt);
     }
 
     public String signer(Certificat certificat) {

@@ -343,6 +343,20 @@ public class AdminRecrutementController {
         return ResponseEntity.ok(candidatureService.getCandidaturesByStatut(enumStatut));
     }
 
+    /**
+     * Candidatures d'un filtre d'export : un ou plusieurs statuts séparés par des virgules (un onglet de la liste en
+     * regroupe plusieurs), ou toutes si le filtre est vide.
+     */
+    private List<CandidatureResponse> candidaturesFiltrees(String statut) {
+        List<EnumStatutCandidature> statuts = EnumStatutCandidature.depuisListe(statut);
+        if (statuts.isEmpty()) {
+            return candidatureService.getAllCandidatures();
+        }
+        return statuts.stream()
+                .flatMap(s -> candidatureService.getCandidaturesByStatut(s).stream())
+                .collect(Collectors.toList());
+    }
+
     /** Colonnes disponibles pour l'export "Candidatures", dans l'ordre proposé au front. */
     private static final Map<String, String> COLONNES_CANDIDATURES = new java.util.LinkedHashMap<>();
     static {
@@ -369,9 +383,7 @@ public class AdminRecrutementController {
     public ResponseEntity<byte[]> exporterCandidatures(
             @RequestParam(required = false) String statut,
             @RequestParam(required = false) List<String> colonnes) {
-        List<CandidatureResponse> candidatures = (statut == null || statut.isBlank())
-                ? candidatureService.getAllCandidatures()
-                : candidatureService.getCandidaturesByStatut(EnumStatutCandidature.valueOf(statut.toUpperCase()));
+        List<CandidatureResponse> candidatures = candidaturesFiltrees(statut);
 
         List<String> cles = (colonnes == null || colonnes.isEmpty())
                 ? List.of("numeroDossier", "nom", "prenom", "email", "session", "statut", "dateSoumission", "motifRejet")
@@ -415,9 +427,7 @@ public class AdminRecrutementController {
      */
     @GetMapping("/candidatures/documents/export")
     public ResponseEntity<byte[]> exporterDocuments(@RequestParam(required = false) String statut) throws IOException {
-        List<CandidatureResponse> candidatures = (statut == null || statut.isBlank())
-                ? candidatureService.getAllCandidatures()
-                : candidatureService.getCandidaturesByStatut(EnumStatutCandidature.valueOf(statut.toUpperCase()));
+        List<CandidatureResponse> candidatures = candidaturesFiltrees(statut);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int nbFichiers = 0;

@@ -34,15 +34,18 @@ public class EntretienService {
     private final CandidatureRepository candidatureRepository;
     private final NotificationService notificationService;
     private final NotificationCandidatService notificationCandidatService;
+    private final ProgressionDossierService progressionDossierService;
 
     public EntretienService(EntretienRepository entretienRepository, CandidatRepository candidatRepository,
             CandidatureRepository candidatureRepository,
-            NotificationService notificationService, NotificationCandidatService notificationCandidatService) {
+            NotificationService notificationService, NotificationCandidatService notificationCandidatService,
+            ProgressionDossierService progressionDossierService) {
         this.entretienRepository = entretienRepository;
         this.candidatRepository = candidatRepository;
         this.candidatureRepository = candidatureRepository;
         this.notificationService = notificationService;
         this.notificationCandidatService = notificationCandidatService;
+        this.progressionDossierService = progressionDossierService;
     }
 
     public EntretienResponse creerEntretien(EntretienRequest request) {
@@ -62,6 +65,7 @@ public class EntretienService {
         entretien.setCandidat(candidat);
 
         Entretien saved = entretienRepository.save(entretien);
+        progressionDossierService.apresEntretien(candidat.getId());
 
         // Convocation automatique du candidat dès la planification de l'entretien (TDR 3.1.3).
         if (saved.getDateHeure() != null) {
@@ -93,6 +97,7 @@ public class EntretienService {
         entretien.setAppreciationGlobale(request.getAppreciationGlobale());
 
         Entretien saved = entretienRepository.save(entretien);
+        progressionDossierService.apresEntretien(saved.getCandidat().getId());
         return toResponse(saved);
     }
 
@@ -111,7 +116,9 @@ public class EntretienService {
             throw new BusinessException("La note d'entretien doit être comprise entre 0 et 20.");
         }
         entretien.setNoteEntretien(note);
-        return toResponse(entretienRepository.save(entretien));
+        Entretien saved = entretienRepository.save(entretien);
+        progressionDossierService.apresEntretien(saved.getCandidat().getId());
+        return toResponse(saved);
     }
 
     public List<EntretienResponse> getEntretiensByCandidatId(Long candidatId) {
@@ -151,7 +158,9 @@ public class EntretienService {
             }
         });
         notes.forEach((id, note) -> parId.get(id).setNoteEntretien(note));
-        return entretienRepository.saveAll(notes.keySet().stream().map(parId::get).toList()).stream()
+        List<Entretien> enregistres = entretienRepository.saveAll(notes.keySet().stream().map(parId::get).toList());
+        enregistres.stream().map(e -> e.getCandidat().getId()).distinct().forEach(progressionDossierService::apresEntretien);
+        return enregistres.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -162,13 +171,15 @@ public class EntretienService {
             throw new ResourceNotFoundException("Entretien introuvable.");
         }
         entretienRepository.deleteAll(lignes);
+        lignes.stream().map(e -> e.getCandidat().getId()).distinct().forEach(progressionDossierService::apresEntretien);
     }
 
     public void supprimerEntretien(Long id) {
-        if (!entretienRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Entretien non trouvé avec l'ID: " + id);
-        }
+        Entretien entretien = entretienRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Entretien non trouvé avec l'ID: " + id));
+        Long candidatId = entretien.getCandidat().getId();
         entretienRepository.deleteById(id);
+        progressionDossierService.apresEntretien(candidatId);
     }
 
     public EntretienResponse confirmerPresence(Long entretienId, Long candidatId) {

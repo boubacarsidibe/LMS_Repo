@@ -31,6 +31,7 @@ import inpg.sn.lms.recrutement.dto.PaiementRequest;
 import inpg.sn.lms.recrutement.dto.PaiementResponse;
 import inpg.sn.lms.recrutement.entity.Candidature;
 import inpg.sn.lms.recrutement.entity.Paiement;
+import inpg.sn.lms.recrutement.enums.EnumStatutCandidature;
 import inpg.sn.lms.recrutement.enums.EnumStatutPaiement;
 import inpg.sn.lms.recrutement.repository.CandidatureRepository;
 import inpg.sn.lms.recrutement.repository.PaiementRepository;
@@ -86,6 +87,8 @@ class PaiementServiceWorkflowTest {
         candidature.setId(ID_CANDIDATURE);
         candidature.setNumeroDossier("INPG-TEST0002");
         candidature.setCandidat(candidat);
+        // Le règlement n'est ouvert qu'une fois le dossier présélectionné (voir le test de garde ci-dessous).
+        candidature.setStatut(EnumStatutCandidature.PRESELECTIONNE);
 
         requete = new PaiementRequest();
         requete.setCandidatureId(ID_CANDIDATURE);
@@ -106,6 +109,37 @@ class PaiementServiceWorkflowTest {
 
     // ===================== Initiation =====================
 
+    /**
+     * Le candidat doit connaître le montant AVANT de déclarer son règlement : la page affichait « Montant communiqué à
+     * la validation ». Le montant annoncé doit être celui qui sera facturé — celui de la session, sinon le tarif de repli.
+     */
+    @Test
+    void les_frais_annonces_sont_ceux_de_la_session_sinon_le_tarif_de_repli() {
+        when(candidatureRepository.findById(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+
+        PaiementService.FraisDossier parDefaut = paiementService.fraisDossierPour(ID_CANDIDATURE);
+        assertEquals(0, parDefaut.montant().compareTo(new java.math.BigDecimal("25000")));
+        assertEquals("XOF", parDefaut.devise());
+
+        inpg.sn.lms.recrutement.entity.SessionCandidature session = new inpg.sn.lms.recrutement.entity.SessionCandidature();
+        session.setMontantFraisDossier(new java.math.BigDecimal("40000"));
+        candidature.setSessionCandidature(session);
+        assertEquals(0, paiementService.fraisDossierPour(ID_CANDIDATURE).montant().compareTo(new java.math.BigDecimal("40000")));
+    }
+
+    @Test
+    void le_montant_annonce_est_celui_qui_sera_enregistre() {
+        when(candidatureRepository.findById(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+        when(candidatureRepository.findByIdForPayment(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+        when(paiementRepository.findByCandidatureId(ID_CANDIDATURE)).thenReturn(Optional.empty());
+
+        PaiementService.FraisDossier annonce = paiementService.fraisDossierPour(ID_CANDIDATURE);
+        PaiementResponse enregistre = paiementService.initierPaiement(requete);
+
+        assertEquals(0, annonce.montant().compareTo(enregistre.getMontant()));
+        assertEquals(annonce.devise(), enregistre.getDevise());
+    }
+
     /** Le tarif est une donnée métier : il ne doit jamais provenir de la requête. */
     @Test
     void le_montant_vient_de_la_configuration_pas_du_client() {
@@ -118,6 +152,23 @@ class PaiementServiceWorkflowTest {
         assertEquals("XOF", reponse.getDevise());
         // Une tentative naît toujours en attente : la confirmation est une étape séparée.
         assertEquals(EnumStatutPaiement.EN_ATTENTE, reponse.getStatut());
+    }
+
+    /**
+     * Le paiement n'a pas de sens avant la présélection : un dossier simplement soumis ou
+     * en cours d'examen n'a pas à régler de frais, et l'accepter ferait sauter le statut
+     * vers PAIEMENT_EN_ATTENTE en court-circuitant l'examen du dossier par les admissions.
+     */
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(value = EnumStatutCandidature.class,
+            names = {"SOUMIS", "INCOMPLET", "DOSSIER_REJETE", "ADMIS"})
+    void le_paiement_est_refuse_avant_la_preselection(EnumStatutCandidature statut) {
+        candidature.setStatut(statut);
+        when(candidatureRepository.findByIdForPayment(ID_CANDIDATURE)).thenReturn(Optional.of(candidature));
+
+        assertThrows(BusinessException.class, () -> paiementService.initierPaiement(requete));
+        verify(paiementRepository, never()).save(any(Paiement.class));
+        verify(candidatureRepository, never()).save(any(Candidature.class));
     }
 
     @Test

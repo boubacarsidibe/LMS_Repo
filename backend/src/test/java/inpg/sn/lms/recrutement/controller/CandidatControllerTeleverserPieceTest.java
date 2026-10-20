@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -112,6 +114,38 @@ class CandidatControllerTeleverserPieceTest {
         stocke.setId(99L);
         stocke.setNomOriginal("diplome.pdf");
         lenient().when(fichierStockeService.enregistrerFichier(any())).thenReturn(stocke);
+    }
+
+    /**
+     * Un dossier qui vient d'être déposé (SOUMIS) doit recevoir ses pièces : c'est ce que fait le formulaire juste après
+     * avoir créé la candidature. Les tests de cette classe passaient tous par SOUMIS et échouaient tous depuis que la garde
+     * n'acceptait plus que PRESELECTIONNE et PAIEMENT_EN_ATTENTE.
+     */
+    @ParameterizedTest
+    @EnumSource(value = EnumStatutCandidature.class, names = {
+        "BROUILLON", "SOUMIS", "INCOMPLET", "DOSSIER_VALIDE", "PRESELECTIONNE", "PAIEMENT_EN_ATTENTE", "PAIEMENT_CONFIRME" })
+    void les_pieces_sont_acceptees_tant_que_le_candidat_n_est_pas_convoque_au_test(EnumStatutCandidature statut) {
+        candidature.setStatut(statut);
+
+        ResponseEntity<?> reponse = controller.televerserPiece(
+                ID_CANDIDATURE, fichier, "CV", null, null, authentication);
+
+        assertThat(reponse.getStatusCode()).as(statut.name()).isEqualTo(HttpStatus.OK);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = EnumStatutCandidature.class, names = {
+        "DOSSIER_REJETE", "CONVOQUE_TEST", "TEST_REUSSI", "TEST_ECHOUE", "ABSENT_TEST", "CONVOQUE_ENTRETIEN",
+        "ENTRETIEN_EFFECTUE", "ABSENT_ENTRETIEN", "ADMIS", "LISTE_ATTENTE", "NON_ADMIS", "INSCRIPTION_FINALISEE",
+        "DESISTEMENT" })
+    void une_piece_est_figee_des_que_le_jury_a_convoque_ou_decide(EnumStatutCandidature statut) {
+        candidature.setStatut(statut);
+
+        ResponseEntity<?> reponse = controller.televerserPiece(
+                ID_CANDIDATURE, fichier, "CV", null, null, authentication);
+
+        assertThat(reponse.getStatusCode()).as(statut.name()).isEqualTo(HttpStatus.CONFLICT);
+        verify(pieceJustificativeRepository, never()).save(any());
     }
 
     @Test

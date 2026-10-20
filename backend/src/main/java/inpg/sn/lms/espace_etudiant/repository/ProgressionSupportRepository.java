@@ -1,6 +1,7 @@
 package inpg.sn.lms.espace_etudiant.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +20,9 @@ public interface ProgressionSupportRepository extends JpaRepository<ProgressionS
     long countByEtudiantIdAndSupport_Cours_Id(Long etudiantId, Long coursId);
 
     long countByEtudiantId(Long etudiantId);
+
+    /** Le support le plus récemment ouvert (pour la première fois) par l'étudiant. */
+    Optional<ProgressionSupport> findFirstByEtudiantIdOrderByDateConsultationDesc(Long etudiantId);
 
     /**
      * Derniers supports ouverts par l'étudiant, du plus récent au plus ancien.

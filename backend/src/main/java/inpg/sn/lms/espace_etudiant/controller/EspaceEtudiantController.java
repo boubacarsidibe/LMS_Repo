@@ -92,6 +92,7 @@ import inpg.sn.lms.espace_etudiant.entity.RetourEvaluation;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.entity.SupportCours;
 import inpg.sn.lms.espace_etudiant.enums.EnumStatutRetour;
+import inpg.sn.lms.espace_etudiant.service.ActiviteEtudiantService;
 import inpg.sn.lms.espace_etudiant.service.CertificatPdfService;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.CoursService;
@@ -135,6 +136,7 @@ public class EspaceEtudiantController {
     private final PresenceService presenceService;
     private final SeanceService seanceService;
     private final SupportCoursStorageService supportCoursStorageService;
+    private final ActiviteEtudiantService activiteEtudiantService;
     private final ForumVisibiliteService forumVisibilite;
     private final Path uploadDirectory;
 
@@ -159,6 +161,7 @@ public class EspaceEtudiantController {
             SeanceService seanceService,
             SupportCoursStorageService supportCoursStorageService,
             ForumVisibiliteService forumVisibilite,
+            ActiviteEtudiantService activiteEtudiantService,
             @Value("${app.upload.dir:uploads}") String uploadDirectory) {
         this.userRepository = userRepository;
         this.etudiantRepository = etudiantRepository;
@@ -179,6 +182,7 @@ public class EspaceEtudiantController {
         this.presenceService = presenceService;
         this.seanceService = seanceService;
         this.supportCoursStorageService = supportCoursStorageService;
+        this.activiteEtudiantService = activiteEtudiantService;
         this.forumVisibilite = forumVisibilite;
         this.uploadDirectory = Path.of(uploadDirectory).toAbsolutePath().normalize();
     }
@@ -1775,8 +1779,8 @@ public class EspaceEtudiantController {
                 etudiant.getId(),
                 nomComplet,
                 promotion,
-                "Non renseignée",
-                0,
+                activiteEtudiantService.derniereActivite(etudiant),
+                activiteEtudiantService.progression(etudiant),
                 noteMoyenne,
                 releveNotesService.statutDeSuivi(noteMoyenne),
                 initials(etudiant.getPrenom(), etudiant.getNom()),

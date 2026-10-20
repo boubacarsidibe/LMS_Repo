@@ -38,7 +38,7 @@ class AttestationAccreditationServiceTest {
     void setUp() {
         DemandeAccreditationRepository repository = mock(DemandeAccreditationRepository.class);
         AttestationAccreditationSignatureService signatureService =
-                new AttestationAccreditationSignatureService("cle-de-test-suffisamment-longue");
+                new AttestationAccreditationSignatureService("cle-de-test-suffisamment-longue", "secret-jwt-de-test-suffisamment-long");
         service = new AttestationAccreditationService(repository, signatureService);
     }
 
@@ -98,7 +98,7 @@ class AttestationAccreditationServiceTest {
     void findByReferenceDelegueAuRepository() {
         DemandeAccreditationRepository repository = mock(DemandeAccreditationRepository.class);
         AttestationAccreditationSignatureService signatureService =
-                new AttestationAccreditationSignatureService("cle-de-test-suffisamment-longue");
+                new AttestationAccreditationSignatureService("cle-de-test-suffisamment-longue", "secret-jwt-de-test-suffisamment-long");
         AttestationAccreditationService service = new AttestationAccreditationService(repository, signatureService);
         DemandeAccreditation demande = demande(EnumStatutDemandeAccreditation.ACCREDITE);
         when(repository.findByReferenceAttestation("INPG-ACC-2026-ABCDEF01"))

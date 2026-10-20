@@ -34,7 +34,7 @@ class CertificatSignatureServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new CertificatSignatureService(CLE);
+        service = new CertificatSignatureService(CLE, "secret-jwt-de-test-suffisamment-long");
 
         Etudiant etudiant = new Etudiant(null, "Ndiaye", "Aissatou", "770000000");
 
@@ -94,9 +94,17 @@ class CertificatSignatureServiceTest {
     @Test
     @DisplayName("Deux clés différentes produisent des signatures différentes pour le même contenu")
     void clesDifferentesProduisentDesSignaturesDifferentes() {
-        CertificatSignatureService autreService = new CertificatSignatureService("une-autre-cle-tout-a-fait-differente");
+        CertificatSignatureService autreService = new CertificatSignatureService("une-autre-cle-tout-a-fait-differente", "secret-jwt-de-test-suffisamment-long");
 
         assertThat(service.signer(certificat)).isNotEqualTo(autreService.signer(certificat));
+    }
+
+    @Test
+    @DisplayName("Une clé dédiée vide (CERTIFICAT_SIGNATURE_SECRET= copiée de .env.example) retombe sur JWT_SECRET au lieu de planter « Empty key »")
+    void cleDedieeVideRetombeSurLeSecretJwt() {
+        CertificatSignatureService sansCleDediee = new CertificatSignatureService("", CLE);
+
+        assertThat(sansCleDediee.signer(certificat)).isEqualTo(service.signer(certificat));
     }
 
     @Test

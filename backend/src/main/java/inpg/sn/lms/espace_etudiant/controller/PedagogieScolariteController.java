@@ -67,6 +67,7 @@ import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
 import inpg.sn.lms.espace_etudiant.repository.NotificationRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
 import inpg.sn.lms.espace_etudiant.repository.RetourEvaluationRepository;
+import inpg.sn.lms.espace_etudiant.service.ActiviteEtudiantService;
 import inpg.sn.lms.espace_etudiant.service.CertificatPdfService;
 import inpg.sn.lms.espace_etudiant.service.CertificatService;
 import inpg.sn.lms.espace_etudiant.service.CompletionProgrammeService;
@@ -128,6 +129,7 @@ public class PedagogieScolariteController {
     private final RelevePdfService relevePdfService;
     private final CompletionProgrammeService completionProgrammeService;
     private final CertificatPdfService certificatPdfService;
+    private final ActiviteEtudiantService activiteEtudiantService;
 
     public PedagogieScolariteController(PromotionRepository promotionRepository,
             FormationRepository formationRepository, EtudiantRepository etudiantRepository,
@@ -144,7 +146,8 @@ public class PedagogieScolariteController {
             NotificationRepository notificationRepository, RapportQualitePdfService rapportQualitePdfService,
             RelevePdfService relevePdfService,
             CompletionProgrammeService completionProgrammeService,
-            CertificatPdfService certificatPdfService) {
+            CertificatPdfService certificatPdfService,
+            ActiviteEtudiantService activiteEtudiantService) {
         this.promotionRepository = promotionRepository;
         this.formationRepository = formationRepository;
         this.etudiantRepository = etudiantRepository;
@@ -171,6 +174,7 @@ public class PedagogieScolariteController {
         this.relevePdfService = relevePdfService;
         this.completionProgrammeService = completionProgrammeService;
         this.certificatPdfService = certificatPdfService;
+        this.activiteEtudiantService = activiteEtudiantService;
     }
 
     // ===================== PROMOTIONS =====================
@@ -1007,8 +1011,8 @@ public class PedagogieScolariteController {
                 etudiant.getId(),
                 nomComplet(etudiant),
                 promotion == null ? "Sans promotion" : promotion.getLibelle(),
-                "Non renseignée",
-                0,
+                activiteEtudiantService.derniereActivite(etudiant),
+                activiteEtudiantService.progression(etudiant),
                 moyenne,
                 promotion == null ? "Sans promotion" : releveNotesService.statutDeSuivi(moyenne),
                 initiales(etudiant),

@@ -115,7 +115,7 @@ class EspaceEtudiantForumModerationTest {
                 forumSujetRepository, forumMessageRepository, certificatService, certificatPdfService,
                 notificationService, retourEvaluationService, perimetreFormateurService, noteModuleService,
                 releveNotesService, presenceService, seanceService, supportCoursStorageService, forumVisibilite,
-                "uploads");
+                org.mockito.Mockito.mock(inpg.sn.lms.espace_etudiant.service.ActiviteEtudiantService.class), "uploads");
 
         user = new User();
         user.setId(12L);
@@ -217,7 +217,7 @@ class EspaceEtudiantForumModerationTest {
                 forumSujetRepository, forumMessageRepository, certificatService, certificatPdfService,
                 notificationService, retourEvaluationService, perimetreFormateurService, noteModuleService,
                 releveNotesService, presenceService, seanceService, supportCoursStorageService, forumVisibilite,
-                repertoireTemp.toString());
+                org.mockito.Mockito.mock(inpg.sn.lms.espace_etudiant.service.ActiviteEtudiantService.class), repertoireTemp.toString());
         when(forumVisibilite.estVisible(sujet, authentication)).thenReturn(true);
         when(forumMessageRepository.findBySujetIdOrderByDateCreationAsc(7L)).thenReturn(List.of());
         MockMultipartFile fichier = new MockMultipartFile("fichier", "correction.pdf", "application/pdf", "contenu".getBytes());

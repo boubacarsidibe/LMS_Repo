@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import inpg.sn.lms.accreditation.entity.DemandeAccreditation;
+import inpg.sn.lms.config.CleSignature;
 
 /**
  * Signature électronique de l'attestation d'accréditation : même principe que
@@ -40,8 +41,10 @@ public class AttestationAccreditationSignatureService {
 
     private final String cle;
 
-    public AttestationAccreditationSignatureService(@Value("${certificat.signature.secret}") String cle) {
-        this.cle = cle;
+    public AttestationAccreditationSignatureService(
+            @Value("${certificat.signature.secret:}") String cle,
+            @Value("${jwt.secret}") String secretJwt) {
+        this.cle = CleSignature.effective(cle, secretJwt);
     }
 
     public String signer(DemandeAccreditation demande) {

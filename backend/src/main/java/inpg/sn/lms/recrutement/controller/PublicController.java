@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import inpg.sn.lms.espace_etudiant.entity.Formation;
@@ -103,14 +102,17 @@ public class PublicController {
                 formation.getImageUrl());
     }
 
-    /** Renvoie la fiche éditoriale, ou {@code null} si elle est absente ou illisible. */
-    private JsonNode lireFiche(Formation formation) {
+    /**
+     * Renvoie la fiche éditoriale sous forme de Map/List, ou {@code null} si elle est absente ou illisible. Pas de
+     * {@code JsonNode} : voir {@link FormationDetailPubliqueDto}.
+     */
+    private Object lireFiche(Formation formation) {
         String fiche = formation.getFicheDetaillee();
         if (fiche == null || fiche.isBlank()) {
             return null;
         }
         try {
-            return objectMapper.readTree(fiche);
+            return objectMapper.readValue(fiche, Object.class);
         } catch (JsonProcessingException e) {
             log.warn("Fiche détaillée illisible pour la formation {} : {}", formation.getCode(), e.getMessage());
             return null;

@@ -104,6 +104,24 @@ public class CandidatController {
             EnumStatutCandidature.BROUILLON,
             EnumStatutCandidature.SOUMIS);
 
+    /**
+     * États où le dossier reste ouvert aux pièces justificatives : tant que le candidat n'a pas été convoqué au test.
+     *
+     * <p>Avant la migration du 22/09, la garde se lisait « SOUMIS ou EN_COURS_DE_PRESELECTION ». En la transposant, seul
+     * le second a été retenu (devenu PRESELECTIONNE, avec PAIEMENT_EN_ATTENTE en plus) : SOUMIS — l'état de TOUT dossier
+     * qui vient d'être déposé — était perdu. Le formulaire crée la candidature puis téléverse ses pièces ; chaque
+     * téléversement répondait 409 « Vous ne pouvez plus ajouter de document », et un candidat arrivait sur sa page de
+     * suivi avec un dossier vide. INCOMPLET (pièces à remplacer) et DOSSIER_VALIDE manquaient pour la même raison.
+     */
+    private static final Set<EnumStatutCandidature> STATUTS_PIECES_MODIFIABLES = Set.of(
+            EnumStatutCandidature.BROUILLON,
+            EnumStatutCandidature.SOUMIS,
+            EnumStatutCandidature.INCOMPLET,
+            EnumStatutCandidature.DOSSIER_VALIDE,
+            EnumStatutCandidature.PRESELECTIONNE,
+            EnumStatutCandidature.PAIEMENT_EN_ATTENTE,
+            EnumStatutCandidature.PAIEMENT_CONFIRME);
+
     /** Repli quand le formulaire ne fournit pas de date : la colonne est NOT NULL en base. */
     private static final LocalDate DATE_NAISSANCE_PAR_DEFAUT = LocalDate.of(2000, 1, 1);
 
@@ -498,8 +516,7 @@ public class CandidatController {
         // Une pièce est figée dès que le dossier a atteint une décision de sélection.
         // Un éventuel complément suit alors une réouverture tracée par le service admission,
         // plutôt que de modifier silencieusement le dossier examiné.
-        if (candidature.getStatut() != EnumStatutCandidature.PRESELECTIONNE
-                && candidature.getStatut() != EnumStatutCandidature.PAIEMENT_EN_ATTENTE) {
+        if (!STATUTS_PIECES_MODIFIABLES.contains(candidature.getStatut())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(java.util.Map.of(
                     "message", "Vous ne pouvez plus ajouter de document à cette étape du dossier. "
                             + "Contactez le service admission si un complément est nécessaire."));
@@ -599,6 +616,23 @@ public class CandidatController {
 
         PaiementResponse paiement = paiementService.initierPaiement(request);
         return ResponseEntity.ok(paiement);
+    }
+
+    /**
+     * Frais de dossier de la candidature, à afficher avant que le candidat déclare son règlement. Réservé au titulaire
+     * du dossier, comme l'initiation du paiement qui suit.
+     */
+    @GetMapping("/candidature/{id}/frais-dossier")
+    public ResponseEntity<?> fraisDossier(@PathVariable Long id, Authentication authentication) {
+        inpg.sn.lms.auth.entity.User user = findUser(authentication);
+        Candidat candidat = candidatRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Candidat non trouvé"));
+        Candidature candidature = candidatureRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée"));
+        if (!candidature.getCandidat().getId().equals(candidat.getId())) {
+            return ResponseEntity.status(403).body(Map.of("message", "Accès non autorisé"));
+        }
+        return ResponseEntity.ok(paiementService.fraisDossierPour(id));
     }
 
     /**

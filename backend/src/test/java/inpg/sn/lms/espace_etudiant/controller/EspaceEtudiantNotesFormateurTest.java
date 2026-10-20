@@ -94,6 +94,8 @@ class EspaceEtudiantNotesFormateurTest {
     private ForumVisibiliteService forumVisibilite;
     @Mock
     private ReleveNotesService releveNotesService;
+    @Mock
+    private inpg.sn.lms.espace_etudiant.service.ActiviteEtudiantService activiteEtudiantService;
 
     private EspaceEtudiantController controller;
     private Authentication authentication;
@@ -109,7 +111,7 @@ class EspaceEtudiantNotesFormateurTest {
                 forumSujetRepository, forumMessageRepository, certificatService, certificatPdfService,
                 notificationService, retourEvaluationService, perimetreFormateurService, noteModuleService,
                 releveNotesService, presenceService, seanceService, supportCoursStorageService, forumVisibilite,
-                "uploads");
+                activiteEtudiantService, "uploads");
 
         User user = new User();
         user.setId(1L);
@@ -171,5 +173,26 @@ class EspaceEtudiantNotesFormateurTest {
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         List<?> notes = (List<?>) reponse.getBody();
         assertThat(notes).hasSize(1);
+    }
+
+    /**
+     * La fiche de suivi servait « 0 % » de progression et « Non renseignée » en dernière connexion à tous
+     * les étudiants — deux valeurs écrites en dur —, alors que l'étudiant voyait de son côté sa vraie
+     * progression : l'écran de celui qui décide qui relancer disait le contraire de celui de l'intéressé.
+     */
+    @Test
+    @DisplayName("La fiche de suivi porte la progression et l'activité réelles de l'étudiant, pas des valeurs codées en dur")
+    void la_fiche_de_suivi_porte_la_progression_et_l_activite_reelles() {
+        etudiant.setPrenom("Fatou");
+        etudiant.setNom("Ndiaye");
+        when(activiteEtudiantService.progression(etudiant)).thenReturn(72);
+        when(activiteEtudiantService.derniereActivite(etudiant)).thenReturn("19 oct. 2026");
+
+        ResponseEntity<?> reponse = controller.getStudent(12L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        var fiche = (inpg.sn.lms.espace_etudiant.dto.EtudiantSuiviDto) reponse.getBody();
+        assertThat(fiche.progression()).isEqualTo(72);
+        assertThat(fiche.derniereActivite()).isEqualTo("19 oct. 2026");
     }
 }
