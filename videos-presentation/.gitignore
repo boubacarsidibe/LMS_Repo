@@ -1,0 +1,4 @@
+# Produits de la chaîne : volumineux et reconstructibles par un simple `./produire.sh`.
+sortie/
+cache/
+node_modules/
