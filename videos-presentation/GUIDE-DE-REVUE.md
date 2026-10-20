@@ -47,7 +47,7 @@ Fichier : `sortie/01-candidat/01-candidat.mp4` · sous-titres : `01-candidat.srt
 | 0:13 | Page d'accueil |
 | 0:23 | Catalogue des formations |
 | 0:39 | Sessions de candidature |
-| 0:47 | Création du compte |
+| 0:46 | Création du compte |
 | 1:04 | Dépôt du dossier |
 | 1:59 | Suivi de la candidature |
 | 2:09 | Paiement des frais de dossier |

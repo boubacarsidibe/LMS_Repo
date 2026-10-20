@@ -45,11 +45,13 @@ dans l'application, avec un test de non-régression vérifié **rouge sur l'anci
     clic sur « Certifications HSE » montrait une erreur pendant ~2 s avant la fiche). Le gabarit lisait `formation` seul et ignorait
     `chargement`. Même défaut sur le profil étudiant du formateur (« Étudiant introuvable. »). Corrigé avec un état « Chargement… »,
     deux tests de non-régression par page (échec constaté sur l'ancien code), vérifié en navigateur avec une réponse retardée de 2,5 s.
+25. Espace alumni : « Diplômé(e) depuis **0 an** » pour un diplômé de l'année (donc pour tous les alumni d'une plateforme qui ouvre) →
+    « Moins d'un an ». Trois tests (0, 1, 3 ans), échec constaté sur l'ancien code.
 
 ## Gravité
 - **Bloquants** (fonction inutilisable) : 17, 18, 11, 10, 2.
 - **Incohérences visibles** : 7, 9, 13, 20, 21, 12, 15, 24.
-- **Ergonomie / hygiène** : 4, 5, 6, 14, 19, 22, 23.
+- **Ergonomie / hygiène** : 4, 5, 6, 14, 19, 22, 23, 25.
 
 ## Recommandations restantes (non traitées)
 - Formulaire de demande entreprise : adresse, téléphone et secteur à ressaisir à chaque demande (seule la raison sociale est reprise).
