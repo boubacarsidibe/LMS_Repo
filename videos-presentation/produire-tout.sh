@@ -10,7 +10,7 @@ LISTE=("$@")
 if [ ${#LISTE[@]} -eq 0 ]; then
   for f in src/scenarios/[0-9][0-9]-*.mjs; do LISTE+=("$(basename "$f" .mjs)"); done
 fi
-: > "$JOURNAL"
+echo "--- $(date +%F\ %H:%M)" >> "$JOURNAL"
 for id in "${LISTE[@]}"; do
   debut=$(date +%s)
   echo "[$(date +%H:%M:%S)] début $id" | tee -a "$JOURNAL"

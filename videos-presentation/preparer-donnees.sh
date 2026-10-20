@@ -5,6 +5,9 @@
 #   ./restaurer.sh                   remet la base dans l'état de l'instantané avant une prise
 #
 # Pré-requis : la pile Docker tourne (docker compose up -d).
+# ATTENTION : l'instantané est pris sur l'état COURANT de la base. Après une répétition (--essai) ou une prise, lancer d'abord
+# ./restaurer.sh : sinon les actions jouées par la répétition (évaluations, réponses, sujets de forum…) sont figées dans la
+# référence et les prises suivantes affichent « Mettre à jour » à la place de « Envoyer ».
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
