@@ -6,24 +6,24 @@ Ce guide accompagne les vidéos de présentation de la plateforme LMS de l'INPG.
 
 | N° | Vidéo | Public | Durée |
 |---|---|---|---|
-| 00 | La plateforme LMS de l’INPG — vue d’ensemble | Tous publics | 0:24 |
-| 01 | Espace candidat — du premier clic au suivi de la candidature | Candidats | 0:16 |
-| 02 | Ouvrir une session, instruire les dossiers, valider les paiements | Responsable des admissions | 0:17 |
-| 03 | Ce que le responsable des admissions peut faire (2/2) | Responsable des admissions | 0:16 |
-| 04 | Espace pédagogique — offre de formation, scolarité, relevés et certificats | Responsable pédagogique | 0:15 |
-| 05 | Espace formateur — piloter ses cours, suivre ses étudiants, animer sa promotion | Formateurs | 0:15 |
-| 06 | Espace étudiant — suivre sa formation, de la première séance au certificat | Étudiants | 0:15 |
-| 07 | Espace alumni — rester en lien avec l'institut après le diplôme | Alumni | 0:15 |
-| 08 | Espace école de formation — obtenir l'accréditation d'un programme | Écoles de formation | 0:19 |
-| 09 | Espace évaluateur — instruire une demande d'accréditation | Évaluateurs d'accréditation | 0:15 |
-| 10 | Exprimer un besoin de formation et suivre la réponse | Entreprises | 0:16 |
-| 11 | Candidat formateur — répondre à une offre de recrutement | Candidats formateurs | 0:16 |
+| 00 | La plateforme LMS de l’INPG — vue d’ensemble | Tous publics | 2:16 |
+| 01 | Espace candidat — du premier clic au suivi de la candidature | Candidats | 3:27 |
+| 02 | Portail Admissions (1/2) — sessions, instruction des dossiers et paiements | Responsable des admissions | 3:01 |
+| 03 | Portail Admissions (2/2) — tests, entretiens, délibération et inscription | Responsable des admissions | 2:37 |
+| 04 | Espace pédagogique — offre de formation, scolarité, relevés et certificats | Responsable pédagogique | 3:30 |
+| 05 | Espace formateur — piloter ses cours, suivre ses étudiants, animer sa promotion | Formateurs | 2:40 |
+| 06 | Espace étudiant — suivre sa formation, de la première séance au certificat | Étudiants | 2:33 |
+| 07 | Espace alumni — rester en lien avec l'institut après le diplôme | Alumni | 2:04 |
+| 08 | Espace école de formation — obtenir l'accréditation d'un programme | Écoles de formation | 2:38 |
+| 09 | Espace évaluateur — instruire une demande d'accréditation | Évaluateurs d'accréditation | 2:34 |
+| 10 | Espace entreprise — exprimer un besoin de formation et suivre la réponse | Entreprises | 2:02 |
+| 11 | Candidat formateur — répondre à une offre de recrutement | Candidats formateurs | 1:55 |
 
 ## Détail par vidéo
 
 ### 00 — La plateforme LMS de l’INPG — vue d’ensemble
 
-Fichier : `sortie/00-presentation-generale/00-presentation-generale.mp4` · sous-titres : `00-presentation-generale.srt` · durée 0:24
+Fichier : `sortie/00-presentation-generale/00-presentation-generale.mp4` · sous-titres : `00-presentation-generale.srt` · durée 2:16
 
 | Repère | Chapitre |
 |---|---|
@@ -39,7 +39,7 @@ Fichier : `sortie/00-presentation-generale/00-presentation-generale.mp4` · sous
 
 ### 01 — Espace candidat — du premier clic au suivi de la candidature
 
-Fichier : `sortie/01-candidat/01-candidat.mp4` · sous-titres : `01-candidat.srt` · durée 0:16
+Fichier : `sortie/01-candidat/01-candidat.mp4` · sous-titres : `01-candidat.srt` · durée 3:27
 
 | Repère | Chapitre |
 |---|---|
@@ -54,9 +54,9 @@ Fichier : `sortie/01-candidat/01-candidat.mp4` · sous-titres : `01-candidat.srt
 | 2:38 | Test, entretien et décision |
 | 3:17 | Récapitulatif |
 
-### 02 — Ouvrir une session, instruire les dossiers, valider les paiements
+### 02 — Portail Admissions (1/2) — sessions, instruction des dossiers et paiements
 
-Fichier : `sortie/02-admission/02-admission.mp4` · sous-titres : `02-admission.srt` · durée 0:17
+Fichier : `sortie/02-admission/02-admission.mp4` · sous-titres : `02-admission.srt` · durée 3:01
 
 | Repère | Chapitre |
 |---|---|
@@ -69,9 +69,9 @@ Fichier : `sortie/02-admission/02-admission.mp4` · sous-titres : `02-admission.
 | 2:38 | Statistiques et rapports |
 | 2:50 | Récapitulatif |
 
-### 03 — Ce que le responsable des admissions peut faire (2/2)
+### 03 — Portail Admissions (2/2) — tests, entretiens, délibération et inscription
 
-Fichier : `sortie/03-admission-suite/03-admission-suite.mp4` · sous-titres : `03-admission-suite.srt` · durée 0:16
+Fichier : `sortie/03-admission-suite/03-admission-suite.mp4` · sous-titres : `03-admission-suite.srt` · durée 2:37
 
 | Repère | Chapitre |
 |---|---|
@@ -85,7 +85,7 @@ Fichier : `sortie/03-admission-suite/03-admission-suite.mp4` · sous-titres : `0
 
 ### 04 — Espace pédagogique — offre de formation, scolarité, relevés et certificats
 
-Fichier : `sortie/04-pedagogie/04-pedagogie.mp4` · sous-titres : `04-pedagogie.srt` · durée 0:15
+Fichier : `sortie/04-pedagogie/04-pedagogie.mp4` · sous-titres : `04-pedagogie.srt` · durée 3:30
 
 | Repère | Chapitre |
 |---|---|
@@ -102,7 +102,7 @@ Fichier : `sortie/04-pedagogie/04-pedagogie.mp4` · sous-titres : `04-pedagogie.
 
 ### 05 — Espace formateur — piloter ses cours, suivre ses étudiants, animer sa promotion
 
-Fichier : `sortie/05-formateur/05-formateur.mp4` · sous-titres : `05-formateur.srt` · durée 0:15
+Fichier : `sortie/05-formateur/05-formateur.mp4` · sous-titres : `05-formateur.srt` · durée 2:40
 
 | Repère | Chapitre |
 |---|---|
@@ -118,7 +118,7 @@ Fichier : `sortie/05-formateur/05-formateur.mp4` · sous-titres : `05-formateur.
 
 ### 06 — Espace étudiant — suivre sa formation, de la première séance au certificat
 
-Fichier : `sortie/06-etudiant/06-etudiant.mp4` · sous-titres : `06-etudiant.srt` · durée 0:15
+Fichier : `sortie/06-etudiant/06-etudiant.mp4` · sous-titres : `06-etudiant.srt` · durée 2:33
 
 | Repère | Chapitre |
 |---|---|
@@ -133,7 +133,7 @@ Fichier : `sortie/06-etudiant/06-etudiant.mp4` · sous-titres : `06-etudiant.srt
 
 ### 07 — Espace alumni — rester en lien avec l'institut après le diplôme
 
-Fichier : `sortie/07-alumni/07-alumni.mp4` · sous-titres : `07-alumni.srt` · durée 0:15
+Fichier : `sortie/07-alumni/07-alumni.mp4` · sous-titres : `07-alumni.srt` · durée 2:04
 
 | Repère | Chapitre |
 |---|---|
@@ -148,7 +148,7 @@ Fichier : `sortie/07-alumni/07-alumni.mp4` · sous-titres : `07-alumni.srt` · d
 
 ### 08 — Espace école de formation — obtenir l'accréditation d'un programme
 
-Fichier : `sortie/08-ecole/08-ecole.mp4` · sous-titres : `08-ecole.srt` · durée 0:19
+Fichier : `sortie/08-ecole/08-ecole.mp4` · sous-titres : `08-ecole.srt` · durée 2:38
 
 | Repère | Chapitre |
 |---|---|
@@ -161,7 +161,7 @@ Fichier : `sortie/08-ecole/08-ecole.mp4` · sous-titres : `08-ecole.srt` · dur�
 
 ### 09 — Espace évaluateur — instruire une demande d'accréditation
 
-Fichier : `sortie/09-evaluateur/09-evaluateur.mp4` · sous-titres : `09-evaluateur.srt` · durée 0:15
+Fichier : `sortie/09-evaluateur/09-evaluateur.mp4` · sous-titres : `09-evaluateur.srt` · durée 2:34
 
 | Repère | Chapitre |
 |---|---|
@@ -173,9 +173,9 @@ Fichier : `sortie/09-evaluateur/09-evaluateur.mp4` · sous-titres : `09-evaluate
 | 1:48 | Avis et décision |
 | 2:23 | Récapitulatif |
 
-### 10 — Exprimer un besoin de formation et suivre la réponse
+### 10 — Espace entreprise — exprimer un besoin de formation et suivre la réponse
 
-Fichier : `sortie/10-entreprise/10-entreprise.mp4` · sous-titres : `10-entreprise.srt` · durée 0:16
+Fichier : `sortie/10-entreprise/10-entreprise.mp4` · sous-titres : `10-entreprise.srt` · durée 2:02
 
 | Repère | Chapitre |
 |---|---|
@@ -189,7 +189,7 @@ Fichier : `sortie/10-entreprise/10-entreprise.mp4` · sous-titres : `10-entrepri
 
 ### 11 — Candidat formateur — répondre à une offre de recrutement
 
-Fichier : `sortie/11-candidat-formateur/11-candidat-formateur.mp4` · sous-titres : `11-candidat-formateur.srt` · durée 0:16
+Fichier : `sortie/11-candidat-formateur/11-candidat-formateur.mp4` · sous-titres : `11-candidat-formateur.srt` · durée 1:55
 
 | Repère | Chapitre |
 |---|---|

@@ -23,12 +23,17 @@ details = []
 for scen in sorted(glob.glob(os.path.join(RACINE, "src/scenarios/[0-9][0-9]-*.mjs"))):
     vid = os.path.basename(scen)[:-4]
     src = open(scen, encoding="utf-8").read()
-    titre = (re.search(r"titre: '((?:[^'\\]|\\.)*)'", src) or re.search(r'titre: "((?:[^"\\]|\\.)*)"', src)).group(1).replace("\\'", "'")
+    # Le titre de la vidéo est la propriété de premier niveau (deux espaces) ; « ouverture.titre » en compte quatre.
+    m = re.search(r"^  titre: (['\"])(.*)\1,\s*$", src, re.M)
+    titre = m.group(2).replace("\\'", "'")
     minutage = os.path.join(RACINE, "sortie", vid, f"{vid}.minutage.json")
     if not os.path.exists(minutage):
         lignes.append(f"| {vid[:2]} | {titre} | {PUBLICS.get(vid[:2], '')} | _non produite_ |"); continue
     seg = json.load(open(minutage, encoding="utf-8"))
-    fin = max((c["fin"] for s in seg for c in s["cues"]), default=0) + 3
+    # Durée réelle : celle que le montage a imprimée à la fin de la prise (« durée 02:16 · … »), pas une estimation.
+    journal = os.path.join(RACINE, "cache", f"prise-{vid}.log")
+    duree = re.findall(r"durée (\d+):(\d+)", open(journal, encoding="utf-8").read()) if os.path.exists(journal) else []
+    fin = int(duree[-1][0]) * 60 + int(duree[-1][1]) if duree else 0
     lignes.append(f"| {vid[:2]} | {titre} | {PUBLICS.get(vid[:2], '')} | {hms(fin)} |")
     vu, chap = set(), []
     for s in seg:
