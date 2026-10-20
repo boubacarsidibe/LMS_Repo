@@ -203,7 +203,12 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       if (statutsRetenus && !statutsRetenus.includes(c.statut as never)) return false;
       if (this.filtreSessionId !== null && c.sessionCandidatureId !== this.filtreSessionId) return false;
       if (!q) return true;
+      // « Rama Kane », tel qu'affiché dans la liste, doit trouver le dossier : chaque champ pris seul ne contenait pas la phrase
+      // entière, et la recherche répondait « Aucune candidature trouvée ».
+      const nomComplet = `${c.candidatPrenom || ''} ${c.candidatNom || ''}`.toLowerCase();
+      const nomInverse = `${c.candidatNom || ''} ${c.candidatPrenom || ''}`.toLowerCase();
       return (
+        nomComplet.includes(q) || nomInverse.includes(q) ||
         (c.candidatNom || '').toLowerCase().includes(q) ||
         (c.candidatPrenom || '').toLowerCase().includes(q) ||
         (c.candidatEmail || '').toLowerCase().includes(q) ||
