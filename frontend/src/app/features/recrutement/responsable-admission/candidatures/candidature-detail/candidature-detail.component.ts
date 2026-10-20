@@ -3,16 +3,21 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CandidatureResponse, EtapeDossierResponse, PieceJustificativeResponse, RecrutementService } from '../../../../../core/recrutement/services/recrutement.service';
+import {
+  actionSuivante as actionSuivanteDe,
+  attenteDuDossier,
+  CIBLES_DE_RECUL,
+  classeStatut as classeStatutDe,
+  friseParcours,
+  libelleStatut as libelleStatutDe,
+  peutAnnuler as peutAnnulerDe,
+  peutReculerVers as peutReculerVersDe,
+  peutRejeter as peutRejeterDe,
+  TimelineItem,
+} from '../../../../../core/recrutement/statuts-candidature';
 import { downloadBlob } from '../../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../../shared/components/ui/notification.service';
-
-interface TimelineItem {
-  label: string;
-  desc: string;
-  pending: boolean;
-  active: boolean;
-  erreur: boolean;
-}
+import { ConfirmationService } from '../../../../../shared/components/ui/confirmation.service';
 
 /**
  * Page dédiée au détail d'une candidature — remplace le panneau latéral de la
@@ -45,20 +50,11 @@ export class CandidatureDetailComponent implements OnInit {
   journal: EtapeDossierResponse[] = [];
   journalChargement = false;
 
-  /** ADMIS3 dont l'inscription (étape 6, QMS-009) reste à finaliser. */
+  /** Dossier ADMIS dont l'inscription (étape 6, QMS-009) reste à finaliser. */
   get inscriptionEnAttente(): boolean {
-    return this.candidature?.statut === this.STATUT_ADMIS3
+    return this.candidature?.statut === 'ADMIS'
       && !this.journal.some((e) => e.etape === 'INSCRIPTION');
   }
-
-  /** Étapes disponibles selon le statut — mêmes codes que côté candidat (SuiviComponent). */
-  readonly STATUT_SOUMIS = 'SOUMIS';
-  readonly STATUT_PRESELECTION = 'EN_COURS_DE_PRESELECTION';
-  readonly STATUT_REJETE = 'REJETE';
-  readonly STATUT_ADMIS1 = 'ADMIS1';
-  readonly STATUT_ADMIS2 = 'ADMIS2';
-  readonly STATUT_ADMIS3 = 'ADMIS3';
-  readonly STATUT_LISTE_ATTENTE = 'LISTE_ATTENTE';
 
   get paiementConfirme(): boolean {
     return this.candidature?.paiement?.statut === 'SUCCES';
@@ -73,74 +69,15 @@ export class CandidatureDetailComponent implements OnInit {
   }
 
   /**
-   * Reprend telle quelle la logique de SuiviComponent#timelineItems : même
-   * ordre (dépôt → présélection → paiement → test → entretien), mêmes règles
-   * de statut. Le responsable admission doit voir exactement l'étape que voit
-   * le candidat — toute divergence entre les deux copies serait un bug muet.
+   * Frise « dossier → présélection → paiement → test → entretien », la même que celle de la page de suivi du candidat
+   * (statuts-candidature.ts) : le responsable doit voir exactement l'étape que voit le candidat. Elle raisonnait avec les
+   * cinq anciens statuts — un dossier admis ou en attente de délibération restait figé devant l'entretien.
    */
   get timelineItems(): TimelineItem[] {
-    const statut = this.candidature?.statut;
-    const paiementConfirme = this.paiementConfirme;
-    const items: TimelineItem[] = [
-      { label: 'Dossier', desc: 'Tous les documents requis téléchargés.', pending: true, active: false, erreur: false },
-      { label: 'Présélection', desc: 'Le jury examine la candidature.', pending: true, active: false, erreur: false },
-      { label: 'Paiement', desc: 'Frais de dossier réglés.', pending: true, active: false, erreur: false },
-      { label: 'Test Académique', desc: '', pending: true, active: false, erreur: false },
-      { label: 'Entretien', desc: '', pending: true, active: false, erreur: false },
-    ];
-
-    if (!statut || statut === 'BROUILLON') {
-      items[0].active = true;
-      return items;
-    }
-    items[0].pending = false; // dossier déposé
-
-    if (statut === this.STATUT_SOUMIS || statut === this.STATUT_PRESELECTION) {
-      items[1].pending = false;
-      items[1].active = true;
-      return items;
-    }
-    items[1].pending = false; // évaluation/présélection franchie
-
-    if (statut === this.STATUT_REJETE && !paiementConfirme) {
-      items[1].erreur = true;
-      return items;
-    }
-
-    if (!paiementConfirme) {
-      items[2].pending = false;
-      items[2].active = true;
-      return items;
-    }
-    items[2].pending = false; // paiement confirmé
-
-    if (statut === this.STATUT_REJETE) {
-      // Comme pour l'échec de présélection plus haut : une étape en échec est franchie,
-      // pas en attente. Laisser `pending` à true faisait cohabiter deux états contraires.
-      items[3].pending = false;
-      items[3].erreur = true;
-      return items;
-    }
-
-    if (statut === this.STATUT_ADMIS1) {
-      items[3].pending = false;
-      items[3].active = true;
-      return items;
-    }
-    items[3].pending = false; // test académique franchi
-
-    if (statut === this.STATUT_ADMIS2) {
-      items[4].pending = false;
-      items[4].active = true;
-      return items;
-    }
-
-    if (statut === this.STATUT_ADMIS3 || statut === this.STATUT_LISTE_ATTENTE) {
-      items[4].pending = false;
-      return items;
-    }
-
-    return items;
+    return friseParcours(this.candidature?.statut, {
+      audience: 'agent',
+      statutPrecedent: this.candidature?.statutPrecedent,
+    });
   }
 
   constructor(
@@ -148,6 +85,7 @@ export class CandidatureDetailComponent implements OnInit {
     private router: Router,
     private recrutementService: RecrutementService,
     private notifications: NotificationService,
+    private confirmation: ConfirmationService,
   ) {}
 
   ngOnInit(): void {
@@ -196,30 +134,11 @@ export class CandidatureDetailComponent implements OnInit {
   }
 
   libelleStatut(statut: string): string {
-    switch (statut) {
-      case 'BROUILLON': return 'Brouillon';
-      case 'SOUMIS': return 'Soumis';
-      case 'EN_COURS_DE_PRESELECTION': return 'En présélection';
-      case 'ADMIS1': return 'Admis au test';
-      case 'ADMIS2': return 'Admis à l\'entretien';
-      case 'ADMIS3': return 'Admis (final)';
-      case 'REJETE': return 'Rejeté';
-      case 'LISTE_ATTENTE': return 'Liste complémentaire';
-      default: return statut;
-    }
+    return libelleStatutDe(statut);
   }
 
   classeStatut(statut: string): string {
-    switch (statut) {
-      case 'REJETE': return 'bg-error-container/20 text-error';
-      case 'ADMIS3': return 'bg-green-100 text-green-800';
-      case 'LISTE_ATTENTE': return 'bg-blue-100 text-blue-800';
-      case 'ADMIS1':
-      case 'ADMIS2': return 'bg-primary-fixed text-on-primary-fixed-variant';
-      case 'SOUMIS':
-      case 'EN_COURS_DE_PRESELECTION': return 'bg-secondary-container/30 text-on-secondary-container';
-      default: return 'bg-surface-container text-on-surface-variant';
-    }
+    return classeStatutDe(statut);
   }
 
   /** Dossier sans aucune pièce jointe : la présélection est bloquée côté backend (CandidatureService#changerStatut). */
@@ -227,52 +146,50 @@ export class CandidatureDetailComponent implements OnInit {
     return !c.piecesJustificatives || c.piecesJustificatives.length === 0;
   }
 
-  /** Libellé + capacité d'action selon l'étape actuelle du workflow (cf. CandidatureService#estTransitionValide côté backend). */
+  /** La présélection est le geste qu'un dossier vide ne peut pas recevoir. */
+  bloqueParDossierVide(c: CandidatureResponse): boolean {
+    return actionSuivanteDe(c.statut)?.cle === 'VALIDER_PRESELECTION' && this.dossierVide(c);
+  }
+
+  /** Libellé + geste selon l'étape actuelle du workflow (cf. CandidatureService#estTransitionValide côté backend). */
   actionSuivante(c: CandidatureResponse): { libelle: string; action: () => void } | null {
-    switch (c.statut) {
-      case 'SOUMIS':
-        return { libelle: 'Valider présélection', action: () => this.validerPreselection(c) };
-      case 'EN_COURS_DE_PRESELECTION':
-        return { libelle: 'Admettre au test', action: () => this.admettreTest(c) };
-      case 'ADMIS1':
-        return { libelle: 'Admettre à l\'entretien', action: () => this.admettreEntretien(c) };
-      case 'ADMIS2':
-        return { libelle: 'Admettre (final)', action: () => this.admettreFinal(c) };
-      case 'ADMIS3':
-        // Étape 6 de QMS-009 : la sélection (admettre-final) n'ouvre plus l'accès étudiant
-        // elle-même — voir finaliserInscription().
-        return this.inscriptionEnAttente
-          ? { libelle: 'Finaliser l\'inscription', action: () => this.finaliserInscription(c) }
-          : null;
-      default:
-        return null;
+    const geste = actionSuivanteDe(c.statut);
+    if (!geste) return null;
+    switch (geste.cle) {
+      case 'VALIDER_PRESELECTION': return { libelle: geste.libelle, action: () => this.validerPreselection(c) };
+      case 'ADMETTRE_TEST': return { libelle: geste.libelle, action: () => this.admettreTest(c) };
+      case 'ADMETTRE_ENTRETIEN': return { libelle: geste.libelle, action: () => this.admettreEntretien(c) };
+      case 'ADMETTRE_FINAL': return { libelle: geste.libelle, action: () => this.admettreFinal(c) };
+      case 'FINALISER_INSCRIPTION':
+        // Étape 6 de QMS-009 : la sélection (admettre-final) n'ouvre pas l'accès étudiant elle-même.
+        return this.inscriptionEnAttente ? { libelle: geste.libelle, action: () => this.finaliserInscription(c) } : null;
     }
   }
 
+  /** Ce qu'attend un dossier qui n'offre aucun geste : le responsable ne reste jamais devant un dossier muet. */
+  attente(c: CandidatureResponse): string | null {
+    return this.actionSuivante(c) ? null : attenteDuDossier(c.statut);
+  }
+
   peutRejeter(c: CandidatureResponse): boolean {
-    return c.statut !== 'ADMIS3' && c.statut !== 'REJETE' && c.statut !== 'BROUILLON';
+    return peutRejeterDe(c.statut);
   }
 
-  /** ADMIS3 exclu : l'admission finale a déjà ouvert l'accès étudiant, non annulable ici. */
+  /** Une fois l'accès étudiant ouvert (INSCRIPTION_FINALISEE), la décision n'est plus annulable ici. */
   peutAnnuler(c: CandidatureResponse): boolean {
-    return c.statutPrecedent != null && c.statut !== 'ADMIS3';
+    return peutAnnulerDe(c.statut, c.statutPrecedent);
   }
 
-  /** Cibles valides pour "faire reculer vers" — mêmes règles que CandidatureService#rangParcours côté backend. */
-  readonly ciblesReculer = [
-    { valeur: 'SOUMIS', libelle: 'Soumis' },
-    { valeur: 'EN_COURS_DE_PRESELECTION', libelle: 'En présélection' },
-    { valeur: 'ADMIS1', libelle: 'Admis au test' },
-    { valeur: 'ADMIS2', libelle: 'Admis à l\'entretien' },
-  ];
-  private readonly rangParcours: Record<string, number> = {
-    SOUMIS: 1, EN_COURS_DE_PRESELECTION: 2, ADMIS1: 3, ADMIS2: 4,
-  };
+  /** Cibles valides pour « faire reculer vers » — mêmes règles que CandidatureService#reculerStatut côté backend. */
+  readonly ciblesReculer = CIBLES_DE_RECUL;
 
   peutReculerVers(c: CandidatureResponse, cible: string): boolean {
-    if (c.statut === 'ADMIS3') return false;
-    if (c.statut === 'REJETE') return true;
-    return this.rangParcours[cible] < this.rangParcours[c.statut];
+    return peutReculerVersDe(c.statut, cible);
+  }
+
+  /** Au moins une étape antérieure est atteignable : sinon la liste « Reculer vers » n'offrirait que des choix grisés. */
+  peutReculer(c: CandidatureResponse): boolean {
+    return this.ciblesReculer.some((cible) => this.peutReculerVers(c, cible.valeur));
   }
 
   annuler(c: CandidatureResponse): void {
@@ -354,14 +271,17 @@ export class CandidatureDetailComponent implements OnInit {
     });
   }
 
+  /** Le motif de rejet est obligatoire (TDR §A) : recueilli dans la boîte partagée, pas dans un window.prompt natif. */
   rejeter(c: CandidatureResponse): void {
-    const motif = window.prompt(`Motif de rejet pour le dossier ${c.numeroDossier} :`);
-    if (motif === null) return; // annulé
-    if (!motif.trim()) {
-      this.notifications.erreur('Un motif de rejet est requis.');
-      return;
-    }
-    this.executer(this.recrutementService.rejeterDossier(c.id, motif.trim()));
+    this.confirmation.demanderSaisie({
+      titre: 'Rejeter ce dossier',
+      message: `Dossier ${c.numeroDossier} — ${c.candidatPrenom} ${c.candidatNom}.\nLe motif est conservé au dossier et le candidat en est informé.`,
+      libelleConfirmer: 'Rejeter le dossier',
+      destructif: true,
+      saisie: { libelle: 'Motif du rejet', obligatoire: true, placeholder: 'Ex. : pièces justificatives incomplètes' },
+    }).subscribe((motif) => {
+      if (motif) this.executer(this.recrutementService.rejeterDossier(c.id, motif));
+    });
   }
 
   telechargerPiece(piece: PieceJustificativeResponse): void {

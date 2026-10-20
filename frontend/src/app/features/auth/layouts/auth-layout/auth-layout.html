@@ -13,7 +13,8 @@
 
       <!-- DROITE : Zone de formulaire -->
       <div class="w-full md:w-1/2 p-6 sm:p-8 md:p-12 flex flex-col justify-center bg-surface-container-lowest">
-        <span class="text-2xl font-extrabold tracking-tight text-primary mb-8 block">INPG<span class="text-brand"> LMS</span></span>
+        <!-- Le logo blanc vit dans le panneau sombre (SidebarAuth), masqué sous md : sur mobile, c'est la version couleur qui prend le relais -->
+        <app-logo-inpg class="md:hidden block mb-8" hauteur="h-10"></app-logo-inpg>
         <router-outlet></router-outlet>
       </div>
 

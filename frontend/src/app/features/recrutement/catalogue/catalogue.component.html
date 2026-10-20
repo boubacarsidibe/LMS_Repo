@@ -122,9 +122,16 @@
           <!-- Image -->
           <div class="h-40 bg-[#e0e3e5] relative">
             <img
+              *ngIf="formation.imageUrl && !imagesEnErreur.has(formation.id)"
               [src]="formation.imageUrl"
               [alt]="formation.libelle"
+              (error)="imagesEnErreur.add(formation.id)"
               class="w-full h-full object-cover mix-blend-multiply opacity-80">
+            <!-- Sans image : un visuel de marque plutôt que le texte alternatif sur fond gris -->
+            <div *ngIf="!formation.imageUrl || imagesEnErreur.has(formation.id)"
+                 class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand to-secondary">
+              <span class="material-symbols-outlined text-white/70 text-5xl" style="font-variation-settings: 'FILL' 0;">school</span>
+            </div>
             <!-- Badges -->
             <div class="absolute top-4 left-4 flex gap-2">
               <span class="bg-white text-[#000002] px-2.5 py-1 rounded text-xs tracking-[0.05em] font-semibold shadow-sm border border-[#c7c5d0]/50">

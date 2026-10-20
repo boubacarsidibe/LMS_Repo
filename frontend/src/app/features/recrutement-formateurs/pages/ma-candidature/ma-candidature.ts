@@ -3,6 +3,7 @@ import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core'
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { MediaProtegeService } from '../../../espace-etudiants/services/media-protege.service';
 import {
   CandidatureFormateur,
@@ -614,6 +615,7 @@ import { RecrutementFormateurService } from '../../services/recrutement-formateu
 export class MaCandidatureComponent implements OnInit {
   private service = inject(RecrutementFormateurService);
   private mediaProtege = inject(MediaProtegeService);
+  private confirmation = inject(ConfirmationService);
   private route = inject(ActivatedRoute);
 
   @ViewChild('champFichier') champFichier?: ElementRef<HTMLInputElement>;
@@ -889,13 +891,24 @@ export class MaCandidatureComponent implements OnInit {
   }
 
   supprimerPiece(pieceId: number): void {
-    if (!this.candidature || !confirm('Retirer cette pièce du dossier ?')) {
+    if (!this.candidature) {
       return;
     }
-    this.erreurPiece = '';
-    this.service.supprimerPiece(this.candidature.id, pieceId).subscribe({
-      next: () => (this.candidature!.pieces = this.candidature!.pieces.filter((p) => p.id !== pieceId)),
-      error: (e) => (this.erreurPiece = e?.error?.message || 'La suppression a échoué.'),
+    // ConfirmationService et non confirm() : la boîte native est invisible d'un partage d'écran, ignore la charte et ne se teste pas.
+    this.confirmation.demander({
+      titre: 'Retirer la pièce',
+      message: 'Cette pièce sera retirée de votre dossier ; vous pourrez en déposer une autre.',
+      libelleConfirmer: 'Retirer la pièce',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme || !this.candidature) {
+        return;
+      }
+      this.erreurPiece = '';
+      this.service.supprimerPiece(this.candidature.id, pieceId).subscribe({
+        next: () => (this.candidature!.pieces = this.candidature!.pieces.filter((p) => p.id !== pieceId)),
+        error: (e) => (this.erreurPiece = e?.error?.message || 'La suppression a échoué.'),
+      });
     });
   }
 }

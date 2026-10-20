@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { RecrutementService, CandidatureResponse, PaiementResponse } from '../../../../core/recrutement/services/recrutement.service';
+import { RecrutementService, CandidatureResponse, FraisDossier, PaiementResponse } from '../../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
@@ -17,6 +17,8 @@ export class PaiementComponent implements OnInit {
   candidature: CandidatureResponse | null = null;
   candidatureId: number | null = null;
   paiement: PaiementResponse | null = null;
+  /** Frais annoncés avant tout règlement ; une fois la tentative enregistrée, c'est le montant persisté qui fait foi. */
+  fraisPrevus: FraisDossier | null = null;
   loading = false;
   telechargementRecu = false;
   actualisationEnCours = false;
@@ -71,8 +73,12 @@ export class PaiementComponent implements OnInit {
   }
 
   get montantFormate(): string {
-    const montant = this.paiement?.montant;
-    return montant == null ? 'Montant communiqué à la validation' : montant.toLocaleString('fr-FR') + ' FCFA';
+    // Le montant enregistré fait foi ; avant tout règlement, on affiche les frais annoncés par le serveur — le candidat
+    // ne doit pas déclarer un paiement sans savoir combien il règle.
+    const source = this.paiement ?? this.fraisPrevus;
+    if (source?.montant == null) return 'Montant indisponible';
+    const devise = source.devise === 'XOF' ? 'FCFA' : source.devise;
+    return `${source.montant.toLocaleString('fr-FR')} ${devise}`;
   }
 
   /** Libellé lisible du moyen de paiement actuellement sélectionné dans le formulaire. */
@@ -105,6 +111,10 @@ export class PaiementComponent implements OnInit {
         this.candidature = data;
         this.paiement = data.paiement;
       }
+    });
+    this.recrutementService.getFraisDossier(this.candidatureId).subscribe({
+      next: (frais) => (this.fraisPrevus = frais),
+      error: () => (this.fraisPrevus = null),
     });
   }
 

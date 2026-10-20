@@ -11,7 +11,7 @@
           type="button"
           (click)="filtre = 'ALL'"
           [ngClass]="{
-            'bg-primary-container text-white font-medium': filtre === 'ALL',
+            'bg-primary text-white font-medium': filtre === 'ALL',
             'text-on-surface hover:bg-surface-container': filtre !== 'ALL'
           }"
           class="flex items-center justify-between w-full p-stack-sm rounded-lg transition-colors group">
@@ -27,7 +27,7 @@
           type="button"
           (click)="filtre = 'EN_COURS'"
           [ngClass]="{
-            'bg-primary-container text-white font-medium': filtre === 'EN_COURS',
+            'bg-primary text-white font-medium': filtre === 'EN_COURS',
             'text-on-surface hover:bg-surface-container': filtre !== 'EN_COURS'
           }"
           class="flex items-center justify-between w-full p-stack-sm rounded-lg transition-colors group">
@@ -43,7 +43,7 @@
           type="button"
           (click)="filtre = 'TERMINE'"
           [ngClass]="{
-            'bg-primary-container text-white font-medium': filtre === 'TERMINE',
+            'bg-primary text-white font-medium': filtre === 'TERMINE',
             'text-on-surface hover:bg-surface-container': filtre !== 'TERMINE'
           }"
           class="flex items-center justify-between w-full p-stack-sm rounded-lg transition-colors group">
@@ -59,7 +59,7 @@
           type="button"
           (click)="filtre = 'FAVORI'"
           [ngClass]="{
-            'bg-primary-container text-white font-medium': filtre === 'FAVORI',
+            'bg-primary text-white font-medium': filtre === 'FAVORI',
             'text-on-surface hover:bg-surface-container': filtre !== 'FAVORI'
           }"
           class="flex items-center justify-between w-full p-stack-sm rounded-lg transition-colors group">

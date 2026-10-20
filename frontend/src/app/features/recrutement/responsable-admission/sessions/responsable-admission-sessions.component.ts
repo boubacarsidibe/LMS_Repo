@@ -8,6 +8,7 @@ import {
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 
 @Component({
@@ -43,7 +44,7 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   sessionSelectionnee: SessionCandidatureResponse | null = null;
 
   constructor(private recrutementService: RecrutementService, private router: Router,
-              private notifications: NotificationService) {}
+              private notifications: NotificationService, private confirmation: ConfirmationService) {}
 
   ngOnInit(): void {
     this.chargerSessions();
@@ -134,10 +135,17 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   }
 
   supprimer(session: SessionCandidatureResponse): void {
-    if (!confirm(`Supprimer définitivement la session "${session.libelle}" ?`)) return;
-    this.recrutementService.supprimerSession(session.id).subscribe({
-      next: () => this.chargerSessions(),
-      error: () => this.notifications.erreur('Échec de la suppression de la session.'),
+    this.confirmation.demander({
+      titre: 'Supprimer la session',
+      message: `La session « ${session.libelle} » sera définitivement supprimée.`,
+      libelleConfirmer: 'Supprimer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.recrutementService.supprimerSession(session.id).subscribe({
+        next: () => this.chargerSessions(),
+        error: () => this.notifications.erreur('Échec de la suppression de la session.'),
+      });
     });
   }
 

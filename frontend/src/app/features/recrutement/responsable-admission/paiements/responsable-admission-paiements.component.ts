@@ -5,9 +5,13 @@ import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { CandidatureResponse, PaiementResponse, RecrutementService, ResultatRelance } from '../../../../core/recrutement/services/recrutement.service';
 import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
+import { estAdmission, estEnEvaluation, libelleStatut } from '../../../../core/recrutement/statuts-candidature';
 
-/** Statuts à partir desquels le dossier est validé et le paiement des frais attendu. */
-const STATUTS_DOSSIER_VALIDE = ['EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 'ADMIS3'];
+/**
+ * Le paiement des frais est attendu dès la présélection et jusqu'à l'admission, liste complémentaire comprise. Un dossier
+ * encore à l'instruction, refusé ou abandonné n'a rien à régler.
+ */
+const doitAvoirPaye = (statut: string): boolean => estEnEvaluation(statut) || estAdmission(statut) || statut === 'LISTE_ATTENTE';
 
 @Component({
   selector: 'app-responsable-admission-paiements',
@@ -61,12 +65,26 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
    */
   get candidaturesImpayees(): CandidatureResponse[] {
     return this.candidatures.filter(
-      (c) => STATUTS_DOSSIER_VALIDE.includes(c.statut) && c.paiement?.statut !== 'SUCCES'
+      (c) => doitAvoirPaye(c.statut) && c.paiement?.statut !== 'SUCCES'
     );
   }
 
+  /** Libellé lisible d'un statut de dossier : la liste affichait le code brut (« PRESELECTIONNE », « ENTRETIEN_EFFECTUE »). */
+  libelle = libelleStatut;
+
+  /**
+   * Dossiers que « Relancer les impayés » écrira réellement — miroir de
+   * {@code PaiementService#STATUTS_ELIGIBLES_RELANCE_PAIEMENT} : seuls les dossiers qui attendent encore le règlement
+   * (présélectionnés, ou règlement déclaré mais non confirmé). Un dossier déjà convoqué ou entretenu sans avoir payé
+   * figure bien dans la liste des impayés — pour être régularisé —, mais lui écrire « vos frais sont en attente » serait
+   * faux. Le bouton annonçait pourtant tous les impayés (3) alors que le serveur n'en relançait que deux.
+   */
+  get candidaturesARelancer(): CandidatureResponse[] {
+    return this.candidaturesImpayees.filter((c) => c.statut === 'PRESELECTIONNE' || c.statut === 'PAIEMENT_EN_ATTENTE');
+  }
+
   relancerImpayes(): void {
-    if (this.candidaturesImpayees.length === 0) return;
+    if (this.candidaturesARelancer.length === 0) return;
     this.relanceEnCours = true;
     this.relanceMessage = '';
     this.recrutementService.relancerPaiementsImpayes().subscribe({
@@ -141,10 +159,11 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
     if (this.idEnCours) return;
     this.idEnCours = p.id;
     this.recrutementService.simulerSuccesPaiement(p.id).subscribe({
-      next: (maj) => {
-        p.statut = maj.statut;
-        p.datePaiement = maj.datePaiement;
+      next: () => {
         this.idEnCours = null;
+        // On recharge tout : valider un règlement change aussi le statut du dossier, que la liste « en attente de paiement »
+        // affichait encore tel quel — le même dossier apparaissait payé dans un tableau et impayé dans l'autre.
+        this.charger();
       },
       error: () => {
         this.idEnCours = null;
@@ -155,17 +174,27 @@ export class ResponsableAdmissionPaiementsComponent implements OnInit {
 
   rejeter(p: PaiementResponse): void {
     if (this.idEnCours) return;
-    const motif = prompt('Motif du rejet (optionnel) :') || undefined;
-    this.idEnCours = p.id;
-    this.recrutementService.marquerPaiementEnEchec(p.id, motif).subscribe({
-      next: (maj) => {
-        p.statut = maj.statut;
-        this.idEnCours = null;
-      },
-      error: () => {
-        this.idEnCours = null;
-        this.errorMessage = 'Échec du rejet du paiement.';
-      },
+    // Le prompt() natif ne s'affiche ni dans un partage d'écran ni dans un enregistrement, et ignore la charte : voir
+    // ConfirmationService#demanderSaisie.
+    this.confirmation.demanderSaisie({
+      titre: 'Rejeter le paiement',
+      message: `Le règlement de ${p.candidatPrenom ?? ''} ${p.candidatNom ?? ''} (${p.numeroDossier ?? ''}) sera marqué en échec ; le candidat pourra en déclarer un nouveau.`,
+      libelleConfirmer: 'Rejeter le paiement',
+      destructif: true,
+      saisie: { libelle: 'Motif du rejet (facultatif)', obligatoire: false, maxLength: 300 },
+    }).subscribe((motif) => {
+      if (motif === null) return;
+      this.idEnCours = p.id;
+      this.recrutementService.marquerPaiementEnEchec(p.id, motif || undefined).subscribe({
+        next: () => {
+          this.idEnCours = null;
+          this.charger();
+        },
+        error: () => {
+          this.idEnCours = null;
+          this.errorMessage = 'Échec du rejet du paiement.';
+        },
+      });
     });
   }
 }

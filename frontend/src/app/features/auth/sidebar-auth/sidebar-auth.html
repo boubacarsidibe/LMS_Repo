@@ -7,8 +7,10 @@
     <div class="absolute inset-0 bg-gradient-to-b from-primary/20 to-transparent"></div>
   </div>
   
-  <!-- Emplacement d'en-tête laissé vide : le logotype est dans la partie blanche (auth-layout) -->
-  <div class="relative z-10"></div>
+  <!-- En-tête : logo officiel en blanc, en haut à gauche de la carte (la version couleur disparaîtrait sur le bleu nuit) -->
+  <div class="relative z-10">
+    <app-logo-inpg blanc hauteur="h-14"></app-logo-inpg>
+  </div>
   
   <!-- Message principal -->
   <div class="relative z-10 max-w-sm mt-32">
@@ -23,6 +25,6 @@
   <!-- Pied de page -->
   <div class="relative z-10 mt-auto pt-12">
     <p class="font-body-sm text-body-sm text-on-primary opacity-70">
-      © 2026 INPG Executive Education.
+      © {{ annee }} INPG Executive Education.
     </p>
   </div>

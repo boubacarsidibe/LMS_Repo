@@ -75,12 +75,18 @@ n'existe plus nulle part — identique dans tous les espaces :
 `LogoInpgComponent` (`shared/components/logo-inpg/`) est l'unique source de l'image
 (`frontend/public/images/logo-inpg.png`, 640 × 174) et de son texte alternatif : ne pas recopier un `<img>`
 ailleurs, ni recomposer un logotype en texte. Le fichier est détouré (fond transparent) et le logo est bleu
-nuit : sur un fond sombre (panneau de connexion, pied de page), le poser dans une pastille blanche arrondie,
-sans quoi il disparaît. **Exception voulue** : le layout de connexion/inscription (`auth-layout`) garde le
-texte « INPG LMS » (`text-2xl font-extrabold text-primary`, suffixe en `text-brand`) en haut de sa partie
-blanche, et le panneau sombre n'a plus de logo — choix esthétique du 2026-09-25. Le nom de l'espace (« Espace formateur », « Portail Admissions », « Espace
-pédagogique ») reste écrit **sous** le logo, en `font-label-sm`. Le même logo coiffe les PDF (voir §3, papier
-à en-tête).
+nuit : sur un fond sombre (pied de page…), le poser dans une pastille blanche arrondie, sans quoi il
+disparaît — **ou, mieux, utiliser la variante blanche** (`<app-logo-inpg blanc hauteur="h-14">`,
+`frontend/public/images/logo-inpg-blanc.png`, 640 × 167, fourni par l'INPG puis rogné de ses marges
+transparentes).
+
+**Layout de connexion/inscription (`auth-layout`), décision du 2026-10-19** : le **logo blanc** coiffe le
+panneau sombre (`SidebarAuth`), en haut à gauche de la carte, et le texte « INPG LMS » a été **supprimé** de la
+partie blanche — il avait remplacé, le 2026-09-25, le logo du panneau ; c'est désormais l'inverse. Sous `md`, le
+panneau sombre est masqué : le logo **en couleur** prend alors le relais au-dessus du formulaire
+(`md:hidden`), pour qu'un écran de connexion mobile ne soit pas sans identité. Le nom de l'espace (« Espace
+formateur », « Portail Admissions », « Espace pédagogique ») reste écrit **sous** le logo, en `font-label-sm`.
+Le même logo coiffe les PDF (voir §3, papier à en-tête).
 
 ### Contraste : le piège des jetons jumeaux
 
@@ -493,3 +499,39 @@ Restaurer les données après tout essai destructif, et cibler les `DELETE` par 
 `WHERE` — la base sert aux démonstrations client.
 
 Réponses en français, chaque terme technique expliqué brièvement.
+
+---
+
+## 6. Pièges découverts pendant les vidéos de présentation (2026-10-19/20)
+
+Les vidéos (`videos-presentation/`, voir son README) ont servi de recette : jouer chaque parcours dans un vrai navigateur a révélé
+des défauts que ni la lecture du code ni les tests unitaires ne voyaient. À ne pas redécouvrir :
+
+- **Spring Boot 4 = Jackson 3 (`tools.jackson`)**, mais le code importe encore des types Jackson 2 (`com.fasterxml…`).
+  (1) Un `JsonNode` Jackson 2 dans un DTO est sérialisé comme un objet Java (`"containerNode": true…`) : les fiches de formation
+  publiques arrivaient vides. Mettre des `Map`/`List` dans les DTO (voir `FormationDetailPubliqueDto`).
+  (2) Jackson 3 refuse un champ **primitif absent** du corps (`boolean pourMaPromotion`) : HTTP 400 « Failed to read request ».
+  Corrigé globalement par `spring.jackson.deserialization.fail-on-null-for-primitives=false` ; `JacksonChampsAbsentsTest` le fige.
+- **Locale Angular** : sans `registerLocaleData(fr)` + `LOCALE_ID`, tous les `| date` sortent en anglais (« Saturday 24 October »).
+  Fait dans `app.config.ts` ; `app.config.spec.ts` le fige.
+- **Pas de `confirm()` / `prompt()` natifs** : `ConfirmationService` (`demander`, `demanderSaisie`). Une boîte native n'apparaît ni
+  dans un partage d'écran ni dans un enregistrement (et vaut `false`/`null` dans un visualiseur sandboxé).
+- **Un accesseur (`get x()`) qui construit de nouveaux tableaux/objets ne doit jamais alimenter un `*ngFor` contenant des
+  `[(ngModel)]`** : chaque passage de détection recrée les champs, dont l'écriture asynchrone relance un passage — le navigateur se
+  fige (« la page ne répond plus »). Mémoïser à chaque changement de données + `trackBy` (cas réel : grille de l'évaluateur,
+  `demandes.ts`). Un gel ne se signale pas : une boucle de micro-tâches empêche même le délai d'expiration d'un test de se
+  déclencher — tester la cause (identité stable), pas le symptôme.
+- **Valeurs d'énumération** (`@Enumerated(STRING)`) dans les jeux de données : une seule valeur inconnue fait échouer TOUTE la requête
+  de lecture (HTTP 500 / 400). Les recopier des énumérations Java, jamais de mémoire (« Langue maternelle » ≠ `LANGUE_MATERNELLE`).
+- **Contrat front/back : vérifier la clé du JSON, pas le commentaire** : le formulaire d'annonce envoyait `cohorteIds`, le serveur
+  n'attendait que `promotionId` — le choix des destinataires était ignoré en silence.
+- **Suivi des étudiants** : la progression et la « dernière activité » viennent de `ActiviteEtudiantService` (même règle que
+  l'espace étudiant). La plateforme ne trace PAS les connexions : ne jamais réafficher une « dernière connexion ».
+- **Échelles** : notes de cours sur 100 (équivalent /20 affiché), épreuves d'admission sur 20 — toujours afficher l'échelle.
+
+### Outil de production vidéo (`videos-presentation/`)
+
+`./preparer-donnees.sh` (jeux SQL + fichiers + objets signés créés par l'API réelle + instantané) puis `./produire.sh <scénario>`
+(restaure l'instantané, filme, monte). `--essai --captures` répète sans voix ni image et dépose une capture par étape : à utiliser
+avant toute prise. **Attendre la fin de la recompilation du serveur de dev après une modification du frontend** (sinon des étapes
+échouent « au hasard »). Les certificats et attestations sont signés par le service : ne pas les fabriquer en SQL.

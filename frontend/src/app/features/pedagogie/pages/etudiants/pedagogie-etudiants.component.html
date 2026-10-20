@@ -94,21 +94,24 @@
 
   <div *ngIf="!chargement" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
     <div class="overflow-x-auto">
+      <!-- La liste déroulante de promotion avait la largeur de son option la plus longue : le tableau débordait, et la colonne
+           « Alumni », qui porte l'action « Marquer alumni », sortait de l'écran (il fallait faire défiler le cadre pour la
+           trouver). Elle est désormais plafonnée, comme le matricule qui se coupait sur trois lignes. -->
       <table class="w-full">
         <thead>
           <tr class="border-b border-outline-variant">
-            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Étudiant</th>
-            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Matricule</th>
-            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Promotion</th>
-            <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Moyenne</th>
-            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Suivi</th>
-            <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-stack-lg py-stack-md">Alumni</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-stack-md">Étudiant</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-stack-md">Matricule</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-stack-md">Promotion</th>
+            <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-stack-md">Moyenne</th>
+            <th class="text-left font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-stack-md">Suivi</th>
+            <th class="text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider px-3 py-stack-md">Alumni</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let e of etudiantsFiltres" (click)="ouvrirDetail(e)"
               class="border-b border-outline-variant/50 last:border-0 cursor-pointer hover:bg-surface-container-low transition-colors">
-            <td class="px-stack-lg py-stack-md">
+            <td class="px-3 py-stack-md">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-sm shrink-0">
                   <span class="text-white font-label-md text-label-md">{{ e.initiales }}</span>
@@ -121,15 +124,15 @@
                 </div>
               </div>
             </td>
-            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums">
+            <td class="px-3 py-stack-md font-body-sm text-body-sm text-on-surface-variant tabular-nums whitespace-nowrap">
               {{ e.matricule || '—' }}
             </td>
-            <td class="px-stack-lg py-stack-md">
+            <td class="px-3 py-stack-md">
               <select
                 [value]="e.promotion === 'Sans promotion' ? '' : (promotions.length ? '' : '')"
                 (click)="$event.stopPropagation()"
                 (change)="affecter(e, $any($event.target).value)"
-                class="p-2 bg-surface-container-low rounded-lg border font-body-sm text-body-sm text-on-surface"
+                class="p-2 w-48 max-w-full bg-surface-container-low rounded-lg border font-body-sm text-body-sm text-on-surface"
                 [class.border-error]="e.promotion === 'Sans promotion'"
                 [class.border-outline-variant]="e.promotion !== 'Sans promotion'">
                 <option value="">{{ e.promotion }}</option>
@@ -139,18 +142,25 @@
             <!-- « Pas encore noté » et non « 0,0 » : sans cette distinction, un étudiant
                  non évalué et un étudiant ayant tout raté s'affichaient à l'identique,
                  sur l'écran même où l'on décide qui relancer. -->
-            <td class="px-stack-lg py-stack-md text-right font-label-md text-label-md tabular-nums"
-                [class.text-error]="e.noteMoyenne !== null && e.noteMoyenne < 10"
-                [class.text-secondary]="e.noteMoyenne !== null && e.noteMoyenne >= 10"
+            <!-- La couleur suit le STATUT (« À risque » = moyenne sous 60 sur 100), pas un seuil propre : un seuil de 50
+                 ici contre 60 pour le statut affichait en bleu une moyenne de 57,5 que la colonne voisine disait « à
+                 risque ». Valeur et équivalent sur 20 sur deux lignes : sur une ligne, la cellule se coupait en trois. -->
+            <td class="px-3 py-stack-md text-right font-label-md text-label-md tabular-nums whitespace-nowrap"
+                [class.text-error]="e.noteMoyenne !== null && e.statut === 'À risque'"
+                [class.text-secondary]="e.noteMoyenne !== null && e.statut !== 'À risque'"
                 [class.text-on-surface-variant]="e.noteMoyenne === null">
-              {{ e.noteMoyenne !== null ? (e.noteMoyenne | number: '1.1-1') + ' / 20' : 'Pas encore noté' }}
+              <ng-container *ngIf="e.noteMoyenne !== null; else nonNote">
+                {{ e.noteMoyenne | number: '1.1-1' }} / 100
+                <span class="block font-label-sm text-label-sm text-on-surface-variant">{{ e.noteMoyenne / 5 | number: '1.1-1' }} / 20</span>
+              </ng-container>
+              <ng-template #nonNote>Pas encore noté</ng-template>
             </td>
-            <td class="px-stack-lg py-stack-md font-body-sm text-body-sm"
+            <td class="px-3 py-stack-md font-body-sm text-body-sm"
                 [class.text-error]="e.statut === 'À risque'"
                 [class.text-on-surface-variant]="e.statut !== 'À risque'">
               {{ e.statut }}
             </td>
-            <td class="px-stack-lg py-stack-md text-right">
+            <td class="px-3 py-stack-md text-right">
               <span *ngIf="e.estAlumni"
                     class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
                 <span class="material-symbols-outlined text-[16px]">workspace_premium</span>Alumni
@@ -163,7 +173,7 @@
             </td>
           </tr>
           <tr *ngIf="etudiantsFiltres.length === 0">
-            <td colspan="6" class="px-stack-lg py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
+            <td colspan="6" class="px-3 py-stack-lg text-center font-body-md text-body-md text-on-surface-variant">
               {{ etudiants.length === 0 ? 'Aucun étudiant.' : 'Aucun étudiant ne correspond à ces filtres.' }}
             </td>
           </tr>
@@ -319,7 +329,7 @@
           </div>
           <div>
             <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Moyenne</dt>
-            <dd class="font-body-sm text-body-sm text-on-surface">{{ d.noteMoyenne !== null ? (d.noteMoyenne | number: '1.1-1') + ' / 20' : 'Pas encore noté' }}</dd>
+            <dd class="font-body-sm text-body-sm text-on-surface">{{ d.noteMoyenne !== null ? (d.noteMoyenne | number: '1.1-1') + ' / 100 (' + (d.noteMoyenne / 5 | number: '1.1-1') + ' / 20)' : 'Pas encore noté' }}</dd>
           </div>
           <div>
             <dt class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Suivi</dt>

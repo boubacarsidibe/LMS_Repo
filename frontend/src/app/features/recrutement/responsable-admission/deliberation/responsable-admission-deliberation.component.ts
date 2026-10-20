@@ -11,6 +11,8 @@ import {
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
+import { estAdmission, STATUTS_A_DELIBERER } from '../../../../core/recrutement/statuts-candidature';
 
 interface LigneDeliberation {
   candidature: CandidatureResponse;
@@ -38,7 +40,8 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
   actionEnCours = false;
   exporting = false;
 
-  constructor(private recrutementService: RecrutementService, private notifications: NotificationService) {}
+  constructor(private recrutementService: RecrutementService, private notifications: NotificationService,
+              private confirmation: ConfirmationService) {}
 
   ngOnInit(): void {
     this.charger();
@@ -92,10 +95,11 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
   }
 
   get lignes(): LigneDeliberation[] {
-    // Seules les candidatures ayant atteint l'étape entretien (ADMIS2), ou déjà décidées
-    // à cette étape (ADMIS3 / REJETE), ont leur place en délibération.
+    // Seules les candidatures dont l'entretien a eu lieu (ENTRETIEN_EFFECTUE), ou déjà décidées à cette étape
+    // (admises, sur liste complémentaire, non retenues), ont leur place en délibération. Le filtre attendait les
+    // cinq anciens statuts : la liste restait vide alors que des dossiers avaient passé l'entretien.
     const eligibles = this.candidatures.filter((c) =>
-      c.statut === 'ADMIS2' || c.statut === 'ADMIS3' || c.statut === 'LISTE_ATTENTE' || c.statut === 'REJETE'
+      (STATUTS_A_DELIBERER as readonly string[]).includes(c.statut) || estAdmission(c.statut) || c.statut === 'NON_ADMIS'
     );
 
     return eligibles
@@ -117,29 +121,57 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
         if (!texte.includes(q)) return false;
       }
       switch (this.filtre) {
-        case 'EN_ATTENTE': return l.candidature.statut === 'ADMIS2';
-        case 'ADMIS': return l.candidature.statut === 'ADMIS3';
-        case 'LISTE_ATTENTE': return l.candidature.statut === 'LISTE_ATTENTE';
-        case 'REJETES': return l.candidature.statut === 'REJETE';
+        case 'EN_ATTENTE': return this.issue(l) === 'attente';
+        case 'ADMIS': return this.issue(l) === 'admis';
+        case 'LISTE_ATTENTE': return this.issue(l) === 'liste';
+        case 'REJETES': return this.issue(l) === 'non-retenu';
         default: return true;
       }
     });
   }
 
+  /** Issue d'un dossier à la délibération : de quel côté de la décision il se trouve. */
+  issue(l: LigneDeliberation): 'attente' | 'admis' | 'liste' | 'non-retenu' {
+    const s = l.candidature.statut;
+    if (estAdmission(s)) return 'admis';
+    if (s === 'NON_ADMIS') return 'non-retenu';
+    if (s === 'LISTE_ATTENTE') return 'liste';
+    return 'attente';
+  }
+
+  libelleIssue(l: LigneDeliberation): string {
+    switch (this.issue(l)) {
+      case 'admis': return 'Admis';
+      case 'non-retenu': return 'Non retenu';
+      case 'liste': return 'Liste complémentaire';
+      default: return 'En attente';
+    }
+  }
+
+  /** Reste-t-il une décision à prendre ? (admettre, rejeter — et, après l'entretien, liste complémentaire). */
+  aDeliberer(l: LigneDeliberation): boolean {
+    return (STATUTS_A_DELIBERER as readonly string[]).includes(l.candidature.statut);
+  }
+
+  /** La liste complémentaire se décide à l'issue de l'entretien : un dossier qui y est déjà n'y retourne pas. */
+  peutMettreEnListeAttente(l: LigneDeliberation): boolean {
+    return l.candidature.statut === 'ENTRETIEN_EFFECTUE';
+  }
+
   get nbEnAttente(): number {
-    return this.lignes.filter((l) => l.candidature.statut === 'ADMIS2').length;
+    return this.lignes.filter((l) => this.issue(l) === 'attente').length;
   }
 
   get nbAdmis(): number {
-    return this.lignes.filter((l) => l.candidature.statut === 'ADMIS3').length;
+    return this.lignes.filter((l) => this.issue(l) === 'admis').length;
   }
 
   get nbRejetes(): number {
-    return this.lignes.filter((l) => l.candidature.statut === 'REJETE').length;
+    return this.lignes.filter((l) => this.issue(l) === 'non-retenu').length;
   }
 
   get nbListeAttente(): number {
-    return this.lignes.filter((l) => l.candidature.statut === 'LISTE_ATTENTE').length;
+    return this.lignes.filter((l) => this.issue(l) === 'liste').length;
   }
 
   /** Retenu par le jury mais sans place disponible (TDR §3.1.C) : ni admis, ni rejeté. */
@@ -172,22 +204,25 @@ export class ResponsableAdmissionDeliberationComponent implements OnInit {
   }
 
   rejeter(l: LigneDeliberation): void {
-    const motif = window.prompt(`Motif de rejet pour ${l.candidature.numeroDossier} :`);
-    if (motif === null) return;
-    if (!motif.trim()) {
-      this.notifications.erreur('Un motif de rejet est requis.');
-      return;
-    }
-    this.actionEnCours = true;
-    this.recrutementService.rejeterDossier(l.candidature.id, motif.trim()).subscribe({
-      next: () => {
-        this.actionEnCours = false;
-        this.charger();
-      },
-      error: (err) => {
-        this.actionEnCours = false;
-        this.notifications.erreur(err.error?.message || 'Échec du rejet.');
-      },
+    this.confirmation.demanderSaisie({
+      titre: 'Ne pas retenir ce candidat',
+      message: `Dossier ${l.candidature.numeroDossier} — ${l.candidature.candidatPrenom} ${l.candidature.candidatNom}.\nLe candidat sera informé de la décision du jury.`,
+      libelleConfirmer: 'Confirmer le rejet',
+      destructif: true,
+      saisie: { libelle: 'Motif', obligatoire: true, placeholder: 'Ex. : résultats insuffisants à l\'entretien' },
+    }).subscribe((motif) => {
+      if (!motif) return;
+      this.actionEnCours = true;
+      this.recrutementService.rejeterDossier(l.candidature.id, motif).subscribe({
+        next: () => {
+          this.actionEnCours = false;
+          this.charger();
+        },
+        error: (err) => {
+          this.actionEnCours = false;
+          this.notifications.erreur(err.error?.message || 'Échec du rejet.');
+        },
+      });
     });
   }
 

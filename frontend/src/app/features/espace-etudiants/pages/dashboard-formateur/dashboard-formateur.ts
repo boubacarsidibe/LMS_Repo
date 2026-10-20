@@ -10,6 +10,8 @@ import { SujetService } from '../../services/sujet.service';
 import { SujetForum } from '../../models/sujet';
 import { EtudiantService } from '../../services/etudiant.service';
 import { Etudiant } from '../../models/etudiant';
+import { RetourService } from '../../services/retour.service';
+import { RetourEvaluation } from '../../models/retour-evaluation';
 
 /** Vue d'aperçu d'une {@link Seance} : la date/heure ISO unique de l'API est
  * éclatée en {@code date}/{@code heure} pour l'affichage du tableau de bord. */
@@ -45,6 +47,9 @@ export class DashboardFormateur implements OnInit {
   mesEtudiants: Etudiant[] = [];
   chargementEtudiants = false;
 
+  retours: RetourEvaluation[] = [];
+  chargementRetours = false;
+
   private readonly nomsMois = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
 
   constructor(
@@ -52,7 +57,8 @@ export class DashboardFormateur implements OnInit {
     private coursService: CoursService,
     private seanceService: SeanceService,
     private sujetService: SujetService,
-    private etudiantService: EtudiantService
+    private etudiantService: EtudiantService,
+    private retourService: RetourService
   ) {}
 
   ngOnInit(): void {
@@ -106,6 +112,33 @@ export class DashboardFormateur implements OnInit {
       next: list => { this.mesEtudiants = list || []; this.chargementEtudiants = false; },
       error: () => { this.mesEtudiants = []; this.chargementEtudiants = false; }
     });
+
+    this.chargementRetours = true;
+    this.retourService.getAll().subscribe({
+      next: list => { this.retours = list || []; this.chargementRetours = false; },
+      error: () => { this.retours = []; this.chargementRetours = false; }
+    });
+  }
+
+  /** Part moyenne des supports consultés, tous cours confondus (même règle que l'espace de l'étudiant). */
+  get progressionMoyenne(): number {
+    if (!this.mesEtudiants.length) return 0;
+    return Math.round(this.mesEtudiants.reduce((somme, e) => somme + e.progression, 0) / this.mesEtudiants.length);
+  }
+
+  /** Étudiants dont la moyenne appelle un accompagnement : même définition que l'écran « Suivi des étudiants ». */
+  get etudiantsAAccompagner(): number {
+    return this.mesEtudiants.filter(({ statut }) => statut === 'À risque' || statut === 'En retard').length;
+  }
+
+  /** Moyenne des avis sur 5, au dixième ; null tant qu'aucun avis n'a été déposé (à ne pas confondre avec 0). */
+  get noteMoyenneRetours(): number | null {
+    if (!this.retours.length) return null;
+    return Math.round((this.retours.reduce((somme, r) => somme + r.note, 0) / this.retours.length) * 10) / 10;
+  }
+
+  get retoursAAgir(): number {
+    return this.retours.filter(r => r.statut === 'action-requise').length;
   }
 
   private versApercu(s: Seance): SeanceApercu {

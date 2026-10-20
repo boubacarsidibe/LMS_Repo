@@ -138,6 +138,11 @@ export interface PieceJustificativeResponse {
   moyenneDeclaree: number | null;
 }
 
+export interface FraisDossier {
+  montant: number;
+  devise: string;
+}
+
 export interface PaiementResponse {
   id: number;
   referenceTransaction: string;
@@ -502,6 +507,11 @@ export class RecrutementService {
     return this.http.post(`${this.baseUrl}/recrutement/candidat/candidature/${candidatureId}/pieces`, formData);
   }
 
+  /** Frais de dossier annoncés avant le règlement (tarif de la session, sinon tarif de l'établissement). */
+  getFraisDossier(candidatureId: number): Observable<FraisDossier> {
+    return this.http.get<FraisDossier>(`${this.baseUrl}/recrutement/candidat/candidature/${candidatureId}/frais-dossier`);
+  }
+
   initierPaiement(request: PaiementRequest): Observable<PaiementResponse> {
     return this.http.post<PaiementResponse>(`${this.baseUrl}/recrutement/candidat/paiement`, request);
   }
@@ -707,14 +717,14 @@ export class RecrutementService {
   }
 
   /**
-   * Étape 6 de QMS-009 : ouvre l'accès étudiant d'un dossier ADMIS3. Distincte de
+   * Étape 6 de QMS-009 : ouvre l'accès étudiant d'un dossier ADMIS. Distincte de
    * {@link admettreFinal}, qui ne fait plus que la sélection (voir LOG_BLOQUANT §QMS-009).
    */
   finaliserInscription(id: number): Observable<CandidatureResponse> {
     return this.http.post<CandidatureResponse>(`${this.baseUrl}/admin/recrutement/candidatures/${id}/finaliser-inscription`, {});
   }
 
-  /** Dossiers ADMIS3 dont l'inscription (étape 6) n'a pas encore été finalisée. */
+  /** Dossiers ADMIS dont l'inscription (étape 6) n'a pas encore été finalisée. */
   getCandidaturesEnAttenteInscription(): Observable<CandidatureResponse[]> {
     return this.http.get<CandidatureResponse[]>(`${this.baseUrl}/admin/recrutement/candidatures/en-attente-inscription`);
   }

@@ -220,7 +220,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     const user = this.auth.currentUser();
     if (!user) return '';
     if ((user as any).username) {
-      return (user as any).username.replace('_', ' ');
+      // Toutes les occurrences : un compte d'école ou d'entreprise porte le nom de l'organisation (« institut_sahel_energie »),
+      // et « replace('_', ' ') » ne remplaçait que la première.
+      return (user as any).username.replace(/_/g, ' ');
     }
     return user.email;
   }

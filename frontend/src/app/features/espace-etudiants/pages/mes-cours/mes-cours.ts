@@ -12,6 +12,8 @@ import { PromotionService } from '../../services/promotion.service';
 import { SupportService } from '../../services/support.service';
 import { SeanceService } from '../../services/seance.service';
 import { PresenceService } from '../../services/presence.service';
+import { EtudiantService } from '../../services/etudiant.service';
+import { Etudiant } from '../../models/etudiant';
 import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
 import { environment } from '../../../../../environments/environment';
@@ -28,6 +30,8 @@ export class MesCours implements OnInit {
   @ViewChild('depotRapide') depotRapide!: ElementRef<HTMLElement>;
 
   cours: Cours[] = [];
+  /** Étudiants distincts du formateur — la même source que le tableau de bord, pour que les deux chiffres concordent. */
+  mesEtudiants: Etudiant[] | null = null;
   toutesPromotions: Promotion[] = [];
 
   coursEnGestion: Cours | null = null;
@@ -81,6 +85,7 @@ export class MesCours implements OnInit {
     private supportService: SupportService,
     private seanceService: SeanceService,
     private presenceService: PresenceService,
+    private etudiantService: EtudiantService,
     private confirmation: ConfirmationService,
     private notifications: NotificationService,
     private route: ActivatedRoute,
@@ -160,6 +165,10 @@ export class MesCours implements OnInit {
     this.loadCours();
     this.chargerSupports();
     this.mettreAJourContraintesDepot('pdf');
+    this.etudiantService.getAll().subscribe({
+      next: (liste) => (this.mesEtudiants = liste || []),
+      error: () => (this.mesEtudiants = null),
+    });
     this.promotionService.getMesPromotionsFormateur().subscribe({
       next: (data) => (this.toutesPromotions = data || []),
       error: () => (this.toutesPromotions = [])
@@ -576,8 +585,14 @@ export class MesCours implements OnInit {
     });
   }
 
-  get totalEtudiantsInscrits(): number {
-    return this.cours.reduce((total, cours) => total + (cours.nbEtudiants || 0), 0);
+  /**
+   * Nombre d'étudiants DISTINCTS. La somme des effectifs par cours — ce que ce compteur affichait — compte un
+   * étudiant autant de fois qu'il suit de cours : 67 « étudiants » pour 19 personnes, alors que le tableau de bord
+   * du même formateur en annonçait 19. Tant que la liste n'est pas chargée (ou en cas d'erreur), le compteur reste
+   * vide plutôt que d'afficher un chiffre faux.
+   */
+  get totalEtudiantsInscrits(): number | null {
+    return this.mesEtudiants === null ? null : this.mesEtudiants.length;
   }
 
   urlImage(cours: Cours): string {

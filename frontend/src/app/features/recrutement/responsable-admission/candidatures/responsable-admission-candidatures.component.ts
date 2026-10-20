@@ -7,8 +7,25 @@ import { CandidatureResponse, FormatRapport, RecrutementService, ResultatRelance
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { ColonneExport, ExportColumnsModalComponent } from '../../../../shared/components/export-columns-modal/export-columns-modal.component';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
+import {
+  actionSuivante as actionSuivanteDe,
+  attenteDuDossier,
+  CIBLES_DE_RECUL,
+  classeStatut as classeStatutDe,
+  GROUPES_STATUTS,
+  libelleStatut as libelleStatutDe,
+  peutAnnuler as peutAnnulerDe,
+  peutReculerVers as peutReculerVersDe,
+  peutRejeter as peutRejeterDe,
+  statutsDuFiltre,
+} from '../../../../core/recrutement/statuts-candidature';
 
-type StatutFiltre = 'TOUS' | 'SOUMIS' | 'EN_COURS_DE_PRESELECTION' | 'ADMIS1' | 'ADMIS2' | 'LISTE_ATTENTE' | 'ADMIS3' | 'REJETE' | 'BROUILLON';
+/**
+ * Clé d'un onglet (« A_INSTRUIRE », « TEST »… voir GROUPES_STATUTS) ou statut précis (« SOUMIS ») : un onglet regroupe
+ * plusieurs des vingt statuts du serveur. L'ancien type ne connaissait que les cinq statuts d'avant le 22/09.
+ */
+type StatutFiltre = string;
 
 @Component({
   selector: 'app-responsable-admission-candidatures',
@@ -41,16 +58,8 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   readonly taillePage = 10;
 
   /** Onglets du parcours, dans l'ordre où un dossier les traverse. */
-  readonly onglets: { statut: StatutFiltre; libelle: string }[] = [
-    { statut: 'TOUS', libelle: 'Toutes' },
-    { statut: 'SOUMIS', libelle: 'Soumises' },
-    { statut: 'EN_COURS_DE_PRESELECTION', libelle: 'Présélection' },
-    { statut: 'ADMIS1', libelle: 'Test' },
-    { statut: 'ADMIS2', libelle: 'Entretien' },
-    { statut: 'LISTE_ATTENTE', libelle: 'Liste complémentaire' },
-    { statut: 'ADMIS3', libelle: 'Admises' },
-    { statut: 'REJETE', libelle: 'Rejetées' },
-  ];
+  readonly onglets: { statut: StatutFiltre; libelle: string }[] =
+    GROUPES_STATUTS.map((g) => ({ statut: g.cle, libelle: g.libelle }));
 
   get totalPages(): number {
     return Math.max(1, Math.ceil(this.candidaturesFiltrees.length / this.taillePage));
@@ -98,7 +107,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   menuActionsOuvert = false;
   menuRapportsOuvert = false;
 
-  /** Dossiers ADMIS3 dont l'inscription (étape 6, QMS-009) reste à finaliser. */
+  /** Dossiers ADMIS dont l'inscription (étape 6, QMS-009) reste à finaliser. */
   idsEnAttenteInscription = new Set<number>();
 
   /**
@@ -138,21 +147,17 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   readonly colonnesExportParDefaut = ['numeroDossier', 'nom', 'prenom', 'email', 'session', 'statut', 'dateSoumission', 'motifRejet'];
 
   constructor(private recrutementService: RecrutementService, private route: ActivatedRoute, private router: Router,
-              private notifications: NotificationService) {}
+              private notifications: NotificationService, private confirmation: ConfirmationService) {}
 
   ngOnInit(): void {
     const sessionParam = this.route.snapshot.queryParamMap.get('session');
     if (sessionParam) this.filtreSessionId = Number(sessionParam);
-    const statutParam = this.route.snapshot.queryParamMap.get('statut') as StatutFiltre | null;
-    if (statutParam && this.STATUTS_VALIDES.includes(statutParam)) this.filtreStatut = statutParam;
+    const statutParam = this.route.snapshot.queryParamMap.get('statut');
+    if (statutParam && statutsDuFiltre(statutParam) !== undefined) this.filtreStatut = statutParam;
     const dossierParam = this.route.snapshot.queryParamMap.get('dossier');
     if (dossierParam) this.recherche = dossierParam;
     this.chargerCandidatures();
   }
-
-  private readonly STATUTS_VALIDES: StatutFiltre[] = [
-    'TOUS', 'SOUMIS', 'EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2', 'LISTE_ATTENTE', 'ADMIS3', 'REJETE', 'BROUILLON',
-  ];
 
   private chargerCandidatures(): void {
     this.loading = true;
@@ -193,8 +198,9 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
    * recherche, filtreStatut ou filtreSessionId. */
   recalculerFiltres(): void {
     const q = this.recherche.trim().toLowerCase();
+    const statutsRetenus = statutsDuFiltre(this.filtreStatut) ?? null;
     this.candidaturesFiltrees = this.candidatures.filter((c) => {
-      if (this.filtreStatut !== 'TOUS' && c.statut !== this.filtreStatut) return false;
+      if (statutsRetenus && !statutsRetenus.includes(c.statut as never)) return false;
       if (this.filtreSessionId !== null && c.sessionCandidatureId !== this.filtreSessionId) return false;
       if (!q) return true;
       return (
@@ -254,8 +260,14 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   }
 
   compter(statut: StatutFiltre): number {
-    if (statut === 'TOUS') return this.candidatures.length;
-    return this.candidatures.filter((c) => c.statut === statut).length;
+    const statuts = statutsDuFiltre(statut);
+    if (!statuts) return this.candidatures.length;
+    return this.candidatures.filter((c) => statuts.includes(c.statut as never)).length;
+  }
+
+  /** Statuts à transmettre au serveur pour l'export : ceux de l'onglet, séparés par des virgules. */
+  private get filtreExport(): string | undefined {
+    return statutsDuFiltre(this.filtreStatut)?.join(',') || undefined;
   }
 
   /** Même définition qu'ApplicationController#isDossierIncomplet côté serveur. */
@@ -273,76 +285,54 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   }
 
   libelleStatut(statut: string): string {
-    switch (statut) {
-      case 'BROUILLON': return 'Brouillon';
-      case 'SOUMIS': return 'Soumis';
-      case 'EN_COURS_DE_PRESELECTION': return 'En présélection';
-      case 'ADMIS1': return 'Admis au test';
-      case 'ADMIS2': return 'Admis à l\'entretien';
-      case 'ADMIS3': return 'Admis (final)';
-      case 'REJETE': return 'Rejeté';
-      default: return statut;
-    }
+    return libelleStatutDe(statut);
   }
 
   classeStatut(statut: string): string {
-    switch (statut) {
-      case 'REJETE': return 'bg-error-container/20 text-error';
-      case 'ADMIS3': return 'bg-green-100 text-green-800';
-      case 'ADMIS1':
-      case 'ADMIS2': return 'bg-primary-fixed text-on-primary-fixed-variant';
-      case 'SOUMIS':
-      case 'EN_COURS_DE_PRESELECTION': return 'bg-secondary-container/30 text-on-secondary-container';
-      default: return 'bg-surface-container text-on-surface-variant';
+    return classeStatutDe(statut);
+  }
+
+  /** La présélection est le geste qu'un dossier vide ne peut pas recevoir. */
+  bloqueParDossierVide(c: CandidatureResponse): boolean {
+    return actionSuivanteDe(c.statut)?.cle === 'VALIDER_PRESELECTION' && this.dossierVide(c);
+  }
+
+  /** Libellé + geste selon l'étape actuelle du workflow (cf. CandidatureService#estTransitionValide côté backend). */
+  actionSuivante(c: CandidatureResponse): { libelle: string; action: () => void } | null {
+    const geste = actionSuivanteDe(c.statut);
+    if (!geste) return null;
+    switch (geste.cle) {
+      case 'VALIDER_PRESELECTION': return { libelle: geste.libelle, action: () => this.validerPreselection(c) };
+      case 'ADMETTRE_TEST': return { libelle: geste.libelle, action: () => this.admettreTest(c) };
+      case 'ADMETTRE_ENTRETIEN': return { libelle: geste.libelle, action: () => this.admettreEntretien(c) };
+      case 'ADMETTRE_FINAL': return { libelle: geste.libelle, action: () => this.admettreFinal(c) };
+      case 'FINALISER_INSCRIPTION':
+        // Étape 6 de QMS-009 : la sélection (admettre-final) n'ouvre pas l'accès étudiant elle-même.
+        return this.idsEnAttenteInscription.has(c.id)
+          ? { libelle: geste.libelle, action: () => this.finaliserInscription(c) }
+          : null;
     }
   }
 
-  /** Libellé + capacité d'action selon l'étape actuelle du workflow (cf. CandidatureService#estTransitionValide côté backend). */
-  actionSuivante(c: CandidatureResponse): { libelle: string; action: () => void } | null {
-    switch (c.statut) {
-      case 'SOUMIS':
-        return { libelle: 'Valider présélection', action: () => this.validerPreselection(c) };
-      case 'EN_COURS_DE_PRESELECTION':
-        return { libelle: 'Admettre au test', action: () => this.admettreTest(c) };
-      case 'ADMIS1':
-        return { libelle: 'Admettre à l\'entretien', action: () => this.admettreEntretien(c) };
-      case 'ADMIS2':
-        return { libelle: 'Admettre (final)', action: () => this.admettreFinal(c) };
-      case 'ADMIS3':
-        // Étape 6 de QMS-009 : la sélection (admettre-final) n'ouvre plus l'accès étudiant
-        // elle-même — voir finaliserInscription().
-        return this.idsEnAttenteInscription.has(c.id)
-          ? { libelle: 'Finaliser l\'inscription', action: () => this.finaliserInscription(c) }
-          : null;
-      default:
-        return null;
-    }
+  /** Ce qu'attend un dossier qui n'offre aucun geste (infobulle de la ligne). */
+  attente(c: CandidatureResponse): string | null {
+    return this.actionSuivante(c) ? null : attenteDuDossier(c.statut);
   }
 
   peutRejeter(c: CandidatureResponse): boolean {
-    return c.statut !== 'ADMIS3' && c.statut !== 'REJETE' && c.statut !== 'BROUILLON';
+    return peutRejeterDe(c.statut);
   }
 
-  /** ADMIS3 exclu : l'admission finale a déjà ouvert l'accès étudiant, non annulable ici. */
+  /** Une fois l'accès étudiant ouvert (INSCRIPTION_FINALISEE), la décision n'est plus annulable ici. */
   peutAnnuler(c: CandidatureResponse): boolean {
-    return c.statutPrecedent != null && c.statut !== 'ADMIS3';
+    return peutAnnulerDe(c.statut, c.statutPrecedent);
   }
 
-  /** Cibles valides pour "faire reculer vers" — mêmes règles que CandidatureService#rangParcours côté backend. */
-  readonly ciblesReculer: { valeur: StatutFiltre; libelle: string }[] = [
-    { valeur: 'SOUMIS', libelle: 'Soumis' },
-    { valeur: 'EN_COURS_DE_PRESELECTION', libelle: 'En présélection' },
-    { valeur: 'ADMIS1', libelle: 'Admis au test' },
-    { valeur: 'ADMIS2', libelle: 'Admis à l\'entretien' },
-  ];
-  private readonly rangParcours: Record<string, number> = {
-    SOUMIS: 1, EN_COURS_DE_PRESELECTION: 2, ADMIS1: 3, ADMIS2: 4,
-  };
+  /** Cibles valides pour « faire reculer vers » — mêmes règles que CandidatureService#reculerStatut côté backend. */
+  readonly ciblesReculer: { valeur: StatutFiltre; libelle: string }[] = [...CIBLES_DE_RECUL];
 
   private peutReculerVers(c: CandidatureResponse, cible: string): boolean {
-    if (c.statut === 'ADMIS3') return false;
-    if (c.statut === 'REJETE') return true;
-    return this.rangParcours[cible] < this.rangParcours[c.statut];
+    return peutReculerVersDe(c.statut, cible);
   }
 
   /** Dossiers actuellement cochés, centralisés pour que le panneau d'actions décrive la sélection réelle. */
@@ -512,14 +502,20 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
       this.notifications.erreur('Aucun dossier sélectionné ne peut être rejeté (déjà admis, déjà rejeté ou brouillon).');
       return;
     }
-    const motif = window.prompt(`Motif de rejet pour ${cibles.length} dossier(s) :`);
-    if (motif === null) return;
-    if (!motif.trim()) {
-      this.notifications.erreur('Un motif de rejet est requis.');
-      return;
-    }
+    this.confirmation.demanderSaisie({
+      titre: cibles.length > 1 ? `Rejeter ${cibles.length} dossiers` : 'Rejeter ce dossier',
+      message: 'Le même motif est conservé sur chaque dossier et chaque candidat en est informé.',
+      libelleConfirmer: 'Rejeter',
+      destructif: true,
+      saisie: { libelle: 'Motif du rejet', obligatoire: true, placeholder: 'Ex. : pièces justificatives incomplètes' },
+    }).subscribe((motif) => {
+      if (motif) this.rejeterCibles(cibles, motif);
+    });
+  }
+
+  private rejeterCibles(cibles: CandidatureResponse[], motif: string): void {
     this.rejetGroupeEnCours = true;
-    forkJoin(cibles.map((c) => this.recrutementService.rejeterDossier(c.id, motif.trim()))).subscribe({
+    forkJoin(cibles.map((c) => this.recrutementService.rejeterDossier(c.id, motif))).subscribe({
       next: () => {
         this.rejetGroupeEnCours = false;
         this.viderSelection();
@@ -643,29 +639,31 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   }
 
   rejeter(c: CandidatureResponse): void {
-    const motif = window.prompt(`Motif de rejet pour le dossier ${c.numeroDossier} :`);
-    if (motif === null) return; // annulé
-    if (!motif.trim()) {
-      this.notifications.erreur('Un motif de rejet est requis.');
-      return;
-    }
-    this.actionEnCours = true;
-    this.recrutementService.rejeterDossier(c.id, motif.trim()).subscribe({
-      next: () => {
-        this.actionEnCours = false;
-        this.chargerCandidatures();
-      },
-      error: (err) => {
-        this.actionEnCours = false;
-        this.notifications.erreur(err.error?.message || 'Échec du rejet de la candidature.');
-      },
+    this.confirmation.demanderSaisie({
+      titre: 'Rejeter ce dossier',
+      message: `Dossier ${c.numeroDossier} — ${c.candidatPrenom} ${c.candidatNom}.\nLe motif est conservé au dossier et le candidat en est informé.`,
+      libelleConfirmer: 'Rejeter le dossier',
+      destructif: true,
+      saisie: { libelle: 'Motif du rejet', obligatoire: true, placeholder: 'Ex. : pièces justificatives incomplètes' },
+    }).subscribe((motif) => {
+      if (!motif) return;
+      this.actionEnCours = true;
+      this.recrutementService.rejeterDossier(c.id, motif).subscribe({
+        next: () => {
+          this.actionEnCours = false;
+          this.chargerCandidatures();
+        },
+        error: (err) => {
+          this.actionEnCours = false;
+          this.notifications.erreur(err.error?.message || 'Échec du rejet de la candidature.');
+        },
+      });
     });
   }
 
   exporter(colonnes: string[]): void {
     this.exporting = true;
-    const statut = this.filtreStatut === 'TOUS' ? undefined : this.filtreStatut;
-    this.recrutementService.exporterCandidatures(statut, colonnes).subscribe({
+    this.recrutementService.exporterCandidatures(this.filtreExport, colonnes).subscribe({
       next: (blob) => {
         downloadBlob(blob, `candidatures_recrutement_${new Date().toISOString().slice(0, 10)}.xlsx`);
         this.exporting = false;
@@ -698,8 +696,7 @@ export class ResponsableAdmissionCandidaturesComponent implements OnInit {
   /** Télécharge les documents (pièces justificatives) des candidatures actuellement filtrées par statut, en .zip. */
   exporterDocuments(): void {
     this.exportingDocuments = true;
-    const statut = this.filtreStatut === 'TOUS' ? undefined : this.filtreStatut;
-    this.recrutementService.exporterDocuments(statut).subscribe({
+    this.recrutementService.exporterDocuments(this.filtreExport).subscribe({
       next: (blob) => {
         downloadBlob(blob, `documents_candidatures_${new Date().toISOString().slice(0, 10)}.zip`);
         this.exportingDocuments = false;

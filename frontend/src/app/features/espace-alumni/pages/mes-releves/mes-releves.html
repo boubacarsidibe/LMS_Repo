@@ -31,7 +31,7 @@
         <div class="flex items-center gap-3 shrink-0">
           <p class="font-headline-sm text-headline-sm text-secondary tabular-nums">
             {{ r.moyenneGenerale !== null ? (r.moyenneGenerale | number: '1.1-1') : '—' }}<span
-              class="font-body-sm text-body-sm text-on-surface-variant">/20</span>
+              class="font-body-sm text-body-sm text-on-surface-variant">/100<ng-container *ngIf="r.moyenneGenerale !== null"> ({{ r.moyenneGenerale / 5 | number: '1.1-1' }}/20)</ng-container></span>
           </p>
           <button type="button" (click)="telechargerReleve(r)" [disabled]="releveEnCoursId === r.id"
                   class="flex items-center gap-1 px-3 py-2 rounded-lg border border-outline-variant font-label-sm text-label-sm text-on-surface hover:bg-surface-container transition-colors disabled:opacity-50">

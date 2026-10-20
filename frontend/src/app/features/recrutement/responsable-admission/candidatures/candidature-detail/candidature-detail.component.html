@@ -48,16 +48,6 @@
             <span *ngIf="item.pending" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
             <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
           
-  <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
-    <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
-      <h2 id="titre-confirmation-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
-      <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourStatutCible ? 'Le dossier reviendra au statut « ' + libelleStatut(retourStatutCible) + ' ».' : 'Le dossier retrouvera son statut précédent.' }}</p>
-      <p *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</p>
-      <label for="mot-de-passe-retour-detail" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
-      <input id="mot-de-passe-retour-detail" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:outline-none focus:border-secondary" />
-      <div class="mt-6 flex justify-end gap-3"><button type="button" (click)="fermerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant">Annuler</button><button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary disabled:opacity-60">{{ actionEnCours ? 'Validation…' : 'Confirmer' }}</button></div>
-    </section>
-  </div>
 </ng-container>
         </div>
         <div>
@@ -68,16 +58,6 @@
             <p *ngIf="paiementEchoue" class="font-body-sm text-body-sm text-error mt-1">La précédente tentative de paiement du candidat n'a pas abouti.</p>
             <p *ngIf="!paiementEnAttente && !paiementEchoue" class="font-body-sm text-body-sm text-on-surface-variant mt-1">En attente du règlement des frais de dossier par le candidat.</p>
           
-  <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
-    <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
-      <h2 id="titre-confirmation-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
-      <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourStatutCible ? 'Le dossier reviendra au statut « ' + libelleStatut(retourStatutCible) + ' ».' : 'Le dossier retrouvera son statut précédent.' }}</p>
-      <p *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</p>
-      <label for="mot-de-passe-retour-detail" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
-      <input id="mot-de-passe-retour-detail" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:outline-none focus:border-secondary" />
-      <div class="mt-6 flex justify-end gap-3"><button type="button" (click)="fermerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant">Annuler</button><button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary disabled:opacity-60">{{ actionEnCours ? 'Validation…' : 'Confirmer' }}</button></div>
-    </section>
-  </div>
 </ng-container>
         </div>
         <div *ngIf="i < timelineItems.length - 1" class="absolute -bottom-5 left-4 h-4 w-[2px] bg-outline-variant"></div>
@@ -152,7 +132,7 @@
       <button *ngIf="peutAnnuler(sel)" type="button" [disabled]="actionEnCours" (click)="annuler(sel)" [title]="'Revenir à : ' + libelleStatut(sel.statutPrecedent!)" class="px-4 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-60 flex items-center gap-2">
         <span class="material-symbols-outlined text-[18px]">undo</span> Annuler la dernière décision
       </button>
-      <div *ngIf="sel.statut !== 'ADMIS3'" class="flex items-center gap-1.5">
+      <div *ngIf="peutReculer(sel)" class="flex items-center gap-1.5">
         <select #cibleReculerDetail class="px-3 py-2 bg-surface border border-outline-variant rounded-lg font-body-sm text-body-sm outline-none" [disabled]="actionEnCours">
           <option *ngFor="let cible of ciblesReculer" [value]="cible.valeur" [disabled]="!peutReculerVers(sel, cible.valeur)">{{ cible.libelle }}</option>
         </select>
@@ -160,12 +140,15 @@
           Reculer vers
         </button>
       </div>
-      <span *ngIf="actionSuivante(sel) && sel.statut === 'SOUMIS' && dossierVide(sel)" class="ml-auto text-body-sm text-error flex items-center gap-1" title="Aucune pièce jointe : la présélection est bloquée tant que le candidat n'a pas déposé son dossier.">
+      <span *ngIf="bloqueParDossierVide(sel)" class="ml-auto text-body-sm text-error flex items-center gap-1" title="Aucune pièce jointe : la présélection est bloquée tant que le candidat n'a pas déposé son dossier.">
         <span class="material-symbols-outlined text-[18px]">error</span> Dossier vide — présélection impossible
       </span>
-      <button *ngIf="actionSuivante(sel) && !(sel.statut === 'SOUMIS' && dossierVide(sel))" type="button" [disabled]="actionEnCours" (click)="actionSuivante(sel)!.action()" class="ml-auto px-4 py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg shadow-sm hover:bg-secondary/90 transition-colors flex items-center gap-2 disabled:opacity-60">
+      <button *ngIf="actionSuivante(sel) && !bloqueParDossierVide(sel)" type="button" [disabled]="actionEnCours" (click)="actionSuivante(sel)!.action()" class="ml-auto px-4 py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg shadow-sm hover:bg-secondary/90 transition-colors flex items-center gap-2 disabled:opacity-60">
         <span class="material-symbols-outlined text-[18px]">how_to_reg</span> {{ actionSuivante(sel)!.libelle }}
       </button>
+      <span *ngIf="attente(sel) as texteAttente" class="ml-auto text-body-sm text-on-surface-variant flex items-center gap-1">
+        <span class="material-symbols-outlined text-[18px]">hourglass_top</span> {{ texteAttente }}
+      </span>
     </div>
   </div>
 

@@ -32,6 +32,20 @@ import { ConfirmationService } from './confirmation.service';
             <p id="confirmation-message" class="font-body-md text-body-md text-on-surface-variant whitespace-pre-line">
               {{ demande.message }}
             </p>
+            @if (demande.saisie; as saisie) {
+              <label class="mt-3 font-label-md text-label-md text-on-surface" for="confirmation-saisie">
+                {{ saisie.libelle }}@if (saisie.obligatoire) { <span aria-hidden="true"> *</span> }
+              </label>
+              <textarea
+                id="confirmation-saisie"
+                rows="3"
+                [attr.maxlength]="saisie.maxLength ?? 500"
+                [attr.placeholder]="saisie.placeholder ?? null"
+                [value]="confirmation.texteSaisi()"
+                (input)="confirmation.texteSaisi.set($any($event.target).value)"
+                class="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-on-surface outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"
+              ></textarea>
+            }
           </div>
           <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex justify-end gap-3">
             <button
@@ -45,7 +59,8 @@ import { ConfirmationService } from './confirmation.service';
               type="button"
               #boutonConfirmer
               (click)="confirmation.repondre(true)"
-              class="px-4 py-2 rounded-lg font-label-md text-label-md text-white transition-colors"
+              [disabled]="!!demande.saisie?.obligatoire && !confirmation.texteSaisi().trim()"
+              class="px-4 py-2 rounded-lg font-label-md text-label-md text-white transition-colors disabled:opacity-50"
               [class.bg-error]="demande.destructif"
               [class.hover:bg-error/90]="demande.destructif"
               [class.bg-secondary]="!demande.destructif"

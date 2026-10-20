@@ -43,4 +43,23 @@ describe('LogoInpgComponent', () => {
 
     expect(image().classList).toContain('h-10');
   });
+
+  it('affiche la version couleur par défaut, la blanche sur demande (fond sombre)', () => {
+    fixture.detectChanges();
+    expect(image().getAttribute('src')).toBe('/images/logo-inpg.png');
+
+    fixture.componentRef.setInput('blanc', true);
+    fixture.detectChanges();
+
+    expect(image().getAttribute('src')).toBe('/images/logo-inpg-blanc.png');
+    expect(image().alt).toContain('Institut National du Pétrole et du Gaz');
+  });
+
+  it('réserve la place du logo blanc à ses propres proportions (640 x 167), pas à celles du logo couleur', () => {
+    fixture.componentRef.setInput('blanc', true);
+    fixture.detectChanges();
+
+    expect(image().getAttribute('width')).toBe('640');
+    expect(image().getAttribute('height')).toBe('167');
+  });
 });
