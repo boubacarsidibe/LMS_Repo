@@ -1,8 +1,8 @@
 <!-- ==================== CONTENU SEUL ==================== -->
-<div class="relative z-30 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+<div class="relative z-30 mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
   <div>
     <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">INPG — Institut National du Pétrole et du Gaz</p>
-    <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Revue des candidatures</h2>
+    <h2 class="text-2xl font-semibold text-on-surface md:text-3xl">Revue des candidatures</h2>
     <p class="font-body-md text-body-md text-on-surface-variant mt-1">Suivez les dossiers, de la soumission jusqu’à l’admission.</p>
   </div>
   <div class="review-actions flex flex-wrap items-center gap-2" aria-label="Actions sur les candidatures">
@@ -74,23 +74,23 @@
 </div>
 
 <!-- Barre de filtres réunie dans un bloc, au lieu de contrôles épars au-dessus du tableau. -->
-<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 mb-stack-md shadow-sm">
-  <div class="flex items-center justify-between gap-3 mb-3">
+<div class="mb-4 rounded-xl border border-outline-variant bg-surface-container-lowest p-4">
+  <div class="mb-3 flex items-center justify-between gap-3">
     <div class="flex items-center gap-2 text-on-surface">
       <span class="material-symbols-outlined text-[20px] text-primary">filter_alt</span>
-      <span class="font-label-md text-label-md font-semibold">Filtrer les candidatures</span>
+      <span class="text-sm font-semibold">Recherche et filtres</span>
     </div>
     <span *ngIf="filtresActifs" class="px-2 py-1 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm">
       {{ nombreFiltresActifs }} filtre{{ nombreFiltresActifs > 1 ? 's' : '' }} actif{{ nombreFiltresActifs > 1 ? 's' : '' }}
     </span>
   </div>
-  <div class="flex flex-col lg:flex-row gap-3 items-end">
+  <div class="flex flex-col items-end gap-3 lg:flex-row">
     <div class="flex-1 min-w-0">
-      <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Rechercher</label>
+      <label class="mb-1 block text-xs font-medium text-on-surface-variant">Rechercher</label>
       <div class="relative">
         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
         <input [(ngModel)]="recherche" (ngModelChange)="recalculerFiltres()"
-               class="w-full h-10 pl-10 pr-10 bg-surface border border-outline-variant rounded-lg text-on-surface focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none font-body-md text-body-md"
+               class="h-10 w-full rounded-xl border border-outline-variant bg-surface px-10 pr-10 text-sm text-on-surface outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20"
                placeholder="Nom, prénom, email ou n° de dossier…" type="text"/>
         <button *ngIf="recherche" type="button" (click)="effacerRecherche()" title="Effacer la recherche" aria-label="Effacer la recherche"
                 class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-md text-on-surface-variant hover:bg-surface-container-high transition-colors">
@@ -99,17 +99,17 @@
       </div>
     </div>
     <div class="w-full lg:w-60 shrink-0">
-      <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Session</label>
+      <label class="mb-1 block text-xs font-medium text-on-surface-variant">Session</label>
       <select [(ngModel)]="filtreSessionId" (ngModelChange)="recalculerFiltres()" aria-label="Filtrer par session"
-              class="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-on-surface font-body-sm text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
+              class="h-10 w-full rounded-xl border border-outline-variant bg-surface px-3 text-sm text-on-surface outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20">
         <option [ngValue]="null">Toutes les sessions</option>
         <option *ngFor="let s of sessionsDisponibles" [ngValue]="s.id">{{ s.libelle }}</option>
       </select>
     </div>
     <div class="w-full lg:w-52 shrink-0">
-      <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Statut</label>
+      <label class="mb-1 block text-xs font-medium text-on-surface-variant">Statut</label>
       <select [ngModel]="filtreStatut" (ngModelChange)="setFiltreStatut($event)"
-              class="w-full h-10 px-3 bg-surface border border-outline-variant rounded-lg text-on-surface font-body-sm text-body-sm focus:border-secondary focus:ring-2 focus:ring-secondary/20 outline-none">
+              class="h-10 w-full rounded-xl border border-outline-variant bg-surface px-3 text-sm text-on-surface outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20">
         <option *ngFor="let o of onglets" [value]="o.statut">{{ o.libelle }} ({{ compter(o.statut) }})</option>
       </select>
     </div>

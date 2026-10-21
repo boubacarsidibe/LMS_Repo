@@ -1,196 +1,182 @@
-<!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
-
+==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
 <div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm mb-2">
-  <a routerLink="/responsable-admission/candidatures" class="hover:underline">Admissions</a>
-  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <a routerLink="/responsable-admission/candidatures" class="hover:underline">Candidatures</a>
-  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <span class="font-medium text-on-surface">{{ candidature ? (candidature.candidatPrenom + ' ' + candidature.candidatNom) : '…' }}</span>
+  <a routerLink="/responsable-admission/candidatures" class="hover:underline">Admissions</a>
+  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+  <a routerLink="/responsable-admission/candidatures" class="hover:underline">Candidatures</a>
+  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+  <span class="font-medium text-on-surface">{{ candidature ? (candidature.candidatPrenom + ' ' + candidature.candidatNom) : '…' }}</span>
 </div>
-
 <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement du dossier…</div>
-
 <div *ngIf="!loading && errorMessage" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
-  <span class="material-symbols-outlined text-4xl text-outline mb-2 block">error_outline</span>
-  <p class="font-body-md text-body-md text-on-surface-variant">{{ errorMessage }}</p>
-  <button type="button" (click)="retour()" class="mt-4 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm">Retour à la liste</button>
+  <span class="material-symbols-outlined text-4xl text-outline mb-2 block">error_outline</span>
+  <p class="font-body-md text-body-md text-on-surface-variant">{{ errorMessage }}</p>
+  <button type="button" (click)="retour()" class="mt-4 px-4 py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/90 transition-colors shadow-sm">Retour à la liste</button>
 </div>
-
 <ng-container *ngIf="!loading && candidature as sel">
-  <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-stack-lg">
-    <div>
-      <span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Dossier</span>
-      <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">{{ sel.candidatPrenom }} {{ sel.candidatNom }}</h1>
-      <p class="font-body-md text-body-md text-on-surface-variant mt-1">{{ sel.numeroDossier }} — {{ sel.candidatEmail }}</p>
-    </div>
-    <button type="button" (click)="retour()" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors shadow-sm shrink-0" title="Retour à la liste" aria-label="Retour à la liste">
-      <span class="material-symbols-outlined">close</span>
-    </button>
-  </div>
-
-  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 max-w-3xl mb-stack-lg">
-    <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2 mb-stack-lg">
-      <span class="material-symbols-outlined text-secondary">timeline</span> Timeline du parcours
-    </h2>
-    <!-- Mêmes données que le suivi candidat (timelineItems), pour ne jamais diverger -->
-    <ul class="space-y-5">
-      <li *ngFor="let item of timelineItems; let i = index" class="flex gap-4 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
-        <!-- L'échec prime sur tout le reste : il portait à la fois bg-surface (via
-             « pending || erreur ») et bg-error, deux classes Tailwind concurrentes dont
-             c'est l'ordre dans la feuille qui tranchait — la pastille de rejet s'affichait
-             donc en gris. Les trois états sont désormais exclusifs. -->
-        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 relative z-10"
-             [ngClass]="item.erreur ? 'bg-error text-white'
-                        : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
-          <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
-          <ng-container *ngIf="!item.erreur">
-            <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;">check</span>
-            <span *ngIf="item.pending" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
-            <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-          
-  <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
-    <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
-      <h2 id="titre-confirmation-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
-      <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourStatutCible ? 'Le dossier reviendra au statut « ' + libelleStatut(retourStatutCible) + ' ».' : 'Le dossier retrouvera son statut précédent.' }}</p>
-      <p *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</p>
-      <label for="mot-de-passe-retour-detail" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
-      <input id="mot-de-passe-retour-detail" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:outline-none focus:border-secondary" />
-      <div class="mt-6 flex justify-end gap-3"><button type="button" (click)="fermerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant">Annuler</button><button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary disabled:opacity-60">{{ actionEnCours ? 'Validation…' : 'Confirmer' }}</button></div>
-    </section>
-  </div>
+  <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-stack-lg">
+    <div>
+      <span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Dossier</span>
+      <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">{{ sel.candidatPrenom }} {{ sel.candidatNom }}</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-1">{{ sel.numeroDossier }} — {{ sel.candidatEmail }}</p>
+    </div>
+    <button type="button" (click)="retour()" class="flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors shadow-sm shrink-0" title="Retour à la liste" aria-label="Retour à la liste">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 max-w-3xl mb-stack-lg">
+    <h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2 mb-stack-lg">
+      <span class="material-symbols-outlined text-secondary">timeline</span> Timeline du parcours
+    </h2>
+    <!-- Mêmes données que le suivi candidat (timelineItems), pour ne jamais diverger -->
+    <ul class="space-y-5">
+      <li *ngFor="let item of timelineItems; let i = index" class="flex gap-4 relative" [class.opacity-50]="item.pending && !item.active && !item.erreur">
+        <!-- L'échec prime sur tout le reste : il portait à la fois bg-surface (via
+             « pending || erreur ») et bg-error, deux classes Tailwind concurrentes dont
+             c'est l'ordre dans la feuille qui tranchait — la pastille de rejet s'affichait
+             donc en gris. Les trois états sont désormais exclusifs. -->
+        <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 relative z-10"
+             [ngClass]="item.erreur ? 'bg-error text-white'
+                        : (item.pending ? 'bg-surface border border-outline-variant' : 'bg-secondary text-white')">
+          <span *ngIf="item.erreur" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;font-weight:700;">close</span>
+          <ng-container *ngIf="!item.erreur">
+            <span *ngIf="!item.pending && !item.active" class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 0;">check</span>
+            <span *ngIf="item.pending" class="text-[10px] font-bold text-on-surface-variant">{{ i + 1 }}</span>
+            <span *ngIf="item.active" class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+  <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
+    <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
+      <h2 id="titre-confirmation-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
+      <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourStatutCible ? 'Le dossier reviendra au statut « ' + libelleStatut(retourStatutCible) + ' ».' : 'Le dossier retrouvera son statut précédent.' }}</p>
+      <p *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</p>
+      <label for="mot-de-passe-retour-detail" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
+      <input id="mot-de-passe-retour-detail" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:outline-none focus:border-secondary" />
+      <div class="mt-6 flex justify-end gap-3"><button type="button" (click)="fermerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant">Annuler</button><button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary disabled:opacity-60">{{ actionEnCours ? 'Validation…' : 'Confirmer' }}</button></div>
+    </section>
+  </div>
 </ng-container>
-        </div>
-        <div>
-          <h4 class="font-label-md text-label-md font-bold" [class.text-error]="item.erreur" [class.text-on-surface]="!item.erreur">{{ item.label }}</h4>
-          <p *ngIf="item.desc" class="font-body-sm text-body-sm text-on-surface-variant">{{ item.desc }}</p>
-          <ng-container *ngIf="i === 2 && item.active">
-            <p *ngIf="paiementEnAttente" class="font-body-sm text-body-sm text-[#b7791f] mt-1">Paiement enregistré par le candidat, en attente de confirmation.</p>
-            <p *ngIf="paiementEchoue" class="font-body-sm text-body-sm text-error mt-1">La précédente tentative de paiement du candidat n'a pas abouti.</p>
-            <p *ngIf="!paiementEnAttente && !paiementEchoue" class="font-body-sm text-body-sm text-on-surface-variant mt-1">En attente du règlement des frais de dossier par le candidat.</p>
-          
-  <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
-    <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
-      <h2 id="titre-confirmation-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
-      <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourStatutCible ? 'Le dossier reviendra au statut « ' + libelleStatut(retourStatutCible) + ' ».' : 'Le dossier retrouvera son statut précédent.' }}</p>
-      <p *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</p>
-      <label for="mot-de-passe-retour-detail" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
-      <input id="mot-de-passe-retour-detail" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:outline-none focus:border-secondary" />
-      <div class="mt-6 flex justify-end gap-3"><button type="button" (click)="fermerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant">Annuler</button><button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary disabled:opacity-60">{{ actionEnCours ? 'Validation…' : 'Confirmer' }}</button></div>
-    </section>
-  </div>
+        </div>
+        <div>
+          <h4 class="font-label-md text-label-md font-bold" [class.text-error]="item.erreur" [class.text-on-surface]="!item.erreur">{{ item.label }}</h4>
+          <p *ngIf="item.desc" class="font-body-sm text-body-sm text-on-surface-variant">{{ item.desc }}</p>
+          <ng-container *ngIf="i === 2 && item.active">
+            <p *ngIf="paiementEnAttente" class="font-body-sm text-body-sm text-[#b7791f] mt-1">Paiement enregistré par le candidat, en attente de confirmation.</p>
+            <p *ngIf="paiementEchoue" class="font-body-sm text-body-sm text-error mt-1">La précédente tentative de paiement du candidat n'a pas abouti.</p>
+            <p *ngIf="!paiementEnAttente && !paiementEchoue" class="font-body-sm text-body-sm text-on-surface-variant mt-1">En attente du règlement des frais de dossier par le candidat.</p>
+  <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
+    <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
+      <h2 id="titre-confirmation-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
+      <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourStatutCible ? 'Le dossier reviendra au statut « ' + libelleStatut(retourStatutCible) + ' ».' : 'Le dossier retrouvera son statut précédent.' }}</p>
+      <p *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</p>
+      <label for="mot-de-passe-retour-detail" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
+      <input id="mot-de-passe-retour-detail" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:outline-none focus:border-secondary" />
+      <div class="mt-6 flex justify-end gap-3"><button type="button" (click)="fermerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant">Annuler</button><button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary disabled:opacity-60">{{ actionEnCours ? 'Validation…' : 'Confirmer' }}</button></div>
+    </section>
+  </div>
 </ng-container>
-        </div>
-        <div *ngIf="i < timelineItems.length - 1" class="absolute -bottom-5 left-4 h-4 w-[2px] bg-outline-variant"></div>
-      </li>
-    </ul>
-  </div>
-
-  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 max-w-3xl">
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-stack-lg">
-      <div class="bg-surface-container-low p-4 rounded-lg border border-outline-variant">
-        <div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Statut</div>
-        <div class="font-label-md text-label-md font-bold" [ngClass]="classeStatut(sel.statut)">{{ libelleStatut(sel.statut) }}</div>
-      </div>
-      <div class="bg-surface-container-low p-4 rounded-lg border border-outline-variant">
-        <div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Paiement</div>
-        <div class="font-headline-sm text-headline-sm text-on-surface font-bold">{{ sel.paiement?.statut || 'Aucun' }}</div>
-      </div>
-      <div class="bg-surface-container-low p-4 rounded-lg border border-outline-variant">
-        <div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Session</div>
-        <div class="font-label-md text-label-md text-on-surface font-bold">{{ sel.sessionCandidatureLibelle }}</div>
-      </div>
-    </div>
-
-    <div class="mb-stack-lg">
-      <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Pièces justificatives</div>
-      <div class="space-y-2" *ngIf="sel.piecesJustificatives.length; else aucunePiece">
-        <div *ngFor="let p of sel.piecesJustificatives" class="py-3 border-b border-outline-variant last:border-0 text-body-sm">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <span class="text-on-surface">{{ p.typeDocument }}<span *ngIf="p.moyenneDeclaree !== null" class="text-on-surface-variant"> — Moyenne déclarée : {{ p.moyenneDeclaree }}/20</span></span>
-            <span class="px-2 py-1 rounded-full text-label-sm" [ngClass]="p.statutVerification === 'CONFORME' ? 'bg-emerald-100 text-emerald-700' : (p.statutVerification === 'A_REMPLACER' ? 'bg-error-container text-on-error-container' : 'bg-amber-100 text-amber-800')">{{ libelleVerificationPiece(p) }}</span>
-          </div>
-          <p *ngIf="p.motifNonConformite" class="mt-2 text-error">Motif communiqué au candidat : {{ p.motifNonConformite }}</p>
-          <div class="mt-2 flex items-center justify-end gap-2">
-            <button type="button" *ngIf="p.fichierStockeId" (click)="telechargerPiece(p)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Télécharger le document" aria-label="Télécharger le document">
-              <span class="material-symbols-outlined text-[18px]">download</span>
-            </button>
-            <button type="button" *ngIf="p.statutVerification !== 'CONFORME'" (click)="marquerPieceConforme(p)" class="px-3 py-1.5 rounded border border-secondary text-secondary hover:bg-secondary-fixed transition-colors" title="Valider ce document">
-              Valider
-            </button>
-            <button type="button" (click)="ouvrirRefusPiece(p)" class="px-3 py-1.5 rounded border border-error text-error hover:bg-error-container transition-colors" title="Demander un remplacement avec un motif">
-              Demander remplacement
-            </button>
-          </div>
-        </div>
-      </div>
-      <ng-template #aucunePiece>
-        <p class="text-body-sm text-on-surface-variant">Aucune pièce téléversée.</p>
-      </ng-template>
-    </div>
-
-    <div *ngIf="sel.motifRejet" class="mb-stack-lg">
-      <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Motif de rejet</div>
-      <p class="text-body-sm text-error">{{ sel.motifRejet }}</p>
-    </div>
-
-    <div class="mb-stack-lg">
-      <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Historique du dossier (QMS-009)</div>
-      <p *ngIf="journalChargement" class="text-body-sm text-on-surface-variant">Chargement…</p>
-      <p *ngIf="!journalChargement && journal.length === 0" class="text-body-sm text-on-surface-variant">Aucune étape consignée.</p>
-      <ol class="space-y-3" *ngIf="!journalChargement && journal.length">
-        <li *ngFor="let etape of journal" class="border-l-2 border-outline-variant pl-3">
-          <div class="font-label-sm text-label-sm text-on-surface font-semibold">{{ libelleEtapeQms(etape.etape) }}</div>
-          <div class="text-body-sm text-on-surface-variant">{{ etape.auteurNom }} — {{ etape.dateEtape | date:'dd/MM/yyyy HH:mm' }}</div>
-          <div *ngIf="etape.commentaire" class="text-body-sm text-on-surface-variant italic">{{ etape.commentaire }}</div>
-        </li>
-      </ol>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-3 pt-4 border-t border-outline-variant">
-      <button type="button" class="px-4 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors" (click)="retour()">Retour à la liste</button>
-      <button *ngIf="peutRejeter(sel)" type="button" [disabled]="actionEnCours" (click)="rejeter(sel)" class="px-4 py-2 border border-error text-error font-label-md text-label-md rounded-lg hover:bg-error-container transition-colors disabled:opacity-60">Rejeter</button>
-      <button *ngIf="peutAnnuler(sel)" type="button" [disabled]="actionEnCours" (click)="annuler(sel)" [title]="'Revenir à : ' + libelleStatut(sel.statutPrecedent!)" class="px-4 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-60 flex items-center gap-2">
-        <span class="material-symbols-outlined text-[18px]">undo</span> Annuler la dernière décision
-      </button>
-      <div *ngIf="sel.statut !== 'ADMIS3'" class="flex items-center gap-1.5">
-        <select #cibleReculerDetail class="px-3 py-2 bg-surface border border-outline-variant rounded-lg font-body-sm text-body-sm outline-none" [disabled]="actionEnCours">
-          <option *ngFor="let cible of ciblesReculer" [value]="cible.valeur" [disabled]="!peutReculerVers(sel, cible.valeur)">{{ cible.libelle }}</option>
-        </select>
-        <button type="button" [disabled]="actionEnCours" (click)="reculerVers(sel, cibleReculerDetail.value)" class="px-3 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-60" title="Faire reculer ce dossier vers le statut choisi">
-          Reculer vers
-        </button>
-      </div>
-      <span *ngIf="actionSuivante(sel) && sel.statut === 'SOUMIS' && dossierVide(sel)" class="ml-auto text-body-sm text-error flex items-center gap-1" title="Aucune pièce jointe : la présélection est bloquée tant que le candidat n'a pas déposé son dossier.">
-        <span class="material-symbols-outlined text-[18px]">error</span> Dossier vide — présélection impossible
-      </span>
-      <button *ngIf="actionSuivante(sel) && !(sel.statut === 'SOUMIS' && dossierVide(sel))" type="button" [disabled]="actionEnCours" (click)="actionSuivante(sel)!.action()" class="ml-auto px-4 py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg shadow-sm hover:bg-secondary/90 transition-colors flex items-center gap-2 disabled:opacity-60">
-        <span class="material-symbols-outlined text-[18px]">how_to_reg</span> {{ actionSuivante(sel)!.libelle }}
-      </button>
-    </div>
-  </div>
-
-  <div *ngIf="pieceARefuser" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
-    <section role="dialog" aria-modal="true" aria-labelledby="titre-remplacement-piece" class="w-full max-w-lg rounded-xl bg-surface-container-lowest shadow-xl p-6">
-      <h2 id="titre-remplacement-piece" class="text-xl font-semibold text-on-surface">Demander le remplacement du document</h2>
-      <p class="mt-2 text-body-sm text-on-surface-variant">Le candidat recevra ce motif dans son espace et par notification.</p>
-      <label class="block mt-5 font-label-md text-label-md text-on-surface" for="motif-remplacement-piece">Motif <span aria-hidden="true">*</span></label>
-      <textarea id="motif-remplacement-piece" [(ngModel)]="motifNonConformite" maxlength="500" rows="4" class="mt-2 w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-on-surface outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Ex. Le document est illisible ou incomplet."></textarea>
-      <div class="mt-2 text-right text-label-sm text-on-surface-variant">{{ motifNonConformite.length }}/500</div>
-      <div class="mt-5 flex justify-end gap-3">
-        <button type="button" (click)="annulerRefusPiece()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-low disabled:opacity-60">Annuler</button>
-        <button type="button" (click)="confirmerRefusPiece()" [disabled]="actionEnCours || !motifNonConformite.trim()" class="px-4 py-2 rounded-lg bg-error text-on-error hover:opacity-90 disabled:opacity-60">{{ actionEnCours ? 'Envoi…' : 'Demander le remplacement' }}</button>
-      </div>
-    </section>
-  </div>
-
-  <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
-    <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
-      <h2 id="titre-confirmation-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
-      <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourStatutCible ? 'Le dossier reviendra au statut « ' + libelleStatut(retourStatutCible) + ' ».' : 'Le dossier retrouvera son statut précédent.' }}</p>
-      <p *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</p>
-      <label for="mot-de-passe-retour-detail" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
-      <input id="mot-de-passe-retour-detail" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:outline-none focus:border-secondary" />
-      <div class="mt-6 flex justify-end gap-3"><button type="button" (click)="fermerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant">Annuler</button><button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary disabled:opacity-60">{{ actionEnCours ? 'Validation…' : 'Confirmer' }}</button></div>
-    </section>
-  </div>
+        </div>
+        <div *ngIf="i < timelineItems.length - 1" class="absolute -bottom-5 left-4 h-4 w-[2px] bg-outline-variant"></div>
+      </li>
+    </ul>
+  </div>
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 max-w-3xl">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-stack-lg">
+      <div class="bg-surface-container-low p-4 rounded-lg border border-outline-variant">
+        <div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Statut</div>
+        <div class="font-label-md text-label-md font-bold" [ngClass]="classeStatut(sel.statut)">{{ libelleStatut(sel.statut) }}</div>
+      </div>
+      <div class="bg-surface-container-low p-4 rounded-lg border border-outline-variant">
+        <div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Paiement</div>
+        <div class="font-headline-sm text-headline-sm text-on-surface font-bold">{{ sel.paiement?.statut || 'Aucun' }}</div>
+      </div>
+      <div class="bg-surface-container-low p-4 rounded-lg border border-outline-variant">
+        <div class="font-label-sm text-label-sm text-on-surface-variant mb-1">Session</div>
+        <div class="font-label-md text-label-md text-on-surface font-bold">{{ sel.sessionCandidatureLibelle }}</div>
+      </div>
+    </div>
+    <div class="mb-stack-lg">
+      <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Pièces justificatives</div>
+      <div class="space-y-2" *ngIf="sel.piecesJustificatives.length; else aucunePiece">
+        <div *ngFor="let p of sel.piecesJustificatives" class="py-3 border-b border-outline-variant last:border-0 text-body-sm">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-on-surface">{{ p.typeDocument }}<span *ngIf="p.moyenneDeclaree !== null" class="text-on-surface-variant"> — Moyenne déclarée : {{ p.moyenneDeclaree }}/20</span></span>
+            <span class="px-2 py-1 rounded-full text-label-sm" [ngClass]="p.statutVerification === 'CONFORME' ? 'bg-emerald-100 text-emerald-700' : (p.statutVerification === 'A_REMPLACER' ? 'bg-error-container text-on-error-container' : 'bg-amber-100 text-amber-800')">{{ libelleVerificationPiece(p) }}</span>
+          </div>
+          <p *ngIf="p.motifNonConformite" class="mt-2 text-error">Motif communiqué au candidat : {{ p.motifNonConformite }}</p>
+          <div class="mt-2 flex items-center justify-end gap-2">
+            <button type="button" *ngIf="p.fichierStockeId" (click)="telechargerPiece(p)" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" title="Télécharger le document" aria-label="Télécharger le document">
+              <span class="material-symbols-outlined text-[18px]">download</span>
+            </button>
+            <button type="button" *ngIf="p.statutVerification !== 'CONFORME'" (click)="marquerPieceConforme(p)" class="px-3 py-1.5 rounded border border-secondary text-secondary hover:bg-secondary-fixed transition-colors" title="Valider ce document">
+              Valider
+            </button>
+            <button type="button" (click)="ouvrirRefusPiece(p)" class="px-3 py-1.5 rounded border border-error text-error hover:bg-error-container transition-colors" title="Demander un remplacement avec un motif">
+              Demander remplacement
+            </button>
+          </div>
+        </div>
+      </div>
+      <ng-template #aucunePiece>
+        <p class="text-body-sm text-on-surface-variant">Aucune pièce téléversée.</p>
+      </ng-template>
+    </div>
+    <div *ngIf="sel.motifRejet" class="mb-stack-lg">
+      <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Motif de rejet</div>
+      <p class="text-body-sm text-error">{{ sel.motifRejet }}</p>
+    </div>
+    <div class="mb-stack-lg">
+      <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Historique du dossier (QMS-009)</div>
+      <p *ngIf="journalChargement" class="text-body-sm text-on-surface-variant">Chargement…</p>
+      <p *ngIf="!journalChargement && journal.length === 0" class="text-body-sm text-on-surface-variant">Aucune étape consignée.</p>
+      <ol class="space-y-3" *ngIf="!journalChargement && journal.length">
+        <li *ngFor="let etape of journal" class="border-l-2 border-outline-variant pl-3">
+          <div class="font-label-sm text-label-sm text-on-surface font-semibold">{{ libelleEtapeQms(etape.etape) }}</div>
+          <div class="text-body-sm text-on-surface-variant">{{ etape.auteurNom }} — {{ etape.dateEtape | date:'dd/MM/yyyy HH:mm' }}</div>
+          <div *ngIf="etape.commentaire" class="text-body-sm text-on-surface-variant italic">{{ etape.commentaire }}</div>
+        </li>
+      </ol>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 pt-4 border-t border-outline-variant">
+      <button type="button" class="px-4 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors" (click)="retour()">Retour à la liste</button>
+      <button *ngIf="peutRejeter(sel)" type="button" [disabled]="actionEnCours" (click)="rejeter(sel)" class="px-4 py-2 border border-error text-error font-label-md text-label-md rounded-lg hover:bg-error-container transition-colors disabled:opacity-60">Rejeter</button>
+      <button *ngIf="peutAnnuler(sel)" type="button" [disabled]="actionEnCours" (click)="annuler(sel)" [title]="'Revenir à : ' + libelleStatut(sel.statutPrecedent!)" class="px-4 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-60 flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">undo</span> Annuler la dernière décision
+      </button>
+      <div *ngIf="sel.statut !== 'ADMIS3'" class="flex items-center gap-1.5">
+        <select #cibleReculerDetail class="px-3 py-2 bg-surface border border-outline-variant rounded-lg font-body-sm text-body-sm outline-none" [disabled]="actionEnCours">
+          <option *ngFor="let cible of ciblesReculer" [value]="cible.valeur" [disabled]="!peutReculerVers(sel, cible.valeur)">{{ cible.libelle }}</option>
+        </select>
+        <button type="button" [disabled]="actionEnCours" (click)="reculerVers(sel, cibleReculerDetail.value)" class="px-3 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-60" title="Faire reculer ce dossier vers le statut choisi">
+          Reculer vers
+        </button>
+      </div>
+      <span *ngIf="actionSuivante(sel) && sel.statut === 'SOUMIS' && dossierVide(sel)" class="ml-auto text-body-sm text-error flex items-center gap-1" title="Aucune pièce jointe : la présélection est bloquée tant que le candidat n'a pas déposé son dossier.">
+        <span class="material-symbols-outlined text-[18px]">error</span> Dossier vide — présélection impossible
+      </span>
+      <button *ngIf="actionSuivante(sel) && !(sel.statut === 'SOUMIS' && dossierVide(sel))" type="button" [disabled]="actionEnCours" (click)="actionSuivante(sel)!.action()" class="ml-auto px-4 py-2 bg-secondary text-on-secondary font-label-md text-label-md rounded-lg shadow-sm hover:bg-secondary/90 transition-colors flex items-center gap-2 disabled:opacity-60">
+        <span class="material-symbols-outlined text-[18px]">how_to_reg</span> {{ actionSuivante(sel)!.libelle }}
+      </button>
+    </div>
+  </div>
+  <div *ngIf="pieceARefuser" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
+    <section role="dialog" aria-modal="true" aria-labelledby="titre-remplacement-piece" class="w-full max-w-lg rounded-xl bg-surface-container-lowest shadow-xl p-6">
+      <h2 id="titre-remplacement-piece" class="text-xl font-semibold text-on-surface">Demander le remplacement du document</h2>
+      <p class="mt-2 text-body-sm text-on-surface-variant">Le candidat recevra ce motif dans son espace et par notification.</p>
+      <label class="block mt-5 font-label-md text-label-md text-on-surface" for="motif-remplacement-piece">Motif <span aria-hidden="true">*</span></label>
+      <textarea id="motif-remplacement-piece" [(ngModel)]="motifNonConformite" maxlength="500" rows="4" class="mt-2 w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-on-surface outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Ex. Le document est illisible ou incomplet."></textarea>
+      <div class="mt-2 text-right text-label-sm text-on-surface-variant">{{ motifNonConformite.length }}/500</div>
+      <div class="mt-5 flex justify-end gap-3">
+        <button type="button" (click)="annulerRefusPiece()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-low disabled:opacity-60">Annuler</button>
+        <button type="button" (click)="confirmerRefusPiece()" [disabled]="actionEnCours || !motifNonConformite.trim()" class="px-4 py-2 rounded-lg bg-error text-on-error hover:opacity-90 disabled:opacity-60">{{ actionEnCours ? 'Envoi…' : 'Demander le remplacement' }}</button>
+      </div>
+    </section>
+  </div>
+  <div *ngIf="retourConfirmationOpen" class="fixed inset-0 z-[70] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4" (click)="fermerRetour()">
+    <section role="dialog" aria-modal="true" aria-labelledby="titre-confirmation-retour" class="w-full max-w-md rounded-xl bg-surface-container-lowest border border-outline-variant shadow-lg p-6" (click)="$event.stopPropagation()">
+      <h2 id="titre-confirmation-retour" class="font-headline-sm text-headline-sm text-primary">Confirmer la correction</h2>
+      <p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retourStatutCible ? 'Le dossier reviendra au statut « ' + libelleStatut(retourStatutCible) + ' ».' : 'Le dossier retrouvera son statut précédent.' }}</p>
+      <p *ngIf="retourErreur" class="mt-4 p-3 rounded-lg bg-error-container/30 text-error font-body-sm text-body-sm">{{ retourErreur }}</p>
+      <label for="mot-de-passe-retour-detail" class="block mt-5 font-label-md text-label-md text-on-surface">Votre mot de passe</label>
+      <input id="mot-de-passe-retour-detail" type="password" [(ngModel)]="motDePasseRetour" (keyup.enter)="confirmerRetour()" autocomplete="current-password" class="mt-1 w-full h-10 px-3 rounded-lg border border-outline-variant bg-surface focus:outline-none focus:border-secondary" />
+      <div class="mt-6 flex justify-end gap-3"><button type="button" (click)="fermerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg border border-outline-variant">Annuler</button><button type="button" (click)="confirmerRetour()" [disabled]="actionEnCours" class="px-4 py-2 rounded-lg bg-secondary text-on-secondary disabled:opacity-60">{{ actionEnCours ? 'Validation…' : 'Confirmer' }}</button></div>
+    </section>
+  </div>
 </ng-container>

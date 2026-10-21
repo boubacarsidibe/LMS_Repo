@@ -1,14 +1,454 @@
-<div class="max-w-5xl mx-auto space-y-6">
-  <a routerLink="/responsable-admission/entretiens" class="inline-flex items-center gap-1 text-secondary font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">arrow_back</span>Liste des entretiens</a>
-  <p *ngIf="loading" class="text-on-surface-variant">Chargement de l’entretien...</p>
-  <p *ngIf="error" class="p-4 bg-error-container text-error rounded-lg">{{ error }}</p>
-  <section *ngIf="entretien" class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
-    <div class="p-6 border-b border-outline-variant flex flex-col sm:flex-row gap-4 sm:items-start sm:justify-between">
-      <div><h1 class="font-headline-lg text-headline-lg text-primary">Entretien</h1><p class="text-body-sm text-on-surface-variant mt-1">{{ groupe.length }} candidat{{ groupe.length > 1 ? 's' : '' }} convoqué{{ groupe.length > 1 ? 's' : '' }}</p></div>
-      <button type="button" (click)="supprimer()" class="h-10 w-10 border border-outline-variant rounded-lg text-error" title="Supprimer l’entretien"><span class="material-symbols-outlined">delete</span></button>
-    </div>
-    <dl class="p-6 grid sm:grid-cols-2 gap-6 text-body-md"><div><dt class="text-on-surface-variant">Date et heure</dt><dd class="text-on-surface mt-1">{{ entretien.dateHeure | date:'dd MMMM y, HH:mm' }}</dd></div><div><dt class="text-on-surface-variant">Lieu ou lien</dt><dd class="text-on-surface mt-1">{{ entretien.lieuOuLien }}</dd></div></dl>
-    <div class="border-t border-outline-variant"><h2 class="px-6 py-4 font-headline-sm text-headline-sm text-primary">Candidats convoqués</h2><div class="divide-y divide-outline-variant"><div *ngFor="let item of groupe; let index = index" class="px-6 py-3 flex items-center gap-4"><span class="text-on-surface-variant w-6">{{ index + 1 }}</span><div><p class="font-label-md text-label-md text-on-surface">{{ candidat(item)?.candidatPrenom }} {{ candidat(item)?.candidatNom }}</p><p class="text-body-sm text-on-surface-variant">{{ candidat(item)?.numeroDossier }}</p></div></div></div></div>
-    <div class="p-6 bg-surface-container-low border-t border-outline-variant"><a [routerLink]="['/responsable-admission/entretiens', entretien.id, 'notes']" class="inline-flex h-10 items-center gap-2 px-4 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md"><span class="material-symbols-outlined text-[20px]">edit_note</span>Saisir les notes des étudiants</a></div>
+<div class="mx-auto max-w-5xl">
+
+  <!-- ============================================================
+       RETOUR
+  ============================================================= -->
+  <a
+    routerLink="/responsable-admission/entretiens"
+    class="
+      mb-6
+      inline-flex items-center gap-1.5
+      text-xs font-semibold
+      text-black/45
+      transition
+      hover:text-[#123B6D]
+    "
+  >
+    <span class="material-symbols-outlined text-[16px]">
+      arrow_back
+    </span>
+
+    Liste des entretiens
+  </a>
+
+
+  <!-- ============================================================
+       LOADING
+  ============================================================= -->
+  <div
+    *ngIf="loading"
+    class="border-y border-black/10 py-16 text-center"
+  >
+    <div
+      class="
+        mx-auto mb-3
+        h-6 w-6
+        animate-spin
+        rounded-full
+        border-2 border-black/10
+        border-t-[#123B6D]
+      "
+    ></div>
+
+    <p class="text-sm text-black/45">
+      Chargement de l’entretien...
+    </p>
+  </div>
+
+
+  <!-- ============================================================
+       ERROR
+  ============================================================= -->
+  <div
+    *ngIf="error"
+    class="
+      mb-6
+      border-l-2 border-red-500
+      bg-red-50
+      px-4 py-3
+      text-sm text-red-700
+    "
+  >
+    {{ error }}
+  </div>
+
+
+  <!-- ============================================================
+       ENTRETIEN
+  ============================================================= -->
+  <section
+    *ngIf="entretien"
+    class="
+      overflow-hidden
+      rounded-xl
+      border border-black/10
+      bg-white
+      shadow-[0_1px_3px_rgba(0,0,0,0.04)]
+    "
+  >
+
+    <!-- ==========================================================
+         HEADER
+    =========================================================== -->
+    <header
+      class="
+        flex flex-col gap-5
+        border-b border-black/10
+        px-6 py-6
+
+        sm:flex-row
+        sm:items-start
+        sm:justify-between
+
+        md:px-8
+        md:py-7
+      "
+    >
+
+      <div>
+
+        <p
+          class="
+            mb-1
+            text-[10px]
+            font-bold
+            uppercase
+            tracking-[0.08em]
+            text-[#123B6D]
+          "
+        >
+          Entretien académique
+        </p>
+
+        <h1
+          class="
+            text-2xl
+            font-bold
+            tracking-[-0.025em]
+            text-black
+            md:text-[28px]
+          "
+        >
+          Entretien
+        </h1>
+
+        <p class="mt-2 text-sm text-black/45">
+          {{ groupe.length }}
+          candidat{{ groupe.length > 1 ? 's' : '' }}
+          convoqué{{ groupe.length > 1 ? 's' : '' }}
+        </p>
+
+      </div>
+
+
+      <!-- DELETE -->
+      <button
+        type="button"
+        (click)="supprimer()"
+        class="
+          inline-flex h-9
+          items-center gap-2
+          self-start
+          rounded-lg
+          px-2.5
+          text-xs
+          font-semibold
+          text-red-600
+          transition
+          hover:bg-red-50
+        "
+        title="Supprimer l’entretien"
+      >
+        <span class="material-symbols-outlined text-[18px]">
+          delete
+        </span>
+
+        Supprimer
+      </button>
+
+    </header>
+
+
+    <!-- ==========================================================
+         INFORMATIONS DU RENDEZ-VOUS
+    =========================================================== -->
+    <section class="px-6 py-7 md:px-8">
+
+      <h2 class="mb-5 text-sm font-bold text-black">
+        Informations du rendez-vous
+      </h2>
+
+
+      <dl
+        class="
+          grid grid-cols-1
+          gap-x-10 gap-y-6
+          sm:grid-cols-2
+        "
+      >
+
+        <!-- DATE -->
+        <div>
+
+          <dt
+            class="
+              text-[10px]
+              font-semibold
+              uppercase
+              tracking-[0.06em]
+              text-black/40
+            "
+          >
+            Date et heure
+          </dt>
+
+          <dd
+            class="
+              mt-1.5
+              text-sm
+              font-semibold
+              text-black
+            "
+          >
+            {{ entretien.dateHeure | date:'dd MMMM y, HH:mm' }}
+          </dd>
+
+        </div>
+
+
+        <!-- LIEU -->
+        <div>
+
+          <dt
+            class="
+              text-[10px]
+              font-semibold
+              uppercase
+              tracking-[0.06em]
+              text-black/40
+            "
+          >
+            Lieu ou lien
+          </dt>
+
+          <dd
+            class="
+              mt-1.5
+              break-words
+              text-sm
+              font-semibold
+              text-black
+            "
+          >
+            {{ entretien.lieuOuLien }}
+          </dd>
+
+        </div>
+
+      </dl>
+
+    </section>
+
+
+    <!-- ==========================================================
+         CANDIDATS
+    =========================================================== -->
+    <section
+      class="
+        border-t border-black/10
+        px-6 py-7
+        md:px-8
+      "
+    >
+
+      <!-- SECTION HEADER -->
+      <div
+        class="
+          mb-4
+          flex items-center
+          justify-between gap-4
+        "
+      >
+
+        <div>
+
+          <h2 class="text-sm font-bold text-black">
+            Candidats convoqués
+          </h2>
+
+          <p class="mt-1 text-xs text-black/45">
+            Participants associés à ce rendez-vous.
+          </p>
+
+        </div>
+
+
+        <span
+          class="
+            rounded-full
+            bg-black/[0.05]
+            px-2.5 py-1
+            text-[10px]
+            font-semibold
+            text-black/50
+          "
+        >
+          {{ groupe.length }}
+        </span>
+
+      </div>
+
+
+      <!-- LIST -->
+      <div
+        class="
+          overflow-hidden
+          rounded-lg
+          border border-black/10
+        "
+      >
+
+        <!-- HEADER -->
+        <div
+          class="
+            hidden
+            grid-cols-[50px_1fr_180px]
+            border-b border-black/10
+            bg-black/[0.018]
+            px-4 py-2.5
+
+            text-[10px]
+            font-semibold
+            uppercase
+            tracking-[0.06em]
+            text-black/40
+
+            sm:grid
+          "
+        >
+          <span>#</span>
+          <span>Candidat</span>
+          <span>N° dossier</span>
+        </div>
+
+
+        <!-- ROWS -->
+        <div class="divide-y divide-black/[0.06]">
+
+          <div
+            *ngFor="let item of groupe; let index = index"
+            class="
+              grid grid-cols-[28px_1fr]
+              items-center gap-3
+              px-4 py-3.5
+
+              sm:grid-cols-[50px_1fr_180px]
+              sm:gap-0
+            "
+          >
+
+            <!-- NUMBER -->
+            <span
+              class="
+                text-xs
+                tabular-nums
+                text-black/35
+              "
+            >
+              {{ index + 1 }}
+            </span>
+
+
+            <!-- NAME -->
+            <p
+              class="
+                min-w-0
+                truncate
+                text-sm
+                font-semibold
+                text-black
+              "
+            >
+              {{ candidat(item)?.candidatPrenom }}
+              {{ candidat(item)?.candidatNom }}
+            </p>
+
+
+            <!-- DOSSIER -->
+            <p
+              class="
+                col-start-2
+                text-xs
+                font-medium
+                text-black/45
+
+                sm:col-start-auto
+              "
+            >
+              {{ candidat(item)?.numeroDossier }}
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==========================================================
+         ACTION PRINCIPALE
+    =========================================================== -->
+    <footer
+      class="
+        flex flex-col gap-4
+        border-t border-black/10
+        bg-black/[0.012]
+        px-6 py-5
+
+        sm:flex-row
+        sm:items-center
+        sm:justify-between
+
+        md:px-8
+      "
+    >
+
+      <div>
+
+        <p class="text-sm font-semibold text-black">
+          Résultats de l'entretien
+        </p>
+
+        <p class="mt-1 text-xs text-black/45">
+          Renseignez les notes des candidats après l'entretien.
+        </p>
+
+      </div>
+
+
+      <a
+        [routerLink]="[
+          '/responsable-admission/entretiens',
+          entretien.id,
+          'notes'
+        ]"
+        class="
+          inline-flex h-10
+          shrink-0
+          items-center justify-center gap-2
+          rounded-lg
+          bg-[#123B6D]
+          px-4
+
+          text-sm
+          font-semibold
+          text-white
+
+          transition
+          hover:bg-[#0E315C]
+        "
+      >
+        <span class="material-symbols-outlined text-[18px]">
+          edit_note
+        </span>
+
+        Saisir les notes
+      </a>
+
+    </footer>
+
   </section>
+
 </div>

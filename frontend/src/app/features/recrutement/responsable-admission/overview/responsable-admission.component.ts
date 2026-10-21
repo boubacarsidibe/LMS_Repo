@@ -86,6 +86,14 @@ export class ResponsableAdmissionComponent implements OnInit {
       .slice(0, 5);
   }
 
+  /** Dossiers dont au moins une pièce attend une correction ou une vérification. */
+  get dossiersIncomplets(): number {
+    return this.candidatures.filter((c) =>
+      c.piecesJustificatives?.some((piece) => piece.statutVerification !== 'CONFORME')
+    ).length;
+  }
+
+
   /** Nombre de candidatures rattachées à une session donnée (donnée réelle, pas de quota inventé). */
   nbCandidatures(sessionId: number): number {
     return this.candidatures.filter((c) => c.sessionCandidatureId === sessionId).length;

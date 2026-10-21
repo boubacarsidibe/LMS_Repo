@@ -25,6 +25,7 @@ interface Alerte {
   standalone: true,
   imports: [CommonModule, RouterModule, LogoInpgComponent],
   templateUrl: './responsable-admission-layout.component.html',
+  styleUrl: './responsable-admission-layout.component.css',
 })
 export class ResponsableAdmissionLayoutComponent implements OnInit {
   notificationOpen = false;
@@ -48,6 +49,7 @@ export class ResponsableAdmissionLayoutComponent implements OnInit {
     { label: 'Formateurs', icon: 'co_present', route: '/responsable-admission/recrutement-formateurs' },
     { label: 'Délibération', icon: 'gavel', route: '/responsable-admission/deliberation', filled: true },
     { label: 'Paiements', icon: 'payments', route: '/responsable-admission/paiements' },
+    { label: 'Statistiques', icon: 'bar_chart', route: '/responsable-admission/statistiques' },
     { label: 'Notifications', icon: 'mail', route: '/responsable-admission/notifications' },
     { label: 'Rendez-vous', icon: 'event', route: '/responsable-admission/rendez-vous' },
   ];

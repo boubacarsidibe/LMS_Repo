@@ -1,86 +1,636 @@
-<!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
+<!-- ==================== CRITÈRE PERSONNALISÉ ==================== -->
 
-<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm mb-2 flex-wrap">
-  <a routerLink="/responsable-admission/sessions" class="hover:underline">Admissions</a>
-  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <a routerLink="/responsable-admission/sessions" class="hover:underline">Sessions</a>
-  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <a [routerLink]="['/responsable-admission/sessions', sessionId]" class="hover:underline">{{ session?.libelle || '…' }}</a>
-  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <a [routerLink]="['/responsable-admission/sessions', sessionId, 'criteres']" class="hover:underline">Critères personnalisés</a>
-  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <span class="font-medium text-on-surface">{{ critereId ? 'Modifier' : 'Nouveau critère' }}</span>
+<!-- ============================================================
+     BREADCRUMB
+============================================================ -->
+<nav
+  class="mb-6 flex flex-wrap items-center gap-1.5 text-xs"
+  aria-label="Fil d'Ariane"
+>
+  <a
+    routerLink="/responsable-admission/sessions"
+    class="text-black/45 transition hover:text-black"
+  >
+    Admissions
+  </a>
+
+  <span class="material-symbols-outlined text-[14px] text-black/25">
+    chevron_right
+  </span>
+
+  <a
+    routerLink="/responsable-admission/sessions"
+    class="text-black/45 transition hover:text-black"
+  >
+    Sessions
+  </a>
+
+  <span class="material-symbols-outlined text-[14px] text-black/25">
+    chevron_right
+  </span>
+
+  <a
+    [routerLink]="['/responsable-admission/sessions', sessionId]"
+    class="max-w-[220px] truncate text-black/45 transition hover:text-black"
+  >
+    {{ session?.libelle || '…' }}
+  </a>
+
+  <span class="material-symbols-outlined text-[14px] text-black/25">
+    chevron_right
+  </span>
+
+  <a
+    [routerLink]="['/responsable-admission/sessions', sessionId, 'criteres']"
+    class="text-black/45 transition hover:text-black"
+  >
+    Critères personnalisés
+  </a>
+
+  <span class="material-symbols-outlined text-[14px] text-black/25">
+    chevron_right
+  </span>
+
+  <span class="font-semibold text-black">
+    {{ critereId ? 'Modifier' : 'Nouveau critère' }}
+  </span>
+</nav>
+
+
+<!-- ============================================================
+     PAGE HEADER
+============================================================ -->
+<header class="mb-8 border-b border-black/10 pb-6">
+
+  <p
+    class="
+      mb-2
+      text-[11px]
+      font-bold
+      uppercase
+      tracking-[0.1em]
+      text-[#123B6D]
+    "
+  >
+    Critères de candidature
+  </p>
+
+  <h1
+    class="
+      text-3xl
+      font-bold
+      tracking-[-0.035em]
+      text-black
+      md:text-[34px]
+    "
+  >
+    {{ critereId ? 'Modifier le critère' : 'Ajouter un critère' }}
+  </h1>
+
+  <p class="mt-2 max-w-2xl text-sm leading-6 text-black/50">
+    Configurez les informations demandées au candidat et, si nécessaire,
+    définissez une condition utilisée lors de la présélection.
+  </p>
+
+</header>
+
+
+<!-- ============================================================
+     LOADING
+============================================================ -->
+<div
+  *ngIf="loading"
+  class="max-w-3xl border-y border-black/10 py-16 text-center"
+>
+  <div
+    class="
+      mx-auto mb-3
+      h-6 w-6
+      animate-spin
+      rounded-full
+      border-2
+      border-black/10
+      border-t-[#123B6D]
+    "
+  ></div>
+
+  <p class="text-sm text-black/45">
+    Chargement…
+  </p>
 </div>
 
-<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-stack-lg">
-  {{ critereId ? 'Modifier le critère' : 'Ajouter un critère' }}
-</h2>
 
-<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement…</div>
+<!-- ============================================================
+     FORM
+============================================================ -->
+<form
+  *ngIf="!loading"
+  [formGroup]="critereForm"
+  (ngSubmit)="enregistrer()"
+  class="max-w-3xl"
+>
 
-<form *ngIf="!loading" [formGroup]="critereForm" (ngSubmit)="enregistrer()" class="max-w-2xl">
-  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 space-y-5">
-    <div *ngIf="formError" class="p-3 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ formError }}</div>
+  <!-- ==========================================================
+       ERROR
+  =========================================================== -->
+  <div
+    *ngIf="formError"
+    class="
+      mb-6
+      border-l-2
+      border-red-500
+      bg-red-50
+      px-4 py-3
+      text-sm
+      text-red-700
+    "
+  >
+    {{ formError }}
+  </div>
 
-    <div>
-      <label for="critere-libelle" class="block font-label-md text-label-md text-on-surface-variant mb-1">Nom du critère</label>
-      <input id="critere-libelle" formControlName="libelle" placeholder="Ex : Diplôme en ingénierie" aria-label="Nom du critère"
-             class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="text"/>
-    </div>
 
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <label for="critere-type" class="block font-label-md text-label-md text-on-surface-variant mb-1">Type de réponse</label>
-        <select id="critere-type" formControlName="type" aria-label="Type de critère"
-                class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none">
-          <option *ngFor="let t of typesCritere" [value]="t.valeur">{{ t.libelle }}</option>
-        </select>
+  <!-- ==========================================================
+       01 — INFORMATIONS
+  =========================================================== -->
+  <section class="border-b border-black/10 pb-8">
+
+    <div class="mb-6">
+
+      <div class="flex items-baseline gap-3">
+
+        <span
+          class="
+            text-[11px]
+            font-bold
+            text-[#123B6D]
+          "
+        >
+          01
+        </span>
+
+        <h2 class="text-base font-bold text-black">
+          Informations du critère
+        </h2>
+
       </div>
-      <div class="flex items-end pb-2">
-        <label class="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant">
-          <input formControlName="obligatoire" type="checkbox" class="rounded border-outline-variant text-secondary focus:ring-secondary"/>
-          Réponse obligatoire
-        </label>
-      </div>
-    </div>
 
-    <div *ngIf="critereForm.value.type === 'CHOIX'">
-      <label for="critere-options" class="block font-label-md text-label-md text-on-surface-variant mb-1">Options proposées</label>
-      <input id="critere-options" formControlName="options" placeholder="Ex : Dakar, Thiès, Saint-Louis" aria-label="Options, séparées par une virgule"
-             class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none transition-all" type="text"/>
-      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Séparées par une virgule.</p>
-    </div>
-
-    <div class="border-t border-outline-variant pt-4">
-      <label class="block font-label-md text-label-md text-on-surface font-bold mb-1">Condition d'évaluation (optionnelle)</label>
-      <p class="font-body-sm text-body-sm text-on-surface-variant mb-3">
-        Sans condition, le critère est purement informatif : collecté auprès du candidat, jamais éliminatoire.
-        Avec une condition, il compte dans le filtre automatique de présélection de la session.
+      <p class="ml-7 mt-1 text-xs leading-5 text-black/45">
+        Définissez la question qui sera présentée au candidat.
       </p>
 
+    </div>
+
+
+    <div class="ml-0 space-y-6 md:ml-7">
+
+      <!-- NOM -->
+      <div>
+
+        <label
+          for="critere-libelle"
+          class="mb-2 block text-sm font-semibold text-black"
+        >
+          Nom du critère
+        </label>
+
+        <input
+          id="critere-libelle"
+          formControlName="libelle"
+          placeholder="Ex : Diplôme en ingénierie"
+          aria-label="Nom du critère"
+          type="text"
+
+          class="
+            h-11 w-full
+            rounded-lg
+            border border-black/15
+            bg-white
+            px-3.5
+
+            text-sm
+            text-black
+
+            outline-none
+            transition
+
+            placeholder:text-black/30
+
+            hover:border-black/25
+
+            focus:border-[#123B6D]
+            focus:ring-2
+            focus:ring-[#123B6D]/10
+          "
+        />
+
+      </div>
+
+
+      <!-- TYPE + OBLIGATOIRE -->
+      <div
+        class="
+          grid grid-cols-1 gap-6
+          md:grid-cols-[1fr_220px]
+          md:items-end
+        "
+      >
+
+        <!-- TYPE -->
+        <div>
+
+          <label
+            for="critere-type"
+            class="mb-2 block text-sm font-semibold text-black"
+          >
+            Type de réponse
+          </label>
+
+          <select
+            id="critere-type"
+            formControlName="type"
+            aria-label="Type de critère"
+
+            class="
+              h-11 w-full
+              rounded-lg
+              border border-black/15
+              bg-white
+              px-3.5
+
+              text-sm
+              text-black
+
+              outline-none
+              transition
+
+              hover:border-black/25
+
+              focus:border-[#123B6D]
+              focus:ring-2
+              focus:ring-[#123B6D]/10
+            "
+          >
+            <option
+              *ngFor="let t of typesCritere"
+              [value]="t.valeur"
+            >
+              {{ t.libelle }}
+            </option>
+          </select>
+
+        </div>
+
+
+        <!-- OBLIGATOIRE -->
+        <label
+          class="
+            flex h-11
+            cursor-pointer
+            items-center gap-3
+
+            text-sm
+            font-medium
+            text-black
+          "
+        >
+
+          <input
+            formControlName="obligatoire"
+            type="checkbox"
+
+            class="
+              h-4 w-4
+              rounded
+              border-black/25
+              text-[#123B6D]
+
+              focus:ring-2
+              focus:ring-[#123B6D]/20
+            "
+          />
+
+          Réponse obligatoire
+
+        </label>
+
+      </div>
+
+
+      <!-- OPTIONS -->
+      <div *ngIf="critereForm.value.type === 'CHOIX'">
+
+        <label
+          for="critere-options"
+          class="mb-2 block text-sm font-semibold text-black"
+        >
+          Options proposées
+        </label>
+
+        <input
+          id="critere-options"
+          formControlName="options"
+          placeholder="Ex : Dakar, Thiès, Saint-Louis"
+          aria-label="Options, séparées par une virgule"
+          type="text"
+
+          class="
+            h-11 w-full
+            rounded-lg
+            border border-black/15
+            bg-white
+            px-3.5
+
+            text-sm
+            text-black
+
+            outline-none
+            transition
+
+            placeholder:text-black/30
+
+            hover:border-black/25
+
+            focus:border-[#123B6D]
+            focus:ring-2
+            focus:ring-[#123B6D]/10
+          "
+        />
+
+        <p class="mt-1.5 text-xs text-black/40">
+          Séparez chaque option par une virgule.
+        </p>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ==========================================================
+       02 — ÉVALUATION
+  =========================================================== -->
+  <section class="border-b border-black/10 py-8">
+
+    <div class="mb-6">
+
+      <div class="flex items-baseline gap-3">
+
+        <span class="text-[11px] font-bold text-[#123B6D]">
+          02
+        </span>
+
+        <h2 class="text-base font-bold text-black">
+          Condition d'évaluation
+        </h2>
+
+        <span class="text-xs font-normal text-black/40">
+          Optionnelle
+        </span>
+
+      </div>
+
+      <p
+        class="
+          ml-7 mt-1
+          max-w-2xl
+          text-xs
+          leading-5
+          text-black/45
+        "
+      >
+        Laissez cette partie vide si le critère sert uniquement à collecter
+        une information. Une condition renseignée sera utilisée dans le filtre
+        automatique de présélection.
+      </p>
+
+    </div>
+
+
+    <div class="ml-0 md:ml-7">
+
+      <!-- NUMÉRIQUE -->
       <div *ngIf="critereForm.value.type === 'NUMERIQUE'">
-        <label for="critere-valeur-min" class="block font-label-md text-label-md text-on-surface-variant mb-1">Valeur minimale exigée</label>
-        <input id="critere-valeur-min" formControlName="valeurMinimale" type="number" placeholder="Ex : 12" aria-label="Valeur minimale exigée"
-               class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+
+        <label
+          for="critere-valeur-min"
+          class="mb-2 block text-sm font-semibold text-black"
+        >
+          Valeur minimale exigée
+        </label>
+
+        <input
+          id="critere-valeur-min"
+          formControlName="valeurMinimale"
+          type="number"
+          placeholder="Ex : 12"
+          aria-label="Valeur minimale exigée"
+
+          class="
+            h-11 w-full
+            rounded-lg
+            border border-black/15
+            bg-white
+            px-3.5
+
+            text-sm
+            text-black
+
+            outline-none
+            transition
+
+            placeholder:text-black/30
+
+            hover:border-black/25
+
+            focus:border-[#123B6D]
+            focus:ring-2
+            focus:ring-[#123B6D]/10
+          "
+        />
+
       </div>
 
+
+      <!-- AUTRES TYPES -->
       <div *ngIf="critereForm.value.type !== 'NUMERIQUE'">
-        <label for="critere-valeur-attendue" class="block font-label-md text-label-md text-on-surface-variant mb-1">Réponse attendue</label>
-        <input id="critere-valeur-attendue" formControlName="valeurAttendue" type="text" placeholder="Ex : Oui" aria-label="Réponse attendue"
-               class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
+
+        <label
+          for="critere-valeur-attendue"
+          class="mb-2 block text-sm font-semibold text-black"
+        >
+          Réponse attendue
+        </label>
+
+        <input
+          id="critere-valeur-attendue"
+          formControlName="valeurAttendue"
+          type="text"
+          placeholder="Ex : Oui"
+          aria-label="Réponse attendue"
+
+          class="
+            h-11 w-full
+            rounded-lg
+            border border-black/15
+            bg-white
+            px-3.5
+
+            text-sm
+            text-black
+
+            outline-none
+            transition
+
+            placeholder:text-black/30
+
+            hover:border-black/25
+
+            focus:border-[#123B6D]
+            focus:ring-2
+            focus:ring-[#123B6D]/10
+          "
+        />
+
       </div>
+
     </div>
 
-    <div class="border-t border-outline-variant pt-4">
-      <label for="critere-ordre" class="block font-label-md text-label-md text-on-surface-variant mb-1">Ordre d'affichage sur le formulaire</label>
-      <input id="critere-ordre" formControlName="ordre" type="number" min="0" class="w-32 h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none"/>
-    </div>
-  </div>
+  </section>
 
-  <div class="flex justify-end gap-3 mt-stack-lg">
-    <button type="button" class="px-4 py-2 font-label-md text-label-md text-on-surface-variant bg-surface border border-outline-variant rounded-lg hover:bg-surface-variant transition-colors" (click)="annuler()">Annuler</button>
-    <button type="submit" [disabled]="isSubmitting" class="px-4 py-2 font-label-md text-label-md text-on-primary bg-secondary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm disabled:opacity-60">
-      {{ isSubmitting ? 'Enregistrement…' : 'Enregistrer' }}
+
+  <!-- ==========================================================
+       03 — AFFICHAGE
+  =========================================================== -->
+  <section class="py-8">
+
+    <div class="mb-6">
+
+      <div class="flex items-baseline gap-3">
+
+        <span class="text-[11px] font-bold text-[#123B6D]">
+          03
+        </span>
+
+        <h2 class="text-base font-bold text-black">
+          Affichage
+        </h2>
+
+      </div>
+
+      <p class="ml-7 mt-1 text-xs text-black/45">
+        Déterminez la position du critère dans le formulaire de candidature.
+      </p>
+
+    </div>
+
+
+    <div class="ml-0 md:ml-7">
+
+      <label
+        for="critere-ordre"
+        class="mb-2 block text-sm font-semibold text-black"
+      >
+        Ordre d'affichage
+      </label>
+
+      <input
+        id="critere-ordre"
+        formControlName="ordre"
+        type="number"
+        min="0"
+
+        class="
+          h-11 w-32
+          rounded-lg
+          border border-black/15
+          bg-white
+          px-3.5
+
+          text-sm
+          text-black
+
+          outline-none
+          transition
+
+          hover:border-black/25
+
+          focus:border-[#123B6D]
+          focus:ring-2
+          focus:ring-[#123B6D]/10
+        "
+      />
+
+    </div>
+
+  </section>
+
+
+  <!-- ==========================================================
+       ACTIONS
+  =========================================================== -->
+  <footer
+    class="
+      flex flex-col-reverse gap-3
+      border-t border-black/10
+      pt-6
+
+      sm:flex-row
+      sm:items-center
+      sm:justify-end
+    "
+  >
+
+    <button
+      type="button"
+      (click)="annuler()"
+
+      class="
+        h-10
+        rounded-lg
+        border border-black/15
+        bg-white
+        px-5
+
+        text-sm
+        font-semibold
+        text-black
+
+        transition
+
+        hover:border-black/25
+        hover:bg-black/[0.025]
+      "
+    >
+      Annuler
     </button>
-  </div>
+
+
+    <button
+      type="submit"
+      [disabled]="isSubmitting"
+
+      class="
+        h-10
+        rounded-lg
+        bg-[#123B6D]
+        px-5
+
+        text-sm
+        font-semibold
+        text-white
+
+        transition
+
+        hover:bg-[#0E315C]
+
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+      "
+    >
+      {{ isSubmitting ? 'Enregistrement…' : 'Enregistrer le critère' }}
+    </button>
+
+  </footer>
+
 </form>

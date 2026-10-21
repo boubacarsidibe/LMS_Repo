@@ -400,13 +400,6 @@ export const routes: Routes = [
           ).then((m) => m.ResponsableAdmissionStatistiquesComponent),
       },
       {
-        path: 'users',
-        loadComponent: () =>
-          import('./features/recrutement/responsable-admission/users/responsable-users.component').then(
-            (m) => m.ResponsableUsersComponent
-          ),
-      },
-      {
         path: 'paiements',
         loadComponent: () =>
           import('./features/recrutement/responsable-admission/paiements/responsable-admission-paiements.component').then(

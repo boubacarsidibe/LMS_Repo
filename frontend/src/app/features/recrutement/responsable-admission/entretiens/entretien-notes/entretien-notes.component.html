@@ -1,43 +1,496 @@
 <section class="mx-auto max-w-6xl">
-  <header class="mb-5 flex items-center justify-between gap-4">
+
+  <!-- ============================================================
+       HEADER
+  ============================================================= -->
+  <header
+    class="
+      mb-6
+      flex flex-col gap-5
+      border-b border-black/10
+      pb-6
+      sm:flex-row
+      sm:items-end
+      sm:justify-between
+    "
+  >
+
     <div>
-      <a *ngIf="entretien" [routerLink]="['/responsable-admission/entretiens', entretien.id]"
-        class="inline-flex items-center gap-1 text-body-sm text-secondary">
-        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-        Retour a l'entretien
+
+      <!-- BACK -->
+      <a
+        *ngIf="entretien"
+        [routerLink]="[
+          '/responsable-admission/entretiens',
+          entretien.id
+        ]"
+        class="
+          mb-3
+          inline-flex items-center gap-1.5
+          text-xs
+          font-semibold
+          text-black/45
+          transition
+          hover:text-[#123B6D]
+        "
+      >
+        <span class="material-symbols-outlined text-[16px]">
+          arrow_back
+        </span>
+
+        Retour à l'entretien
       </a>
-      <h1 class="mt-2 font-headline-lg text-headline-lg text-primary">Notes de l'entretien</h1>
+
+
+      <!-- LABEL -->
+      <p
+        class="
+          mb-1
+          text-[10px]
+          font-bold
+          uppercase
+          tracking-[0.08em]
+          text-[#123B6D]
+        "
+      >
+        Évaluation
+      </p>
+
+
+      <!-- TITLE -->
+      <h1
+        class="
+          text-2xl
+          font-bold
+          tracking-[-0.025em]
+          text-black
+          md:text-3xl
+        "
+      >
+        Notes de l'entretien
+      </h1>
+
+
+      <p class="mt-1.5 text-sm text-black/45">
+        Renseignez la note obtenue par chaque candidat à l'entretien.
+      </p>
+
     </div>
-    <button type="button" (click)="enregistrer()" [disabled]="saving || loading || !modifie"
-      class="h-10 rounded-lg bg-secondary px-4 font-label-md text-on-secondary disabled:opacity-50">
+
+
+    <!-- SAVE -->
+    <button
+      type="button"
+      (click)="enregistrer()"
+      [disabled]="saving || loading || !modifie"
+      class="
+        inline-flex h-10
+        shrink-0
+        items-center justify-center
+        rounded-lg
+        bg-[#123B6D]
+        px-5
+        text-sm
+        font-semibold
+        text-white
+        transition
+        hover:bg-[#0E315C]
+        disabled:cursor-not-allowed
+        disabled:opacity-40
+      "
+    >
       {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
     </button>
+
   </header>
 
-  <p *ngIf="loading" class="py-8 text-center text-body-sm text-on-surface-variant">Chargement des candidats...</p>
-  <p *ngIf="error" class="mb-3 text-body-sm text-error">{{ error }}</p>
 
-  <div *ngIf="!loading" class="overflow-x-auto rounded-lg border border-outline-variant">
-    <table class="w-full min-w-[720px] text-left">
-      <thead class="border-b border-outline-variant bg-surface-container-low">
-        <tr>
-          <th class="w-16 px-4 py-3">#</th>
-          <th class="px-4 py-3">Candidat</th>
-          <th class="px-4 py-3">N° dossier</th>
-          <th class="w-44 px-4 py-3">Note / 20</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-outline-variant">
-        <tr *ngFor="let ligne of lignes; index as index" class="hover:bg-surface-container-low">
-          <td class="px-4 py-3 text-on-surface-variant">{{ index + 1 }}</td>
-          <td class="px-4 py-3 font-label-md">{{ ligne.candidat }}</td>
-          <td class="px-4 py-3 text-on-surface-variant">{{ ligne.numeroDossierAffiche }}</td>
-          <td class="px-4 py-3">
-            <input [(ngModel)]="ligne.noteEntretien" type="number" min="0" max="20" step="0.25"
-              class="h-10 w-28 rounded-lg border border-outline-variant bg-surface px-3">
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- ============================================================
+       MODIFICATIONS NON ENREGISTRÉES
+  ============================================================= -->
+  <div
+    *ngIf="modifie && !loading"
+    class="
+      mb-4
+      flex items-center gap-2
+      border-l-2 border-[#123B6D]
+      bg-[#123B6D]/[0.035]
+      px-3 py-2.5
+      text-xs
+      font-medium
+      text-[#123B6D]
+    "
+  >
+    <span class="h-1.5 w-1.5 rounded-full bg-[#123B6D]"></span>
+
+    Modifications non enregistrées
   </div>
+
+
+  <!-- ============================================================
+       ERROR
+  ============================================================= -->
+  <div
+    *ngIf="error"
+    class="
+      mb-4
+      border-l-2 border-red-500
+      bg-red-50
+      px-4 py-3
+      text-sm
+      text-red-700
+    "
+  >
+    {{ error }}
+  </div>
+
+
+  <!-- ============================================================
+       LOADING
+  ============================================================= -->
+  <div
+    *ngIf="loading"
+    class="
+      border-y border-black/10
+      py-16
+      text-center
+    "
+  >
+    <div
+      class="
+        mx-auto mb-3
+        h-6 w-6
+        animate-spin
+        rounded-full
+        border-2 border-black/10
+        border-t-[#123B6D]
+      "
+    ></div>
+
+    <p class="text-sm text-black/45">
+      Chargement des candidats...
+    </p>
+  </div>
+
+
+  <!-- ============================================================
+       TABLEAU
+  ============================================================= -->
+  <div
+    *ngIf="!loading"
+    class="
+      overflow-hidden
+      rounded-xl
+      border border-black/10
+      bg-white
+    "
+  >
+
+    <div class="overflow-x-auto">
+
+      <table
+        class="
+          w-full
+          min-w-[720px]
+          border-collapse
+          text-left
+        "
+      >
+
+        <!-- ======================================================
+             HEADER
+        ======================================================= -->
+        <thead>
+
+          <tr
+            class="
+              border-b border-black/10
+              bg-black/[0.018]
+            "
+          >
+
+            <th
+              class="
+                w-16
+                px-5 py-3.5
+                text-[10px]
+                font-semibold
+                uppercase
+                tracking-[0.06em]
+                text-black/40
+              "
+            >
+              #
+            </th>
+
+
+            <th
+              class="
+                px-5 py-3.5
+                text-[10px]
+                font-semibold
+                uppercase
+                tracking-[0.06em]
+                text-black/40
+              "
+            >
+              Candidat
+            </th>
+
+
+            <th
+              class="
+                px-5 py-3.5
+                text-[10px]
+                font-semibold
+                uppercase
+                tracking-[0.06em]
+                text-black/40
+              "
+            >
+              N° dossier
+            </th>
+
+
+            <th
+              class="
+                w-52
+                px-5 py-3.5
+                text-[10px]
+                font-semibold
+                uppercase
+                tracking-[0.06em]
+                text-black/40
+              "
+            >
+              Note
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <!-- ======================================================
+             BODY
+        ======================================================= -->
+        <tbody class="divide-y divide-black/[0.065]">
+
+          <tr
+            *ngFor="let ligne of lignes; index as index"
+            class="
+              transition-colors
+              hover:bg-[#123B6D]/[0.018]
+            "
+          >
+
+            <!-- INDEX -->
+            <td
+              class="
+                px-5 py-3.5
+                text-xs
+                tabular-nums
+                text-black/35
+              "
+            >
+              {{ index + 1 }}
+            </td>
+
+
+            <!-- CANDIDAT -->
+            <td class="px-5 py-3.5">
+
+              <p
+                class="
+                  text-sm
+                  font-semibold
+                  text-black
+                "
+              >
+                {{ ligne.candidat }}
+              </p>
+
+            </td>
+
+
+            <!-- DOSSIER -->
+            <td
+              class="
+                px-5 py-3.5
+                text-xs
+                font-medium
+                text-black/45
+              "
+            >
+              {{ ligne.numeroDossierAffiche }}
+            </td>
+
+
+            <!-- NOTE -->
+            <td class="px-5 py-2.5">
+
+              <div class="flex items-center gap-2">
+
+                <input
+                  [(ngModel)]="ligne.noteEntretien"
+                  type="number"
+                  min="0"
+                  max="20"
+                  step="0.25"
+                  placeholder="—"
+
+                  class="
+                    h-10 w-24
+                    rounded-md
+                    border border-black/15
+                    bg-white
+                    px-2.5
+                    text-center
+                    text-sm
+                    font-semibold
+                    tabular-nums
+                    text-black
+                    outline-none
+                    transition
+
+                    placeholder:text-black/25
+
+                    hover:border-black/30
+
+                    focus:border-[#123B6D]
+                    focus:ring-2
+                    focus:ring-[#123B6D]/10
+                  "
+                />
+
+                <span
+                  class="
+                    text-xs
+                    font-medium
+                    text-black/35
+                  "
+                >
+                  / 20
+                </span>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+
+          <!-- ====================================================
+               EMPTY
+          ===================================================== -->
+          <tr *ngIf="lignes.length === 0">
+
+            <td
+              colspan="4"
+              class="px-5 py-14 text-center"
+            >
+
+              <p class="text-sm font-semibold text-black">
+                Aucun candidat
+              </p>
+
+              <p class="mt-1 text-xs text-black/45">
+                Aucun candidat n'est associé à cet entretien.
+              </p>
+
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+
+    <!-- ==========================================================
+         TABLE FOOTER
+    =========================================================== -->
+    <div
+      *ngIf="lignes.length > 0"
+      class="
+        flex flex-col gap-2
+        border-t border-black/10
+        bg-black/[0.012]
+        px-5 py-3
+
+        sm:flex-row
+        sm:items-center
+        sm:justify-between
+      "
+    >
+
+      <p class="text-xs text-black/40">
+        {{ lignes.length }}
+        candidat{{ lignes.length > 1 ? 's' : '' }}
+      </p>
+
+
+      <p class="text-xs text-black/40">
+        Barème :
+        <span class="font-semibold text-black/60">
+          0 à 20
+        </span>
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       ACTION BAS DE PAGE
+  ============================================================= -->
+  <div
+    *ngIf="!loading && lignes.length > 0"
+    class="
+      mt-5
+      flex flex-col-reverse gap-3
+      border-t border-black/10
+      pt-5
+
+      sm:flex-row
+      sm:items-center
+      sm:justify-between
+    "
+  >
+
+    <p class="text-xs text-black/40">
+      Les notes ne sont définitives qu'après enregistrement.
+    </p>
+
+
+    <button
+      type="button"
+      (click)="enregistrer()"
+      [disabled]="saving || !modifie"
+      class="
+        h-10
+        rounded-lg
+        bg-[#123B6D]
+        px-5
+        text-sm
+        font-semibold
+        text-white
+        transition
+        hover:bg-[#0E315C]
+        disabled:cursor-not-allowed
+        disabled:opacity-40
+      "
+    >
+      {{
+        saving
+          ? 'Enregistrement...'
+          : 'Enregistrer les notes'
+      }}
+    </button>
+
+  </div>
+
 </section>

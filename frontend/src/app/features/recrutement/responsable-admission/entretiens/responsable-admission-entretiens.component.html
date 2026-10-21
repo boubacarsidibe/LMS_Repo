@@ -1,44 +1,1111 @@
-<section class="max-w-6xl mx-auto">
-  <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-8">
-    <h1 class="font-display text-display text-primary">Entretiens</h1>
-    <div class="flex flex-wrap gap-2"><app-report-button [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button><button type="button" (click)="ouvrirConvocationGroupee()" class="inline-flex h-10 items-center gap-2 px-4 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md"><span class="material-symbols-outlined text-[20px]">groups</span>Convoquer un groupe</button></div>
+<!-- ==================== ENTRETIENS ==================== -->
+
+<section class="mx-auto max-w-6xl">
+
+  <!-- ============================================================
+       HEADER
+  ============================================================= -->
+  <header
+    class="
+      mb-7 flex flex-col gap-5
+      border-b border-black/10 pb-7
+      md:flex-row md:items-end md:justify-between
+    "
+  >
+    <div>
+      <h1
+        class="
+          text-3xl font-bold tracking-[-0.035em]
+          text-black md:text-[34px]
+        "
+      >
+        Entretiens
+      </h1>
+
+      <p class="mt-2 max-w-xl text-sm leading-6 text-black/50">
+        Planifiez les rendez-vous et renseignez les résultats des entretiens.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+
+      <app-report-button
+        [generationEnCours]="generatingReport"
+        (genererRapport)="genererRapport($event)">
+      </app-report-button>
+
+      <button
+        type="button"
+        (click)="ouvrirConvocationGroupee()"
+        class="
+          inline-flex h-10 items-center justify-center gap-2
+          rounded-lg bg-[#123B6D] px-4
+          text-sm font-semibold text-white
+          transition hover:bg-[#0E315C]
+        "
+      >
+        <span class="material-symbols-outlined text-[18px]">
+          groups
+        </span>
+
+        Convoquer un groupe
+      </button>
+
+    </div>
+  </header>
+
+
+  <!-- ============================================================
+       ERREUR
+  ============================================================= -->
+  <div
+    *ngIf="errorMessage"
+    class="
+      mb-5 border-l-2 border-red-500
+      bg-red-50 px-4 py-3
+      text-sm text-red-700
+    "
+  >
+    {{ errorMessage }}
   </div>
-  <div *ngIf="errorMessage" class="mb-5 p-4 bg-error-container text-error rounded-lg">{{ errorMessage }}</div>
-  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-    <div class="p-4 border-b border-outline-variant flex flex-col sm:flex-row gap-3"><div class="relative flex-1 max-w-md"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span><input [(ngModel)]="recherche" type="search" placeholder="Rechercher un candidat ou un lieu" class="w-full h-10 pl-10 pr-3 bg-surface border border-outline-variant rounded-lg outline-none focus:border-secondary"></div><span *ngIf="!loading" class="sm:ml-auto text-body-sm text-on-surface-variant">{{ entretiensFiltres.length }} entretien{{ entretiensFiltres.length > 1 ? 's' : '' }}</span></div>
-    <div *ngIf="loading" class="py-16 text-center text-on-surface-variant">Chargement des entretiens...</div><div *ngIf="!loading && !entretiensFiltres.length" class="py-16 text-center text-on-surface-variant">Aucun entretien programmé.</div>
-    <div *ngIf="!loading && entretiensFiltres.length" class="divide-y divide-outline-variant"><button *ngFor="let e of entretiensFiltres" type="button" (click)="ouvrirEntretien(e)" class="w-full text-left group flex flex-col lg:flex-row lg:items-center gap-4 px-5 py-5 hover:bg-surface-container-low"><div class="w-10 h-10 rounded-lg bg-secondary-fixed text-secondary flex items-center justify-center"><span class="material-symbols-outlined">groups</span></div><div class="flex-1"><h2 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-secondary">Entretien</h2><p class="text-body-sm text-on-surface-variant mt-1">{{ e.candidatPrenom }} {{ e.candidatNom }}</p></div><div class="grid grid-cols-2 gap-x-8 gap-y-2 text-body-sm"><div><span class="block text-label-sm text-on-surface-variant">Rendez-vous</span><span>{{ e.dateHeure | date:'dd MMM y, HH:mm' }}</span></div><div><span class="block text-label-sm text-on-surface-variant">Lieu</span><span>{{ e.lieuOuLien }}</span></div></div><span class="inline-flex items-center gap-1 text-secondary font-label-md">Ouvrir<span class="material-symbols-outlined text-[18px]">chevron_right</span></span></button></div>
+
+
+  <!-- ============================================================
+       OUTILS
+  ============================================================= -->
+  <div
+    class="
+      mb-5 flex flex-col gap-3
+      sm:flex-row sm:items-center sm:justify-between
+    "
+  >
+
+    <div class="relative w-full max-w-lg">
+
+      <span
+        class="
+          material-symbols-outlined
+          absolute left-3 top-1/2 -translate-y-1/2
+          text-[19px] text-black/35
+        "
+      >
+        search
+      </span>
+
+      <input
+        [(ngModel)]="recherche"
+        type="search"
+        placeholder="Rechercher un candidat ou un lieu"
+        class="
+          h-11 w-full rounded-lg
+          border border-black/15 bg-white
+          pl-10 pr-4
+          text-sm text-black
+          outline-none transition
+          placeholder:text-black/30
+          hover:border-black/25
+          focus:border-[#123B6D]
+          focus:ring-2 focus:ring-[#123B6D]/10
+        "
+      />
+
+    </div>
+
+    <span
+      *ngIf="!loading"
+      class="shrink-0 text-xs font-medium text-black/45"
+    >
+      {{ entretiensFiltres.length }}
+      entretien{{ entretiensFiltres.length > 1 ? 's' : '' }}
+    </span>
+
   </div>
+
+
+  <!-- ============================================================
+       LOADING
+  ============================================================= -->
+  <div
+    *ngIf="loading"
+    class="border-y border-black/10 py-16 text-center"
+  >
+    <div
+      class="
+        mx-auto mb-3 h-6 w-6 animate-spin
+        rounded-full border-2 border-black/10
+        border-t-[#123B6D]
+      "
+    ></div>
+
+    <p class="text-sm text-black/45">
+      Chargement des entretiens...
+    </p>
+  </div>
+
+
+  <!-- ============================================================
+       EMPTY
+  ============================================================= -->
+  <div
+    *ngIf="!loading && !entretiensFiltres.length"
+    class="border-y border-black/10 py-16 text-center"
+  >
+    <p class="text-sm font-semibold text-black">
+      Aucun entretien programmé
+    </p>
+
+    <p class="mt-1 text-xs text-black/45">
+      Les entretiens planifiés apparaîtront ici.
+    </p>
+  </div>
+
+
+  <!-- ============================================================
+       LISTE
+  ============================================================= -->
+  <section *ngIf="!loading && entretiensFiltres.length">
+
+    <!-- TABLE HEADER -->
+    <div
+      class="
+        hidden
+        grid-cols-[minmax(250px,1.4fr)_210px_minmax(180px,1fr)_80px]
+        gap-6
+        border-b border-black/10
+        px-2 py-3
+        text-[10px] font-semibold uppercase
+        tracking-[0.06em] text-black/40
+        lg:grid
+      "
+    >
+      <span>Candidat</span>
+      <span>Rendez-vous</span>
+      <span>Lieu</span>
+      <span class="text-right">Action</span>
+    </div>
+
+
+    <div class="divide-y divide-black/[0.07]">
+
+      <button
+        *ngFor="let e of entretiensFiltres"
+        type="button"
+        (click)="ouvrirEntretien(e)"
+        class="
+          group w-full px-2 py-5 text-left
+          transition-colors hover:bg-black/[0.018]
+
+          lg:grid
+          lg:grid-cols-[minmax(250px,1.4fr)_210px_minmax(180px,1fr)_80px]
+          lg:items-center lg:gap-6
+        "
+      >
+
+        <!-- CANDIDAT -->
+        <div class="min-w-0">
+
+          <p
+            class="
+              truncate text-sm font-semibold text-black
+              transition group-hover:text-[#123B6D]
+            "
+          >
+            {{ e.candidatPrenom }} {{ e.candidatNom }}
+          </p>
+
+          <p class="mt-1 text-xs text-black/40">
+            Entretien
+          </p>
+
+        </div>
+
+
+        <!-- MOBILE + DESKTOP INFO -->
+        <div
+          class="
+            mt-4 grid grid-cols-1 gap-4
+            sm:grid-cols-2
+            lg:contents
+          "
+        >
+
+          <!-- DATE -->
+          <div>
+
+            <span
+              class="
+                mb-1 block text-[10px] font-semibold
+                uppercase tracking-wide text-black/35
+                lg:hidden
+              "
+            >
+              Rendez-vous
+            </span>
+
+            <span class="text-sm text-black/65">
+              {{ e.dateHeure | date:'dd MMM y, HH:mm' }}
+            </span>
+
+          </div>
+
+
+          <!-- LIEU -->
+          <div class="min-w-0">
+
+            <span
+              class="
+                mb-1 block text-[10px] font-semibold
+                uppercase tracking-wide text-black/35
+                lg:hidden
+              "
+            >
+              Lieu
+            </span>
+
+            <span
+              class="
+                block truncate
+                text-sm text-black/65
+              "
+            >
+              {{ e.lieuOuLien }}
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- OPEN -->
+        <div
+          class="
+            mt-4 flex items-center
+            lg:mt-0 lg:justify-end
+          "
+        >
+          <span
+            class="
+              inline-flex items-center gap-1
+              text-xs font-semibold text-[#123B6D]
+              transition-all group-hover:gap-2
+            "
+          >
+            Ouvrir
+
+            <span class="material-symbols-outlined text-[16px]">
+              chevron_right
+            </span>
+          </span>
+        </div>
+
+      </button>
+
+    </div>
+
+  </section>
+
 </section>
 
-<div *ngIf="drawerOpen" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50" (click)="closeDrawer()"></div>
-<aside *ngIf="drawerOpen" class="fixed top-0 right-0 z-50 h-full w-full max-w-lg bg-surface shadow-lg flex flex-col" (click)="$event.stopPropagation()">
-  <header class="p-5 border-b border-outline-variant flex items-center justify-between"><div><p class="text-label-sm text-secondary">Entretien</p><h2 class="font-headline-sm text-headline-sm text-primary">{{ entretienEnEdition ? 'Fiche du rendez-vous' : 'Planifier un entretien' }}</h2></div><button type="button" (click)="closeDrawer()" class="p-2 text-on-surface-variant" title="Fermer"><span class="material-symbols-outlined">close</span></button></header>
-  <form [formGroup]="entretienForm" (ngSubmit)="enregistrer()" class="flex-1 overflow-y-auto p-5 space-y-5"><p *ngIf="formError" class="p-3 bg-error-container text-error rounded-lg">{{ formError }}</p><label class="block text-body-sm">Candidat<select formControlName="candidatId" class="mt-1 w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface"><option value="" disabled>Sélectionner</option><option *ngIf="entretienEnEdition" [value]="entretienEnEdition.candidatId">{{ entretienForm.value.candidatId }}</option><option *ngFor="let c of candidatsEligibles" [value]="c.candidatId">{{ c.candidatPrenom }} {{ c.candidatNom }} — {{ c.numeroDossier }}</option></select></label><label class="block text-body-sm">Date et heure<input formControlName="dateHeure" type="datetime-local" class="mt-1 w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface"></label><label class="block text-body-sm">Lieu ou lien<input formControlName="lieuOuLien" class="mt-1 w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface"></label><hr class="border-outline-variant"><label class="block text-body-sm">Note /20<input formControlName="noteEntretien" type="number" min="0" max="20" step="0.25" class="mt-1 w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface"></label><label class="block text-body-sm">Appréciation<textarea formControlName="appreciationGlobale" rows="4" class="mt-1 w-full p-3 border border-outline-variant rounded-lg bg-surface"></textarea></label></form>
-  <footer class="p-5 border-t border-outline-variant flex justify-between gap-3"><button *ngIf="entretienEnEdition" type="button" (click)="supprimer(entretienEnEdition)" class="h-10 w-10 border border-outline-variant rounded-lg text-error" title="Supprimer"><span class="material-symbols-outlined">delete</span></button><span class="flex-1"></span><button type="button" (click)="closeDrawer()" class="h-10 px-4 border border-outline-variant rounded-lg">Annuler</button><button type="button" (click)="enregistrer()" [disabled]="isSubmitting" class="h-10 px-4 bg-secondary text-on-secondary rounded-lg">{{ isSubmitting ? 'Enregistrement...' : 'Enregistrer' }}</button></footer>
+
+
+<!-- ================================================================
+     DRAWER BACKDROP — ENTRETIEN INDIVIDUEL
+================================================================= -->
+<div
+  *ngIf="drawerOpen"
+  class="fixed inset-0 z-50 bg-black/25 backdrop-blur-[2px]"
+  (click)="closeDrawer()"
+></div>
+
+
+<!-- ================================================================
+     DRAWER — ENTRETIEN INDIVIDUEL
+================================================================= -->
+<aside
+  *ngIf="drawerOpen"
+  class="
+    fixed right-0 top-0 z-50
+    flex h-full w-full max-w-[560px] flex-col
+    bg-white
+    shadow-[-10px_0_40px_rgba(0,0,0,0.10)]
+  "
+  (click)="$event.stopPropagation()"
+>
+
+  <!-- HEADER -->
+  <header
+    class="
+      flex items-start justify-between gap-5
+      border-b border-black/10
+      px-6 py-5
+      md:px-7
+    "
+  >
+
+    <div>
+
+      <p
+        class="
+          mb-1 text-[10px] font-bold
+          uppercase tracking-[0.08em]
+          text-[#123B6D]
+        "
+      >
+        Entretien
+      </p>
+
+      <h2
+        class="
+          text-xl font-bold
+          tracking-[-0.02em]
+          text-black
+        "
+      >
+        {{
+          entretienEnEdition
+            ? 'Fiche du rendez-vous'
+            : 'Planifier un entretien'
+        }}
+      </h2>
+
+      <p class="mt-1 text-xs text-black/45">
+        {{
+          entretienEnEdition
+            ? 'Consultez ou modifiez les informations de cet entretien.'
+            : 'Renseignez le candidat et les informations du rendez-vous.'
+        }}
+      </p>
+
+    </div>
+
+
+    <button
+      type="button"
+      (click)="closeDrawer()"
+      class="
+        flex h-9 w-9 shrink-0
+        items-center justify-center
+        rounded-lg
+        text-black/45
+        transition
+        hover:bg-black/[0.04]
+        hover:text-black
+      "
+      title="Fermer"
+    >
+      <span class="material-symbols-outlined text-[20px]">
+        close
+      </span>
+    </button>
+
+  </header>
+
+
+  <!-- ============================================================
+       FORM
+  ============================================================= -->
+  <form
+    [formGroup]="entretienForm"
+    (ngSubmit)="enregistrer()"
+    class="flex-1 overflow-y-auto"
+  >
+
+    <!-- ERROR -->
+    <div
+      *ngIf="formError"
+      class="
+        mx-6 mt-6
+        border-l-2 border-red-500
+        bg-red-50
+        px-4 py-3
+        text-sm text-red-700
+        md:mx-7
+      "
+    >
+      {{ formError }}
+    </div>
+
+
+    <!-- RENDEZ-VOUS -->
+    <section class="px-6 py-7 md:px-7">
+
+      <div class="mb-6">
+
+        <h3 class="text-sm font-bold text-black">
+          Rendez-vous
+        </h3>
+
+        <p class="mt-1 text-xs text-black/45">
+          Informations de planification de l'entretien.
+        </p>
+
+      </div>
+
+
+      <div class="space-y-5">
+
+        <!-- CANDIDAT -->
+        <div>
+
+          <label
+            class="mb-2 block text-sm font-semibold text-black"
+          >
+            Candidat
+          </label>
+
+          <select
+            formControlName="candidatId"
+            class="
+              h-11 w-full
+              rounded-lg
+              border border-black/15
+              bg-white
+              px-3.5
+              text-sm text-black
+              outline-none transition
+              hover:border-black/25
+              focus:border-[#123B6D]
+              focus:ring-2 focus:ring-[#123B6D]/10
+            "
+          >
+            <option value="" disabled>
+              Sélectionner un candidat
+            </option>
+
+            <option
+              *ngIf="entretienEnEdition"
+              [value]="entretienEnEdition.candidatId"
+            >
+              {{ entretienForm.value.candidatId }}
+            </option>
+
+            <option
+              *ngFor="let c of candidatsEligibles"
+              [value]="c.candidatId"
+            >
+              {{ c.candidatPrenom }}
+              {{ c.candidatNom }}
+              — {{ c.numeroDossier }}
+            </option>
+          </select>
+
+        </div>
+
+
+        <!-- DATE -->
+        <div>
+
+          <label class="mb-2 block text-sm font-semibold text-black">
+            Date et heure
+          </label>
+
+          <input
+            formControlName="dateHeure"
+            type="datetime-local"
+            class="
+              h-11 w-full
+              rounded-lg
+              border border-black/15
+              bg-white
+              px-3.5
+              text-sm text-black
+              outline-none transition
+              hover:border-black/25
+              focus:border-[#123B6D]
+              focus:ring-2 focus:ring-[#123B6D]/10
+            "
+          />
+
+        </div>
+
+
+        <!-- LIEU -->
+        <div>
+
+          <label class="mb-2 block text-sm font-semibold text-black">
+            Lieu ou lien
+          </label>
+
+          <input
+            formControlName="lieuOuLien"
+            placeholder="Ex. Salle B12 ou lien visioconférence"
+            class="
+              h-11 w-full
+              rounded-lg
+              border border-black/15
+              bg-white
+              px-3.5
+              text-sm text-black
+              outline-none transition
+              placeholder:text-black/30
+              hover:border-black/25
+              focus:border-[#123B6D]
+              focus:ring-2 focus:ring-[#123B6D]/10
+            "
+          />
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==========================================================
+         ÉVALUATION
+    =========================================================== -->
+    <section
+      class="
+        border-t border-black/10
+        bg-black/[0.012]
+        px-6 py-7
+        md:px-7
+      "
+    >
+
+      <div class="mb-6">
+
+        <h3 class="text-sm font-bold text-black">
+          Évaluation
+        </h3>
+
+        <p class="mt-1 text-xs text-black/45">
+          Renseignez le résultat et l'appréciation de l'entretien.
+        </p>
+
+      </div>
+
+
+      <div class="space-y-5">
+
+        <!-- NOTE -->
+        <div class="max-w-[180px]">
+
+          <label class="mb-2 block text-sm font-semibold text-black">
+            Note
+          </label>
+
+          <div class="relative">
+
+            <input
+              formControlName="noteEntretien"
+              type="number"
+              min="0"
+              max="20"
+              step="0.25"
+              class="
+                h-11 w-full
+                rounded-lg
+                border border-black/15
+                bg-white
+                px-3.5 pr-12
+                text-sm font-semibold
+                text-black
+                outline-none transition
+                hover:border-black/25
+                focus:border-[#123B6D]
+                focus:ring-2 focus:ring-[#123B6D]/10
+              "
+            />
+
+            <span
+              class="
+                pointer-events-none
+                absolute right-3 top-1/2
+                -translate-y-1/2
+                text-xs text-black/35
+              "
+            >
+              / 20
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- APPRECIATION -->
+        <div>
+
+          <label class="mb-2 block text-sm font-semibold text-black">
+            Appréciation
+          </label>
+
+          <textarea
+            formControlName="appreciationGlobale"
+            rows="5"
+            placeholder="Saisir une appréciation sur l'entretien..."
+            class="
+              w-full resize-y
+              rounded-lg
+              border border-black/15
+              bg-white
+              px-3.5 py-3
+              text-sm leading-6
+              text-black
+              outline-none transition
+              placeholder:text-black/30
+              hover:border-black/25
+              focus:border-[#123B6D]
+              focus:ring-2 focus:ring-[#123B6D]/10
+            "
+          ></textarea>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </form>
+
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================= -->
+  <footer
+    class="
+      flex items-center gap-2
+      border-t border-black/10
+      bg-white
+      px-6 py-4
+      md:px-7
+    "
+  >
+
+    <!-- DELETE -->
+    <button
+      *ngIf="entretienEnEdition"
+      type="button"
+      (click)="supprimer(entretienEnEdition)"
+      class="
+        mr-auto inline-flex h-10
+        items-center gap-2
+        rounded-lg px-2
+        text-sm font-semibold
+        text-red-600
+        transition
+        hover:bg-red-50
+      "
+    >
+      <span class="material-symbols-outlined text-[18px]">
+        delete
+      </span>
+
+      <span class="hidden sm:inline">
+        Supprimer
+      </span>
+    </button>
+
+
+    <button
+      type="button"
+      (click)="closeDrawer()"
+      class="
+        h-10 rounded-lg
+        border border-black/15
+        bg-white px-4
+        text-sm font-semibold text-black
+        transition
+        hover:bg-black/[0.025]
+      "
+    >
+      Annuler
+    </button>
+
+
+    <button
+      type="button"
+      (click)="enregistrer()"
+      [disabled]="isSubmitting"
+      class="
+        h-10 rounded-lg
+        bg-[#123B6D] px-5
+        text-sm font-semibold text-white
+        transition
+        hover:bg-[#0E315C]
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+      "
+    >
+      {{ isSubmitting ? 'Enregistrement...' : 'Enregistrer' }}
+    </button>
+
+  </footer>
+
 </aside>
 
-<div *ngIf="convocationGroupeeOpen" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50" (click)="fermerConvocationGroupee()"></div>
-<aside *ngIf="convocationGroupeeOpen" class="fixed top-0 right-0 z-50 h-full w-full max-w-xl bg-surface shadow-lg flex flex-col" (click)="$event.stopPropagation()">
-  <header class="p-5 border-b border-outline-variant flex items-center justify-between">
-    <div><p class="text-label-sm text-secondary">Entretiens</p><h2 class="font-headline-sm text-headline-sm text-primary">Convoquer un groupe</h2></div>
-    <button type="button" (click)="fermerConvocationGroupee()" class="p-2 text-on-surface-variant" title="Fermer"><span class="material-symbols-outlined">close</span></button>
+
+
+<!-- ================================================================
+     BACKDROP — CONVOCATION GROUPÉE
+================================================================= -->
+<div
+  *ngIf="convocationGroupeeOpen"
+  class="fixed inset-0 z-50 bg-black/25 backdrop-blur-[2px]"
+  (click)="fermerConvocationGroupee()"
+></div>
+
+
+<!-- ================================================================
+     DRAWER — CONVOCATION GROUPÉE
+================================================================= -->
+<aside
+  *ngIf="convocationGroupeeOpen"
+  class="
+    fixed right-0 top-0 z-50
+    flex h-full w-full max-w-[620px] flex-col
+    bg-white
+    shadow-[-10px_0_40px_rgba(0,0,0,0.10)]
+  "
+  (click)="$event.stopPropagation()"
+>
+
+  <!-- HEADER -->
+  <header
+    class="
+      flex items-start justify-between gap-5
+      border-b border-black/10
+      px-6 py-5
+      md:px-7
+    "
+  >
+
+    <div>
+
+      <p
+        class="
+          mb-1 text-[10px] font-bold
+          uppercase tracking-[0.08em]
+          text-[#123B6D]
+        "
+      >
+        Entretiens
+      </p>
+
+      <h2
+        class="
+          text-xl font-bold
+          tracking-[-0.02em]
+          text-black
+        "
+      >
+        Convoquer un groupe
+      </h2>
+
+      <p class="mt-1 text-xs text-black/45">
+        Sélectionnez plusieurs candidats et définissez leur rendez-vous.
+      </p>
+
+    </div>
+
+
+    <button
+      type="button"
+      (click)="fermerConvocationGroupee()"
+      class="
+        flex h-9 w-9 shrink-0
+        items-center justify-center
+        rounded-lg
+        text-black/45
+        transition
+        hover:bg-black/[0.04]
+        hover:text-black
+      "
+      title="Fermer"
+    >
+      <span class="material-symbols-outlined text-[20px]">
+        close
+      </span>
+    </button>
+
   </header>
-  <form [formGroup]="convocationForm" class="flex-1 overflow-y-auto p-5 space-y-5">
-    <p *ngIf="convocationFormError" class="p-3 bg-error-container text-error rounded-lg">{{ convocationFormError }}</p>
-    <div class="flex items-center justify-between gap-3">
-      <div><p class="font-label-md text-label-md text-on-surface">Candidats à convoquer</p><p class="text-body-sm text-on-surface-variant mt-1">{{ selectionCandidatIds.size }} sélectionné{{ selectionCandidatIds.size > 1 ? 's' : '' }}</p></div>
-      <button type="button" (click)="toutSelectionner()" class="text-secondary font-label-md text-label-md hover:underline">{{ selectionCandidatIds.size === candidatsEligibles.length && candidatsEligibles.length ? 'Tout désélectionner' : 'Tout sélectionner' }}</button>
+
+
+  <!-- FORM -->
+  <form
+    [formGroup]="convocationForm"
+    class="flex-1 overflow-y-auto"
+  >
+
+    <!-- ERROR -->
+    <div
+      *ngIf="convocationFormError"
+      class="
+        mx-6 mt-6
+        border-l-2 border-red-500
+        bg-red-50
+        px-4 py-3
+        text-sm text-red-700
+        md:mx-7
+      "
+    >
+      {{ convocationFormError }}
     </div>
-    <div class="border border-outline-variant rounded-lg divide-y divide-outline-variant max-h-72 overflow-y-auto">
-      <label *ngFor="let c of candidatsEligibles" class="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-low cursor-pointer">
-        <input type="checkbox" [checked]="selectionCandidatIds.has(c.candidatId)" (change)="basculerSelection(c.candidatId)" class="w-4 h-4 accent-secondary">
-        <span class="min-w-0"><span class="block font-label-md text-label-md text-on-surface">{{ c.candidatPrenom }} {{ c.candidatNom }}</span><span class="block text-body-sm text-on-surface-variant">{{ c.numeroDossier }}</span></span>
-      </label>
-      <p *ngIf="!candidatsEligibles.length" class="p-5 text-body-sm text-on-surface-variant">Aucun candidat n’est actuellement éligible à un entretien.</p>
-    </div>
-    <label class="block text-body-sm">Date et heure<input formControlName="dateHeure" type="datetime-local" class="mt-1 w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface"></label>
-    <label class="block text-body-sm">Lieu ou lien<input formControlName="lieuOuLien" class="mt-1 w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface"></label>
+
+
+    <!-- ==========================================================
+         CANDIDATS
+    =========================================================== -->
+    <section class="px-6 py-7 md:px-7">
+
+      <div
+        class="
+          mb-4
+          flex items-end justify-between
+          gap-4
+        "
+      >
+
+        <div>
+
+          <h3 class="text-sm font-bold text-black">
+            Candidats à convoquer
+          </h3>
+
+          <p class="mt-1 text-xs text-black/45">
+            {{ selectionCandidatIds.size }}
+            sélectionné{{ selectionCandidatIds.size > 1 ? 's' : '' }}
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          (click)="toutSelectionner()"
+          class="
+            text-xs font-semibold
+            text-[#123B6D]
+            hover:underline
+          "
+        >
+          {{
+            selectionCandidatIds.size === candidatsEligibles.length
+            && candidatsEligibles.length
+              ? 'Tout désélectionner'
+              : 'Tout sélectionner'
+          }}
+        </button>
+
+      </div>
+
+
+      <!-- LISTE -->
+      <div
+        class="
+          max-h-72 overflow-y-auto
+          rounded-lg
+          border border-black/10
+          bg-white
+          divide-y divide-black/[0.06]
+        "
+      >
+
+        <label
+          *ngFor="let c of candidatsEligibles"
+          class="
+            flex cursor-pointer
+            items-center gap-3
+            px-4 py-3
+            transition
+            hover:bg-[#123B6D]/[0.025]
+          "
+        >
+
+          <input
+            type="checkbox"
+            [checked]="selectionCandidatIds.has(c.candidatId)"
+            (change)="basculerSelection(c.candidatId)"
+            class="
+              h-4 w-4 shrink-0
+              rounded border-black/25
+              accent-[#123B6D]
+            "
+          />
+
+
+          <span class="min-w-0">
+
+            <span
+              class="
+                block truncate
+                text-sm font-medium
+                text-black
+              "
+            >
+              {{ c.candidatPrenom }} {{ c.candidatNom }}
+            </span>
+
+            <span
+              class="
+                mt-0.5 block
+                text-xs text-black/40
+              "
+            >
+              {{ c.numeroDossier }}
+            </span>
+
+          </span>
+
+        </label>
+
+
+        <!-- EMPTY -->
+        <div
+          *ngIf="!candidatsEligibles.length"
+          class="px-5 py-8 text-center"
+        >
+          <p class="text-sm font-semibold text-black">
+            Aucun candidat éligible
+          </p>
+
+          <p class="mt-1 text-xs text-black/45">
+            Aucun candidat n'est actuellement disponible pour un entretien.
+          </p>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==========================================================
+         RENDEZ-VOUS
+    =========================================================== -->
+    <section
+      class="
+        border-t border-black/10
+        bg-black/[0.012]
+        px-6 py-7
+        md:px-7
+      "
+    >
+
+      <div class="mb-5">
+
+        <h3 class="text-sm font-bold text-black">
+          Rendez-vous
+        </h3>
+
+        <p class="mt-1 text-xs text-black/45">
+          Ces informations seront appliquées aux candidats sélectionnés.
+        </p>
+
+      </div>
+
+
+      <div class="space-y-5">
+
+        <!-- DATE -->
+        <div>
+
+          <label class="mb-2 block text-sm font-semibold text-black">
+            Date et heure
+          </label>
+
+          <input
+            formControlName="dateHeure"
+            type="datetime-local"
+            class="
+              h-11 w-full
+              rounded-lg
+              border border-black/15
+              bg-white
+              px-3.5
+              text-sm text-black
+              outline-none transition
+              hover:border-black/25
+              focus:border-[#123B6D]
+              focus:ring-2 focus:ring-[#123B6D]/10
+            "
+          />
+
+        </div>
+
+
+        <!-- LIEU -->
+        <div>
+
+          <label class="mb-2 block text-sm font-semibold text-black">
+            Lieu ou lien
+          </label>
+
+          <input
+            formControlName="lieuOuLien"
+            placeholder="Ex. Salle B12 ou lien visioconférence"
+            class="
+              h-11 w-full
+              rounded-lg
+              border border-black/15
+              bg-white
+              px-3.5
+              text-sm text-black
+              outline-none transition
+              placeholder:text-black/30
+              hover:border-black/25
+              focus:border-[#123B6D]
+              focus:ring-2 focus:ring-[#123B6D]/10
+            "
+          />
+
+        </div>
+
+      </div>
+
+    </section>
+
   </form>
-  <footer class="p-5 border-t border-outline-variant flex justify-end gap-3"><button type="button" (click)="fermerConvocationGroupee()" class="h-10 px-4 border border-outline-variant rounded-lg">Annuler</button><button type="button" (click)="envoyerConvocationGroupee()" [disabled]="envoiGroupeEnCours || !candidatsEligibles.length" class="h-10 px-4 bg-secondary text-on-secondary rounded-lg">{{ envoiGroupeEnCours ? 'Envoi...' : 'Envoyer les convocations' }}</button></footer>
+
+
+  <!-- FOOTER -->
+  <footer
+    class="
+      flex justify-end gap-2
+      border-t border-black/10
+      bg-white
+      px-6 py-4
+      md:px-7
+    "
+  >
+
+    <button
+      type="button"
+      (click)="fermerConvocationGroupee()"
+      class="
+        h-10 rounded-lg
+        border border-black/15
+        bg-white px-4
+        text-sm font-semibold text-black
+        transition
+        hover:bg-black/[0.025]
+      "
+    >
+      Annuler
+    </button>
+
+
+    <button
+      type="button"
+      (click)="envoyerConvocationGroupee()"
+      [disabled]="envoiGroupeEnCours || !candidatsEligibles.length"
+      class="
+        h-10 rounded-lg
+        bg-[#123B6D] px-5
+        text-sm font-semibold text-white
+        transition
+        hover:bg-[#0E315C]
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+      "
+    >
+      {{
+        envoiGroupeEnCours
+          ? 'Envoi...'
+          : 'Envoyer les convocations'
+      }}
+    </button>
+
+  </footer>
+
 </aside>

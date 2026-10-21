@@ -67,6 +67,31 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
     return this.candidatures.filter((c) => c.statut === 'REJETE').length;
   }
 
+  /** Dépôts reçus par mois pendant l'année en cours. */
+  get candidaturesParMois(): number[] {
+    const valeurs = Array.from({ length: 12 }, () => 0);
+    const annee = new Date().getFullYear();
+    for (const candidature of this.candidatures) {
+      const date = new Date(candidature.dateSoumission);
+      if (!Number.isNaN(date.getTime()) && date.getFullYear() === annee) {
+        valeurs[date.getMonth()]++;
+      }
+    }
+    return valeurs;
+  }
+
+  get pointsGraphique(): string {
+    const valeurs = this.candidaturesParMois;
+    const maximum = Math.max(...valeurs, 1);
+    return valeurs.map((valeur, index) => {
+      const x = 24 + (index * 552) / 11;
+      const y = 168 - (valeur * 136) / maximum;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+  }
+
+  readonly moisGraphique = ['Jan.', 'Fév.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
+
   /** Répartition réelle des candidatures par étape du workflow, pour le graphique en barres. */
   get repartitionStatuts(): SegmentStatut[] {
     const total = this.candidatures.length || 1;

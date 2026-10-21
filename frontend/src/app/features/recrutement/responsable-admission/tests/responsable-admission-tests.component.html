@@ -1,40 +1,546 @@
 <section class="max-w-6xl mx-auto">
-  <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-8">
-    <h1 class="font-display text-display text-primary">Tests académiques</h1>
-    <div class="flex gap-2"><app-report-button [generationEnCours]="generatingReport" (genererRapport)="genererRapport($event)"></app-report-button><a routerLink="/responsable-admission/tests/nouveau" class="inline-flex h-10 items-center justify-center gap-2 px-4 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md shadow-sm hover:opacity-90"><span class="material-symbols-outlined text-[20px]">add</span>Nouveau test</a></div>
-  </div>
 
-  <div *ngIf="errorMessage" class="mb-5 p-4 bg-error-container text-error rounded-lg font-body-sm">{{ errorMessage }}</div>
+  <!-- ============================================================
+       HEADER
+  ============================================================= -->
+  <header
+    class="
+      mb-7
+      flex flex-col gap-5
+      border-b border-black/10
+      pb-7
+      md:flex-row
+      md:items-end
+      md:justify-between
+    "
+  >
 
-  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-    <div class="p-4 md:p-5 border-b border-outline-variant flex flex-col sm:flex-row sm:items-center gap-3">
-      <div class="relative flex-1 max-w-md">
-        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-        <input [(ngModel)]="recherche" type="search" placeholder="Rechercher une épreuve, une session ou un lieu" class="w-full h-10 pl-10 pr-3 bg-surface border border-outline-variant rounded-lg text-body-md text-on-surface outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20">
-      </div>
-      <span *ngIf="!loading" class="text-body-sm text-on-surface-variant sm:ml-auto">{{ testsFiltres.length }} test{{ testsFiltres.length > 1 ? 's' : '' }}</span>
+    <div>
+
+      <h1
+        class="
+          text-3xl
+          font-bold
+          tracking-[-0.035em]
+          text-black
+          md:text-[34px]
+        "
+      >
+        Tests académiques
+      </h1>
+
+      <p class="mt-2 max-w-xl text-sm leading-6 text-black/50">
+        Planifiez les épreuves, consultez les inscrits et suivez la saisie
+        des résultats.
+      </p>
+
     </div>
 
-    <div *ngIf="loading" class="px-6 py-16 text-center text-on-surface-variant">Chargement des tests...</div>
-    <div *ngIf="!loading && testsFiltres.length === 0" class="px-6 py-16 text-center">
-      <span class="material-symbols-outlined text-[32px] text-outline">quiz</span>
-      <p class="mt-3 text-on-surface-variant">Aucun test ne correspond à votre recherche.</p>
-    </div>
 
-    <div *ngIf="!loading && testsFiltres.length" class="divide-y divide-outline-variant">
-      <a *ngFor="let test of testsFiltres" [routerLink]="['/responsable-admission/tests', test.id]" class="group flex flex-col lg:flex-row lg:items-center gap-4 px-5 py-5 hover:bg-surface-container-low transition-colors">
-        <div class="w-10 h-10 shrink-0 rounded-lg bg-secondary-fixed text-secondary flex items-center justify-center"><span class="material-symbols-outlined">quiz</span></div>
-        <div class="min-w-0 flex-1">
-          <h2 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-secondary">{{ test.nom }}</h2>
-          <p class="text-body-sm text-on-surface-variant mt-1">{{ test.session || 'Session non renseignée' }}</p>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-body-sm">
-          <div><span class="block text-label-sm text-on-surface-variant">Date</span><span class="text-on-surface">{{ test.date ? (test.date | date:'dd MMM y, HH:mm') : 'À planifier' }}</span></div>
-          <div><span class="block text-label-sm text-on-surface-variant">Lieu</span><span class="text-on-surface">{{ test.lieu || 'Non précisé' }}</span></div>
-          <div><span class="block text-label-sm text-on-surface-variant">Notes</span><span class="text-on-surface">{{ test.notesSaisies }} / {{ test.inscrits }}</span></div>
-        </div>
-        <span class="inline-flex items-center gap-1 text-secondary font-label-md text-label-md lg:ml-3">Ouvrir<span class="material-symbols-outlined text-[18px]">chevron_right</span></span>
+    <!-- ACTIONS -->
+    <div class="flex flex-wrap items-center gap-2">
+
+      <app-report-button
+        [generationEnCours]="generatingReport"
+        (genererRapport)="genererRapport($event)">
+      </app-report-button>
+
+
+      <a
+        routerLink="/responsable-admission/tests/nouveau"
+
+        class="
+          inline-flex h-10
+          items-center justify-center gap-2
+          rounded-lg
+          bg-[#123B6D]
+          px-4
+
+          text-sm
+          font-semibold
+          text-white
+
+          transition
+          hover:bg-[#0E315C]
+        "
+      >
+        <span class="material-symbols-outlined text-[18px]">
+          add
+        </span>
+
+        Nouveau test
       </a>
+
     </div>
+
+  </header>
+
+
+
+  <!-- ============================================================
+       ERROR
+  ============================================================= -->
+  <div
+    *ngIf="errorMessage"
+
+    class="
+      mb-6
+      border-l-2
+      border-red-500
+      bg-red-50
+      px-4 py-3
+      text-sm
+      text-red-700
+    "
+  >
+    {{ errorMessage }}
   </div>
+
+
+
+  <!-- ============================================================
+       RECHERCHE + COMPTEUR
+  ============================================================= -->
+  <div
+    class="
+      mb-5
+      flex flex-col gap-3
+      sm:flex-row
+      sm:items-center
+      sm:justify-between
+    "
+  >
+
+    <!-- SEARCH -->
+    <div class="relative w-full max-w-lg">
+
+      <span
+        class="
+          material-symbols-outlined
+          absolute left-3 top-1/2
+          -translate-y-1/2
+          text-[19px]
+          text-black/35
+        "
+      >
+        search
+      </span>
+
+      <input
+        [(ngModel)]="recherche"
+        type="search"
+        placeholder="Rechercher une épreuve, une session ou un lieu"
+
+        class="
+          h-11 w-full
+          rounded-lg
+          border border-black/10
+          bg-white
+
+          pl-10 pr-4
+
+          text-sm
+          text-black
+
+          outline-none
+          transition
+
+          placeholder:text-black/35
+
+          hover:border-black/20
+
+          focus:border-[#123B6D]/60
+          focus:ring-2
+          focus:ring-[#123B6D]/10
+        "
+      />
+
+    </div>
+
+
+    <!-- COUNT -->
+    <span
+      *ngIf="!loading"
+      class="
+        shrink-0
+        text-xs
+        font-medium
+        text-black/45
+      "
+    >
+      {{ testsFiltres.length }}
+      test{{ testsFiltres.length > 1 ? 's' : '' }}
+    </span>
+
+  </div>
+
+
+
+  <!-- ============================================================
+       LOADING
+  ============================================================= -->
+  <div
+    *ngIf="loading"
+
+    class="
+      border-y border-black/10
+      py-16
+      text-center
+    "
+  >
+
+    <div
+      class="
+        mx-auto mb-3
+        h-6 w-6
+        animate-spin
+        rounded-full
+        border-2
+        border-black/10
+        border-t-[#123B6D]
+      "
+    ></div>
+
+    <p class="text-sm text-black/45">
+      Chargement des tests...
+    </p>
+
+  </div>
+
+
+
+  <!-- ============================================================
+       EMPTY
+  ============================================================= -->
+  <div
+    *ngIf="!loading && testsFiltres.length === 0"
+
+    class="
+      border-y border-black/10
+      py-16
+      text-center
+    "
+  >
+
+    <p class="text-sm font-semibold text-black">
+      Aucun test trouvé
+    </p>
+
+    <p class="mt-1 text-sm text-black/45">
+      Aucun test ne correspond à votre recherche.
+    </p>
+
+  </div>
+
+
+
+  <!-- ============================================================
+       LISTE
+  ============================================================= -->
+  <section *ngIf="!loading && testsFiltres.length">
+
+    <!-- LIST HEADER -->
+    <div
+      class="
+        hidden
+        grid-cols-[minmax(260px,1.5fr)_180px_180px_130px_80px]
+        gap-6
+
+        border-b border-black/10
+        px-1
+        py-3
+
+        text-[11px]
+        font-semibold
+        uppercase
+        tracking-[0.06em]
+        text-black/40
+
+        lg:grid
+      "
+    >
+
+      <span>Test</span>
+
+      <span>Date</span>
+
+      <span>Lieu</span>
+
+      <span>Notes</span>
+
+      <span class="text-right">
+        Action
+      </span>
+
+    </div>
+
+
+
+    <!-- ROWS -->
+    <div class="divide-y divide-black/[0.07]">
+
+      <a
+        *ngFor="let test of testsFiltres"
+        [routerLink]="['/responsable-admission/tests', test.id]"
+
+        class="
+          group
+          block
+          px-1 py-5
+
+          transition-colors
+
+          hover:bg-black/[0.018]
+
+          lg:grid
+          lg:grid-cols-[minmax(260px,1.5fr)_180px_180px_130px_80px]
+          lg:items-center
+          lg:gap-6
+        "
+      >
+
+        <!-- ======================================================
+             TEST
+        ======================================================= -->
+        <div class="min-w-0">
+
+          <h2
+            class="
+              truncate
+              text-sm
+              font-semibold
+              text-black
+
+              transition-colors
+
+              group-hover:text-[#123B6D]
+            "
+          >
+            {{ test.nom }}
+          </h2>
+
+          <p
+            class="
+              mt-1
+              truncate
+              text-xs
+              text-black/45
+            "
+          >
+            {{ test.session || 'Session non renseignée' }}
+          </p>
+
+        </div>
+
+
+
+        <!-- ======================================================
+             MOBILE DETAILS
+        ======================================================= -->
+        <div
+          class="
+            mt-4
+            grid grid-cols-2
+            gap-x-6 gap-y-4
+
+            sm:grid-cols-3
+
+            lg:contents
+          "
+        >
+
+          <!-- DATE -->
+          <div>
+
+            <span
+              class="
+                mb-1
+                block
+                text-[10px]
+                font-medium
+                uppercase
+                tracking-wide
+                text-black/35
+
+                lg:hidden
+              "
+            >
+              Date
+            </span>
+
+            <span
+              class="
+                text-xs
+                font-medium
+                text-black/65
+
+                lg:text-sm
+              "
+            >
+              {{
+                test.date
+                  ? (test.date | date:'dd MMM y, HH:mm')
+                  : 'À planifier'
+              }}
+            </span>
+
+          </div>
+
+
+
+          <!-- LIEU -->
+          <div>
+
+            <span
+              class="
+                mb-1
+                block
+                text-[10px]
+                font-medium
+                uppercase
+                tracking-wide
+                text-black/35
+
+                lg:hidden
+              "
+            >
+              Lieu
+            </span>
+
+            <span
+              class="
+                block
+                max-w-[180px]
+                truncate
+
+                text-xs
+                font-medium
+                text-black/65
+
+                lg:text-sm
+              "
+            >
+              {{ test.lieu || 'Non précisé' }}
+            </span>
+
+          </div>
+
+
+
+          <!-- NOTES -->
+          <div>
+
+            <span
+              class="
+                mb-1
+                block
+                text-[10px]
+                font-medium
+                uppercase
+                tracking-wide
+                text-black/35
+
+                lg:hidden
+              "
+            >
+              Notes
+            </span>
+
+
+            <div class="flex items-center gap-2">
+
+              <span
+                class="
+                  text-xs
+                  font-semibold
+                  text-black
+
+                  lg:text-sm
+                "
+              >
+                {{ test.notesSaisies }} / {{ test.inscrits }}
+              </span>
+
+              <!-- petite progression, pas de sticker -->
+              <div
+                *ngIf="test.inscrits > 0"
+                class="
+                  hidden
+                  h-1
+                  w-12
+                  overflow-hidden
+                  rounded-full
+                  bg-black/10
+
+                  xl:block
+                "
+              >
+
+                <div
+                  class="
+                    h-full
+                    bg-[#123B6D]
+                  "
+                  [style.width.%]="
+                    (test.notesSaisies / test.inscrits) * 100
+                  "
+                ></div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- ======================================================
+             OPEN
+        ======================================================= -->
+        <div
+          class="
+            mt-4
+            flex items-center
+
+            lg:mt-0
+            lg:justify-end
+          "
+        >
+
+          <span
+            class="
+              inline-flex
+              items-center gap-1
+
+              text-xs
+              font-semibold
+              text-[#123B6D]
+
+              transition-all
+
+              group-hover:gap-2
+            "
+          >
+            Ouvrir
+
+            <span
+              class="
+                material-symbols-outlined
+                text-[16px]
+              "
+            >
+              chevron_right
+            </span>
+          </span>
+
+        </div>
+
+      </a>
+
+    </div>
+
+  </section>
+
 </section>

@@ -22,7 +22,7 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
   errorMessage = '';
 
   recherche = '';
-  filtreStatut: 'TOUTES' | 'OUVERTES' | 'FERMEES' | 'ACTIVES' = 'TOUTES';
+  filtreStatut: 'TOUTES' | 'OUVERTES' | 'A_VENIR' | 'TERMINEES' = 'TOUTES';
 
   exporting = false;
   exportModalOpen = false;
@@ -70,15 +70,16 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
 
   get sessionsFiltrees(): SessionCandidatureResponse[] {
     const q = this.recherche.trim().toLowerCase();
+    const aujourdHui = new Date().toISOString().slice(0, 10);
     const filtrees = this.sessions.filter((s) => {
       if (q && !s.libelle.toLowerCase().includes(q)) return false;
       switch (this.filtreStatut) {
         case 'OUVERTES':
-          return s.estOuverte;
-        case 'FERMEES':
-          return !s.estOuverte;
-        case 'ACTIVES':
-          return s.estActive;
+          return s.estOuverte && s.dateOuverture <= aujourdHui && s.dateFermeture >= aujourdHui;
+        case 'A_VENIR':
+          return s.dateOuverture > aujourdHui;
+        case 'TERMINEES':
+          return s.dateFermeture < aujourdHui;
         default:
           return true;
       }
@@ -121,12 +122,33 @@ export class ResponsableAdmissionSessionsComponent implements OnInit {
     return candidates.length > 0 ? candidates[0] : null;
   }
 
+  statutSession(session: SessionCandidatureResponse): 'OUVERTE' | 'A_VENIR' | 'TERMINEE' {
+    const aujourdHui = new Date().toISOString().slice(0, 10);
+    if (session.dateOuverture > aujourdHui) return 'A_VENIR';
+    if (session.dateFermeture < aujourdHui || !session.estOuverte) return 'TERMINEE';
+    return 'OUVERTE';
+  }
+
+  libelleStatut(session: SessionCandidatureResponse): string {
+    const statut = this.statutSession(session);
+    return statut === 'OUVERTE' ? 'Ouverte' : statut === 'A_VENIR' ? 'À venir' : 'Terminée';
+  }
+
+  classeStatut(session: SessionCandidatureResponse): string {
+    const statut = this.statutSession(session);
+    return statut === 'OUVERTE'
+      ? 'bg-green-100 text-green-800'
+      : statut === 'A_VENIR'
+        ? 'bg-primary-container text-on-primary-container'
+        : 'bg-surface-container text-on-surface-variant';
+  }
+
   nouvelleSession(): void {
     this.router.navigate(['/responsable-admission/sessions/nouvelle']);
   }
 
   voirSession(session: SessionCandidatureResponse): void {
-    this.sessionSelectionnee = session;
+    this.modifierSession(session);
   }
 
   modifierSession(session: SessionCandidatureResponse): void {

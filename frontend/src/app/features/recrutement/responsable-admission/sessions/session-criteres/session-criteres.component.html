@@ -1,85 +1,654 @@
-<!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
+<!-- ==================== CRITÈRES PERSONNALISÉS ==================== -->
 
-<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm mb-2 flex-wrap">
-  <a routerLink="/responsable-admission/sessions" class="hover:underline">Admissions</a>
-  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <a routerLink="/responsable-admission/sessions" class="hover:underline">Sessions</a>
-  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <a [routerLink]="['/responsable-admission/sessions', sessionId]" class="hover:underline">{{ session?.libelle || '…' }}</a>
-  <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-  <span class="font-medium text-on-surface">Critères personnalisés</span>
-</div>
+<!-- ============================================================
+     BREADCRUMB
+============================================================ -->
+<nav
+  class="mb-6 flex flex-wrap items-center gap-1.5 text-xs"
+  aria-label="Fil d'Ariane"
+>
+  <a
+    routerLink="/responsable-admission/sessions"
+    class="text-black/45 transition hover:text-black"
+  >
+    Admissions
+  </a>
 
-<div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-stack-lg">
-  <div>
-    <h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1">Critères personnalisés</h2>
-    <p class="font-body-md text-body-md text-on-surface-variant mt-1">S'ajoutent aux critères de base de la session sur le formulaire de candidature. Un critère sans règle définie est informatif : collecté, jamais éliminatoire.</p>
+  <span class="material-symbols-outlined text-[14px] text-black/25">
+    chevron_right
+  </span>
+
+  <a
+    routerLink="/responsable-admission/sessions"
+    class="text-black/45 transition hover:text-black"
+  >
+    Sessions
+  </a>
+
+  <span class="material-symbols-outlined text-[14px] text-black/25">
+    chevron_right
+  </span>
+
+  <a
+    [routerLink]="['/responsable-admission/sessions', sessionId]"
+    class="max-w-[220px] truncate text-black/45 transition hover:text-black"
+  >
+    {{ session?.libelle || '…' }}
+  </a>
+
+  <span class="material-symbols-outlined text-[14px] text-black/25">
+    chevron_right
+  </span>
+
+  <span class="font-semibold text-black">
+    Critères personnalisés
+  </span>
+</nav>
+
+
+<!-- ============================================================
+     HEADER
+============================================================ -->
+<header
+  class="
+    mb-7
+    flex flex-col gap-5
+    border-b border-black/10
+    pb-7
+    lg:flex-row
+    lg:items-end
+    lg:justify-between
+  "
+>
+  <div class="max-w-2xl">
+
+    <h1
+      class="
+        text-3xl
+        font-bold
+        tracking-[-0.035em]
+        text-black
+        md:text-[34px]
+      "
+    >
+      Critères personnalisés
+    </h1>
+
+    <p class="mt-2 text-sm leading-6 text-black/50">
+      Ajoutez les informations spécifiques demandées aux candidats pour cette
+      session. Les critères avec une condition peuvent être utilisés lors de
+      la présélection automatique.
+    </p>
+
   </div>
-  <button type="button" (click)="ajouterCritere()" class="flex items-center gap-2 px-4 py-2 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md shrink-0">
-    <span class="material-symbols-outlined text-[18px]">add</span>
+
+
+  <button
+    type="button"
+    (click)="ajouterCritere()"
+
+    class="
+      inline-flex h-10
+      shrink-0
+      items-center justify-center gap-2
+      rounded-lg
+      bg-[#123B6D]
+      px-4
+
+      text-sm
+      font-semibold
+      text-white
+
+      transition
+      hover:bg-[#0E315C]
+    "
+  >
+    <span class="material-symbols-outlined text-[18px]">
+      add
+    </span>
+
     Ajouter un critère
   </button>
+
+</header>
+
+
+<!-- ============================================================
+     ERREUR
+============================================================ -->
+<div
+  *ngIf="errorMessage"
+  class="
+    mb-6
+    border-l-2
+    border-red-500
+    bg-red-50
+    px-4 py-3
+    text-sm
+    text-red-700
+  "
+>
+  {{ errorMessage }}
 </div>
 
-<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
 
-<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement…</div>
+<!-- ============================================================
+     LOADING
+============================================================ -->
+<div
+  *ngIf="loading"
+  class="border-y border-black/10 py-16 text-center"
+>
+  <div
+    class="
+      mx-auto mb-3
+      h-6 w-6
+      animate-spin
+      rounded-full
+      border-2
+      border-black/10
+      border-t-[#123B6D]
+    "
+  ></div>
+
+  <p class="text-sm text-black/45">
+    Chargement…
+  </p>
+</div>
+
 
 <ng-container *ngIf="!loading">
-  <!-- Critères actifs : les seuls proposés aux candidats -->
-  <div *ngIf="criteresActifsListe.length === 0" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant mb-stack-lg">
-    <span class="material-symbols-outlined text-4xl text-outline mb-2 block">checklist</span>
-    <p class="font-body-md text-body-md text-on-surface-variant">Aucun critère personnalisé pour cette session.</p>
-  </div>
 
-  <div *ngIf="criteresActifsListe.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-gutter mb-stack-lg">
-    <div *ngFor="let c of criteresActifsListe" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 flex items-start justify-between gap-3">
-      <div class="min-w-0">
-        <p class="font-label-md text-label-md text-on-surface truncate">
-          {{ c.libelle }}<span *ngIf="c.obligatoire" class="text-error"> *</span>
-        </p>
-        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ c.type }}</p>
-        <p *ngIf="c.valeurMinimale !== null" class="font-body-sm text-body-sm text-on-surface-variant">Minimum exigé : {{ c.valeurMinimale }}</p>
-        <p *ngIf="c.valeurAttendue" class="font-body-sm text-body-sm text-on-surface-variant">Réponse attendue : « {{ c.valeurAttendue }} »</p>
+  <!-- ==========================================================
+       HEADER LISTE
+  =========================================================== -->
+  <div
+    class="
+      flex items-end justify-between
+      border-b border-black/10
+      pb-3
+    "
+  >
+
+    <div>
+
+      <div class="flex items-center gap-2">
+
+        <h2 class="text-base font-bold text-black">
+          Critères actifs
+        </h2>
+
+        <span
+          *ngIf="criteresActifsListe.length > 0"
+          class="
+            rounded-full
+            bg-black/[0.05]
+            px-2 py-0.5
+            text-[10px]
+            font-semibold
+            text-black/50
+          "
+        >
+          {{ criteresActifsListe.length }}
+        </span>
+
       </div>
-      <div class="flex items-center gap-1 shrink-0">
-        <button type="button" (click)="modifierCritere(c)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded-full transition-colors" title="Modifier" aria-label="Modifier">
-          <span class="material-symbols-outlined text-[20px]">edit</span>
-        </button>
-        <button type="button" (click)="retirer(c)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded-full transition-colors" title="Retirer" aria-label="Retirer">
-          <span class="material-symbols-outlined text-[20px]">delete</span>
-        </button>
-      </div>
+
+      <p class="mt-1 text-xs text-black/45">
+        Ces critères sont actuellement proposés aux candidats.
+      </p>
+
     </div>
+
   </div>
 
-  <!-- Critères retirés : repliés par défaut, jamais supprimés physiquement (réponses déjà données préservées) -->
-  <div *ngIf="criteresRetires.length > 0" class="mb-stack-lg">
-    <button type="button" (click)="afficherRetires = !afficherRetires" class="flex items-center gap-2 font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface">
-      <span class="material-symbols-outlined text-[18px]">{{ afficherRetires ? 'expand_less' : 'expand_more' }}</span>
-      {{ afficherRetires ? 'Masquer' : 'Afficher' }} les critères retirés ({{ criteresRetires.length }})
+
+  <!-- ==========================================================
+       EMPTY STATE
+  =========================================================== -->
+  <div
+    *ngIf="criteresActifsListe.length === 0"
+    class="
+      border-b border-black/10
+      py-14
+      text-center
+    "
+  >
+    <p class="text-sm font-semibold text-black">
+      Aucun critère personnalisé
+    </p>
+
+    <p class="mx-auto mt-1 max-w-md text-sm leading-5 text-black/45">
+      Cette session utilise uniquement les critères de candidature standards.
+    </p>
+
+    <button
+      type="button"
+      (click)="ajouterCritere()"
+      class="
+        mt-4
+        text-sm
+        font-semibold
+        text-[#123B6D]
+        hover:underline
+      "
+    >
+      Ajouter le premier critère
     </button>
-    <div *ngIf="afficherRetires" class="grid grid-cols-1 md:grid-cols-2 gap-gutter mt-3">
-      <div *ngFor="let c of criteresRetires" class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 flex items-start justify-between gap-3 opacity-60">
-        <div class="min-w-0">
-          <p class="font-label-md text-label-md text-on-surface truncate">{{ c.libelle }}</p>
-          <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ c.type }} · retiré</p>
+  </div>
+
+
+  <!-- ==========================================================
+       LISTE DES CRITÈRES ACTIFS
+  =========================================================== -->
+  <div
+    *ngIf="criteresActifsListe.length > 0"
+    class="divide-y divide-black/[0.07]"
+  >
+
+    <article
+      *ngFor="let c of criteresActifsListe"
+      class="
+        group
+        flex flex-col gap-4
+        py-5
+
+        sm:flex-row
+        sm:items-center
+        sm:justify-between
+
+        transition-colors
+      "
+    >
+
+      <!-- INFORMATION -->
+      <div class="min-w-0 flex-1">
+
+        <div class="flex flex-wrap items-center gap-2">
+
+          <h3
+            class="
+              truncate
+              text-sm
+              font-semibold
+              text-black
+            "
+          >
+            {{ c.libelle }}
+          </h3>
+
+
+          <!-- Obligatoire -->
+          <span
+            *ngIf="c.obligatoire"
+            class="
+              text-[10px]
+              font-semibold
+              uppercase
+              tracking-[0.05em]
+              text-black/40
+            "
+          >
+            Obligatoire
+          </span>
+
         </div>
-        <button type="button" (click)="reactiver(c)" class="p-1.5 text-secondary hover:bg-secondary/10 rounded-full transition-colors shrink-0" title="Réactiver" aria-label="Réactiver">
-          <span class="material-symbols-outlined text-[20px]">restore</span>
-        </button>
+
+
+        <!-- META -->
+        <div
+          class="
+            mt-2
+            flex flex-wrap
+            items-center gap-x-2 gap-y-1
+            text-xs
+            text-black/45
+          "
+        >
+
+          <span>
+            {{ c.type }}
+          </span>
+
+
+          <ng-container *ngIf="c.valeurMinimale !== null">
+
+            <span class="text-black/20">·</span>
+
+            <span>
+              Minimum :
+              <strong class="font-semibold text-black/65">
+                {{ c.valeurMinimale }}
+              </strong>
+            </span>
+
+          </ng-container>
+
+
+          <ng-container *ngIf="c.valeurAttendue">
+
+            <span class="text-black/20">·</span>
+
+            <span>
+              Réponse attendue :
+              <strong class="font-semibold text-black/65">
+                {{ c.valeurAttendue }}
+              </strong>
+            </span>
+
+          </ng-container>
+
+        </div>
+
       </div>
-    </div>
+
+
+      <!-- ACTIONS -->
+      <div class="flex shrink-0 items-center gap-1">
+
+        <button
+          type="button"
+          (click)="modifierCritere(c)"
+          title="Modifier"
+          aria-label="Modifier"
+
+          class="
+            inline-flex h-8
+            items-center gap-1.5
+            px-2
+
+            text-xs
+            font-semibold
+            text-black/50
+
+            transition
+
+            hover:text-[#123B6D]
+          "
+        >
+          <span class="material-symbols-outlined text-[17px]">
+            edit
+          </span>
+
+          <span class="hidden lg:inline">
+            Modifier
+          </span>
+        </button>
+
+
+        <button
+          type="button"
+          (click)="retirer(c)"
+          title="Retirer"
+          aria-label="Retirer"
+
+          class="
+            inline-flex h-8
+            items-center gap-1.5
+            px-2
+
+            text-xs
+            font-semibold
+            text-black/40
+
+            transition
+
+            hover:text-red-600
+          "
+        >
+          <span class="material-symbols-outlined text-[17px]">
+            delete
+          </span>
+
+          <span class="hidden lg:inline">
+            Retirer
+          </span>
+        </button>
+
+      </div>
+
+    </article>
+
   </div>
 
-  <!-- Filtre automatique -->
-  <div *ngIf="session?.criteresActifs" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6 max-w-xl">
-    <p class="font-label-md text-label-md text-on-surface font-bold mb-1">Filtre automatique de présélection</p>
-    <p class="font-body-sm text-body-sm text-on-surface-variant mb-3">Évalue chaque dossier « Soumis » de cette session par rapport aux critères de base et personnalisés ci-dessus.</p>
-    <button type="button" [disabled]="filtreEnCours" (click)="appliquerFiltre()"
-            class="w-full px-3 py-2 font-label-sm text-label-sm text-on-primary bg-primary rounded-lg disabled:opacity-60">
-      {{ filtreEnCours ? 'Application en cours…' : 'Appliquer le filtre sur les dossiers « Soumis »' }}
+
+  <!-- ==========================================================
+       CRITÈRES RETIRÉS
+  =========================================================== -->
+  <section
+    *ngIf="criteresRetires.length > 0"
+    class="
+      mt-8
+      border-t border-black/10
+      pt-5
+    "
+  >
+
+    <button
+      type="button"
+      (click)="afficherRetires = !afficherRetires"
+
+      class="
+        flex w-full
+        items-center justify-between
+        py-2
+        text-left
+      "
+    >
+
+      <div>
+
+        <div class="flex items-center gap-2">
+
+          <span class="text-sm font-semibold text-black/65">
+            Critères retirés
+          </span>
+
+          <span
+            class="
+              rounded-full
+              bg-black/[0.05]
+              px-2 py-0.5
+              text-[10px]
+              font-semibold
+              text-black/40
+            "
+          >
+            {{ criteresRetires.length }}
+          </span>
+
+        </div>
+
+        <p class="mt-1 text-xs text-black/40">
+          Conservés afin de préserver les réponses déjà enregistrées.
+        </p>
+
+      </div>
+
+
+      <span
+        class="
+          material-symbols-outlined
+          text-[18px]
+          text-black/40
+        "
+      >
+        {{ afficherRetires ? 'expand_less' : 'expand_more' }}
+      </span>
+
     </button>
-    <p *ngIf="filtreMessage" class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ filtreMessage }}</p>
-  </div>
+
+
+    <!-- LISTE RETIRÉS -->
+    <div
+      *ngIf="afficherRetires"
+      class="
+        mt-3
+        divide-y divide-black/[0.06]
+        border-t border-black/[0.07]
+      "
+    >
+
+      <article
+        *ngFor="let c of criteresRetires"
+        class="
+          flex
+          items-center
+          justify-between
+          gap-4
+          py-4
+        "
+      >
+
+        <div class="min-w-0">
+
+          <p
+            class="
+              truncate
+              text-sm
+              font-medium
+              text-black/50
+            "
+          >
+            {{ c.libelle }}
+          </p>
+
+          <p class="mt-1 text-xs text-black/35">
+            {{ c.type }} · Retiré
+          </p>
+
+        </div>
+
+
+        <button
+          type="button"
+          (click)="reactiver(c)"
+          title="Réactiver"
+          aria-label="Réactiver"
+
+          class="
+            inline-flex h-8
+            shrink-0
+            items-center gap-1.5
+            px-2
+
+            text-xs
+            font-semibold
+            text-[#123B6D]
+
+            transition
+            hover:underline
+          "
+        >
+          <span class="material-symbols-outlined text-[17px]">
+            restore
+          </span>
+
+          Réactiver
+        </button>
+
+      </article>
+
+    </div>
+
+  </section>
+
+
+  <!-- ==========================================================
+       FILTRE AUTOMATIQUE
+  =========================================================== -->
+  <section
+    *ngIf="session?.criteresActifs"
+    class="
+      mt-10
+      border-t border-black/10
+      pt-7
+    "
+  >
+
+    <div
+      class="
+        flex flex-col gap-5
+
+        lg:flex-row
+        lg:items-center
+        lg:justify-between
+      "
+    >
+
+      <!-- DESCRIPTION -->
+      <div class="max-w-xl">
+
+        <h2 class="text-base font-bold text-black">
+          Filtre automatique de présélection
+        </h2>
+
+        <p
+          class="
+            mt-1.5
+            text-sm
+            leading-6
+            text-black/50
+          "
+        >
+          Évalue les dossiers « Soumis » selon les critères de base et
+          personnalisés configurés pour cette session.
+        </p>
+
+      </div>
+
+
+      <!-- ACTION -->
+      <button
+        type="button"
+        [disabled]="filtreEnCours"
+        (click)="appliquerFiltre()"
+
+        class="
+          inline-flex h-10
+          shrink-0
+          items-center justify-center
+          rounded-lg
+          bg-[#123B6D]
+          px-4
+
+          text-sm
+          font-semibold
+          text-white
+
+          transition
+
+          hover:bg-[#0E315C]
+
+          disabled:cursor-not-allowed
+          disabled:opacity-50
+        "
+      >
+        {{
+          filtreEnCours
+            ? 'Application en cours…'
+            : 'Appliquer le filtre'
+        }}
+      </button>
+
+    </div>
+
+
+    <!-- RESULTAT -->
+    <p
+      *ngIf="filtreMessage"
+      class="
+        mt-4
+        border-l-2
+        border-[#123B6D]
+        pl-3
+        text-sm
+        text-black/55
+      "
+    >
+      {{ filtreMessage }}
+    </p>
+
+  </section>
+
 </ng-container>

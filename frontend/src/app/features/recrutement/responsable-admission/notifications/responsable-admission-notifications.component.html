@@ -1,45 +1,463 @@
-<div class="mb-stack-lg">
-  <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Modèles de notifications</h1>
-  <p class="font-body-md text-body-md text-on-surface-variant mt-2 max-w-2xl">
-    Personnalisez le sujet et le contenu de chaque email automatique envoyé aux candidats, et désactivez celles que vous ne souhaitez pas envoyer. Utilisez les variables indiquées (ex: <code>{{ '{{numeroDossier}}' }}</code>) : elles seront remplacées automatiquement à l'envoi.
-    <a routerLink="/responsable-admission/aide" class="text-primary hover:underline whitespace-nowrap">Voir le détail de chaque variable</a>.
-  </p>
-</div>
+<!-- ================================================================
+     MODÈLES DE NOTIFICATIONS
+================================================================ -->
+<section class="mx-auto max-w-5xl">
 
-<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
-<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des modèles…</div>
+  <!-- ============================================================
+       HEADER
+  ============================================================= -->
+  <header class="mb-7 border-b border-black/10 pb-7">
 
-<div *ngIf="!loading" class="space-y-4">
-  <div *ngFor="let t of templates" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6">
-    <div class="flex items-start justify-between gap-4 mb-4">
-      <div>
-        <h3 class="font-headline-sm text-headline-sm text-primary">{{ t.label }}</h3>
-        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1" *ngIf="t.placeholders.length">
-          Variables disponibles :
-          <code *ngFor="let p of t.placeholders" class="mx-0.5 px-1.5 py-0.5 bg-surface-container rounded text-[11px]">{{ '{{' + p + '}}' }}</code>
-        </p>
-      </div>
-      <button type="button" (click)="t.actif = !t.actif" role="switch" [attr.aria-checked]="t.actif" title="Activer/désactiver cet envoi automatique"
-              class="relative w-12 h-7 rounded-full transition-colors shrink-0" [class.bg-secondary]="t.actif" [class.bg-outline-variant]="!t.actif">
-        <span class="absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform" [class.translate-x-5]="t.actif"></span>
-      </button>
-    </div>
+    <h1
+      class="
+        text-3xl font-bold tracking-[-0.035em]
+        text-black md:text-[34px]
+      "
+    >
+      Modèles de notifications
+    </h1>
 
-    <div class="space-y-3" [class.opacity-50]="!t.actif">
-      <div>
-        <label [for]="'notif-sujet-' + t.type" class="block font-label-md text-label-md text-on-surface-variant mb-1">Sujet</label>
-        <input [id]="'notif-sujet-' + t.type" [(ngModel)]="t.sujet" [disabled]="!t.actif" class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none" type="text"/>
-      </div>
-      <div>
-        <label [for]="'notif-message-' + t.type" class="block font-label-md text-label-md text-on-surface-variant mb-1">Message</label>
-        <textarea [id]="'notif-message-' + t.type" [(ngModel)]="t.corps" [disabled]="!t.actif" rows="5" class="w-full px-3 py-2 border border-outline-variant rounded-lg bg-surface text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary/20 outline-none font-mono text-sm"></textarea>
-      </div>
-    </div>
+    <p class="mt-2 max-w-3xl text-sm leading-6 text-black/50">
+      Personnalisez le sujet et le contenu des emails automatiques envoyés
+      aux candidats. Les variables comme
+      <code
+        class="
+          mx-1 rounded
+          bg-black/[0.05]
+          px-1.5 py-0.5
+          font-mono text-[11px]
+          text-black/65
+        "
+      >{{ '{{numeroDossier}}' }}</code>
+      sont remplacées automatiquement lors de l'envoi.
 
-    <div class="flex justify-end mt-4">
-      <button type="button" [disabled]="t.enregistrement" (click)="enregistrer(t)" class="px-4 py-2 bg-secondary hover:bg-secondary/90 text-on-secondary rounded-lg font-label-md text-label-md transition-colors shadow-sm disabled:opacity-60">
-        {{ t.enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
-      </button>
-    </div>
+      <a
+        routerLink="/responsable-admission/aide"
+        class="
+          ml-1 whitespace-nowrap
+          font-medium text-[#123B6D]
+          hover:underline
+        "
+      >
+        Voir les variables disponibles
+      </a>
+    </p>
+
+  </header>
+
+
+  <!-- ============================================================
+       ERROR
+  ============================================================= -->
+  <div
+    *ngIf="errorMessage"
+    class="
+      mb-5 border-l-2 border-red-500
+      bg-red-50 px-4 py-3
+      text-sm text-red-700
+    "
+  >
+    {{ errorMessage }}
   </div>
-</div>
+
+
+  <!-- ============================================================
+       LOADING
+  ============================================================= -->
+  <div
+    *ngIf="loading"
+    class="border-y border-black/10 py-16 text-center"
+  >
+    <div
+      class="
+        mx-auto mb-3 h-6 w-6 animate-spin
+        rounded-full border-2 border-black/10
+        border-t-[#123B6D]
+      "
+    ></div>
+
+    <p class="text-sm text-black/45">
+      Chargement des modèles…
+    </p>
+  </div>
+
+
+  <!-- ============================================================
+       TEMPLATES
+  ============================================================= -->
+  <div
+    *ngIf="!loading"
+    class="space-y-6"
+  >
+
+    <section
+      *ngFor="let t of templates"
+      class="
+        overflow-hidden
+        rounded-xl
+        border border-black/10
+        bg-white
+        shadow-[0_1px_3px_rgba(0,0,0,0.035)]
+      "
+    >
+
+      <!-- ========================================================
+           TEMPLATE HEADER
+      ========================================================= -->
+      <header
+        class="
+          flex flex-col gap-4
+          border-b border-black/10
+          px-6 py-5
+
+          sm:flex-row
+          sm:items-center
+          sm:justify-between
+
+          md:px-7
+        "
+      >
+
+        <div class="min-w-0">
+
+          <div class="flex flex-wrap items-center gap-2">
+
+            <h2
+              class="
+                text-base font-bold
+                text-black
+              "
+            >
+              {{ t.label }}
+            </h2>
+
+
+            <!-- STATUS -->
+            <span
+              class="
+                rounded-full
+                px-2 py-0.5
+                text-[10px]
+                font-semibold
+              "
+              [class.bg-emerald-50]="t.actif"
+              [class.text-emerald-700]="t.actif"
+              [class.bg-black-50]="!t.actif"
+              [class.text-black-45]="!t.actif"
+            >
+              {{ t.actif ? 'Actif' : 'Désactivé' }}
+            </span>
+
+          </div>
+
+          <p class="mt-1 text-xs text-black/45">
+            {{
+              t.actif
+                ? 'Cet email est envoyé automatiquement.'
+                : 'L’envoi automatique de cet email est désactivé.'
+            }}
+          </p>
+
+        </div>
+
+
+        <!-- SWITCH -->
+        <div class="flex shrink-0 items-center gap-3">
+
+          <span class="text-xs font-medium text-black/45">
+            {{ t.actif ? 'Activé' : 'Désactivé' }}
+          </span>
+
+          <button
+            type="button"
+            (click)="t.actif = !t.actif"
+            role="switch"
+            [attr.aria-checked]="t.actif"
+            title="Activer/désactiver cet envoi automatique"
+
+            class="
+              relative h-6 w-11
+              shrink-0 rounded-full
+              transition-colors
+              focus:outline-none
+              focus:ring-2
+              focus:ring-[#123B6D]/15
+            "
+
+            [class.bg-[#123B6D]]="t.actif"
+            [class.bg-black-15]="!t.actif"
+          >
+
+            <span
+              class="
+                absolute left-1 top-1
+                h-4 w-4
+                rounded-full
+                bg-white
+                shadow-sm
+                transition-transform
+              "
+              [class.translate-x-5]="t.actif"
+            ></span>
+
+          </button>
+
+        </div>
+
+      </header>
+
+
+      <!-- ========================================================
+           FORMULAIRE
+      ========================================================= -->
+      <div
+        class="
+          px-6 py-6
+          transition-opacity
+          md:px-7
+        "
+        [class.opacity-50]="!t.actif"
+      >
+
+        <div class="space-y-5">
+
+          <!-- ====================================================
+               SUBJECT
+          ===================================================== -->
+          <div>
+
+            <label
+              [for]="'notif-sujet-' + t.type"
+              class="
+                mb-2 block
+                text-sm font-semibold
+                text-black
+              "
+            >
+              Sujet de l'email
+            </label>
+
+            <input
+              [id]="'notif-sujet-' + t.type"
+              [(ngModel)]="t.sujet"
+              [disabled]="!t.actif"
+              type="text"
+              placeholder="Sujet de la notification"
+
+              class="
+                h-11 w-full
+                rounded-lg
+                border border-black/15
+                bg-white
+                px-3.5
+
+                text-sm text-black
+                outline-none
+                transition
+
+                placeholder:text-black/30
+
+                hover:border-black/25
+
+                focus:border-[#123B6D]
+                focus:ring-2
+                focus:ring-[#123B6D]/10
+
+                disabled:cursor-not-allowed
+                disabled:bg-black/[0.02]
+              "
+            />
+
+          </div>
+
+
+          <!-- ====================================================
+               MESSAGE
+          ===================================================== -->
+          <div>
+
+            <div
+              class="
+                mb-2 flex flex-col gap-2
+                sm:flex-row
+                sm:items-center
+                sm:justify-between
+              "
+            >
+
+              <label
+                [for]="'notif-message-' + t.type"
+                class="
+                  text-sm font-semibold
+                  text-black
+                "
+              >
+                Message
+              </label>
+
+
+              <!-- VARIABLES -->
+              <span
+                *ngIf="t.placeholders.length"
+                class="
+                  text-[11px]
+                  text-black/40
+                "
+              >
+                Vous pouvez utiliser les variables ci-dessous.
+              </span>
+
+            </div>
+
+
+            <textarea
+              [id]="'notif-message-' + t.type"
+              [(ngModel)]="t.corps"
+              [disabled]="!t.actif"
+              rows="7"
+              placeholder="Contenu de l'email..."
+
+              class="
+                w-full resize-y
+                rounded-lg
+                border border-black/15
+                bg-white
+                px-3.5 py-3
+
+                font-mono
+                text-[13px]
+                leading-6
+                text-black
+
+                outline-none
+                transition
+
+                placeholder:text-black/30
+
+                hover:border-black/25
+
+                focus:border-[#123B6D]
+                focus:ring-2
+                focus:ring-[#123B6D]/10
+
+                disabled:cursor-not-allowed
+                disabled:bg-black/[0.02]
+              "
+            ></textarea>
+
+          </div>
+
+
+          <!-- ====================================================
+               VARIABLES
+          ===================================================== -->
+          <div
+            *ngIf="t.placeholders.length"
+            class="
+              border-t border-black/[0.07]
+              pt-4
+            "
+          >
+
+            <p
+              class="
+                mb-2.5
+                text-[10px]
+                font-semibold
+                uppercase
+                tracking-[0.06em]
+                text-black/40
+              "
+            >
+              Variables disponibles
+            </p>
+
+
+            <div class="flex flex-wrap gap-1.5">
+
+              <code
+                *ngFor="let p of t.placeholders"
+                class="
+                  rounded-md
+                  border border-black/[0.07]
+                  bg-black/[0.025]
+                  px-2 py-1
+
+                  font-mono
+                  text-[11px]
+                  text-black/60
+                "
+              >
+                {{ '{{' + p + '}}' }}
+              </code>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ========================================================
+           FOOTER
+      ========================================================= -->
+      <footer
+        class="
+          flex flex-col gap-3
+          border-t border-black/10
+          bg-black/[0.012]
+          px-6 py-4
+
+          sm:flex-row
+          sm:items-center
+          sm:justify-between
+
+          md:px-7
+        "
+      >
+
+        <p class="text-xs text-black/40">
+          Les modifications s'appliquent aux prochains emails envoyés.
+        </p>
+
+
+        <button
+          type="button"
+          [disabled]="t.enregistrement"
+          (click)="enregistrer(t)"
+
+          class="
+            h-9
+            shrink-0
+            rounded-lg
+            bg-[#123B6D]
+            px-4
+
+            text-xs
+            font-semibold
+            text-white
+
+            transition
+
+            hover:bg-[#0E315C]
+
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          "
+        >
+          {{
+            t.enregistrement
+              ? 'Enregistrement…'
+              : 'Enregistrer'
+          }}
+        </button>
+
+      </footer>
+
+    </section>
+
+  </div>
+
+</section>

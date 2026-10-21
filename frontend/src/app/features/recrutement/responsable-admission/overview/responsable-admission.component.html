@@ -1,136 +1,59 @@
-<!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
-
-<header class="mb-stack-lg flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-  <div>
-    <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-2 block">Admissions</span>
-    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Vue d'ensemble</h1>
-    <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-2xl">Suivez les sessions en cours et les derniers dossiers déposés.</p>
-  </div>
-  <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-    <button type="button" [disabled]="exporting" (click)="exporterSessions()" [title]="exporting ? 'Export en cours…' : 'Rapport (Sessions)'" class="flex items-center justify-center gap-2 h-10 px-4 bg-surface-container-lowest border border-outline-variant rounded-lg text-on-surface hover:bg-surface-container-low transition-colors shadow-sm disabled:opacity-60 font-label-md text-label-md">
-      <span class="material-symbols-outlined text-[18px]">download</span>
-      {{ exporting ? 'Export…' : 'Exporter les sessions' }}
-    </button>
-  </div>
-</header>
-
-<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des données…</div>
-
-<ng-container *ngIf="!loading">
-  <!-- Indicateurs -->
-  <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-gutter mb-stack-lg" aria-label="Indicateurs d'admission">
-    <a routerLink="/responsable-admission/candidatures" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
-      <div class="flex items-center gap-2 text-on-surface-variant">
-        <span class="material-symbols-outlined">folder_shared</span>
-        <span class="font-label-sm text-label-sm uppercase tracking-wider">Candidatures</span>
-      </div>
-      <p class="font-display text-headline-lg text-on-surface mt-5 tabular-nums">{{ totalCandidats }}</p>
-    </a>
-    <a routerLink="/responsable-admission/sessions" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
-      <div class="flex items-center gap-2 text-on-surface-variant">
-        <span class="material-symbols-outlined">calendar_today</span>
-        <span class="font-label-sm text-label-sm uppercase tracking-wider">Sessions actives</span>
-      </div>
-      <p class="font-display text-headline-lg text-on-surface mt-5 tabular-nums">{{ sessionsActives.length }}</p>
-    </a>
-    <a routerLink="/responsable-admission/candidatures" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
-      <div class="flex items-center gap-2 text-on-surface-variant">
-        <span class="material-symbols-outlined">hourglass_top</span>
-        <span class="font-label-sm text-label-sm uppercase tracking-wider">À traiter</span>
-      </div>
-      <p class="font-display text-headline-lg text-on-surface mt-5 tabular-nums">{{ validationEnCours + preselectionnes }}</p>
-    </a>
-    <a routerLink="/responsable-admission/statistiques" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg no-underline hover:border-secondary transition-colors">
-      <div class="flex items-center gap-2 text-on-surface-variant">
-        <span class="material-symbols-outlined">check_circle</span>
-        <span class="font-label-sm text-label-sm uppercase tracking-wider">Taux d'admission</span>
-      </div>
-      <p class="font-display text-headline-lg text-on-surface mt-5 tabular-nums">{{ tauxAdmission }}%</p>
-    </a>
-  </section>
-
-  <div *ngIf="prefs.showSessionsActives" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
-    <div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
-      <h3 class="font-headline-sm text-headline-sm text-primary">Sessions Actives</h3>
-      <button type="button" class="text-secondary font-label-md text-label-md hover:underline" routerLink="/responsable-admission/sessions">Voir tout</button>
+<section class="space-y-stack-lg">
+  <header class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div>
+      <p class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Portail Admissions</p>
+      <h1 class="mt-2 font-display text-display leading-none text-on-surface">Tableau de bord</h1>
+      <p class="mt-4 max-w-2xl font-body-lg text-body-lg text-on-surface-variant">Suivez les admissions et priorisez les actions qui nécessitent votre attention.</p>
     </div>
-    <div *ngIf="sessionsActives.length === 0" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">
-      Aucune session active pour le moment.
+    <div class="flex flex-wrap gap-3">
+      <button type="button" [disabled]="exporting" (click)="exporterSessions()" class="inline-flex items-center gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-3 font-label-md text-label-md text-on-surface transition-colors hover:bg-surface-container-low disabled:opacity-50">
+        <span class="material-symbols-outlined text-[20px]">download</span>{{ exporting ? 'Export…' : 'Exporter les sessions' }}
+      </button>
+      <a routerLink="/responsable-admission/candidatures" class="inline-flex items-center gap-2 rounded-lg bg-secondary px-4 py-3 font-label-md text-label-md text-on-secondary no-underline transition-opacity hover:opacity-90">
+        <span class="material-symbols-outlined text-[20px]">add</span>Voir les candidatures
+      </a>
     </div>
-    <div class="overflow-x-auto" *ngIf="sessionsActives.length > 0">
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="border-b border-outline-variant bg-surface-container-lowest">
-            <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Session</th>
-            <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Candidatures</th>
-            <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Date limite</th>
-            <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium text-right">Statut</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-outline-variant">
-          <tr *ngFor="let s of sessionsActives" class="hover:bg-surface-container-low transition-colors">
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">school</span></div>
-                <p class="font-label-md text-label-md text-primary font-semibold">{{ s.libelle }}</p>
-              </div>
-            </td>
-            <td class="px-6 py-4 font-body-md text-body-md text-primary">{{ nbCandidatures(s.id) }} candidature(s)</td>
-            <td class="px-6 py-4"><p class="font-body-md text-body-md text-primary">{{ s.dateFermeture | date:'dd MMM yyyy' }}</p></td>
-            <td class="px-6 py-4 text-right">
-              <span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-label-sm"
-                    [ngClass]="s.estOuverte ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'">
-                {{ s.estOuverte ? 'Ouverte' : 'Fermée' }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+  </header>
+
+  <div *ngIf="loading" class="flex min-h-72 items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
+    <div class="text-center"><span class="material-symbols-outlined animate-spin text-secondary text-[32px]">progress_activity</span><p class="mt-3 font-body-md text-body-md text-on-surface-variant">Chargement des admissions…</p></div>
   </div>
 
-  <div *ngIf="!prefs.showSessionsActives" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant">
-    <span class="material-symbols-outlined text-4xl text-outline mb-2 block">visibility_off</span>
-    <p class="font-body-md text-body-md text-on-surface-variant">Le tableau des sessions actives est masqué. <a routerLink="/responsable-admission/parametres" class="text-secondary hover:underline">Modifier dans Paramètres</a>.</p>
-  </div>
+  <ng-container *ngIf="!loading">
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicateurs d'admission">
+      <a routerLink="/responsable-admission/candidatures" class="group rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm no-underline transition-colors hover:border-secondary">
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-container text-on-primary-container"><span class="material-symbols-outlined">description</span></span>
+        <p class="mt-5 font-headline-lg text-headline-lg tabular-nums text-on-surface">{{ totalCandidats }}</p><p class="mt-1 font-label-md text-label-md text-on-surface-variant">Candidatures</p>
+      </a>
+      <a routerLink="/responsable-admission/candidatures" class="group rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm no-underline transition-colors hover:border-secondary">
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary-container text-on-secondary-container"><span class="material-symbols-outlined">pending_actions</span></span>
+        <p class="mt-5 font-headline-lg text-headline-lg tabular-nums text-on-surface">{{ validationEnCours }}</p><p class="mt-1 font-label-md text-label-md text-on-surface-variant">À examiner</p>
+      </a>
+      <a routerLink="/responsable-admission/candidatures" class="group rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm no-underline transition-colors hover:border-secondary">
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-fixed text-on-primary-fixed"><span class="material-symbols-outlined">fact_check</span></span>
+        <p class="mt-5 font-headline-lg text-headline-lg tabular-nums text-on-surface">{{ preselectionnes }}</p><p class="mt-1 font-label-md text-label-md text-on-surface-variant">En évaluation</p>
+      </a>
+      <a routerLink="/responsable-admission/candidatures" class="group rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm no-underline transition-colors hover:border-secondary">
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-error-container text-on-error-container"><span class="material-symbols-outlined">folder_off</span></span>
+        <p class="mt-5 font-headline-lg text-headline-lg tabular-nums text-on-surface">{{ dossiersIncomplets }}</p><p class="mt-1 font-label-md text-label-md text-on-surface-variant">Dossiers à vérifier</p>
+      </a>
+    </section>
 
-  <!-- Candidatures récentes -->
-  <section class="mt-stack-lg space-y-stack-md">
-    <div class="flex items-center justify-between">
-      <h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
-        <span class="material-symbols-outlined text-secondary">history</span>Candidatures récentes
-      </h2>
-      <a routerLink="/responsable-admission/candidatures" class="font-label-md text-label-md text-secondary hover:underline">Tout voir</a>
-    </div>
+    <section>
+      <article class="rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
+        <div class="flex items-center justify-between border-b border-outline-variant px-6 py-5"><h2 class="font-headline-sm text-headline-sm text-primary">Actions prioritaires</h2><a routerLink="/responsable-admission/candidatures" class="font-label-md text-label-md text-secondary no-underline hover:underline">Voir tout</a></div>
+        <div class="divide-y divide-outline-variant">
+          <a routerLink="/responsable-admission/candidatures" class="flex items-center gap-3 px-6 py-4 no-underline hover:bg-surface-container-low"><span class="flex h-10 w-10 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container"><span class="material-symbols-outlined">schedule</span></span><span class="min-w-0 flex-1"><strong class="block font-label-md text-label-md text-on-surface">{{ validationEnCours }} candidature(s) à examiner</strong><span class="font-body-sm text-body-sm text-on-surface-variant">Décidez de la suite de chaque dossier soumis.</span></span><span class="material-symbols-outlined text-on-surface-variant">chevron_right</span></a>
+          <a routerLink="/responsable-admission/candidatures" class="flex items-center gap-3 px-6 py-4 no-underline hover:bg-surface-container-low"><span class="flex h-10 w-10 items-center justify-center rounded-full bg-error-container text-on-error-container"><span class="material-symbols-outlined">folder_open</span></span><span class="min-w-0 flex-1"><strong class="block font-label-md text-label-md text-on-surface">{{ dossiersIncomplets }} dossier(s) à vérifier</strong><span class="font-body-sm text-body-sm text-on-surface-variant">Contrôlez les pièces justificatives signalées.</span></span><span class="material-symbols-outlined text-on-surface-variant">chevron_right</span></a>
+          <a routerLink="/responsable-admission/sessions" class="flex items-center gap-3 px-6 py-4 no-underline hover:bg-surface-container-low"><span class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-on-primary-container"><span class="material-symbols-outlined">calendar_month</span></span><span class="min-w-0 flex-1"><strong class="block font-label-md text-label-md text-on-surface">{{ sessionsActives.length }} session(s) active(s)</strong><span class="font-body-sm text-body-sm text-on-surface-variant">Consultez les échéances et critères en cours.</span></span><span class="material-symbols-outlined text-on-surface-variant">chevron_right</span></a>
+        </div>
+      </article>
+    </section>
 
-    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-      <div *ngIf="candidaturesRecentes.length === 0" class="p-10 text-center font-body-md text-body-md text-on-surface-variant">
-        Aucune candidature soumise pour l'instant.
-      </div>
-      <div class="overflow-x-auto" *ngIf="candidaturesRecentes.length > 0">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="border-b border-outline-variant bg-surface-container-lowest">
-              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Candidat</th>
-              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Session</th>
-              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium">Soumise le</th>
-              <th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant font-medium text-right">Statut</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-outline-variant">
-            <tr *ngFor="let c of candidaturesRecentes" class="hover:bg-surface-container-low transition-colors">
-              <td class="px-6 py-4 font-label-md text-label-md text-primary font-semibold">{{ c.candidatPrenom }} {{ c.candidatNom }}</td>
-              <td class="px-6 py-4 font-body-md text-body-md text-on-surface-variant">{{ c.sessionCandidatureLibelle }}</td>
-              <td class="px-6 py-4 font-body-md text-body-md text-on-surface-variant">{{ c.dateSoumission | date:'dd MMM yyyy' }}</td>
-              <td class="px-6 py-4 text-right">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-label-sm font-label-sm" [ngClass]="classeStatut(c.statut)">
-                  {{ libelleStatut(c.statut) }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-</ng-container>
+    <section class="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant px-6 py-5"><div><h2 class="font-headline-sm text-headline-sm text-primary">Dernières candidatures</h2><p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">Les cinq derniers dossiers soumis.</p></div><a routerLink="/responsable-admission/candidatures" class="font-label-md text-label-md text-secondary no-underline hover:underline">Voir toutes les candidatures</a></div>
+      <div *ngIf="candidaturesRecentes.length === 0" class="px-6 py-12 text-center"><span class="material-symbols-outlined text-[32px] text-on-surface-variant">inbox</span><p class="mt-3 font-body-md text-body-md text-on-surface">Aucune candidature soumise</p></div>
+      <div *ngIf="candidaturesRecentes.length > 0" class="overflow-x-auto"><table class="w-full min-w-[760px] text-left"><thead class="bg-surface-container-low"><tr class="font-label-sm text-label-sm text-on-surface-variant"><th class="px-6 py-3">Candidat</th><th class="px-6 py-3">N° dossier</th><th class="px-6 py-3">Session</th><th class="px-6 py-3">Étape</th><th class="px-6 py-3">Dépôt</th><th class="px-6 py-3 text-right">Action</th></tr></thead><tbody class="divide-y divide-outline-variant"><tr *ngFor="let candidature of candidaturesRecentes" class="hover:bg-surface-container-low"><td class="px-6 py-4 font-label-md text-label-md text-on-surface">{{ candidature.candidatPrenom }} {{ candidature.candidatNom }}</td><td class="px-6 py-4 font-body-sm text-body-sm text-on-surface-variant">{{ candidature.numeroDossier }}</td><td class="px-6 py-4 font-body-sm text-body-sm text-on-surface-variant">{{ candidature.sessionCandidatureLibelle }}</td><td class="px-6 py-4"><span class="rounded-full px-3 py-1 font-label-sm text-label-sm" [ngClass]="classeStatut(candidature.statut)">{{ libelleStatut(candidature.statut) }}</span></td><td class="px-6 py-4 font-body-sm text-body-sm text-on-surface-variant">{{ candidature.dateSoumission | date:'dd/MM/yyyy' }}</td><td class="px-6 py-4 text-right"><a [routerLink]="['/responsable-admission/candidatures', candidature.id]" class="font-label-md text-label-md text-secondary no-underline hover:underline">Voir</a></td></tr></tbody></table></div>
+    </section>
+  </ng-container>
+</section>

@@ -1,192 +1,39 @@
-<!-- ==================== CONTENU SEUL (layout sidebar+navbar fournis par le parent) ==================== -->
-
-<!-- Page Header -->
-<header class="flex flex-col gap-5 border-b border-outline-variant/50 pb-6 xl:flex-row xl:items-end xl:justify-between">
-  <div class="max-w-3xl">
-    <div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm mb-2">
-      <span>Admissions</span>
-      <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-      <span class="font-medium text-on-surface">Sessions</span>
+<section class="space-y-stack-lg">
+  <header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div>
+      <p class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Portail Admissions</p>
+      <h1 class="mt-2 font-display text-display leading-none text-on-surface">Sessions d’admission</h1>
+      <p class="mt-4 max-w-2xl font-body-lg text-body-lg text-on-surface-variant">Créez, ouvrez et pilotez vos campagnes de candidature.</p>
     </div>
-    <h1 class="font-display text-display text-on-surface leading-none -ml-1">Sessions de recrutement</h1>
-    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Planification, suivi des quotas et ouverture des appels à candidatures.</p>
-  </div>
-  <div class="flex flex-wrap items-center gap-3">
-    <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" [title]="exporting ? 'Export en cours…' : 'Exporter la liste'" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-outline-variant/70 bg-surface-container-lowest px-4 font-label-md text-label-md text-primary transition-colors hover:bg-surface-container-low disabled:opacity-60">
-      <span class="material-symbols-outlined text-[18px]">download</span>
-      {{ exporting ? 'Export…' : 'Exporter' }}
-    </button>
-    <app-export-columns-modal
-      [open]="exportModalOpen"
-      [colonnes]="colonnesExport"
-      [selectionnees]="colonnesExportParDefaut"
-      (openChange)="exportModalOpen = $event"
-      (exporter)="exporter($event)">
-    </app-export-columns-modal>
-    <button type="button" title="Nouvelle Session" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-secondary px-4 font-label-md text-label-md text-on-secondary transition-colors hover:bg-secondary/90" (click)="nouvelleSession()">
-      <span class="material-symbols-outlined text-[18px]">add</span>
-      Nouvelle session
-    </button>
-  </div>
-</header>
-
-<!-- Erreur de chargement -->
-<div *ngIf="errorMessage" class="mt-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">
-  {{ errorMessage }}
-</div>
-
-<!-- Filters -->
-<section aria-label="Rechercher et filtrer les sessions" class="mb-stack-lg flex flex-col gap-3 rounded-xl border border-outline-variant/50 bg-surface-container-lowest p-4 shadow-sm md:flex-row md:items-center">
-  <div class="relative min-w-0 flex-1">
-    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
-    <input #rechercheBox [value]="recherche" (keyup.enter)="recherche = rechercheBox.value" class="h-11 w-full rounded-lg border border-outline-variant/60 bg-surface-container-low pl-10 pr-4 font-body-md text-body-md text-on-surface outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20" placeholder="Rechercher une session" type="search"/>
-  </div>
-  <div class="md:w-56">
-    <select [(ngModel)]="filtreStatut" aria-label="Filtrer les sessions par statut" class="h-11 w-full rounded-lg border border-outline-variant/60 bg-surface-container-low px-3 font-body-md text-body-md text-on-surface outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20">
-      <option value="TOUTES">Toutes les sessions</option>
-      <option value="OUVERTES">Ouvertes</option>
-      <option value="FERMEES">Fermées</option>
-      <option value="ACTIVES">Actives</option>
-    </select>
-  </div>
-</section>
-
-<!-- Repères de pilotage -->
-<section *ngIf="!loading" aria-label="Vue d'ensemble des sessions" class="mb-stack-lg grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-outline-variant/50 bg-outline-variant/40 sm:grid-cols-4">
-  <dl class="bg-surface-container-lowest p-4">
-    <dt class="font-label-sm text-label-sm text-on-surface-variant">Sessions</dt>
-    <dd class="mt-1 font-headline-sm text-headline-sm text-on-surface">{{ totalSessions }}</dd>
-  </dl>
-  <dl class="bg-surface-container-lowest p-4">
-    <dt class="font-label-sm text-label-sm text-on-surface-variant">Ouvertes</dt>
-    <dd class="mt-1 font-headline-sm text-headline-sm text-on-surface">{{ nbOuvertes }}</dd>
-  </dl>
-  <dl class="bg-surface-container-lowest p-4">
-    <dt class="font-label-sm text-label-sm text-on-surface-variant">Actives</dt>
-    <dd class="mt-1 font-headline-sm text-headline-sm text-on-surface">{{ nbActives }}</dd>
-  </dl>
-  <dl class="bg-surface-container-lowest p-4">
-    <dt class="font-label-sm text-label-sm text-on-surface-variant">Prochaine clôture</dt>
-    <dd class="mt-1 font-label-md text-label-md text-on-surface">
-      {{ prochaineFermeture ? (prochaineFermeture.dateFermeture | date:'dd MMM yyyy') : 'Aucune' }}
-    </dd>
-  </dl>
-</section>
-
-<!-- Loading -->
-<div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement des sessions…</div>
-
-<!-- Empty state -->
-<div *ngIf="!loading && sessionsFiltrees.length === 0" class="p-10 text-center bg-surface-container-lowest rounded-xl border border-outline-variant/50">
-  <span class="material-symbols-outlined text-4xl text-outline mb-2 block">event_busy</span>
-  <p class="font-body-md text-body-md text-on-surface-variant">Aucune session ne correspond à votre recherche.</p>
-</div>
-
-
-<!-- Détail de la session sélectionnée -->
-<section *ngIf="sessionSelectionnee as sessionDetail" class="mb-stack-lg bg-surface-container-lowest rounded-xl border border-outline-variant/50 shadow-sm overflow-hidden">
-  <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4 p-5 border-b border-outline-variant/40 bg-surface-container-low">
-    <div class="min-w-0">
-      <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Session sélectionnée</p>
-      <h3 class="font-headline-sm text-headline-sm text-primary truncate">{{ sessionDetail.libelle }}</h3>
-      <p class="mt-3 font-body-sm text-body-sm text-on-surface-variant">
-        <span>Statut : {{ sessionDetail.estOuverte ? 'ouverte' : 'fermée' }}</span>
-        <span *ngIf="sessionDetail.estActive"> · Session active</span>
-        <span *ngIf="sessionDetail.criteresActifs"> · Présélection automatique</span>
-      </p>
+    <div class="flex flex-wrap gap-3">
+      <button type="button" [disabled]="exporting" (click)="exportModalOpen = true" class="inline-flex items-center gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-3 font-label-md text-label-md text-on-surface transition-colors hover:bg-surface-container-low disabled:opacity-50"><span class="material-symbols-outlined text-[20px]">download</span>{{ exporting ? 'Export…' : 'Exporter' }}</button>
+      <button type="button" (click)="nouvelleSession()" class="inline-flex items-center gap-2 rounded-lg bg-secondary px-4 py-3 font-label-md text-label-md text-on-secondary transition-opacity hover:opacity-90"><span class="material-symbols-outlined text-[20px]">add</span>Nouvelle session</button>
     </div>
-    <div class="flex flex-wrap items-center gap-2 shrink-0">
-      <button type="button" (click)="modifierSession(sessionDetail)" class="inline-flex items-center justify-center gap-2 h-10 px-4 bg-secondary text-on-primary rounded-lg hover:bg-secondary/90 transition-colors shadow-sm font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">edit</span>Modifier</button>
-      <button type="button" (click)="supprimer(sessionDetail)" class="inline-flex items-center justify-center gap-2 h-10 px-4 bg-error text-on-primary rounded-lg hover:bg-error/90 transition-colors shadow-sm font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">delete</span>Supprimer</button>
-    </div>
-  </div>
-  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 p-5">
-    <div class="rounded-lg border border-outline-variant/40 p-4"><dt class="font-label-sm text-label-sm text-on-surface-variant">Ouverture</dt><dd class="font-label-md text-label-md text-primary font-semibold mt-1">{{ sessionDetail.dateOuverture | date:'dd MMM yyyy' }}</dd></div>
-    <div class="rounded-lg border border-outline-variant/40 p-4"><dt class="font-label-sm text-label-sm text-on-surface-variant">Fermeture</dt><dd class="font-label-md text-label-md text-primary font-semibold mt-1">{{ sessionDetail.dateFermeture | date:'dd MMM yyyy' }}</dd></div>
-    <div class="rounded-lg border border-outline-variant/40 p-4"><dt class="font-label-sm text-label-sm text-on-surface-variant">Candidatures</dt><dd class="mt-1"><a [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ session: sessionDetail.id }" class="font-label-md text-label-md text-secondary font-semibold hover:underline">{{ sessionDetail.nbCandidatures }} dossier(s)</a></dd></div>
-    <div class="rounded-lg border border-outline-variant/40 p-4"><dt class="font-label-sm text-label-sm text-on-surface-variant">Seuil test</dt><dd class="font-label-md text-label-md text-primary font-semibold mt-1">{{ sessionDetail.seuilReussiteTest }}</dd></div>
-  </div>
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 px-5 pb-5">
-    <div class="rounded-lg bg-surface-container-low p-4"><h4 class="font-label-md text-label-md text-primary mb-2">Frais de scolarité</h4><p class="font-body-sm text-body-sm text-on-surface-variant">{{ sessionDetail.infoFraisScolarite || 'Aucune information renseignée.' }}</p></div>
-    <div class="rounded-lg bg-surface-container-low p-4"><h4 class="font-label-md text-label-md text-primary mb-2">Carte étudiante</h4><p class="font-body-sm text-body-sm text-on-surface-variant">{{ sessionDetail.infoCarteEtudiante || 'Aucune information renseignée.' }}</p></div>
-    <div class="rounded-lg bg-surface-container-low p-4"><h4 class="font-label-md text-label-md text-primary mb-2">Rentrée</h4><p class="font-body-sm text-body-sm text-on-surface-variant">{{ sessionDetail.infoRentree || 'Aucune information renseignée.' }}</p></div>
-  </div>
-</section>
-<!-- Data Table -->
-<div *ngIf="!loading && sessionsFiltrees.length > 0" class="bg-surface-container-lowest rounded-xl border border-outline-variant/50 shadow-sm overflow-hidden">
-  <div class="md:hidden divide-y divide-outline-variant">
-    <article *ngFor="let s of sessionsFiltrees; let i = index" (click)="voirSession(s)" class="p-4 cursor-pointer hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="estSelectionne(s.id)">
-      <div class="flex items-start gap-3">
-        <div class="min-w-0 flex-1">
-          <div class="flex items-start justify-between gap-2">
-            <div class="min-w-0">
-              <h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ s.libelle }}</h3>
-              <p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">
-                <span>{{ s.estOuverte ? 'Ouverte' : 'Fermée' }}</span>
-                <span *ngIf="s.estActive"> · Active</span>
-                <span *ngIf="s.criteresActifs"> · Présélection automatique</span>
-              </p>
-            </div>
-            <div class="flex items-center gap-0.5 shrink-0" (click)="$event.stopPropagation()">
-              <button type="button" (click)="modifierSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded" title="Modifier"><span class="material-symbols-outlined text-[18px]">edit</span></button>
-              <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded" title="Supprimer"><span class="material-symbols-outlined text-[18px]">delete</span></button>
-            </div>
-          </div>
-          <dl class="grid grid-cols-2 gap-2 mt-3 text-xs">
-            <div><dt class="text-[10px] text-on-surface-variant">Ouverture</dt><dd class="text-primary mt-0.5">{{ s.dateOuverture | date:'dd MMM yyyy' }}</dd></div>
-            <div><dt class="text-[10px] text-on-surface-variant">Fermeture</dt><dd class="text-primary mt-0.5">{{ s.dateFermeture | date:'dd MMM yyyy' }}</dd></div>
-          </dl>
-          <a [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ session: s.id }" (click)="$event.stopPropagation()" class="inline-flex items-center gap-1 mt-3 text-[11px] font-semibold text-secondary hover:underline"><span class="material-symbols-outlined text-[15px]">folder_shared</span>{{ s.nbCandidatures }} candidature(s)</a>
-        </div>
-      </div>
-    </article>
-  </div>
+  </header>
 
-  <div class="hidden md:block overflow-x-auto">
-  <table class="w-full text-left border-collapse">
-    <thead>
-      <tr class="border-b border-outline-variant/40 bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
-        <th class="px-6 py-4 font-semibold cursor-pointer select-none hover:text-primary" (click)="trierPar('libelle')">
-          Session <span class="material-symbols-outlined text-[16px] align-middle" *ngIf="triColonne === 'libelle'">{{ triDesc ? 'arrow_downward' : 'arrow_upward' }}</span>
-        </th>
-        <th class="px-6 py-4 font-semibold cursor-pointer select-none hover:text-primary" (click)="trierPar('dateOuverture')">
-          Ouverture <span class="material-symbols-outlined text-[16px] align-middle" *ngIf="triColonne === 'dateOuverture'">{{ triDesc ? 'arrow_downward' : 'arrow_upward' }}</span>
-        </th>
-        <th class="px-6 py-4 font-semibold cursor-pointer select-none hover:text-primary" (click)="trierPar('dateFermeture')">
-          Fermeture <span class="material-symbols-outlined text-[16px] align-middle" *ngIf="triColonne === 'dateFermeture'">{{ triDesc ? 'arrow_downward' : 'arrow_upward' }}</span>
-        </th>
-        <th class="px-6 py-4 font-semibold cursor-pointer select-none hover:text-primary" (click)="trierPar('nbCandidatures')">
-          Candidatures <span class="material-symbols-outlined text-[16px] align-middle" *ngIf="triColonne === 'nbCandidatures'">{{ triDesc ? 'arrow_downward' : 'arrow_upward' }}</span>
-        </th>
-        <th class="px-6 py-4 font-semibold">Statut</th>
-        <th class="px-6 py-4 font-semibold text-right">Actions</th>
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-outline-variant text-on-surface font-body-sm text-body-sm">
-      <tr *ngFor="let s of sessionsFiltrees; let i = index" (click)="voirSession(s)" class="cursor-pointer hover:bg-surface-container-low transition-colors" [class.bg-secondary-container]="estSelectionne(s.id)">
-        <td class="px-6 py-4 font-medium">{{ s.libelle }}</td>
-        <td class="px-6 py-4 text-on-surface-variant">{{ s.dateOuverture | date:'dd MMM yyyy' }}</td>
-        <td class="px-6 py-4 text-on-surface-variant">{{ s.dateFermeture | date:'dd MMM yyyy' }}</td>
-        <td class="px-6 py-4" (click)="$event.stopPropagation()">
-          <a [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ session: s.id }" class="text-secondary hover:underline font-medium">{{ s.nbCandidatures }}</a>
-        </td>
-        <td class="px-6 py-4">
-          <div class="font-body-sm text-body-sm text-on-surface-variant">
-            <span>{{ s.estOuverte ? 'Ouverte' : 'Fermée' }}</span>
-            <span *ngIf="s.estActive"> · Active</span>
-            <span *ngIf="s.criteresActifs"> · Présélection automatique</span>
-          </div>
-        </td>
-        <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
-          <button type="button" (click)="modifierSession(s)" class="p-1.5 text-on-surface-variant hover:text-secondary hover:bg-surface-container-low rounded transition-colors" title="Modifier">
-            <span class="material-symbols-outlined text-[20px]">edit</span>
-          </button>
-          <button type="button" (click)="supprimer(s)" class="p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded transition-colors" title="Supprimer">
-            <span class="material-symbols-outlined text-[20px]">delete</span>
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  </div>
-</div>
+  <app-export-columns-modal [open]="exportModalOpen" [colonnes]="colonnesExport" [selectionnees]="colonnesExportParDefaut" (openChange)="exportModalOpen = $event" (exporter)="exporter($event)"></app-export-columns-modal>
+
+  <p *ngIf="errorMessage" role="alert" class="rounded-lg border border-error bg-error-container px-4 py-3 font-body-sm text-body-sm text-on-error-container">{{ errorMessage }}</p>
+
+  <section *ngIf="!loading" class="grid gap-4 sm:grid-cols-2" aria-label="Synthèse des sessions">
+    <article class="rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm"><span class="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary-container text-on-secondary-container"><span class="material-symbols-outlined">event_available</span></span><p class="mt-5 font-headline-lg text-headline-lg tabular-nums text-on-surface">{{ nbOuvertes }}</p><p class="mt-1 font-label-md text-label-md text-on-surface-variant">Sessions ouvertes</p></article>
+    <article class="rounded-xl border border-outline-variant bg-surface-container-lowest p-5 shadow-sm"><span class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-container text-on-primary-container"><span class="material-symbols-outlined">schedule</span></span><p class="mt-5 font-headline-lg text-headline-lg text-on-surface">{{ prochaineFermeture ? (prochaineFermeture.dateFermeture | date:'dd MMM') : '—' }}</p><p class="mt-1 font-label-md text-label-md text-on-surface-variant">Prochaine clôture</p></article>
+  </section>
+
+  <section class="rounded-xl border border-outline-variant bg-surface-container-lowest p-4 shadow-sm">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <label class="relative block min-w-0 flex-1 lg:max-w-xl"><span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span><input [(ngModel)]="recherche" type="search" placeholder="Rechercher une session" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest py-3 pl-11 pr-4 font-body-md text-body-md text-on-surface outline-none transition-colors placeholder:text-on-surface-variant focus:border-secondary" /></label>
+      <div class="flex flex-wrap gap-2" aria-label="Filtrer les sessions"><button type="button" (click)="filtreStatut = 'TOUTES'" [class.bg-secondary]="filtreStatut === 'TOUTES'" [class.text-on-secondary]="filtreStatut === 'TOUTES'" class="rounded-full bg-surface-container-low px-4 py-2 font-label-md text-label-md text-on-surface transition-colors hover:bg-surface-container">Toutes</button><button type="button" (click)="filtreStatut = 'OUVERTES'" [class.bg-secondary]="filtreStatut === 'OUVERTES'" [class.text-on-secondary]="filtreStatut === 'OUVERTES'" class="rounded-full bg-surface-container-low px-4 py-2 font-label-md text-label-md text-on-surface transition-colors hover:bg-surface-container">Ouvertes</button><button type="button" (click)="filtreStatut = 'A_VENIR'" [class.bg-secondary]="filtreStatut === 'A_VENIR'" [class.text-on-secondary]="filtreStatut === 'A_VENIR'" class="rounded-full bg-surface-container-low px-4 py-2 font-label-md text-label-md text-on-surface transition-colors hover:bg-surface-container">À venir</button><button type="button" (click)="filtreStatut = 'TERMINEES'" [class.bg-secondary]="filtreStatut === 'TERMINEES'" [class.text-on-secondary]="filtreStatut === 'TERMINEES'" class="rounded-full bg-surface-container-low px-4 py-2 font-label-md text-label-md text-on-surface transition-colors hover:bg-surface-container">Terminées</button></div>
+    </div>
+  </section>
+
+  <div *ngIf="loading" class="flex min-h-72 items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm"><div class="text-center"><span class="material-symbols-outlined animate-spin text-[32px] text-secondary">progress_activity</span><p class="mt-3 font-body-md text-body-md text-on-surface-variant">Chargement des sessions…</p></div></div>
+
+  <section *ngIf="!loading" class="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant px-6 py-5"><div><h2 class="font-headline-sm text-headline-sm text-primary">Toutes les sessions</h2><p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">{{ sessionsFiltrees.length }} session(s) affichée(s) sur {{ totalSessions }}.</p></div></div>
+    <div *ngIf="sessionsFiltrees.length === 0" class="px-6 py-14 text-center"><span class="material-symbols-outlined text-[32px] text-on-surface-variant">event_busy</span><p class="mt-3 font-body-md text-body-md text-on-surface">Aucune session trouvée</p><p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">Modifiez votre recherche ou le filtre choisi.</p></div>
+    <div *ngIf="sessionsFiltrees.length > 0" class="overflow-x-auto"><table class="w-full min-w-[900px] text-left"><thead class="bg-surface-container-low"><tr class="font-label-sm text-label-sm text-on-surface-variant"><th class="cursor-pointer px-6 py-3 hover:text-on-surface" (click)="trierPar('libelle')">Session <span *ngIf="triColonne === 'libelle'" class="material-symbols-outlined align-middle text-[15px]">{{ triDesc ? 'arrow_downward' : 'arrow_upward' }}</span></th><th class="cursor-pointer px-6 py-3 hover:text-on-surface" (click)="trierPar('dateOuverture')">Ouverture</th><th class="cursor-pointer px-6 py-3 hover:text-on-surface" (click)="trierPar('dateFermeture')">Clôture</th><th class="cursor-pointer px-6 py-3 hover:text-on-surface" (click)="trierPar('nbCandidatures')">Candidatures</th><th class="px-6 py-3">Statut</th><th class="px-6 py-3 text-right">Actions</th></tr></thead><tbody class="divide-y divide-outline-variant"><tr *ngFor="let session of sessionsFiltrees" (click)="voirSession(session)" class="cursor-pointer transition-colors hover:bg-surface-container-low" [class.bg-primary-container]="estSelectionne(session.id)"><td class="px-6 py-4"><p class="font-label-md text-label-md text-on-surface">{{ session.libelle }}</p><p *ngIf="session.criteresActifs" class="mt-1 font-body-sm text-body-sm text-on-surface-variant">Présélection automatique</p></td><td class="px-6 py-4 font-body-sm text-body-sm text-on-surface-variant">{{ session.dateOuverture | date:'dd MMM yyyy' }}</td><td class="px-6 py-4 font-body-sm text-body-sm text-on-surface-variant">{{ session.dateFermeture | date:'dd MMM yyyy' }}</td><td class="px-6 py-4" (click)="$event.stopPropagation()"><a [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ session: session.id }" class="font-label-md text-label-md text-secondary no-underline hover:underline">{{ session.nbCandidatures }}</a></td><td class="px-6 py-4"><span class="rounded-full px-3 py-1 font-label-sm text-label-sm" [ngClass]="classeStatut(session)">{{ libelleStatut(session) }}</span></td><td class="px-6 py-4 text-right" (click)="$event.stopPropagation()"><div class="inline-flex items-center gap-3"><button type="button" (click)="modifierSession(session)" class="font-label-md text-label-md text-secondary hover:underline">Gérer</button><button type="button" (click)="supprimer(session)" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant hover:bg-error-container hover:text-error" aria-label="Supprimer la session"><span class="material-symbols-outlined text-[19px]">more_vert</span></button></div></td></tr></tbody></table></div>
+  </section>
+
+  <section *ngIf="sessionSelectionnee as sessionDetail" class="rounded-xl border border-outline-variant bg-surface-container-lowest p-6 shadow-sm"><div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Session sélectionnée</p><h2 class="mt-2 font-headline-sm text-headline-sm text-primary">{{ sessionDetail.libelle }}</h2><p class="mt-2 font-body-md text-body-md text-on-surface-variant">{{ sessionDetail.nbCandidatures }} candidature(s) · Seuil de réussite : {{ sessionDetail.seuilReussiteTest }}</p></div><button type="button" (click)="modifierSession(sessionDetail)" class="inline-flex items-center gap-2 self-start rounded-lg bg-secondary px-4 py-3 font-label-md text-label-md text-on-secondary"><span class="material-symbols-outlined text-[19px]">edit</span>Modifier la session</button></div></section>
+</section>

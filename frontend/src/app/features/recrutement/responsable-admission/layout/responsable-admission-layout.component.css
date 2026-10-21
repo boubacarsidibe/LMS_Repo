@@ -1,0 +1,10 @@
+:host { display: block; }
+
+.admission-sidebar { background: #131741; border-color: rgb(255 255 255 / 0.12); }
+.admission-sidebar > div:first-child, .admission-sidebar > div:last-child { border-color: rgb(255 255 255 / 0.12); }
+.admission-sidebar :is(p, a, span, button) { color: rgb(255 255 255 / 0.84); }
+.admission-sidebar nav a { border-radius: 0.65rem; }
+.admission-sidebar nav a.bg-blue-50, .admission-sidebar .bg-\[\#123B6D\] { background: #30609a; color: #fff; }
+.admission-sidebar nav a.bg-blue-50 span, .admission-sidebar .text-\[\#123B6D\] { color: #fff; }
+.admission-sidebar nav a:hover, .admission-sidebar a:hover { background: rgb(255 255 255 / 0.1); }
+.admission-topbar { border-color: #e0e3e5; background: rgb(255 255 255 / 0.94); }

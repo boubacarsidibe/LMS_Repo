@@ -1,127 +1,858 @@
-<div class="bg-surface min-h-screen">
-  <!-- Fond semi-transparent mobile pour fermer la sidebar au clic extérieur -->
-  <div *ngIf="sidebarMobileOpen" class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-30 md:hidden" (click)="toggleSidebarMobile()"></div>
+<div class="admission-shell min-h-screen bg-surface text-on-surface">
 
-  <!-- SideNavBar -->
-  <nav id="mobile-sidebar" class="fixed left-0 top-0 h-full flex flex-col z-40 w-64 border-r border-outline-variant bg-surface-container-lowest transition-transform duration-200 md:translate-x-0 md:flex" [class.-translate-x-full]="!sidebarMobileOpen" [class.translate-x-0]="sidebarMobileOpen">
-    <div class="p-6 flex items-center gap-4">
-      <div>
-        <h1 class="sr-only">INPG LMS — Portail Admissions</h1>
-        <app-logo-inpg hauteur="h-10"></app-logo-inpg>
-        <p class="mt-2 font-label-sm text-label-sm text-on-surface-variant">Portail Admissions</p>
+  <!-- =========================================================
+       MOBILE OVERLAY
+  ========================================================== -->
+  <div
+    *ngIf="sidebarMobileOpen"
+    class="fixed inset-0 z-40 bg-black/35 backdrop-blur-[2px] lg:hidden"
+    (click)="toggleSidebarMobile()">
+  </div>
+
+
+  <!-- =========================================================
+       SIDEBAR
+  ========================================================== -->
+  <aside
+    id="mobile-sidebar"
+    class="admission-sidebar
+      fixed inset-y-0 left-0 z-50
+      flex w-[280px] flex-col
+      border-r border-black/10
+      bg-white
+      transition-transform duration-300 ease-out
+      lg:translate-x-0
+    "
+    [class.-translate-x-full]="!sidebarMobileOpen"
+    [class.translate-x-0]="sidebarMobileOpen">
+
+    <!-- =======================================================
+         LOGO — CONSERVÉ
+    ======================================================== -->
+    <div class="flex h-24 shrink-0 items-center border-b border-black/10 px-5">
+
+      <div class="p-6 flex items-center gap-4">
+        <div>
+
+          <h1 class="sr-only">
+            INPG LMS — Portail Admissions
+          </h1>
+
+          <span class="inline-flex rounded-md bg-white px-2 py-1.5 shadow-sm">
+            <app-logo-inpg hauteur="h-8"></app-logo-inpg>
+          </span>
+
+          <p class="mt-2 font-label-sm text-label-sm text-white/75">
+            Portail Admissions
+          </p>
+
+        </div>
       </div>
-    </div>
-    <div class="flex-1 overflow-y-auto px-2 space-y-1">
-      <a
-        *ngFor="let item of navItems"
-        [routerLink]="item.route"
-        class="flex items-center gap-3 px-4 py-2 rounded-lg font-label-md text-label-md transition-all duration-200"
-        [class.bg-secondary-fixed]="isActive(item.route)"
-        [class.text-secondary]="isActive(item.route)"
-        [class.font-medium]="isActive(item.route)"
-        [class.text-on-surface-variant]="!isActive(item.route)"
-        [class.hover:bg-surface-container-low]="!isActive(item.route)"
-      >
-        <span
-          class="material-symbols-outlined"
-          [style.font-variation-settings]="item.filled ? 'FILL 1' : 'FILL 0'"
-        >{{ item.icon }}</span>
-        {{ item.label }}
-      </a>
-    </div>
-    <div class="p-4 border-t border-outline-variant space-y-1">
-      <a routerLink="/responsable-admission/parametres" routerLinkActive="bg-secondary-fixed text-secondary font-medium" class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 rounded-lg font-label-md text-label-md">
-        <span class="material-symbols-outlined">settings</span>
-        Paramètres
-      </a>
-      <a routerLink="/responsable-admission/aide" routerLinkActive="bg-secondary-fixed text-secondary font-medium" class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 rounded-lg font-label-md text-label-md">
-        <span class="material-symbols-outlined">help</span>
-        Aide
-      </a>
-    </div>
-  </nav>
 
-  <!-- Main Content Wrapper -->
-  <div class="md:ml-64 flex flex-col min-h-screen">
-    <!-- TopNavBar -->
-    <header class="fixed top-0 right-0 left-0 md:left-64 h-16 w-full md:w-auto border-b border-outline-variant bg-surface-container-lowest/80 backdrop-blur-md flex justify-between items-center px-4 md:px-margin-desktop z-30">
-      <div class="flex items-center gap-4 md:hidden">
-        <button id="mobile-menu-btn" type="button" (click)="toggleSidebarMobile()" class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full" aria-label="Ouvrir le menu">
-          <span class="material-symbols-outlined">menu</span>
+
+      <!-- Close mobile -->
+      <button
+        type="button"
+        (click)="toggleSidebarMobile()"
+        class="
+          ml-auto flex h-9 w-9 shrink-0
+          items-center justify-center
+          rounded-lg
+          text-black
+          transition
+          hover:bg-black/5
+          lg:hidden
+        "
+        aria-label="Fermer le menu">
+
+        <span class="material-symbols-outlined text-[21px]">
+          close
+        </span>
+
+      </button>
+
+    </div>
+
+
+    <!-- =======================================================
+         NAVIGATION
+    ======================================================== -->
+    <div class="flex-1 overflow-y-auto px-4 py-6">
+
+      <p
+        class="
+          mb-3 px-3
+          text-[10px] font-bold uppercase
+          tracking-[0.16em]
+          text-black
+        ">
+        Navigation
+      </p>
+
+
+      <nav class="space-y-1">
+
+        <a
+          *ngFor="let item of navItems"
+          [routerLink]="item.route"
+
+          class="
+            group relative
+            flex min-h-[44px] items-center gap-3
+            rounded-xl
+            px-3.5 py-2.5
+            text-[14px] font-medium
+            text-black
+            transition-all duration-200
+          "
+
+          [class.bg-blue-50]="isActive(item.route)"
+          [class.text-[#123B6D]]="isActive(item.route)"
+          [class.font-semibold]="isActive(item.route)"
+
+          [class.hover:bg-black/[0.04]]="!isActive(item.route)">
+
+          <!-- Active bar -->
+          <span
+            *ngIf="isActive(item.route)"
+            class="
+              absolute -left-4 top-1/2
+              h-7 w-[3px]
+              -translate-y-1/2
+              rounded-r-full
+              bg-[#123B6D]
+            ">
+          </span>
+
+
+          <!-- Icon -->
+          <span
+            class="
+              material-symbols-outlined
+              text-[21px]
+              transition-transform duration-200
+              group-hover:scale-105
+            "
+            [style.font-variation-settings]="
+              isActive(item.route) || item.filled
+                ? 'FILL 1'
+                : 'FILL 0'
+            ">
+            {{ item.icon }}
+          </span>
+
+
+          <span class="truncate">
+            {{ item.label }}
+          </span>
+
+        </a>
+
+      </nav>
+
+    </div>
+
+
+    <!-- =======================================================
+         SIDEBAR FOOTER
+    ======================================================== -->
+    <div class="border-t border-black/10 p-4">
+
+      <p
+        class="
+          mb-3 px-3
+          text-[10px] font-bold uppercase
+          tracking-[0.16em]
+          text-black
+        ">
+        Assistance
+      </p>
+
+
+      <div class="space-y-1">
+
+        <a
+          routerLink="/responsable-admission/parametres"
+          routerLinkActive="bg-blue-50 text-[#123B6D] font-semibold"
+          class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[14px] font-medium text-black transition hover:bg-black/[0.04]">
+          <span class="material-symbols-outlined text-[20px]">settings</span>
+          Paramètres
+        </a>
+
+        <a
+          routerLink="/responsable-admission/aide"
+          routerLinkActive="bg-blue-50 text-[#123B6D] font-semibold"
+
+          class="
+            flex items-center gap-3
+            rounded-xl
+            px-3.5 py-2.5
+            text-[14px] font-medium
+            text-black
+            transition
+            hover:bg-black/[0.04]
+          ">
+
+          <span class="material-symbols-outlined text-[20px]">
+            help
+          </span>
+
+          Centre d'aide
+
+        </a>
+
+      </div>
+
+    </div>
+
+  </aside>
+
+
+  <!-- =========================================================
+       MAIN APPLICATION
+  ========================================================== -->
+  <div class="min-h-screen lg:pl-[280px]">
+
+
+    <!-- =======================================================
+         TOPBAR
+    ======================================================== -->
+    <header
+      class="admission-topbar
+        fixed left-0 right-0 top-0 z-30
+        h-20
+        border-b border-black/10
+        bg-white/95
+        backdrop-blur-xl
+        lg:left-[280px]
+      ">
+
+      <div
+        class="
+          flex h-full items-center gap-4
+          px-4 sm:px-6 lg:px-8
+        ">
+
+
+        <!-- Mobile menu -->
+        <button
+          id="mobile-menu-btn"
+          type="button"
+          (click)="toggleSidebarMobile()"
+
+          class="
+            flex h-10 w-10 shrink-0
+            items-center justify-center
+            rounded-xl
+            border border-black/10
+            text-black
+            transition
+            hover:bg-black/[0.04]
+            lg:hidden
+          "
+
+          aria-label="Ouvrir le menu">
+
+          <span class="material-symbols-outlined">
+            menu
+          </span>
+
         </button>
-        <span class="font-headline-sm text-headline-sm font-bold text-primary">Admissions Portal</span>
-      </div>
-      <div class="hidden md:flex items-center flex-1 max-w-md">
-        <div class="relative w-full">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-          <input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all outline-none" placeholder="Rechercher..." type="text"/>
-        </div>
-      </div>
-      <div class="flex items-center gap-2 md:gap-4 ml-auto relative">
-        <!--
-          Deux sources distinctes dans la même cloche :
-          - les notifications enregistrées en base pour ce compte (événements datés,
-            qui restent jusqu'à ce qu'on les ouvre) ;
-          - les alertes recalculées à chaque chargement sur les vraies candidatures
-            et sessions (états permanents, sans notion de « lu »).
-        -->
-        <div class="relative">
-          <button id="notification-btn" type="button" class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all relative" (click)="toggleDropdown('notification')" aria-label="Alertes">
-            <span class="material-symbols-outlined">notifications</span>
-            <span *ngIf="alertes.length + notificationsPersistees.length > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-surface-container-lowest">{{ alertes.length + notificationsPersistees.length }}</span>
-          </button>
-          <div *ngIf="notificationOpen" id="notification-dropdown" class="absolute right-0 mt-2 w-80 bg-surface border border-outline-variant rounded-xl shadow-lg z-50">
-            <div class="px-4 py-3 border-b border-outline-variant">
-              <p class="font-label-md text-label-md text-on-surface">Alertes</p>
-            </div>
-            <div class="max-h-80 overflow-y-auto">
-              <div *ngIf="alertes.length + notificationsPersistees.length === 0" class="px-4 py-8 text-center">
-                <span class="material-symbols-outlined text-3xl text-outline mb-1 block">check_circle</span>
-                <p class="font-body-sm text-body-sm text-on-surface-variant">Rien à signaler.</p>
-              </div>
-              <button *ngFor="let n of notificationsPersistees" type="button" (click)="ouvrirNotification(n)"
-                      class="w-full text-left flex items-start gap-3 px-4 py-3 border-b border-outline-variant hover:bg-surface-container-low transition-colors cursor-pointer">
-                <span class="material-symbols-outlined text-[18px] text-secondary mt-0.5">notifications_active</span>
-                <span class="font-body-sm text-body-sm text-on-surface">{{ n.message }}</span>
-              </button>
-              <a *ngFor="let a of alertes" [routerLink]="a.route" (click)="notificationOpen = false"
-                 class="flex items-start gap-3 px-4 py-3 border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors cursor-pointer">
-                <span class="material-symbols-outlined text-[18px] text-secondary mt-0.5">{{ a.icone }}</span>
-                <span class="font-body-sm text-body-sm text-on-surface">{{ a.message }}</span>
-              </a>
-            </div>
-          </div>
+
+
+        <!-- Mobile title -->
+        <div class="min-w-0 lg:hidden">
+
+          <p class="truncate text-sm font-semibold text-black">
+            Admissions
+          </p>
+
+          <p class="truncate text-[11px] font-medium text-black">
+            INPG
+          </p>
+
         </div>
 
-        <!-- Profil -->
-        <div class="relative">
-          <button id="profile-btn" type="button" class="flex items-center gap-1 ml-2 cursor-pointer group" (click)="toggleDropdown('profile')" aria-label="Menu utilisateur" aria-haspopup="menu" [attr.aria-expanded]="profileOpen">
-            <span class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-label-md text-label-md border border-outline-variant">{{ userInitials }}</span>
-            <span class="material-symbols-outlined text-on-surface-variant text-[20px] group-hover:text-primary transition-colors">{{ profileOpen ? 'expand_less' : 'expand_more' }}</span>
-          </button>
-          <div *ngIf="profileOpen" id="profile-dropdown" class="absolute right-0 mt-2 w-56 bg-surface border border-outline-variant rounded-xl shadow-lg py-1 z-50">
-            <div class="px-4 py-3 border-b border-outline-variant">
-              <p class="font-label-md text-label-md text-on-surface capitalize">{{ userDisplayName }}</p>
-              <p class="font-body-sm text-body-sm text-on-surface-variant truncate">{{ userEmail }}</p>
-            </div>
-            <a routerLink="/responsable-admission/parametres" (click)="profileOpen = false" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
-              <span class="material-symbols-outlined text-[20px]">settings</span> Paramètres
-            </a>
-            <a routerLink="/responsable-admission/aide" (click)="profileOpen = false" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary cursor-pointer transition-colors">
-              <span class="material-symbols-outlined text-[20px]">help</span> Aide
-            </a>
-            <hr class="my-1 border-outline-variant">
-            <a (click)="logout()" class="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-error-container hover:text-error cursor-pointer transition-colors">
-              <span class="material-symbols-outlined text-[20px]">logout</span> Déconnexion
-            </a>
+
+        <!-- ===================================================
+             SEARCH
+        ==================================================== -->
+        <div class="hidden max-w-[520px] flex-1 lg:block">
+
+          <div class="group relative">
+
+            <span
+              class="
+                material-symbols-outlined
+                pointer-events-none
+                absolute left-4 top-1/2
+                -translate-y-1/2
+                text-[20px]
+                text-black
+              ">
+              search
+            </span>
+
+
+            <input
+              type="search"
+              placeholder="Rechercher un candidat, une session..."
+
+              class="
+                h-11 w-full
+                rounded-xl
+                border border-black/10
+                bg-[#F8F9FB]
+                pl-11 pr-4
+
+                text-sm
+                font-medium
+                text-black
+
+                outline-none
+                transition-all duration-200
+
+                placeholder:font-normal
+                placeholder:text-black/45
+
+                hover:border-black/20
+
+                focus:border-[#123B6D]
+                focus:bg-white
+                focus:ring-4
+                focus:ring-[#123B6D]/5
+              "
+            />
+
           </div>
+
         </div>
+
+
+        <!-- ===================================================
+             RIGHT ACTIONS
+        ==================================================== -->
+        <div class="ml-auto flex items-center gap-2">
+
+
+          <!-- Mobile search -->
+          <button
+            type="button"
+
+            class="
+              flex h-10 w-10
+              items-center justify-center
+              rounded-xl
+              text-black
+              transition
+              hover:bg-black/[0.04]
+              lg:hidden
+            "
+
+            aria-label="Rechercher">
+
+            <span class="material-symbols-outlined text-[21px]">
+              search
+            </span>
+
+          </button>
+
+
+          <!-- =================================================
+               NOTIFICATIONS
+          ================================================== -->
+          <div class="relative">
+
+            <button
+              id="notification-btn"
+              type="button"
+              (click)="toggleDropdown('notification')"
+
+              class="
+                relative
+                flex h-10 w-10
+                items-center justify-center
+                rounded-xl
+                text-black
+                transition
+                hover:bg-black/[0.04]
+              "
+
+              aria-label="Alertes">
+
+              <span class="material-symbols-outlined text-[21px]">
+                notifications
+              </span>
+
+
+              <span
+                *ngIf="alertes.length + notificationsPersistees.length > 0"
+
+                class="
+                  absolute right-0.5 top-0.5
+                  flex h-[18px] min-w-[18px]
+                  items-center justify-center
+                  rounded-full
+                  bg-red-500
+                  px-1
+                  text-[9px]
+                  font-bold
+                  text-white
+                  ring-2 ring-white
+                ">
+
+                {{ alertes.length + notificationsPersistees.length }}
+
+              </span>
+
+            </button>
+
+
+            <!-- Notification dropdown -->
+            <div
+              *ngIf="notificationOpen"
+              id="notification-dropdown"
+
+              class="
+                absolute right-0 mt-3
+                w-[350px]
+                max-w-[calc(100vw-2rem)]
+                overflow-hidden
+                rounded-2xl
+                border border-black/10
+                bg-white
+                shadow-[0_18px_50px_rgba(0,0,0,0.12)]
+              ">
+
+
+              <!-- Header -->
+              <div
+                class="
+                  flex items-center justify-between
+                  border-b border-black/10
+                  px-5 py-4
+                ">
+
+                <div>
+
+                  <h3 class="text-sm font-bold text-black">
+                    Notifications
+                  </h3>
+
+                  <p class="mt-1 text-xs text-black">
+                    Activité récente du portail
+                  </p>
+
+                </div>
+
+
+                <span
+                  *ngIf="alertes.length + notificationsPersistees.length > 0"
+
+                  class="
+                    rounded-full
+                    bg-blue-50
+                    px-2.5 py-1
+                    text-[11px]
+                    font-bold
+                    text-[#123B6D]
+                  ">
+
+                  {{ alertes.length + notificationsPersistees.length }}
+
+                </span>
+
+              </div>
+
+
+              <!-- List -->
+              <div class="max-h-[360px] overflow-y-auto">
+
+
+                <!-- Empty -->
+                <div
+                  *ngIf="alertes.length + notificationsPersistees.length === 0"
+                  class="px-6 py-12 text-center">
+
+                  <div
+                    class="
+                      mx-auto mb-3
+                      flex h-11 w-11
+                      items-center justify-center
+                      rounded-full
+                      bg-emerald-50
+                      text-emerald-700
+                    ">
+
+                    <span class="material-symbols-outlined">
+                      check_circle
+                    </span>
+
+                  </div>
+
+                  <p class="text-sm font-semibold text-black">
+                    Tout est à jour
+                  </p>
+
+                  <p class="mt-1 text-xs text-black">
+                    Aucune nouvelle alerte.
+                  </p>
+
+                </div>
+
+
+                <!-- Persistent -->
+                <button
+                  *ngFor="let n of notificationsPersistees"
+                  type="button"
+                  (click)="ouvrirNotification(n)"
+
+                  class="
+                    group
+                    flex w-full items-start gap-3
+                    border-b border-black/10
+                    px-5 py-4
+                    text-left
+                    transition
+                    hover:bg-black/[0.03]
+                  ">
+
+                  <div
+                    class="
+                      mt-0.5
+                      flex h-9 w-9 shrink-0
+                      items-center justify-center
+                      rounded-xl
+                      bg-blue-50
+                      text-[#123B6D]
+                    ">
+
+                    <span class="material-symbols-outlined text-[18px]">
+                      notifications_active
+                    </span>
+
+                  </div>
+
+
+                  <span class="text-sm leading-5 text-black">
+                    {{ n.message }}
+                  </span>
+
+                </button>
+
+
+                <!-- Alerts -->
+                <a
+                  *ngFor="let a of alertes"
+                  [routerLink]="a.route"
+                  (click)="notificationOpen = false"
+
+                  class="
+                    flex items-start gap-3
+                    border-b border-black/10
+                    px-5 py-4
+                    transition
+                    last:border-0
+                    hover:bg-black/[0.03]
+                  ">
+
+                  <div
+                    class="
+                      mt-0.5
+                      flex h-9 w-9 shrink-0
+                      items-center justify-center
+                      rounded-xl
+                      bg-amber-50
+                      text-black
+                    ">
+
+                    <span class="material-symbols-outlined text-[18px]">
+                      {{ a.icone }}
+                    </span>
+
+                  </div>
+
+
+                  <span class="text-sm leading-5 text-black">
+                    {{ a.message }}
+                  </span>
+
+                </a>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- Separator -->
+          <div class="mx-2 hidden h-7 w-px bg-black/10 sm:block"></div>
+
+
+          <!-- =================================================
+               PROFILE
+          ================================================== -->
+          <div class="relative">
+
+            <button
+              id="profile-btn"
+              type="button"
+              (click)="toggleDropdown('profile')"
+
+              class="
+                group
+                flex items-center gap-2.5
+                rounded-xl
+                p-1.5 pr-2
+                transition
+                hover:bg-black/[0.04]
+              "
+
+              aria-label="Menu utilisateur"
+              aria-haspopup="menu"
+              [attr.aria-expanded]="profileOpen">
+
+
+              <!-- Avatar -->
+              <span
+                class="
+                  flex h-9 w-9 shrink-0
+                  items-center justify-center
+                  rounded-xl
+                  bg-[#123B6D]
+                  text-xs
+                  font-bold
+                  uppercase
+                  text-white
+                ">
+
+                {{ userInitials }}
+
+              </span>
+
+
+              <!-- User information -->
+              <div class="hidden max-w-[170px] text-left md:block">
+
+                <p
+                  class="
+                    truncate
+                    text-[13px]
+                    font-bold
+                    capitalize
+                    text-black
+                  ">
+                  {{ userDisplayName }}
+                </p>
+
+                <p
+                  class="
+                    truncate
+                    text-[11px]
+                    font-medium
+                    text-black
+                  ">
+                  Responsable admissions
+                </p>
+
+              </div>
+
+
+              <span
+                class="
+                  material-symbols-outlined
+                  hidden
+                  text-[18px]
+                  text-black
+                  md:block
+                ">
+
+                {{ profileOpen ? 'expand_less' : 'expand_more' }}
+
+              </span>
+
+            </button>
+
+
+            <!-- Profile dropdown -->
+            <div
+              *ngIf="profileOpen"
+              id="profile-dropdown"
+
+              class="
+                absolute right-0 mt-3
+                w-64
+                overflow-hidden
+                rounded-2xl
+                border border-black/10
+                bg-white
+                shadow-[0_18px_50px_rgba(0,0,0,0.12)]
+              ">
+
+
+              <!-- User -->
+              <div class="border-b border-black/10 px-4 py-4">
+
+                <div class="flex items-center gap-3">
+
+                  <span
+                    class="
+                      flex h-10 w-10 shrink-0
+                      items-center justify-center
+                      rounded-xl
+                      bg-[#123B6D]
+                      text-xs
+                      font-bold
+                      uppercase
+                      text-white
+                    ">
+
+                    {{ userInitials }}
+
+                  </span>
+
+
+                  <div class="min-w-0">
+
+                    <p
+                      class="
+                        truncate
+                        text-sm
+                        font-bold
+                        capitalize
+                        text-black
+                      ">
+                      {{ userDisplayName }}
+                    </p>
+
+                    <p class="truncate text-xs text-black">
+                      {{ userEmail }}
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              <!-- Profile actions -->
+              <div class="p-2">
+
+                <a
+                  routerLink="/responsable-admission/parametres"
+                  (click)="profileOpen = false"
+
+                  class="
+                    flex items-center gap-3
+                    rounded-xl
+                    px-3 py-2.5
+                    text-sm
+                    font-medium
+                    text-black
+                    transition
+                    hover:bg-black/[0.04]
+                  ">
+
+                  <span class="material-symbols-outlined text-[19px]">
+                    settings
+                  </span>
+
+                  Paramètres
+
+                </a>
+
+
+                <a
+                  routerLink="/responsable-admission/aide"
+                  (click)="profileOpen = false"
+
+                  class="
+                    flex items-center gap-3
+                    rounded-xl
+                    px-3 py-2.5
+                    text-sm
+                    font-medium
+                    text-black
+                    transition
+                    hover:bg-black/[0.04]
+                  ">
+
+                  <span class="material-symbols-outlined text-[19px]">
+                    help
+                  </span>
+
+                  Centre d'aide
+
+                </a>
+
+              </div>
+
+
+              <!-- Logout -->
+              <div class="border-t border-black/10 p-2">
+
+                <button
+                  type="button"
+                  (click)="logout()"
+
+                  class="
+                    flex w-full items-center gap-3
+                    rounded-xl
+                    px-3 py-2.5
+                    text-left
+                    text-sm
+                    font-medium
+                    text-red-600
+                    transition
+                    hover:bg-red-50
+                  ">
+
+                  <span class="material-symbols-outlined text-[19px]">
+                    logout
+                  </span>
+
+                  Déconnexion
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
+
     </header>
 
-    <!-- Page Content via Router Outlet -->
-    <main class="flex-1 pt-20 px-4 md:px-margin-desktop pb-12 overflow-x-hidden max-w-container-max mx-auto w-full">
-      <router-outlet></router-outlet>
+
+    <!-- =======================================================
+         PAGE CONTENT
+    ======================================================== -->
+    <main class="min-h-screen pt-20">
+
+      <div
+        class="
+          mx-auto
+          w-full
+          max-w-[1600px]
+          px-4 py-6
+          sm:px-6
+          lg:px-8
+          lg:py-8
+          xl:px-10
+        ">
+
+        <router-outlet></router-outlet>
+
+      </div>
+
     </main>
+
   </div>
+
 </div>
