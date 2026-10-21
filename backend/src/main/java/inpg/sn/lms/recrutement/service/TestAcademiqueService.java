@@ -34,17 +34,20 @@ public class TestAcademiqueService {
     private final CandidatureRepository candidatureRepository;
     private final NotificationService notificationService;
     private final NotificationCandidatService notificationCandidatService;
+    private final ProgressionDossierService progressionDossierService;
 
     public TestAcademiqueService(TestAcademiqueRepository testAcademiqueRepository,
             CandidatRepository candidatRepository,
             CandidatureRepository candidatureRepository,
             NotificationService notificationService,
-            NotificationCandidatService notificationCandidatService) {
+            NotificationCandidatService notificationCandidatService,
+            ProgressionDossierService progressionDossierService) {
         this.testAcademiqueRepository = testAcademiqueRepository;
         this.candidatRepository = candidatRepository;
         this.candidatureRepository = candidatureRepository;
         this.notificationService = notificationService;
         this.notificationCandidatService = notificationCandidatService;
+        this.progressionDossierService = progressionDossierService;
     }
 
     public TestAcademiqueResponse creerTest(TestAcademiqueRequest request) {
@@ -66,6 +69,7 @@ public class TestAcademiqueService {
         test.setCandidat(candidat);
 
         TestAcademique saved = testAcademiqueRepository.save(test);
+        progressionDossierService.apresTests(candidat.getId());
 
         // Convocation automatique du candidat dès la planification du test (TDR 3.1.2).
         if (saved.getDateEpreuve() != null) {
@@ -100,6 +104,7 @@ public class TestAcademiqueService {
         test.setLieuOuLien(request.getLieuOuLien());
 
         TestAcademique saved = testAcademiqueRepository.save(test);
+        progressionDossierService.apresTests(saved.getCandidat().getId());
         return toResponse(saved);
     }
 
@@ -115,7 +120,9 @@ public class TestAcademiqueService {
         verifierNote(noteObtenue);
         test.setNoteObtenuePrecedente(test.getNoteObtenue());
         test.setNoteObtenue(noteObtenue);
-        return toResponse(testAcademiqueRepository.save(test));
+        TestAcademique saved = testAcademiqueRepository.save(test);
+        progressionDossierService.apresTests(saved.getCandidat().getId());
+        return toResponse(saved);
     }
 
     /**
@@ -157,6 +164,7 @@ public class TestAcademiqueService {
             test.setNoteObtenue(notes.get(test.getId()));
         });
         testAcademiqueRepository.saveAll(tests);
+        tests.stream().map(t -> t.getCandidat().getId()).distinct().forEach(progressionDossierService::apresTests);
         return tests.size();
     }
     /** Annule la dernière saisie de note (un seul niveau, pas d'historique complet). */
@@ -168,7 +176,9 @@ public class TestAcademiqueService {
         }
         test.setNoteObtenue(test.getNoteObtenuePrecedente());
         test.setNoteObtenuePrecedente(null);
-        return toResponse(testAcademiqueRepository.save(test));
+        TestAcademique saved = testAcademiqueRepository.save(test);
+        progressionDossierService.apresTests(saved.getCandidat().getId());
+        return toResponse(saved);
     }
 
     public TestAcademiqueResponse getTestById(Long id) {
@@ -210,8 +220,9 @@ public class TestAcademiqueService {
             test.setNoteObtenuePrecedente(test.getNoteObtenue());
             test.setNoteObtenue(note);
         });
-        return testAcademiqueRepository.saveAll(notes.keySet().stream().map(parId::get).toList()).stream()
-                .map(this::toResponse).collect(Collectors.toList());
+        List<TestAcademique> enregistres = testAcademiqueRepository.saveAll(notes.keySet().stream().map(parId::get).toList());
+        enregistres.stream().map(t -> t.getCandidat().getId()).distinct().forEach(progressionDossierService::apresTests);
+        return enregistres.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     /** Modifie les informations communes sans toucher aux notes ni aux inscrits. */
@@ -224,7 +235,10 @@ public class TestAcademiqueService {
             test.setDateEpreuve(request.getDateEpreuve());
             test.setLieuOuLien(request.getLieuOuLien());
         });
-        return testAcademiqueRepository.saveAll(lignes).stream().map(this::toResponse).collect(Collectors.toList());
+        List<TestAcademique> enregistres = testAcademiqueRepository.saveAll(lignes);
+        // Le coefficient pèse dans la moyenne : le modifier peut faire basculer un résultat.
+        enregistres.stream().map(t -> t.getCandidat().getId()).distinct().forEach(progressionDossierService::apresTests);
+        return enregistres.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     /** Supprime exclusivement les inscriptions et notes de l'épreuve sélectionnée. */
@@ -232,13 +246,15 @@ public class TestAcademiqueService {
         List<TestAcademique> lignes = testAcademiqueRepository.findByGroupeEpreuveId(groupeEpreuveId);
         if (lignes.isEmpty()) throw new ResourceNotFoundException("Test académique introuvable.");
         testAcademiqueRepository.deleteAll(lignes);
+        lignes.stream().map(t -> t.getCandidat().getId()).distinct().forEach(progressionDossierService::apresTests);
     }
 
     public void supprimerTest(Long id) {
-        if (!testAcademiqueRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Test non trouvé avec l'ID: " + id);
-        }
+        TestAcademique test = testAcademiqueRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Test non trouvé avec l'ID: " + id));
+        Long candidatId = test.getCandidat().getId();
         testAcademiqueRepository.deleteById(id);
+        progressionDossierService.apresTests(candidatId);
     }
 
     private TestAcademiqueResponse toResponse(TestAcademique t) {

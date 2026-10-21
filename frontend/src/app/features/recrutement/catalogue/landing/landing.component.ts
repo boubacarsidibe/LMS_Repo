@@ -42,6 +42,11 @@ const ACCUEIL_PAR_PROFIL: Record<ProfilCompte, AccueilProfil> = {
     surtitre: 'Espace entreprise partenaire',
     accroche: "Exprimez vos besoins de formation, demandez un devis sur mesure et échangez avec l'équipe pédagogique.",
     actions: [
+      // Vers l'accueil de l'espace (tuiles, dernières demandes), pas directement
+      // le formulaire : une entreprise qui revient consulter le suivi de ses
+      // dossiers tombait sinon toujours sur une page vierge malgré l'ajout
+      // d'une vue d'ensemble propre à l'espace lui-même.
+      { libelle: 'Accéder à mon espace', icone: 'business_center', lien: '/espace-entreprise' },
       { libelle: 'Déposer une demande', icone: 'request_quote', lien: '/espace-entreprise/nouvelle-demande' },
       { libelle: 'Messagerie', icone: 'forum', lien: '/espace-entreprise/messagerie' },
       { libelle: 'Rendez-vous', icone: 'event', lien: '/espace-entreprise/rendez-vous' },
@@ -88,7 +93,18 @@ export class LandingComponent implements OnInit {
   /** Accueil propre au type du compte connecté (école, entreprise, candidat formateur), sinon null. */
   get accueilProfil(): AccueilProfil | null {
     const profil = this.auth.getProfilCompte();
-    return profil ? ACCUEIL_PAR_PROFIL[profil] : null;
+    if (!profil) {
+      return null;
+    }
+    const accueil = ACCUEIL_PAR_PROFIL[profil];
+    if (profil === 'entreprise' && !this.auth.getUserRoles().includes('ROLE_ENTREPRISE')) {
+      // ROLE_ENTREPRISE n'est accordé qu'à la première demande réellement soumise
+      // (EntrepriseController.soumettreDemande) : avant ça, la fiche Entreprise
+      // n'existe pas encore et l'envoi d'un message échoue en 403 (même correctif
+      // que sur le menu du profil, navbar.component.ts).
+      return { ...accueil, actions: accueil.actions.filter(a => a.libelle !== 'Messagerie') };
+    }
+    return accueil;
   }
 
   /**

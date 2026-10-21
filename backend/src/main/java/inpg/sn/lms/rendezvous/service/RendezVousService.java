@@ -30,6 +30,10 @@ public class RendezVousService {
     public static final List<String> ROLES_PERSONNEL = List.of(
             "ROLE_FORMATEUR", "ROLE_RESPONSABLE_PEDAGOGIQUE", "ROLE_RESPONSABLE_ADMISSION");
 
+    /** Seuls interlocuteurs proposés aux écoles partenaires et aux entreprises pour un rendez-vous. */
+    public static final List<String> ROLES_INTERLOCUTEURS_EXTERNES = List.of(
+            "ROLE_RESPONSABLE_PEDAGOGIQUE", "ROLE_RESPONSABLE_ADMISSION");
+
     private final UserRepository userRepository;
     private final CreneauDisponibiliteRepository creneauRepository;
     private final RendezVousRepository rendezVousRepository;
@@ -53,13 +57,14 @@ public class RendezVousService {
     }
 
     /**
-     * Personnel restreint aux responsables pédagogiques : c'est le seul
-     * interlocuteur habilité à traiter les demandes de rendez-vous des écoles
-     * partenaires et des entreprises (décision client). Les écoles / entreprises
-     * ne se voient donc proposer que lui.
+     * Personnel restreint aux responsables pédagogique et admission : ce sont
+     * les deux seuls interlocuteurs habilités à traiter les demandes de
+     * rendez-vous des écoles partenaires et des entreprises (décision client).
+     * Les écoles / entreprises ne se voient donc proposer qu'eux, jamais un
+     * formateur.
      */
-    public List<PersonnelProfilDto> listerResponsablesPedagogiques() {
-        return userRepository.findDistinctByRoles_CodeInOrderByUsernameAsc(List.of("ROLE_RESPONSABLE_PEDAGOGIQUE"))
+    public List<PersonnelProfilDto> listerInterlocuteursExternes() {
+        return userRepository.findDistinctByRoles_CodeInOrderByUsernameAsc(ROLES_INTERLOCUTEURS_EXTERNES)
                 .stream()
                 .map(this::toPersonnelProfilDto)
                 .toList();
@@ -71,9 +76,9 @@ public class RendezVousService {
                 .anyMatch(r -> "ROLE_ECOLE_FORMATION".equals(r.getCode()) || "ROLE_ENTREPRISE".equals(r.getCode()));
     }
 
-    /** Vrai si l'utilisateur porte le rôle responsable pédagogique. */
-    public boolean estResponsablePedagogique(User user) {
-        return user.getRoles().stream().anyMatch(r -> "ROLE_RESPONSABLE_PEDAGOGIQUE".equals(r.getCode()));
+    /** Vrai si l'utilisateur porte le rôle responsable pédagogique ou responsable admission. */
+    public boolean estInterlocuteurExterne(User user) {
+        return user.getRoles().stream().anyMatch(r -> ROLES_INTERLOCUTEURS_EXTERNES.contains(r.getCode()));
     }
 
     /**
@@ -99,7 +104,27 @@ public class RendezVousService {
     }
 
     public void notifier(User destinataire, String message, String type) {
-        notificationRepository.save(new Notification(destinataire, message, type, "/rendez-vous"));
+        notificationRepository.save(new Notification(destinataire, message, type, lienRendezVous(destinataire)));
+    }
+
+    /**
+     * URL de l'espace du destinataire pour ce rendez-vous. Chaque espace a sa
+     * propre racine de route (même piège déjà rencontré pour les réponses du
+     * forum et de la messagerie privée) : un lien unique {@code "/rendez-vous"}
+     * ne correspond à aucune route réelle, quel que soit le rôle du destinataire.
+     */
+    private String lienRendezVous(User destinataire) {
+        return switch (premierRoleConnu(destinataire)) {
+            case "ROLE_FORMATEUR" -> "/espace-etudiant/formateur/rendez-vous";
+            case "ROLE_RESPONSABLE_PEDAGOGIQUE" -> "/pedagogie/rendez-vous";
+            case "ROLE_RESPONSABLE_ADMISSION" -> "/responsable-admission/rendez-vous";
+            case "ROLE_ETUDIANT" -> "/espace-etudiant/rendez-vous";
+            case "ROLE_ECOLE_FORMATION" -> "/accreditation/rendez-vous";
+            case "ROLE_ENTREPRISE" -> "/espace-entreprise/rendez-vous";
+            // Alumni et candidat n'ont aujourd'hui aucun écran de rendez-vous dédié ;
+            // ce repli reste au moins correct pour un candidat.
+            default -> "/recrutement/rendez-vous";
+        };
     }
 
     public String libelleRole(User user) {

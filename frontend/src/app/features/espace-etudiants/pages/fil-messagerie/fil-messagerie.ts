@@ -44,6 +44,17 @@ import { MessagerieService } from '../../services/messagerie.service';
               <span class="font-body-sm text-body-sm text-on-surface-variant">{{ m.dateEnvoi }}</span>
             </div>
             <p class="font-body-md text-body-md text-on-surface mt-2 whitespace-pre-line">{{ m.contenu }}</p>
+            <button
+              *ngIf="m.pieceJointeNom"
+              type="button"
+              (click)="telechargerPieceJointe(m)"
+              [disabled]="telechargementEnCoursId === m.id"
+              class="mt-3 flex items-center gap-2 px-3 py-2 bg-surface-container rounded-lg border border-outline-variant/50 hover:bg-surface-container-high transition-colors text-left disabled:opacity-60"
+            >
+              <span class="material-symbols-outlined text-[20px] text-secondary">attach_file</span>
+              <span class="font-label-sm text-label-sm text-on-surface truncate max-w-[220px]">{{ m.pieceJointeNom }}</span>
+              <span class="material-symbols-outlined text-[18px] text-outline ml-1">{{ telechargementEnCoursId === m.id ? 'hourglass_empty' : 'download' }}</span>
+            </button>
           </li>
         </ul>
 
@@ -68,14 +79,28 @@ import { MessagerieService } from '../../services/messagerie.service';
             placeholder="Votre message…"
             class="w-full p-3 rounded-lg bg-surface-container-low border border-outline-variant font-body-sm text-body-sm text-on-surface outline-none focus:border-secondary transition-colors resize-y"
           ></textarea>
+          <div *ngIf="fichierSelectionne" class="flex items-center gap-2 px-3 py-2 bg-secondary-container/20 rounded-lg">
+            <span class="material-symbols-outlined text-[18px] text-secondary">attach_file</span>
+            <span class="font-label-sm text-label-sm text-on-surface truncate max-w-xs">{{ fichierSelectionne.name }}</span>
+            <button type="button" (click)="retirerFichier()" class="ml-auto p-1 text-outline hover:text-error transition-colors" title="Retirer le fichier" aria-label="Retirer le fichier">
+              <span class="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          </div>
           <p *ngIf="erreurReponse" class="font-body-sm text-body-sm text-error">{{ erreurReponse }}</p>
-          <button
-            type="submit"
-            [disabled]="!reponse.trim() || envoiEnCours"
-            class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {{ envoiEnCours ? 'Envoi…' : 'Envoyer' }}
-          </button>
+          <div class="flex items-center justify-between gap-3">
+            <input #fichierInput (change)="onFichierSelectionne($event)" class="hidden" type="file">
+            <button type="button" (click)="fichierInput.click()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-secondary hover:bg-secondary-container/20 transition-colors font-label-md text-label-md" title="Joindre un fichier">
+              <span class="material-symbols-outlined text-[20px]">attach_file</span>
+              <span>Joindre un fichier</span>
+            </button>
+            <button
+              type="submit"
+              [disabled]="!reponse.trim() || envoiEnCours"
+              class="px-4 py-2 rounded-lg bg-secondary text-on-secondary font-label-md text-label-md hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {{ envoiEnCours ? 'Envoi…' : 'Envoyer' }}
+            </button>
+          </div>
         </form>
       </ng-container>
     </div>
@@ -90,6 +115,8 @@ export class FilMessagerie implements OnInit, OnDestroy {
   reponse = '';
   envoiEnCours = false;
   erreurReponse = '';
+  fichierSelectionne: File | null = null;
+  telechargementEnCoursId: number | null = null;
 
   urlListe = '/espace-etudiant/messagerie';
 
@@ -146,15 +173,44 @@ export class FilMessagerie implements OnInit, OnDestroy {
     }
     this.envoiEnCours = true;
     this.erreurReponse = '';
-    this.messagerie.repondre(this.conversationId, this.reponse.trim()).subscribe({
+    this.messagerie.repondre(this.conversationId, this.reponse.trim(), this.fichierSelectionne).subscribe({
       next: (message) => {
         this.messages = [...this.messages, message];
         this.reponse = '';
+        this.fichierSelectionne = null;
         this.envoiEnCours = false;
       },
       error: (e) => {
         this.envoiEnCours = false;
         this.erreurReponse = e?.error?.message || "L'envoi de votre message a échoué.";
+      },
+    });
+  }
+
+  onFichierSelectionne(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.fichierSelectionne = input.files?.[0] ?? null;
+  }
+
+  retirerFichier(): void {
+    this.fichierSelectionne = null;
+  }
+
+  telechargerPieceJointe(message: MessagePrive): void {
+    if (!message.pieceJointeNom) return;
+    this.telechargementEnCoursId = message.id;
+    this.messagerie.telechargerPieceJointe(message.id).subscribe({
+      next: (blob) => {
+        this.telechargementEnCoursId = null;
+        const url = window.URL.createObjectURL(blob);
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = message.pieceJointeNom!;
+        lien.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.telechargementEnCoursId = null;
       },
     });
   }

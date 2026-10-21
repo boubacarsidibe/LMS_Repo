@@ -41,6 +41,7 @@ import inpg.sn.lms.accreditation.repository.DemandeAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.EvaluationCritereRepository;
 import inpg.sn.lms.accreditation.repository.PieceAccreditationRepository;
 import inpg.sn.lms.accreditation.service.AccreditationNotificationService;
+import inpg.sn.lms.accreditation.service.AttestationAccreditationService;
 import inpg.sn.lms.accreditation.service.PieceAccreditationStorageService;
 import inpg.sn.lms.auth.entity.User;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
@@ -67,12 +68,14 @@ public class EvaluateurAccreditationController {
     private final UtilisateurCourantService utilisateurCourant;
     private final PieceAccreditationStorageService storage;
     private final AccreditationNotificationService notificationService;
+    private final AttestationAccreditationService attestationService;
 
     public EvaluateurAccreditationController(DemandeAccreditationRepository demandeRepository,
             PieceAccreditationRepository pieceRepository, CritereAccreditationRepository critereRepository,
             AvisAccreditationRepository avisRepository, EvaluationCritereRepository evaluationCritereRepository,
             UtilisateurCourantService utilisateurCourant,
-            PieceAccreditationStorageService storage, AccreditationNotificationService notificationService) {
+            PieceAccreditationStorageService storage, AccreditationNotificationService notificationService,
+            AttestationAccreditationService attestationService) {
         this.demandeRepository = demandeRepository;
         this.pieceRepository = pieceRepository;
         this.critereRepository = critereRepository;
@@ -81,6 +84,7 @@ public class EvaluateurAccreditationController {
         this.utilisateurCourant = utilisateurCourant;
         this.storage = storage;
         this.notificationService = notificationService;
+        this.attestationService = attestationService;
     }
 
     // ===================== Demandes =====================
@@ -200,6 +204,7 @@ public class EvaluateurAccreditationController {
         demande.setPlanActions(null);
         trancher(demande, EnumStatutDemandeAccreditation.ACCREDITE, authentication,
                 requete != null ? requete.motif() : null);
+        attestationService.genererReferenceEtSignatureSiAccreditee(demande);
         demandeRepository.save(demande);
         String email = demande.getEcole().getUser() != null ? demande.getEcole().getUser().getEmail() : null;
         if (email != null) {
@@ -233,6 +238,7 @@ public class EvaluateurAccreditationController {
         }
         demande.setPlanActions(requete.planActions().trim());
         trancher(demande, EnumStatutDemandeAccreditation.ACCREDITE_SOUS_RESERVE, authentication, requete.motif());
+        attestationService.genererReferenceEtSignatureSiAccreditee(demande);
         demandeRepository.save(demande);
         String email = demande.getEcole().getUser() != null ? demande.getEcole().getUser().getEmail() : null;
         if (email != null) {

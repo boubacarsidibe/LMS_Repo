@@ -272,10 +272,10 @@
           </td>
           <td class="p-4 text-right" (click)="$event.stopPropagation()">
             <div class="flex justify-end gap-1" [class.opacity-40]="actionEnCours">
-              <button *ngIf="actionSuivante(c) && !(c.statut === 'SOUMIS' && dossierVide(c))" type="button" [disabled]="actionEnCours" (click)="actionSuivante(c)!.action()" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" [title]="actionSuivante(c)!.libelle">
+              <button *ngIf="actionSuivante(c) && !bloqueParDossierVide(c)" type="button" [disabled]="actionEnCours" (click)="actionSuivante(c)!.action()" class="p-1.5 rounded text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed transition-colors" [title]="actionSuivante(c)!.libelle">
                 <span class="material-symbols-outlined text-[20px]">check</span>
               </button>
-              <span *ngIf="actionSuivante(c) && c.statut === 'SOUMIS' && dossierVide(c)" class="p-1.5 text-error" title="Aucune pièce jointe : présélection impossible">
+              <span *ngIf="bloqueParDossierVide(c)" class="p-1.5 text-error" title="Aucune pièce jointe : présélection impossible">
                 <span class="material-symbols-outlined text-[20px]">error</span>
               </span>
               <button *ngIf="peutRejeter(c)" type="button" [disabled]="actionEnCours" (click)="rejeter(c)" class="p-1.5 rounded text-on-surface-variant hover:text-error hover:bg-error-container transition-colors" title="Rejeter">

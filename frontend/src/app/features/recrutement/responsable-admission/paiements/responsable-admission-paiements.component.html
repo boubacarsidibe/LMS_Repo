@@ -1,1062 +1,160 @@
-<section class="mx-auto max-w-6xl">
+<div class="mb-stack-lg flex flex-col xl:flex-row xl:items-end justify-between gap-5">
+  <div class="max-w-3xl">
+    <h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Historique des paiements</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mt-2">Suivi des frais de dossier réglés par les candidats, toutes sessions confondues.</p>
+  </div>
+  <button type="button" [disabled]="relanceEnCours || candidaturesARelancer.length === 0" (click)="relancerImpayes()" title="Envoie un email et une notification aux candidats dont le dossier est validé mais les frais impayés" class="w-full sm:w-auto shrink-0 flex items-center justify-center gap-2 px-4 h-10 bg-secondary text-on-secondary rounded-lg hover:opacity-90 transition-colors font-label-md text-label-md disabled:opacity-60">
+    <span class="material-symbols-outlined text-sm">mark_email_unread</span>
+    {{ relanceEnCours ? 'Relance en cours…' : 'Relancer les impayés (' + candidaturesARelancer.length + ')' }}
+  </button>
+</div>
 
-  <!-- ============================================================
-       HEADER
-  ============================================================= -->
-  <header
-    class="
-      mb-7 flex flex-col gap-5
-      border-b border-black/10 pb-7
-      xl:flex-row xl:items-end xl:justify-between
-    "
-  >
-    <div class="max-w-3xl">
-      <h1
-        class="
-          text-3xl font-bold tracking-[-0.035em]
-          text-black md:text-[34px]
-        "
-      >
-        Historique des paiements
-      </h1>
+<div *ngIf="errorMessage" class="mb-stack-md p-4 bg-error-container/20 text-error rounded-lg font-body-sm text-body-sm">{{ errorMessage }}</div>
+<div *ngIf="relanceMessage" class="mb-stack-md p-4 bg-secondary-container/30 text-on-secondary-container rounded-lg font-body-sm text-body-sm">{{ relanceMessage }}</div>
 
-      <p class="mt-2 max-w-2xl text-sm leading-6 text-black/50">
-        Suivez les frais de dossier réglés par les candidats,
-        toutes sessions confondues.
-      </p>
+<div class="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-outline-variant border border-outline-variant rounded-lg bg-surface-container-lowest mb-stack-md overflow-hidden">
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-secondary text-[20px]">payments</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ montantTotal | number:'1.0-0' }} <span class="font-label-sm text-label-sm text-on-surface-variant font-normal">XOF</span></div><div class="font-label-sm text-label-sm text-on-surface-variant">Total encaissé</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-secondary text-[20px]">check_circle</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbReussis }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">Réussis</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-outline text-[20px]">hourglass_empty</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm text-primary leading-none">{{ nbEnAttente }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">En attente</div></div></div>
+  <div class="flex items-center gap-3 px-4 py-3"><span class="material-symbols-outlined text-[20px]" [class.text-error]="candidaturesImpayees.length > 0" [class.text-outline]="candidaturesImpayees.length === 0">priority_high</span><div class="min-w-0"><div class="font-headline-sm text-headline-sm leading-none" [class.text-error]="candidaturesImpayees.length > 0" [class.text-primary]="candidaturesImpayees.length === 0">{{ candidaturesImpayees.length }}</div><div class="font-label-sm text-label-sm text-on-surface-variant">Impayés</div></div></div>
+</div>
+
+<!-- Dossiers validés sans paiement réussi : jamais tentés (invisibles de l'historique ci-dessous) ou tentative en attente/échouée. -->
+<div *ngIf="!loading && candidaturesImpayees.length > 0" class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden mb-stack-lg">
+  <div class="p-4 border-b border-outline-variant bg-surface">
+    <span class="font-label-md text-label-md text-on-surface">Dossiers validés en attente de paiement</span>
+  </div>
+  <div class="md:hidden divide-y divide-outline-variant">
+    <article *ngFor="let c of candidaturesImpayees" [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ dossier: c.numeroDossier }" class="p-4 cursor-pointer hover:bg-surface-container-low transition-colors">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0"><h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ c.candidatPrenom }} {{ c.candidatNom }}</h3><p class="text-[11px] text-on-surface-variant truncate">{{ c.numeroDossier }}</p></div>
+        <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-error-container/30 text-error whitespace-nowrap">Paiement requis</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mt-3 rounded-lg bg-surface-container-low p-3 text-[11px]">
+        <div><span class="block text-[10px] text-on-surface-variant">Dossier</span><span class="text-primary">{{ libelle(c.statut) }}</span></div>
+        <div><span class="block text-[10px] text-on-surface-variant">Dernière tentative</span><span [class.text-error]="c.paiement?.statut === 'ECHEC'" [class.text-on-surface-variant]="c.paiement?.statut !== 'ECHEC'">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</span></div>
+      </div>
+      <div class="mt-3" (click)="$event.stopPropagation()"><button type="button" (click)="confirmerDossier(c)" [disabled]="idEnCours === c.id" class="h-8 px-3 rounded-md bg-secondary text-on-secondary text-[11px] font-semibold disabled:opacity-50">{{ idEnCours === c.id ? 'Confirmation…' : 'Confirmer le paiement' }}</button></div>
+    </article>
+  </div>
+  <div class="hidden md:block overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low border-b border-outline-variant">
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut du dossier</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Paiement</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant">
+        <tr *ngFor="let c of candidaturesImpayees" [routerLink]="['/responsable-admission/candidatures']" [queryParams]="{ dossier: c.numeroDossier }" class="cursor-pointer hover:bg-surface-container-low transition-colors">
+          <td class="p-4">
+            <div class="font-label-md text-label-md text-primary">{{ c.candidatPrenom }} {{ c.candidatNom }}</div>
+            <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ c.numeroDossier }}</div>
+          </td>
+          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ libelle(c.statut) }}</td>
+          <td class="p-4 font-body-sm text-body-sm"
+              [class.text-error]="c.paiement?.statut === 'ECHEC'"
+              [class.text-on-surface-variant]="c.paiement?.statut !== 'ECHEC'">{{ c.paiement?.statut === 'ECHEC' ? 'Échec' : (c.paiement?.statut === 'EN_ATTENTE' ? 'En attente' : 'Jamais initié') }}</td>
+          <td class="p-4 text-right" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              (click)="confirmerDossier(c)"
+              [disabled]="idEnCours === c.id"
+              title="Confirmer un règlement effectué hors ligne (espèces, virement)"
+              class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {{ idEnCours === c.id ? 'Confirmation…' : 'Confirmer le paiement' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+  <div class="p-3 border-b border-outline-variant bg-surface flex flex-col sm:flex-row justify-between items-center gap-3">
+    <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto" aria-label="Filtrer les paiements">
+      <button type="button" (click)="filtreStatut = 'TOUS'" [attr.aria-pressed]="filtreStatut === 'TOUS'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtreStatut === 'TOUS'" [class.text-on-secondary]="filtreStatut === 'TOUS'" [class.border-secondary]="filtreStatut === 'TOUS'" [class.bg-surface-container-lowest]="filtreStatut !== 'TOUS'" [class.text-on-surface-variant]="filtreStatut !== 'TOUS'" [class.border-outline-variant]="filtreStatut !== 'TOUS'">Tous</button>
+      <button type="button" (click)="filtreStatut = 'SUCCES'" [attr.aria-pressed]="filtreStatut === 'SUCCES'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtreStatut === 'SUCCES'" [class.text-on-secondary]="filtreStatut === 'SUCCES'" [class.border-secondary]="filtreStatut === 'SUCCES'" [class.bg-surface-container-lowest]="filtreStatut !== 'SUCCES'" [class.text-on-surface-variant]="filtreStatut !== 'SUCCES'" [class.border-outline-variant]="filtreStatut !== 'SUCCES'">Réussis</button>
+      <button type="button" (click)="filtreStatut = 'EN_ATTENTE'" [attr.aria-pressed]="filtreStatut === 'EN_ATTENTE'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-secondary]="filtreStatut === 'EN_ATTENTE'" [class.text-on-secondary]="filtreStatut === 'EN_ATTENTE'" [class.border-secondary]="filtreStatut === 'EN_ATTENTE'" [class.bg-surface-container-lowest]="filtreStatut !== 'EN_ATTENTE'" [class.text-on-surface-variant]="filtreStatut !== 'EN_ATTENTE'" [class.border-outline-variant]="filtreStatut !== 'EN_ATTENTE'">En attente</button>
+      <button type="button" (click)="filtreStatut = 'ECHEC'" [attr.aria-pressed]="filtreStatut === 'ECHEC'" class="whitespace-nowrap h-8 px-2 rounded-md border text-[11px] font-semibold transition-colors" [class.bg-error]="filtreStatut === 'ECHEC'" [class.text-on-error]="filtreStatut === 'ECHEC'" [class.border-error]="filtreStatut === 'ECHEC'" [class.bg-surface-container-lowest]="filtreStatut !== 'ECHEC'" [class.text-on-surface-variant]="filtreStatut !== 'ECHEC'" [class.border-outline-variant]="filtreStatut !== 'ECHEC'">Échecs</button>
     </div>
-
-    <button
-      type="button"
-      [disabled]="relanceEnCours || candidaturesImpayees.length === 0"
-      (click)="relancerImpayes()"
-      title="Envoie un email et une notification aux candidats dont le dossier est validé mais les frais impayés"
-      class="
-        inline-flex h-10 shrink-0 items-center justify-center gap-2
-        rounded-lg bg-[#123B6D] px-4
-        text-sm font-semibold text-white
-        transition
-        hover:bg-[#0E315C]
-        disabled:cursor-not-allowed disabled:opacity-40
-      "
-    >
-      <span class="material-symbols-outlined text-[18px]">
-        mark_email_unread
-      </span>
-
-      {{
-        relanceEnCours
-          ? 'Relance en cours…'
-          : 'Relancer les impayés (' + candidaturesImpayees.length + ')'
-      }}
-    </button>
-  </header>
-
-
-  <!-- ============================================================
-       MESSAGES
-  ============================================================= -->
-  <div
-    *ngIf="errorMessage"
-    class="
-      mb-4 border-l-2 border-red-500
-      bg-red-50 px-4 py-3
-      text-sm text-red-700
-    "
-  >
-    {{ errorMessage }}
+    <div class="relative w-full sm:w-64">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+      <input #rechercheBox [value]="recherche" (keyup.enter)="recherche = rechercheBox.value" class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Nom, dossier, référence... (Entrée)" type="text">
+    </div>
   </div>
 
-  <div
-    *ngIf="relanceMessage"
-    class="
-      mb-4 border-l-2 border-[#123B6D]
-      bg-[#123B6D]/[0.035] px-4 py-3
-      text-sm text-[#123B6D]
-    "
-  >
-    {{ relanceMessage }}
+  <div *ngIf="loading" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Chargement…</div>
+  <div *ngIf="!loading && paiementsFiltres.length === 0" class="p-10 text-center text-on-surface-variant font-body-md text-body-md">Aucun paiement ne correspond à ces critères.</div>
+
+  <div class="md:hidden divide-y divide-outline-variant" *ngIf="!loading && paiementsFiltres.length > 0">
+    <article *ngFor="let p of paiementsFiltres" [routerLink]="p.numeroDossier ? ['/responsable-admission/candidatures'] : null" [queryParams]="p.numeroDossier ? { dossier: p.numeroDossier } : null" [class.cursor-pointer]="p.numeroDossier" class="p-4 hover:bg-surface-container-low transition-colors">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0"><h3 class="font-label-md text-label-md text-primary font-semibold truncate">{{ p.candidatPrenom }} {{ p.candidatNom }}</h3><p class="text-[11px] text-on-surface-variant truncate">{{ p.numeroDossier || p.referenceTransaction }}</p></div>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap" [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]' : (p.statut === 'ECHEC' ? 'bg-error-container/30 text-error' : 'bg-surface-container text-on-surface-variant')">{{ p.statut === 'SUCCES' ? 'Réussi' : (p.statut === 'ECHEC' ? 'Échec' : 'En attente') }}</span>
+      </div>
+      <dl class="grid grid-cols-2 gap-2 mt-3 rounded-lg bg-surface-container-low p-3 text-[11px]">
+        <div><dt class="text-[10px] text-on-surface-variant">Montant</dt><dd class="font-semibold text-primary mt-0.5">{{ p.montant | number:'1.0-0' }} {{ p.devise }}</dd></div>
+        <div><dt class="text-[10px] text-on-surface-variant">Date</dt><dd class="text-primary mt-0.5">{{ p.datePaiement ? (p.datePaiement | date:'dd MMM yyyy, HH:mm') : '—' }}</dd></div>
+        <div class="col-span-2"><dt class="text-[10px] text-on-surface-variant">Référence</dt><dd class="text-primary mt-0.5 break-all">{{ p.referenceTransaction || '—' }}</dd></div>
+      </dl>
+      <div class="flex gap-1.5 mt-3 pt-3 border-t border-outline-variant" *ngIf="p.statut === 'EN_ATTENTE'" (click)="$event.stopPropagation()">
+        <button type="button" (click)="valider(p)" [disabled]="idEnCours === p.id" class="h-8 px-3 rounded-md bg-secondary text-on-secondary text-[11px] font-semibold disabled:opacity-50">Valider</button>
+        <button type="button" (click)="rejeter(p)" [disabled]="idEnCours === p.id" class="h-8 px-3 rounded-md border border-outline-variant text-error bg-surface text-[11px] font-semibold disabled:opacity-50">Rejeter</button>
+      </div>
+    </article>
   </div>
 
-
-  <!-- ============================================================
-       STATISTIQUES
-  ============================================================= -->
-  <section
-    class="
-      mb-8 grid grid-cols-2
-      overflow-hidden rounded-xl
-      border border-black/10 bg-white
-      md:grid-cols-4
-    "
-  >
-
-    <!-- TOTAL -->
-    <div class="border-b border-r border-black/[0.07] p-5 md:border-b-0">
-      <p
-        class="
-          text-[10px] font-semibold uppercase
-          tracking-[0.06em] text-black/40
-        "
-      >
-        Total encaissé
-      </p>
-
-      <p
-        class="
-          mt-2 text-xl font-bold
-          tracking-[-0.02em] text-black
-        "
-      >
-        {{ montantTotal | number:'1.0-0' }}
-        <span class="text-xs font-medium text-black/40">
-          XOF
-        </span>
-      </p>
-    </div>
-
-
-    <!-- SUCCESS -->
-    <div
-      class="
-        border-b border-black/[0.07] p-5
-        md:border-b-0 md:border-r
-      "
-    >
-      <p
-        class="
-          text-[10px] font-semibold uppercase
-          tracking-[0.06em] text-black/40
-        "
-      >
-        Paiements réussis
-      </p>
-
-      <p class="mt-2 text-xl font-bold text-black">
-        {{ nbReussis }}
-      </p>
-    </div>
-
-
-    <!-- PENDING -->
-    <div class="border-r border-black/[0.07] p-5">
-      <p
-        class="
-          text-[10px] font-semibold uppercase
-          tracking-[0.06em] text-black/40
-        "
-      >
-        En attente
-      </p>
-
-      <p class="mt-2 text-xl font-bold text-black">
-        {{ nbEnAttente }}
-      </p>
-    </div>
-
-
-    <!-- UNPAID -->
-    <div class="p-5">
-      <p
-        class="
-          text-[10px] font-semibold uppercase
-          tracking-[0.06em] text-black/40
-        "
-      >
-        Impayés
-      </p>
-
-      <p
-        class="mt-2 text-xl font-bold"
-        [class.text-red-600]="candidaturesImpayees.length > 0"
-        [class.text-black]="candidaturesImpayees.length === 0"
-      >
-        {{ candidaturesImpayees.length }}
-      </p>
-    </div>
-
-  </section>
-
-
-  <!-- ============================================================
-       IMPAYÉS
-  ============================================================= -->
-  <section
-    *ngIf="!loading && candidaturesImpayees.length > 0"
-    class="mb-10"
-  >
-
-    <!-- TITLE -->
-    <div
-      class="
-        mb-4 flex flex-col gap-2
-        sm:flex-row sm:items-end sm:justify-between
-      "
-    >
-      <div>
-        <h2 class="text-base font-bold text-black">
-          Paiements à régulariser
-        </h2>
-
-        <p class="mt-1 text-xs text-black/45">
-          Dossiers validés pour lesquels aucun paiement réussi n'a encore été enregistré.
-        </p>
-      </div>
-
-      <span class="text-xs font-medium text-red-600">
-        {{ candidaturesImpayees.length }}
-        dossier{{ candidaturesImpayees.length > 1 ? 's' : '' }}
-      </span>
-    </div>
-
-
-    <!-- ==========================================================
-         IMPAYÉS MOBILE
-    =========================================================== -->
-    <div class="divide-y divide-black/[0.07] border-y border-black/10 md:hidden">
-
-      <article
-        *ngFor="let c of candidaturesImpayees"
-        [routerLink]="['/responsable-admission/candidatures']"
-        [queryParams]="{ dossier: c.numeroDossier }"
-        class="
-          cursor-pointer px-1 py-5
-          transition hover:bg-black/[0.015]
-        "
-      >
-        <div class="flex items-start justify-between gap-3">
-
-          <div class="min-w-0">
-            <h3 class="truncate text-sm font-semibold text-black">
-              {{ c.candidatPrenom }} {{ c.candidatNom }}
-            </h3>
-
-            <p class="mt-0.5 truncate text-xs text-black/40">
-              {{ c.numeroDossier }}
-            </p>
-          </div>
-
-          <span
-            class="
-              shrink-0 rounded-full
-              bg-red-50 px-2 py-0.5
-              text-[10px] font-semibold text-red-700
-            "
-          >
-            Paiement requis
-          </span>
-        </div>
-
-
-        <dl
-          class="
-            mt-4 grid grid-cols-2 gap-4
-            border-y border-black/[0.07]
-            py-3
-          "
-        >
-          <div>
-            <dt class="text-[10px] font-medium text-black/35">
-              Statut du dossier
-            </dt>
-
-            <dd class="mt-1 text-xs font-medium text-black">
-              {{ c.statut }}
-            </dd>
-          </div>
-
-          <div>
-            <dt class="text-[10px] font-medium text-black/35">
-              Dernière tentative
-            </dt>
-
-            <dd
-              class="mt-1 text-xs font-medium"
-              [class.text-red-600]="c.paiement?.statut === 'ECHEC'"
-              [class.text-black-55]="c.paiement?.statut !== 'ECHEC'"
-            >
-              {{
-                c.paiement?.statut === 'ECHEC'
-                  ? 'Échec'
-                  : (
-                    c.paiement?.statut === 'EN_ATTENTE'
-                      ? 'En attente'
-                      : 'Jamais initié'
-                  )
-              }}
-            </dd>
-          </div>
-        </dl>
-
-
-        <div
-          class="mt-4"
-          (click)="$event.stopPropagation()"
-        >
-          <button
-            type="button"
-            (click)="confirmerDossier(c)"
-            [disabled]="idEnCours === c.id"
-            class="
-              h-9 rounded-lg bg-[#123B6D] px-3
-              text-xs font-semibold text-white
-              transition hover:bg-[#0E315C]
-              disabled:opacity-40
-            "
-          >
-            {{
-              idEnCours === c.id
-                ? 'Confirmation…'
-                : 'Confirmer le paiement'
-            }}
-          </button>
-        </div>
-
-      </article>
-
-    </div>
-
-
-    <!-- ==========================================================
-         IMPAYÉS DESKTOP
-    =========================================================== -->
-    <div
-      class="
-        hidden overflow-hidden rounded-xl
-        border border-black/10 bg-white
-        md:block
-      "
-    >
-      <div class="overflow-x-auto">
-
-        <table class="w-full border-collapse text-left">
-
-          <thead>
-            <tr
-              class="
-                border-b border-black/10
-                bg-black/[0.018]
-              "
-            >
-              <th
-                class="
-                  px-5 py-3
-                  text-[10px] font-semibold uppercase
-                  tracking-[0.06em] text-black/40
-                "
-              >
-                Candidat
-              </th>
-
-              <th
-                class="
-                  px-5 py-3
-                  text-[10px] font-semibold uppercase
-                  tracking-[0.06em] text-black/40
-                "
-              >
-                Statut du dossier
-              </th>
-
-              <th
-                class="
-                  px-5 py-3
-                  text-[10px] font-semibold uppercase
-                  tracking-[0.06em] text-black/40
-                "
-              >
-                Paiement
-              </th>
-
-              <th
-                class="
-                  px-5 py-3 text-right
-                  text-[10px] font-semibold uppercase
-                  tracking-[0.06em] text-black/40
-                "
-              >
-                Action
-              </th>
-            </tr>
-          </thead>
-
-
-          <tbody class="divide-y divide-black/[0.06]">
-
-            <tr
-              *ngFor="let c of candidaturesImpayees"
-              [routerLink]="['/responsable-admission/candidatures']"
-              [queryParams]="{ dossier: c.numeroDossier }"
-              class="
-                cursor-pointer
-                transition
-                hover:bg-[#123B6D]/[0.018]
-              "
-            >
-
-              <!-- CANDIDATE -->
-              <td class="px-5 py-4">
-                <p class="text-sm font-semibold text-black">
-                  {{ c.candidatPrenom }} {{ c.candidatNom }}
-                </p>
-
-                <p class="mt-0.5 text-[11px] text-black/40">
-                  {{ c.numeroDossier }}
-                </p>
-              </td>
-
-
-              <!-- APPLICATION STATUS -->
-              <td class="px-5 py-4 text-sm text-black/55">
-                {{ c.statut }}
-              </td>
-
-
-              <!-- PAYMENT STATUS -->
-              <td
-                class="px-5 py-4 text-sm font-medium"
-                [class.text-red-600]="c.paiement?.statut === 'ECHEC'"
-                [class.text-black-50]="c.paiement?.statut !== 'ECHEC'"
-              >
-                {{
-                  c.paiement?.statut === 'ECHEC'
-                    ? 'Échec'
-                    : (
-                      c.paiement?.statut === 'EN_ATTENTE'
-                        ? 'En attente'
-                        : 'Jamais initié'
-                    )
-                }}
-              </td>
-
-
-              <!-- ACTION -->
-              <td
-                class="px-5 py-4 text-right"
-                (click)="$event.stopPropagation()"
-              >
-                <button
-                  type="button"
-                  (click)="confirmerDossier(c)"
-                  [disabled]="idEnCours === c.id"
-                  title="Confirmer un règlement effectué hors ligne (espèces, virement)"
-                  class="
-                    h-9 rounded-lg
-                    bg-[#123B6D] px-3
-                    text-xs font-semibold text-white
-                    transition
-                    hover:bg-[#0E315C]
-                    disabled:opacity-40
-                  "
-                >
-                  {{
-                    idEnCours === c.id
-                      ? 'Confirmation…'
-                      : 'Confirmer le paiement'
-                  }}
-                </button>
-              </td>
-
-            </tr>
-
-          </tbody>
-
-        </table>
-
-      </div>
-    </div>
-
-  </section>
-
-
-  <!-- ============================================================
-       HISTORIQUE
-  ============================================================= -->
-  <section>
-
-    <!-- SECTION TITLE -->
-    <div class="mb-4">
-
-      <h2 class="text-base font-bold text-black">
-        Transactions
-      </h2>
-
-      <p class="mt-1 text-xs text-black/45">
-        Historique des tentatives et paiements enregistrés.
-      </p>
-
-    </div>
-
-
-    <!-- ==========================================================
-         FILTERS
-    =========================================================== -->
-    <div
-      class="
-        mb-4 flex flex-col gap-3
-        sm:flex-row sm:items-center sm:justify-between
-      "
-    >
-
-      <!-- STATUS -->
-      <div
-        class="
-          flex w-full flex-wrap items-center gap-1.5
-          sm:w-auto
-        "
-        aria-label="Filtrer les paiements"
-      >
-
-        <!-- ALL -->
-        <button
-          type="button"
-          (click)="filtreStatut = 'TOUS'"
-          [attr.aria-pressed]="filtreStatut === 'TOUS'"
-          class="
-            h-8 whitespace-nowrap rounded-md
-            border px-3
-            text-[11px] font-semibold
-            transition
-          "
-          [class.bg-[#123B6D]]="filtreStatut === 'TOUS'"
-          [class.text-white]="filtreStatut === 'TOUS'"
-          [class.border-[#123B6D]]="filtreStatut === 'TOUS'"
-          [class.bg-white]="filtreStatut !== 'TOUS'"
-          [class.text-black-50]="filtreStatut !== 'TOUS'"
-          [class.border-black-10]="filtreStatut !== 'TOUS'"
-        >
-          Tous
-        </button>
-
-
-        <!-- SUCCESS -->
-        <button
-          type="button"
-          (click)="filtreStatut = 'SUCCES'"
-          [attr.aria-pressed]="filtreStatut === 'SUCCES'"
-          class="
-            h-8 whitespace-nowrap rounded-md
-            border px-3
-            text-[11px] font-semibold
-            transition
-          "
-          [class.bg-[#123B6D]]="filtreStatut === 'SUCCES'"
-          [class.text-white]="filtreStatut === 'SUCCES'"
-          [class.border-[#123B6D]]="filtreStatut === 'SUCCES'"
-          [class.bg-white]="filtreStatut !== 'SUCCES'"
-          [class.text-black-50]="filtreStatut !== 'SUCCES'"
-          [class.border-black-10]="filtreStatut !== 'SUCCES'"
-        >
-          Réussis
-        </button>
-
-
-        <!-- PENDING -->
-        <button
-          type="button"
-          (click)="filtreStatut = 'EN_ATTENTE'"
-          [attr.aria-pressed]="filtreStatut === 'EN_ATTENTE'"
-          class="
-            h-8 whitespace-nowrap rounded-md
-            border px-3
-            text-[11px] font-semibold
-            transition
-          "
-          [class.bg-[#123B6D]]="filtreStatut === 'EN_ATTENTE'"
-          [class.text-white]="filtreStatut === 'EN_ATTENTE'"
-          [class.border-[#123B6D]]="filtreStatut === 'EN_ATTENTE'"
-          [class.bg-white]="filtreStatut !== 'EN_ATTENTE'"
-          [class.text-black-50]="filtreStatut !== 'EN_ATTENTE'"
-          [class.border-black-10]="filtreStatut !== 'EN_ATTENTE'"
-        >
-          En attente
-        </button>
-
-
-        <!-- FAILURE -->
-        <button
-          type="button"
-          (click)="filtreStatut = 'ECHEC'"
-          [attr.aria-pressed]="filtreStatut === 'ECHEC'"
-          class="
-            h-8 whitespace-nowrap rounded-md
-            border px-3
-            text-[11px] font-semibold
-            transition
-          "
-          [class.bg-red-600]="filtreStatut === 'ECHEC'"
-          [class.text-white]="filtreStatut === 'ECHEC'"
-          [class.border-red-600]="filtreStatut === 'ECHEC'"
-          [class.bg-white]="filtreStatut !== 'ECHEC'"
-          [class.text-black-50]="filtreStatut !== 'ECHEC'"
-          [class.border-black-10]="filtreStatut !== 'ECHEC'"
-        >
-          Échecs
-        </button>
-
-      </div>
-
-
-      <!-- SEARCH -->
-      <div class="relative w-full sm:w-72">
-
-        <span
-          class="
-            material-symbols-outlined
-            absolute left-3 top-1/2
-            -translate-y-1/2
-            text-[18px] text-black/35
-          "
-        >
-          search
-        </span>
-
-        <input
-          #rechercheBox
-          [value]="recherche"
-          (keyup.enter)="recherche = rechercheBox.value"
-          type="text"
-          placeholder="Nom, dossier, référence... (Entrée)"
-          class="
-            h-10 w-full rounded-lg
-            border border-black/15 bg-white
-            pl-9 pr-3
-            text-sm text-black
-            outline-none transition
-            placeholder:text-black/30
-            hover:border-black/25
-            focus:border-[#123B6D]
-            focus:ring-2 focus:ring-[#123B6D]/10
-          "
-        />
-
-      </div>
-
-    </div>
-
-
-    <!-- ==========================================================
-         LOADING
-    =========================================================== -->
-    <div
-      *ngIf="loading"
-      class="
-        border-y border-black/10
-        py-16 text-center
-      "
-    >
-      <div
-        class="
-          mx-auto mb-3 h-6 w-6 animate-spin
-          rounded-full border-2 border-black/10
-          border-t-[#123B6D]
-        "
-      ></div>
-
-      <p class="text-sm text-black/45">
-        Chargement…
-      </p>
-    </div>
-
-
-    <!-- ==========================================================
-         EMPTY
-    =========================================================== -->
-    <div
-      *ngIf="!loading && paiementsFiltres.length === 0"
-      class="
-        border-y border-black/10
-        py-16 text-center
-      "
-    >
-      <p class="text-sm font-semibold text-black">
-        Aucun paiement
-      </p>
-
-      <p class="mt-1 text-xs text-black/45">
-        Aucun paiement ne correspond à ces critères.
-      </p>
-    </div>
-
-
-    <!-- ==========================================================
-         MOBILE TRANSACTIONS
-    =========================================================== -->
-    <div
-      *ngIf="!loading && paiementsFiltres.length > 0"
-      class="
-        divide-y divide-black/[0.07]
-        border-y border-black/10
-        md:hidden
-      "
-    >
-
-      <article
-        *ngFor="let p of paiementsFiltres"
-        [routerLink]="p.numeroDossier ? ['/responsable-admission/candidatures'] : null"
-        [queryParams]="p.numeroDossier ? { dossier: p.numeroDossier } : null"
-        [class.cursor-pointer]="p.numeroDossier"
-        class="px-1 py-5 transition hover:bg-black/[0.015]"
-      >
-
-        <div class="flex items-start justify-between gap-3">
-
-          <div class="min-w-0">
-            <h3 class="truncate text-sm font-semibold text-black">
-              {{ p.candidatPrenom }} {{ p.candidatNom }}
-            </h3>
-
-            <p class="mt-0.5 truncate text-xs text-black/40">
-              {{ p.numeroDossier || p.referenceTransaction }}
-            </p>
-          </div>
-
-
-          <span
-            class="
-              shrink-0 rounded-full
-              px-2 py-0.5
-              text-[10px] font-semibold
-            "
-            [ngClass]="
-              p.statut === 'SUCCES'
-                ? 'bg-emerald-50 text-emerald-700'
-                : (
-                    p.statut === 'ECHEC'
-                      ? 'bg-red-50 text-red-700'
-                      : 'bg-black/[0.05] text-black/55'
-                  )
-            "
-          >
-            {{
-              p.statut === 'SUCCES'
-                ? 'Réussi'
-                : (
-                    p.statut === 'ECHEC'
-                      ? 'Échec'
-                      : 'En attente'
-                  )
-            }}
-          </span>
-
-        </div>
-
-
-        <dl
-          class="
-            mt-4 grid grid-cols-2
-            gap-x-4 gap-y-3
-            border-y border-black/[0.07]
-            py-3
-          "
-        >
-
-          <div>
-            <dt class="text-[10px] text-black/35">
-              Montant
-            </dt>
-
-            <dd class="mt-1 text-sm font-semibold text-black">
-              {{ p.montant | number:'1.0-0' }} {{ p.devise }}
-            </dd>
-          </div>
-
-
-          <div>
-            <dt class="text-[10px] text-black/35">
-              Date
-            </dt>
-
-            <dd class="mt-1 text-xs text-black/60">
-              {{
-                p.datePaiement
-                  ? (p.datePaiement | date:'dd MMM yyyy, HH:mm')
-                  : '—'
-              }}
-            </dd>
-          </div>
-
-
-          <div class="col-span-2">
-            <dt class="text-[10px] text-black/35">
-              Référence
-            </dt>
-
-            <dd class="mt-1 break-all text-xs text-black/60">
-              {{ p.referenceTransaction || '—' }}
-            </dd>
-          </div>
-
-        </dl>
-
-
-        <!-- ACTIONS -->
-        <div
-          *ngIf="p.statut === 'EN_ATTENTE'"
-          class="mt-4 flex items-center gap-2"
-          (click)="$event.stopPropagation()"
-        >
-          <button
-            type="button"
-            (click)="valider(p)"
-            [disabled]="idEnCours === p.id"
-            class="
-              h-8 rounded-md bg-[#123B6D] px-3
-              text-[11px] font-semibold text-white
-              disabled:opacity-40
-            "
-          >
-            Valider
-          </button>
-
-          <button
-            type="button"
-            (click)="rejeter(p)"
-            [disabled]="idEnCours === p.id"
-            class="
-              h-8 rounded-md px-3
-              text-[11px] font-semibold text-red-600
-              transition hover:bg-red-50
-              disabled:opacity-40
-            "
-          >
-            Rejeter
-          </button>
-        </div>
-
-      </article>
-
-    </div>
-
-
-    <!-- ==========================================================
-         DESKTOP TRANSACTIONS
-    =========================================================== -->
-    <div
-      *ngIf="!loading && paiementsFiltres.length > 0"
-      class="
-        hidden overflow-hidden
-        rounded-xl border border-black/10
-        bg-white md:block
-      "
-    >
-
-      <div class="overflow-x-auto">
-
-        <table class="w-full border-collapse text-left">
-
-          <thead>
-            <tr
-              class="
-                border-b border-black/10
-                bg-black/[0.018]
-              "
-            >
-              <th class="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.06em] text-black/40">
-                Candidat
-              </th>
-
-              <th class="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.06em] text-black/40">
-                Référence
-              </th>
-
-              <th class="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.06em] text-black/40">
-                Montant
-              </th>
-
-              <th class="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.06em] text-black/40">
-                Date
-              </th>
-
-              <th class="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.06em] text-black/40">
-                Statut
-              </th>
-
-              <th class="px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.06em] text-black/40">
-                Action
-              </th>
-            </tr>
-          </thead>
-
-
-          <tbody class="divide-y divide-black/[0.06]">
-
-            <tr
-              *ngFor="let p of paiementsFiltres"
-              [routerLink]="p.numeroDossier ? ['/responsable-admission/candidatures'] : null"
-              [queryParams]="p.numeroDossier ? { dossier: p.numeroDossier } : null"
-              [class.cursor-pointer]="p.numeroDossier"
-              class="
-                transition
-                hover:bg-[#123B6D]/[0.018]
-              "
-            >
-
-              <!-- CANDIDATE -->
-              <td class="px-5 py-4">
-                <p class="text-sm font-semibold text-black">
-                  {{ p.candidatPrenom }} {{ p.candidatNom }}
-                </p>
-
-                <p class="mt-0.5 text-[11px] text-black/40">
-                  {{ p.numeroDossier }}
-                </p>
-              </td>
-
-
-              <!-- REFERENCE -->
-              <td
-                class="
-                  max-w-[220px]
-                  px-5 py-4
-                  text-xs text-black/50
-                "
-              >
-                <span class="block truncate">
-                  {{ p.referenceTransaction || '—' }}
-                </span>
-              </td>
-
-
-              <!-- AMOUNT -->
-              <td
-                class="
-                  whitespace-nowrap
-                  px-5 py-4
-                  text-sm font-semibold
-                  tabular-nums text-black
-                "
-              >
-                {{ p.montant | number:'1.0-0' }}
-                <span class="text-xs font-normal text-black/40">
-                  {{ p.devise }}
-                </span>
-              </td>
-
-
-              <!-- DATE -->
-              <td
-                class="
-                  whitespace-nowrap
-                  px-5 py-4
-                  text-xs text-black/50
-                "
-              >
-                {{
-                  p.datePaiement
-                    ? (p.datePaiement | date:'dd MMM yyyy, HH:mm')
-                    : '—'
-                }}
-              </td>
-
-
-              <!-- STATUS -->
-              <td class="px-5 py-4">
-                <span
-                  class="
-                    inline-flex rounded-full
-                    px-2.5 py-1
-                    text-[10px] font-semibold
-                  "
-                  [ngClass]="
-                    p.statut === 'SUCCES'
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : (
-                          p.statut === 'ECHEC'
-                            ? 'bg-red-50 text-red-700'
-                            : 'bg-black/[0.05] text-black/55'
-                        )
-                  "
-                >
-                  {{
-                    p.statut === 'SUCCES'
-                      ? 'Réussi'
-                      : (
-                          p.statut === 'ECHEC'
-                            ? 'Échec'
-                            : 'En attente'
-                        )
-                  }}
-                </span>
-              </td>
-
-
-              <!-- ACTIONS -->
-              <td
-                class="px-5 py-4"
-                (click)="$event.stopPropagation()"
-              >
-                <div
-                  *ngIf="p.statut === 'EN_ATTENTE'; else aucuneAction"
-                  class="flex items-center gap-1"
-                >
-                  <button
-                    type="button"
-                    (click)="valider(p)"
-                    [disabled]="idEnCours === p.id"
-                    class="
-                      h-8 rounded-md
-                      bg-[#123B6D] px-3
-                      text-[11px] font-semibold text-white
-                      transition hover:bg-[#0E315C]
-                      disabled:opacity-40
-                    "
-                  >
-                    Valider
-                  </button>
-
-                  <button
-                    type="button"
-                    (click)="rejeter(p)"
-                    [disabled]="idEnCours === p.id"
-                    class="
-                      h-8 rounded-md px-3
-                      text-[11px] font-semibold text-red-600
-                      transition hover:bg-red-50
-                      disabled:opacity-40
-                    "
-                  >
-                    Rejeter
-                  </button>
-                </div>
-
-                <ng-template #aucuneAction>
-                  <span class="text-xs text-black/30">
-                    —
-                  </span>
-                </ng-template>
-              </td>
-
-            </tr>
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-
-      <!-- FOOTER -->
-      <div
-        class="
-          flex items-center justify-between
-          border-t border-black/10
-          bg-black/[0.012]
-          px-5 py-3
-        "
-      >
-        <p class="text-xs text-black/40">
-          {{ paiementsFiltres.length }}
-          transaction{{ paiementsFiltres.length > 1 ? 's' : '' }}
-        </p>
-
-        <p class="text-xs text-black/40">
-          Historique des paiements
-        </p>
-      </div>
-
-    </div>
-
-  </section>
-
-</section>
+  <div class="hidden md:block overflow-x-auto" *ngIf="!loading && paiementsFiltres.length > 0">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container-low border-b border-outline-variant">
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Candidat</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Référence</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Montant</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Statut</th>
+          <th class="p-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-outline-variant">
+        <tr *ngFor="let p of paiementsFiltres" [routerLink]="p.numeroDossier ? ['/responsable-admission/candidatures'] : null" [queryParams]="p.numeroDossier ? { dossier: p.numeroDossier } : null" [class.cursor-pointer]="p.numeroDossier" class="hover:bg-surface-container-low transition-colors">
+          <td class="p-4">
+            <div class="font-label-md text-label-md text-primary">{{ p.candidatPrenom }} {{ p.candidatNom }}</div>
+            <div class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">{{ p.numeroDossier }}</div>
+          </td>
+          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ p.referenceTransaction }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-primary">{{ p.montant | number:'1.0-0' }} {{ p.devise }}</td>
+          <td class="p-4 font-body-sm text-body-sm text-on-surface-variant">{{ p.datePaiement ? (p.datePaiement | date:'dd MMM yyyy, HH:mm') : '—' }}</td>
+          <td class="p-4">
+            <!-- Trois statuts existent côté serveur (EN_ATTENTE, SUCCES, ECHEC). Le badge
+                 n'en connaissait que deux : un paiement en échec s'affichait « En attente »
+                 en gris, c'est-à-dire l'inverse de ce qu'il fallait lire. -->
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [ngClass]="p.statut === 'SUCCES' ? 'bg-[#ecfdf5] text-[#065f46]'
+                             : (p.statut === 'ECHEC' ? 'bg-error-container/30 text-error' : 'bg-surface-container text-on-surface-variant')">
+              {{ p.statut === 'SUCCES' ? 'Réussi' : (p.statut === 'ECHEC' ? 'Échec' : 'En attente') }}
+            </span>
+          </td>
+          <td class="p-4" (click)="$event.stopPropagation()">
+            <div class="flex items-center gap-2" *ngIf="p.statut === 'EN_ATTENTE'; else aucuneAction">
+              <button type="button" (click)="valider(p)" [disabled]="idEnCours === p.id"
+                      class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary font-label-sm text-label-sm disabled:opacity-50">
+                Valider
+              </button>
+              <button type="button" (click)="rejeter(p)" [disabled]="idEnCours === p.id"
+                      class="px-3 py-1.5 rounded-lg border border-outline-variant text-error font-label-sm text-label-sm disabled:opacity-50">
+                Rejeter
+              </button>
+            </div>
+            <ng-template #aucuneAction><span class="text-on-surface-variant text-body-sm font-body-sm">—</span></ng-template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

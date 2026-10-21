@@ -63,7 +63,7 @@
 
             <div *ngIf="releveCourant.nombreNotes > 0" class="mt-4">
               <p class="font-headline-sm text-headline-sm text-secondary tabular-nums">
-                {{ releveCourant.moyenneGenerale !== null ? (releveCourant.moyenneGenerale | number: '1.1-1') + ' / 20' : '—' }}
+                {{ releveCourant.moyenneGenerale !== null ? (releveCourant.moyenneGenerale | number: '1.1-1') + ' / 100 (' + (releveCourant.moyenneGenerale / 5 | number: '1.1-1') + ' / 20)' : '—' }}
                 <span class="font-body-sm text-body-sm text-on-surface-variant">
                   · {{ releveCourant.nombreNotes }} note(s)
                 </span>

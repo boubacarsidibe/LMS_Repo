@@ -171,6 +171,17 @@ export const routes: Routes = [
       ),
   },
 
+  // Même principe pour l'attestation d'accréditation d'une école (TDR §F) : sert
+  // à la fois de page de vérification (QR imprimé) et de fiche détaillée depuis
+  // la liste des écoles accréditées.
+  {
+    path: 'verification-accreditation/:reference',
+    loadComponent: () =>
+      import('./features/accreditation/verification/verification-accreditation.component').then(
+        (m) => m.VerificationAccreditationComponent
+      ),
+  },
+
   // Groupe des pages d'authentification partageant la même mise en page
   // guestGuard : un utilisateur déjà connecté est redirigé vers son espace
   // plutôt que de revoir le formulaire de connexion.

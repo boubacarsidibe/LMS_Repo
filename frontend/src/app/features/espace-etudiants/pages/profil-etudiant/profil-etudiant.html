@@ -1,4 +1,4 @@
-<div class="flex flex-col w-full" *ngIf="etudiant; else introuvable">
+<div class="flex flex-col w-full" *ngIf="etudiant; else absent">
 
   <div class="px-margin-desktop py-stack-lg flex flex-col gap-base">
     <a routerLink="/espace-etudiant/formateur/suivi-etudiants" class="flex items-center gap-2 text-label-md text-secondary hover:underline w-fit mb-2">
@@ -34,8 +34,8 @@
       </p>
     </div>
     <div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm">
-      <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">Dernière connexion</span>
-      <p class="font-body-lg text-body-lg text-on-surface mt-2">{{ etudiant.derniereConnexion }}</p>
+      <span class="text-label-sm uppercase tracking-widest text-on-surface-variant">Dernière activité</span>
+      <p class="font-body-lg text-body-lg text-on-surface mt-2">{{ etudiant.derniereActivite }}</p>
     </div>
   </div>
 
@@ -151,6 +151,12 @@
 
 
 </div>
+
+<ng-template #absent>
+  <div *ngIf="chargementEtudiant; else introuvable" class="px-margin-desktop py-stack-lg" role="status">
+    <p class="text-body-lg text-on-surface-variant">Chargement du profil…</p>
+  </div>
+</ng-template>
 
 <ng-template #introuvable>
   <div class="px-margin-desktop py-stack-lg">

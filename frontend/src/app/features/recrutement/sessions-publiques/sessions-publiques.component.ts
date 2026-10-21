@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { RecrutementService, SessionCandidatureResponse } from '../../../core/recrutement/services/recrutement.service';
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
 import { ContexteNavbarService } from '../../../shared/components/navbar/contexte-navbar.service';
+import { Auth } from '../../../core/auth/services/authService';
 
 @Component({
   selector: 'app-sessions-publiques',
@@ -16,6 +17,12 @@ export class SessionsPubliquesComponent implements OnInit {
   loading = false;
   errorMessage = '';
   private contexteNavbar = inject(ContexteNavbarService);
+  private auth = inject(Auth);
+
+  /** École, entreprise ou candidat formateur connecté : « Postuler » (candidature étudiante) ne le concerne pas. */
+  get estCompteOrganisation(): boolean {
+    return this.auth.getProfilCompte() !== null;
+  }
 
   constructor(private recrutementService: RecrutementService) {}
 

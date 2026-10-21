@@ -7,6 +7,7 @@ import { RecrutementService, SessionCandidatureResponse, CandidatureRequest, Can
 import { FooterComponent } from '../../../../shared/components/footer/footer.component';
 import { Auth } from '../../../../core/auth/services/authService';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { estRefus } from '../../../../core/recrutement/statuts-candidature';
 
 const STORAGE_KEY = 'candidature_brouillon';
 
@@ -127,7 +128,7 @@ export class FormulaireComponent implements OnInit {
     // Vérification immédiate : si une candidature active existe, rediriger sans afficher le formulaire
     this.recrutementService.getMesCandidatures().subscribe({
       next: (candidatures) => {
-        const active = candidatures.find(c => c.statut !== 'REJETE' && c.statut !== 'BROUILLON');
+        const active = candidatures.find(c => !estRefus(c.statut) && c.statut !== 'BROUILLON');
         if (active) {
           this.router.navigate(['/recrutement/suivi'], { replaceUrl: true });
           return;

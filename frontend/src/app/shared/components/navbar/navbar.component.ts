@@ -29,14 +29,17 @@ const ONGLET_PAR_CONTEXTE: Record<ProfilCompte | 'etudiant', Omit<EntreeNavigati
   entreprise: { libelle: 'Espace entreprise', lien: '/espace-entreprise' },
 };
 
-/** Menu du cercle de profil des comptes qui ont leur propre espace. */
+/**
+ * Menu du cercle de profil des comptes qui ont leur propre espace. Pas de
+ * « Mon espace » ici pour école/entreprise : l'onglet {@link ONGLET_PAR_CONTEXTE}
+ * pointe déjà vers la même destination (/accreditation, /espace-entreprise) —
+ * un second lien identique dans le menu déroulant était une redondance pure.
+ */
 const MENU_PAR_PROFIL: Record<ProfilCompte, EntreeNavigation[]> = {
   ecole: [
-    { libelle: 'Mon espace', icone: 'school', lien: '/accreditation' },
     { libelle: 'Mon profil', icone: 'account_circle', lien: '/accreditation/mon-profil' },
   ],
   entreprise: [
-    { libelle: 'Mon espace', icone: 'business_center', lien: '/espace-entreprise' },
     { libelle: 'Messagerie', icone: 'forum', lien: '/espace-entreprise/messagerie' },
     { libelle: 'Mon profil', icone: 'account_circle', lien: '/espace-entreprise/mon-profil' },
   ],
@@ -98,6 +101,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
    */
   readonly entreesMenu = computed<EntreeNavigation[]>(() => {
     const profil = this.auth.getProfilCompte();
+    if (profil === 'entreprise' && !this.auth.getUserRoles().includes('ROLE_ENTREPRISE')) {
+      // ROLE_ENTREPRISE n'est accordé qu'à la première demande réellement soumise
+      // (voir EntrepriseController.soumettreDemande) : avant ça, la fiche Entreprise
+      // n'existe pas encore en base et l'envoi d'un message échoue en 403. Le lien
+      // réapparaît dès que le compte a soumis sa première demande.
+      return MENU_PAR_PROFIL.entreprise.filter(entree => entree.libelle !== 'Messagerie');
+    }
     if (profil) {
       return MENU_PAR_PROFIL[profil];
     }
@@ -210,7 +220,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     const user = this.auth.currentUser();
     if (!user) return '';
     if ((user as any).username) {
-      return (user as any).username.replace('_', ' ');
+      // Toutes les occurrences : un compte d'école ou d'entreprise porte le nom de l'organisation (« institut_sahel_energie »),
+      // et « replace('_', ' ') » ne remplaçait que la première.
+      return (user as any).username.replace(/_/g, ' ');
     }
     return user.email;
   }

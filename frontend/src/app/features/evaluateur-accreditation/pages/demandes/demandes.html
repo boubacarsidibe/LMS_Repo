@@ -238,7 +238,7 @@
               Aucun critère actif dans le référentiel.
             </p>
 
-            <div *ngFor="let s of sectionsGrille" class="space-y-2">
+            <div *ngFor="let s of sectionsGrille; trackBy: parNom" class="space-y-2">
               <div class="flex items-center justify-between gap-2">
                 <p class="font-label-sm text-label-sm text-primary">{{ s.nom }}</p>
                 <span class="font-label-sm text-label-sm"
@@ -246,7 +246,7 @@
                   {{ s.jugees }} / {{ s.total }} évalué(s)
                 </span>
               </div>
-              <div *ngFor="let c of s.criteres" class="p-3 rounded-lg bg-surface-container-low space-y-2">
+              <div *ngFor="let c of s.criteres; trackBy: parId" class="p-3 rounded-lg bg-surface-container-low space-y-2">
                 <div>
                   <p class="font-label-sm text-label-sm text-on-surface">
                     <span *ngIf="c.code" class="text-secondary">{{ c.code }}</span> {{ c.libelle }}

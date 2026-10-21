@@ -15,8 +15,9 @@ export class AnnonceService {
     return this.http.get<Annonce[]>(`${this.api}/annonces`);
   }
 
-  create(data: AnnonceCreation): Observable<Annonce> {
-    return this.http.post<Annonce>(`${this.api}/formateur/annonces`, data);
+  /** Une annonce est créée par promotion désignée (une seule, générale, si aucune ne l'est). */
+  create(data: AnnonceCreation): Observable<Annonce[]> {
+    return this.http.post<Annonce[]>(`${this.api}/formateur/annonces`, data);
   }
 
   getMesPromotions(): Observable<Promotion[]> {

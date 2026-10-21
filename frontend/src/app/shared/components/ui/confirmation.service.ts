@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { map, Observable, Subject } from 'rxjs';
 
 export interface DemandeConfirmation {
   /** Titre court, ex. « Supprimer le cours ». */
@@ -11,6 +11,14 @@ export interface DemandeConfirmation {
   libelleAnnuler?: string;
   /** true pour une action destructrice : le bouton passe en rouge. */
   destructif?: boolean;
+  /** Si présent, la boîte recueille aussi un texte (motif de rejet…) : voir {@link ConfirmationService#demanderSaisie}. */
+  saisie?: {
+    libelle: string;
+    /** Le bouton de confirmation reste grisé tant que le champ est vide. */
+    obligatoire?: boolean;
+    placeholder?: string;
+    maxLength?: number;
+  };
 }
 
 /**
@@ -38,6 +46,9 @@ export class ConfirmationService {
   /** Demande courante, ou null quand aucune boîte n'est ouverte. */
   readonly demandeEnCours = signal<DemandeConfirmation | null>(null);
 
+  /** Texte en cours de saisie dans la boîte (quand la demande comporte un champ). */
+  readonly texteSaisi = signal('');
+
   private reponse$: Subject<boolean> | null = null;
 
   demander(demande: DemandeConfirmation): Observable<boolean> {
@@ -46,8 +57,24 @@ export class ConfirmationService {
     this.cloturer(false);
 
     this.reponse$ = new Subject<boolean>();
+    this.texteSaisi.set('');
     this.demandeEnCours.set(demande);
     return this.reponse$.asObservable();
+  }
+
+  /**
+   * Remplace le `prompt()` natif : demande une confirmation ET un texte (le motif d'un rejet, par exemple).
+   *
+   * <p>Le `prompt()` natif n'est ni stylé ni accessible, et il n'apparaît pas dans un partage d'écran ou un
+   * enregistrement : un responsable qui présente la plateforme voit son écran se figer sans rien comprendre.
+   *
+   * @return le texte saisi (sans espaces en tête ni en queue), ou {@code null} si l'utilisateur annule
+   */
+  demanderSaisie(demande: DemandeConfirmation & { saisie: NonNullable<DemandeConfirmation['saisie']> }): Observable<string | null> {
+    return this.demander(demande).pipe(
+      // Lu au moment de la réponse : cloturer() n'efface la boîte qu'après avoir émis.
+      map((confirme) => (confirme ? this.texteSaisi().trim() : null))
+    );
   }
 
   /** Appelé par le composant hôte quand l'utilisateur tranche. */

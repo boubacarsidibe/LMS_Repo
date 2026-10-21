@@ -53,4 +53,13 @@ export class EntrepriseService {
   demanderAjustements(demandeId: number, commentaire: string): Observable<FicheTechniqueModule> {
     return this.http.put<FicheTechniqueModule>(`${this.api}/demandes/${demandeId}/fiche/ajustements`, { commentaire });
   }
+
+  /** Historique téléchargeable d'une fiche acceptée (404 tant qu'elle ne l'est pas). Le jeton passe par l'intercepteur. */
+  telechargerDevisPdf(demandeId: number): Observable<Blob> {
+    return this.http.get(`${this.api}/demandes/${demandeId}/fiche/devis-pdf`, { responseType: 'blob' });
+  }
+
+  telechargerConventionPdf(demandeId: number): Observable<Blob> {
+    return this.http.get(`${this.api}/demandes/${demandeId}/fiche/convention-pdf`, { responseType: 'blob' });
+  }
 }

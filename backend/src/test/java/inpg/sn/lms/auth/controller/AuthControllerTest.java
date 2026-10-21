@@ -120,6 +120,7 @@ class AuthControllerTest {
     @DisplayName("La connexion renvoie le type d'inscription, même pour un compte sans rôle métier")
     void login_renvoie_le_type_inscription() {
         User ecole = compte("ecole_test", EnumTypeInscription.ECOLE);
+        when(loginAttemptService.autoriser("ecole_test@example.test")).thenReturn(true);
         when(userService.findByEmail("ecole_test@example.test")).thenReturn(ecole);
         when(jwtUtils.generateToken(ecole)).thenReturn("jeton");
 
@@ -152,6 +153,7 @@ class AuthControllerTest {
     @DisplayName("Un compte sans type d'inscription est traité comme un candidat, valeur par défaut de la colonne")
     void un_type_absent_vaut_candidat() {
         User ancien = compte("ancien_test", null);
+        when(loginAttemptService.autoriser("ancien_test@example.test")).thenReturn(true);
         when(userService.findByEmail("ancien_test@example.test")).thenReturn(ancien);
         when(jwtUtils.generateToken(ancien)).thenReturn("jeton");
 

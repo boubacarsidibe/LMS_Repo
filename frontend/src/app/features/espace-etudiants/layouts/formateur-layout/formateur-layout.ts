@@ -11,6 +11,7 @@ import { Etudiant } from '../../models/etudiant';
 import { Cours } from '../../models/cours';
 import { Support } from '../../models/support';
 import { LogoInpgComponent } from '../../../../shared/components/logo-inpg/logo-inpg.component';
+import { ClocheNotificationsService, NotificationCloche } from '../../../../shared/services/cloche-notifications.service';
 
 interface NavItem {
   label: string;
@@ -29,6 +30,7 @@ export class FormateurLayout implements OnInit {
   notificationOpen = false;
   profileOpen = false;
   sidebarMobileOpen = false;
+  notifications: NotificationCloche[] = [];
 
   searchQuery = '';
   searchOpen = false;
@@ -44,6 +46,7 @@ export class FormateurLayout implements OnInit {
     { label: 'Mes Cours & Ressources', icon: 'menu_book', route: 'mes-cours' },
     { label: 'Suivi Étudiants', icon: 'analytics', route: 'suivi-etudiants' },
     { label: 'Planning & Calendrier', icon: 'calendar_today', route: 'planning-calendrier' },
+    { label: 'Rendez-vous', icon: 'event', route: 'rendez-vous' },
     { label: 'Forum & Interaction', icon: 'forum', route: 'forum' },
     { label: 'Messagerie', icon: 'chat', route: 'messagerie' },
     { label: 'Retours & Évaluations', icon: 'assignment_turned_in', route: 'retours-evaluations' },
@@ -57,6 +60,7 @@ export class FormateurLayout implements OnInit {
     private etudiantService: EtudiantService,
     private coursService: CoursService,
     private supportService: SupportService,
+    private cloche: ClocheNotificationsService,
   ) {
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
@@ -69,6 +73,22 @@ export class FormateurLayout implements OnInit {
     this.etudiantService.getAll().subscribe({ next: (data) => (this.tousEtudiants = data), error: () => {} });
     this.coursService.getAll().subscribe({ next: (data) => (this.tousCours = data), error: () => {} });
     this.supportService.getMesSupports().subscribe({ next: (data) => (this.tousSupports = data), error: () => {} });
+    this.cloche.lister().subscribe({
+      next: (liste) => (this.notifications = (liste || []).filter((n) => !n.lu)),
+      error: () => {},
+    });
+  }
+
+  /** Ouvre la cible et marque la notification lue, sans quoi la cloche répète un événement traité. */
+  ouvrirNotification(notification: NotificationCloche): void {
+    this.cloche.marquerLue(notification.id).subscribe({
+      next: () => (this.notifications = this.notifications.filter((n) => n.id !== notification.id)),
+      error: () => {},
+    });
+    this.closeAll();
+    if (notification.lien) {
+      this.router.navigateByUrl(notification.lien);
+    }
   }
 
   onSearchInput(): void {

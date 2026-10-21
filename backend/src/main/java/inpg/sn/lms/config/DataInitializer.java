@@ -183,7 +183,7 @@ public class DataInitializer {
                 s1.setDateFermeture(LocalDate.of(2026, 9, 30));
                 s1.setEstOuverte(true);
                 s1.setQuotaMax(220);
-                s1.setStatus("OUVERT");
+                s1.setStatus("OUVERTE");
                 s1.setProgram(p1);
                 sessionRepository.save(s1);
 
@@ -193,7 +193,7 @@ public class DataInitializer {
                 s2.setDateFermeture(LocalDate.of(2027, 5, 30));
                 s2.setEstOuverte(true);
                 s2.setQuotaMax(150);
-                s2.setStatus("OUVERT");
+                s2.setStatus("OUVERTE");
                 s2.setProgram(p2);
                 sessionRepository.save(s2);
 
@@ -213,7 +213,7 @@ public class DataInitializer {
                 s4.setDateFermeture(LocalDate.of(2026, 3, 15));
                 s4.setEstOuverte(false);
                 s4.setQuotaMax(100);
-                s4.setStatus("CLOTURE");
+                s4.setStatus("CLOTUREE");
                 s4.setProgram(p4);
                 sessionRepository.save(s4);
 
@@ -562,14 +562,28 @@ public class DataInitializer {
 
     private void creerPhotoDemo(PhotoRepository photoRepository, AlbumPhotoRepository albumPhotoRepository,
             Path uploadPath, byte[] contenu, String titre, String nomFichier, Promotion promotion) throws IOException {
+        String cheminStocke = deposerPhotoDemo(uploadPath, nomFichier, contenu);
+        AlbumPhoto album = new AlbumPhoto(titre, null, promotion, LocalDate.now().minusDays(1));
+        album = albumPhotoRepository.save(album);
+        Photo photo = new Photo(album, cheminStocke, nomFichier, titre);
+        photoRepository.save(photo);
+    }
+
+    /**
+     * Dépose le fichier d'une photo de démonstration et renvoie le chemin à enregistrer en base.
+     *
+     * <p>{@code PhotoStorageService} résout {@code fichier_stocke} depuis la <strong>racine des dépôts</strong>
+     * (« uploads/ »), pas depuis « uploads/photos/ » : le chemin doit donc inclure le sous-dossier. La première
+     * version enregistrait le seul nom du fichier, qui n'existe nulle part à cet endroit — les trois photos de
+     * démonstration répondaient 404 et la photothèque n'affichait que le texte alternatif à la place des images.
+     */
+    static String deposerPhotoDemo(Path uploadPath, String nomFichier, byte[] contenu) throws IOException {
         Path cible = uploadPath.resolve("photos").resolve(nomFichier);
+        Files.createDirectories(cible.getParent());
         if (!Files.exists(cible)) {
             Files.write(cible, contenu);
         }
-        AlbumPhoto album = new AlbumPhoto(titre, null, promotion, LocalDate.now().minusDays(1));
-        album = albumPhotoRepository.save(album);
-        Photo photo = new Photo(album, nomFichier, nomFichier, titre);
-        photoRepository.save(photo);
+        return "photos/" + nomFichier;
     }
 
     private Certificat creerCertificatDemo(Etudiant etudiant, String intituleFormation, Promotion promotion, String formateurNom) {

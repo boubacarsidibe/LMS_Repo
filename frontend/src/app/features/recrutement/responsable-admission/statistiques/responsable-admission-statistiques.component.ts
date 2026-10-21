@@ -4,6 +4,13 @@ import { RouterModule } from '@angular/router';
 import { CandidatureResponse, RecrutementService } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import {
+  estAdmission,
+  estATraiter,
+  estEnEvaluation,
+  estRejete,
+  GROUPES_STATUTS,
+} from '../../../../core/recrutement/statuts-candidature';
 import { DashboardPreferences, DashboardPreferencesService } from '../services/dashboard-preferences.service';
 
 interface SegmentStatut {
@@ -53,18 +60,18 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
     return this.candidatures.length;
   }
 
+  /** Dossiers qui attendent la validation du responsable (SOUMIS, DOSSIER_VALIDE). */
   get validationEnCours(): number {
-    return this.candidatures.filter((c) => c.statut === 'SOUMIS').length;
+    return this.candidatures.filter((c) => estATraiter(c.statut)).length;
   }
 
+  /** Dossiers présélectionnés et en cours d'évaluation : paiement, test, entretien. */
   get preselectionnes(): number {
-    return this.candidatures.filter((c) =>
-      ['EN_COURS_DE_PRESELECTION', 'ADMIS1', 'ADMIS2'].includes(c.statut)
-    ).length;
+    return this.candidatures.filter((c) => estEnEvaluation(c.statut)).length;
   }
 
   get rejetes(): number {
-    return this.candidatures.filter((c) => c.statut === 'REJETE').length;
+    return this.candidatures.filter((c) => estRejete(c.statut)).length;
   }
 
   /** Dépôts reçus par mois pendant l'année en cours. */
@@ -95,30 +102,27 @@ export class ResponsableAdmissionStatistiquesComponent implements OnInit {
   /** Répartition réelle des candidatures par étape du workflow, pour le graphique en barres. */
   get repartitionStatuts(): SegmentStatut[] {
     const total = this.candidatures.length || 1;
-    const definitions: Array<{ statut: string; label: string; couleur: string }> = [
-      { statut: 'SOUMIS', label: 'Soumis', couleur: 'bg-surface-tint' },
-      { statut: 'EN_COURS_DE_PRESELECTION', label: 'En présélection', couleur: 'bg-secondary' },
-      { statut: 'ADMIS1', label: 'Admis au test', couleur: 'bg-primary' },
-      { statut: 'ADMIS2', label: "Admis à l'entretien", couleur: 'bg-primary-fixed-dim' },
-      { statut: 'ADMIS3', label: 'Admis final', couleur: 'bg-green-600' },
-      { statut: 'REJETE', label: 'Rejeté', couleur: 'bg-error' },
-    ];
-    return definitions.map((d) => {
-      const count = this.candidatures.filter((c) => c.statut === d.statut).length;
-      return { ...d, count, pourcentage: Math.round((count / total) * 100) };
+    // Une barre par étape du parcours (les onglets de la liste des candidatures) : vingt statuts seraient illisibles.
+    const couleurs: Record<string, string> = {
+      A_INSTRUIRE: 'bg-surface-tint', PRESELECTION: 'bg-secondary', TEST: 'bg-primary', ENTRETIEN: 'bg-primary-fixed-dim',
+      LISTE_ATTENTE: 'bg-blue-500', ADMIS: 'bg-green-600', REFUSES: 'bg-error',
+    };
+    return GROUPES_STATUTS.filter((g) => g.statuts !== null).map((g) => {
+      const count = this.candidatures.filter((c) => g.statuts!.includes(c.statut as never)).length;
+      return { statut: g.cle, label: g.libelle, couleur: couleurs[g.cle] ?? 'bg-surface-tint', count, pourcentage: Math.round((count / total) * 100) };
     });
   }
 
   /** Candidatures ayant reçu une décision finale (admises ou rejetées). */
   get candidaturesDecidees(): number {
-    return this.candidatures.filter((c) => c.statut === 'ADMIS3' || c.statut === 'REJETE').length;
+    return this.candidatures.filter((c) => estAdmission(c.statut) || estRejete(c.statut)).length;
   }
 
   /** Taux d'admission parmi les dossiers déjà tranchés (0 si aucune décision encore prise). */
   get tauxAdmission(): number {
     const decidees = this.candidaturesDecidees;
     if (decidees === 0) return 0;
-    const admis = this.candidatures.filter((c) => c.statut === 'ADMIS3').length;
+    const admis = this.candidatures.filter((c) => estAdmission(c.statut)).length;
     return Math.round((admis / decidees) * 100);
   }
 

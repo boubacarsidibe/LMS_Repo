@@ -46,4 +46,9 @@ export class AccreditationService {
   getEcolesAccreditees(): Observable<EcoleAccreditee[]> {
     return this.http.get<EcoleAccreditee[]>(`${this.api}/public/ecoles-accreditees`);
   }
+
+  /** PDF de l'attestation d'accréditation (le jeton passe par l'intercepteur). */
+  telechargerAttestationPdf(demandeId: number): Observable<Blob> {
+    return this.http.get(`${this.api}/ecole/demande/${demandeId}/attestation/pdf`, { responseType: 'blob' });
+  }
 }

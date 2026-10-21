@@ -14,7 +14,8 @@ public record EtudiantSuiviDto(
         Long id,
         String nom,
         String promotion,
-        String derniereConnexion,
+        /** Date du dernier support ouvert, ou « Aucune activité » : la connexion elle-même n'est pas tracée. */
+        String derniereActivite,
         int progression,
         Double noteMoyenne,
         String statut,

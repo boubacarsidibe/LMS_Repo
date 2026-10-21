@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UiSpinnerComponent } from '../../../../shared/components/ui/ui-spinner.component';
 import { UiEmptyStateComponent } from '../../../../shared/components/ui/ui-empty-state.component';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
 import {
   LIBELLES_TYPE_CONTRAT,
   OffreFormateur,
@@ -101,6 +102,7 @@ import { AdminRecrutementFormateurService } from '../../services/admin-recruteme
 })
 export class OffresAdminFormateursComponent implements OnInit {
   private service = inject(AdminRecrutementFormateurService);
+  private confirmation = inject(ConfirmationService);
 
   offres: OffreFormateur[] = [];
   chargement = true;
@@ -143,13 +145,20 @@ export class OffresAdminFormateursComponent implements OnInit {
   }
 
   supprimer(o: OffreFormateur): void {
-    if (!confirm(`Supprimer l'offre « ${o.intitule} » ?`)) {
-      return;
-    }
-    this.erreur = '';
-    this.service.supprimerOffre(o.id).subscribe({
-      next: () => (this.offres = this.offres.filter((x) => x.id !== o.id)),
-      error: (e) => (this.erreur = e?.error?.message || 'La suppression a échoué (offre avec candidatures ?).'),
+    this.confirmation.demander({
+      titre: "Supprimer l'offre",
+      message: `L'offre « ${o.intitule} » sera supprimée définitivement. Une offre qui a déjà reçu des candidatures ne peut pas l'être.`,
+      libelleConfirmer: "Supprimer l'offre",
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) {
+        return;
+      }
+      this.erreur = '';
+      this.service.supprimerOffre(o.id).subscribe({
+        next: () => (this.offres = this.offres.filter((x) => x.id !== o.id)),
+        error: (e) => (this.erreur = e?.error?.message || 'La suppression a échoué (offre avec candidatures ?).'),
+      });
     });
   }
 }

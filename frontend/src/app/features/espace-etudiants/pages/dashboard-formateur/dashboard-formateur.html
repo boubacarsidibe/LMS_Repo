@@ -2,7 +2,7 @@
   <section class="grid grid-cols-12 gap-gutter">
     <div class="col-span-12 lg:col-span-5 lg:pt-1">
       <span class="mb-2 block font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Bonjour,</span>
-      <h1 class="font-display text-display leading-none text-on-surface">{{ profile?.prenom || 'Formateur' }} <span aria-hidden="true">👋</span></h1>
+      <h1 class="font-display text-display leading-none text-on-surface">{{ profile?.prenom || 'Formateur' }}</h1>
       <p class="mt-3 max-w-xl font-body-lg text-body-lg text-on-surface-variant">Ravi de vous revoir ! Consultez vos cours, vos prochaines séances et l’activité de vos étudiants ci-dessous.</p>
     </div>
 
@@ -25,20 +25,20 @@
           <span class="material-symbols-outlined rounded-full bg-primary-container p-2 text-secondary">arrow_forward</span>
         </a>
         <a routerLink="/espace-etudiant/formateur/mes-cours" class="flex items-center justify-between rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-4 shadow-sm transition-colors hover:bg-surface-container-low">
-          <span class="flex items-center gap-4"><span class="material-symbols-outlined rounded-xl bg-secondary-container p-3 text-secondary">menu_book</span><span><span class="block font-label-md text-label-md text-on-surface-variant">Cours actifs</span><strong class="mt-1 block font-headline-md text-headline-md text-on-surface">{{ chargementCours ? '—' : mesCours.length }}</strong></span></span>
-          <span class="material-symbols-outlined rounded-full bg-secondary-container p-2 text-secondary">arrow_forward</span>
+          <span class="flex items-center gap-4"><span class="material-symbols-outlined rounded-xl bg-primary-container p-3 text-secondary">menu_book</span><span><span class="block font-label-md text-label-md text-on-surface-variant">Cours actifs</span><strong class="mt-1 block font-headline-md text-headline-md text-on-surface">{{ chargementCours ? '—' : mesCours.length }}</strong></span></span>
+          <span class="material-symbols-outlined rounded-full bg-primary-container p-2 text-secondary">arrow_forward</span>
         </a>
       </div>
 
       <section class="rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-stack-lg shadow-sm">
         <div class="flex items-center justify-between gap-3">
           <h2 class="font-headline-sm text-headline-sm text-primary"><span class="material-symbols-outlined mr-2 align-middle text-secondary">bar_chart</span>Analyse de la progression étudiante</h2>
-          <span class="hidden items-center gap-2 rounded-full bg-surface-container-low px-3 py-1 font-label-sm text-label-sm text-primary sm:inline-flex"><span class="h-2 w-2 rounded-full bg-secondary"></span>Suivi en temps réel</span>
         </div>
         <div class="mt-stack-lg grid grid-cols-1 items-center gap-stack-lg md:grid-cols-[14rem_1fr]">
-          <div class="flex min-h-44 flex-col items-center justify-center rounded-xl bg-surface-container-low text-center"><span class="material-symbols-outlined text-[38px] text-outline">bar_chart</span><p class="mt-3 font-label-md text-label-md text-on-surface-variant">Bientôt disponible</p></div>
+          <div class="flex min-h-44 flex-col items-center justify-center rounded-xl bg-surface-container-low text-center"><span class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Progression moyenne</span><span class="mt-2 font-display text-display text-primary">{{ chargementEtudiants ? '—' : progressionMoyenne }}<small class="font-headline-sm text-headline-sm">%</small></span></div>
           <div>
-            <p class="font-body-md text-body-md text-on-surface-variant">Le suivi de présence et de progression par cours arrive prochainement. En attendant, retrouvez la liste détaillée de vos étudiants.</p>
+            <p class="font-body-md text-body-md text-on-surface-variant">Part des supports de cours consultés par vos étudiants, tous cours confondus.
+              <ng-container *ngIf="!chargementEtudiants && etudiantsAAccompagner > 0"> <strong class="text-on-surface">{{ etudiantsAAccompagner }} étudiant(s)</strong> appellent un accompagnement : leur moyenne est sous le seuil de 60 sur 100.</ng-container></p>
             <a routerLink="/espace-etudiant/formateur/suivi-etudiants" class="mt-6 flex items-center justify-between rounded-xl bg-surface-container-low p-4 transition-colors hover:bg-surface-container">
               <span class="flex items-center gap-3"><span class="material-symbols-outlined text-secondary">group</span><span><strong class="block font-label-md text-label-md text-on-surface">{{ chargementEtudiants ? '—' : mesEtudiants.length }} étudiant(s) suivi(s)</strong><span class="font-body-sm text-body-sm text-on-surface-variant">Répartis sur {{ chargementCours ? '—' : mesCours.length }} cours.</span></span></span>
               <span class="font-label-md text-label-md text-secondary">Voir la liste <span class="material-symbols-outlined align-middle text-[18px]">arrow_forward</span></span>
@@ -56,7 +56,7 @@
         <div class="flex items-center gap-3 rounded-lg bg-surface-container-low px-4 py-3 font-label-md text-label-md text-on-surface"><span class="material-symbols-outlined text-secondary">link</span>Lien vers Ressource Externe</div>
         <div class="flex items-center gap-3 rounded-lg bg-surface-container-low px-4 py-3 font-label-md text-label-md text-on-surface"><span class="material-symbols-outlined text-secondary">videocam</span>Cours Vidéo / Diffusion</div>
       </div>
-      <a routerLink="/espace-etudiant/formateur/creer-ressource" class="mt-stack-lg flex w-full items-center justify-center gap-2 rounded-lg bg-secondary px-4 py-3 font-label-md text-label-md text-on-secondary transition-opacity hover:opacity-90"><span class="material-symbols-outlined">add_circle</span>Créer une nouvelle ressource</a>
+      <a routerLink="/espace-etudiant/formateur/creer-ressource" class="mt-stack-lg flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 font-label-md text-label-md text-on-primary transition-opacity hover:opacity-90"><span class="material-symbols-outlined">add_circle</span>Créer une nouvelle ressource</a>
     </section>
 
     <section class="col-span-12 flex min-h-[290px] flex-col rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-stack-lg shadow-sm lg:col-span-4">
@@ -74,8 +74,9 @@
     </section>
 
     <section class="col-span-12 flex min-h-[290px] flex-col rounded-xl border border-outline-variant/40 bg-surface-container-lowest p-stack-lg shadow-sm lg:col-span-4">
-      <div class="flex items-center justify-between"><h2 class="font-headline-sm text-headline-sm text-primary"><span class="material-symbols-outlined mr-2 align-middle text-secondary">rate_review</span>Retours Qualitatifs</h2><span class="rounded-full bg-tertiary-container px-3 py-1 font-label-sm text-label-sm text-on-tertiary-container">Bientôt disponible</span></div>
-      <div class="mt-stack-lg flex flex-1 flex-col items-center justify-center text-center"><span class="material-symbols-outlined text-[40px] text-primary-container">rate_review</span><p class="mt-3 max-w-xs font-body-sm text-body-sm text-on-surface-variant">La collecte des retours étudiants par cours arrive prochainement.</p></div>
+      <div class="flex items-center justify-between"><h2 class="font-headline-sm text-headline-sm text-primary"><span class="material-symbols-outlined mr-2 align-middle text-secondary">rate_review</span>Retours Qualitatifs</h2><span *ngIf="retoursAAgir > 0" class="rounded-full bg-error-container px-3 py-1 font-label-sm text-label-sm text-on-error-container">{{ retoursAAgir }} à traiter</span></div>
+      <div *ngIf="noteMoyenneRetours !== null; else aucunRetour" class="mt-stack-lg flex flex-1 flex-col items-center justify-center text-center"><span class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Note moyenne</span><span class="mt-2 font-display text-display text-primary">{{ noteMoyenneRetours }}<small class="font-headline-sm text-headline-sm"> / 5</small></span><p class="mt-2 font-body-sm text-body-sm text-on-surface-variant">{{ retours.length }} avis déposés par vos étudiants.</p></div>
+      <ng-template #aucunRetour><div class="mt-stack-lg flex flex-1 flex-col items-center justify-center text-center"><span class="material-symbols-outlined text-[40px] text-primary-container">rate_review</span><p class="mt-3 max-w-xs font-body-sm text-body-sm text-on-surface-variant">{{ chargementRetours ? 'Chargement…' : 'Aucun avis pour le moment : ils apparaîtront ici dès qu’un étudiant évaluera l’un de vos cours.' }}</p></div></ng-template>
       <a routerLink="/espace-etudiant/formateur/retours-evaluations" class="mt-stack-lg flex items-center justify-center gap-2 rounded-lg border border-outline-variant px-4 py-3 font-label-md text-label-md text-secondary hover:bg-surface-container-low"><span class="material-symbols-outlined">bar_chart</span>Voir tous les retours</a>
     </section>
   </section>

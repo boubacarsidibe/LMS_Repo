@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { ConfirmationService } from '../../../../../shared/components/ui/confirmation.service';
 import { CandidatureResponse, EntretienResponse, RecrutementService } from '../../../../../core/recrutement/services/recrutement.service';
 
 @Component({
@@ -17,7 +18,7 @@ export class EntretienDetailComponent implements OnInit {
   loading = true;
   error = '';
 
-  constructor(private route: ActivatedRoute, private router: Router, private service: RecrutementService) {}
+  constructor(private route: ActivatedRoute, private router: Router, private service: RecrutementService, private confirmation: ConfirmationService) {}
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -38,10 +39,18 @@ export class EntretienDetailComponent implements OnInit {
   }
 
   supprimer(): void {
-    if (!this.entretien || !confirm('Supprimer cet entretien et tous ses candidats ?')) return;
-    forkJoin(this.groupe.map((item) => this.service.supprimerEntretien(item.id))).subscribe({
-      next: () => this.router.navigate(['/responsable-admission/entretiens']),
-      error: () => this.error = 'La suppression du groupe a échoué.',
+    if (!this.entretien) return;
+    this.confirmation.demander({
+      titre: "Supprimer l'entretien",
+      message: 'Cet entretien et les convocations de tous ses candidats seront supprimés.',
+      libelleConfirmer: "Supprimer l'entretien",
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      forkJoin(this.groupe.map((item) => this.service.supprimerEntretien(item.id))).subscribe({
+        next: () => this.router.navigate(['/responsable-admission/entretiens']),
+        error: () => this.error = 'La suppression du groupe a échoué.',
+      });
     });
   }
 

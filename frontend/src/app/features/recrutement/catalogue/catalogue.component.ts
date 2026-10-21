@@ -35,6 +35,8 @@ export class CatalogueComponent implements OnInit {
   formations: FormationItem[] = [];
   chargement = true;
   erreur = '';
+  /** Formations dont l'image n'a pas pu être chargée : leur carte affiche le visuel de repli. */
+  readonly imagesEnErreur = new Set<number>();
 
   private readonly PAGE_STORAGE_KEY = 'catalogue_current_page';
   private contexteNavbar = inject(ContexteNavbarService);

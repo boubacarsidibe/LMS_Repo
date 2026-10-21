@@ -2,7 +2,8 @@ export interface Etudiant {
   id: number;
   nom: string;
   promotion: string;
-  derniereConnexion: string;
+  /** Date du dernier support ouvert, ou « Aucune activité » : la connexion elle-même n'est pas tracée. */
+  derniereActivite: string;
   progression: number;
   /** null tant qu'aucune note n'est saisie — a ne pas confondre avec un zero. */
   noteMoyenne: number | null;

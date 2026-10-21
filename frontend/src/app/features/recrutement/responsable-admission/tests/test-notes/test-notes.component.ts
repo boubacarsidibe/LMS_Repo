@@ -6,6 +6,7 @@ import {
   RecrutementService,
   TestAcademiqueResponse,
 } from '../../../../../core/recrutement/services/recrutement.service';
+import { ConfirmationService } from '../../../../../shared/components/ui/confirmation.service';
 
 interface LigneNote extends TestAcademiqueResponse {
   numeroDossierAffiche: string;
@@ -34,6 +35,7 @@ export class TestNotesComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private service: RecrutementService,
+    private confirmation: ConfirmationService,
   ) {}
 
   ngOnInit(): void {
@@ -129,8 +131,20 @@ export class TestNotesComponent implements OnInit {
   }
 
   annuler(): void {
-    if (this.modifie && !confirm('Annuler les modifications non enregistrees ?')) return;
-    this.lignes.forEach(ligne => ligne.noteObtenue = this.original.get(ligne.id) ?? null);
+    const revenir = () => this.lignes.forEach(ligne => ligne.noteObtenue = this.original.get(ligne.id) ?? null);
+    if (!this.modifie) {
+      revenir();
+      return;
+    }
+    this.confirmation.demander({
+      titre: 'Annuler les modifications',
+      message: 'Les notes saisies et non enregistrées seront perdues.',
+      libelleConfirmer: 'Annuler mes modifications',
+      libelleAnnuler: 'Continuer la saisie',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (confirme) revenir();
+    });
   }
 
   @HostListener('window:beforeunload', ['$event'])

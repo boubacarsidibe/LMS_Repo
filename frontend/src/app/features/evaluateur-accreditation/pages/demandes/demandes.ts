@@ -86,6 +86,15 @@ export class EvaluateurDemandesComponent implements OnInit {
 
   // Commentaires en cours d'édition dans la grille de critères (clé = critereId)
   grilleCommentaires: Record<number, string> = {};
+  /**
+   * Critères regroupés par section — CALCULÉ UNE FOIS par changement de dossier, jamais à chaque lecture.
+   *
+   * C'était un accesseur qui construisait de nouveaux tableaux et de nouveaux objets à chaque passage de détection de
+   * changements. Or le gabarit y boucle (`*ngFor`) autour de 31 champs `[(ngModel)]` : chaque passage détruisait et recréait
+   * tous les champs, dont l'écriture de valeur est asynchrone, ce qui relançait un passage… sans fin. Le navigateur se
+   * figeait dès l'ouverture d'un dossier en cours d'évaluation (« la page ne répond plus »).
+   */
+  sectionsGrille: SectionGrille[] = [];
 
   // Décision : bloc de confirmation avec une seule synthèse
   decisionCible: CibleDecision | null = null;
@@ -150,6 +159,7 @@ export class EvaluateurDemandesComponent implements OnInit {
       error: () => {
         this.selection = demande;
         this.chargementDetail = false;
+        this.hydraterGrille();
       },
     });
   }
@@ -237,14 +247,19 @@ export class EvaluateurDemandesComponent implements OnInit {
     for (const e of this.selection?.maGrille ?? []) {
       this.grilleCommentaires[e.critereId] = e.commentaire ?? '';
     }
+    this.sectionsGrille = this.calculerSectionsGrille();
   }
+
+  /** Identité stable d'une section / d'un critère pour `*ngFor` : les champs gardent leur saisie et leur focus. */
+  parNom = (_: number, s: SectionGrille): string => s.nom;
+  parId = (_: number, c: CritereAccreditation): number => c.id;
 
   appreciationDe(critereId: number): AppreciationCritere | null {
     return this.selection?.maGrille.find((e) => e.critereId === critereId)?.appreciation ?? null;
   }
 
   /** Critères actifs regroupés par section du référentiel, avec l'avancement de la grille. */
-  get sectionsGrille(): SectionGrille[] {
+  private calculerSectionsGrille(): SectionGrille[] {
     const jugees = new Set((this.selection?.maGrille ?? []).map((e) => e.critereId));
     const groupes = new Map<string, CritereAccreditation[]>();
     for (const c of this.selection?.criteresActifs ?? []) {

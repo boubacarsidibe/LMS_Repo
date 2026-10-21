@@ -75,10 +75,18 @@ n'existe plus nulle part — identique dans tous les espaces :
 `LogoInpgComponent` (`shared/components/logo-inpg/`) est l'unique source de l'image
 (`frontend/public/images/logo-inpg.png`, 640 × 174) et de son texte alternatif : ne pas recopier un `<img>`
 ailleurs, ni recomposer un logotype en texte. Le fichier est détouré (fond transparent) et le logo est bleu
-nuit : sur un fond sombre (panneau de connexion, pied de page), le poser dans une pastille blanche arrondie,
-sans quoi il disparaît. Le nom de l'espace (« Espace formateur », « Portail Admissions », « Espace
-pédagogique ») reste écrit **sous** le logo, en `font-label-sm`. Le même logo coiffe les PDF (voir §3, papier
-à en-tête).
+nuit : sur un fond sombre (pied de page…), le poser dans une pastille blanche arrondie, sans quoi il
+disparaît — **ou, mieux, utiliser la variante blanche** (`<app-logo-inpg blanc hauteur="h-14">`,
+`frontend/public/images/logo-inpg-blanc.png`, 640 × 167, fourni par l'INPG puis rogné de ses marges
+transparentes).
+
+**Layout de connexion/inscription (`auth-layout`), décision du 2026-10-19** : le **logo blanc** coiffe le
+panneau sombre (`SidebarAuth`), en haut à gauche de la carte, et le texte « INPG LMS » a été **supprimé** de la
+partie blanche — il avait remplacé, le 2026-09-25, le logo du panneau ; c'est désormais l'inverse. Sous `md`, le
+panneau sombre est masqué : le logo **en couleur** prend alors le relais au-dessus du formulaire
+(`md:hidden`), pour qu'un écran de connexion mobile ne soit pas sans identité. Le nom de l'espace (« Espace
+formateur », « Portail Admissions », « Espace pédagogique ») reste écrit **sous** le logo, en `font-label-sm`.
+Le même logo coiffe les PDF (voir §3, papier à en-tête).
 
 ### Contraste : le piège des jetons jumeaux
 
@@ -261,8 +269,21 @@ sudo /usr/local/share/docker-init.sh true &    # si le démon Docker est tombé
 
 `docker compose up -d --build backend` recrée le conteneur : toute variable passée en ligne de commande
 (ex. `APP_CORS_ORIGINS` pour un tunnel Cloudflare, dont l'URL change à chaque lancement) est perdue et doit
-être repassée. Les redémarrages du Codespace arrêtent Postgres sans arrêt propre : les écritures récentes
-peuvent être perdues.
+être repassée. **Ce n'est pas propre à `backend`** : `docker compose up -d frontend` seul (par exemple après
+un vidage de cache, ci-dessus) recrée aussi `demo-backend` en silence dès que sa config effective a dérivé
+de celle appliquée en dernier — même symptôme, même remède (repasser `APP_CORS_ORIGINS`). Vérifier après coup
+(`docker inspect demo-backend --format '{{json .Config.Env}}' | grep -i cors`) plutôt que de le supposer
+intact. Les redémarrages du Codespace arrêtent Postgres sans arrêt propre : les écritures récentes peuvent
+être perdues.
+
+### 504 « Outdated Optimize Dep » sur le frontend : même piège de cache, un autre symptôme
+
+Vidage de `.angular/cache` déjà documenté ci-dessus pour un module qui ne se met pas à jour — mais le même
+cache périmé peut aussi produire une page blanche avec des erreurs console `Failed to load resource: 504
+(Outdated Optimize Dep)` (dépendances pré-empaquetées par le serveur de dev, invalidées par un rebuild mais
+pas rechargées). Symptôme constaté après un simple redémarrage de conteneur, sans rien changer côté source.
+Même remède : `docker compose stop frontend && rm -rf frontend/.angular/cache frontend/dist && docker compose
+up -d frontend` (reconstruction à froid, ~90 s).
 
 ---
 
@@ -433,7 +454,7 @@ Mot de passe commun aux comptes de recette : `Test@2026`.
 | Candidat (sans dossier) | `test.candidat@inpg.sn` |
 | Candidat (avec dossier) | `test.candidat2@inpg.sn` |
 | Étudiant | `test.etudiant@inpg.sn` |
-| Formateur *(sans cours — cobaye de cloisonnement)* | `test.formateur@inpg.sn` |
+| Formateur | `test.formateur@inpg.sn` |
 | Responsable admission | `test.admission@inpg.sn` |
 | Responsable pédagogique | `test.pedago@inpg.sn` |
 | Alumni | `test.alumni@inpg.sn` |
@@ -442,6 +463,19 @@ Mot de passe commun aux comptes de recette : `Test@2026`.
 
 Pour une démonstration, préférer **`prof.demo@inpg.sn` / `Demo@2026`** : trois cours,
 six supports, seize notes. Les étudiants de démonstration utilisent `Etudiant@2026`.
+
+**`test.formateur@inpg.sn` n'est plus « sans cours ».** Constaté le 2026-09-28 en
+cherchant un formateur exclu d'un cours donné pour vérifier un cloisonnement : la table
+`cours_formateur` montre qu'il enseigne désormais `GEO-101`. Plus largement, à cette
+date, **aucun** formateur de la base n'est exclu d'aucun cours — `prof.demo@inpg.sn`
+enseigne la totalité des cours existants. Un test de cloisonnement formateur ne peut
+donc plus s'appuyer sur un compte présumé « sans cours » : vérifier `cours_formateur`
+avant de choisir un compte, ou passer par un étudiant d'une autre promotion pour le
+même genre de vérification. Les cours de la maquette `DEMO-DS`/`DEMO-FIN`/`DEMO-PROC`
+souffrent par ailleurs du même genre de maillon rompu déjà documenté plus haut pour
+`MPG-2026` (§3) : ils apparaissent dans `GET /api/espace-etudiant/cours` pour
+`test.etudiant@inpg.sn` mais `HabilitationCoursService.estAutorise` les refuse (403) —
+non instruit plus avant, sans rapport avec la tâche qui l'a fait découvrir.
 
 Scripts hors Flyway, relançables sans risque (`backend/db/`) :
 
@@ -465,3 +499,39 @@ Restaurer les données après tout essai destructif, et cibler les `DELETE` par 
 `WHERE` — la base sert aux démonstrations client.
 
 Réponses en français, chaque terme technique expliqué brièvement.
+
+---
+
+## 6. Pièges découverts pendant les vidéos de présentation (2026-10-19/20)
+
+Les vidéos (`videos-presentation/`, voir son README) ont servi de recette : jouer chaque parcours dans un vrai navigateur a révélé
+des défauts que ni la lecture du code ni les tests unitaires ne voyaient. À ne pas redécouvrir :
+
+- **Spring Boot 4 = Jackson 3 (`tools.jackson`)**, mais le code importe encore des types Jackson 2 (`com.fasterxml…`).
+  (1) Un `JsonNode` Jackson 2 dans un DTO est sérialisé comme un objet Java (`"containerNode": true…`) : les fiches de formation
+  publiques arrivaient vides. Mettre des `Map`/`List` dans les DTO (voir `FormationDetailPubliqueDto`).
+  (2) Jackson 3 refuse un champ **primitif absent** du corps (`boolean pourMaPromotion`) : HTTP 400 « Failed to read request ».
+  Corrigé globalement par `spring.jackson.deserialization.fail-on-null-for-primitives=false` ; `JacksonChampsAbsentsTest` le fige.
+- **Locale Angular** : sans `registerLocaleData(fr)` + `LOCALE_ID`, tous les `| date` sortent en anglais (« Saturday 24 October »).
+  Fait dans `app.config.ts` ; `app.config.spec.ts` le fige.
+- **Pas de `confirm()` / `prompt()` natifs** : `ConfirmationService` (`demander`, `demanderSaisie`). Une boîte native n'apparaît ni
+  dans un partage d'écran ni dans un enregistrement (et vaut `false`/`null` dans un visualiseur sandboxé).
+- **Un accesseur (`get x()`) qui construit de nouveaux tableaux/objets ne doit jamais alimenter un `*ngFor` contenant des
+  `[(ngModel)]`** : chaque passage de détection recrée les champs, dont l'écriture asynchrone relance un passage — le navigateur se
+  fige (« la page ne répond plus »). Mémoïser à chaque changement de données + `trackBy` (cas réel : grille de l'évaluateur,
+  `demandes.ts`). Un gel ne se signale pas : une boucle de micro-tâches empêche même le délai d'expiration d'un test de se
+  déclencher — tester la cause (identité stable), pas le symptôme.
+- **Valeurs d'énumération** (`@Enumerated(STRING)`) dans les jeux de données : une seule valeur inconnue fait échouer TOUTE la requête
+  de lecture (HTTP 500 / 400). Les recopier des énumérations Java, jamais de mémoire (« Langue maternelle » ≠ `LANGUE_MATERNELLE`).
+- **Contrat front/back : vérifier la clé du JSON, pas le commentaire** : le formulaire d'annonce envoyait `cohorteIds`, le serveur
+  n'attendait que `promotionId` — le choix des destinataires était ignoré en silence.
+- **Suivi des étudiants** : la progression et la « dernière activité » viennent de `ActiviteEtudiantService` (même règle que
+  l'espace étudiant). La plateforme ne trace PAS les connexions : ne jamais réafficher une « dernière connexion ».
+- **Échelles** : notes de cours sur 100 (équivalent /20 affiché), épreuves d'admission sur 20 — toujours afficher l'échelle.
+
+### Outil de production vidéo (`videos-presentation/`)
+
+`./preparer-donnees.sh` (jeux SQL + fichiers + objets signés créés par l'API réelle + instantané) puis `./produire.sh <scénario>`
+(restaure l'instantané, filme, monte). `--essai --captures` répète sans voix ni image et dépose une capture par étape : à utiliser
+avant toute prise. **Attendre la fin de la recompilation du serveur de dev après une modification du frontend** (sinon des étapes
+échouent « au hasard »). Les certificats et attestations sont signés par le service : ne pas les fabriquer en SQL.

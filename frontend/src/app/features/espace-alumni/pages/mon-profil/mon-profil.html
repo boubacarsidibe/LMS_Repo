@@ -21,7 +21,7 @@
           <span class="font-label-sm text-label-sm uppercase tracking-wider">Diplômé(e) depuis</span>
         </div>
         <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">
-          {{ metriques.anneesDepuisDiplome }} an{{ metriques.anneesDepuisDiplome > 1 ? 's' : '' }}
+          {{ metriques.anneesDepuisDiplome < 1 ? "Moins d'un an" : metriques.anneesDepuisDiplome + ' an' + (metriques.anneesDepuisDiplome > 1 ? 's' : '') }}
         </p>
         <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">{{ metriques.promotionLibelle || '—' }}</p>
       </article>
@@ -30,11 +30,13 @@
           <span class="material-symbols-outlined">star_rate</span>
           <span class="font-label-sm text-label-sm uppercase tracking-wider">Moyenne au diplôme</span>
         </div>
+        <!-- La valeur et son échelle ne doivent pas se couper sur quatre lignes dans une tuile étroite : le chiffre
+             seul est en grand, « / 100 » et l'équivalent sur 20 passent dessous. -->
         <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">
-          {{ metriques.moyenneGeneraleDernierReleve !== null ? (metriques.moyenneGeneraleDernierReleve | number: '1.1-1') + ' / 20' : '—' }}
+          {{ metriques.moyenneGeneraleDernierReleve !== null ? (metriques.moyenneGeneraleDernierReleve | number: '1.1-1') : '—' }}<span *ngIf="metriques.moyenneGeneraleDernierReleve !== null" class="font-body-md text-body-md text-on-surface-variant"> / 100</span>
         </p>
         <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
-          {{ metriques.nombreRelevesDelivres }} relevé{{ metriques.nombreRelevesDelivres > 1 ? 's' : '' }} délivré{{ metriques.nombreRelevesDelivres > 1 ? 's' : '' }}
+          <ng-container *ngIf="metriques.moyenneGeneraleDernierReleve !== null">soit {{ metriques.moyenneGeneraleDernierReleve / 5 | number: '1.1-1' }} / 20 · </ng-container>{{ metriques.nombreRelevesDelivres }} relevé{{ metriques.nombreRelevesDelivres > 1 ? 's' : '' }} délivré{{ metriques.nombreRelevesDelivres > 1 ? 's' : '' }}
         </p>
       </article>
       <article class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-stack-lg">

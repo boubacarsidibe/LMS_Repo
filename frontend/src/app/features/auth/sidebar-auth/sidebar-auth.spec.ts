@@ -20,4 +20,12 @@ describe('SidebarAuth', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('porte le logo blanc de l\'INPG en en-tête : le bleu nuit du panneau ne laisse pas voir la version couleur', () => {
+    fixture.detectChanges();
+    const logo = (fixture.nativeElement as HTMLElement).querySelector('app-logo-inpg img') as HTMLImageElement;
+
+    expect(logo).not.toBeNull();
+    expect(logo.getAttribute('src')).toBe('/images/logo-inpg-blanc.png');
+  });
 });

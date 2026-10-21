@@ -13,6 +13,8 @@ import {
 } from '../../../../core/recrutement/services/recrutement.service';
 import { downloadBlob } from '../../../../shared/utils/download-file';
 import { NotificationService } from '../../../../shared/components/ui/notification.service';
+import { ConfirmationService } from '../../../../shared/components/ui/confirmation.service';
+import { STATUTS_CONVOCABLES_A_L_ENTRETIEN } from '../../../../core/recrutement/statuts-candidature';
 import { ReportButtonComponent } from '../../../../shared/components/report-button/report-button.component';
 
 interface EntretienAffiche extends EntretienResponse {
@@ -51,7 +53,7 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
   convocationFormError = '';
 
   constructor(private recrutementService: RecrutementService, private fb: FormBuilder, private router: Router,
-              private notifications: NotificationService) {
+              private notifications: NotificationService, private confirmation: ConfirmationService) {
     this.entretienForm = this.fb.group({
       candidatId: ['', Validators.required],
       dateHeure: ['', Validators.required],
@@ -129,9 +131,9 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
     });
   }
 
-  /** Candidats admis à l'entretien (ADMIS2), éligibles pour une planification. */
+  /** Candidats admis à l'entretien (CONVOQUE_ENTRETIEN — l'ancien ADMIS2), éligibles pour une planification. */
   get candidatsEligibles(): CandidatureResponse[] {
-    return this.candidatures.filter((c) => c.statut === 'ADMIS2');
+    return this.candidatures.filter((c) => (STATUTS_CONVOCABLES_A_L_ENTRETIEN as readonly string[]).includes(c.statut));
   }
 
   get totalEntretiens(): number {
@@ -226,10 +228,17 @@ export class ResponsableAdmissionEntretiensComponent implements OnInit {
   }
 
   supprimer(entretien: EntretienResponse): void {
-    if (!confirm("Supprimer cet entretien ?")) return;
-    this.recrutementService.supprimerEntretien(entretien.id).subscribe({
-      next: () => this.charger(),
-      error: () => this.notifications.erreur("Échec de l'annulation de l'entretien."),
+    this.confirmation.demander({
+      titre: "Supprimer l'entretien",
+      message: `L'entretien de ${entretien.candidatPrenom} ${entretien.candidatNom} sera supprimé.`,
+      libelleConfirmer: 'Supprimer',
+      destructif: true,
+    }).subscribe((confirme) => {
+      if (!confirme) return;
+      this.recrutementService.supprimerEntretien(entretien.id).subscribe({
+        next: () => this.charger(),
+        error: () => this.notifications.erreur("Échec de l'annulation de l'entretien."),
+      });
     });
   }
 

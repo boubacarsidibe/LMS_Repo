@@ -29,6 +29,8 @@ interface ActiviteItem {
 })
 export class ProfilEtudiant implements OnInit {
   etudiant: Etudiant | undefined;
+  /** Vrai tant que la fiche est demandée à l'API : sans lui, « Étudiant introuvable » s'affichait pendant l'attente. */
+  chargementEtudiant = false;
   isSaving = false;
   errorMessage = '';
 
@@ -81,9 +83,10 @@ export class ProfilEtudiant implements OnInit {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
       this.etudiantId = id;
+      this.chargementEtudiant = true;
       this.etudiantService.getById(id).subscribe({
-        next: e => this.etudiant = e,
-        error: () => this.etudiant = undefined
+        next: e => { this.etudiant = e; this.chargementEtudiant = false; },
+        error: () => { this.etudiant = undefined; this.chargementEtudiant = false; }
       });
       this.coursService.getAll().subscribe({
         next: list => this.mesCours = list,

@@ -1,7 +1,11 @@
 package inpg.sn.lms.espace_etudiant.controller;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +31,7 @@ import inpg.sn.lms.espace_etudiant.enums.EnumTypeAnnonce;
 import inpg.sn.lms.espace_etudiant.repository.AnnonceLectureRepository;
 import inpg.sn.lms.espace_etudiant.repository.AnnonceRepository;
 import inpg.sn.lms.espace_etudiant.repository.PromotionRepository;
+import inpg.sn.lms.espace_etudiant.service.PerimetreFormateurService;
 import inpg.sn.lms.espace_etudiant.service.UtilisateurCourantService;
 
 /**
@@ -55,13 +60,16 @@ public class AnnonceController {
     private final AnnonceLectureRepository lectureRepository;
     private final PromotionRepository promotionRepository;
     private final UtilisateurCourantService utilisateurCourant;
+    private final PerimetreFormateurService perimetreFormateur;
 
     public AnnonceController(AnnonceRepository annonceRepository, AnnonceLectureRepository lectureRepository,
-            PromotionRepository promotionRepository, UtilisateurCourantService utilisateurCourant) {
+            PromotionRepository promotionRepository, UtilisateurCourantService utilisateurCourant,
+            PerimetreFormateurService perimetreFormateur) {
         this.annonceRepository = annonceRepository;
         this.lectureRepository = lectureRepository;
         this.promotionRepository = promotionRepository;
         this.utilisateurCourant = utilisateurCourant;
+        this.perimetreFormateur = perimetreFormateur;
     }
 
     /** Fil des communications visibles par le connecté, épinglées en tête. */
@@ -147,22 +155,49 @@ public class AnnonceController {
         if (estVide(request.titre()) || estVide(request.contenu())) {
             return ResponseEntity.badRequest().body(Map.of("message", "Le titre et le contenu sont obligatoires."));
         }
-        Promotion promotion = null;
+        // Destinataires : aucune promotion = tout l'institut ; sinon une annonce par promotion désignée.
+        Set<Long> cibles = new LinkedHashSet<>();
         if (request.promotionId() != null) {
-            promotion = promotionRepository.findById(request.promotionId()).orElse(null);
-            if (promotion == null) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Promotion introuvable."));
+            cibles.add(request.promotionId());
+        }
+        if (request.cohorteIds() != null) {
+            request.cohorteIds().stream().filter(Objects::nonNull).forEach(cibles::add);
+        }
+        // Tout est contrôlé AVANT d'écrire quoi que ce soit : renvoyer une réponse d'erreur n'annule pas une
+        // transaction, une annonce déjà enregistrée pour la première promotion y resterait.
+        List<Promotion> promotions = new ArrayList<>();
+        if (!cibles.isEmpty()) {
+            List<Long> autorisees = perimetreFormateur.cohorteIdsVisiblesPour(auteur);
+            for (Long id : cibles) {
+                Promotion promotion = promotionRepository.findById(id).orElse(null);
+                if (promotion == null) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Promotion introuvable."));
+                }
+                if (!autorisees.contains(id)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message",
+                            "Vous ne pouvez publier que dans les promotions dont vous enseignez un cours."));
+                }
+                promotions.add(promotion);
             }
         }
-        Annonce annonce = new Annonce(
-                request.titre().trim(),
-                request.contenu().trim(),
-                request.type() == null ? EnumTypeAnnonce.ANNONCE : request.type(),
-                auteur,
-                promotion);
-        annonce.setEpinglee(Boolean.TRUE.equals(request.epinglee()));
-        annonce = annonceRepository.save(annonce);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toDto(annonce, false));
+        EnumTypeAnnonce type = request.type() == null ? EnumTypeAnnonce.ANNONCE : request.type();
+        boolean epinglee = Boolean.TRUE.equals(request.epinglee());
+        List<AnnonceDto> publiees = new ArrayList<>();
+        if (promotions.isEmpty()) {
+            publiees.add(toDto(enregistrer(request, type, auteur, null, epinglee), false));
+        } else {
+            for (Promotion promotion : promotions) {
+                publiees.add(toDto(enregistrer(request, type, auteur, promotion, epinglee), false));
+            }
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(publiees);
+    }
+
+    private Annonce enregistrer(AnnonceCreateRequest request, EnumTypeAnnonce type, User auteur, Promotion promotion,
+            boolean epinglee) {
+        Annonce annonce = new Annonce(request.titre().trim(), request.contenu().trim(), type, auteur, promotion);
+        annonce.setEpinglee(epinglee);
+        return annonceRepository.save(annonce);
     }
 
     /** Retrait d'une communication, réservé à son auteur. */

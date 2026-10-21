@@ -2,10 +2,12 @@ package inpg.sn.lms.espace_etudiant.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +15,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -27,6 +31,7 @@ import inpg.sn.lms.auth.repository.EtudiantRepository;
 import inpg.sn.lms.auth.repository.FormateurRepository;
 import inpg.sn.lms.auth.repository.UserRepository;
 import inpg.sn.lms.espace_etudiant.entity.Cours;
+import inpg.sn.lms.espace_etudiant.entity.ForumMessage;
 import inpg.sn.lms.espace_etudiant.entity.ForumSujet;
 import inpg.sn.lms.espace_etudiant.repository.ForumMessageRepository;
 import inpg.sn.lms.espace_etudiant.repository.ForumSujetRepository;
@@ -110,17 +115,20 @@ class EspaceEtudiantForumModerationTest {
                 forumSujetRepository, forumMessageRepository, certificatService, certificatPdfService,
                 notificationService, retourEvaluationService, perimetreFormateurService, noteModuleService,
                 releveNotesService, presenceService, seanceService, supportCoursStorageService, forumVisibilite,
-                "uploads");
+                org.mockito.Mockito.mock(inpg.sn.lms.espace_etudiant.service.ActiviteEtudiantService.class), "uploads");
 
         user = new User();
         user.setId(12L);
         user.setUsername("awa_diallo");
         authentication = new UsernamePasswordAuthenticationToken("awa_diallo", "n/a", List.of());
-        when(userRepository.findByUsername("awa_diallo")).thenReturn(user);
+        // lenient : les tests de téléchargement de pièce jointe résolvent le sujet via
+        // message.getSujet(), sans passer ni par userRepository ni par forumSujetRepository —
+        // un stub strict échouerait pour eux faute d'être consommé.
+        lenient().when(userRepository.findByUsername("awa_diallo")).thenReturn(user);
 
         sujet = new ForumSujet("Titre", (Cours) null, user);
         sujet.setId(7L);
-        when(forumSujetRepository.findById(7L)).thenReturn(Optional.of(sujet));
+        lenient().when(forumSujetRepository.findById(7L)).thenReturn(Optional.of(sujet));
     }
 
     @Test
@@ -197,5 +205,61 @@ class EspaceEtudiantForumModerationTest {
 
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         verify(forumSujetRepository).deleteById(7L);
+    }
+
+    // ===================== Pièce jointe =====================
+
+    @Test
+    @DisplayName("Répondre avec une pièce jointe valide : les trois informations sont enregistrées")
+    void repondre_avec_piece_jointe_valide_enregistre_les_trois_informations(@TempDir Path repertoireTemp) {
+        controller = new EspaceEtudiantController(userRepository, etudiantRepository, formateurRepository,
+                formationService, coursService, promotionService, supportService,
+                forumSujetRepository, forumMessageRepository, certificatService, certificatPdfService,
+                notificationService, retourEvaluationService, perimetreFormateurService, noteModuleService,
+                releveNotesService, presenceService, seanceService, supportCoursStorageService, forumVisibilite,
+                org.mockito.Mockito.mock(inpg.sn.lms.espace_etudiant.service.ActiviteEtudiantService.class), repertoireTemp.toString());
+        when(forumVisibilite.estVisible(sujet, authentication)).thenReturn(true);
+        when(forumMessageRepository.findBySujetIdOrderByDateCreationAsc(7L)).thenReturn(List.of());
+        MockMultipartFile fichier = new MockMultipartFile("fichier", "correction.pdf", "application/pdf", "contenu".getBytes());
+
+        ResponseEntity<?> reponse = controller.repondreAuSujet(7L, "Bonjour", false, fichier, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        ArgumentCaptor<ForumMessage> capture = ArgumentCaptor.forClass(ForumMessage.class);
+        verify(forumMessageRepository).save(capture.capture());
+        assertThat(capture.getValue().getPieceJointeNomOriginal()).isEqualTo("correction.pdf");
+        assertThat(capture.getValue().getPieceJointeNomStocke()).endsWith("-correction.pdf");
+        assertThat(capture.getValue().getPieceJointeTypeContenu()).isEqualTo("application/pdf");
+    }
+
+    /**
+     * Régression du correctif du 2026-09-28 : cet endpoint ne vérifiait auparavant que
+     * l'existence du message, jamais la visibilité de son sujet — n'importe quel
+     * étudiant ou formateur authentifié pouvait donc télécharger la pièce jointe d'un
+     * cours auquel il n'avait pas accès en devinant un identifiant de message.
+     */
+    @Test
+    @DisplayName("Télécharger la pièce jointe d'un message d'un sujet non visible : introuvable")
+    void telecharger_piece_jointe_d_un_sujet_non_visible_est_refuse() {
+        ForumMessage message = new ForumMessage(sujet, user, "Bonjour");
+        message.setPieceJointeNomOriginal("correction.pdf");
+        message.setPieceJointeNomStocke("abc-correction.pdf");
+        when(forumMessageRepository.findById(99L)).thenReturn(Optional.of(message));
+        when(forumVisibilite.estVisible(sujet, authentication)).thenReturn(false);
+
+        ResponseEntity<?> reponse = controller.downloadMessageAttachment(99L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("Télécharger la pièce jointe d'un message sans pièce jointe : introuvable")
+    void telecharger_piece_jointe_absente_est_introuvable() {
+        ForumMessage message = new ForumMessage(sujet, user, "Sans pièce jointe");
+        when(forumMessageRepository.findById(99L)).thenReturn(Optional.of(message));
+
+        ResponseEntity<?> reponse = controller.downloadMessageAttachment(99L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }

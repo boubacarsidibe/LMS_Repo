@@ -92,6 +92,24 @@ class PaiementServiceRelanceTest {
         assertThat(resultat.get("envoyes")).isEqualTo(0);
     }
 
+    /**
+     * Seuls les dossiers qui attendent encore un règlement sont relancés. Un dossier déjà
+     * convoqué au test ou à l'entretien a, par construction du parcours, passé l'étape du
+     * paiement : lui écrire « vos frais sont en attente » serait faux.
+     */
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(value = EnumStatutCandidature.class,
+            names = {"PAIEMENT_CONFIRME", "CONVOQUE_TEST", "CONVOQUE_ENTRETIEN", "ADMIS"})
+    void un_dossier_deja_passe_au_dela_du_paiement_nest_pas_relance(EnumStatutCandidature statut) {
+        when(candidatureRepository.findAll()).thenReturn(
+                List.of(candidature(1L, statut, null, "a@example.sn")));
+
+        Map<String, Object> resultat = paiementService.relancerImpayes();
+
+        assertThat(resultat.get("envoyes")).isEqualTo(0);
+        verify(notificationService, never()).notifierRappelPaiement(anyString(), anyString());
+    }
+
     @Test
     void un_dossier_deja_paye_nest_pas_relance() {
         when(candidatureRepository.findAll()).thenReturn(List.of(
@@ -117,9 +135,9 @@ class PaiementServiceRelanceTest {
     }
 
     @Test
-    void un_dossier_admis_avec_paiement_en_echec_est_relance() {
+    void un_dossier_preselectionne_avec_paiement_en_echec_est_relance() {
         when(candidatureRepository.findAll()).thenReturn(List.of(
-                candidature(2L, EnumStatutCandidature.CONVOQUE_ENTRETIEN, paiement(EnumStatutPaiement.ECHEC), "b@example.sn")));
+                candidature(2L, EnumStatutCandidature.PRESELECTIONNE, paiement(EnumStatutPaiement.ECHEC), "b@example.sn")));
 
         Map<String, Object> resultat = paiementService.relancerImpayes();
 
@@ -130,7 +148,7 @@ class PaiementServiceRelanceTest {
     @Test
     void un_candidat_sans_adresse_email_est_compte_en_echec_pas_en_exception() {
         when(candidatureRepository.findAll()).thenReturn(
-                List.of(candidature(3L, EnumStatutCandidature.ADMIS, null, null)));
+                List.of(candidature(3L, EnumStatutCandidature.PRESELECTIONNE, null, null)));
 
         Map<String, Object> resultat = paiementService.relancerImpayes();
 
@@ -145,7 +163,7 @@ class PaiementServiceRelanceTest {
     void plusieurs_dossiers_eligibles_sont_tous_relances() {
         when(candidatureRepository.findAll()).thenReturn(List.of(
                 candidature(1L, EnumStatutCandidature.PRESELECTIONNE, null, "a@example.sn"),
-                candidature(2L, EnumStatutCandidature.CONVOQUE_TEST, paiement(EnumStatutPaiement.EN_ATTENTE), "b@example.sn"),
+                candidature(2L, EnumStatutCandidature.PAIEMENT_EN_ATTENTE, paiement(EnumStatutPaiement.EN_ATTENTE), "b@example.sn"),
                 candidature(3L, EnumStatutCandidature.ADMIS, paiement(EnumStatutPaiement.SUCCES), "c@example.sn"),
                 candidature(4L, EnumStatutCandidature.SOUMIS, null, "d@example.sn")));
 

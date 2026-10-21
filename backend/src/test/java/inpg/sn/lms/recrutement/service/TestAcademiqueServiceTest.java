@@ -47,6 +47,7 @@ class TestAcademiqueServiceTest {
     @Mock private CandidatureRepository candidatureRepository;
     @Mock private NotificationService notificationService;
     @Mock private NotificationCandidatService notificationCandidatService;
+    @Mock private ProgressionDossierService progressionDossierService;
 
     @InjectMocks private TestAcademiqueService service;
 

@@ -10,6 +10,7 @@ import {
   TestAcademiqueRequest,
   TestAcademiqueResponse,
 } from '../../../../../core/recrutement/services/recrutement.service';
+import { STATUTS_CONVOCABLES_AU_TEST } from '../../../../../core/recrutement/statuts-candidature';
 
 /** Création groupée ou correction d'une épreuve déjà planifiée. */
 @Component({
@@ -73,7 +74,7 @@ export class TestFormComponent implements OnInit {
 
   get candidatsEligibles(): CandidatureResponse[] {
     const sessionId = Number(this.testForm.getRawValue().sessionId);
-    return this.candidatures.filter((c) => c.statut === 'ADMIS1' && c.sessionCandidatureId === sessionId);
+    return this.candidatures.filter((c) => (STATUTS_CONVOCABLES_AU_TEST as readonly string[]).includes(c.statut) && c.sessionCandidatureId === sessionId);
   }
   get sessionAffichee(): string | null { return this.test?.sessionCandidatureLibelle ?? null; }
   get candidatAffiche(): string {

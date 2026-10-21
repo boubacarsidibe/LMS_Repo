@@ -46,8 +46,13 @@ import { ScolariteService } from '../../services/scolarite.service';
             </div>
             <p class="font-headline-lg text-headline-lg text-on-surface mt-2 tabular-nums">
               {{ releve?.moyenneGenerale !== null && releve?.moyenneGenerale !== undefined
-                  ? (releve!.moyenneGenerale | number: '1.1-1') + ' / 20'
+                  ? (releve!.moyenneGenerale | number: '1.1-1') + ' / 100'
                   : '—' }}
+              <span
+                *ngIf="releve?.moyenneGenerale !== null && releve?.moyenneGenerale !== undefined"
+                class="font-body-md text-body-md text-on-surface-variant"
+                >({{ releve!.moyenneGenerale! / 5 | number: '1.1-1' }} / 20)</span
+              >
             </p>
             <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
               Pondérée par le coefficient de chaque cours, et non par le nombre de devoirs.
@@ -109,7 +114,11 @@ import { ScolariteService } from '../../services/scolarite.service';
               <div class="text-right shrink-0">
                 <p class="font-label-sm text-label-sm text-on-surface-variant">Moyenne</p>
                 <p class="font-headline-sm text-headline-sm text-secondary tabular-nums">
-                  {{ cours.moyenne !== null ? (cours.moyenne | number: '1.1-1') : '—' }}
+                  {{ cours.moyenne !== null ? (cours.moyenne | number: '1.1-1') : '—' }}<span
+                    *ngIf="cours.moyenne !== null"
+                    class="font-body-sm text-body-sm text-on-surface-variant"
+                    >/100</span
+                  >
                 </p>
               </div>
             </header>
@@ -171,7 +180,7 @@ import { ScolariteService } from '../../services/scolarite.service';
               <div class="flex items-center gap-3 shrink-0">
                 <p class="font-headline-sm text-headline-sm text-secondary tabular-nums">
                   {{ r.moyenneGenerale !== null ? (r.moyenneGenerale | number: '1.1-1') : '—' }}<span
-                    class="font-body-sm text-body-sm text-on-surface-variant">/20</span>
+                    class="font-body-sm text-body-sm text-on-surface-variant">/100<ng-container *ngIf="r.moyenneGenerale !== null"> ({{ r.moyenneGenerale / 5 | number: '1.1-1' }}/20)</ng-container></span>
                 </p>
                 <button type="button" (click)="telechargerReleve(r)" [disabled]="releveEnCoursId === r.id"
                         class="flex items-center gap-1 px-3 py-2 rounded-lg border border-outline-variant font-label-sm text-label-sm text-on-surface hover:bg-surface-container transition-colors disabled:opacity-50">

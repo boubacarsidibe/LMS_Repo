@@ -38,6 +38,15 @@ public class MessagePrive {
     @Column(nullable = false)
     private boolean lu = false;
 
+    @Column(name = "piece_jointe_nom_original")
+    private String pieceJointeNomOriginal;
+
+    @Column(name = "piece_jointe_nom_stocke")
+    private String pieceJointeNomStocke;
+
+    @Column(name = "piece_jointe_type_contenu")
+    private String pieceJointeTypeContenu;
+
     protected MessagePrive() {
         // requis par JPA
     }
@@ -75,5 +84,29 @@ public class MessagePrive {
 
     public void setLu(boolean lu) {
         this.lu = lu;
+    }
+
+    public String getPieceJointeNomOriginal() {
+        return pieceJointeNomOriginal;
+    }
+
+    public void setPieceJointeNomOriginal(String pieceJointeNomOriginal) {
+        this.pieceJointeNomOriginal = pieceJointeNomOriginal;
+    }
+
+    public String getPieceJointeNomStocke() {
+        return pieceJointeNomStocke;
+    }
+
+    public void setPieceJointeNomStocke(String pieceJointeNomStocke) {
+        this.pieceJointeNomStocke = pieceJointeNomStocke;
+    }
+
+    public String getPieceJointeTypeContenu() {
+        return pieceJointeTypeContenu;
+    }
+
+    public void setPieceJointeTypeContenu(String pieceJointeTypeContenu) {
+        this.pieceJointeTypeContenu = pieceJointeTypeContenu;
     }
 }

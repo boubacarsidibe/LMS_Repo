@@ -16,5 +16,5 @@ import { LogoInpgComponent } from '../../../shared/components/logo-inpg/logo-inp
   `
 })
 export class SidebarAuth {
-
+  readonly annee = new Date().getFullYear();
 }

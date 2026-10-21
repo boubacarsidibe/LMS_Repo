@@ -33,6 +33,7 @@ import inpg.sn.lms.accreditation.repository.CritereAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.DemandeAccreditationRepository;
 import inpg.sn.lms.accreditation.repository.PieceAccreditationRepository;
 import inpg.sn.lms.accreditation.service.AccreditationNotificationService;
+import inpg.sn.lms.accreditation.service.AttestationAccreditationService;
 import inpg.sn.lms.accreditation.service.PieceAccreditationStorageService;
 import inpg.sn.lms.auth.entity.EcoleFormation;
 import inpg.sn.lms.auth.entity.User;
@@ -65,6 +66,8 @@ class EvaluateurAccreditationControllerTest {
     @Mock
     private AccreditationNotificationService notificationService;
     @Mock
+    private AttestationAccreditationService attestationService;
+    @Mock
     private Authentication authentication;
 
     private EvaluateurAccreditationController controller;
@@ -75,7 +78,8 @@ class EvaluateurAccreditationControllerTest {
     @BeforeEach
     void setUp() {
         controller = new EvaluateurAccreditationController(demandeRepository, pieceRepository, critereRepository,
-                avisRepository, evaluationCritereRepository, utilisateurCourant, storage, notificationService);
+                avisRepository, evaluationCritereRepository, utilisateurCourant, storage, notificationService,
+                attestationService);
         evaluateur = new User();
         evaluateur.setId(1L);
         ecoleUser = new User();
@@ -181,6 +185,10 @@ class EvaluateurAccreditationControllerTest {
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(demande.getStatut()).isEqualTo(EnumStatutDemandeAccreditation.ACCREDITE);
         verify(notificationService).notifierAccreditation(org.mockito.ArgumentMatchers.eq("ecole@example.sn"), org.mockito.ArgumentMatchers.eq("École X"), any());
+        // L'attestation devient téléchargeable dès la décision, pas seulement au premier
+        // téléchargement : sans cet appel, la liste publique des écoles accréditées ne
+        // pourrait jamais lier une entrée à sa fiche détaillée / vérification.
+        verify(attestationService).genererReferenceEtSignatureSiAccreditee(demande);
     }
 
     @Test
@@ -410,5 +418,25 @@ class EvaluateurAccreditationControllerTest {
         verify(notificationService).notifierAccreditationSousReserve(
                 org.mockito.ArgumentMatchers.eq("ecole@example.sn"), org.mockito.ArgumentMatchers.eq("École X"),
                 org.mockito.ArgumentMatchers.eq("Renforcer le corps enseignant"), any());
+        verify(attestationService).genererReferenceEtSignatureSiAccreditee(demande);
+    }
+
+    @Test
+    @DisplayName("Rejet : aucune référence d'attestation n'est jamais générée")
+    void rejeter_ne_genere_pas_d_attestation() {
+        DemandeAccreditation demande = new DemandeAccreditation(ecole);
+        demande.setId(5L);
+        demande.setStatut(EnumStatutDemandeAccreditation.EN_COURS_EVALUATION);
+        when(demandeRepository.findById(5L)).thenReturn(Optional.of(demande));
+        when(utilisateurCourant.utilisateur(authentication)).thenReturn(evaluateur);
+        when(demandeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(pieceRepository.findByDemandeId(5L)).thenReturn(List.of());
+        when(avisRepository.findByDemandeIdOrderByDateAvisAsc(5L))
+                .thenReturn(List.of(new AvisAccreditation(demande, evaluateur, EnumAvisAccreditation.DEFAVORABLE, null)));
+
+        controller.rejeter(5L, new DecisionAccreditationRequest("Dossier incomplet", null), authentication);
+
+        assertThat(demande.getStatut()).isEqualTo(EnumStatutDemandeAccreditation.REJETE);
+        verify(attestationService, never()).genererReferenceEtSignatureSiAccreditee(any());
     }
 }

@@ -187,6 +187,25 @@ public class PaiementService {
         return montantSession != null ? montantSession : new BigDecimal(fraisDossier);
     }
 
+    /** Frais de dossier tels qu'ils seront facturés : montant et devise. */
+    public record FraisDossier(BigDecimal montant, String devise) {
+    }
+
+    /**
+     * Frais que le candidat devra régler pour cette candidature, connus AVANT qu'il déclare son règlement.
+     *
+     * <p>La page de paiement n'affichait le montant qu'une fois la tentative enregistrée : le candidat devait
+     * « déclarer ce règlement » en lisant « Montant communiqué à la validation », sans savoir combien il payait.
+     * Le tarif est celui de {@link #montantPour} — celui de la session, sinon le tarif de repli de l'établissement —
+     * donc exactement celui qui sera enregistré ensuite : l'écran ne peut plus annoncer un prix et en facturer un autre.
+     */
+    @Transactional(readOnly = true)
+    public FraisDossier fraisDossierPour(Long candidatureId) {
+        Candidature candidature = candidatureRepository.findById(candidatureId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidature non trouvée avec l'ID: " + candidatureId));
+        return new FraisDossier(montantPour(candidature), deviseFraisDossier);
+    }
+
     private String methodeOuDefaut(PaiementRequest request) {
         return request.getMethodePaiement() != null && !request.getMethodePaiement().isBlank()
                 ? request.getMethodePaiement()

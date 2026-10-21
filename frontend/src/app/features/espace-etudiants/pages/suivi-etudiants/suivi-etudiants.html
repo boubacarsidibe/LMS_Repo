@@ -1,13 +1,10 @@
 <div class="flex flex-col w-full">
 
   <!-- En-tête -->
-  <div class="px-margin-desktop pt-stack-lg grid grid-cols-12 items-center gap-gutter">
-    <div class="col-span-12 lg:col-span-7">
+  <div class="px-margin-desktop pt-stack-lg">
     <span class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Suivi pédagogique</span>
     <h1 class="mt-2 font-display text-display text-on-surface leading-none">Suivi des Étudiants &amp; Progression</h1>
     <p class="text-body-md text-on-surface-variant max-w-2xl">Analysez la performance de vos promotions et identifiez les besoins d'accompagnement personnalisés.</p>
-    </div>
-    <div class="relative col-span-12 min-h-36 overflow-hidden rounded-xl bg-primary-container lg:col-span-5"><span class="material-symbols-outlined absolute bottom-5 left-12 text-[92px] text-secondary">monitoring</span><span class="material-symbols-outlined absolute bottom-6 left-40 text-[60px] text-primary">school</span><blockquote class="absolute right-4 top-4 w-40 rounded-xl bg-surface-container-lowest/90 px-5 py-4 font-body-sm text-body-sm italic leading-5 text-secondary">« Un meilleur suivi pour une réussite partagée. »<span class="mt-4 block h-1 w-7 rounded-full bg-secondary"></span></blockquote></div>
   </div>
 
   <!-- KPI -->
@@ -57,7 +54,7 @@
         </div>
       </div>
       <div class="flex items-center gap-stack-md shrink-0">
-        <button (click)="ouvrirRelanceCollective()" class="bg-secondary text-on-secondary px-6 py-2.5 rounded-lg font-label-md text-label-md hover:opacity-90 transition-all flex items-center gap-2">
+        <button (click)="ouvrirRelanceCollective()" class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-label-md text-label-md hover:opacity-90 transition-all flex items-center gap-2">
           <span class="material-symbols-outlined text-[18px]">mail</span>
           Envoyer une relance collective
         </button>
@@ -104,7 +101,7 @@
             <tr class="bg-surface-container-low/50">
               <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Étudiant</th>
               <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Promotion</th>
-              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Dernière connexion</th>
+              <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Dernière activité</th>
               <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Progression</th>
               <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Note Moyenne</th>
               <th class="px-6 py-4 text-label-sm font-semibold text-on-surface-variant uppercase tracking-wider">Statut</th>
@@ -125,7 +122,7 @@
                 </div>
               </td>
               <td class="px-6 py-4 text-body-sm text-on-surface-variant">{{ e.promotion }}</td>
-              <td class="px-6 py-4 text-body-sm text-on-surface-variant">{{ e.derniereConnexion }}</td>
+              <td class="px-6 py-4 text-body-sm text-on-surface-variant">{{ e.derniereActivite }}</td>
               <td class="px-6 py-4">
                 <div class="flex flex-col gap-1 w-32">
                   <div class="h-1.5 bg-surface-container-high rounded-full overflow-hidden">
@@ -185,7 +182,7 @@
           <button type="button" (click)="fermerModalMessage()" class="flex-1 py-3 bg-surface-container text-on-surface rounded-xl font-label-md text-label-md hover:bg-outline-variant transition-all">
             Fermer
           </button>
-          <button [disabled]="isEnvoiEnCours" (click)="envoyerMessage()" class="flex-1 py-3 bg-secondary text-on-secondary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
+          <button [disabled]="isEnvoiEnCours" (click)="envoyerMessage()" class="flex-1 py-3 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:opacity-90 transition-all disabled:opacity-60">
             {{ isEnvoiEnCours ? 'Envoi…' : 'Envoyer' }}
           </button>
         </div>

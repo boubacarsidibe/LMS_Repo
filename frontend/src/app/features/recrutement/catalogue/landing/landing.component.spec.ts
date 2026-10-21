@@ -60,15 +60,25 @@ describe('LandingComponent (accueil)', () => {
     expect(fixture.nativeElement.textContent).toContain('Espace école de formation');
   });
 
-  it('entreprise connectée : déposer une demande, messagerie, rendez-vous (plus de catalogue)', () => {
+  it('entreprise sans ROLE_ENTREPRISE (aucune demande encore soumise) : déposer une demande, rendez-vous, pas la messagerie', () => {
+    // Compte tout juste inscrit : la fiche Entreprise n'existe en base qu'à la
+    // première demande réellement soumise (EntrepriseController.soumettreDemande).
+    // Avant ça, envoyer un message échoue en 403 — le raccourci reste masqué.
     connecter([], 'ENTREPRISE');
     fixture.detectChanges();
     const boutons = boutonsDuHero();
     expect(boutons['/espace-entreprise/nouvelle-demande']).toContain('Déposer une demande');
     expect(Object.keys(boutons)).not.toContain('/espace-entreprise/catalogue');
-    expect(boutons['/espace-entreprise/messagerie']).toContain('Messagerie');
+    expect(Object.keys(boutons)).not.toContain('/espace-entreprise/messagerie');
     expect(boutons['/espace-entreprise/rendez-vous']).toContain('Rendez-vous');
     expect(Object.keys(boutons)).not.toContain('/recrutement/sessions');
+  });
+
+  it('entreprise avec ROLE_ENTREPRISE (première demande déjà soumise) : la messagerie apparaît', () => {
+    connecter(['ROLE_ENTREPRISE']);
+    fixture.detectChanges();
+    const boutons = boutonsDuHero();
+    expect(boutons['/espace-entreprise/messagerie']).toContain('Messagerie');
   });
 
   it('candidat formateur : offres de recrutement et sa candidature', () => {

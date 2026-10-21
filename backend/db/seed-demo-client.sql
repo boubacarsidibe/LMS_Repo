@@ -167,8 +167,11 @@ WHERE NOT EXISTS (
 -- documentation de recette ; on se limite à deux épreuves pour ce candidat,
 -- ce qui suffit à sortir l'écran de son état vide.
 -- ---------------------------------------------------------------------
-INSERT INTO tests_academiques (candidat_id, nom_epreuve, coefficient, note_obtenue, date_epreuve)
-SELECT u.id, v.epreuve, v.coef, v.note, now() - (v.jours || ' days')::interval
+-- groupe_epreuve_id (NOT NULL depuis l'ajout des groupes d'épreuves) : un identifiant
+-- par épreuve, déterministe — tous les candidats d'une même épreuve le partagent.
+INSERT INTO tests_academiques (candidat_id, nom_epreuve, coefficient, note_obtenue, date_epreuve, groupe_epreuve_id)
+SELECT u.id, v.epreuve, v.coef, v.note, now() - (v.jours || ' days')::interval,
+       md5('seed-demo-client:epreuve:' || v.epreuve)::uuid
 FROM (VALUES
     ('test_candidat2', 'Culture scientifique',     1.0, 14.5, 30),
     ('test_candidat2', 'Mathématiques appliquées', 2.0, 15.0, 28)
@@ -190,9 +193,11 @@ WHERE NOT EXISTS (
 -- autres états resteront à démontrer manuellement, ou demanderont d'enrichir
 -- le jeu de comptes de test si le besoin se confirme.
 -- ---------------------------------------------------------------------
+-- groupe_entretien_id (NOT NULL) : même principe que groupe_epreuve_id ci-dessus.
 INSERT INTO entretiens (candidat_id, date_heure, lieu_ou_lien, note_entretien,
-                        appreciation_globale, confirme_par_candidat)
-SELECT u.id, now() + (v.jours || ' days')::interval, v.lieu, v.note, v.appreciation, v.confirme
+                        appreciation_globale, confirme_par_candidat, groupe_entretien_id)
+SELECT u.id, now() + (v.jours || ' days')::interval, v.lieu, v.note, v.appreciation, v.confirme,
+       md5('seed-demo-client:entretien:' || v.lieu || v.jours)::uuid
 FROM (VALUES
     ('test_candidat2', -12, 'Salle B12 — Immeuble Adja Koone', 15.0,
      'Motivation solide et projet professionnel clair. Bonne connaissance du secteur pétrolier.', true)

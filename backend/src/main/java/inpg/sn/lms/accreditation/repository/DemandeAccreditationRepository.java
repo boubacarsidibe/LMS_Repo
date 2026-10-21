@@ -22,4 +22,7 @@ public interface DemandeAccreditationRepository extends JpaRepository<DemandeAcc
 
     /** Une demande active (non tranchée) pour cette école, s'il y en a une. */
     List<DemandeAccreditation> findByEcoleIdAndStatutIn(Long ecoleId, List<EnumStatutDemandeAccreditation> statuts);
+
+    /** Vérification publique de l'attestation d'accréditation par sa référence (voir migration V202609271700). */
+    java.util.Optional<DemandeAccreditation> findByReferenceAttestation(String referenceAttestation);
 }

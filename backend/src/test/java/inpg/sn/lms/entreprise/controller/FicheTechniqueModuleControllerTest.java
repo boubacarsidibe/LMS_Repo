@@ -68,6 +68,8 @@ class FicheTechniqueModuleControllerTest {
     @Mock
     private EntrepriseNotificationService notificationService;
     @Mock
+    private inpg.sn.lms.entreprise.service.FicheTechniqueModulePdfService ficheModulePdfService;
+    @Mock
     private Authentication authentication;
 
     private final FicheTechniqueModuleService ficheService = new FicheTechniqueModuleService();
@@ -82,7 +84,7 @@ class FicheTechniqueModuleControllerTest {
     void setUp() {
         entrepriseController = new EntrepriseController(entrepriseRepository, demandeRepository, messageRepository,
                 formationRepository, ficheRepository, ficheService, roleRepository, utilisateurCourant,
-                notificationService);
+                notificationService, ficheModulePdfService);
         pedagogieController = new PedagogieEntrepriseController(demandeRepository, messageRepository,
                 entrepriseRepository, ficheRepository, ficheService, notificationService, utilisateurCourant);
 
@@ -282,5 +284,83 @@ class FicheTechniqueModuleControllerTest {
         assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(notificationService, never()).notifierDecisionFiche(any(), anyBoolean(), any());
         verify(demandeRepository, never()).save(any());
+    }
+
+    // ===================== Devis / convention téléchargeables (entreprise) =====================
+
+    @Test
+    @DisplayName("Devis d'une fiche seulement TRANSMISE (pas encore acceptée) : 404, aucun PDF généré")
+    void devisPdf_sur_fiche_non_acceptee_est_refuse() {
+        FicheTechniqueModule fiche = new FicheTechniqueModule(demandeA);
+        fiche.setStatut(EnumStatutFicheModule.TRANSMISE);
+        when(utilisateurCourant.entreprise(authentication)).thenReturn(entrepriseA);
+        when(ficheRepository.findByDemandeId(5L)).thenReturn(Optional.of(fiche));
+
+        ResponseEntity<?> reponse = entrepriseController.devisPdf(5L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        verify(ficheModulePdfService, never()).genererDevisPdf(any());
+    }
+
+    @Test
+    @DisplayName("Convention d'une fiche seulement TRANSMISE (pas encore acceptée) : 404, aucun PDF généré")
+    void conventionPdf_sur_fiche_non_acceptee_est_refuse() {
+        FicheTechniqueModule fiche = new FicheTechniqueModule(demandeA);
+        fiche.setStatut(EnumStatutFicheModule.TRANSMISE);
+        when(utilisateurCourant.entreprise(authentication)).thenReturn(entrepriseA);
+        when(ficheRepository.findByDemandeId(5L)).thenReturn(Optional.of(fiche));
+
+        ResponseEntity<?> reponse = entrepriseController.conventionPdf(5L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        verify(ficheModulePdfService, never()).genererConventionPdf(any());
+    }
+
+    @Test
+    @DisplayName("Devis d'une fiche ACCEPTEE : 200 PDF")
+    void devisPdf_sur_fiche_acceptee_est_servi() {
+        FicheTechniqueModule fiche = new FicheTechniqueModule(demandeA);
+        fiche.setStatut(EnumStatutFicheModule.ACCEPTEE);
+        when(utilisateurCourant.entreprise(authentication)).thenReturn(entrepriseA);
+        when(ficheRepository.findByDemandeId(5L)).thenReturn(Optional.of(fiche));
+        when(ficheModulePdfService.genererDevisPdf(fiche)).thenReturn(new byte[] { 1, 2, 3 });
+
+        ResponseEntity<?> reponse = entrepriseController.devisPdf(5L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(reponse.getBody()).isEqualTo(new byte[] { 1, 2, 3 });
+    }
+
+    @Test
+    @DisplayName("Convention d'une fiche ACCEPTEE : 200 PDF")
+    void conventionPdf_sur_fiche_acceptee_est_servie() {
+        FicheTechniqueModule fiche = new FicheTechniqueModule(demandeA);
+        fiche.setStatut(EnumStatutFicheModule.ACCEPTEE);
+        when(utilisateurCourant.entreprise(authentication)).thenReturn(entrepriseA);
+        when(ficheRepository.findByDemandeId(5L)).thenReturn(Optional.of(fiche));
+        when(ficheModulePdfService.genererConventionPdf(fiche)).thenReturn(new byte[] { 4, 5, 6 });
+
+        ResponseEntity<?> reponse = entrepriseController.conventionPdf(5L, authentication);
+
+        assertThat(reponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(reponse.getBody()).isEqualTo(new byte[] { 4, 5, 6 });
+    }
+
+    @Test
+    @DisplayName("Cloisonnement : une autre entreprise ne peut télécharger ni le devis ni la convention de l'entreprise A")
+    void documentsSontCloisonnesALEntrepriseProprietaire() {
+        FicheTechniqueModule fiche = new FicheTechniqueModule(demandeA);
+        fiche.setStatut(EnumStatutFicheModule.ACCEPTEE);
+        User userB = new User();
+        userB.setId(2L);
+        Entreprise entrepriseB = new Entreprise(userB, "Entreprise B", null, "Adresse B", "78000000");
+        entrepriseB.setId(2L);
+        when(utilisateurCourant.entreprise(authentication)).thenReturn(entrepriseB);
+        when(ficheRepository.findByDemandeId(5L)).thenReturn(Optional.of(fiche));
+
+        assertThat(entrepriseController.devisPdf(5L, authentication).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(entrepriseController.conventionPdf(5L, authentication).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        verify(ficheModulePdfService, never()).genererDevisPdf(any());
+        verify(ficheModulePdfService, never()).genererConventionPdf(any());
     }
 }

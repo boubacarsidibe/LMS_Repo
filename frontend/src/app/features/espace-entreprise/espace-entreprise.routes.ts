@@ -13,7 +13,10 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./layouts/entreprise-layout/entreprise-layout').then(m => m.EntrepriseLayout),
     children: [
-      { path: '', redirectTo: 'nouvelle-demande', pathMatch: 'full' },
+      {
+        path: '',
+        loadComponent: () => import('./pages/accueil/entreprise-accueil').then(m => m.EntrepriseAccueil)
+      },
       {
         path: 'nouvelle-demande',
         loadComponent: () => import('./pages/nouvelle-demande/nouvelle-demande').then(m => m.NouvelleDemande)
